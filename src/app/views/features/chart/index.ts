@@ -1,6 +1,6 @@
 import { appStyleConfig } from "@/style/appStyle"
-import { dateTimeUtils, hex2Rgba } from "@core/utils"
-import { ECategory, IqueryPeriods } from "@models/item.model"
+import { dateTimeUtils, hex2Rgba } from "@/core/utils"
+import { ECategory, IQueryPeriods } from "@/models/item.model"
 
 export const getBgColorByCatId = (id: ECategory, opacity = 1) => {
   if (!id) id = ECategory.WORD
@@ -39,7 +39,7 @@ export const labelPeriods: string[] = [
   'This month',
 ]
 
-export const queryPeriods: IqueryPeriods[] = [
+export const queryPeriods: IQueryPeriods[] = [
   // {
   //   id: 0,
   //   label: labelPeriods[0],

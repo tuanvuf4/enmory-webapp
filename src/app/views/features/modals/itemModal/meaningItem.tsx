@@ -1,9 +1,9 @@
-import { msgWarning } from "@/app/constants"
-import gStyles from "@/style/appStyle"
+import { msgWarning } from "@/constant/index"
+import globalStyle from "@/style/appStyle"
 import { PlusOutlined, SaveOutlined, DeleteOutlined, WarningOutlined } from "@ant-design/icons"
-import { patternValidation } from "@core/utils"
-import { ECategory, IPair, EType, IItem } from "@models/item.model"
-import { InputTag } from "@views/components/inputTag/inputTag"
+import { patternValidation } from "@/core/utils"
+import { ECategory, IPair, EType, IItem } from "@/models/item.model"
+import { InputTag } from "@/views/components/inputTag/inputTag"
 import { theme, Modal, Space, Col, Row, Button, Select, Checkbox, Popover, Input } from "antd"
 import TextArea from "antd/es/input/TextArea"
 import { useFormContext, useFieldArray, Controller } from "react-hook-form"
@@ -22,7 +22,7 @@ interface IProps {
 export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const [modal, modalContextHolder] = Modal.useModal()
 

@@ -1,6 +1,6 @@
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from 'src/style/appStyle'
+import { appStyleConfig } from '@/style/appStyle'
 
 const styles = () => {
   const { token } = theme.useToken()

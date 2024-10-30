@@ -1,6 +1,6 @@
 import { AliasToken } from 'antd/es/theme/internal'
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from 'src/style/appStyle'
+import { appStyleConfig } from '@/style/appStyle'
 
 const styles = (token: AliasToken) => {
   return createUseStyles({

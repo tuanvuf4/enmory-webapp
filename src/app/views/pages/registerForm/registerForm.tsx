@@ -5,11 +5,11 @@ import classNames from 'clsx'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons'
-import gStyles from '@/style/appStyle'
-import { appConfig } from '@config/appConfig'
-import { IUser } from '@models/user.model'
-import { apiAuth } from '@services/api'
-import { initRegisterForm } from '@services/registerForm'
+import globalStyle from '@/style/appStyle'
+import { appConfig } from '@/config/appConfig'
+import { IUser } from '@/models/user.model'
+import { apiAuth } from '@/services/api'
+import { initRegisterForm } from '@/services/registerForm'
 
 import logo from '@/assets/img/logo.png'
 import styles from './style'
@@ -22,9 +22,9 @@ interface IRegisterForm {
 
 export const RegisterForm = ({ showBanner = true }) => {
   const { token } = theme.useToken()
-  const classesLogin = loginStyle(token)
+  const classesLogin = loginStyle()
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const [isRegistered, setIsRegistered] = useState<boolean>(false)
   const [registerSuccess, setRegisterSuccess] = useState<boolean>(false)

@@ -1,17 +1,17 @@
-import useErrorHandlerRequest from '@core/hooks/axiosErrorHandleRequest'
-import useHandleAuthRequest from '@core/hooks/axiosHandleAuthRequest'
-import { EPageExt } from '@models/app.model'
-import { IHttpResponse } from '@models/http.model'
-import { ECategory, EType, IExample, IItem, IPair } from '@models/item.model'
-import { ILoginResponse } from '@models/user.model'
-import { appApi } from '@services/api'
-import { ExampleFormAdd } from '@views/features/exampleOverview/exampleFormAdd'
-import { HeaderExt } from '@views/features/headerExt/header'
-import { Loading } from '@views/features/loading/loading'
-import { LoginForm } from '@views/features/loginForm/loginForm'
-import { initItem } from '@views/features/modals/itemModal'
-import { CRUFormExt } from '@views/features/modals/itemModal/ItemFormExt'
-import { RegisterForm } from '@views/pages/registerForm/registerForm'
+import useErrorHandlerRequest from '@/core/hooks/axiosErrorHandleRequest'
+import useHandleAuthRequest from '@/core/hooks/axiosHandleAuthRequest'
+import { EPageExt } from '@/models/app.model'
+import { IHttpResponse } from '@/models/http.model'
+import { ECategory, EType, IExample, IItem, IPair } from '@/models/item.model'
+import { ILoginResponse } from '@/models/user.model'
+import { appApi } from '@/services/api'
+import { ExampleFormAdd } from '@/views/features/exampleOverview/exampleFormAdd'
+import { HeaderExt } from '@/views/features/headerExt/header'
+import { Loading } from '@/views/features/loading/loading'
+import { LoginForm } from '@/views/features/loginForm/loginForm'
+import { initItem } from '@/views/features/modals/itemModal'
+import { CRUFormExt } from '@/views/features/modals/itemModal/ItemFormExt'
+import { RegisterForm } from '@/views/pages/registerForm/registerForm'
 import { theme } from 'antd'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
@@ -20,7 +20,8 @@ import styles from './style'
 
 export const PopupExt = () => {
   const { token } = theme.useToken()
-  const classes = styles(token)
+
+  const classes = styles()
 
   const [isLogin, setIsLogin] = useState<boolean>(true)
   const [cats, setCats] = useState<IPair<string, ECategory>[]>([])

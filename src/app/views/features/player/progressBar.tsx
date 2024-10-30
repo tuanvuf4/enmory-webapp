@@ -1,7 +1,5 @@
-import { theme } from 'antd'
 import { RefObject } from 'react'
 import styles from './style'
-import gStyles from 'src/style/appStyle'
 import classNames from 'clsx'
 
 interface IProps {
@@ -17,8 +15,7 @@ export const ProgressBar: React.FC<IProps> = ({
   timeProgress,
   duration,
 }) => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
+  const classes = styles()
 
   const handleProgressChange = () => {
     if (progressBarRef.current && audioRef.current)

@@ -2,8 +2,8 @@ import { appConfig } from '@/app/config/appConfig'
 import { Button } from 'antd'
 import styles from './style'
 import React from 'react'
-import gStyles from '@/style/appStyle'
-import { useAppSelector } from '@core/hooks'
+import globalStyle from '@/style/appStyle'
+import { useAppSelector } from '@/core/hooks'
 
 interface IPros {
   original: string
@@ -11,7 +11,7 @@ interface IPros {
 
 export const Reference: React.FC<IPros> = ({ original }) => {
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const { user } = useAppSelector((state) => state.auth)
 

@@ -1,12 +1,12 @@
 import React from 'react'
-import { useAppDispatch, useAppSelector } from 'src/app/core/hooks/redux'
+import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
 import { Button, Col, Row, Space, theme } from 'antd'
 import styles from './style'
 import { FormSearchItem } from '../formSearchItem/formSearchItem'
-import gStyles from 'src/style/appStyle'
+import globalStyle from '@/style/appStyle'
 import classNames from 'clsx'
 import { CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons'
-import { settingAction } from 'src/app/store/reducers/setting.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
 
 interface IProps {
   formSearch?: React.JSX.Element
@@ -17,7 +17,7 @@ export const Toolbar = ({ formSearch = <FormSearchItem />, pagination }: IProps)
   const { token } = theme.useToken()
 
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const dispatch = useAppDispatch()
 

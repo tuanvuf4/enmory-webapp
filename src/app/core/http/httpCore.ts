@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios'
 import _ from 'lodash'
-import { httpConfig } from '../../config/httpConfig'
-import { ELoading } from 'src/app/models/app.model'
+import { ELoading } from '@/models/app.model'
+import { httpConfig } from '@/config/httpConfig'
 
 export const defaultHttpConfig: AxiosRequestConfig = {
   baseURL: `${httpConfig.baseUrl}/${httpConfig.apiVersion}/${httpConfig.apiUrl}/`,

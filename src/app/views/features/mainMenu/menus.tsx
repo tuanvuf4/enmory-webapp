@@ -10,7 +10,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
-import { EPageExt } from 'src/app/models/app.model'
+import { EPageExt } from '@/models/app.model'
 
 export interface IMenus {
   key: string
@@ -82,7 +82,7 @@ export const menusExt: MenuProps['items'] = [
     label: 'Item',
   },
   {
-    key: EPageExt.ADDEX,
+    key: EPageExt.ADD_EX,
     icon: <PlusOutlined className='icon' />,
     label: 'Example',
   },

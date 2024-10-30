@@ -1,4 +1,4 @@
-import { defaultSetting } from '@config/appConfig'
+import { defaultSetting } from '@/config/appConfig'
 import { INotification } from '../../models/app.model'
 import { EListeningTypes } from '../../models/dictation.model'
 import { IFormSearchEx, IFormSearchItem } from '../../models/formSearch.model'

@@ -1,5 +1,5 @@
 import { StepBackwardOutlined, BackwardOutlined, PauseOutlined, CaretRightOutlined, ForwardOutlined, StepForwardOutlined, NotificationOutlined, SoundOutlined } from "@ant-design/icons"
-import { ITracks } from "@models/media.model"
+import { ITracks } from "@/models/media.model"
 import { RefObject, useState, useRef, useCallback, useEffect } from "react"
 import styles from "./style"
 

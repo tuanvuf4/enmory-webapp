@@ -1,12 +1,12 @@
 import React from 'react'
-import { useAppDispatch, useAppSelector } from 'src/app/core/hooks/redux'
-import { Modal, theme } from 'antd'
-import { appStyleConfig } from 'src/style/appStyle'
+import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
+import { Modal } from 'antd'
+import { appStyleConfig } from '@/style/appStyle'
 import { CloseSquareOutlined } from '@ant-design/icons'
-import { settingAction } from 'src/app/store/reducers/setting.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
 import { ExampleFormAdd } from '../../exampleOverview/exampleFormAdd'
-import { IExample } from 'src/app/models/item.model'
-import { exampleAction } from 'src/app/store/reducers/example.reducer'
+import { IExample } from '@/models/item.model'
+import { exampleAction } from '@/store/reducers/example.reducer'
 
 interface IProps {
   onConfirm?: () => void
@@ -16,13 +16,11 @@ interface IProps {
 }
 
 export const ExModal: React.FC<IProps> = ({ open }) => {
-  const { token } = theme.useToken()
-
   const { selectedExample } = useAppSelector((state) => state.example)
 
   const dispatch = useAppDispatch()
 
-  const onSucces = (content: IExample) => {
+  const onSuccess = (content: IExample) => {
     dispatch(settingAction.toggleExModal())
     dispatch(exampleAction.updateExamples(content))
     dispatch(exampleAction.updateRandomExamples(content))
@@ -43,7 +41,7 @@ export const ExModal: React.FC<IProps> = ({ open }) => {
       footer={null}
       maskClosable={true}
     >
-      <ExampleFormAdd data={selectedExample as IExample} mode={'light'} onSucces={onSucces} />
+      <ExampleFormAdd data={selectedExample as IExample} mode={'light'} onSuccess={onSuccess} />
     </Modal>
   )
 }

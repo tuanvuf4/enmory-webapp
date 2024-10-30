@@ -2,7 +2,7 @@ import { CustomerServiceOutlined } from '@ant-design/icons'
 import { RefObject } from 'react'
 import { theme } from 'antd'
 import styles from './style'
-import gStyles from 'src/style/appStyle'
+import globalStyle from 'src/style/appStyle'
 import { ITrack } from './data/tracks'
 
 interface IProps {

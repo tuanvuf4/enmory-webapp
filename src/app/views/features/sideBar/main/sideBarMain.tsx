@@ -1,7 +1,7 @@
 import { theme } from 'antd'
 import React from 'react'
 import { Link } from 'react-router-dom'
-import logo from 'src/assets/img/logo.png'
+import logo from '@/assets/img/logo.png'
 import styles from './style'
 import { MainMenu } from '../../mainMenu/mainMenu'
 

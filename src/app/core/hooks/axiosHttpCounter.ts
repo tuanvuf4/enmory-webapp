@@ -1,8 +1,8 @@
 /* eslint-disable no-prototype-builtins */
 /*eslint @typescript-eslint/no-explicit-any: ["off"]*/
 
-import { axiosInstance } from "@core/http/httpCore"
-import { ELoading } from "@models/app.model"
+import { axiosInstance } from "@/core/http/httpCore"
+import { ELoading } from "@/models/app.model"
 import { useState, useMemo, useEffect } from "react"
 
 export const useAxiosLoader = () => {

@@ -1,6 +1,6 @@
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
-import { hex2Rgba } from '@core/utils/style.util'
+import { hex2Rgba } from '@/core/utils/style.util'
 import { appStyleConfig } from '@/style/appStyle'
 
 const styles = () => {

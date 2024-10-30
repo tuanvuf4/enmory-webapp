@@ -1,5 +1,5 @@
 import { appStyleConfig } from '@/style/appStyle'
-import { hex2Rgba } from '@core/utils'
+import { hex2Rgba } from '@/core/utils'
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
 

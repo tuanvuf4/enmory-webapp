@@ -1,34 +1,31 @@
 import { PropsWithChildren, useEffect } from 'react'
 import { AppFooter } from '../footer/footer'
 import { AppHeader } from '../header/header'
-import { Drawer, FloatButton, Layout, theme } from 'antd'
-import { useAppDispatch, useAppSelector } from 'src/app/core/hooks/redux'
+import { Drawer, FloatButton, Layout } from 'antd'
+import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
 import { ArrowUpOutlined } from '@ant-design/icons'
-import { appTheme } from 'src/style/theme'
+import { appTheme } from '@/style/theme'
 import styles from './style'
-import gStyles, { appStyleConfig } from 'src/style/appStyle'
+import { appStyleConfig } from '@/style/appStyle'
 import { ItemModal } from '../modals/itemModal/itemModal'
 import { SideBarMain } from '../sideBar/main/sideBarMain'
-import { Loading } from '../loading/loading'
 import { ViewItemModal } from '../modals/viewItemModal/viewItemModal'
 import { DeleteItemModal } from '../modals/deleteItemModal/deleteItemModal'
 import { Notification } from '../../components/notification/notification'
-import { configAction } from 'src/app/store/reducers/config.reducer'
+import { configAction } from '@/store/reducers/config.reducer'
 import { MediaUploadModal } from '../modals/mediaUploadModal/mediaUploadModal'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { EViewPort } from 'src/app/models/app.model'
+import { EViewPort } from '@/models/app.model'
 import { FormProvider, useForm } from 'react-hook-form'
-import { IItem } from 'src/app/models/item.model'
+import { IItem } from '@/models/item.model'
 import { initItem } from '../modals/itemModal'
 import { ExModal } from '../modals/exModal/exModal'
 import { DeleteExModal } from '../modals/deleteExModal/deleteExModal'
 import { LoadingBar } from '../loading/loadingBar'
-import { useAxiosLoader } from 'src/app/core/hooks/axiosHttpCounter'
+import { useAxiosLoader } from '@/core/hooks/axiosHttpCounter'
 
 export const AppLayout: React.FC<PropsWithChildren> = (props) => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
-  const gClasses = gStyles(token)
+  const classes = styles()
 
   const {
     isShowViewItemModal,
@@ -61,6 +58,8 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
       dispatch(configAction.setViewPort(EViewPort.MD))
     }
     if (width >= 992) {
+
+      
       dispatch(configAction.setViewPort(EViewPort.LG))
     }
     if (width >= 1200) {

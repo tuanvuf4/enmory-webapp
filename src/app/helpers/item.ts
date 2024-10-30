@@ -1,5 +1,5 @@
-import { patternValidation } from '@core/utils';
-import { IItem, EType, ECategory } from '@models/item.model';
+import { patternValidation } from '@/core/utils';
+import { IItem, EType, ECategory } from '@/models/item.model';
 import { compact } from 'lodash';
 
 export const transformItemModelToClient = (item: IItem<string>): IItem => ({

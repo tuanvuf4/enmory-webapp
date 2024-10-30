@@ -1,19 +1,19 @@
-import gStyles from '@/style/appStyle'
+import globalStyle from '@/style/appStyle'
 import { SyncOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { NotificationContext, TConfigNotification } from '@context/notification.context'
-import { useAppDispatch, useAppSelector } from '@core/hooks'
-import { useAutoComplete } from '@helpers/hooks'
-import { IExample } from '@models/item.model'
-import { exampleApi } from '@services/api'
-import { exampleAsync } from '@store/async/example.async'
-import { exampleAction } from '@store/reducers/example.reducer'
-import { settingAction } from '@store/reducers/setting.reducer'
+import { NotificationContext, TConfigNotification } from '@/context/notification.context'
+import { useAppDispatch, useAppSelector } from '@/core/hooks'
+import { useAutoComplete } from '@/helpers/hooks'
+import { IExample } from '@/models/item.model'
+import { exampleApi } from '@/services/api'
+import { exampleAsync } from '@/store/async/example.async'
+import { exampleAction } from '@/store/reducers/example.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme, Skeleton, Button, AutoComplete, Input } from 'antd'
 import { PropsWithChildren, useContext, useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { ExItem } from '../exItem/exItem'
 import styles from './style'
-import exstyles from '@views/features/item/style'
+import exstyles from '@/views/features/item/style'
 import clsx from 'clsx'
 
 interface IProps {
@@ -34,7 +34,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = ({ title = 
   const { token } = theme.useToken()
   const classes = styles()
   const exClasses = exstyles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const dispatch = useAppDispatch()
   const { randomExamples } = useAppSelector((state) => state.example)

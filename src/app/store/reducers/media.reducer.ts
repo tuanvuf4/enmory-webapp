@@ -2,7 +2,7 @@ import { EMediaSrc } from "@/app/models/dictation.model"
 import { IHttpResponse } from "@/app/models/http.model"
 import { ITracks } from "@/app/models/media.model"
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import { actionAsyncMedia } from "@store/async/media.async"
+import { actionAsyncMedia } from "@/store/async/media.async"
 
 export interface IMediaState {
   list: ITracks[]

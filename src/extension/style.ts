@@ -1,8 +1,9 @@
-import { AliasToken } from 'antd/es/theme/internal'
+import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from 'src/style/appStyle'
 
-const styles = (token: AliasToken) => {
+const styles = () => {
+  const { token } = theme.useToken()
+
   return createUseStyles({
     cruForm: {
       padding: (token.size / 4) * 3,

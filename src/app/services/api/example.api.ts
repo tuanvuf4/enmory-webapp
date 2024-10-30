@@ -1,8 +1,8 @@
-import { httpConfig } from "@config/httpConfig"
-import { http } from "@core/http"
-import { IExampleQuery } from "@models/example.model"
-import { IHttpResponse, IHttpResponseArray } from "@models/http.model"
-import { IExample } from "@models/item.model"
+import { httpConfig } from "@/config/httpConfig"
+import { http } from "@/core/http"
+import { IExampleQuery } from "@/models/example.model"
+import { IHttpResponse, IHttpResponseArray } from "@/models/http.model"
+import { IExample } from "@/models/item.model"
 
 
 const createExample = async (body: IExample) => {

@@ -1,14 +1,14 @@
-import gStyles from '@/style/appStyle'
-import { defaultSetting } from '@config/appConfig'
-import { useAppDispatch, useAppSelector } from '@core/hooks'
-import { EMediaSrc, EListeningTypes } from '@models/dictation.model'
-import { mediaApi } from '@services/api'
-import { actionAsyncMedia } from '@store/async/media.async'
-import { mediaAction } from '@store/reducers/media.reducer'
-import { settingAction } from '@store/reducers/setting.reducer'
-import { Dictation } from '@views/features/dictation/dictation'
-import { Exercise } from '@views/features/exercise/exercise'
-import { AudioPlayer } from '@views/features/player/audioPlayer'
+import globalStyle from '@/style/appStyle'
+import { defaultSetting } from '@/config/appConfig'
+import { useAppDispatch, useAppSelector } from '@/core/hooks'
+import { EMediaSrc, EListeningTypes } from '@/models/dictation.model'
+import { mediaApi } from '@/services/api'
+import { actionAsyncMedia } from '@/store/async/media.async'
+import { mediaAction } from '@/store/reducers/media.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { Dictation } from '@/views/features/dictation/dictation'
+import { Exercise } from '@/views/features/exercise/exercise'
+import { AudioPlayer } from '@/views/features/player/audioPlayer'
 import { theme, Col, Skeleton, Space, Row } from 'antd'
 import { useState, useEffect } from 'react'
 import clsx from 'clsx'
@@ -16,7 +16,7 @@ import clsx from 'clsx'
 export const Listening = () => {
   const { token } = theme.useToken()
 
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const dispatch = useAppDispatch()
 

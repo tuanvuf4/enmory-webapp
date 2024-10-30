@@ -1,9 +1,8 @@
 import { Button, Col, Row, Space, Tooltip, theme } from 'antd'
 import styles from './style'
-import gStyles from 'src/style/appStyle'
 import TextArea from 'antd/es/input/TextArea'
 import { useEffect, useState } from 'react'
-import { defaultSetting } from 'src/app/config/appConfig'
+import { defaultSetting } from '@/config/appConfig'
 import { InfoCircleOutlined } from '@ant-design/icons'
 import classNames from 'clsx'
 
@@ -21,8 +20,7 @@ export const Dictation: React.FC<IProps> = ({
   translation,
 }) => {
   const { token } = theme.useToken()
-  const classes = styles(token)
-  const gClasses = gStyles(token)
+  const classes = styles()
 
   const [isFinish, setIsFinish] = useState<boolean>(false)
   const [isStart, setIsStart] = useState<boolean>(false)

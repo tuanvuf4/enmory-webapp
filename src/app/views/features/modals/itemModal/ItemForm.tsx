@@ -1,22 +1,22 @@
-import { msgErrors } from "@/app/constants/validation"
+import { msgErrors } from "@/constant/validation"
 import { chromeStorage } from "@/extension/storageService"
-import gStyles from "@/style/appStyle"
-import { defaultSetting, appConfig } from "@config/appConfig"
-import { NotificationContext, TConfigNotification } from "@context/notification.context"
-import { useAutoComplete } from "@helpers/hooks/autoComplete"
-import { transformItemModelToServer, transformItemModelToClient } from "@helpers/item"
-import { isGroupWord } from "@helpers/validate"
-import { ELoading } from "@models/app.model"
-import { IPair, ECategory, EType, IItem } from "@models/item.model"
-import { itemApi } from "@services/api/item.api"
-import { itemAsync } from "@store/async/item.async"
-import { iotdAction } from "@store/reducers/iotd.reducer"
-import { itemAction } from "@store/reducers/items.reducer"
-import { settingAction } from "@store/reducers/setting.reducer"
-import { studySetAction } from "@store/reducers/studySet.reducer"
-import { InputTag } from "@views/components/inputTag/inputTag"
-import { Level } from "@views/components/level/level"
-import { Reference } from "@views/features/references/references"
+import globalStyle from "@/style/appStyle"
+import { defaultSetting, appConfig } from "@/config/appConfig"
+import { NotificationContext, TConfigNotification } from "@/context/notification.context"
+import { useAutoComplete } from "@/helpers/hooks/autoComplete"
+import { transformItemModelToServer, transformItemModelToClient } from "@/helpers/item"
+import { isGroupWord } from "@/helpers/validate"
+import { ELoading } from "@/models/app.model"
+import { IPair, ECategory, EType, IItem } from "@/models/item.model"
+import { itemApi } from "@/services/api/item.api"
+import { itemAsync } from "@/store/async/item.async"
+import { iotdAction } from "@/store/reducers/iotd.reducer"
+import { itemAction } from "@/store/reducers/items.reducer"
+import { settingAction } from "@/store/reducers/setting.reducer"
+import { studySetAction } from "@/store/reducers/studySet.reducer"
+import { InputTag } from "@/views/components/inputTag/inputTag"
+import { Level } from "@/views/components/level/level"
+import { Reference } from "@/views/features/references/references"
 import { theme, Row, Space, Col, Select, AutoComplete, Input, Checkbox, Button } from "antd"
 import classNames from "clsx"
 import _ from "lodash"
@@ -25,7 +25,7 @@ import { useFormContext, useWatch, Controller } from "react-hook-form"
 import { initItem, meaningItem } from "."
 import MeaningItem from "./meaningItem"
 import styles from "./style"
-import { useAppDispatch, useAppSelector } from "@core/hooks/redux"
+import { useAppDispatch, useAppSelector } from "@/core/hooks/redux"
 import { CloseCircleOutlined, Loading3QuartersOutlined } from "@ant-design/icons"
 
 interface ICRUForm {
@@ -36,7 +36,7 @@ interface ICRUForm {
 export const CRUForm: React.FC<ICRUForm> = ({ categories, types }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const { openNotification } = useContext(NotificationContext) as TConfigNotification
 

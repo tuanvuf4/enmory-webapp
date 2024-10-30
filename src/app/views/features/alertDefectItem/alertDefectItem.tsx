@@ -1,9 +1,9 @@
-import React, { PropsWithChildren, useEffect, useState } from 'react'
+import React from 'react'
 import { Button, Popover, theme } from 'antd'
 import styles from './style'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
-import { msgWarning } from 'src/app/constants/validation'
-import { IItem } from 'src/app/models/item.model'
+import { msgWarning } from '@/constant/validation'
+import { IItem } from '@/models/item.model'
 
 interface IProps {
   item: IItem

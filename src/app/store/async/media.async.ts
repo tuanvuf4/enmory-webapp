@@ -1,8 +1,8 @@
-import { appConfig } from "@config/appConfig"
-import { httpConfig } from "@config/httpConfig"
-import { EMediaSrc } from "@models/dictation.model"
+import { appConfig } from "@/config/appConfig"
+import { httpConfig } from "@/config/httpConfig"
+import { EMediaSrc } from "@/models/dictation.model"
 import { createAsyncThunk } from "@reduxjs/toolkit"
-import { mediaApi } from "@services/api/media.api"
+import { mediaApi } from "@/services/api/media.api"
 
 const fetchMedias = createAsyncThunk('media/fetchAllMedia', async (src: EMediaSrc) => {
   appConfig

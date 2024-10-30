@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { appConfig } from '@/config/appConfig'
+import { chromeStorage } from '@/extension/storageService'
 import { useEffect } from 'react'
 import { axiosInstance } from '../http/httpCore'
-import { appConfig } from 'src/app/config/appConfig'
-import { chromeStorage } from 'src/extension/storageService'
 import { useAppSelector } from './redux'
 
 const useHandleAuthRequest = () => {

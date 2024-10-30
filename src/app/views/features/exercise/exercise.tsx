@@ -1,10 +1,10 @@
-import { msgErrors } from "@/app/constants"
-import gStyles from "@/style/appStyle"
+import { msgErrors } from "@/constant/index"
+import globalStyle from "@/style/appStyle"
 import { ReloadOutlined } from "@ant-design/icons"
-import { defaultSetting } from "@config/appConfig"
-import { useAppSelector } from "@core/hooks"
-import { patternValidation, hex2Rgba } from "@core/utils"
-import { getRandomArrayIndex } from "@helpers/validate"
+import { defaultSetting } from "@/config/appConfig"
+import { useAppSelector } from "@/core/hooks"
+import { patternValidation, hex2Rgba } from "@/core/utils"
+import { getRandomArrayIndex } from "@/helpers/validate"
 import { theme, Row, Col, Button, Input } from "antd"
 import { useState, useEffect } from "react"
 import styles from "./style"
@@ -26,7 +26,7 @@ export const Exercise: React.FC<IProps> = ({
   const { token } = theme.useToken()
 
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const [isGenerate, setIsGenerate] = useState<boolean>(false)
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
@@ -176,7 +176,7 @@ export const Exercise: React.FC<IProps> = ({
   }, [])
 
   return (
-    <div className={classes.listeningExcercise}>
+    <div className={classes.listeningExercise}>
       {!isGenerate && (
         <Row gutter={[token.size / 2, token.size]}>
           <Col xs={24}>

@@ -3,7 +3,7 @@ import { Controls } from './controls'
 import { ProgressBar } from './progressBar'
 import { Button, Dropdown, MenuProps, theme } from 'antd'
 import styles from './style'
-import { appStyleConfig } from 'src/style/appStyle'
+import { appStyleConfig } from '@/style/appStyle'
 import {
   CaretDownOutlined,
   CaretRightOutlined,
@@ -14,9 +14,9 @@ import {
   PauseOutlined,
   PlusOutlined,
 } from '@ant-design/icons'
-import { ITracks } from 'src/app/models/media.model'
-import { EMediaSrc } from 'src/app/models/dictation.model'
-import { defaultSetting } from 'src/app/config/appConfig'
+import { ITracks } from '@/models/media.model'
+import { EMediaSrc } from '@/models/dictation.model'
+import { defaultSetting } from '@/config/appConfig'
 import classNames from 'clsx'
 import { TExternalSource } from '../modals/mediaUploadModal'
 
@@ -46,7 +46,7 @@ export const AudioPlayer: React.FC<IProps> = ({
   onCurrentUpdating,
 }) => {
   const { token } = theme.useToken()
-  const classes = styles(token)
+  const classes = styles()
 
   const [currentTrack, setCurrentTrack] = useState<ITracks | null>(null)
   const [timeProgress, setTimeProgress] = useState(0)

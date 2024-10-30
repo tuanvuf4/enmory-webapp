@@ -1,24 +1,24 @@
-import gStyles from '@/style/appStyle'
-import { NotificationContext, TConfigNotification } from '@context/notification.context'
-import { useAppSelector, useAppDispatch } from '@core/hooks'
-import { transformItemModelToClient } from '@helpers/item'
-import { IExample } from '@models/item.model'
-import { itemApi } from '@services/api'
-import { settingAction } from '@store/reducers/setting.reducer'
-import { ExampleFormAdd } from '@views/features/exampleOverview/exampleFormAdd'
-import { ExampleOverView } from '@views/features/exampleOverview/exampleOverview'
-import { FormSearchItem } from '@views/features/formSearchItem/formSearchItem'
-import { StudySet } from '@views/features/studySet/studySet'
-import { Widget } from '@views/features/widget/widget'
+import globalStyle from '@/style/appStyle'
+import { NotificationContext, TConfigNotification } from '@/context/notification.context'
+import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { transformItemModelToClient } from '@/helpers/item'
+import { IExample } from '@/models/item.model'
+import { itemApi } from '@/services/api'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { ExampleFormAdd } from '@/views/features/exampleOverview/exampleFormAdd'
+import { ExampleOverView } from '@/views/features/exampleOverview/exampleOverview'
+import { FormSearchItem } from '@/views/features/formSearchItem/formSearchItem'
+import { StudySet } from '@/views/features/studySet/studySet'
+import { Widget } from '@/views/features/widget/widget'
 import { theme, Space, Row, Col } from 'antd'
 import { useContext } from 'react'
 import About from '../about/about'
-import { Item } from '@views/features/item/Item'
+import { Item } from '@/views/features/item/Item'
 
 const Home = () => {
   const { token } = theme.useToken()
 
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const { openNotification } = useContext(NotificationContext) as TConfigNotification
 

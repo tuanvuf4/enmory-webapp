@@ -1,7 +1,7 @@
 import { createUseStyles } from 'react-jss'
 import { gray, volcano, yellow, blue, red, cyan, green, gold, lime } from '@ant-design/colors'
 import { appTheme } from './theme'
-import { hex2Rgba } from '@core/utils'
+import { hex2Rgba } from '@/core/utils'
 import { theme } from 'antd'
 
 export const appStyleConfig = {
@@ -48,7 +48,7 @@ export const appStyleConfig = {
   },
 }
 
-const gStyles = () => {
+const globalStyle = () => {
   const { token } = theme.useToken()
 
   return createUseStyles({
@@ -178,4 +178,4 @@ const gStyles = () => {
   })()
 }
 
-export default gStyles
+export default globalStyle

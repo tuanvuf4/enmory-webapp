@@ -1,19 +1,18 @@
 import { Col, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
-import gStyles from 'src/style/appStyle'
-import styles from './style'
+import globalStyle from '@/style/appStyle'
 import { Link } from 'react-router-dom'
 
 import registerStyle from '../register/style'
 import loginStyle from '../login/style'
-import { useAppSelector } from 'src/app/core/hooks/redux'
+import { useAppSelector } from '@/app/core/hooks/redux'
 
 const About = () => {
   const { token } = theme.useToken()
-  const classes = styles(token)
-  const gClasses = gStyles(token)
-  const classesLogin = loginStyle(token)
-  const classesRegister = registerStyle(token)
+  
+  const gClasses = globalStyle()
+  const classesLogin = loginStyle()
+  const classesRegister = registerStyle()
 
   const { isAuth } = useAppSelector((state) => state.auth)
 

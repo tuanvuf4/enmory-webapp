@@ -162,7 +162,7 @@ export interface IProgressChartData {
   data: IItem[]
 }
 
-export interface IqueryPeriods {
+export interface IQueryPeriods {
   id: number
   label: string
   from: number

@@ -1,9 +1,9 @@
-import { httpConfig } from "@config/httpConfig"
-import { http } from "@core/http"
-import { EMediaSrc } from "@models/dictation.model"
-import { IHttpResponse } from "@models/http.model"
-import { ITracks } from "@models/media.model"
-import { IMediaForm } from "@views/features/modals/mediaUploadModal"
+import { httpConfig } from "@/config/httpConfig"
+import { http } from "@/core/http"
+import { EMediaSrc } from "@/models/dictation.model"
+import { IHttpResponse } from "@/models/http.model"
+import { ITracks } from "@/models/media.model"
+import { IMediaForm } from "@/views/features/modals/mediaUploadModal"
 
 
 const removeMedia = async (id: number) => {

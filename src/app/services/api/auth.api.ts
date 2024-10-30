@@ -1,7 +1,7 @@
-import { http } from 'src/app/core/http'
-import { httpConfig } from 'src/app/config/httpConfig'
-import { IHttpResponse } from 'src/app/models/http.model'
-import { ILogin, ILoginResponse, IUser } from 'src/app/models/user.model'
+import { httpConfig } from '@/config/httpConfig'
+import { http } from '@/core/http'
+import { IHttpResponse } from '@/models/http.model'
+import { ILogin, ILoginResponse, IUser } from '@/models/user.model'
 
 const getGoogleUserInfo = (access_token: string) => {
   return http.get(

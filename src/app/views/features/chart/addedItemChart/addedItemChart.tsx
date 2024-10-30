@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Skeleton, theme } from 'antd'
 import styles from '../style'
-import { chartApi } from 'src/app/services/api/chart.api'
+import { chartApi } from '@/app/services/api/chart.api'
 import {
   Chart as ChartJS,
   CategoryScale,

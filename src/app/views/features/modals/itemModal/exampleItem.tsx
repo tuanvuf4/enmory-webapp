@@ -1,8 +1,8 @@
-import gStyles from "@/style/appStyle"
+import globalStyle from "@/style/appStyle"
 import { PlusOutlined, DeleteOutlined, CloseCircleOutlined } from "@ant-design/icons"
-import { useAutoComplete } from "@helpers/hooks"
-import { IItem } from "@models/item.model"
-import { exampleApi } from "@services/api"
+import { useAutoComplete } from "@/helpers/hooks"
+import { IItem } from "@/models/item.model"
+import { exampleApi } from "@/services/api"
 import { theme, Modal, Space, Col, Row, Button, Switch, AutoComplete } from "antd"
 import TextArea from "antd/es/input/TextArea"
 import { useState } from "react"
@@ -18,7 +18,7 @@ interface IProps {
 export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const [currentSearch, setCurrentSearch] = useState<string>('')
 

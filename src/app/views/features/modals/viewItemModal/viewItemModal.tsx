@@ -1,12 +1,11 @@
 import React from 'react'
-import { useAppDispatch, useAppSelector } from 'src/app/core/hooks/redux'
+import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
 import { Modal, theme } from 'antd'
-import { styles } from './style'
-import { Item } from '../../item/Item'
-import { appStyleConfig } from 'src/style/appStyle'
-import { IItem } from 'src/app/models/item.model'
+import { appStyleConfig } from '@/style/appStyle'
+import { IItem } from '@/models/item.model'
 import { CloseSquareOutlined } from '@ant-design/icons'
-import { settingAction } from 'src/app/store/reducers/setting.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { Item } from '../../item/Item'
 
 interface IProps {
   onConfirm?: () => void

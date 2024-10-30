@@ -1,7 +1,7 @@
-import { http } from 'src/app/core/http'
-import { httpConfig } from 'src/app/config/httpConfig'
-import { IHttpResponse } from 'src/app/models/http.model'
-import { ECategory, EType, IIotd, IPair } from 'src/app/models/item.model'
+import { httpConfig } from "@/config/httpConfig"
+import { http } from "@/core/http"
+import { IHttpResponse } from "@/models/http.model"
+import { IPair, ECategory, EType, IIotd } from "@/models/item.model"
 
 const getCategories = async () =>
   http

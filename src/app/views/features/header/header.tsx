@@ -1,13 +1,13 @@
 
-import gStyles from '@/style/appStyle'
+import globalStyle from '@/style/appStyle'
 import { MenuOutlined, SearchOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons'
-import { useAppSelector, useAppDispatch } from '@core/hooks'
-import { authAction } from '@store/reducers/auth.reducer'
-import { configAction } from '@store/reducers/config.reducer'
-import { iotdAction } from '@store/reducers/iotd.reducer'
-import { mediaAction } from '@store/reducers/media.reducer'
-import { settingAction } from '@store/reducers/setting.reducer'
-import { studySetAction } from '@store/reducers/studySet.reducer'
+import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { authAction } from '@/store/reducers/auth.reducer'
+import { configAction } from '@/store/reducers/config.reducer'
+import { iotdAction } from '@/store/reducers/iotd.reducer'
+import { mediaAction } from '@/store/reducers/media.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { theme, MenuProps, Layout, Row, Col, Button, Dropdown, Space } from 'antd'
 import { useNavigate, Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
@@ -19,7 +19,7 @@ import clsx from 'clsx'
 export const AppHeader = () => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const { isAuth, user } = useAppSelector((state) => state.auth)
   const { drawer } = useAppSelector((state) => state.config)

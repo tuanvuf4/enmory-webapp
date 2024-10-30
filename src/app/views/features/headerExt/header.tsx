@@ -3,12 +3,12 @@ import { Button, Col, Dropdown, Layout, MenuProps, Row, Space, theme } from 'ant
 import classNames from 'clsx'
 import { items } from './menus'
 import styles from './style'
-import gStyles from 'src/style/appStyle'
+import globalStyle from '@/style/appStyle'
 import { useEffect, useState } from 'react'
-import { IUser } from 'src/app/models/user.model'
-import { apiAuth } from 'src/app/services/api/auth.api'
-import { EPageExt } from 'src/app/models/app.model'
-import logo from 'src/assets/img/logo.png'
+import { IUser } from '@/models/user.model'
+import { apiAuth } from '@/services/api/auth.api'
+import { EPageExt } from '@/models/app.model'
+import logo from '@/assets/img/logo.png'
 import { Link } from 'react-router-dom'
 import { addNewType } from '../header/menus'
 interface IHeaderExt {
@@ -18,8 +18,9 @@ interface IHeaderExt {
 
 export const HeaderExt: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) => {
   const { token } = theme.useToken()
-  const classes = styles(token)
-  const gClasses = gStyles(token)
+
+  const classes = styles()
+  const gClasses = globalStyle()
 
   const [userInfo, setUserInfo] = useState<IUser<string>>()
 
@@ -40,7 +41,7 @@ export const HeaderExt: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) => {
     }
 
     if (e.key === 'addEx') {
-      onPageChange(EPageExt.ADDEX)
+      onPageChange(EPageExt.ADD_EX)
     }
   }
 

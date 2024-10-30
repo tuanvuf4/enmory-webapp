@@ -1,10 +1,8 @@
-import { useAxiosLoader } from 'src/app/core/hooks/axiosHttpCounter'
-import { theme } from 'antd'
+import { useAxiosLoader } from '@/core/hooks/axiosHttpCounter'
 import styles from './style'
 
 export const LoadingBar = () => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
+  const classes = styles()
 
   const [active] = useAxiosLoader()
 

@@ -1,15 +1,14 @@
-import { Menu, theme } from 'antd'
+import { Menu } from 'antd'
 import styles from './style'
-import gStyles from 'src/style/appStyle'
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useAppDispatch, useAppSelector } from 'src/app/core/hooks/redux'
+import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
 import { authMenus, keyPaths, menus, menusExt } from './menus'
 import classNames from 'clsx'
 import type { MenuProps } from 'antd'
-import { configAction } from 'src/app/store/reducers/config.reducer'
-import { appConfig } from 'src/app/config/appConfig'
-import { EPageExt } from 'src/app/models/app.model'
+import { configAction } from '@/store/reducers/config.reducer'
+import { appConfig } from '@/config/appConfig'
+import { EPageExt } from '@/models/app.model'
 
 type TDirection = 'horizontal' | 'vertical'
 
@@ -24,9 +23,7 @@ export const MainMenu: React.FC<IPros> = ({
   toggleDrawler = false,
   onPageChange,
 }: IPros) => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
-  const gClasses = gStyles(token)
+  const classes = styles()
 
   const [menu, setMenu] = useState<MenuProps['items']>([])
   const [current, setCurrent] = useState('1')

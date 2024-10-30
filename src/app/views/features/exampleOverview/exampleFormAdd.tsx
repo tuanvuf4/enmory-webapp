@@ -1,6 +1,6 @@
 import { CloseOutlined } from '@ant-design/icons'
-import { IExample } from '@models/item.model'
-import { exampleApi } from '@services/api'
+import { IExample } from '@/models/item.model'
+import { exampleApi } from '@/services/api'
 import { theme, Space, Row, Col, Button } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import { PropsWithChildren, useState } from 'react'

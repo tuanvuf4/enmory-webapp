@@ -13,13 +13,13 @@ import { App } from './app/app'
 import { appStyleConfig } from './style/appStyle'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { appConfig } from './app/config/appConfig'
-import { store } from './app/store'
 import { PopupExt } from './extension/popupExt'
 import { BrowserRouter } from 'react-router-dom'
 import React from 'react'
 import { AppContext } from './app/context/app.context'
+import { store } from '@/store/store'
 
-if (process.env.REACT_APP_APP_TYPE === 'EXT') {
+if (import.meta.env.APP_TYPE === 'EXT') {
   const root = ReactDOM.createRoot(document.getElementById('popupExt') as HTMLElement)
   root.render(
     <JssProvider classNamePrefix={`${appStyleConfig.prefixClassCss}-`}>

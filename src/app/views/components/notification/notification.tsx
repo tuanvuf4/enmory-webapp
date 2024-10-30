@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react'
-import { useAppDispatch, useAppSelector } from 'src/app/core/hooks/redux'
+import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
 import { notification as noti, theme } from 'antd'
 import styles from './style'
-import { NotificationType } from 'src/app/models/app.model'
-import { settingAction } from 'src/app/store/reducers/setting.reducer'
+import { NotificationType } from '@/models/app.model'
+import { settingAction } from '@/store/reducers/setting.reducer'
 
 export const Notification: React.FC = () => {
   const { token } = theme.useToken()

@@ -8,16 +8,16 @@ export enum EVN {
 
 export const appConfig = {
   appName: 'Enmory',
-  appType: process.env.REACT_APP_APP_TYPE ? 'EXT' : 'APP',
-  env: process.env.NODE_ENV,
-  localKeyEncode: process.env.REACT_APP_LOCAL_KEY_TRANSFORM,
+  appType: import.meta.env.APP_TYPE ? 'EXT' : 'APP',
+  env: import.meta.env.NODE_ENV,
+  localKeyEncode: import.meta.env.LOCAL_KEY_TRANSFORM,
   googleAuth: {
-    client_id: process.env.REACT_APP_LOCAL_GOOGLE_AUTH_CLIENT_ID,
+    client_id: import.meta.env.GOOGLE_CLIENT_ID,
     project_id: 'enmory',
     auth_uri: 'https://accounts.google.com/o/oauth2/auth',
     token_uri: 'https://oauth2.googleapis.com/token',
     auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-    client_secret: process.env.REACT_APP_LOCAL_GOOGLE_AUTH_CLIENT_SECRET,
+    client_secret: import.meta.env.LOCAL_GOOGLE_AUTH_CLIENT_SECRET,
     redirect_uris: ['http://localhost:3000'],
   },
   references: [

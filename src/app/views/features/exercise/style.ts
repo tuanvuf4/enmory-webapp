@@ -1,12 +1,12 @@
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
-import { hex2Rgba } from 'src/app/core/utils/style.util'
+import { hex2Rgba } from '@/core/utils/style.util'
 
 const styles = () => {
   const { token } = theme.useToken()
 
   return createUseStyles({
-    listeningExcercise: {
+    listeningExercise: {
       color: token.colorWhite,
 
       '& button:disabled': {

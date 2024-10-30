@@ -1,7 +1,7 @@
 import { createContext, PropsWithChildren } from 'react'
 import { notification } from 'antd'
 import { ArgsProps } from 'antd/es/notification'
-import { NotificationType } from '@models/app.model'
+import { NotificationType } from '@/models/app.model'
 
 interface IConfigNofication extends ArgsProps {
   type: NotificationType

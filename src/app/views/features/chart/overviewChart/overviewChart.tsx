@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Skeleton, theme } from 'antd'
 import styles from '../style'
-import { chartApi } from '@services/api/chart.api'
+import { chartApi } from '@/services/api/chart.api'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Pie } from 'react-chartjs-2'
 import { getBgColorByCatId } from '..'
-import { ECategory } from '@models/item.model'
+import { ECategory } from '@/models/item.model'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 

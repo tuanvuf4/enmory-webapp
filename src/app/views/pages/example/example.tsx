@@ -1,23 +1,23 @@
-import gStyles from '@/style/appStyle'
-import { NotificationContext, TConfigNotification } from '@context/notification.context'
-import { useAppSelector, useAppDispatch } from '@core/hooks'
-import { exampleApi } from '@services/api'
-import { exampleAsync } from '@store/async/example.async'
-import { exampleAction } from '@store/reducers/example.reducer'
-import { settingAction } from '@store/reducers/setting.reducer'
-import { IDataOnChange, Pagination } from '@views/components/pagination/pagination'
-import { ExItem } from '@views/features/exItem/exItem'
-import { FormSearchEx } from '@views/features/formSearchEx/formSearchEx'
+import globalStyle from '@/style/appStyle'
+import { NotificationContext, TConfigNotification } from '@/context/notification.context'
+import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { exampleApi } from '@/services/api'
+import { exampleAsync } from '@/store/async/example.async'
+import { exampleAction } from '@/store/reducers/example.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { IDataOnChange, Pagination } from '@/views/components/pagination/pagination'
+import { ExItem } from '@/views/features/exItem/exItem'
+import { FormSearchEx } from '@/views/features/formSearchEx/formSearchEx'
 import { theme, Row, Col } from 'antd'
 import { useContext, useEffect } from 'react'
 import styles from './style'
-import { Toolbar } from '@views/features/toolbar/toolbar'
+import { Toolbar } from '@/views/features/toolbar/toolbar'
 
 export const Example: React.FC = () => {
   const { token } = theme.useToken()
 
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const { openNotification } = useContext(NotificationContext) as TConfigNotification
 

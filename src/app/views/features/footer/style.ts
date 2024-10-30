@@ -1,9 +1,11 @@
-import { AliasToken } from 'antd/es/theme/internal'
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from 'src/style/appStyle'
-import { appTheme } from 'src/style/theme'
+import { appStyleConfig } from '@/style/appStyle'
+import { appTheme } from '@/style/theme'
+import { theme } from 'antd'
 
-const styles = (token: AliasToken) => {
+const styles = () => {
+  const { token } = theme.useToken()
+
   return createUseStyles({
     footer: {
       textAlign: 'center',

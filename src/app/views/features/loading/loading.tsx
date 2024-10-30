@@ -1,14 +1,11 @@
 // import loading from 'src/assets/img/loading.gif'
-import { useAxiosLoader } from 'src/app/core/hooks/axiosHttpCounter'
-import { theme } from 'antd'
-import { LoadingOutlined } from '@ant-design/icons'
+import { useAxiosLoader } from '@/core/hooks/axiosHttpCounter'
 import { Spin } from 'antd'
 import styles from './style'
 import classNames from 'clsx'
 
 export const Loading = () => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
+  const classes = styles()
 
   const [active] = useAxiosLoader()
 

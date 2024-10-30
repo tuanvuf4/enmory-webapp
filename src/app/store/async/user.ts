@@ -1,8 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import { authAction } from '../reducers/auth.reducer'
-import { ILogin, IUser } from 'src/app/models/user.model'
-import { apiAuth } from 'src/app/services/api/auth.api'
-import { httpConfig } from 'src/app/config/httpConfig'
+import { ILogin, IUser } from '@/models/user.model'
+import { apiAuth } from '@/services/api/auth.api'
+import { httpConfig } from '@/config/httpConfig'
 
 export const logoutUser = createAsyncThunk(
   httpConfig.apiEndPoint.auth + '/logout',

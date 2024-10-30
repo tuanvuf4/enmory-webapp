@@ -1,5 +1,4 @@
-import { AliasToken } from 'antd/es/theme/internal'
 
-export const styles = (token: AliasToken) => {
+export const styles = () => {
   return {}
 }

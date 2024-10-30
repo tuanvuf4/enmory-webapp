@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Skeleton, theme } from 'antd'
 import styles from '../style'
-import { chartApi } from 'src/app/services/api/chart.api'
+import { chartApi } from '@/services/api/chart.api'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,23 +12,10 @@ import {
   Legend,
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
-import { ECategory } from 'src/app/models/item.model'
+import { ECategory } from '@/models/item.model'
 import { getBgColorByCatId } from '..'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
-
-export const options = {
-  responsive: true,
-  plugins: {
-    legend: {
-      position: 'top' as const,
-    },
-    title: {
-      display: true,
-      text: '(Enabled items Only)',
-    },
-  },
-}
 
 interface IProps {
   title?: string
@@ -40,6 +27,19 @@ export const ProgressChart: React.FC<IProps> = ({ title = 'Progress' }) => {
 
   const [data, setData] = useState<any>()
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: '(Enabled items Only)',
+      },
+    },
+  }
 
   const levelToSum = (levels: ECategory[]) => {
     const tmp: number[] = []

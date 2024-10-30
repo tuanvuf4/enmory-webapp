@@ -1,9 +1,11 @@
-import { AliasToken } from 'antd/es/theme/internal'
+import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
-import { hex2Rgba } from 'src/app/core/utils/style.util'
-import { appStyleConfig } from 'src/style/appStyle'
+import { hex2Rgba } from '@/core/utils/style.util'
+import { appStyleConfig } from '@/style/appStyle'
 
-const styles = (token: AliasToken) => {
+const styles = () => {
+  const { token } = theme.useToken()
+
   return createUseStyles({
     header: {
       height: '60px !important',

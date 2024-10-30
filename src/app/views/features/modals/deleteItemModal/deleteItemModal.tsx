@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react'
-import { useAppDispatch, useAppSelector } from 'src/app/core/hooks/redux'
+import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
 import { Modal } from 'antd'
-import { itemAction } from 'src/app/store/reducers/items.reducer'
-import { settingAction } from 'src/app/store/reducers/setting.reducer'
-import { itemApi } from 'src/app/services/api/item.api'
+import { itemAction } from '@/store/reducers/items.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { itemApi } from '@/services/api/item.api'
 
 interface IProps {
   onConfirm?: () => void

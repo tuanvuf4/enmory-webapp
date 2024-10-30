@@ -1,10 +1,10 @@
-import { IFormSearchEx } from "@models/formSearch.model"
-import { IHttpResponse, IHttpResponseArray } from "@models/http.model"
-import { IExample } from "@models/item.model"
-import { IPagination } from "@models/pagination.model"
+import { IFormSearchEx } from "@/models/formSearch.model"
+import { IHttpResponse, IHttpResponseArray } from "@/models/http.model"
+import { IExample } from "@/models/item.model"
+import { IPagination } from "@/models/pagination.model"
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import { initSearchFormEx } from "@services/index"
-import { exampleAsync } from "@store/async/example.async"
+import { exampleAsync } from "@/store/async/example.async"
+import { initSearchFormEx } from "@/services/index"
 
 export interface IExampleState {
   selectedExample: IExample | null

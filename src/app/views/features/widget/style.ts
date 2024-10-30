@@ -1,9 +1,10 @@
-import { AliasToken } from 'antd/es/theme/internal'
 import { createUseStyles } from 'react-jss'
-import { hex2Rgba } from 'src/app/core/utils/style.util'
-import { appStyleConfig } from 'src/style/appStyle'
+import { appStyleConfig } from '@/style/appStyle'
+import { theme } from 'antd'
 
-const styles = (token: AliasToken) => {
+const styles = () => {
+  const { token } = theme.useToken()
+
   return createUseStyles({
     widget: {
       marginBottom: `${token.size}px`,

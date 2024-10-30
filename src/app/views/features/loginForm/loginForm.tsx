@@ -1,13 +1,13 @@
-import { msgErrors } from '@/app/constants'
-import gStyles from '@/style/appStyle'
+import { msgErrors } from '@/constant/index'
+import globalStyle from '@/style/appStyle'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
-import { appConfig } from '@config/appConfig'
-import { useAppDispatch } from '@core/hooks'
-import { IHttpResponse } from '@models/http.model'
-import { ILoginResponse, ILogin, IUser } from '@models/user.model'
+import { appConfig } from '@/config/appConfig'
+import { useAppDispatch } from '@/core/hooks'
+import { IHttpResponse } from '@/models/http.model'
+import { ILoginResponse, ILogin, IUser } from '@/models/user.model'
 import { useGoogleLogin } from '@react-oauth/google'
 import { PayloadAction } from '@reduxjs/toolkit'
-import { actionAsyncUser } from '@store/async/user'
+import { actionAsyncUser } from '@/store/async/user'
 import { theme, Space, Row, Col, Input, Button } from 'antd'
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
@@ -25,7 +25,7 @@ interface Login {
 export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const [errorMsg, setErrorMsg] = useState<string>('')
 
@@ -60,20 +60,20 @@ export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
     }
   }
 
-  const googleLogin = useGoogleLogin({
-    flow: 'auth-code',
-    onSuccess: (credentialResponse) => {
-      console.log('credentialResponse: ', credentialResponse)
-      if (credentialResponse) {
-        // getGoogleUserInfo(credentialResponse.credential).then((resp) => {
-        // console.log('resp: ', resp);
-        // });
-      }
-    },
-    onError: () => {
-      console.log('Login Failed')
-    },
-  })
+  // const googleLogin = useGoogleLogin({
+  //   flow: 'auth-code',
+  //   onSuccess: (credentialResponse) => {
+  //     console.log('credentialResponse: ', credentialResponse)
+  //     if (credentialResponse) {
+  //       // getGoogleUserInfo(credentialResponse.credential).then((resp) => {
+  //       // console.log('resp: ', resp);
+  //       // });
+  //     }
+  //   },
+  //   onError: () => {
+  //     console.log('Login Failed')
+  //   },
+  // })
 
   return (
     <div className={classes.loginForm}>
@@ -161,9 +161,9 @@ export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
                     <Button className={gClasses.fulWidth}>Facebook</Button>
                   </Col>
                   <Col span={12}>
-                    <Button className={gClasses.fulWidth} onClick={googleLogin}>
+                    {/* <Button className={gClasses.fulWidth} onClick={googleLogin}>
                       Google
-                    </Button>
+                    </Button> */}
                   </Col>
                 </Row>
               </>

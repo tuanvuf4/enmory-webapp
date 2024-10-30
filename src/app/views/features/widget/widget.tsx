@@ -1,5 +1,4 @@
 import React, { PropsWithChildren } from 'react'
-import { theme } from 'antd'
 import styles from './style'
 
 interface IProps {
@@ -7,8 +6,7 @@ interface IProps {
 }
 
 export const Widget: React.FC<PropsWithChildren & IProps> = ({ children, title }) => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
+  const classes = styles()
 
   return (
     <div className={classes.widget}>

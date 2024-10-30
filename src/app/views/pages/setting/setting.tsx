@@ -1,10 +1,10 @@
-import gStyles from "@/style/appStyle"
-import { appConfig, defaultSetting } from "@config/appConfig"
-import { useAppSelector, useAppDispatch } from "@core/hooks"
-import { IUserConfig } from "@models/user.model"
-import { apiUser } from "@services/api"
-import { actionAsyncUser } from "@store/async/user"
-import { authAction } from "@store/reducers/auth.reducer"
+import globalStyle from "@/style/appStyle"
+import { appConfig, defaultSetting } from "@/config/appConfig"
+import { useAppSelector, useAppDispatch } from "@/core/hooks"
+import { IUserConfig } from "@/models/user.model"
+import { apiUser } from "@/services/api"
+import { actionAsyncUser } from "@/store/async/user"
+import { authAction } from "@/store/reducers/auth.reducer"
 import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button } from "antd"
 import { useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
@@ -15,7 +15,7 @@ import clsx from "clsx"
 const Setting = () => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const { user } = useAppSelector((state) => state.auth)
 

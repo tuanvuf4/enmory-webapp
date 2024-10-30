@@ -1,8 +1,6 @@
+import { transformItemModelToClient } from '@/helpers/item'
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { transformItemModelToClient } from 'src/app/helpers/item'
-import { IHttpResponse } from 'src/app/models/http.model'
-import { IIotd } from 'src/app/models/item.model'
-import { appApi } from 'src/app/services/api/app.api'
+import { appApi } from '@/services/api'
 
 const fetchCategories = createAsyncThunk('categories/fetchCategories', async () => {
   const cats = await appApi.getCategories()

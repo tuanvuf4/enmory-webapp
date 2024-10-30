@@ -1,16 +1,16 @@
-import { msgErrors } from '@/app/constants';
-import gStyles, { appStyleConfig } from '@/style/appStyle';
+import { msgErrors } from '@/constant/index';
+import globalStyle, { appStyleConfig } from '@/style/appStyle';
 import { CloseSquareOutlined, UploadOutlined } from '@ant-design/icons';
-import { defaultSetting } from '@config/appConfig';
-import { useAppSelector, useAppDispatch } from '@core/hooks';
+import { defaultSetting } from '@/config/appConfig';
+import { useAppSelector, useAppDispatch } from '@/core/hooks';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { EMediaSrc } from '@models/dictation.model';
-import { IPair } from '@models/item.model';
-import { mediaApi } from '@services/api';
-import { actionAsyncMedia } from '@store/async/media.async';
-import { mediaAction } from '@store/reducers/media.reducer';
-import { settingAction } from '@store/reducers/setting.reducer';
+import { EMediaSrc } from '@/models/dictation.model';
+import { IPair } from '@/models/item.model';
+import { mediaApi } from '@/services/api';
+import { actionAsyncMedia } from '@/store/async/media.async';
+import { mediaAction } from '@/store/reducers/media.reducer';
+import { settingAction } from '@/store/reducers/setting.reducer';
 import {
   theme,
   Input,
@@ -40,7 +40,7 @@ interface IProps {
 export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
   const { token } = theme.useToken();
   const classes = styles();
-  const gClasses = gStyles();
+  const gClasses = globalStyle();
 
   const { TextArea } = Input;
 
@@ -187,7 +187,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
 
   const handleCancel = () => {
     dispatch(settingAction.toggleMediaModal());
-    dispatch(mediaAction.setCurentUpdating(-1));
+    dispatch(mediaAction.setCurrentUpdating(-1));
     dispatch(mediaAction.setUpdating(false));
   };
 

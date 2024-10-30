@@ -1,9 +1,8 @@
-import { Layout, theme } from 'antd'
+import { Layout } from 'antd'
 import styles from './style'
 
 export const AppFooter = () => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
+  const classes = styles()
 
   return (
     <>

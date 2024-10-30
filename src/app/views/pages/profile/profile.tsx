@@ -1,19 +1,20 @@
 import { Col, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
-import gStyles from 'src/style/appStyle'
+import globalStyle from '@/style/appStyle'
 import styles from './style'
-import { useAppDispatch, useAppSelector } from 'src/app/core/hooks/redux'
+import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
 import { ManOutlined, WomanOutlined } from '@ant-design/icons'
 import { useEffect } from 'react'
-import { actionAsyncUser } from 'src/app/store/async/user'
-import { AddedItemChart } from '../../features/chart/addedItemChart/addedItemChart'
-import { OverviewChart } from '../../features/chart/overviewChart/overviewChart'
-import { ProgressChart } from '../../features/chart/progressChart/progressChart'
+import { actionAsyncUser } from '@/store/async/user'
+import { AddedItemChart } from '@/views/features/chart/addedItemChart/addedItemChart'
+import { OverviewChart } from '@/views/features/chart/overviewChart/overviewChart'
+import { ProgressChart } from '@/views/features/chart/progressChart/progressChart'
 
 const Profile = () => {
   const { token } = theme.useToken()
-  const classes = styles(token)
-  const gClasses = gStyles(token)
+
+  const classes = styles()
+  const gClasses = globalStyle()
 
   const { user } = useAppSelector((state) => state.auth)
 

@@ -1,32 +1,32 @@
-import { msgErrors } from '@/app/constants';
+import { msgErrors } from '@/constant/index';
 import { chromeStorage } from '@/extension/storageService';
-import gStyles from '@/style/appStyle';
+import globalStyle from '@/style/appStyle';
 import {
   Loading3QuartersOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
-import { defaultSetting, appConfig } from '@config/appConfig';
+import { defaultSetting, appConfig } from '@/config/appConfig';
 import {
   NotificationContext,
   TConfigNotification,
-} from '@context/notification.context';
-import { useAutoComplete } from '@helpers/hooks';
+} from '@/context/notification.context';
+import { useAutoComplete } from '@/helpers/hooks';
 import {
   transformItemModelToServer,
   transformItemModelToClient,
-} from '@helpers/item';
-import { isGroupWord } from '@helpers/validate';
-import { ELoading } from '@models/app.model';
-import { IPair, ECategory, EType, IItem } from '@models/item.model';
-import { itemApi } from '@services/api';
-import { itemAsync } from '@store/async/item.async';
-import { iotdAction } from '@store/reducers/iotd.reducer';
-import { itemAction } from '@store/reducers/items.reducer';
-import { settingAction } from '@store/reducers/setting.reducer';
-import { studySetAction } from '@store/reducers/studySet.reducer';
-import { InputTag } from '@views/components/inputTag/inputTag';
-import { Level } from '@views/components/level/level';
-import { Reference } from '@views/features/references/references';
+} from '@/helpers/item';
+import { isGroupWord } from '@/helpers/validate';
+import { ELoading } from '@/models/app.model';
+import { IPair, ECategory, EType, IItem } from '@/models/item.model';
+import { itemApi } from '@/services/api';
+import { itemAsync } from '@/store/async/item.async';
+import { iotdAction } from '@/store/reducers/iotd.reducer';
+import { itemAction } from '@/store/reducers/items.reducer';
+import { settingAction } from '@/store/reducers/setting.reducer';
+import { studySetAction } from '@/store/reducers/studySet.reducer';
+import { InputTag } from '@/views/components/inputTag/inputTag';
+import { Level } from '@/views/components/level/level';
+import { Reference } from '@/views/features/references/references';
 import {
   theme,
   Row,
@@ -44,7 +44,7 @@ import { useFormContext, useWatch, Controller } from 'react-hook-form';
 import { initItem, meaningItem } from '.';
 import MeaningItem from './meaningItem';
 import styles from './style';
-import { useAppDispatch, useAppSelector } from '@core/hooks';
+import { useAppDispatch, useAppSelector } from '@/core/hooks';
 import clsx from 'clsx';
 
 interface ICRUForm {
@@ -55,7 +55,7 @@ interface ICRUForm {
 export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
   const { token } = theme.useToken();
   const classes = styles();
-  const gClasses = gStyles();
+  const gClasses = globalStyle();
 
   const { openNotification } = useContext(
     NotificationContext

@@ -1,14 +1,14 @@
-import gStyles from "@/style/appStyle"
+import globalStyle from "@/style/appStyle"
 import { CloseCircleOutlined, FilterOutlined, SyncOutlined, SearchOutlined } from "@ant-design/icons"
-import { defaultSetting } from "@config/appConfig"
-import { useAppSelector, useAppDispatch } from "@core/hooks"
-import { useAutoComplete } from "@helpers/hooks"
-import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from "@models/app.model"
-import { IFormSearchEx } from "@models/formSearch.model"
-import { exampleApi } from "@services/api"
-import { initSearchFormEx } from "@services/index"
-import { exampleAsync } from "@store/async/example.async"
-import { exampleAction } from "@store/reducers/example.reducer"
+import { defaultSetting } from "@/config/appConfig"
+import { useAppSelector, useAppDispatch } from "@/core/hooks"
+import { useAutoComplete } from "@/helpers/hooks"
+import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from "@/models/app.model"
+import { IFormSearchEx } from "@/models/formSearch.model"
+import { exampleApi } from "@/services/api"
+import { initSearchFormEx } from "@/services/index"
+import { exampleAsync } from "@/store/async/example.async"
+import { exampleAction } from "@/store/reducers/example.reducer"
 import { theme, AutoComplete, Input, Dropdown, Select, Button } from "antd"
 import { useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
@@ -23,7 +23,7 @@ interface IProps {
 export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = gStyles()
+  const gClasses = globalStyle()
 
   const { pagination, formSearchQuery } = useAppSelector((state) => state.example)
 

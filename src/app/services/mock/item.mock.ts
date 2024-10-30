@@ -1,0 +1,71 @@
+import { IItem, IMeaning } from 'src/app/models/item.model'
+
+export const meaningClient: IMeaning<string[]> = {
+  typeId: 0,
+  enable: true,
+  common: false,
+  definition: '',
+  translation: '',
+  examples: [{ original: '', translation: '', note: '' }],
+  note: '',
+  grammar: '',
+  collocations: '',
+  synonyms: [],
+  antonyms: [],
+  pronunciation: { uk: '', us: '', common: '' },
+}
+
+export const meaningServer: IMeaning<string> = {
+  typeId: 0,
+  enable: true,
+  common: false,
+  note: '',
+  translation: '',
+  definition: '',
+  grammar: '',
+  collocations: '',
+  synonyms: '',
+  antonyms: '',
+  pronunciation: { uk: '', us: '', common: '' },
+  examples: [{ original: '', translation: '', note: '' }],
+}
+
+export const itemClient: IItem<string[]> = {
+  id: 0,
+  catId: 1,
+  created_date: 1,
+  deleted_date: 0,
+  is_deleted: false,
+  archive: false,
+  last_update: 0,
+  level: 0,
+  practiceCount: 0,
+  userId: 1,
+  original: '',
+  favorite: false,
+  forms: [],
+  collocations: [],
+  word_family: [],
+  relation: [],
+  meanings: [meaningClient],
+}
+
+export const itemServer: IItem<string> = {
+  id: 0,
+  catId: 1,
+  created_date: 1,
+  deleted_date: 0,
+  is_deleted: false,
+  archive: false,
+  last_update: 0,
+  level: 0,
+  practiceCount: 0,
+  userId: 1,
+  original: '',
+  favorite: false,
+  forms: '',
+  collocations: '',
+  word_family: '',
+  relation: '',
+  meanings: [meaningServer],
+}

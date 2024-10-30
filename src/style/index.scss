@@ -1,0 +1,178 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+ul {
+  margin: 0;
+  li {
+    display: block;
+  }
+}
+
+.emr-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+
+  .emr-modal-close-x {
+    font-size: 22px !important;
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @media screen and (max-width: 767px) {
+    margin-bottom: 0.3rem;
+  }
+}
+
+/* 
+ * ant custom drawer body padding
+ */
+
+.emr-drawer-body {
+  padding: 0 !important;
+}
+
+.emr-menu-vertical {
+  color: #333333 !important;
+}
+
+::-webkit-scrollbar {
+  background-color: #333;
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  --tw-border-opacity: 1;
+  --tw-bg-opacity: 1;
+  background-color: rgba($color: #72a526, $alpha: 0.75);
+}
+
+::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  background-color: rgba($color: #333, $alpha: 0.75);
+}
+
+/* =========================
+Custom Input range 
+=============================*/
+
+/* Input range - chrome and safari */
+input[type='range'] {
+  --range-progress: 0;
+  -webkit-appearance: none;
+  position: relative;
+  background: #ccc;
+  // width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+/* Input range - firefox */
+input[type='range']::-moz-range-track {
+  position: relative;
+  background: #ccc;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+/* played progress length - Chrome & safari*/
+input[type='range']::before {
+  content: '';
+  height: 2px;
+  background: #d4b106;
+  width: var(--range-progress);
+  border-bottom-left-radius: 2px;
+  border-top-left-radius: 2px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* played progress length - firefox */
+input[type='range']::-moz-range-progress {
+  background: #d4b106;
+  border-bottom-left-radius: 2px;
+  border-top-left-radius: 2px;
+  height: 2px;
+}
+
+/* slider thumb - chrome and safari */
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  border: none;
+  background-color: #d4b106;
+  cursor: pointer;
+  position: relative;
+}
+
+/* dragging thumb - chrome and safari */
+input[type='range']:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+/* slider thumb - firefox */
+input[type='range']::-moz-range-thumb {
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  background: #d4b106;
+  cursor: pointer;
+  border: transparent;
+  position: relative;
+}
+/* dragging thumb - firefox */
+input[type='range']:active::-moz-range-thumb {
+  transform: scale(1.2);
+}
+
+/* animation: borealisBar */
+@keyframes borealisBar {
+  0% {
+    left: 0%;
+    right: 100%;
+    width: 0%;
+  }
+  10% {
+    left: 0%;
+    right: 75%;
+    width: 25%;
+  }
+  90% {
+    right: 0%;
+    left: 75%;
+    width: 25%;
+  }
+  100% {
+    left: 100%;
+    right: 0%;
+    width: 0%;
+  }
+}

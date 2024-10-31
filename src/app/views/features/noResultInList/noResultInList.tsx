@@ -1,9 +1,7 @@
-import { theme } from 'antd'
 import styles from './style'
 
 export const NoResultInList = () => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
+  const classes = styles()
 
   return [
     {

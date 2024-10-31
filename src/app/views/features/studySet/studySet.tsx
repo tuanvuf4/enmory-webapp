@@ -37,7 +37,7 @@ export const StudySet: React.FC = () => {
   const { list, status, respond, isSubmit } = useAppSelector((state) => state.studySet)
 
   const { configuration } = useAppSelector((state) => state.auth.user)
-  const { categories, viewPort } = useAppSelector((state) => state.config)
+  const { categories } = useAppSelector((state) => state.config)
 
   const { inProgress, isDone, currentIndex } = status
 

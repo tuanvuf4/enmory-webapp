@@ -1,6 +1,6 @@
-import { appConfig, defaultSetting } from '../config/appConfig'
+import { defaultSetting } from '../config/appConfig'
 import { EListeningTypes } from '../models/dictation.model'
-import { IUserConfig, IUser } from '../models/user.model'
+import { IUserConfig } from '../models/user.model'
 
 export const initSettingForm: IUserConfig<number[]> = {
   numberOfWordsInStudySet: defaultSetting.studySet.numberOfWordsInStudySet,

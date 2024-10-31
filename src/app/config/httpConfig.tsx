@@ -1,5 +1,5 @@
 export const httpConfig = {
-  baseUrl: import.meta.env.API_BASE_URL || '',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || '',
   apiVersion: 'v1',
   apiUrl: 'api',
   apiEndPoint: {

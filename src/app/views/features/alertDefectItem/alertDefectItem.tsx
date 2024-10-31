@@ -10,7 +10,7 @@ interface IProps {
   title?: string
 }
 
-export const AlertDefectItem: React.FC<IProps> = ({ item, title = msgWarning.missingMeaning }) => {
+export const AlertDefectItem: React.FC<IProps> = ({ title = msgWarning.missingMeaning }) => {
   const { token } = theme.useToken()
   const classes = styles(token)
 

@@ -22,7 +22,6 @@ import { initItem } from '../modals/itemModal'
 import { ExModal } from '../modals/exModal/exModal'
 import { DeleteExModal } from '../modals/deleteExModal/deleteExModal'
 import { LoadingBar } from '../loading/loadingBar'
-import { useAxiosLoader } from '@/core/hooks/axiosHttpCounter'
 
 export const AppLayout: React.FC<PropsWithChildren> = (props) => {
   const classes = styles()
@@ -35,15 +34,13 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
     isShowDeleteItemModal,
     isShowMediaUploadForm,
   } = useAppSelector((state) => state.setting)
-  const { viewMode, isSidebarOpened, drawer } = useAppSelector((state) => state.config)
+  const { isSidebarOpened, drawer } = useAppSelector((state) => state.config)
   const { isAuth } = useAppSelector((state) => state.auth)
 
   const dispatch = useAppDispatch()
 
   const location = useLocation()
   const navigate = useNavigate()
-
-  const [active] = useAxiosLoader()
 
   const methods = useForm<IItem>({ defaultValues: initItem })
 
@@ -58,8 +55,6 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
       dispatch(configAction.setViewPort(EViewPort.MD))
     }
     if (width >= 992) {
-
-      
       dispatch(configAction.setViewPort(EViewPort.LG))
     }
     if (width >= 1200) {

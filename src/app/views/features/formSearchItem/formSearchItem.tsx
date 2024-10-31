@@ -41,7 +41,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
 
   const [showtype, setShowType] = useState<boolean>(false)
 
-  const { pagination, formSearchValue } = useAppSelector((state) => state.items)
+  const { formSearchValue } = useAppSelector((state) => state.items)
   const { categories, types } = useAppSelector((state) => state.config)
 
   const dispatch = useAppDispatch()
@@ -160,7 +160,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
           page: defaultSetting.pagination.page,
           size: defaultSetting.pagination.size,
         }),
-      ).then((resp) => {
+      ).then(() => {
         // console.log(`resp: `, resp)
       })
     } else {

@@ -1,14 +1,14 @@
-import { msgErrors } from "@/constant/index"
-import globalStyle from "@/style/appStyle"
-import { ReloadOutlined } from "@ant-design/icons"
-import { defaultSetting } from "@/config/appConfig"
-import { useAppSelector } from "@/core/hooks"
-import { patternValidation, hex2Rgba } from "@/core/utils"
-import { getRandomArrayIndex } from "@/helpers/validate"
-import { theme, Row, Col, Button, Input } from "antd"
-import { useState, useEffect } from "react"
-import styles from "./style"
-import clsx from "clsx"
+import { msgErrors } from '@/constant/index'
+import globalStyle from '@/style/appStyle'
+import { ReloadOutlined } from '@ant-design/icons'
+import { defaultSetting } from '@/config/appConfig'
+import { useAppSelector } from '@/core/hooks'
+import { patternValidation, hex2Rgba } from '@/core/utils'
+import { getRandomArrayIndex } from '@/helpers/validate'
+import { theme, Row, Col, Button, Input } from 'antd'
+import { useState, useEffect } from 'react'
+import styles from './style'
+import clsx from 'clsx'
 
 interface IProps {
   player: boolean
@@ -70,7 +70,7 @@ export const Exercise: React.FC<IProps> = ({
         })
         .filter((item) => item)
         .map((sentence) => {
-          return sentence?.map((item, index) => {
+          return sentence?.map((item) => {
             const matchItem = randomIndex.find((rIndexItem) => rIndexItem === item.index)
             if (matchItem) {
               order++

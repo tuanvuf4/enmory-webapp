@@ -9,7 +9,7 @@ const useHandleAuthRequest = () => {
   const { token_type, access_token } = useAppSelector((state) => state.auth.authorization)
 
   const requestInterceptor = axiosInstance.interceptors.request.use(async (request: any) => {
-    let token_type_local,
+    let token_type_local = '',
       access_token_local = ''
     if (appConfig.appType === 'EXT') {
       token_type_local = (await chromeStorage.get(['token_type'])).token_type

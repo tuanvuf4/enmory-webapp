@@ -1,16 +1,15 @@
-import globalStyle from "@/style/appStyle"
-import { appConfig, defaultSetting } from "@/config/appConfig"
-import { useAppSelector, useAppDispatch } from "@/core/hooks"
-import { IUserConfig } from "@/models/user.model"
-import { apiUser } from "@/services/api"
-import { actionAsyncUser } from "@/store/async/user"
-import { authAction } from "@/store/reducers/auth.reducer"
-import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button } from "antd"
-import { useEffect } from "react"
-import { useForm, Controller } from "react-hook-form"
-import styles from "./style"
-import clsx from "clsx"
-
+import globalStyle from '@/style/appStyle'
+import { appConfig, defaultSetting } from '@/config/appConfig'
+import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { IUserConfig } from '@/models/user.model'
+import { apiUser } from '@/services/api'
+import { actionAsyncUser } from '@/store/async/user'
+import { authAction } from '@/store/reducers/auth.reducer'
+import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button } from 'antd'
+import { useEffect } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import styles from './style'
+import clsx from 'clsx'
 
 const Setting = () => {
   const { token } = theme.useToken()
@@ -21,9 +20,7 @@ const Setting = () => {
 
   const dispatch = useAppDispatch()
 
-  const { control, handleSubmit, reset, setValue, getValues, watch } = useForm<
-    IUserConfig<number[]>
-  >({
+  const { control, handleSubmit } = useForm<IUserConfig<number[]>>({
     defaultValues: user.configuration,
   })
 

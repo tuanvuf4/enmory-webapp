@@ -1,6 +1,5 @@
 import { theme } from 'antd';
-import { AliasToken } from 'antd/es/theme/internal'
-import { createUseStyles } from 'react-jss'
+import { createUseStyles } from 'react-jss';
 
 export const styles = () => {
   const { token } = theme.useToken();

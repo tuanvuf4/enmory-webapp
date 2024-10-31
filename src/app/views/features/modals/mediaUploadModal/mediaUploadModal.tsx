@@ -198,7 +198,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
       authorization: 'authorization-text',
     },
     maxCount: 1,
-    beforeUpload(file) {
+    beforeUpload() {
       return false;
     },
   };

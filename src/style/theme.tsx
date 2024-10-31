@@ -1,8 +1,5 @@
 import { ThemeConfig } from 'antd/es/config-provider'
 import { gray } from '@ant-design/colors'
-import { appStyleConfig } from './appStyle'
-
-// console.log('gray: ', gray);
 
 export const appTheme: ThemeConfig = {
   token: {

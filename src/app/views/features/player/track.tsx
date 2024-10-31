@@ -1,8 +1,6 @@
 import { CustomerServiceOutlined } from '@ant-design/icons'
 import { RefObject } from 'react'
-import { theme } from 'antd'
 import styles from './style'
-import globalStyle from 'src/style/appStyle'
 import { ITrack } from './data/tracks'
 
 interface IProps {
@@ -20,9 +18,7 @@ export const Track: React.FC<IProps> = ({
   progressBarRef,
   handleNext,
 }) => {
-  const { token } = theme.useToken()
-
-  const classes = styles(token)
+  const classes = styles()
 
   const onLoadedMetadata = () => {
     const seconds = audioRef.current?.duration

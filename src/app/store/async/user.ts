@@ -6,7 +6,7 @@ import { httpConfig } from '@/config/httpConfig'
 
 export const logoutUser = createAsyncThunk(
   httpConfig.apiEndPoint.auth + '/logout',
-  async (refreshToken: string) => {
+  async () => {
     return authAction.logOut()
   },
 )

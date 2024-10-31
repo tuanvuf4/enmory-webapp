@@ -28,11 +28,10 @@ export const Dictation: React.FC<IProps> = ({
   const [fmSource, setFmSource] = useState<string>('')
 
   const [srcTran, setSrcTran] = useState<string>(translation)
-  const [fmTran, setFmTran] = useState<string>('')
   const [target, setTarget] = useState<string>('')
   const [fmTarget, setFmTarget] = useState<string>('')
-  const [transciptLabel, setTranscriptLable] = useState<string>('Transcript')
-  const [translationLabel, setTranslationLabel] = useState<string>('Translation')
+  const [, setTranscriptLable] = useState<string>('Transcript')
+  const [, setTranslationLabel] = useState<string>('Translation')
 
   const getTooltip = () => {
     return (

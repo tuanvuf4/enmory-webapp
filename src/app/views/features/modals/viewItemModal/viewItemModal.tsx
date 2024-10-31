@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
-import { Modal, theme } from 'antd'
+import { Modal } from 'antd'
 import { appStyleConfig } from '@/style/appStyle'
 import { IItem } from '@/models/item.model'
 import { CloseSquareOutlined } from '@ant-design/icons'
@@ -16,8 +16,6 @@ interface IProps {
 }
 
 export const ViewItemModal: React.FC<IProps> = ({ open, title }) => {
-  const { token } = theme.useToken()
-
   const { currentItem } = useAppSelector((state) => state.setting)
 
   const dispatch = useAppDispatch()

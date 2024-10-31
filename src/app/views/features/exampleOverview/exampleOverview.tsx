@@ -54,7 +54,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = ({ title = 
     },
   })
 
-  const onSelect = (id: string, option: any) => {
+  const onSelect = (option: any) => {
     dispatch(exampleAction.setSelectedExample(option.id))
     exampleApi.getExampleById(option.id).then(({ content }) => {
       setValue('query', '')
@@ -170,7 +170,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = ({ title = 
                         ? options
                         : []
                     }
-                    onSelect={(v, o) => onSelect(v, o)}
+                    onSelect={(v, o) => onSelect(o)}
                     onClear={() => onChange('')}
                     onChange={(text) => {
                       onChange(text)

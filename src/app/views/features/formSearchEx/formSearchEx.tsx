@@ -1,20 +1,24 @@
-import globalStyle from "@/style/appStyle"
-import { CloseCircleOutlined, FilterOutlined, SyncOutlined, SearchOutlined } from "@ant-design/icons"
-import { defaultSetting } from "@/config/appConfig"
-import { useAppSelector, useAppDispatch } from "@/core/hooks"
-import { useAutoComplete } from "@/helpers/hooks"
-import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from "@/models/app.model"
-import { IFormSearchEx } from "@/models/formSearch.model"
-import { exampleApi } from "@/services/api"
-import { initSearchFormEx } from "@/services/index"
-import { exampleAsync } from "@/store/async/example.async"
-import { exampleAction } from "@/store/reducers/example.reducer"
-import { theme, AutoComplete, Input, Dropdown, Select, Button } from "antd"
-import { useEffect } from "react"
-import { useForm, Controller } from "react-hook-form"
-import styles from "./style"
-import clsx from "clsx"
-
+import globalStyle from '@/style/appStyle'
+import {
+  CloseCircleOutlined,
+  FilterOutlined,
+  SyncOutlined,
+  SearchOutlined,
+} from '@ant-design/icons'
+import { defaultSetting } from '@/config/appConfig'
+import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { useAutoComplete } from '@/helpers/hooks'
+import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from '@/models/app.model'
+import { IFormSearchEx } from '@/models/formSearch.model'
+import { exampleApi } from '@/services/api'
+import { initSearchFormEx } from '@/services/index'
+import { exampleAsync } from '@/store/async/example.async'
+import { exampleAction } from '@/store/reducers/example.reducer'
+import { theme, AutoComplete, Input, Dropdown, Select, Button } from 'antd'
+import { useEffect } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import styles from './style'
+import clsx from 'clsx'
 
 interface IProps {
   filter?: boolean
@@ -25,11 +29,11 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const classes = styles()
   const gClasses = globalStyle()
 
-  const { pagination, formSearchQuery } = useAppSelector((state) => state.example)
+  const { formSearchQuery } = useAppSelector((state) => state.example)
 
   const dispatch = useAppDispatch()
 
-  const { control, handleSubmit, reset, setValue, getValues, watch } = useForm<IFormSearchEx>({
+  const { control, handleSubmit, reset, watch } = useForm<IFormSearchEx>({
     defaultValues: initSearchFormEx,
   })
 

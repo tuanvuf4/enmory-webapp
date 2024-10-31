@@ -23,4 +23,15 @@ export const HttpUtils = {
   isOk: (code: number | string): boolean => {
     return Number(code) === OK.code
   },
+  code: {
+    OK,
+    CREATED,
+    FORBIDDEN,
+    UNAUTHORIZED,
+    BAD_REQUEST,
+    NOT_FOUND,
+    METHOD_NOT_ALLOWED,
+    SERVER_ERROR,
+    BAD_GATEWAY,
+  },
 }

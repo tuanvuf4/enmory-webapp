@@ -6,8 +6,7 @@ import { NotificationType } from '@/models/app.model'
 import { settingAction } from '@/store/reducers/setting.reducer'
 
 export const Notification: React.FC = () => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
+  const classes = styles()
 
   const { notification } = useAppSelector((state) => state.setting)
 

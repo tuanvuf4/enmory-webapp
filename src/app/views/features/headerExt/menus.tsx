@@ -1,5 +1,5 @@
 import { MenuProps } from 'antd'
-import { PoweroffOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons/lib/icons'
+import { PoweroffOutlined } from '@ant-design/icons/lib/icons'
 
 export const items: MenuProps['items'] = [
   {

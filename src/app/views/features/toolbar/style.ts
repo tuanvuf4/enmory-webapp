@@ -1,9 +1,6 @@
-import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
 
 const styles = () => {
-  const { token } = theme.useToken()
-
   return createUseStyles({
     toolbar: {
       // padding: `${token.size / 2}px 0`,

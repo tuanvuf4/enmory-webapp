@@ -9,7 +9,8 @@ import { configAction } from 'src/app/store/reducers/config.reducer'
 
 export const ViewMode: React.FC = () => {
   const { token } = theme.useToken()
-  const classes = styles(token)
+
+  const classes = styles()
 
   const { viewMode } = useAppSelector((state) => state.config)
 

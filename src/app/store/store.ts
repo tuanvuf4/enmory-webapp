@@ -1,5 +1,5 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit'
-import { PersistConfig, PersistedState, createMigrate, persistReducer } from 'redux-persist'
+import { PersistConfig, createMigrate, persistReducer } from 'redux-persist'
 import autoMergeLevel2 from 'redux-persist/es/stateReconciler/autoMergeLevel2'
 import localStorage from 'redux-persist/lib/storage'
 import { authReducer, IAuthState, initialState as initialAuthState } from './reducers/auth.reducer'
@@ -65,7 +65,7 @@ const persistConfig: PersistConfig<IAppState> = {
   stateReconciler: autoMergeLevel2,
   // transforms: [{ in: (es) => es, out: (es) => es }],
   migrate: createMigrate({
-    2: (state: PersistedState) => ({
+    2: () => ({
       ...initialState,
       _persist: {
         version: 3,
@@ -94,6 +94,13 @@ const rootReducers = combineReducers({
 
 export const store = configureStore({
   reducer: persistReducer(persistConfig, rootReducers),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        // Ignore these action types
+        ignoredActions: ['persist/PERSIST'],
+      },
+    }),
 })
 
 export type AppDispatch = typeof store.dispatch

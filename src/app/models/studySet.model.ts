@@ -1,4 +1,4 @@
-import { ECategory, EType } from './item.model'
+import { ECategory } from './item.model'
 
 export interface GetStudySetByCatId {
   size: number

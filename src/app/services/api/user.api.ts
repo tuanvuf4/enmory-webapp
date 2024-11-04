@@ -1,7 +1,7 @@
-import { httpConfig } from "@/config/httpConfig"
-import { http } from "@/core/http"
-import { IHttpResponse } from "@/models/http.model"
-import { IUser, IUserConfig } from "@/models/user.model"
+import { httpConfig } from '@/config/httpConfig'
+import { http } from '@/core/http'
+import { IHttpResponse } from '@/models/http.model'
+import { IUser, IUserConfig } from '@/models/user.model'
 
 const getUsers = () => {
   return http.get(httpConfig.apiEndPoint.user)

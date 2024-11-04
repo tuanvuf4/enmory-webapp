@@ -1,14 +1,14 @@
-import { useAppDispatch, useAppSelector } from "@/core/hooks"
-import useErrorHandlerRequest from "@/core/hooks/axiosErrorHandleRequest"
-import useHandleAuthRequest from "@/core/hooks/axiosHandleAuthRequest"
-import { IHttpResponse } from "@/models/http.model"
-import { ECategory, IPair } from "@/models/item.model"
-import { actionAsyncApp } from "@/store/async/app.async"
-import { actionAsyncUser } from "@/store/async/user"
-import { AppLayout } from "@/views/features/layout/layout"
-import { useEffect } from "react"
-import { BrowserRouter } from "react-router-dom"
-import { RouterElement } from "./router"
+import { useAppDispatch, useAppSelector } from '@/core/hooks'
+import useErrorHandlerRequest from '@/core/hooks/axiosErrorHandleRequest'
+import useHandleAuthRequest from '@/core/hooks/axiosHandleAuthRequest'
+import { IHttpResponse } from '@/models/http.model'
+import { ECategory, IPair } from '@/models/item.model'
+import { actionAsyncApp } from '@/store/async/app.async'
+import { actionAsyncUser } from '@/store/async/user'
+import { AppLayout } from '@/views/features/layout/layout'
+import { useEffect } from 'react'
+import { BrowserRouter } from 'react-router-dom'
+import { RouterElement } from './router'
 
 export const App = () => {
   const { isAuth } = useAppSelector((state) => state.auth)

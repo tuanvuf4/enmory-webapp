@@ -1,54 +1,41 @@
-import { msgErrors } from '@/constant/index';
-import globalStyle, { appStyleConfig } from '@/style/appStyle';
-import { CloseSquareOutlined, UploadOutlined } from '@ant-design/icons';
-import { defaultSetting } from '@/config/appConfig';
-import { useAppSelector, useAppDispatch } from '@/core/hooks';
-import * as yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { EMediaSrc } from '@/models/dictation.model';
-import { IPair } from '@/models/item.model';
-import { mediaApi } from '@/services/api';
-import { actionAsyncMedia } from '@/store/async/media.async';
-import { mediaAction } from '@/store/reducers/media.reducer';
-import { settingAction } from '@/store/reducers/setting.reducer';
-import {
-  theme,
-  Input,
-  UploadProps,
-  Modal,
-  Space,
-  Row,
-  Col,
-  Radio,
-  Upload,
-  Button,
-} from 'antd';
-import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { TExternalSource, IMediaForm, initMediaForm } from '.';
-import { styles } from './style';
-import clsx from 'clsx';
+import { msgErrors } from '@/constant/index'
+import globalStyle, { appStyleConfig } from '@/style/appStyle'
+import { CloseSquareOutlined, UploadOutlined } from '@ant-design/icons'
+import { defaultSetting } from '@/config/appConfig'
+import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import * as yup from 'yup'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { EMediaSrc } from '@/models/dictation.model'
+import { IPair } from '@/models/item.model'
+import { mediaApi } from '@/services/api'
+import { actionAsyncMedia } from '@/store/async/media.async'
+import { mediaAction } from '@/store/reducers/media.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { theme, Input, UploadProps, Modal, Space, Row, Col, Radio, Upload, Button } from 'antd'
+import { useEffect } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { TExternalSource, IMediaForm, initMediaForm } from '.'
+import { styles } from './style'
+import clsx from 'clsx'
 
 interface IProps {
-  onConfirm?: () => void;
-  onCancel?: () => void;
-  open: boolean;
-  title?: string;
-  content?: string;
+  onConfirm?: () => void
+  onCancel?: () => void
+  open: boolean
+  title?: string
+  content?: string
 }
 
 export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
-  const { token } = theme.useToken();
-  const classes = styles();
-  const gClasses = globalStyle();
+  const { token } = theme.useToken()
+  const classes = styles()
+  const gClasses = globalStyle()
 
-  const { TextArea } = Input;
+  const { TextArea } = Input
 
-  const { mediaSrc, isUpdating, list, currentUpdating } = useAppSelector(
-    (state) => state.media
-  );
+  const { mediaSrc, isUpdating, list, currentUpdating } = useAppSelector((state) => state.media)
 
-  const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch()
 
   const extSrcOptions: IPair<string, TExternalSource>[] = [
     {
@@ -61,7 +48,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
       value: TExternalSource.EMBED,
       label: 'embed',
     },
-  ];
+  ]
 
   const schema = (
     yup.object().shape(
@@ -71,61 +58,43 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
           .required(msgErrors.required)
           .max(
             defaultSetting.listening.maxLengthShortInput,
-            msgErrors.maxLength(
-              'Title',
-              defaultSetting.listening.maxLengthShortInput
-            )
+            msgErrors.maxLength('Title', defaultSetting.listening.maxLengthShortInput),
           ),
         description: yup
           .string()
           .max(
             defaultSetting.listening.maxLengthTranscript,
-            msgErrors.maxLength(
-              'Description',
-              defaultSetting.listening.maxLengthTranscript
-            )
+            msgErrors.maxLength('Description', defaultSetting.listening.maxLengthTranscript),
           ),
         transcript: yup
           .string()
           .max(
             defaultSetting.listening.maxLengthTranscript,
-            msgErrors.maxLength(
-              'Transcript',
-              defaultSetting.listening.maxLengthTranscript
-            )
+            msgErrors.maxLength('Transcript', defaultSetting.listening.maxLengthTranscript),
           ),
         externalUrl: yup
           .string()
           .max(
             defaultSetting.listening.maxLengthInput,
-            msgErrors.maxLength(
-              'External url',
-              defaultSetting.listening.maxLengthInput
-            )
+            msgErrors.maxLength('External url', defaultSetting.listening.maxLengthInput),
           ),
         file: yup.mixed().test(
           'maxSize',
           msgErrors.maxSize('File', defaultSetting.listening.maxMediaSize),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (file: any) => {
-            if (
-              file &&
-              file.size > defaultSetting.listening.maxMediaSize * 1024 * 1024
-            ) {
+            if (file && file.size > defaultSetting.listening.maxMediaSize * 1024 * 1024) {
               setError('file', {
-                message: msgErrors.maxSize(
-                  'File',
-                  defaultSetting.listening.maxMediaSize
-                ),
-              });
-              return false;
+                message: msgErrors.maxSize('File', defaultSetting.listening.maxMediaSize),
+              })
+              return false
             }
-            clearErrors('file');
-            return true;
-          }
+            clearErrors('file')
+            return true
+          },
         ),
       },
-      [['file', 'externalUrl']]
+      [['file', 'externalUrl']],
     ) as yup.ObjectSchema<IMediaForm>
   )
     .test({
@@ -135,9 +104,9 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
           return option.createError({
             path: 'externalUrl',
             message: msgErrors.required,
-          });
+          })
         } else {
-          return true;
+          return true
         }
       },
     })
@@ -148,12 +117,12 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
           return option.createError({
             path: 'file',
             message: msgErrors.required,
-          });
+          })
         } else {
-          return true;
+          return true
         }
       },
-    });
+    })
 
   const {
     control,
@@ -168,28 +137,26 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
     defaultValues: initMediaForm,
     mode: 'all',
     resolver: yupResolver(schema),
-  });
+  })
 
   const onSubmit = async (data: IMediaForm) => {
     try {
       isUpdating
-        ? (await mediaApi.updateMedia(data),
-          await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)))
-        : (await mediaApi.uploadMedia(data),
-          await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)));
+        ? (await mediaApi.updateMedia(data), await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)))
+        : (await mediaApi.uploadMedia(data), await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)))
     } catch (error) {
-      console.log(`error: `, error);
+      console.log(`error: `, error)
     } finally {
-      dispatch(settingAction.toggleMediaModal());
-      dispatch(mediaAction.setUpdating(false));
+      dispatch(settingAction.toggleMediaModal())
+      dispatch(mediaAction.setUpdating(false))
     }
-  };
+  }
 
   const handleCancel = () => {
-    dispatch(settingAction.toggleMediaModal());
-    dispatch(mediaAction.setCurrentUpdating(-1));
-    dispatch(mediaAction.setUpdating(false));
-  };
+    dispatch(settingAction.toggleMediaModal())
+    dispatch(mediaAction.setCurrentUpdating(-1))
+    dispatch(mediaAction.setUpdating(false))
+  }
 
   const uploadProps: UploadProps = {
     accept: '.mp3, .mp4',
@@ -199,9 +166,9 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
     },
     maxCount: 1,
     beforeUpload() {
-      return false;
+      return false
     },
-  };
+  }
 
   useEffect(() => {
     if (isUpdating) {
@@ -214,10 +181,10 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
         externalUrl: item.externalUrl,
         externalSource: item.externalSource,
         file: undefined,
-      }));
-      reset(tmp.find((item) => item.id === currentUpdating));
+      }))
+      reset(tmp.find((item) => item.id === currentUpdating))
     }
-  }, [isUpdating]);
+  }, [isUpdating])
 
   return (
     <Modal
@@ -229,12 +196,10 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
       okText={'Upload'}
       width={appStyleConfig.modal.large}
       footer={false}
-      maskClosable={false}>
+      maskClosable={false}
+    >
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Space
-          direction='vertical'
-          size={[token.size / 2, token.size]}
-          style={{ display: 'flex' }}>
+        <Space direction='vertical' size={[token.size / 2, token.size]} style={{ display: 'flex' }}>
           <Row gutter={[token.size / 2, token.size / 2]}>
             <Col xs={24}>
               Title: <span className={clsx(gClasses.errorMsg)}>*</span>
@@ -255,9 +220,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                     />
 
                     {errors.title && (
-                      <div className={clsx(gClasses.errorMsg)}>
-                        {errors.title.message}
-                      </div>
+                      <div className={clsx(gClasses.errorMsg)}>{errors.title.message}</div>
                     )}
                   </>
                 )}
@@ -285,9 +248,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                     />
 
                     {errors.description && (
-                      <div className={clsx(gClasses.errorMsg)}>
-                        {errors.description.message}
-                      </div>
+                      <div className={clsx(gClasses.errorMsg)}>{errors.description.message}</div>
                     )}
                   </>
                 )}
@@ -302,7 +263,8 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                }}>
+                }}
+              >
                 <div style={{ flex: 1 }}>
                   <p>Transcript:</p>
                 </div>
@@ -320,7 +282,8 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                   minHeight: 450,
                   overflow: 'auto',
                   border: `1px solid ${token.colorBorder}`,
-                }}>
+                }}
+              >
                 <div className={classes.texture}>
                   <Controller
                     control={control}
@@ -338,9 +301,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                         />
 
                         {errors.transcript && (
-                          <div className={clsx(gClasses.errorMsg)}>
-                            {errors.transcript.message}
-                          </div>
+                          <div className={clsx(gClasses.errorMsg)}>{errors.transcript.message}</div>
                         )}
                       </>
                     )}
@@ -364,9 +325,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                         />
 
                         {errors.transcript && (
-                          <div className={clsx(gClasses.errorMsg)}>
-                            {errors.transcript.message}
-                          </div>
+                          <div className={clsx(gClasses.errorMsg)}>{errors.transcript.message}</div>
                         )}
                       </>
                     )}
@@ -399,8 +358,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
 
               <Row gutter={[token.size / 2, token.size / 2]}>
                 <Col xs={24}>
-                  External Url:{' '}
-                  <span className={clsx(gClasses.errorMsg)}>*</span>
+                  External Url: <span className={clsx(gClasses.errorMsg)}>*</span>
                 </Col>
 
                 <Col xs={24}>
@@ -416,9 +374,9 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                           }
                           {...field}
                           onChange={(e) => {
-                            field.onChange(e);
-                            setValue('externalUrl', e.target.value);
-                            trigger();
+                            field.onChange(e)
+                            setValue('externalUrl', e.target.value)
+                            trigger()
                           }}
                         />
 
@@ -458,18 +416,15 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                         {...uploadProps}
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         onChange={(e: any) => {
-                          e.fileList.length === 0
-                            ? setValue('file', '')
-                            : setValue('file', e.file);
-                          trigger();
-                        }}>
+                          e.fileList.length === 0 ? setValue('file', '') : setValue('file', e.file)
+                          trigger()
+                        }}
+                      >
                         <Button icon={<UploadOutlined />}>Select File</Button>
                       </Upload>
 
                       {errors.file && (
-                        <div className={clsx(gClasses.errorMsg)}>
-                          {errors.file.message}
-                        </div>
+                        <div className={clsx(gClasses.errorMsg)}>{errors.file.message}</div>
                       )}
                     </>
                   )}
@@ -494,5 +449,5 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
         </Space>
       </form>
     </Modal>
-  );
-};
+  )
+}

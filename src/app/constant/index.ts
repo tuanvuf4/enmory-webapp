@@ -1,2 +1,2 @@
-export * from './initial';
-export * from './validation';
+export * from './initial'
+export * from './validation'

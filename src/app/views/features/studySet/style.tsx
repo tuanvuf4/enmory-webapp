@@ -114,6 +114,7 @@ const styles = () => {
       paddingTop: 0,
       width: '100%',
       textAlign: 'center',
+      fontFamily: 'Lora, sans-serif',
 
       '& h2': {
         fontSize: token.fontSizeHeading2,

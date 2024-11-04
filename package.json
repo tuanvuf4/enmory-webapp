@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite --port=9000",
     "build": "tsc -b && vite build",
-    "build-prod": "tsc -b && vite build --mode prod",
+    "build-prod": "vite build",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
+    "build:web-prod": "npm run format && env-cmd -f .env.prod npm run build-prod",
+    "build:ext-prod": "npm run format && env-cmd -f .env.ext-prod npm run build-prod",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -20,6 +23,7 @@
     "chart.js": "^4.4.6",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",
+    "env-cmd": "^10.1.0",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
     "react": "^18.3.1",
@@ -47,6 +51,7 @@
     "globals": "^15.11.0",
     "i": "^0.3.7",
     "npm": "^10.9.0",
+    "prettier": "^3.3.3",
     "sass-embedded": "^1.80.4",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.10.0",

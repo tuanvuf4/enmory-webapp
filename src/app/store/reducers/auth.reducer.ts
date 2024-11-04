@@ -1,8 +1,8 @@
-import { IHttpResponse } from "@/models/http.model"
-import { IUser, ILoginResponse, IUserConfig } from "@/models/user.model"
-import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import { initUser, initAuth } from "@/services/index"
-import { actionAsyncUser } from "@/store/async/user"
+import { IHttpResponse } from '@/models/http.model'
+import { IUser, ILoginResponse, IUserConfig } from '@/models/user.model'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { initUser, initAuth } from '@/services/index'
+import { actionAsyncUser } from '@/store/async/user'
 
 export interface IAuthState {
   isAuth: boolean

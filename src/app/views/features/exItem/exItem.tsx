@@ -1,13 +1,13 @@
-import { appStyleConfig } from "@/style/appStyle"
-import { MoreOutlined } from "@ant-design/icons"
-import { defaultSetting } from "@/config/appConfig"
-import { IExample } from "@/models/item.model"
-import { theme, MenuProps, Skeleton, Dropdown, Button } from "antd"
-import { ItemType } from "antd/es/menu/interface"
-import moment from "moment"
-import { actionMenuItems, actionMenuEx } from "./actionMenuItem"
-import styles from "./style"
-import clsx from "clsx"
+import { appStyleConfig } from '@/style/appStyle'
+import { MoreOutlined } from '@ant-design/icons'
+import { defaultSetting } from '@/config/appConfig'
+import { IExample } from '@/models/item.model'
+import { theme, MenuProps, Skeleton, Dropdown, Button } from 'antd'
+import { ItemType } from 'antd/es/menu/interface'
+import moment from 'moment'
+import { actionMenuItems, actionMenuEx } from './actionMenuItem'
+import styles from './style'
+import clsx from 'clsx'
 
 interface IProps {
   groupAction?: boolean

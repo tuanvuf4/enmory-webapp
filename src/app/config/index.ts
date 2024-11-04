@@ -1,2 +1,2 @@
-export * from './appConfig';
-export * from './httpConfig';
+export * from './appConfig'
+export * from './httpConfig'

@@ -1,20 +1,14 @@
-import { patternValidation } from '@/core/utils';
-import { IItem, EType, ECategory } from '@/models/item.model';
-import { compact } from 'lodash';
+import { patternValidation } from '@/core/utils'
+import { IItem, EType, ECategory } from '@/models/item.model'
+import { compact } from 'lodash'
 
 export const transformItemModelToClient = (item: IItem<string>): IItem => ({
   ...item,
   collocations:
-    item.collocations && item.collocations.length > 0
-      ? item.collocations.split(',')
-      : [],
-  word_family:
-    item.word_family && item.word_family.length > 0
-      ? item.word_family.split(',')
-      : [],
+    item.collocations && item.collocations.length > 0 ? item.collocations.split(',') : [],
+  word_family: item.word_family && item.word_family.length > 0 ? item.word_family.split(',') : [],
   forms: item.forms && item.forms.length > 0 ? item.forms.split(',') : [],
-  relation:
-    item.relation && item.relation.length > 0 ? item.relation.split(',') : [],
+  relation: item.relation && item.relation.length > 0 ? item.relation.split(',') : [],
   quickAdd: [],
   meanings: item.meanings.map((meaning) => ({
     ...meaning,
@@ -22,22 +16,13 @@ export const transformItemModelToClient = (item: IItem<string>): IItem => ({
       ? {
           id: meaning.pronunciation.id,
           uk: meaning.pronunciation.uk
-            ? meaning.pronunciation.uk.replace(
-                patternValidation.specialCharacterPronouns,
-                ''
-              )
+            ? meaning.pronunciation.uk.replace(patternValidation.specialCharacterPronouns, '')
             : '',
           us: meaning.pronunciation.us
-            ? meaning.pronunciation.us.replace(
-                patternValidation.specialCharacterPronouns,
-                ''
-              )
+            ? meaning.pronunciation.us.replace(patternValidation.specialCharacterPronouns, '')
             : '',
           common: meaning.pronunciation.common
-            ? meaning.pronunciation.common.replace(
-                patternValidation.specialCharacterPronouns,
-                ''
-              )
+            ? meaning.pronunciation.common.replace(patternValidation.specialCharacterPronouns, '')
             : '',
         }
       : {
@@ -45,14 +30,8 @@ export const transformItemModelToClient = (item: IItem<string>): IItem => ({
           uk: '',
           us: '',
         },
-    synonyms:
-      meaning.synonyms && meaning.synonyms.length > 0
-        ? meaning.synonyms.split(',')
-        : [],
-    antonyms:
-      meaning.antonyms && meaning.antonyms.length > 0
-        ? meaning.antonyms.split(',')
-        : [],
+    synonyms: meaning.synonyms && meaning.synonyms.length > 0 ? meaning.synonyms.split(',') : [],
+    antonyms: meaning.antonyms && meaning.antonyms.length > 0 ? meaning.antonyms.split(',') : [],
     examples: meaning.examples.map((example) => ({
       ...example,
       auto: false,
@@ -60,10 +39,10 @@ export const transformItemModelToClient = (item: IItem<string>): IItem => ({
       translation: example.translation.trim().replace(/\n/g, ''),
     })),
   })),
-});
+})
 
 export const transformItemModelToServer = (item: IItem): IItem<string> => {
-  const { quickAdd, ...rest } = item;
+  const { quickAdd, ...rest } = item
   return {
     ...rest,
     original: item.original.trim().replace(/\n/g, ''),
@@ -72,9 +51,7 @@ export const transformItemModelToServer = (item: IItem): IItem<string> => {
         ? rest.collocations.map((item) => item.trim()).join(',')
         : '',
     forms:
-      rest.forms && rest.forms.length > 0
-        ? rest.forms.map((item) => item.trim()).join(',')
-        : '',
+      rest.forms && rest.forms.length > 0 ? rest.forms.map((item) => item.trim()).join(',') : '',
     word_family:
       rest.word_family && rest.word_family.length > 0
         ? rest.word_family
@@ -97,14 +74,10 @@ export const transformItemModelToServer = (item: IItem): IItem<string> => {
       pronunciation: {
         id: meaning.pronunciation.id,
         uk: meaning.pronunciation.uk
-          ? meaning.pronunciation.uk
-              .trim()
-              .replace(patternValidation.specialCharacterPronouns, '')
+          ? meaning.pronunciation.uk.trim().replace(patternValidation.specialCharacterPronouns, '')
           : '',
         us: meaning.pronunciation.us
-          ? meaning.pronunciation.us
-              .trim()
-              .replace(patternValidation.specialCharacterPronouns, '')
+          ? meaning.pronunciation.us.trim().replace(patternValidation.specialCharacterPronouns, '')
           : '',
         common: meaning.pronunciation.common
           ? meaning.pronunciation.common
@@ -113,12 +86,12 @@ export const transformItemModelToServer = (item: IItem): IItem<string> => {
           : '',
       },
       examples: meaning.examples.map((example) => {
-        const { auto, ...rest } = example;
+        const { auto, ...rest } = example
         return {
           ...rest,
           original: example.original.trim().replace(/\n/g, ''),
           translation: example.translation.trim().replace(/\n/g, ''),
-        };
+        }
       }),
       synonyms:
         meaning.synonyms && meaning.synonyms.length > 0
@@ -129,80 +102,80 @@ export const transformItemModelToServer = (item: IItem): IItem<string> => {
           ? meaning.antonyms.map((item) => item.trim()).join(',')
           : '',
     })),
-  };
-};
+  }
+}
 
 export const getTypeOfItem = (type: EType) => {
   switch (type) {
     case EType.NOUN:
-      return 'Noun';
+      return 'Noun'
 
     case EType.VERB:
-      return 'Verb';
+      return 'Verb'
 
     case EType.ADJECTIVE:
-      return 'Adjective';
+      return 'Adjective'
 
     case EType.ADVERB:
-      return 'Adverb';
+      return 'Adverb'
 
     case EType.PREPOSITION:
-      return 'Preposition';
+      return 'Preposition'
 
     case EType.CONJUNCTION:
-      return 'Conjunction';
+      return 'Conjunction'
 
     case EType.PRONOUN:
-      return 'Pronoun';
+      return 'Pronoun'
 
     case EType.ARTICLE:
-      return 'Article';
+      return 'Article'
 
     case EType.DETERMINER:
-      return 'Determiner';
+      return 'Determiner'
 
     case EType.INTERJECTION:
-      return 'Interjection';
+      return 'Interjection'
 
     default:
-      return '';
+      return ''
   }
-};
+}
 
 export const getCategory = (type: ECategory) => {
   switch (type) {
     case ECategory.WORD:
-      return 'Word';
+      return 'Word'
 
     case ECategory.PHRASE:
-      return 'Phrase';
+      return 'Phrase'
 
     case ECategory.IDIOM:
-      return 'Idiom';
+      return 'Idiom'
 
     case ECategory.SLANG:
-      return 'Slang';
+      return 'Slang'
 
     case ECategory.COLLOCATION:
-      return 'Collocation';
+      return 'Collocation'
 
     case ECategory.SENTENCE:
-      return 'Sentence';
+      return 'Sentence'
 
     default:
-      return 'Other';
+      return 'Other'
   }
-};
+}
 
 export const getArrayUniqueItem = <T>(origin: T[]) => {
-  const combine: T[] = [];
+  const combine: T[] = []
   origin.forEach((item) => {
     if (combine.findIndex((outItem) => outItem === item) < 0) {
-      combine.push(item);
+      combine.push(item)
     }
-  });
-  return compact(combine);
-};
+  })
+  return compact(combine)
+}
 
 export const isDefect = (item: IItem) => {
   if (
@@ -212,8 +185,8 @@ export const isDefect = (item: IItem) => {
       item.meanings.length > 0 &&
       item.meanings.filter((item) => item.translation.trim() === '').length > 0)
   ) {
-    return true;
+    return true
   } else {
-    return false;
+    return false
   }
-};
+}

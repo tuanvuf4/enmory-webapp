@@ -4,12 +4,9 @@ import { ILogin, IUser } from '@/models/user.model'
 import { apiAuth } from '@/services/api/auth.api'
 import { httpConfig } from '@/config/httpConfig'
 
-export const logoutUser = createAsyncThunk(
-  httpConfig.apiEndPoint.auth + '/logout',
-  async () => {
-    return authAction.logOut()
-  },
-)
+export const logoutUser = createAsyncThunk(httpConfig.apiEndPoint.auth + '/logout', async () => {
+  return authAction.logOut()
+})
 
 const login = createAsyncThunk(
   httpConfig.apiEndPoint.auth + '/login',

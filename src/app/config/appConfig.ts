@@ -6,9 +6,14 @@ export enum EVN {
   LOCAL = 'local',
 }
 
+export enum EAppType {
+  WEB_APP = 'WEB_APP',
+  EXTENSION = 'EXTENSION',
+}
+
 export const appConfig = {
   appName: 'Enmory',
-  appType: import.meta.env.APP_TYPE ? 'EXT' : 'APP',
+  appType: import.meta.env.VITE_APP_TYPE as EAppType,
   env: import.meta.env.MODE, // development | production
   localKeyEncode: import.meta.env.LOCAL_KEY_TRANSFORM,
   googleAuth: {

@@ -1,7 +1,7 @@
-import { httpConfig } from "@/config/httpConfig"
-import { http } from "@/core/http"
-import { IHttpResponse } from "@/models/http.model"
-import { IOverviewChartData, IQueryPeriods, IProgressChartData } from "@/models/item.model"
+import { httpConfig } from '@/config/httpConfig'
+import { http } from '@/core/http'
+import { IHttpResponse } from '@/models/http.model'
+import { IOverviewChartData, IQueryPeriods, IProgressChartData } from '@/models/item.model'
 
 const getOverviewItems = async () =>
   http

@@ -1,6 +1,6 @@
-import { appStyleConfig } from "@/style/appStyle"
-import { dateTimeUtils, hex2Rgba } from "@/core/utils"
-import { ECategory, IQueryPeriods } from "@/models/item.model"
+import { appStyleConfig } from '@/style/appStyle'
+import { dateTimeUtils, hex2Rgba } from '@/core/utils'
+import { ECategory, IQueryPeriods } from '@/models/item.model'
 
 export const getBgColorByCatId = (id: ECategory, opacity = 1) => {
   if (!id) id = ECategory.WORD

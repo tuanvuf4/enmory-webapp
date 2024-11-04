@@ -1,15 +1,15 @@
-import globalStyle from "@/style/appStyle"
-import { PlusOutlined, DeleteOutlined, CloseCircleOutlined } from "@ant-design/icons"
-import { useAutoComplete } from "@/helpers/hooks"
-import { IItem } from "@/models/item.model"
-import { exampleApi } from "@/services/api"
-import { theme, Modal, Space, Col, Row, Button, Switch, AutoComplete } from "antd"
-import TextArea from "antd/es/input/TextArea"
-import { useState } from "react"
-import { useFormContext, useFieldArray, Controller } from "react-hook-form"
-import { exampleItem } from "."
-import styles from "./style"
-import clsx from "clsx"
+import globalStyle from '@/style/appStyle'
+import { PlusOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { useAutoComplete } from '@/helpers/hooks'
+import { IItem } from '@/models/item.model'
+import { exampleApi } from '@/services/api'
+import { theme, Modal, Space, Col, Row, Button, Switch, AutoComplete } from 'antd'
+import TextArea from 'antd/es/input/TextArea'
+import { useState } from 'react'
+import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
+import { exampleItem } from '.'
+import styles from './style'
+import clsx from 'clsx'
 
 interface IProps {
   nestIndex: number

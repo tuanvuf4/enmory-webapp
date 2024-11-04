@@ -167,8 +167,8 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = ({ title = 
                       options && options.length === 0 && value
                         ? NoResultInList()
                         : options.length > 0 && value
-                        ? options
-                        : []
+                          ? options
+                          : []
                     }
                     onSelect={(v, o) => onSelect(o)}
                     onClear={() => onChange('')}

@@ -1,7 +1,6 @@
-import { IExampleQuery } from "@/app/models/example.model"
-import { exampleApi } from "@/app/services/api/example.api"
-import { createAsyncThunk } from "@reduxjs/toolkit"
-
+import { IExampleQuery } from '@/app/models/example.model'
+import { exampleApi } from '@/app/services/api/example.api'
+import { createAsyncThunk } from '@reduxjs/toolkit'
 
 const fetchRandomExample = createAsyncThunk(
   'example/fetchRandomExample',

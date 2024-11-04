@@ -15,7 +15,6 @@ import logo from '@/assets/img/logo.png'
 import styles from './style'
 import loginStyle from '../login/style'
 
-
 interface IRegisterForm {
   showBanner?: boolean
 }

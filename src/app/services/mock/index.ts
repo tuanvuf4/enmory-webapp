@@ -1,2 +1,2 @@
-export * from './item.mock';
-export * from './time.mock';
+export * from './item.mock'
+export * from './time.mock'

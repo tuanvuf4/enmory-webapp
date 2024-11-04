@@ -1,16 +1,16 @@
-import { msgWarning } from "@/constant/index"
-import globalStyle from "@/style/appStyle"
-import { PlusOutlined, SaveOutlined, DeleteOutlined, WarningOutlined } from "@ant-design/icons"
-import { patternValidation } from "@/core/utils"
-import { ECategory, IPair, EType, IItem } from "@/models/item.model"
-import { InputTag } from "@/views/components/inputTag/inputTag"
-import { theme, Modal, Space, Col, Row, Button, Select, Checkbox, Popover, Input } from "antd"
-import TextArea from "antd/es/input/TextArea"
-import { useFormContext, useFieldArray, Controller } from "react-hook-form"
-import { meaningItem } from "."
-import { ExampleItem } from "./exampleItem"
-import styles from "./style"
-import clsx from "clsx"
+import { msgWarning } from '@/constant/index'
+import globalStyle from '@/style/appStyle'
+import { PlusOutlined, SaveOutlined, DeleteOutlined, WarningOutlined } from '@ant-design/icons'
+import { patternValidation } from '@/core/utils'
+import { ECategory, IPair, EType, IItem } from '@/models/item.model'
+import { InputTag } from '@/views/components/inputTag/inputTag'
+import { theme, Modal, Space, Col, Row, Button, Select, Checkbox, Popover, Input } from 'antd'
+import TextArea from 'antd/es/input/TextArea'
+import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
+import { meaningItem } from '.'
+import { ExampleItem } from './exampleItem'
+import styles from './style'
+import clsx from 'clsx'
 
 interface IProps {
   origin?: string

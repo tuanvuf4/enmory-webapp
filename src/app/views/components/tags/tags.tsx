@@ -1,11 +1,10 @@
-import { SearchOutlined } from "@ant-design/icons"
-import { useAppSelector, useAppDispatch } from "@/core/hooks"
-import { transformItemModelToClient } from "@/helpers/item"
-import { settingAction } from "@/store/reducers/setting.reducer"
-import { theme } from "antd"
-import styles from "./style"
-import { itemApi } from "@/services/api"
-
+import { SearchOutlined } from '@ant-design/icons'
+import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { transformItemModelToClient } from '@/helpers/item'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { theme } from 'antd'
+import styles from './style'
+import { itemApi } from '@/services/api'
 
 interface IPros {
   onSearch?: (tag: string) => void

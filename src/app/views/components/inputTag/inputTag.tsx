@@ -157,10 +157,7 @@ export const InputTag: React.FC<IPros> = ({ tags, allowSpace = true, onChange })
           allowClear={{ clearIcon: <CloseCircleOutlined style={{ fontSize: 14 }} /> }}
         />
       ) : (
-        <Tag
-          className={clsx([classes.tag, classes.tagPlus])}
-          onClick={() => setInputVisible(true)}
-        >
+        <Tag className={clsx([classes.tag, classes.tagPlus])} onClick={() => setInputVisible(true)}>
           Add <PlusOutlined />
         </Tag>
       )}

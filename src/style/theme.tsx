@@ -30,7 +30,7 @@ export const appTheme: ThemeConfig = {
     sizeStep: 4,
     lineHeight: 1.5,
     borderRadius: 2,
-    fontFamily: 'Lora, arial, sans-serif',
+    fontFamily: 'Lato, Oswald, sans-serif',
   },
   components: {
     Modal: {

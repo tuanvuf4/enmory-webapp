@@ -1,10 +1,9 @@
-import { useAppSelector, useAppDispatch } from "@/core/hooks"
-import { exampleApi } from "@/services/api"
-import { exampleAction } from "@/store/reducers/example.reducer"
-import { settingAction } from "@/store/reducers/setting.reducer"
-import { Modal } from "antd"
-import { useEffect } from "react"
-
+import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { exampleApi } from '@/services/api'
+import { exampleAction } from '@/store/reducers/example.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { Modal } from 'antd'
+import { useEffect } from 'react'
 
 interface IProps {
   onConfirm?: () => void

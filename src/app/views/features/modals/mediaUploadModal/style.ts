@@ -1,8 +1,8 @@
-import { theme } from 'antd';
-import { createUseStyles } from 'react-jss';
+import { theme } from 'antd'
+import { createUseStyles } from 'react-jss'
 
 export const styles = () => {
-  const { token } = theme.useToken();
+  const { token } = theme.useToken()
 
   return createUseStyles({
     action: {

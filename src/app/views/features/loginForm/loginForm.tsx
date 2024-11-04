@@ -160,9 +160,7 @@ export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
                     <Button className={gClasses.fulWidth}>Facebook</Button>
                   </Col>
                   <Col span={12}>
-                    {/* <Button className={gClasses.fulWidth} onClick={googleLogin}>
-                      Google
-                    </Button> */}
+                    <Button className={gClasses.fulWidth}>Google</Button>
                   </Col>
                 </Row>
               </>

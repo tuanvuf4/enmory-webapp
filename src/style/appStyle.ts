@@ -9,6 +9,7 @@ export const appStyleConfig = {
   fontFamily: {
     lora: 'Lora, arial, sans-serif',
     oswald: 'Oswald, sans-serif',
+    lato: 'Lato, sans-serif',
   },
   modal: {
     small: 500,

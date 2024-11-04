@@ -1,7 +1,7 @@
-import { appStyleConfig } from "@/style/appStyle"
-import { hex2Rgba } from "@/core/utils"
-import { theme } from "antd"
-import { createUseStyles } from "react-jss"
+import { appStyleConfig } from '@/style/appStyle'
+import { hex2Rgba } from '@/core/utils'
+import { theme } from 'antd'
+import { createUseStyles } from 'react-jss'
 
 const styles = () => {
   const { token } = theme.useToken()
@@ -174,10 +174,12 @@ const styles = () => {
     definition: {
       color: token.colorPrimary,
       fontSize: token.fontSize,
+      fontFamily: 'Lora, sans-serif',
     },
     translate: {
       color: appStyleConfig.color.blue[4],
       fontSize: token.fontSize,
+      fontFamily: 'Lora, sans-serif',
     },
     word_family: {
       // color: token.colorWhite,
@@ -197,6 +199,7 @@ const styles = () => {
       flexWrap: 'wrap',
       rowGap: 0,
       fontSize: 13,
+      fontFamily: 'Lora, sans-serif',
     },
     grammar: {},
     collocations: {},

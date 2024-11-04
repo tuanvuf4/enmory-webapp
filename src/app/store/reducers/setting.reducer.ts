@@ -1,9 +1,8 @@
-import { INotification } from "@/app/models/app.model"
-import { EListeningTypes } from "@/app/models/dictation.model"
-import { IItem } from "@/app/models/item.model"
-import { initNotification } from "@/app/services"
-import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-
+import { INotification } from '@/app/models/app.model'
+import { EListeningTypes } from '@/app/models/dictation.model'
+import { IItem } from '@/app/models/item.model'
+import { initNotification } from '@/app/services'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export interface ISettingState {
   onEditEvent: boolean

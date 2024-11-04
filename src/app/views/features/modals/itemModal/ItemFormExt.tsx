@@ -1,79 +1,54 @@
-import { msgErrors } from '@/constant/index';
-import { chromeStorage } from '@/extension/storageService';
-import globalStyle from '@/style/appStyle';
-import {
-  Loading3QuartersOutlined,
-  CloseCircleOutlined,
-} from '@ant-design/icons';
-import { defaultSetting, appConfig } from '@/config/appConfig';
-import {
-  NotificationContext,
-  TConfigNotification,
-} from '@/context/notification.context';
-import { useAutoComplete } from '@/helpers/hooks';
-import {
-  transformItemModelToServer,
-  transformItemModelToClient,
-} from '@/helpers/item';
-import { isGroupWord } from '@/helpers/validate';
-import { ELoading } from '@/models/app.model';
-import { IPair, ECategory, EType, IItem } from '@/models/item.model';
-import { itemApi } from '@/services/api';
-import { itemAsync } from '@/store/async/item.async';
-import { iotdAction } from '@/store/reducers/iotd.reducer';
-import { itemAction } from '@/store/reducers/items.reducer';
-import { settingAction } from '@/store/reducers/setting.reducer';
-import { studySetAction } from '@/store/reducers/studySet.reducer';
-import { InputTag } from '@/views/components/inputTag/inputTag';
-import { Level } from '@/views/components/level/level';
-import { Reference } from '@/views/features/references/references';
-import {
-  theme,
-  Row,
-  Space,
-  Col,
-  Select,
-  AutoComplete,
-  Input,
-  Checkbox,
-  Button,
-} from 'antd';
-import _ from 'lodash';
-import { useContext, useState, useEffect, Suspense } from 'react';
-import { useFormContext, useWatch, Controller } from 'react-hook-form';
-import { initItem, meaningItem } from '.';
-import MeaningItem from './meaningItem';
-import styles from './style';
-import { useAppDispatch, useAppSelector } from '@/core/hooks';
-import clsx from 'clsx';
+import { msgErrors } from '@/constant/index'
+import { chromeStorage } from '@/extension/storageService'
+import globalStyle from '@/style/appStyle'
+import { Loading3QuartersOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { defaultSetting, appConfig } from '@/config/appConfig'
+import { NotificationContext, TConfigNotification } from '@/context/notification.context'
+import { useAutoComplete } from '@/helpers/hooks'
+import { transformItemModelToServer, transformItemModelToClient } from '@/helpers/item'
+import { isGroupWord } from '@/helpers/validate'
+import { ELoading } from '@/models/app.model'
+import { IPair, ECategory, EType, IItem } from '@/models/item.model'
+import { itemApi } from '@/services/api'
+import { itemAsync } from '@/store/async/item.async'
+import { iotdAction } from '@/store/reducers/iotd.reducer'
+import { itemAction } from '@/store/reducers/items.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { studySetAction } from '@/store/reducers/studySet.reducer'
+import { InputTag } from '@/views/components/inputTag/inputTag'
+import { Level } from '@/views/components/level/level'
+import { Reference } from '@/views/features/references/references'
+import { theme, Row, Space, Col, Select, AutoComplete, Input, Checkbox, Button } from 'antd'
+import _ from 'lodash'
+import { useContext, useState, useEffect, Suspense } from 'react'
+import { useFormContext, useWatch, Controller } from 'react-hook-form'
+import { initItem, meaningItem } from '.'
+import MeaningItem from './meaningItem'
+import styles from './style'
+import { useAppDispatch, useAppSelector } from '@/core/hooks'
+import clsx from 'clsx'
 
 interface ICRUForm {
-  categories: IPair<string, ECategory>[];
-  types: IPair<string, EType>[];
+  categories: IPair<string, ECategory>[]
+  types: IPair<string, EType>[]
 }
 
 export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
-  const { token } = theme.useToken();
-  const classes = styles();
-  const gClasses = globalStyle();
+  const { token } = theme.useToken()
+  const classes = styles()
+  const gClasses = globalStyle()
 
-  const { openNotification } = useContext(
-    NotificationContext
-  ) as TConfigNotification;
+  const { openNotification } = useContext(NotificationContext) as TConfigNotification
 
-  const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch()
 
-  const [itemOrigin, setItemOrigin] = useState<IItem | null>(null);
+  const [itemOrigin, setItemOrigin] = useState<IItem | null>(null)
 
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector((state) => state.auth)
 
-  const { pagination, formSearchValue } = useAppSelector(
-    (state) => state.items
-  );
-  const { currentItem, onEditEvent, isShowItemModal } = useAppSelector(
-    (state) => state.setting
-  );
-  const { list } = useAppSelector((state) => state.studySet);
+  const { pagination, formSearchValue } = useAppSelector((state) => state.items)
+  const { currentItem, onEditEvent, isShowItemModal } = useAppSelector((state) => state.setting)
+  const { list } = useAppSelector((state) => state.studySet)
 
   const {
     control,
@@ -85,66 +60,60 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
     setError,
     clearErrors,
     formState: { isValid, errors },
-  } = useFormContext<IItem>();
+  } = useFormContext<IItem>()
 
   const catType = useWatch({
     control,
     name: 'catId',
     defaultValue: ECategory.WORD,
-  });
+  })
 
-  const original = useWatch({ control, name: 'original' });
+  const original = useWatch({ control, name: 'original' })
 
-  const { options, isSearching } = useAutoComplete(original, 'item', false);
+  const { options, isSearching } = useAutoComplete(original, 'item', false)
 
   const prepareDataSubmit = (payload: IItem<string[]>): IItem<string> => ({
     userId: user.id,
     ...transformItemModelToServer({ ...payload }),
-  });
+  })
 
   const getBatchItem = (data: IItem) => {
     const quickAdd = (data.quickAdd as string[]).map((word) => {
-      const itemBase = { ...initItem, original: word };
+      const itemBase = { ...initItem, original: word }
       return isGroupWord(word)
         ? { ...itemBase, catId: ECategory.PHRASE }
-        : { ...itemBase, catId: ECategory.WORD };
-    });
+        : { ...itemBase, catId: ECategory.WORD }
+    })
 
     const synonyms = data.meanings.map((meaning) => {
       return meaning.synonyms.map((synonym) => {
         const itemBase = {
           ...initItem,
           original: synonym.trim(),
-          catId: isGroupWord(synonym.trim())
-            ? ECategory.PHRASE
-            : ECategory.WORD,
+          catId: isGroupWord(synonym.trim()) ? ECategory.PHRASE : ECategory.WORD,
           meanings: [
             {
               ...meaningItem,
               typeId: isGroupWord(synonym) ? EType.NOUN : meaning.typeId,
               synonyms: [data.original.trim()].concat(
-                meaning.synonyms.filter(
-                  (item) => item.trim() !== synonym.trim()
-                )
+                meaning.synonyms.filter((item) => item.trim() !== synonym.trim()),
               ),
               antonyms: meaning.antonyms,
             },
           ],
-        };
+        }
         return isGroupWord(synonym)
           ? { ...itemBase, catId: ECategory.PHRASE }
-          : { ...itemBase, catId: ECategory.WORD };
-      });
-    });
+          : { ...itemBase, catId: ECategory.WORD }
+      })
+    })
 
     const antonyms = data.meanings.map((meaning) => {
       return meaning.antonyms.map((antonym) => {
         const itemBase = {
           ...initItem,
           original: antonym.trim(),
-          catId: isGroupWord(antonym.trim())
-            ? ECategory.PHRASE
-            : ECategory.WORD,
+          catId: isGroupWord(antonym.trim()) ? ECategory.PHRASE : ECategory.WORD,
           meanings: [
             {
               ...meaningItem,
@@ -152,126 +121,115 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
               antonyms: [data.original.trim()],
             },
           ],
-        };
+        }
         return isGroupWord(antonym)
           ? { ...itemBase, catId: ECategory.PHRASE }
-          : { ...itemBase, catId: ECategory.WORD };
-      });
-    });
+          : { ...itemBase, catId: ECategory.WORD }
+      })
+    })
 
-    return [
-      ...quickAdd,
-      ..._.flattenDeep(synonyms),
-      ..._.flattenDeep(antonyms),
-    ];
-  };
+    return [...quickAdd, ..._.flattenDeep(synonyms), ..._.flattenDeep(antonyms)]
+  }
 
   const handleOk = async () => {
     if (isValid) {
       handleSubmit(async (data: IItem) => {
-        const dataSubmit = prepareDataSubmit(data);
-        const batch = getBatchItem(data);
+        const dataSubmit = prepareDataSubmit(data)
+        const batch = getBatchItem(data)
         if (onEditEvent) {
           try {
-            const updatedItem = await itemApi.updateItem(
-              currentItem?.id as number,
-              dataSubmit
-            );
+            const updatedItem = await itemApi.updateItem(currentItem?.id as number, dataSubmit)
             const pr =
               batch.length > 0
                 ? [
                     updatedItem,
-                    await itemApi.createItems(
-                      batch.map((item) => prepareDataSubmit(item))
-                    ),
+                    await itemApi.createItems(batch.map((item) => prepareDataSubmit(item))),
                   ]
-                : [updatedItem];
-            const [{ content }] = await Promise.all(pr);
-            const itemUpdated = transformItemModelToClient(content);
+                : [updatedItem]
+            const [{ content }] = await Promise.all(pr)
+            const itemUpdated = transformItemModelToClient(content)
             if (list.find((item) => item.id === itemUpdated.id)) {
-              dispatch(studySetAction.update(itemUpdated));
+              dispatch(studySetAction.update(itemUpdated))
             }
-            dispatch(itemAction.replace(itemUpdated));
-            dispatch(iotdAction.update(itemUpdated));
-            dispatch(settingAction.toggleItemModal());
-            dispatch(settingAction.setOnEditItem(false));
-            reset(initItem);
+            dispatch(itemAction.replace(itemUpdated))
+            dispatch(iotdAction.update(itemUpdated))
+            dispatch(settingAction.toggleItemModal())
+            dispatch(settingAction.setOnEditItem(false))
+            reset(initItem)
             openNotification({
               type: 'success',
               message: 'Update item successful!',
-            });
+            })
             await dispatch(
               itemAsync.fetchItems({
                 ...formSearchValue,
                 page: pagination.page,
                 size: pagination.size,
-              })
+              }),
             ).catch(() => {
-              openNotification({ type: 'error', message: 'Cannot get item!' });
-            });
+              openNotification({ type: 'error', message: 'Cannot get item!' })
+            })
           } catch (error) {
-            openNotification({ type: 'error', message: JSON.stringify(error) });
-            dispatch(settingAction.toggleItemModal());
-            dispatch(settingAction.setOnEditItem(false));
+            openNotification({ type: 'error', message: JSON.stringify(error) })
+            dispatch(settingAction.toggleItemModal())
+            dispatch(settingAction.setOnEditItem(false))
           } finally {
-            reset(initItem);
-            setItemOrigin(null);
-            dispatch(settingAction.setCurrentItem(null));
+            reset(initItem)
+            setItemOrigin(null)
+            dispatch(settingAction.setCurrentItem(null))
           }
         } else {
           try {
-            const createItem = await itemApi.createItem(dataSubmit);
+            const createItem = await itemApi.createItem(dataSubmit)
             const pr =
               batch.length > 0
                 ? [
                     createItem,
-                    await itemApi.createItems(
-                      batch.map((item) => prepareDataSubmit(item))
-                    ),
+                    await itemApi.createItems(batch.map((item) => prepareDataSubmit(item))),
                   ]
-                : [createItem];
-            const [{ isSuccess }] = await Promise.all(pr);
+                : [createItem]
+            const [{ isSuccess }] = await Promise.all(pr)
 
             if (isSuccess) {
-              dispatch(settingAction.toggleItemModal());
-              reset(initItem);
+              dispatch(settingAction.toggleItemModal())
+              reset(initItem)
               openNotification({
                 type: 'success',
                 message: 'Create a item successful!',
-              });
+              })
               await dispatch(
                 itemAsync.fetchItems({
                   ...formSearchValue,
                   page: pagination.page,
                   size: pagination.size,
-                })
+                }),
               ).catch((error: unknown) => {
                 openNotification({
                   type: 'error',
                   message: JSON.stringify(error),
-                });
-              });
+                })
+              })
             }
           } catch (error) {
-            openNotification({ type: 'error', message: JSON.stringify(error) });
-            dispatch(settingAction.toggleItemModal());
+            openNotification({ type: 'error', message: JSON.stringify(error) })
+            dispatch(settingAction.toggleItemModal())
           } finally {
-            reset({ ...initItem });
-            setItemOrigin(null);
-            dispatch(settingAction.setCurrentItem(null));
+            reset({ ...initItem })
+            setItemOrigin(null)
+            dispatch(settingAction.setCurrentItem(null))
           }
         }
-      })();
+      })()
     }
-  };
+  }
 
   const handleCancel = () => {
-    reset(initItem);
-    setItemOrigin(null);
-    dispatch(settingAction.toggleItemModal());
-    dispatch(settingAction.setOnEditItem(false));
-    dispatch(settingAction.setCurrentItem(null));
-  };
+    reset(initItem)
+    setItemOrigin(null)
+    dispatch(settingAction.toggleItemModal())
+    dispatch(settingAction.setOnEditItem(false))
+    dispatch(settingAction.setCurrentItem(null))
+  }
 
   const loadItem = (value: string) => {
     const params = {
@@ -279,60 +237,57 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
       page: 0,
       size: defaultSetting.numberItemOfAutoComplete * 2,
       exact: true,
-    };
-    itemApi
-      .getItemAutoComplete(params, { headers: { loading: ELoading.YES } })
-      .then((response) => {
-        dispatch(settingAction.setOnEditItem(true));
-        dispatch(
-          settingAction.setCurrentItem({
-            ...transformItemModelToClient(response.content.data[0]),
-          })
-        );
-      });
-  };
+    }
+    itemApi.getItemAutoComplete(params, { headers: { loading: ELoading.YES } }).then((response) => {
+      dispatch(settingAction.setOnEditItem(true))
+      dispatch(
+        settingAction.setCurrentItem({
+          ...transformItemModelToClient(response.content.data[0]),
+        }),
+      )
+    })
+  }
 
   useEffect(() => {
-    trigger();
-  }, []);
+    trigger()
+  }, [])
 
   useEffect(() => {
     if (!original) {
-      setError('original', { type: 'required', message: msgErrors.required });
+      setError('original', { type: 'required', message: msgErrors.required })
     } else if (
       (onEditEvent &&
         options.length > 0 &&
         original !== itemOrigin?.original &&
-        options.findIndex((option) => option.value !== itemOrigin?.original) >
-          -1) ||
+        options.findIndex((option) => option.value !== itemOrigin?.original) > -1) ||
       (options.length > 0 && !onEditEvent)
     ) {
-      setError('original', { type: 'existed', message: msgErrors.existed });
-    } else clearErrors('original');
-  }, [options, original]);
+      setError('original', { type: 'existed', message: msgErrors.existed })
+    } else clearErrors('original')
+  }, [options, original])
 
   useEffect(() => {
     if (currentItem) {
-      setItemOrigin(currentItem as IItem<string[]>);
-      reset(currentItem);
+      setItemOrigin(currentItem as IItem<string[]>)
+      reset(currentItem)
     } else {
       if (appConfig.appType === 'EXT')
         chromeStorage.get(['original']).then((resp) => {
-          reset({ ...initItem, original: resp.original || '' });
-        });
+          reset({ ...initItem, original: resp.original || '' })
+        })
     }
-  }, [currentItem, itemOrigin]);
+  }, [currentItem, itemOrigin])
 
   useEffect(() => {
     if (isShowItemModal && !original && !onEditEvent) {
-      reset({ ...initItem });
-      setError('original', { type: 'required', message: msgErrors.required });
+      reset({ ...initItem })
+      setError('original', { type: 'required', message: msgErrors.required })
     }
 
     return () => {
-      reset({ ...initItem });
-    };
-  }, [isShowItemModal, onEditEvent]);
+      reset({ ...initItem })
+    }
+  }, [isShowItemModal, onEditEvent])
 
   return (
     <form onSubmit={handleSubmit(handleOk)}>
@@ -340,7 +295,8 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
         <Space
           direction='vertical'
           size={[token.size / 2, (token.size / 4) * 3]}
-          className={gClasses.fulWidth}>
+          className={gClasses.fulWidth}
+        >
           <Row align={'middle'}>
             <Col md={4} xs={12}>
               <label htmlFor=''>Kind of item:</label>
@@ -379,10 +335,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
                     message: msgErrors.required,
                   },
                 }}
-                render={({
-                  field: { onChange, value },
-                  fieldState: { invalid },
-                }) => (
+                render={({ field: { onChange, value }, fieldState: { invalid } }) => (
                   <>
                     <AutoComplete
                       value={value}
@@ -392,11 +345,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
                         <Input
                           value={value}
                           placeholder='Original'
-                          suffix={
-                            isSearching ? (
-                              <Loading3QuartersOutlined spin />
-                            ) : undefined
-                          }
+                          suffix={isSearching ? <Loading3QuartersOutlined spin /> : undefined}
                           allowClear={
                             isSearching
                               ? false
@@ -415,15 +364,11 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
                                 }
                           }
                           onChange={(e) => {
-                            onChange(e);
-                            if (
-                              isGroupWord(e.target.value) &&
-                              catType === ECategory.WORD
-                            )
-                              setValue('catId', ECategory.PHRASE);
+                            onChange(e)
+                            if (isGroupWord(e.target.value) && catType === ECategory.WORD)
+                              setValue('catId', ECategory.PHRASE)
 
-                            if (!isGroupWord(e.target.value))
-                              setValue('catId', ECategory.WORD);
+                            if (!isGroupWord(e.target.value)) setValue('catId', ECategory.WORD)
                           }}
                         />
                       }
@@ -459,8 +404,9 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
                   <Checkbox
                     checked={value}
                     onChange={(e) => {
-                      onChange(e.target.checked);
-                    }}>
+                      onChange(e.target.checked)
+                    }}
+                  >
                     Archive
                   </Checkbox>
                 )}
@@ -474,9 +420,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
                 control={control}
                 name={`favorite`}
                 render={({ field: { onChange, value } }) => (
-                  <Checkbox
-                    checked={value}
-                    onChange={(e) => onChange(e.target.checked)}>
+                  <Checkbox checked={value} onChange={(e) => onChange(e.target.checked)}>
                     Favorite
                   </Checkbox>
                 )}
@@ -516,7 +460,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
                       <InputTag
                         tags={getValues('forms')}
                         onChange={(value: string[]) => {
-                          setValue('forms', value);
+                          setValue('forms', value)
                         }}
                       />
                     )}
@@ -558,7 +502,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
                         tags={getValues('word_family')}
                         allowSpace={false}
                         onChange={(value: string[]) => {
-                          setValue('word_family', value);
+                          setValue('word_family', value)
                         }}
                       />
                     )}
@@ -581,7 +525,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
                   <InputTag
                     tags={getValues('relation')}
                     onChange={(value: string[]) => {
-                      setValue('relation', value);
+                      setValue('relation', value)
                     }}
                   />
                 )}
@@ -634,5 +578,5 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
         </Col>
       </Row>
     </form>
-  );
-};
+  )
+}

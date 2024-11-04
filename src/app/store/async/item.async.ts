@@ -1,9 +1,8 @@
-import { transformItemModelToClient } from "@/app/helpers/item"
-import { IPair } from "@/app/models/item.model"
-import { GetStudySetByCatId } from "@/app/models/studySet.model"
-import { IItemRequestData, itemApi } from "@/app/services/api/item.api"
-import { createAsyncThunk } from "@reduxjs/toolkit"
-
+import { transformItemModelToClient } from '@/app/helpers/item'
+import { IPair } from '@/app/models/item.model'
+import { GetStudySetByCatId } from '@/app/models/studySet.model'
+import { IItemRequestData, itemApi } from '@/app/services/api/item.api'
+import { createAsyncThunk } from '@reduxjs/toolkit'
 
 const fetchItems = createAsyncThunk('item/fetchItems', async (params: IItemRequestData) => {
   const response = await itemApi.getItems({

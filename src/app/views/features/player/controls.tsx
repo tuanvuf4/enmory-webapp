@@ -1,7 +1,16 @@
-import { StepBackwardOutlined, BackwardOutlined, PauseOutlined, CaretRightOutlined, ForwardOutlined, StepForwardOutlined, NotificationOutlined, SoundOutlined } from "@ant-design/icons"
-import { ITracks } from "@/models/media.model"
-import { RefObject, useState, useRef, useCallback, useEffect } from "react"
-import styles from "./style"
+import {
+  StepBackwardOutlined,
+  BackwardOutlined,
+  PauseOutlined,
+  CaretRightOutlined,
+  ForwardOutlined,
+  StepForwardOutlined,
+  NotificationOutlined,
+  SoundOutlined,
+} from '@ant-design/icons'
+import { ITracks } from '@/models/media.model'
+import { RefObject, useState, useRef, useCallback, useEffect } from 'react'
+import styles from './style'
 
 interface IProps {
   audioRef: RefObject<HTMLAudioElement>
@@ -30,7 +39,6 @@ export const Controls: React.FC<IProps> = ({
   setCurrentTrack,
   handleNext,
 }) => {
-  
   const classes = styles()
 
   const [volume, setVolume] = useState(100)

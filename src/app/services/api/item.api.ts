@@ -1,9 +1,9 @@
-import { httpConfig } from "@/config/httpConfig"
-import { http } from "@/core/http"
-import { AppOrderQuery, AppOrderByQuery } from "@/models/app.model"
-import { IHttpResponse, IHttpResponseArray } from "@/models/http.model"
-import { IItem, IItemQuiz } from "@/models/item.model"
-import { GetStudySetByCatId } from "@/models/studySet.model"
+import { httpConfig } from '@/config/httpConfig'
+import { http } from '@/core/http'
+import { AppOrderQuery, AppOrderByQuery } from '@/models/app.model'
+import { IHttpResponse, IHttpResponseArray } from '@/models/http.model'
+import { IItem, IItemQuiz } from '@/models/item.model'
+import { GetStudySetByCatId } from '@/models/studySet.model'
 
 export interface IItemRequestData {
   keyword: string

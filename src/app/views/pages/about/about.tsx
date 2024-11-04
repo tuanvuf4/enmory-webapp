@@ -9,7 +9,7 @@ import { useAppSelector } from '@/app/core/hooks/redux'
 
 const About = () => {
   const { token } = theme.useToken()
-  
+
   const gClasses = globalStyle()
   const classesLogin = loginStyle()
   const classesRegister = registerStyle()

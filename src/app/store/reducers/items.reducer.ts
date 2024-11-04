@@ -1,12 +1,11 @@
-import { defaultSetting } from "@/app/config/appConfig"
-import { IFormSearchItem } from "@/app/models/formSearch.model"
-import { IHttpResponse, IHttpResponseArray } from "@/app/models/http.model"
-import { IItem } from "@/app/models/item.model"
-import { IPagination } from "@/app/models/pagination.model"
-import { initSearchFormItem } from "@/app/services"
-import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import { itemAsync } from "../async/item.async"
-
+import { defaultSetting } from '@/app/config/appConfig'
+import { IFormSearchItem } from '@/app/models/formSearch.model'
+import { IHttpResponse, IHttpResponseArray } from '@/app/models/http.model'
+import { IItem } from '@/app/models/item.model'
+import { IPagination } from '@/app/models/pagination.model'
+import { initSearchFormItem } from '@/app/services'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { itemAsync } from '../async/item.async'
 
 export interface IItemsState {
   listItem: IItem[]

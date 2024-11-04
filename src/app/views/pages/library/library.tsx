@@ -1,23 +1,23 @@
-import globalStyle, { appStyleConfig } from "@/style/appStyle"
-import { EyeOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons"
-import { NotificationContext, TConfigNotification } from "@/context/notification.context"
-import { transformItemModelToClient, isDefect, getCategory, getTypeOfItem } from "@/helpers/item"
-import { EViewMode } from "@/models/app.model"
-import { ECategory, EType } from "@/models/item.model"
-import { itemApi } from "@/services/api"
-import { itemAsync } from "@/store/async/item.async"
-import { itemAction } from "@/store/reducers/items.reducer"
-import { settingAction } from "@/store/reducers/setting.reducer"
-import { AlertDefectItem } from "@/views/features/alertDefectItem/alertDefectItem"
-import { Toolbar } from "@/views/features/toolbar/toolbar"
-import { theme, Row, Col, Button } from "antd"
-import { useContext, useEffect } from "react"
-import styles from "./style"
+import globalStyle, { appStyleConfig } from '@/style/appStyle'
+import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { NotificationContext, TConfigNotification } from '@/context/notification.context'
+import { transformItemModelToClient, isDefect, getCategory, getTypeOfItem } from '@/helpers/item'
+import { EViewMode } from '@/models/app.model'
+import { ECategory, EType } from '@/models/item.model'
+import { itemApi } from '@/services/api'
+import { itemAsync } from '@/store/async/item.async'
+import { itemAction } from '@/store/reducers/items.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { AlertDefectItem } from '@/views/features/alertDefectItem/alertDefectItem'
+import { Toolbar } from '@/views/features/toolbar/toolbar'
+import { theme, Row, Col, Button } from 'antd'
+import { useContext, useEffect } from 'react'
+import styles from './style'
 import iStyles from '@/app/views/features/item/style'
-import { useAppDispatch, useAppSelector } from "@/core/hooks"
-import { Pagination } from "@/views/components/pagination/pagination"
-import { Item } from "@/views/features/item/Item"
-import { Reference } from "@/views/features/references/references"
+import { useAppDispatch, useAppSelector } from '@/core/hooks'
+import { Pagination } from '@/views/components/pagination/pagination'
+import { Item } from '@/views/features/item/Item'
+import { Reference } from '@/views/features/references/references'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()

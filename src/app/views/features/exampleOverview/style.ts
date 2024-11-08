@@ -7,9 +7,6 @@ const styles = () => {
   const { token } = theme.useToken()
 
   return createUseStyles({
-    fontFamily: {
-      fontFamily: 'Lora, sans-serif !important'
-    },
     exampleOverview: {
       marginBottom: `${token.size}px`,
       background: hex2Rgba(appStyleConfig.itemColorBg, 0.9),

@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
 
   return {
+    base: './',
     plugins: [react()],
     build: {
       outDir: env.VITE_APP_TYPE === 'WEB_APP' ? 'dist' : 'dist_ext',

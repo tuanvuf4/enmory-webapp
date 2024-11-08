@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom/client'
 import { StyleProvider } from '@ant-design/cssinjs'
 import 'antd/dist/reset.css'
-import './style/index.scss'
+import './style/index.css'
 
 import { Provider } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'

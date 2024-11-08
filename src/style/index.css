@@ -21,9 +21,10 @@ code {
 
 ul {
   margin: 0;
-  li {
-    display: block;
-  }
+}
+
+ul li {
+  display: block;
 }
 
 .emr-modal-close {
@@ -31,10 +32,10 @@ ul {
   align-items: center;
   justify-content: center;
   background: transparent !important;
+}
 
-  .emr-modal-close-x {
-    font-size: 22px !important;
-  }
+.emr-modal-close .emr-modal-close-x {
+  font-size: 22px !important;
 }
 
 h1,
@@ -73,12 +74,12 @@ textarea {
 ::-webkit-scrollbar-thumb {
   --tw-border-opacity: 1;
   --tw-bg-opacity: 1;
-  background-color: rgba($color: #72a526, $alpha: 0.75);
+  background-color: rgba(#72a526, 0.75);
 }
 
 ::-webkit-scrollbar-track {
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  background-color: rgba($color: #333, $alpha: 0.75);
+  background-color: rgba(#333, 0.75);
 }
 
 /* =========================
@@ -91,7 +92,7 @@ input[type='range'] {
   -webkit-appearance: none;
   position: relative;
   background: #ccc;
-  // width: 100%;
+  width: 100%;
   height: 2px;
   border-radius: 2px;
   cursor: pointer;

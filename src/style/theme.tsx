@@ -33,6 +33,9 @@ export const appTheme: ThemeConfig = {
     fontFamily: 'Lato, Oswald, sans-serif',
   },
   components: {
+    Input: {
+      fontFamily: '"Noto Sans JP", sans-serif !important',
+    },
     Modal: {
       fontSizeHeading5: 24,
     },

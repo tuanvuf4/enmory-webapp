@@ -19,10 +19,8 @@ import React from 'react'
 import { AppContext } from './app/context/app.context'
 import { store } from '@/store/store'
 
-import './index.css'
-
 if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
-  const root = ReactDOM.createRoot(document.getElementById('popupExt') as HTMLElement)
+  const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
   root.render(
     <JssProvider classNamePrefix={`${appStyleConfig.prefixClassCss}-`}>
       <Provider store={store}>

@@ -48,7 +48,9 @@ const styles = () => {
     contentHead: {
       // marginBottom: token.size / 2,
     },
-    contentMain: {},
+    contentMain: {
+      fontFamily: 'Lato, sans-serif',
+    },
     meaningItem: {
       border: `1px solid ${appStyleConfig.color.neutral[0]}`,
       padding: `${token.size / 4}px ${(token.size / 4) * 3}px`,

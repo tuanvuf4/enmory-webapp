@@ -7,7 +7,6 @@ import { ILoginResponse } from '@/models/user.model'
 import { appApi } from '@/services/api'
 import { ExampleFormAdd } from '@/views/features/exampleOverview/exampleFormAdd'
 import { HeaderExt } from '@/views/features/headerExt/header'
-import { Loading } from '@/views/features/loading/loading'
 import { LoginForm } from '@/views/features/loginForm/loginForm'
 import { initItem } from '@/views/features/modals/itemModal'
 import { CRUFormExt } from '@/views/features/modals/itemModal/ItemFormExt'
@@ -17,6 +16,7 @@ import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { chromeStorage } from './storageService'
 import styles from './style'
+import { LoadingBar } from '@/views/features/loading/loadingBar'
 
 export const PopupExt = () => {
   const { token } = theme.useToken()
@@ -118,7 +118,7 @@ export const PopupExt = () => {
         </>
       )}
 
-      <Loading />
+      <LoadingBar />
     </div>
   )
 }

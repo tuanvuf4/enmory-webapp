@@ -97,6 +97,7 @@ const styles = () => {
       marginTop: `-1px`,
       padding: `0 0 0 0`,
       lineHeight: '2em',
+      fontFamily: 'Lato, sans-serif',
 
       '& textarea': {
         resize: 'none !important',

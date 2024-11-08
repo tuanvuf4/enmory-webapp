@@ -6,7 +6,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons'
 import globalStyle from '@/style/appStyle'
-import { appConfig } from '@/config/appConfig'
+import { appConfig, EAppType } from '@/config/appConfig'
 import { IUser } from '@/models/user.model'
 import { apiAuth } from '@/services/api'
 import { initRegisterForm } from '@/services/registerForm'
@@ -226,7 +226,7 @@ export const RegisterForm = ({ showBanner = true }) => {
                 </Col>
               </Row>
 
-              {appConfig.appType !== 'EXT' && (
+              {appConfig.appType !== EAppType.EXTENSION && (
                 <Row justify={'center'}>
                   <Col span={24}>
                     <div className={classesLogin.register}>

@@ -34,6 +34,7 @@ const styles = (token: AliasToken) => {
         borderLeft: `1px solid ${token.colorWhite}`,
         outline: 'none',
         cursor: 'pointer',
+        borderRadius: 0,
 
         '&:hover': {
           background: token.colorPrimary,

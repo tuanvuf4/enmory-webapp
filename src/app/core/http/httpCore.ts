@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios'
-import _ from 'lodash'
+import { defaultsDeep } from 'lodash'
 import { ELoading } from '@/models/app.model'
 import { httpConfig } from '@/config/httpConfig'
 
@@ -15,7 +15,7 @@ export const getHttpConfig = (
   custom: AxiosRequestConfig = {},
   config = defaultHttpConfig,
 ): AxiosRequestConfig => {
-  return _.defaultsDeep(custom, config)
+  return defaultsDeep(custom, config)
 }
 
 export const axiosInstance = axios.create(getHttpConfig())

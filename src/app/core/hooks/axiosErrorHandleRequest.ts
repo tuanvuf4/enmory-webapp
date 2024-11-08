@@ -1,5 +1,5 @@
 import { chromeStorage } from '@/extension/storageService'
-import { appConfig } from '@/config/appConfig'
+import { appConfig, EAppType } from '@/config/appConfig'
 import { NotificationContext, TConfigNotification } from '@/context/notification.context'
 import { axiosInstance } from '@/core/http/httpCore'
 import { initNotification } from '@/services/index'
@@ -29,7 +29,7 @@ const useErrorHandlerRequest = () => {
         dispatch(settingAction.setNotification(initNotification))
         dispatch(mediaAction.reset())
         openNotification({ type: 'error', message: 'Token is expired!' })
-        if (appConfig.appType === 'EXT') chromeStorage.clear()
+        if (appConfig.appType === EAppType.EXTENSION) chromeStorage.clear()
       } else if (status === 500) {
         openNotification({ type: 'error', message: 'Something went wrong!' })
       } else {

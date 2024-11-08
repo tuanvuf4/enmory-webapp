@@ -28,7 +28,7 @@ export const ExModal: React.FC<IProps> = ({ open }) => {
 
   return (
     <Modal
-      title={selectedExample ? 'Edit new Example' : 'Add new Example'}
+      title={selectedExample ? 'Edit Example' : 'Add Example'}
       closeIcon={<CloseSquareOutlined />}
       open={open}
       onCancel={() => {

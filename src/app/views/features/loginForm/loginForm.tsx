@@ -1,7 +1,7 @@
 import { msgErrors } from '@/constant/index'
 import globalStyle from '@/style/appStyle'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
-import { appConfig } from '@/config/appConfig'
+import { appConfig, EAppType } from '@/config/appConfig'
 import { useAppDispatch } from '@/core/hooks'
 import { IHttpResponse } from '@/models/http.model'
 import { ILoginResponse, ILogin, IUser } from '@/models/user.model'
@@ -133,7 +133,7 @@ export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
               </Col>
             </Row>
 
-            {appConfig.appType !== 'EXT' && (
+            {appConfig.appType !== EAppType.EXTENSION && (
               <Row justify={'center'}>
                 <Col span={24}>
                   <div className={classes.register}>

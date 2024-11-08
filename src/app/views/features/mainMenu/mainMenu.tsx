@@ -7,7 +7,7 @@ import { authMenus, keyPaths, menus, menusExt } from './menus'
 import classNames from 'clsx'
 import type { MenuProps } from 'antd'
 import { configAction } from '@/store/reducers/config.reducer'
-import { appConfig } from '@/config/appConfig'
+import { appConfig, EAppType } from '@/config/appConfig'
 import { EPageExt } from '@/models/app.model'
 
 type TDirection = 'horizontal' | 'vertical'
@@ -41,7 +41,7 @@ export const MainMenu: React.FC<IPros> = ({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onItemClick = (menu: any) => {
-    if (appConfig.appType === 'EXT') {
+    if (appConfig.appType === EAppType.EXTENSION) {
       if (onPageChange) onPageChange(menu.key)
     } else {
       setCurrent(menu.key)
@@ -51,7 +51,7 @@ export const MainMenu: React.FC<IPros> = ({
   }
 
   useEffect(() => {
-    if (appConfig.appType === 'EXT') {
+    if (appConfig.appType === EAppType.EXTENSION) {
       setMenu(menusExt)
     } else {
       isAuth ? setMenu(authMenus) : setMenu(menus)

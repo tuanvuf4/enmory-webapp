@@ -53,6 +53,7 @@ const styles = () => {
     autoSearchInputGroup: {
       display: 'flex',
       flex: `1 0`,
+      fontFamily: 'Lora, sans-serif',
     },
     autoSearchInput: {
       flex: `1 0`,

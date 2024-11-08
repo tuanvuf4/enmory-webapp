@@ -2,7 +2,7 @@ import { msgErrors } from '@/constant/index'
 import { chromeStorage } from '@/extension/storageService'
 import globalStyle from '@/style/appStyle'
 import { Loading3QuartersOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { defaultSetting, appConfig } from '@/config/appConfig'
+import { defaultSetting, appConfig, EAppType } from '@/config/appConfig'
 import { NotificationContext, TConfigNotification } from '@/context/notification.context'
 import { useAutoComplete } from '@/helpers/hooks'
 import { transformItemModelToServer, transformItemModelToClient } from '@/helpers/item'
@@ -271,7 +271,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
       setItemOrigin(currentItem as IItem<string[]>)
       reset(currentItem)
     } else {
-      if (appConfig.appType === 'EXT')
+      if (appConfig.appType === EAppType.EXTENSION)
         chromeStorage.get(['original']).then((resp) => {
           reset({ ...initItem, original: resp.original || '' })
         })

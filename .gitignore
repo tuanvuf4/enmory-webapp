@@ -17,6 +17,7 @@ dist-ssr
 
 # build
 **.tsbuildinfo
+dist_ext
 
 # Editor directories and files
 .vscode/*

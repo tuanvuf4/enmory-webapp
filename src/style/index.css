@@ -74,12 +74,12 @@ textarea {
 ::-webkit-scrollbar-thumb {
   --tw-border-opacity: 1;
   --tw-bg-opacity: 1;
-  background-color: rgba(#72a526, 0.75);
+  background-color: #72a526;
 }
 
 ::-webkit-scrollbar-track {
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  background-color: rgba(#333, 0.75);
+  background-color: #333;
 }
 
 /* =========================

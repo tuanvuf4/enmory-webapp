@@ -15,12 +15,12 @@ interface IProps {
   content?: string
 }
 
-export const ExModal: React.FC<IProps> = ({ open }) => {
+export const ExampleModal: React.FC<IProps> = ({ open }) => {
   const { selectedExample } = useAppSelector((state) => state.example)
 
   const dispatch = useAppDispatch()
 
-  const onSuccess = (content: IExample) => {
+  const onSubmit = (content: IExample) => {
     dispatch(settingAction.toggleExModal())
     dispatch(exampleAction.updateExamples(content))
     dispatch(exampleAction.updateRandomExamples(content))
@@ -28,7 +28,7 @@ export const ExModal: React.FC<IProps> = ({ open }) => {
 
   return (
     <Modal
-      title={selectedExample ? 'Edit Example' : 'Add Example'}
+      title={selectedExample ? 'Review An Example' : 'Add Example'}
       closeIcon={<CloseSquareOutlined />}
       open={open}
       onCancel={() => {
@@ -41,7 +41,7 @@ export const ExModal: React.FC<IProps> = ({ open }) => {
       footer={null}
       maskClosable={true}
     >
-      <ExampleFormAdd data={selectedExample as IExample} mode={'light'} onSuccess={onSuccess} />
+      <ExampleFormAdd data={selectedExample as IExample} themeMode={'light'} onSuccess={onSubmit} />
     </Modal>
   )
 }

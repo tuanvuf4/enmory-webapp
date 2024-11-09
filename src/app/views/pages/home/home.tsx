@@ -2,7 +2,6 @@ import globalStyle from '@/style/appStyle'
 import { NotificationContext, TConfigNotification } from '@/context/notification.context'
 import { useAppSelector, useAppDispatch } from '@/core/hooks'
 import { transformItemModelToClient } from '@/helpers/item'
-import { IExample } from '@/models/item.model'
 import { itemApi } from '@/services/api'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { ExampleFormAdd } from '@/views/features/exampleOverview/exampleFormAdd'
@@ -14,6 +13,9 @@ import { theme, Space, Row, Col } from 'antd'
 import { useContext } from 'react'
 import About from '../about/about'
 import { Item } from '@/views/features/item/Item'
+import { exampleAction } from '@/store/reducers/example.reducer'
+import { IExample } from '@/models/item.model'
+import { Mode } from '@/models/example.model'
 
 const Home = () => {
   const { token } = theme.useToken()
@@ -48,8 +50,10 @@ const Home = () => {
     }
   }
 
-  const onSuccess = (data: IExample) => {
-    console.log(`data: `, data)
+  const onSuccess = (content: IExample) => {
+    dispatch(settingAction.toggleExModal())
+    dispatch(exampleAction.updateExamples(content))
+    dispatch(exampleAction.updateRandomExamples(content))
   }
 
   return (
@@ -76,8 +80,8 @@ const Home = () => {
                     <StudySet />
                   </Widget>
 
-                  <Widget title={'Want To Write Something?'}>
-                    <ExampleFormAdd onSuccess={onSuccess} />
+                  <Widget title={'Translation Challenge'}>
+                    <ExampleFormAdd />
                   </Widget>
 
                   <Widget title={'Review Example'}>

@@ -19,7 +19,7 @@ import { EViewPort } from '@/models/app.model'
 import { FormProvider, useForm } from 'react-hook-form'
 import { IItem } from '@/models/item.model'
 import { initItem } from '../modals/itemModal'
-import { ExModal } from '../modals/exModal/exModal'
+import { ExampleModal } from '../modals/exampleModal/exampleModal'
 import { DeleteExModal } from '../modals/deleteExModal/deleteExModal'
 import { LoadingBar } from '../loading/loadingBar'
 
@@ -174,7 +174,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
             </FormProvider>
           )}
 
-          {isShowExModal && <ExModal open={isShowExModal} />}
+          {isShowExModal && <ExampleModal open={isShowExModal} />}
 
           {isShowDeleteExModal && <DeleteExModal />}
 

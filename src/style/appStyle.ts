@@ -1,18 +1,19 @@
 import { createUseStyles } from 'react-jss'
 import { gray, volcano, yellow, blue, red, cyan, green, gold, lime } from '@ant-design/colors'
-import { appTheme } from './theme'
 import { hex2Rgba } from '@/core/utils'
 import { theme } from 'antd'
 
 export const appStyleConfig = {
   prefixClassCss: 'emr',
   fontFamily: {
+    default: 'Lora, Lato, Oswald, sans-serif',
     lora: 'Lora, arial, sans-serif',
     oswald: 'Oswald, sans-serif',
     lato: 'Lato, sans-serif',
   },
   modal: {
     small: 500,
+    medium: 750,
     large: 1000,
   },
   logo: {
@@ -22,7 +23,7 @@ export const appStyleConfig = {
   sider: {
     width: 280,
     widthCollapse: 80,
-    background: appTheme.token?.colorBgLayout,
+    // background: appTheme.token?.colorBgLayout,
   },
   footer: {
     background: '#fff',

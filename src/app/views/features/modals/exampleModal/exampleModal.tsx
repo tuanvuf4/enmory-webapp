@@ -7,6 +7,7 @@ import { settingAction } from '@/store/reducers/setting.reducer'
 import { ExampleFormAdd } from '../../exampleOverview/exampleFormAdd'
 import { IExample } from '@/models/item.model'
 import { exampleAction } from '@/store/reducers/example.reducer'
+import { ExampleMode } from '@/models/example.model'
 
 interface IProps {
   onConfirm?: () => void
@@ -28,7 +29,7 @@ export const ExampleModal: React.FC<IProps> = ({ open }) => {
 
   return (
     <Modal
-      title={selectedExample ? 'Review An Example' : 'Add Example'}
+      title={selectedExample ? 'Edit Example' : 'Add Example'}
       closeIcon={<CloseSquareOutlined />}
       open={open}
       onCancel={() => {
@@ -37,7 +38,7 @@ export const ExampleModal: React.FC<IProps> = ({ open }) => {
       }}
       onOk={() => dispatch(settingAction.toggleExModal())}
       okText={'Close'}
-      width={appStyleConfig.modal.large}
+      width={appStyleConfig.modal.medium}
       footer={null}
       maskClosable={true}
     >

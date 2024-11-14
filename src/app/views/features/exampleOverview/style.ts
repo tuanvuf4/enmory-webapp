@@ -45,6 +45,11 @@ const styles = () => {
         '& textarea': {
           color: `${token.colorTextBase} !important`,
           background: 'transparent !important',
+
+          '&:disabled': {
+            color: 'transparent !important',
+            background: 'transparent !important',
+          },
         },
       },
 
@@ -52,6 +57,11 @@ const styles = () => {
         resize: 'none !important',
         color: `${token.colorWhite} !important`,
         background: 'transparent !important',
+
+        '&:disabled': {
+          color: 'transparent !important',
+          background: 'transparent !important',
+        },
       },
     },
     overviewForm: {

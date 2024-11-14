@@ -49,7 +49,7 @@ const styles = () => {
       // marginBottom: token.size / 2,
     },
     contentMain: {
-      fontFamily: 'Lato, sans-serif',
+      // fontFamily: 'Lato, sans-serif',
     },
     meaningItem: {
       border: `1px solid ${appStyleConfig.color.neutral[0]}`,
@@ -129,11 +129,12 @@ const styles = () => {
     },
     original: {
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
       gap: token.size / 4,
       fontSize: token.fontSizeHeading5,
-      margin: [0, 0, token.size / 2, 0],
+      margin: [0, 0, 0, 0],
+      fontFamily: appStyleConfig.fontFamily.lato,
 
       '& span': {
         display: 'block',

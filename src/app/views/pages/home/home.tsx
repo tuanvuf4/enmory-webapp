@@ -15,7 +15,7 @@ import About from '../about/about'
 import { Item } from '@/views/features/item/Item'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { IExample } from '@/models/item.model'
-import { Mode } from '@/models/example.model'
+import { ExampleMode } from '@/models/example.model'
 
 const Home = () => {
   const { token } = theme.useToken()
@@ -76,12 +76,12 @@ const Home = () => {
             >
               <Row justify={'start'} align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={16}>
-                  <Widget title={`Practice Study Set!`}>
+                  <Widget title={`Study Set`}>
                     <StudySet />
                   </Widget>
 
                   <Widget title={'Translation Challenge'}>
-                    <ExampleFormAdd />
+                    <ExampleFormAdd showSelectMode mode={ExampleMode.Translation} />
                   </Widget>
 
                   <Widget title={'Review Example'}>

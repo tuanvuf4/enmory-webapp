@@ -3,22 +3,26 @@ import { IExample } from '@/models/item.model'
 import { exampleApi } from '@/services/api'
 import { theme, Space, Row, Col, Button, Select, Flex } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
-import { PropsWithChildren, useState } from 'react'
+import { PropsWithChildren, useCallback, useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import styles from './style'
 import clsx from 'clsx'
 import globalStyle from '@/style/appStyle'
-import { Mode } from '@/models/example.model'
+import { ExampleMode } from '@/models/example.model'
 
 interface IProps {
   data?: IExample
   themeMode?: 'dark' | 'light'
+  mode?: ExampleMode
+  showSelectMode?: boolean
   onSuccess?: (data: IExample) => void
 }
 
 export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
   themeMode = 'dark',
+  mode = ExampleMode.Default,
   data,
+  showSelectMode = false,
   onSuccess,
 }) => {
   const { token } = theme.useToken()
@@ -28,10 +32,12 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
   const [loading, setLoading] = useState<boolean>(false)
   const [isChecked, setIsChecked] = useState<boolean>(false)
   const [answer, setAnswer] = useState<string>('')
-  const [mode, setMode] = useState<Mode>(Mode.Translation)
+  const [exMode, setMode] = useState<ExampleMode>(mode)
+
   const gClasses = globalStyle()
 
-  const showTranslation = mode === Mode.Default || (isChecked && mode === Mode.Translation)
+  const showTranslation =
+    mode === ExampleMode.Default || (isChecked && mode === ExampleMode.Translation)
 
   const {
     control,
@@ -80,7 +86,7 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
     getRandomExamples()
   }
 
-  const getRandomExamples = async () => {
+  const getRandomExamples = useCallback(async () => {
     setLoading(true)
 
     const { content } = await exampleApi.getRandomExamples({
@@ -89,7 +95,11 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
     })
     reset({ ...content[0] })
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => {
+    if (exMode === ExampleMode.Translation) getRandomExamples()
+  }, [])
 
   return (
     <form
@@ -102,9 +112,9 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
           <Col xs={24}>
             <Flex
               gap={token.size / 2}
-              justify={mode === Mode.Translation ? 'space-between' : 'flex-end'}
+              justify={exMode === ExampleMode.Translation ? 'space-between' : 'flex-end'}
             >
-              {mode === Mode.Translation && (
+              {exMode === ExampleMode.Translation && (
                 <Button
                   variant='outlined'
                   style={{
@@ -113,72 +123,77 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
                   }}
                   onClick={onReload}
                 >
-                  <SyncOutlined />
+                  <SyncOutlined spin={loading} />
                   <span className={gClasses.fromTablet}>Reload</span>
                 </Button>
               )}
 
-              <Select
-                value={mode}
-                onChange={setMode}
-                style={{
-                  minWidth: 120,
-                }}
-                options={[
-                  {
-                    value: Mode.Translation,
-                    id: Mode.Translation,
-                  },
-                  {
-                    value: Mode.Default,
-                    id: Mode.Default,
-                  },
-                ]}
-              />
+              {showSelectMode && (
+                <Select
+                  value={exMode}
+                  onChange={setMode}
+                  style={{
+                    minWidth: 120,
+                  }}
+                  options={[
+                    {
+                      id: ExampleMode.Default,
+                      value: ExampleMode.Default,
+                      label: 'Default',
+                    },
+                    {
+                      id: ExampleMode.Translation,
+                      value: ExampleMode.Translation,
+                      label: 'Translation',
+                    },
+                  ]}
+                />
+              )}
             </Flex>
           </Col>
         </Row>
 
-        {showTranslation && (
-          <Row align={'middle'} gutter={[token.size, token.size / 2]}>
-            <Col xs={24}>Origin:</Col>
-            <Col xs={24}>
-              <Controller
-                control={control}
-                name={`original`}
-                rules={{
-                  required: {
-                    value: true,
-                    message: 'Required',
-                  },
-                }}
-                render={({ field: { onChange, value } }) => {
-                  return (
-                    <TextArea
-                      value={value}
-                      placeholder='Origin'
-                      className={classes.autoSearchInput}
-                      onChange={(text) => onChange(text.target.value)}
-                      allowClear={{
-                        clearIcon: (
-                          <CloseOutlined
-                            style={{
-                              background: token.colorWhite,
-                              padding: token.size / 8,
-                              borderRadius: '50%',
-                              color: token.colorBgLayout,
-                              fontSize: 10,
-                            }}
-                          />
-                        ),
-                      }}
-                    />
-                  )
-                }}
-              />
-            </Col>
-          </Row>
-        )}
+        <Row align={'middle'} gutter={[token.size, token.size / 2]}>
+          <Col xs={24}>Origin:</Col>
+
+          <Col xs={24}>
+            <Controller
+              control={control}
+              name={`original`}
+              rules={{
+                required: {
+                  value: true,
+                  message: 'Required',
+                },
+              }}
+              render={({ field: { onChange, value } }) => {
+                return (
+                  <TextArea
+                    disabled={!showTranslation}
+                    autoSize
+                    value={value}
+                    placeholder='Origin'
+                    className={classes.autoSearchInput}
+                    onChange={(text) => onChange(text.target.value)}
+                    allowClear={{
+                      clearIcon: (
+                        <CloseOutlined
+                          style={{
+                            background: token.colorWhite,
+                            padding: token.size / 8,
+                            borderRadius: '50%',
+                            color: token.colorBgLayout,
+                            fontSize: 10,
+                          }}
+                        />
+                      ),
+                    }}
+                  />
+                )
+              }}
+            />
+          </Col>
+        </Row>
 
         <Row align={'middle'} gutter={[token.size, token.size / 2]}>
           <Col xs={24}>Translation:</Col>
@@ -197,6 +212,7 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
                 return (
                   <TextArea
                     value={value}
+                    autoSize
                     placeholder='Translation'
                     className={classes.autoSearchInput}
                     onChange={(text) => onChange(text.target.value)}
@@ -220,7 +236,7 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
           </Col>
         </Row>
 
-        {mode === Mode.Default && (
+        {exMode === ExampleMode.Default && (
           <Row align={'middle'} gutter={[token.size, token.size / 2]}>
             <Col xs={24}>Note:</Col>
 
@@ -232,6 +248,7 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
                   return (
                     <TextArea
                       value={value}
+                      autoSize
                       placeholder='Note'
                       className={classes.autoSearchInput}
                       onChange={(text) => onChange(text.target.value)}
@@ -256,13 +273,14 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
           </Row>
         )}
 
-        {mode === Mode.Translation && (
+        {exMode === ExampleMode.Translation && (
           <Row align={'middle'} gutter={[token.size, token.size / 2]} justify={'end'}>
             <Col xs={24}>Your Translation:</Col>
 
             <Col xs={24}>
               <TextArea
                 value={answer}
+                autoSize
                 placeholder='Text here...'
                 className={classes.autoSearchInput}
                 onChange={(text) => setAnswer(text.target.value)}
@@ -287,13 +305,10 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
         <Row align={'middle'} gutter={[token.size, token.size / 2]} justify={'end'}>
           <Col xs={24}>
             <Flex
-              justify={mode === Mode.Translation ? 'space-between' : 'flex-start'}
+              justify={exMode === ExampleMode.Translation ? 'space-between' : 'flex-start'}
               className={'pt-4'}
-              style={{
-                borderTop: '1px solid',
-              }}
             >
-              {mode === Mode.Translation && (
+              {exMode === ExampleMode.Translation && (
                 <Button
                   disabled={isChecked}
                   variant='outlined'
@@ -315,7 +330,7 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
                 disabled={!isValid}
                 style={{ minWidth: 120 }}
               >
-                {mode === Mode.Translation ? 'Update' : 'Save'}
+                Save
               </Button>
             </Flex>
           </Col>

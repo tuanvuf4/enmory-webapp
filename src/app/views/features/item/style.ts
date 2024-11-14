@@ -66,11 +66,12 @@ const styles = () => {
     },
     title: {
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'space-between',
       wordBreak: 'break-word',
       marginBottom: token.margin / 4,
       minHeight: token.controlHeight,
+      gap: token.size / 2,
     },
     btnDelete: {
       flex: '0 0 38px',
@@ -97,7 +98,6 @@ const styles = () => {
       marginTop: `-1px`,
       padding: `0 0 0 0`,
       lineHeight: '2em',
-      fontFamily: 'Lato, sans-serif',
 
       '& textarea': {
         resize: 'none !important',
@@ -117,11 +117,12 @@ const styles = () => {
     },
     original: {
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
       gap: token.size / 4,
       fontSize: token.fontSizeHeading5,
       margin: [0, 0, 0, 0],
+      fontFamily: appStyleConfig.fontFamily.lato,
 
       '& span': {
         display: 'block',

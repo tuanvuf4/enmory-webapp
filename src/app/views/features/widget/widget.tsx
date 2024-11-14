@@ -10,7 +10,7 @@ export const Widget: React.FC<PropsWithChildren & IProps> = ({ children, title }
 
   return (
     <div className={classes.widget}>
-      <h3 className={classes.widgetTitle}>{title}</h3>
+      {title && <h3 className={classes.widgetTitle}>{title}</h3>}
 
       <div className={classes.widgetContent}>{children}</div>
     </div>

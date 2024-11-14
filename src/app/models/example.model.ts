@@ -10,7 +10,7 @@ export interface IExampleQuery {
 
 export type ITypeExample = Record<keyof IExampleQuery, number | string>
 
-export enum Mode {
-  Translation = 'Translation',
-  Default = 'Default',
+export enum ExampleMode {
+  Default,
+  Translation,
 }

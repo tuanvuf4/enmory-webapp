@@ -6,7 +6,7 @@ const styles = (token: AliasToken) => {
   return createUseStyles({
     aside: {
       padding: `${token.size}px 0`,
-      background: `${appStyleConfig.sider.background} !important`,
+      // background: `${appStyleConfig.sider.background} !important`,
       height: '100%',
       overflow: 'auto',
     },

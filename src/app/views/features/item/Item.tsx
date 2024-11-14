@@ -14,7 +14,7 @@ import { settingAction } from '@/store/reducers/setting.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { Level } from '@/views/components/level/level'
 import { Tags } from '@/views/components/tags/tags'
-import { MenuProps, Skeleton, Popover, Dropdown, Button, theme } from 'antd'
+import { MenuProps, Skeleton, Popover, Dropdown, Button, theme, Flex } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import moment from 'moment'
 import React, { useEffect, useState } from 'react'
@@ -202,30 +202,36 @@ export const Item: React.FC<IProps> = ({
                   {type === 'full' && <span>{data.original}</span>}
                 </h2>
 
-                {groupAction && (onView || onEdit || onDelete) && (
-                  <Dropdown
-                    placement='bottomRight'
-                    menu={menuProps}
-                    arrow={{ pointAtCenter: true }}
-                    trigger={['click']}
-                  >
-                    <Button
-                      size='middle'
-                      type='text'
-                      icon={<MoreOutlined />}
-                      className={classes.btnActions}
-                    />
-                  </Dropdown>
-                )}
-              </div>
+                <Flex align={'center'} gap={token.size / 4}>
+                  {data.archive && (
+                    <Button className={classes.btnInactive} size='small'>
+                      A
+                    </Button>
+                  )}
 
+                  {groupAction && (onView || onEdit || onDelete) && (
+                    <Dropdown
+                      placement='bottomRight'
+                      menu={menuProps}
+                      arrow={{ pointAtCenter: true }}
+                      trigger={['click']}
+                    >
+                      <Button
+                        size='middle'
+                        type='text'
+                        icon={<MoreOutlined />}
+                        className={classes.btnActions}
+                      />
+                    </Dropdown>
+                  )}
+                </Flex>
+              </div>
+              {/* 
               {data.archive && (
-                <p>
-                  <Button className={classes.btnInactive} size='small'>
-                    Archived
-                  </Button>
-                </p>
-              )}
+                <Button className={classes.btnInactive} size='small'>
+                  Archived
+                </Button>
+              )} */}
 
               {data.catId && (
                 <h5 className={classes.kindOfWord}>

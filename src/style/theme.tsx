@@ -1,5 +1,6 @@
 import { ThemeConfig } from 'antd/es/config-provider'
 import { gray } from '@ant-design/colors'
+import { appStyleConfig } from './appStyle'
 
 export const appTheme: ThemeConfig = {
   token: {
@@ -30,12 +31,10 @@ export const appTheme: ThemeConfig = {
     sizeStep: 4,
     lineHeight: 1.5,
     borderRadius: 2,
-    fontFamily: 'Lato, Oswald, sans-serif',
+    fontFamily: appStyleConfig.fontFamily.default,
   },
   components: {
-    Input: {
-      fontFamily: '"Noto Sans JP", sans-serif !important',
-    },
+    Input: {},
     Modal: {
       fontSizeHeading5: 24,
     },
@@ -55,6 +54,7 @@ export const appTheme: ThemeConfig = {
       itemSelectedColor: '#90C53F',
       itemSelectedBg: 'transparent',
       itemBorderRadius: 4,
+      fontFamily: appStyleConfig.fontFamily.lato,
     },
     Button: {
       padding: 12,

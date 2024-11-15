@@ -25,17 +25,11 @@ export const ViewItemModal: React.FC<IProps> = ({ open, title }) => {
 
   const dispatch = useAppDispatch()
 
-  const onEdit = async (id: number) => {
+  const onEdit = async () => {
     try {
-      const { content } = await itemApi.getItemById(id)
       dispatch(settingAction.setOnEditItem(true))
       dispatch(settingAction.toggleItemModal())
       dispatch(settingAction.toggleViewItemModal())
-      dispatch(
-        settingAction.setCurrentItem({
-          ...transformItemModelToClient(content),
-        }),
-      )
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }
@@ -57,7 +51,7 @@ export const ViewItemModal: React.FC<IProps> = ({ open, title }) => {
       footer={null}
       maskClosable={true}
     >
-      <Item data={currentItem as IItem} type='full' onEdit={() => onEdit(currentItem?.id ?? 0)} />
+      <Item data={currentItem as IItem} type='full' onEdit={() => onEdit()} />
     </Modal>
   )
 }

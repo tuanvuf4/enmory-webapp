@@ -218,6 +218,11 @@ const styles = () => {
     },
     btnActions: {
       color: `${token.colorWhite} !important`,
+
+      '&.active': {
+        color: `${token.colorText} !important`,
+      },
+
       '& span': {
         fontSize: `${token.fontSizeHeading4}px !important`,
       },

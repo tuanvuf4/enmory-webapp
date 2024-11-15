@@ -3,12 +3,13 @@ import { IExample } from '@/models/item.model'
 import { exampleApi } from '@/services/api'
 import { theme, Space, Row, Col, Button, Select, Flex } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
-import { PropsWithChildren, useCallback, useEffect, useState } from 'react'
+import { PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import styles from './style'
 import clsx from 'clsx'
 import globalStyle from '@/style/appStyle'
 import { ExampleMode } from '@/models/example.model'
+import { NotificationContext, TConfigNotification } from '@/context/notification.context'
 
 interface IProps {
   data?: IExample
@@ -28,6 +29,8 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
   const { token } = theme.useToken()
 
   const classes = styles()
+
+  const { openNotification } = useContext(NotificationContext) as TConfigNotification
 
   const [loading, setLoading] = useState<boolean>(false)
   const [isChecked, setIsChecked] = useState<boolean>(false)
@@ -55,24 +58,14 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
   const onSubmit = async (data: IExample) => {
     setLoading(true)
     try {
-      const { content, isSuccess } = await exampleApi.createExample({
-        ...data,
-        ...(isChecked
-          ? {
-              original: answer,
-            }
-          : {}),
-      })
+      const { content, isSuccess } = await exampleApi.createExample(data)
       setAnswer('')
       setLoading(false)
       setIsChecked(false)
-      reset({
-        original: '',
-        translation: '',
-      })
+      reset({ original: '', translation: '' })
       if (isSuccess) onSuccess?.(content)
     } catch (error) {
-      console.log(`error: `, error)
+      openNotification({ type: 'error', message: JSON.stringify(error) })
     } finally {
       setLoading(false)
       reset()

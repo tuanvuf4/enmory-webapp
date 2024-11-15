@@ -92,7 +92,7 @@ export const Item: React.FC<IProps> = ({
         if (!onDelete && menu?.key === 4) return false
         return menu
       })
-      .filter((menu) => menu) as ItemType[]
+      .filter(Boolean) as ItemType[]
   }
 
   const menuProps = {
@@ -220,7 +220,10 @@ export const Item: React.FC<IProps> = ({
                         size='middle'
                         type='text'
                         icon={<MoreOutlined />}
-                        className={classes.btnActions}
+                        className={clsx({
+                          [classes.btnActions]: true,
+                          active: !active && type === 'full' ? true : false,
+                        })}
                       />
                     </Dropdown>
                   )}

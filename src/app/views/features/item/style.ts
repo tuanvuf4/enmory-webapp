@@ -53,9 +53,9 @@ const styles = () => {
         },
       },
 
-      // '& ol': {
-      //   paddingLeft: token.size,
-      // },
+      '& p': {
+        marginBottom: token.size / 4,
+      },
     },
     contentHead: {
       // marginBottom: token.size / 2,

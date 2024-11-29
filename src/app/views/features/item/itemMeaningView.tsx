@@ -66,7 +66,7 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, type 
       (catId === ECategory.WORD && meaning.pronunciation.us)
     ) {
       return (
-        <div className={classes.pronouns}>
+        <div className={`${classes.pronouns} flex gap-6 items-center`}>
           {meaning.pronunciation.uk && (
             <div className={classes.audio}>
               <span className={classes.accent}>UK</span>
@@ -101,16 +101,18 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, type 
   return (
     <Row gutter={[token.size, token.size * 2]}>
       <Col span={24}>
-        <ul
+        <div
           className={clsx(
             classes.meaningItem,
             meaning.common || type === 'brief' ? classes.meaningCommon : '',
             meaning.enable ? '' : classes.disableMeaning,
           )}
         >
-          {catId === ECategory.WORD && <h4>{getTypeOfItem(meaning.typeId)}</h4>}
+          <div className={'flex gap-1 justify-between items-center'}>
+            {getPronouns()}
 
-          {getPronouns()}
+            {catId === ECategory.WORD && <h4 className={'m-0'}>{getTypeOfItem(meaning.typeId)}</h4>}
+          </div>
 
           {meaning.note && (
             <div
@@ -206,7 +208,7 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, type 
                 )}
             </>
           )}
-        </ul>
+        </div>
       </Col>
     </Row>
   )

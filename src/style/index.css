@@ -37,8 +37,12 @@ img {
 
 blockquote {
   border-left: 2px solid #72a526;
-  padding: 4px 4px 4px 8px;
+  padding: 6px 4px 6px 12px;
   margin: 4px 0;
+
+  p {
+    margin: 0 !important;
+  }
 }
 
 .emr-modal-close {

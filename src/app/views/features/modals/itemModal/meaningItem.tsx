@@ -376,7 +376,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                     </Col>
 
                     <Col md={20} xs={24}>
-                      <Controller
+                      {/* <Controller
                         control={control}
                         name={`meanings.${index}.note`}
                         render={({ field: { onChange, value } }) => (
@@ -389,7 +389,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
 
                           <TextEditor content={value} onChange={onChange} placeholder='Note' />
                         )}
-                      />
+                      /> */}
                     </Col>
                   </Row>
                 </Col>

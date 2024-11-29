@@ -93,13 +93,12 @@ const styles = () => {
 
       '& > ul': {
         marginLeft: 0,
+        padding: 0,
       },
     },
     exampleItem: {
       display: 'block',
-      padding: `${token.padding / 2}px ${token.padding / 2}px ${token.padding / 2}px ${
-        (token.padding / 2) * 3
-      }px`,
+      padding: `${token.padding / 2}px ${token.padding / 2}px ${token.padding / 2}px 0px`,
       borderTop: `1px solid ${appStyleConfig.border.red[2]}`,
       '&:first-child': {
         borderBottom: 'none',

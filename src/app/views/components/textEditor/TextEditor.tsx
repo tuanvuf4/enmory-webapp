@@ -52,24 +52,29 @@ const MenuBar = ({ editor }: MenuBarProps) => {
   if (!editor) return null
 
   const addImage = useCallback(() => {
-    // const url = window.prompt('URL')
-    // if (url) {
-    //   editor.chain().focus().setImage({ src: url }).run()
-    // }
+    const url = window.prompt('URL')
+
+    if (url) {
+      editor.chain().focus().setImage({ src: url }).run()
+    }
   }, [editor])
 
   const setLink = useCallback(() => {
-    // const previousUrl = editor.getAttributes('link').href
-    // const url = window.prompt('URL', previousUrl)
-    // // cancelled
-    // if (url === null) return
-    // // empty
-    // if (url === '') {
-    //   editor.chain().focus().extendMarkRange('link').unsetLink().run()
-    //   return
-    // }
-    // // update link
-    // editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    const previousUrl = editor.getAttributes('link').href
+    const url = window.prompt('URL', previousUrl)
+
+    // cancelled
+    if (url === null) return
+
+    // empty
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+
+      return
+    }
+
+    // update link
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
   }, [editor])
 
   return (

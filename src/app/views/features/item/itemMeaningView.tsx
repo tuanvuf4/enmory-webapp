@@ -7,7 +7,7 @@ import { itemAsync } from '@/store/async/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { Tags } from '@/views/components/tags/tags'
-import { theme, Row, Col } from 'antd'
+import { theme, Row, Col, Typography } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
@@ -113,12 +113,28 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, type 
           {getPronouns()}
 
           {meaning.note && (
-            <div className={classes.note}>
-              {meaning.note
-                .replace(/\n/g, '*')
-                .replace(/- /g, '')
-                .split('*')
-                .map((value, key) => (value ? <span key={key}>{`${value}`}</span> : ''))}
+            <div
+              className={classes.note}
+              dangerouslySetInnerHTML={{
+                __html: meaning.note,
+              }}
+            >
+              {/* <ul>
+                {meaning.note
+                  .replace(/\n/g, '*')
+                  .replace(/- /g, '')
+                  .split('*')
+                  .map((value, key) =>
+                    value ? (
+                      <li
+                        key={key}
+                        dangerouslySetInnerHTML={{
+                          __html: value,
+                        }}
+                      />
+                    ) : null,
+                  )}
+              </ul> */}
             </div>
           )}
 

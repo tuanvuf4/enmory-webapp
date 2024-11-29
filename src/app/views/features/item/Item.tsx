@@ -190,7 +190,7 @@ export const Item: React.FC<IProps> = ({
           <div className={classes.contentItem}>
             <div className={classes.contentHead}>
               <div className={classes.title}>
-                <h2 className={classes.original}>
+                <h2 className={classes.original} onDoubleClick={onView}>
                   {type === 'brief' && !isDefect(data) && <span>{data.original}</span>}
 
                   {type === 'brief' && isDefect(data) && (
@@ -229,12 +229,6 @@ export const Item: React.FC<IProps> = ({
                   )}
                 </Flex>
               </div>
-              {/* 
-              {data.archive && (
-                <Button className={classes.btnInactive} size='small'>
-                  Archived
-                </Button>
-              )} */}
 
               {data.catId && (
                 <h5 className={classes.kindOfWord}>
@@ -246,31 +240,18 @@ export const Item: React.FC<IProps> = ({
                       gap: token.size / 2,
                     }}
                   >
-                    {type === 'brief' && (
-                      <Button
-                        className={classes.quickView}
-                        type='text'
-                        size='small'
-                        icon={<EyeOutlined />}
-                        onClick={onView}
-                      />
-                    )}
-
                     <span>{getCategory(data.catId)}</span>
                   </div>
 
                   {data.user && (
-                    <span>
-                      Added by:
-                      <span
-                        style={{
-                          color: token.colorPrimary,
-                          fontSize: token.fontSize,
-                          marginLeft: token.size / 2,
-                        }}
-                      >
-                        {data.user.username}
-                      </span>
+                    <span
+                      style={{
+                        color: token.colorPrimary,
+                        fontSize: token.fontSize,
+                        marginLeft: token.size / 2,
+                      }}
+                    >
+                      {data.user.username}
                     </span>
                   )}
                 </h5>
@@ -286,12 +267,6 @@ export const Item: React.FC<IProps> = ({
 
               {data.catId === ECategory.WORD && (
                 <>
-                  {/* {data.collocations &&
-                  data.collocations.filter((item) => item).length > 0 &&
-                  data.collocations.length > 0 && (
-                    <Tags label={'Collocations'} tags={data.collocations} onSearch={onSearch} />
-                  )} */}
-
                   {data.word_family &&
                     data.word_family.filter((word) => word).length > 0 &&
                     data.word_family.length > 0 && (

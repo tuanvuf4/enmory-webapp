@@ -72,11 +72,11 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
     }
   }
 
-  const onReload = () => {
-    setIsChecked(false)
+  const onReload = async () => {
     setAnswer('')
     reset({ original: '', translation: '' })
-    getRandomExamples()
+    await getRandomExamples()
+    setIsChecked(false)
   }
 
   const getRandomExamples = useCallback(async () => {
@@ -103,24 +103,7 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
       <Space direction='vertical' style={{ display: 'flex', width: '100%' }} size={token.size}>
         <Row>
           <Col xs={24}>
-            <Flex
-              gap={token.size / 2}
-              justify={exMode === ExampleMode.Translation ? 'space-between' : 'flex-end'}
-            >
-              {exMode === ExampleMode.Translation && (
-                <Button
-                  variant='outlined'
-                  style={{
-                    background: 'transparent',
-                    color: themeMode === 'dark' ? token.colorWhite : token.colorTextBase,
-                  }}
-                  onClick={onReload}
-                >
-                  <SyncOutlined spin={loading} />
-                  <span className={gClasses.fromTablet}>Reload</span>
-                </Button>
-              )}
-
+            <Flex gap={token.size / 2} justify={'flex-end'}>
               {showSelectMode && (
                 <Select
                   value={exMode}
@@ -162,7 +145,7 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
               render={({ field: { onChange, value } }) => {
                 return (
                   <TextArea
-                    disabled={!showTranslation}
+                    disabled={!showTranslation && exMode === ExampleMode.Translation}
                     autoSize
                     value={value}
                     placeholder='Origin'
@@ -295,7 +278,7 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
           </Row>
         )}
 
-        <Row align={'middle'} gutter={[token.size, token.size / 2]} justify={'end'}>
+        <Row align={'middle'} gutter={[token.size, token.size / 2]}>
           <Col xs={24}>
             <Flex
               justify={exMode === ExampleMode.Translation ? 'space-between' : 'flex-start'}
@@ -303,16 +286,16 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
             >
               {exMode === ExampleMode.Translation && (
                 <Button
-                  disabled={isChecked}
                   variant='outlined'
                   style={{
                     background: 'transparent',
                     minWidth: 120,
                     color: themeMode === 'dark' ? token.colorWhite : token.colorTextBase,
                   }}
-                  onClick={() => setIsChecked(true)}
+                  onClick={() => (isChecked ? onReload() : setIsChecked(true))}
+                  icon={isChecked ? <SyncOutlined spin={loading} /> : null}
                 >
-                  Check
+                  {!isChecked ? 'Check' : <span className={gClasses.fromTablet}>Reload</span>}
                 </Button>
               )}
 

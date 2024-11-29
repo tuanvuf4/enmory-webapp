@@ -11,6 +11,7 @@ import { meaningItem } from '.'
 import { ExampleItem } from './exampleItem'
 import styles from './style'
 import clsx from 'clsx'
+import { TextEditor } from '@/views/components'
 
 interface IProps {
   origin?: string
@@ -379,12 +380,14 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                         control={control}
                         name={`meanings.${index}.note`}
                         render={({ field: { onChange, value } }) => (
-                          <TextArea
-                            autoSize={{ minRows: 2, maxRows: 4 }}
-                            value={value}
-                            placeholder='Note'
-                            onChange={onChange}
-                          />
+                          // <TextArea
+                          //   autoSize={{ minRows: 2, maxRows: 4 }}
+                          //   value={value}
+                          //   placeholder='Note'
+                          //   onChange={onChange}
+                          // />
+
+                          <TextEditor content={value} onChange={onChange} placeholder='Note' />
                         )}
                       />
                     </Col>

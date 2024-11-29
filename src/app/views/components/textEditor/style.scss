@@ -1,0 +1,30 @@
+.tiptap {
+  :first-child {
+    margin-top: 0;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+
+  /* List styles */
+  ul {
+    li {
+      display: list-item;
+    }
+  }
+
+  ol li {
+    display: list-item;
+  }
+
+  ul,
+  ol {
+    padding-left: 16px;
+
+    li p {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+  }
+}

@@ -31,6 +31,16 @@ ul li {
   display: block;
 }
 
+img {
+  max-width: 100%;
+}
+
+blockquote {
+  border-left: 2px solid #72a526;
+  padding: 4px 4px 4px 8px;
+  margin: 4px 0;
+}
+
 .emr-modal-close {
   display: flex;
   align-items: center;

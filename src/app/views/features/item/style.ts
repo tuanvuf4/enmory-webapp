@@ -44,6 +44,18 @@ const styles = () => {
           color: token.colorTextSecondary,
         },
       },
+
+      '& ul, & ol': {
+        paddingLeft: token.size,
+
+        '& p': {
+          marginBottom: token.size / 4,
+        },
+      },
+
+      // '& ol': {
+      //   paddingLeft: token.size,
+      // },
     },
     contentHead: {
       // marginBottom: token.size / 2,
@@ -117,12 +129,14 @@ const styles = () => {
     },
     original: {
       display: 'flex',
+      flex: 1,
       alignItems: 'flex-start',
       justifyContent: 'space-between',
       gap: token.size / 4,
       fontSize: token.fontSizeHeading5,
       margin: [0, 0, 0, 0],
       fontFamily: appStyleConfig.fontFamily.lato,
+      cursor: 'pointer',
 
       '& span': {
         display: 'block',
@@ -177,6 +191,10 @@ const styles = () => {
       color: token.colorPrimary,
       fontSize: token.fontSize,
       fontFamily: 'Lora, sans-serif',
+
+      '& li': {
+        display: 'list-item',
+      },
     },
     translate: {
       color: appStyleConfig.color.blue[4],
@@ -196,12 +214,16 @@ const styles = () => {
     note: {
       fontWeight: 'normal',
       fontStyle: 'italic',
-      display: 'flex',
-      gap: token.size / 4,
-      flexWrap: 'wrap',
-      rowGap: 0,
-      fontSize: 13,
+      fontSize: 14,
       fontFamily: 'Lora, sans-serif',
+
+      '& ul': {
+        paddingLeft: token.size,
+      },
+
+      '& li': {
+        display: 'list-item',
+      },
     },
     grammar: {},
     collocations: {},

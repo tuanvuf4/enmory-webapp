@@ -9,21 +9,11 @@ import { default as Highlight } from '@tiptap/extension-highlight'
 import { default as TextAlign } from '@tiptap/extension-text-align'
 import { default as Underline } from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
-
-import {
-  BubbleMenu,
-  type Content,
-  Editor,
-  EditorContent,
-  FloatingMenu,
-  useCurrentEditor,
-  useEditor,
-} from '@tiptap/react'
-import { default as StarterKit } from '@tiptap/starter-kit'
+import { type Content, Editor, EditorContent, useEditor } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
 import { isEmpty } from 'lodash'
 import { Button } from 'antd'
 import styles from './style'
-
 import './style.scss'
 import {
   BoldOutlined,
@@ -47,8 +37,6 @@ interface MenuBarProps {
 }
 
 const MenuBar = ({ editor }: MenuBarProps) => {
-  // const { editor } = useCurrentEditor()
-
   if (!editor) return null
 
   const addImage = useCallback(() => {
@@ -220,9 +208,7 @@ export const TextEditor = ({ content, onUpdate, onChange, errors }: TextEditor) 
     extensions: [
       StarterKit,
       Underline,
-      Image.configure({
-        inline: true,
-      }),
+      Image.configure({ inline: false }),
       Link.configure({
         openOnClick: false,
         autolink: true,
@@ -302,8 +288,11 @@ export const TextEditor = ({ content, onUpdate, onChange, errors }: TextEditor) 
   })
 
   useEffect(() => {
-    if (editor?.getHTML() !== content) editor?.commands.setContent(content)
+    if (!editor) return
+    if (editor.getHTML() !== content) editor.commands.setContent(content)
   }, [content, editor])
+
+  if (!editor) return null
 
   return (
     <div className={`${classes.textEditorWrapper} flex gap-1 flex-col`}>
@@ -314,8 +303,6 @@ export const TextEditor = ({ content, onUpdate, onChange, errors }: TextEditor) 
       <div className={`${classes.textEditorContent}`}>
         <EditorContent editor={editor} />
       </div>
-      {/* <FloatingMenu editor={editor}>This is the floating menu</FloatingMenu>
-      <BubbleMenu editor={editor}>This is the bubble menu</BubbleMenu> */}
 
       {errors ? <span className={`text-red-6 mb-2.5 mt-1`}>{errors}</span> : null}
     </div>

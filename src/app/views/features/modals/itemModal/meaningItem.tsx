@@ -12,6 +12,7 @@ import { ExampleItem } from './exampleItem'
 import styles from './style'
 import clsx from 'clsx'
 import { TextEditor } from '@/views/components'
+import { Suspense } from 'react'
 
 interface IProps {
   origin?: string
@@ -376,20 +377,19 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                     </Col>
 
                     <Col md={20} xs={24}>
-                      {/* <Controller
+                      <Controller
                         control={control}
                         name={`meanings.${index}.note`}
                         render={({ field: { onChange, value } }) => (
-                          // <TextArea
-                          //   autoSize={{ minRows: 2, maxRows: 4 }}
-                          //   value={value}
-                          //   placeholder='Note'
-                          //   onChange={onChange}
-                          // />
-
-                          <TextEditor content={value} onChange={onChange} placeholder='Note' />
+                          <TextArea
+                            autoSize={{ minRows: 2, maxRows: 4 }}
+                            value={value}
+                            placeholder='Note'
+                            onChange={onChange}
+                          />
+                          // <TextEditor content={value ?? ''} onChange={onChange} placeholder='Note' />
                         )}
-                      /> */}
+                      />
                     </Col>
                   </Row>
                 </Col>

@@ -7,7 +7,6 @@ import { settingAction } from '@/store/reducers/setting.reducer'
 import { ExampleFormAdd } from '../../exampleOverview/exampleFormAdd'
 import { IExample } from '@/models/item.model'
 import { exampleAction } from '@/store/reducers/example.reducer'
-import { ExampleMode } from '@/models/example.model'
 
 interface IProps {
   onConfirm?: () => void

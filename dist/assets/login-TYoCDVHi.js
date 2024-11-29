@@ -1,0 +1,1 @@
+import{g as o,j as s,f as e,av as n}from"./index-EAqF-31b.js";const l=()=>{const a=o();return s.jsx("div",{className:a.container,children:s.jsx("div",{className:e(a.bodyContent),children:s.jsx(n,{})})})};export{l as default};

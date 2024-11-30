@@ -295,7 +295,7 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
                   onClick={() => (isChecked ? onReload() : setIsChecked(true))}
                   icon={isChecked ? <SyncOutlined spin={loading} /> : null}
                 >
-                  {!isChecked ? 'Check' : <span className={gClasses.fromTablet}>Reload</span>}
+                  {!isChecked ? 'Check' : 'Reload'}
                 </Button>
               )}
 

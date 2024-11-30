@@ -1,20 +1,38 @@
-import { type ReactNode, useCallback, useEffect } from 'react'
+import { type ReactNode, useCallback, useEffect, useRef } from 'react'
+
+import {
+  ClassicEditor,
+  Bold,
+  Essentials,
+  Heading,
+  Indent,
+  IndentBlock,
+  Strikethrough,
+  UploadImageCommand,
+  BlockQuote,
+  Italic,
+  Link,
+  List,
+  MediaEmbed,
+  Paragraph,
+  Table,
+  Undo,
+} from 'ckeditor5'
+import { CKEditor, CKEditorContext } from '@ckeditor/ckeditor5-react'
+
 import { CiImageOn } from 'react-icons/ci'
-import Image from '@tiptap/extension-image'
 import { RxQuote } from 'react-icons/rx'
 import { IoIosUndo, IoIosRedo } from 'react-icons/io'
 import { TbH1, TbH2, TbH3, TbH4, TbH5, TbH6 } from 'react-icons/tb'
 import { BiParagraph } from 'react-icons/bi'
-import { default as Highlight } from '@tiptap/extension-highlight'
-import { default as TextAlign } from '@tiptap/extension-text-align'
-import { default as Underline } from '@tiptap/extension-underline'
-import Link from '@tiptap/extension-link'
-import { type Content, Editor, EditorContent, useEditor } from '@tiptap/react'
+import Image from '@tiptap/extension-image'
+import TextAlign from '@tiptap/extension-text-align'
+// import Link from '@tiptap/extension-link'
 import StarterKit from '@tiptap/starter-kit'
+import { type Content, Editor, EditorContent, useEditor } from '@tiptap/react'
 import { isEmpty } from 'lodash'
 import { Button } from 'antd'
 import styles from './style'
-import './style.scss'
 import {
   BoldOutlined,
   ItalicOutlined,
@@ -24,12 +42,12 @@ import {
   UnorderedListOutlined,
 } from '@ant-design/icons'
 
+import './style.scss'
+import 'ckeditor5/ckeditor5.css'
+
 interface TextEditor {
-  content: Content
-  onUpdate?: (cont: string) => void
-  onChange?: (cont: string) => void
-  placeholder?: string
-  errors?: ReactNode
+  content?: string | null
+  onChange?: (content: unknown) => void
 }
 
 interface MenuBarProps {
@@ -201,110 +219,159 @@ const MenuBar = ({ editor }: MenuBarProps) => {
   )
 }
 
-export const TextEditor = ({ content, onUpdate, onChange, errors }: TextEditor) => {
+export const TextEditor = ({ content, onChange }: TextEditor) => {
+  const editorRef = useRef<ClassicEditor>()
+
   const classes = styles()
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      Image.configure({ inline: false }),
-      Link.configure({
-        openOnClick: false,
-        autolink: true,
-        defaultProtocol: 'https',
-        protocols: ['http', 'https'],
-        isAllowedUri: (url, ctx) => {
-          try {
-            // construct URL
-            const parsedUrl = url.includes(':')
-              ? new URL(url)
-              : new URL(`${ctx.defaultProtocol}://${url}`)
+  // const editor = useEditor({
+  //   extensions: [
+  //     StarterKit,
+  //     Image.configure({ inline: false }),
+  //     Link.configure({
+  //       openOnClick: false,
+  //       autolink: true,
+  //       defaultProtocol: 'https',
+  //       protocols: ['http', 'https'],
+  //       isAllowedUri: (url, ctx) => {
+  //         try {
+  //           // construct URL
+  //           const parsedUrl = url.includes(':')
+  //             ? new URL(url)
+  //             : new URL(`${ctx.defaultProtocol}://${url}`)
 
-            // use default validation
-            if (!ctx.defaultValidate(parsedUrl.href)) {
-              return false
-            }
+  //           // use default validation
+  //           if (!ctx.defaultValidate(parsedUrl.href)) {
+  //             return false
+  //           }
 
-            // disallowed protocols
-            const disallowedProtocols = ['ftp', 'file', 'mailto']
-            const protocol = parsedUrl.protocol.replace(':', '')
+  //           // disallowed protocols
+  //           const disallowedProtocols = ['ftp', 'file', 'mailto']
+  //           const protocol = parsedUrl.protocol.replace(':', '')
 
-            if (disallowedProtocols.includes(protocol)) {
-              return false
-            }
+  //           if (disallowedProtocols.includes(protocol)) {
+  //             return false
+  //           }
 
-            // only allow protocols specified in ctx.protocols
-            const allowedProtocols = ctx.protocols.map((p) =>
-              typeof p === 'string' ? p : p.scheme,
-            )
+  //           // only allow protocols specified in ctx.protocols
+  //           const allowedProtocols = ctx.protocols.map((p) =>
+  //             typeof p === 'string' ? p : p.scheme,
+  //           )
 
-            if (!allowedProtocols.includes(protocol)) {
-              return false
-            }
+  //           if (!allowedProtocols.includes(protocol)) {
+  //             return false
+  //           }
 
-            // disallowed domains
-            const disallowedDomains = ['example-phishing.com', 'malicious-site.net']
-            const domain = parsedUrl.hostname
+  //           // disallowed domains
+  //           const disallowedDomains = ['example-phishing.com', 'malicious-site.net']
+  //           const domain = parsedUrl.hostname
 
-            if (disallowedDomains.includes(domain)) {
-              return false
-            }
+  //           if (disallowedDomains.includes(domain)) {
+  //             return false
+  //           }
 
-            // all checks have passed
-            return true
-          } catch (error) {
-            return false
-          }
-        },
-        shouldAutoLink: (url) => {
-          try {
-            // construct URL
-            const parsedUrl = url.includes(':') ? new URL(url) : new URL(`https://${url}`)
+  //           // all checks have passed
+  //           return true
+  //         } catch (error) {
+  //           return false
+  //         }
+  //       },
+  //       shouldAutoLink: (url) => {
+  //         try {
+  //           // construct URL
+  //           const parsedUrl = url.includes(':') ? new URL(url) : new URL(`https://${url}`)
 
-            // only auto-link if the domain is not in the disallowed list
-            const disallowedDomains = ['example-no-autolink.com', 'another-no-autolink.com']
-            const domain = parsedUrl.hostname
+  //           // only auto-link if the domain is not in the disallowed list
+  //           const disallowedDomains = ['example-no-autolink.com', 'another-no-autolink.com']
+  //           const domain = parsedUrl.hostname
 
-            return !disallowedDomains.includes(domain)
-          } catch (error) {
-            return false
-          }
-        },
-      }),
-      Highlight,
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    ],
-    onUpdate: ({ editor }) => {
-      if (!isEmpty(editor.getText()) || !isEmpty(editor.getHTML())) {
-        onUpdate?.(editor.getHTML())
-        onChange?.(editor.getHTML())
-      } else {
-        onUpdate?.('')
-        onChange?.('')
-      }
-    },
-    content,
-  })
+  //           return !disallowedDomains.includes(domain)
+  //         } catch (error) {
+  //           return false
+  //         }
+  //       },
+  //     }),
+  //     TextAlign.configure({ types: ['heading', 'paragraph'] }),
+  //   ],
+  //   onUpdate: ({ editor }) => {
+  //     if (!isEmpty(editor.getText()) || !isEmpty(editor.getHTML())) {
+  //       onUpdate?.(editor.getHTML())
+  //       onChange?.(editor.getHTML())
+  //     } else {
+  //       onUpdate?.('')
+  //       onChange?.('')
+  //     }
+  //   },
+  //   content,
+  // })
 
-  useEffect(() => {
-    if (!editor) return
-    if (editor.getHTML() !== content) editor.commands.setContent(content)
-  }, [content, editor])
-
-  if (!editor) return null
+  // useEffect(() => {
+  //   if (!editor) return
+  //   if (editor.getHTML() !== content) editor.commands.setContent(content)
+  // }, [content, editor])
 
   return (
-    <div className={`${classes.textEditorWrapper} flex gap-1 flex-col`}>
-      <div className={classes.textEditorToolbar}>
-        <MenuBar editor={editor} />
-      </div>
+    <>
+      {/* <div className={`${classes.textEditorWrapper} flex gap-1 flex-col`}>
+        <div className={classes.textEditorToolbar}>
+          <MenuBar editor={editor} />
+        </div>
 
-      <div className={`${classes.textEditorContent}`}>
-        <EditorContent editor={editor} />
-      </div>
+        <div className={`${classes.textEditorContent}`}>
+          <EditorContent editor={editor} />
+        </div>
+        {errors ? <span className={`text-red-6 mb-2.5 mt-1`}>{errors}</span> : null}
+      </div> */}
 
-      {errors ? <span className={`text-red-6 mb-2.5 mt-1`}>{errors}</span> : null}
-    </div>
+      <div className={'text-editor'}>
+        <CKEditor
+          editor={ClassicEditor}
+          config={{
+            plugins: [
+              Essentials,
+              Bold,
+              Heading,
+              Indent,
+              IndentBlock,
+              Italic,
+              Link,
+              List,
+              MediaEmbed,
+              Paragraph,
+              Table,
+              Undo,
+              Strikethrough,
+              BlockQuote,
+            ],
+            toolbar: [
+              'undo',
+              'redo',
+              '|',
+              'bold',
+              'italic',
+              'strikethrough',
+              '|',
+              'link',
+              'blockQuote',
+              'uploadImage',
+              'mediaEmbed',
+              '|',
+              'numberedList',
+              'bulletedList',
+            ],
+          }}
+          onChange={(event) => {
+            console.log(`******* event ******* `, event)
+            onChange?.(editorRef.current?.getData() )
+          }}
+          data={content}
+          onReady={(editor) => {
+            editorRef.current = editor
+            // You can store the "editor" and use when it is needed.
+            console.log('Editor 2 is ready to use!', editor)
+          }}
+        />
+      </div>
+    </>
   )
 }

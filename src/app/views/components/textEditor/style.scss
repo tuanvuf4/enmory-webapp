@@ -1,4 +1,8 @@
-.tiptap {
+.text-editor {
+  .ck-content {
+    min-height: 4em;
+    padding: 8px 12px !important;
+  }
   :first-child {
     margin-top: 0;
   }

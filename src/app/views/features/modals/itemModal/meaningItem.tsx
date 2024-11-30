@@ -28,7 +28,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
 
   const [modal, modalContextHolder] = Modal.useModal()
 
-  const { control, getValues, trigger } = useFormContext<IItem>()
+  const { control, getValues, trigger, setValue } = useFormContext<IItem>()
 
   const { fields, remove, prepend } = useFieldArray({
     control,
@@ -380,15 +380,25 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                       <Controller
                         control={control}
                         name={`meanings.${index}.note`}
-                        render={({ field: { onChange, value } }) => (
-                          <TextArea
-                            autoSize={{ minRows: 2, maxRows: 4 }}
-                            value={value}
-                            placeholder='Note'
-                            onChange={onChange}
-                          />
-                          // <TextEditor content={value ?? ''} onChange={onChange} placeholder='Note' />
-                        )}
+                        render={({ field: { onChange, value } }) => {
+                          console.log(`******* value ******* `, value)
+                          return (
+                            // <TextArea
+                            //   autoSize={{ minRows: 2, maxRows: 4 }}
+                            //   value={value}
+                            //   placeholder='Note'
+                            //   onChange={onChange}
+                            // />
+                            <TextEditor
+                              content={value}
+                              onChange={(content: any) => {
+                                console.log(`******* content ******* `, content);
+                                setValue(`meanings.${index}.note`, content ?? '')
+                                onChange(content)
+                              }}
+                            />
+                          )
+                        }}
                       />
                     </Col>
                   </Row>

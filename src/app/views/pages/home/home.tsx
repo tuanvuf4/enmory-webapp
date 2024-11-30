@@ -16,6 +16,7 @@ import { Item } from '@/views/features/item/Item'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { IExample } from '@/models/item.model'
 import { ExampleMode } from '@/models/example.model'
+import { TextEditor } from '@/views/components'
 
 const Home = () => {
   const { token } = theme.useToken()

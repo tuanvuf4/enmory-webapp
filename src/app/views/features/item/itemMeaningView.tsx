@@ -66,10 +66,10 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, type 
       (catId === ECategory.WORD && meaning.pronunciation.us)
     ) {
       return (
-        <div className={`${classes.pronouns} flex gap-6 items-center`}>
+        <div className={`${classes.pronouns} flex flex-wrap gap-x-4 gap-y-1 items-center`}>
           {meaning.pronunciation.uk && (
             <div className={classes.audio}>
-              <span className={classes.accent}>UK</span>
+              {/* <span className={classes.accent}>UK</span> */}
               <AudioOutlined className={classes.audioIcon} />
               {meaning.pronunciation?.uk || ''}
             </div>
@@ -77,7 +77,7 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, type 
 
           {meaning.pronunciation.us && (
             <div className={classes.audio}>
-              <span className={classes.accent}>US</span>
+              {/* <span className={classes.accent}>US</span> */}
               <AudioOutlined className={classes.audioIcon} />
               {meaning.pronunciation?.us || ''}
             </div>
@@ -111,7 +111,7 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, type 
           <div className={'flex gap-1 justify-between items-center'}>
             {getPronouns()}
 
-            {catId === ECategory.WORD && <h4 className={'m-0'}>{getTypeOfItem(meaning.typeId)}</h4>}
+            {catId === ECategory.WORD && <h4 className={'m-0 p-1'}>{getTypeOfItem(meaning.typeId)}</h4>}
           </div>
 
           {meaning.note && (

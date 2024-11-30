@@ -362,7 +362,7 @@ export const TextEditor = ({ content, onChange }: TextEditor) => {
           }}
           onChange={(event) => {
             console.log(`******* event ******* `, event)
-            onChange?.(editorRef.current?.getData() )
+            onChange?.(editorRef.current?.getData())
           }}
           data={content}
           onReady={(editor) => {

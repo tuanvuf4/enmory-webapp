@@ -111,7 +111,9 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, type 
           <div className={'flex gap-1 justify-between items-center'}>
             {getPronouns()}
 
-            {catId === ECategory.WORD && <h4 className={'m-0 p-1'}>{getTypeOfItem(meaning.typeId)}</h4>}
+            {catId === ECategory.WORD && (
+              <h4 className={'m-0 p-1'}>{getTypeOfItem(meaning.typeId)}</h4>
+            )}
           </div>
 
           {meaning.note && (

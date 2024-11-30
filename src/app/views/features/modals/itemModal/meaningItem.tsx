@@ -392,7 +392,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                             <TextEditor
                               content={value}
                               onChange={(content: any) => {
-                                console.log(`******* content ******* `, content);
+                                console.log(`******* content ******* `, content)
                                 setValue(`meanings.${index}.note`, content ?? '')
                                 onChange(content)
                               }}

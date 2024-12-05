@@ -69,6 +69,11 @@ const styles = () => {
       '& > *': {
         margin: `${token.size / 2}px 0`,
       },
+
+      '& img': {
+        maxWidth: '100%',
+        height: 'auto',
+      },
     },
     meaningCommon: {
       border: `1px solid ${appStyleConfig.border.blue[2]}`,

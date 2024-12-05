@@ -16,6 +16,10 @@ import {
   Paragraph,
   Table,
   Undo,
+  AutoImage,
+  Image,
+  ImageInsertViaUrl,
+  Alignment,
 } from 'ckeditor5'
 import { CKEditor } from '@ckeditor/ckeditor5-react'
 
@@ -45,6 +49,10 @@ export const TextEditor = ({ content, onChange }: TextEditor) => {
             Link,
             List,
             MediaEmbed,
+            Image,
+            AutoImage,
+            ImageInsertViaUrl,
+            Alignment,
             Paragraph,
             Table,
             Undo,
@@ -55,11 +63,15 @@ export const TextEditor = ({ content, onChange }: TextEditor) => {
             'bold',
             'italic',
             'strikethrough',
+            // '|',
+            // 'alignment',
+            // only works for text format
             '|',
             'link',
             'blockQuote',
+            'imageInsertViaUrl',
+            'insertImage',
             'uploadImage',
-            'mediaEmbed',
             '|',
             'numberedList',
             'bulletedList',

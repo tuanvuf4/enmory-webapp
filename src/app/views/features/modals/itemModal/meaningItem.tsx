@@ -381,7 +381,6 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                         control={control}
                         name={`meanings.${index}.note`}
                         render={({ field: { onChange, value } }) => {
-                          console.log(`******* value ******* `, value)
                           return (
                             // <TextArea
                             //   autoSize={{ minRows: 2, maxRows: 4 }}
@@ -392,7 +391,6 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                             <TextEditor
                               content={value}
                               onChange={(content: any) => {
-                                console.log(`******* content ******* `, content)
                                 setValue(`meanings.${index}.note`, content ?? '')
                                 onChange(content)
                               }}

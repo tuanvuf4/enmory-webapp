@@ -1,1 +1,1 @@
-export * from './NoResult';
+export * from './NoResult'

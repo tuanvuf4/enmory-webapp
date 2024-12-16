@@ -4,6 +4,7 @@ import {
   FilterOutlined,
   SyncOutlined,
   SearchOutlined,
+  Loading3QuartersOutlined,
 } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
 import { useAppSelector, useAppDispatch } from '@/core/hooks'
@@ -19,6 +20,7 @@ import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import styles from './style'
 import clsx from 'clsx'
+import { NoResult } from '@/views/components'
 
 interface IProps {
   filter?: boolean
@@ -39,33 +41,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
 
   const keyword = watch('keyword')
 
-  const { options } = useAutoComplete(keyword, 'example')
-
-  const NoResult = () => {
-    return (
-      <div className={classes.optionItem} onClick={(e) => e.stopPropagation()}>
-        <span>No result!</span>
-      </div>
-    )
-  }
-
-  const noResultInList = (options: any[], value: string) => {
-    const noResult = [{ value: 'noresult', label: NoResult() }]
-
-    if (options.length === 0 && value) {
-      return noResult
-    }
-
-    if (options.length > 0 && options.findIndex((item) => item.label === value) > -1) {
-      return [...options]
-    }
-
-    if (options.length > 0 && options.findIndex((item) => item.label === value) === -1) {
-      return [...options, ...noResult]
-    }
-
-    return []
-  }
+  const { options, isSearching } = useAutoComplete(keyword, 'example')
 
   const onSelect = (value: string) => {
     exampleApi.getExampleById(value).then((resp) => {
@@ -101,25 +77,9 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // useEffect(() => {
-  //   dispatch(
-  //     exampleAsync.fetchExamples({
-  //       keyword: formSearchQuery.keyword || '',
-  //       page: pagination.page,
-  //       size: pagination.size,
-  //       order: 'DESC',
-  //       orderBy: 'created_date',
-  //     }),
-  //   )
-  // }, [])
+  useEffect(() => reset(formSearchQuery), [])
 
-  useEffect(() => {
-    reset(formSearchQuery)
-  }, [])
-
-  useEffect(() => {
-    reset(formSearchQuery)
-  }, [formSearchQuery])
+  useEffect(() => reset(formSearchQuery), [formSearchQuery])
 
   return (
     <div className={classes.searchForm}>
@@ -132,27 +92,33 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
               <div className={classes.autoSearchInputGroup}>
                 <AutoComplete
                   value={value}
-                  placeholder='Keyword'
+                  placeholder='Enter keyword...'
+                  notFoundContent={<NoResult showAddBtn={false} />}
                   children={
                     <Input
                       className={classes.searchExampleInput}
-                      allowClear={{
-                        clearIcon: (
-                          <CloseCircleOutlined
-                            style={{
-                              background: token.colorWhite,
-                              padding: token.size / 4,
-                              borderRadius: '50%',
-                              color: token.colorBgLayout,
-                              fontSize: 14,
-                            }}
-                          />
-                        ),
-                      }}
+                      suffix={isSearching ? <Loading3QuartersOutlined spin /> : undefined}
+                      allowClear={
+                        isSearching
+                          ? false
+                          : {
+                              clearIcon: (
+                                <CloseCircleOutlined
+                                  style={{
+                                    background: token.colorWhite,
+                                    padding: token.size / 4,
+                                    borderRadius: '50%',
+                                    color: token.colorBgLayout,
+                                    fontSize: 14,
+                                  }}
+                                />
+                              ),
+                            }
+                      }
                     />
                   }
                   className={clsx(classes.autoSearchInput, gClasses.fulWidth)}
-                  options={noResultInList(options, value)}
+                  options={options}
                   onSelect={onSelect}
                   onClear={() => {
                     dispatch(exampleAction.updateSearchFormValue({ keyword: '' }))

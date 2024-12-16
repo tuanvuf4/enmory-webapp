@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { appStyleConfig } from '@/style/appStyle'
 import { CloseSquareOutlined } from '@ant-design/icons'
-import { CRUForm } from './ItemForm'
+import { ItemForm } from './ItemForm'
 
 export const ItemModal: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -27,8 +27,9 @@ export const ItemModal: React.FC = () => {
       width={appStyleConfig.modal.large}
       maskClosable={false}
       footer={false}
+      keyboard={false}
     >
-      <CRUForm categories={categories} types={types} />
+      <ItemForm categories={categories} types={types} />
     </Modal>
   )
 }

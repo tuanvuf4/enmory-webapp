@@ -1,10 +1,10 @@
 import globalStyle from '@/style/appStyle'
 import {
-  PlusOutlined,
   CloseCircleOutlined,
   FilterOutlined,
   SyncOutlined,
   SearchOutlined,
+  Loading3QuartersOutlined,
 } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
 import { useAppSelector, useAppDispatch } from '@/core/hooks'
@@ -28,9 +28,10 @@ import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select } from '
 import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { initItem } from '../modals/itemModal'
 import styles from './style'
 import clsx from 'clsx'
+import { NoResult } from '@/views/components'
+import { initItem } from '../modals/itemModal'
 
 interface ISearchFormComp {
   filter?: boolean
@@ -50,7 +51,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [showtype, setShowType] = useState<boolean>(false)
+  const [showType, setShowType] = useState<boolean>(false)
 
   const { formSearchValue } = useAppSelector((state) => state.items)
   const { categories, types } = useAppSelector((state) => state.config)
@@ -63,51 +64,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
 
   const keyword = watch('keyword')
 
-  const { options } = useAutoComplete(keyword)
-
-  const NoResult = () => {
-    return (
-      <div className={classes.optionItem} onClick={(e) => e.stopPropagation()}>
-        <span>No exact!</span>
-
-        <Button
-          className={clsx(classes.btnAddNew)}
-          icon={
-            <PlusOutlined style={{ fontSize: token.fontSizeHeading4 }} color={token.colorPrimary} />
-          }
-          onClick={() => {
-            dispatch(
-              settingAction.setCurrentItem({
-                ...initItem,
-                original: getValues('keyword'),
-              }),
-            )
-            dispatch(settingAction.toggleItemModal())
-          }}
-        >
-          Add
-        </Button>
-      </div>
-    )
-  }
-
-  const noResultInList = (options: any[], value: string) => {
-    const noResult = [{ value: 'noresult', label: NoResult() }]
-
-    if (options.length > 0 && options.findIndex((item) => item.label === value) === -1) {
-      return [...options, ...noResult]
-    }
-
-    if (options.length > 0 && options.findIndex((item) => item.label === value) > -1) {
-      return [...options]
-    }
-
-    if (options.length === 0 && value) {
-      return noResult
-    }
-
-    return []
-  }
+  const { options, isSearching } = useAutoComplete(keyword)
 
   const onSelect = (value: string) => {
     reset({ ...initSearchFormItem, keyword: value })
@@ -180,27 +137,9 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // useEffect(() => {
-  //   dispatch(
-  //     itemAsync.fetchItems({
-  //       keyword: formSearchValue.keyword || '',
-  //       cat: ECategory.ALL,
-  //       type: EType.ALL,
-  //       defect: false,
-  //       archive: false,
-  //       page: pagination.page,
-  //       size: pagination.size,
-  //     }),
-  //   )
-  // }, [])
+  useEffect(() => reset(formSearchValue), [])
 
-  useEffect(() => {
-    reset(formSearchValue)
-  }, [])
-
-  useEffect(() => {
-    reset(formSearchValue)
-  }, [formSearchValue])
+  useEffect(() => reset(formSearchValue), [formSearchValue])
 
   return (
     <div className={classes.searchForm}>
@@ -213,57 +152,52 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
               <div className={classes.autoSearchInputGroup}>
                 <AutoComplete
                   value={value}
-                  placeholder='Keyword'
-                  children={
-                    <Input
-                      className={classes.searchExampleInput}
-                      allowClear={{
-                        clearIcon: (
-                          <CloseCircleOutlined
-                            style={{
-                              background: token.colorWhite,
-                              padding: token.size / 4,
-                              borderRadius: '50%',
-                              color: token.colorBgLayout,
-                              fontSize: 14,
-                            }}
-                          />
-                        ),
+                  placeholder='Enter keyword...'
+                  notFoundContent={
+                    <NoResult
+                      onAdd={() => {
+                        dispatch(
+                          settingAction.setCurrentItem({
+                            ...initItem,
+                            original: getValues('keyword'),
+                          }),
+                        )
+                        dispatch(settingAction.toggleItemModal())
                       }}
                     />
                   }
+                  children={
+                    <Input
+                      className={classes.searchExampleInput}
+                      suffix={isSearching ? <Loading3QuartersOutlined spin /> : undefined}
+                      allowClear={
+                        isSearching
+                          ? false
+                          : {
+                              clearIcon: (
+                                <CloseCircleOutlined
+                                  style={{
+                                    background: token.colorWhite,
+                                    padding: token.size / 4,
+                                    borderRadius: '50%',
+                                    color: token.colorBgLayout,
+                                    fontSize: 14,
+                                  }}
+                                />
+                              ),
+                            }
+                      }
+                    />
+                  }
                   className={clsx(classes.autoSearchInput, gClasses.fulWidth)}
-                  options={noResultInList(options, value)}
+                  options={options}
                   onSelect={onSelect}
                   onClear={() => {
                     dispatch(itemAction.updateSearchFormValue({ keyword: '' }))
                     onChange('')
                   }}
-                  onChange={(text) => {
-                    onChange(text)
-                  }}
+                  onChange={(text) => onChange(text)}
                 />
-
-                {/* <Button
-                  className={classNames(classes.btnAddNew)}
-                  icon={
-                    <PlusOutlined
-                      style={{ fontSize: token.fontSizeHeading4 }}
-                      color={token.colorPrimary}
-                    />
-                  }
-                  onClick={() => {
-                    dispatch(
-                      settingAction.setCurrentItem({
-                        ...initItem,
-                        original: getValues('keyword'),
-                      }),
-                    )
-                    dispatch(settingAction.toggleItemModal())
-                  }}
-                >
-                  Add
-                </Button> */}
               </div>
             )
           }}
@@ -349,7 +283,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                   )}
                 />
 
-                {showtype && !getValues('defect') && (
+                {showType && !getValues('defect') && (
                   <Controller
                     control={control}
                     name={`type`}

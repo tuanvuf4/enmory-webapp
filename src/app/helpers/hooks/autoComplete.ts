@@ -29,7 +29,7 @@ export const useAutoComplete = (
     const query = {
       keyword: searchText,
       page: 0,
-      size: defaultSetting.numberItemOfAutoComplete * 2,
+      size: defaultSetting.numberItemOfAutoComplete * 10,
     }
     if (searchText && searchText.length >= 2) {
       handleSession = setTimeout(() => {

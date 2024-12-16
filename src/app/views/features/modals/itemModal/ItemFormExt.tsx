@@ -27,13 +27,14 @@ import MeaningItem from './meaningItem'
 import styles from './style'
 import { useAppDispatch, useAppSelector } from '@/core/hooks'
 import clsx from 'clsx'
+import { NoResult } from '@/views/components'
 
-interface ICRUForm {
+interface ItemFormProps {
   categories: IPair<string, ECategory>[]
   types: IPair<string, EType>[]
 }
 
-export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
+export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
   const { token } = theme.useToken()
   const classes = styles()
   const gClasses = globalStyle()
@@ -42,7 +43,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
 
   const dispatch = useAppDispatch()
 
-  const [itemOrigin, setItemOrigin] = useState<IItem | null>(null)
+  const [origin, setOrigin] = useState<IItem | null>(null)
 
   const { user } = useAppSelector((state) => state.auth)
 
@@ -175,7 +176,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
             dispatch(settingAction.setOnEditItem(false))
           } finally {
             reset(initItem)
-            setItemOrigin(null)
+            setOrigin(null)
             dispatch(settingAction.setCurrentItem(null))
           }
         } else {
@@ -215,7 +216,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
             dispatch(settingAction.toggleItemModal())
           } finally {
             reset({ ...initItem })
-            setItemOrigin(null)
+            setOrigin(null)
             dispatch(settingAction.setCurrentItem(null))
           }
         }
@@ -225,7 +226,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
 
   const handleCancel = () => {
     reset(initItem)
-    setItemOrigin(null)
+    setOrigin(null)
     dispatch(settingAction.toggleItemModal())
     dispatch(settingAction.setOnEditItem(false))
     dispatch(settingAction.setCurrentItem(null))
@@ -256,11 +257,10 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
     if (!original) {
       setError('original', { type: 'required', message: msgErrors.required })
     } else if (
-      (onEditEvent &&
-        options.length > 0 &&
-        original !== itemOrigin?.original &&
-        options.findIndex((option) => option.value !== itemOrigin?.original) > -1) ||
-      (options.length > 0 && !onEditEvent)
+      onEditEvent &&
+      options.length > 0 &&
+      original !== origin?.original &&
+      options.findIndex((option) => option.value === original) > -1
     ) {
       setError('original', { type: 'existed', message: msgErrors.existed })
     } else clearErrors('original')
@@ -268,7 +268,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
 
   useEffect(() => {
     if (currentItem) {
-      setItemOrigin(currentItem as IItem<string[]>)
+      setOrigin(currentItem as IItem<string[]>)
       reset(currentItem)
     } else {
       if (appConfig.appType === EAppType.EXTENSION)
@@ -276,7 +276,7 @@ export const CRUFormExt: React.FC<ICRUForm> = ({ categories, types }) => {
           reset({ ...initItem, original: resp.original || '' })
         })
     }
-  }, [currentItem, itemOrigin])
+  }, [currentItem, origin])
 
   useEffect(() => {
     if (isShowItemModal && !original && !onEditEvent) {

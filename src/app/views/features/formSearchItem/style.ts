@@ -7,12 +7,6 @@ const styles = () => {
 
   return createUseStyles({
     btnAddNew: {
-      display: 'flex !important',
-      alignItems: 'center',
-      textTransform: 'uppercase',
-      fontWeight: 'bold !important',
-      borderRadius: `0 !important`,
-
       '&:hover span': {
         color: token.colorPrimary,
       },

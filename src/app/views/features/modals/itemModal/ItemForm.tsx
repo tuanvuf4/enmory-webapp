@@ -28,12 +28,12 @@ import styles from './style'
 import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
 import { CloseCircleOutlined, Loading3QuartersOutlined } from '@ant-design/icons'
 
-interface ICRUForm {
+interface ItemFormProps {
   categories: IPair<string, ECategory>[]
   types: IPair<string, EType>[]
 }
 
-export const CRUForm: React.FC<ICRUForm> = ({ categories, types }) => {
+export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
   const { token } = theme.useToken()
   const classes = styles()
   const gClasses = globalStyle()
@@ -250,7 +250,7 @@ export const CRUForm: React.FC<ICRUForm> = ({ categories, types }) => {
       onEditEvent &&
       options.length > 0 &&
       original !== origin?.original &&
-      options.findIndex((option) => option.value === origin?.original) > -1
+      options.findIndex((option) => option.value === original) > -1
     ) {
       setError('original', { type: 'existed', message: msgErrors.existed })
     } else clearErrors('original')

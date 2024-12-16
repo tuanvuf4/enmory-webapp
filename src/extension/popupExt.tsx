@@ -9,7 +9,7 @@ import { ExampleFormAdd } from '@/views/features/exampleOverview/exampleFormAdd'
 import { HeaderExt } from '@/views/features/headerExt/header'
 import { LoginForm } from '@/views/features/loginForm/loginForm'
 import { initItem } from '@/views/features/modals/itemModal'
-import { CRUFormExt } from '@/views/features/modals/itemModal/ItemFormExt'
+import { ItemFormExt } from '@/views/features/modals/itemModal/ItemFormExt'
 import { RegisterForm } from '@/views/pages/registerForm/registerForm'
 import { theme } from 'antd'
 import { useEffect, useState } from 'react'
@@ -102,7 +102,7 @@ export const PopupExt = () => {
           {currentPage === EPageExt.ADD && (
             <div className={classes.cruForm}>
               <FormProvider {...methods}>
-                <CRUFormExt categories={cats} types={types} />
+                <ItemFormExt categories={cats} types={types} />
               </FormProvider>
             </div>
           )}

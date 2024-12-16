@@ -267,11 +267,11 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                         <Col md={4} xs={24}>
                           <label htmlFor=''>
                             Pronunciation:
-                            {!getValues(`meanings.${index}.pronunciation.common`) && (
+                            {/* {!getValues(`meanings.${index}.pronunciation.common`) && (
                               <Popover title={msgWarning.empty}>
                                 <WarningOutlined className={classes.alertIcon} />
                               </Popover>
-                            )}
+                            )} */}
                           </label>
                         </Col>
 

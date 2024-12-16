@@ -298,20 +298,20 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
 
                     {catType === ECategory.WORD && (
                       <>
-                        <Col md={4} xs={24} className={gClasses.fromTablet}>
+                        <Col md={4} xs={24}>
                           <label htmlFor=''>Pronunciation:</label>
                         </Col>
 
                         <Col md={10} xs={12}>
                           <Row gutter={[token.size / 4, token.size / 4]}>
-                            <Col xs={24}>
+                            {/* <Col xs={24}>
                               UK
                               {!getValues(`meanings.${index}.pronunciation.uk`) && (
                                 <Popover title={msgWarning.empty}>
                                   <WarningOutlined className={classes.alertIcon} />
                                 </Popover>
                               )}
-                            </Col>
+                            </Col> */}
                             <Col xs={24}>
                               <Controller
                                 control={control}
@@ -319,7 +319,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                                 render={({ field }) => (
                                   <Input
                                     {...field}
-                                    placeholder='UK'
+                                    // placeholder='UK'
                                     onBlur={() => trigger()}
                                     onInput={(e) => {
                                       const input = e.target as HTMLInputElement
@@ -336,14 +336,14 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
 
                         <Col md={10} xs={12}>
                           <Row gutter={[token.size / 4, token.size / 4]}>
-                            <Col xs={24}>
+                            {/* <Col xs={24}>
                               US
                               {!getValues(`meanings.${index}.pronunciation.us`) && (
                                 <Popover title='This field is missing!'>
                                   <WarningOutlined className={classes.alertIcon} />
                                 </Popover>
                               )}
-                            </Col>
+                            </Col> */}
                             <Col xs={24}>
                               <Controller
                                 control={control}
@@ -351,7 +351,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                                 render={({ field }) => (
                                   <Input
                                     {...field}
-                                    placeholder='US'
+                                    // placeholder='US'
                                     onBlur={() => trigger()}
                                     onInput={(e) => {
                                       const input = e.target as HTMLInputElement

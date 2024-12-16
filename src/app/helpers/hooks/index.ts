@@ -1,2 +1,2 @@
-export * from './autoComplete';
-export * from './usePrompt';
+export * from './autoComplete'
+export * from './usePrompt'

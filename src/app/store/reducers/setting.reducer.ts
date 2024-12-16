@@ -12,7 +12,6 @@ export interface ISettingState {
   isShowExModal: boolean
   isShowDeleteExModal: boolean
   isShowViewItemModal: boolean
-  isShowDeleteItemModal: boolean
   isShowSearchForm: boolean
   isShowMediaUploadForm: boolean
   notification: INotification
@@ -28,7 +27,6 @@ export const initialState: ISettingState = {
   isShowExModal: false,
   isShowDeleteExModal: false,
   isShowViewItemModal: false,
-  isShowDeleteItemModal: false,
   isShowSearchForm: true,
   isShowMediaUploadForm: false,
   notification: initNotification,
@@ -63,9 +61,6 @@ export const settingReducer = createSlice({
     },
     updateViewItemModal(state: ISettingState, action: PayloadAction<boolean>) {
       state.isShowViewItemModal = action.payload
-    },
-    toggleDeleteItemModal(state: ISettingState) {
-      state.isShowDeleteItemModal = !state.isShowDeleteItemModal
     },
     toggleDeleteExModal(state: ISettingState) {
       state.isShowDeleteExModal = !state.isShowDeleteExModal

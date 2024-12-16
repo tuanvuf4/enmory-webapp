@@ -10,7 +10,6 @@ import { appStyleConfig } from '@/style/appStyle'
 import { ItemModal } from '../modals/itemModal/itemModal'
 import { SideBarMain } from '../sideBar/main/sideBarMain'
 import { ViewItemModal } from '../modals/viewItemModal/viewItemModal'
-import { DeleteItemModal } from '../modals/deleteItemModal/deleteItemModal'
 import { Notification } from '../../components/notification/notification'
 import { configAction } from '@/store/reducers/config.reducer'
 import { MediaUploadModal } from '../modals/mediaUploadModal/mediaUploadModal'
@@ -31,7 +30,6 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
     isShowItemModal,
     isShowExModal,
     isShowDeleteExModal,
-    isShowDeleteItemModal,
     isShowMediaUploadForm,
   } = useAppSelector((state) => state.setting)
   const { isSidebarOpened, drawer } = useAppSelector((state) => state.config)
@@ -179,8 +177,6 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
           {isShowDeleteExModal && <DeleteExModal />}
 
           {isShowViewItemModal && <ViewItemModal open={isShowViewItemModal} />}
-
-          {isShowDeleteItemModal && <DeleteItemModal />}
 
           {isShowMediaUploadForm && <MediaUploadModal open={isShowMediaUploadForm} />}
         </>

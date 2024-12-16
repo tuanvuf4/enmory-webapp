@@ -27,7 +27,6 @@ import MeaningItem from './meaningItem'
 import styles from './style'
 import { useAppDispatch, useAppSelector } from '@/core/hooks'
 import clsx from 'clsx'
-import { NoResult } from '@/views/components'
 
 interface ItemFormProps {
   categories: IPair<string, ECategory>[]

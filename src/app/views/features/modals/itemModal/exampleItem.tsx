@@ -1,9 +1,9 @@
 import globalStyle from '@/style/appStyle'
 import { PlusOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { useAutoComplete } from '@/helpers/hooks'
+import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IItem } from '@/models/item.model'
 import { exampleApi } from '@/services/api'
-import { theme, Modal, Space, Col, Row, Button, Switch, AutoComplete } from 'antd'
+import { theme, Space, Col, Row, Button, Switch, AutoComplete } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
@@ -22,7 +22,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
 
   const [currentSearch, setCurrentSearch] = useState<string>('')
 
-  const [modal, modalRemoveExContextHolder] = Modal.useModal()
+  const { confirmDeleteModal } = usePrompt()
 
   const { options } = useAutoComplete(currentSearch, 'example')
 
@@ -92,13 +92,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           <Button
                             danger
                             onClick={() => {
-                              modal.confirm({
-                                type: 'warning',
-                                title: 'Deleting...!',
-                                content: 'Are you sure you want to delete this item?',
-                                okText: 'Delete',
-                                maskClosable: true,
-                                closable: true,
+                              confirmDeleteModal({
                                 onOk: () => {
                                   remove(key)
                                 },
@@ -200,8 +194,6 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
           )
         })}
       </Space>
-
-      {modalRemoveExContextHolder}
     </>
   )
 }

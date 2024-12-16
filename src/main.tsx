@@ -7,6 +7,7 @@ import { Provider } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
 import persistStore from 'redux-persist/es/persistStore'
 import { ConfigProvider } from 'antd'
+import { App as AntdApp } from 'antd'
 import { appTheme } from './style/theme'
 import { JssProvider } from 'react-jss'
 import { App } from './app/app'
@@ -32,13 +33,15 @@ if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
               theme={appTheme}
               prefixCls={appStyleConfig.prefixClassCss}
             >
-              <StyleProvider hashPriority='high'>
-                <PersistGate loading={null} persistor={persistStore(store)}>
-                  <BrowserRouter data-testid='browser-router-element'>
-                    <PopupExt />
-                  </BrowserRouter>
-                </PersistGate>
-              </StyleProvider>
+              <AntdApp>
+                <StyleProvider hashPriority='high'>
+                  <PersistGate loading={null} persistor={persistStore(store)}>
+                    <BrowserRouter data-testid='browser-router-element'>
+                      <PopupExt />
+                    </BrowserRouter>
+                  </PersistGate>
+                </StyleProvider>
+              </AntdApp>
             </ConfigProvider>
           </GoogleOAuthProvider>
         </AppContext>
@@ -59,11 +62,13 @@ if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
                 theme={appTheme}
                 prefixCls={appStyleConfig.prefixClassCss}
               >
-                <StyleProvider hashPriority='high'>
-                  <PersistGate loading={null} persistor={persistStore(store)}>
-                    <App />
-                  </PersistGate>
-                </StyleProvider>
+                <AntdApp>
+                  <StyleProvider hashPriority='high'>
+                    <PersistGate loading={null} persistor={persistStore(store)}>
+                      <App />
+                    </PersistGate>
+                  </StyleProvider>
+                </AntdApp>
               </ConfigProvider>
             </GoogleOAuthProvider>
           </AppContext>

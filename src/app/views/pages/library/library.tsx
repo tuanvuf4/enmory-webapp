@@ -18,6 +18,7 @@ import { useAppDispatch, useAppSelector } from '@/core/hooks'
 import { Pagination } from '@/views/components/pagination/pagination'
 import { Item } from '@/views/features/item/Item'
 import { Reference } from '@/views/features/references/references'
+import { usePrompt } from '@/helpers/hooks'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
@@ -28,6 +29,8 @@ export const Library: React.FC = () => {
 
   const { viewMode } = useAppSelector((state) => state.config)
 
+  const { confirmDeleteModal } = usePrompt()
+
   const { openNotification } = useContext(NotificationContext) as TConfigNotification
 
   const { listItem, pagination, formSearchValue } = useAppSelector((state) => state.items)
@@ -35,8 +38,13 @@ export const Library: React.FC = () => {
   const dispatch = useAppDispatch()
 
   const onDelete = (id: number) => {
-    dispatch(settingAction.updateCurrentItem({ id }))
-    dispatch(settingAction.toggleDeleteItemModal())
+    confirmDeleteModal({
+      onOk: () => {
+        itemApi.deleteItem(id).then(() => {
+          dispatch(itemAction.removeItem(id))
+        })
+      },
+    })
   }
 
   const onEdit = async (id: number) => {

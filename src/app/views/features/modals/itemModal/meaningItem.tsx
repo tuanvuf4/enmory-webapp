@@ -1,10 +1,9 @@
-import { msgWarning } from '@/constant/index'
 import globalStyle from '@/style/appStyle'
-import { PlusOutlined, SaveOutlined, DeleteOutlined, WarningOutlined } from '@ant-design/icons'
+import { PlusOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons'
 import { patternValidation } from '@/core/utils'
 import { ECategory, IPair, EType, IItem } from '@/models/item.model'
 import { InputTag } from '@/views/components/inputTag/inputTag'
-import { theme, Modal, Space, Col, Row, Button, Select, Checkbox, Popover, Input } from 'antd'
+import { theme, Space, Col, Row, Button, Select, Checkbox, Input } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { meaningItem } from '.'
@@ -12,7 +11,7 @@ import { ExampleItem } from './exampleItem'
 import styles from './style'
 import clsx from 'clsx'
 import { TextEditor } from '@/views/components'
-import { Suspense } from 'react'
+import { usePrompt } from '@/helpers/hooks'
 
 interface IProps {
   origin?: string
@@ -26,7 +25,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
   const classes = styles()
   const gClasses = globalStyle()
 
-  const [modal, modalContextHolder] = Modal.useModal()
+  const { confirmDeleteModal } = usePrompt()
 
   const { control, getValues, trigger, setValue } = useFormContext<IItem>()
 
@@ -105,13 +104,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                       <Button
                         danger
                         onClick={() => {
-                          modal.confirm({
-                            type: 'warning',
-                            title: 'Deleting...!',
-                            content: 'Are you sure you want to delete this item?',
-                            okText: 'Delete',
-                            maskClosable: true,
-                            closable: true,
+                          confirmDeleteModal({
                             onOk: () => {
                               remove(index)
                             },
@@ -535,8 +528,6 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
           </div>
         )
       })}
-
-      {modalContextHolder}
     </Space>
   )
 }

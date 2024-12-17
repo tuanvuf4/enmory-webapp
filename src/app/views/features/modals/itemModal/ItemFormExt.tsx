@@ -3,8 +3,7 @@ import { chromeStorage } from '@/extension/storageService'
 import globalStyle from '@/style/appStyle'
 import { Loading3QuartersOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { defaultSetting, appConfig, EAppType } from '@/config/appConfig'
-import { NotificationContext, TConfigNotification } from '@/context/notification.context'
-import { useAutoComplete } from '@/helpers/hooks'
+import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { transformItemModelToServer, transformItemModelToClient } from '@/helpers/item'
 import { isGroupWord } from '@/helpers/validate'
 import { ELoading } from '@/models/app.model'
@@ -20,7 +19,7 @@ import { Level } from '@/views/components/level/level'
 import { Reference } from '@/views/features/references/references'
 import { theme, Row, Space, Col, Select, AutoComplete, Input, Checkbox, Button } from 'antd'
 import _ from 'lodash'
-import { useContext, useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useFormContext, useWatch, Controller } from 'react-hook-form'
 import { initItem, meaningItem } from '.'
 import MeaningItem from './meaningItem'
@@ -38,7 +37,7 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
   const classes = styles()
   const gClasses = globalStyle()
 
-  const { openNotification } = useContext(NotificationContext) as TConfigNotification
+  const { openNotification } = usePrompt()
 
   const dispatch = useAppDispatch()
 
@@ -156,10 +155,7 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
             dispatch(settingAction.toggleItemModal())
             dispatch(settingAction.setOnEditItem(false))
             reset(initItem)
-            openNotification({
-              type: 'success',
-              message: 'Update item successful!',
-            })
+            openNotification({ type: 'success', message: 'Update item successful!' })
             await dispatch(
               itemAsync.fetchItems({
                 ...formSearchValue,
@@ -193,10 +189,7 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
             if (isSuccess) {
               dispatch(settingAction.toggleItemModal())
               reset(initItem)
-              openNotification({
-                type: 'success',
-                message: 'Create a item successful!',
-              })
+              openNotification({ type: 'success', message: 'Create a item successful!' })
               await dispatch(
                 itemAsync.fetchItems({
                   ...formSearchValue,
@@ -204,10 +197,7 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
                   size: pagination.size,
                 }),
               ).catch((error: unknown) => {
-                openNotification({
-                  type: 'error',
-                  message: JSON.stringify(error),
-                })
+                openNotification({ type: 'error', message: JSON.stringify(error) })
               })
             }
           } catch (error) {

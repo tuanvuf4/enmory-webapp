@@ -5,7 +5,7 @@ import { IHttpResponse } from '@/models/http.model'
 import { ECategory, EType, IExample, IItem, IPair } from '@/models/item.model'
 import { ILoginResponse } from '@/models/user.model'
 import { appApi } from '@/services/api'
-import { ExampleFormAdd } from '@/views/features/exampleOverview/exampleFormAdd'
+import { ExampleForm } from '@/views/features/exampleOverview/exampleFormAdd'
 import { HeaderExt } from '@/views/features/headerExt/header'
 import { LoginForm } from '@/views/features/loginForm/loginForm'
 import { initItem } from '@/views/features/modals/itemModal'
@@ -110,7 +110,7 @@ export const PopupExt = () => {
           {currentPage === EPageExt.ADD_EX && (
             <div style={{ padding: (token.size / 4) * 3 }}>
               <h2 style={{ fontWeight: 'normal' }}>Add a Example</h2>
-              <ExampleFormAdd themeMode={'light'} onSuccess={onSuccess} />
+              <ExampleForm themeMode={'light'} onSuccess={onSuccess} />
             </div>
           )}
 

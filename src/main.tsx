@@ -33,15 +33,15 @@ if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
               theme={appTheme}
               prefixCls={appStyleConfig.prefixClassCss}
             >
-              <AntdApp>
-                <StyleProvider hashPriority='high'>
+              <StyleProvider hashPriority='high'>
+                <AntdApp>
                   <PersistGate loading={null} persistor={persistStore(store)}>
                     <BrowserRouter data-testid='browser-router-element'>
                       <PopupExt />
                     </BrowserRouter>
                   </PersistGate>
-                </StyleProvider>
-              </AntdApp>
+                </AntdApp>
+              </StyleProvider>
             </ConfigProvider>
           </GoogleOAuthProvider>
         </AppContext>
@@ -62,13 +62,13 @@ if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
                 theme={appTheme}
                 prefixCls={appStyleConfig.prefixClassCss}
               >
-                <AntdApp>
-                  <StyleProvider hashPriority='high'>
+                <StyleProvider hashPriority='high'>
+                  <AntdApp>
                     <PersistGate loading={null} persistor={persistStore(store)}>
                       <App />
                     </PersistGate>
-                  </StyleProvider>
-                </AntdApp>
+                  </AntdApp>
+                </StyleProvider>
               </ConfigProvider>
             </GoogleOAuthProvider>
           </AppContext>

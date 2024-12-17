@@ -3,13 +3,12 @@ import { IExample } from '@/models/item.model'
 import { exampleApi } from '@/services/api'
 import { theme, Space, Row, Col, Button, Select, Flex } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
-import { PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react'
+import { PropsWithChildren, useCallback, useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import styles from './style'
 import clsx from 'clsx'
-import globalStyle from '@/style/appStyle'
 import { ExampleMode } from '@/models/example.model'
-import { NotificationContext, TConfigNotification } from '@/context/notification.context'
+import { usePrompt } from '@/helpers/hooks'
 
 interface IProps {
   data?: IExample
@@ -19,7 +18,7 @@ interface IProps {
   onSuccess?: (data: IExample) => void
 }
 
-export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
+export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   themeMode = 'dark',
   mode = ExampleMode.Default,
   data,
@@ -30,14 +29,12 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
 
   const classes = styles()
 
-  const { openNotification } = useContext(NotificationContext) as TConfigNotification
+  const { openNotification } = usePrompt()
 
   const [loading, setLoading] = useState<boolean>(false)
   const [isChecked, setIsChecked] = useState<boolean>(false)
   const [answer, setAnswer] = useState<string>('')
   const [exMode, setMode] = useState<ExampleMode>(mode)
-
-  const gClasses = globalStyle()
 
   const showTranslation =
     mode === ExampleMode.Default || (isChecked && mode === ExampleMode.Translation)
@@ -63,7 +60,12 @@ export const ExampleFormAdd: React.FC<PropsWithChildren & IProps> = ({
       setLoading(false)
       setIsChecked(false)
       reset({ original: '', translation: '' })
-      if (isSuccess) onSuccess?.(content)
+      if (isSuccess) {
+        onSuccess?.(content)
+        data.id
+          ? openNotification({ type: 'success', message: 'Update example successful!' })
+          : openNotification({ type: 'success', message: 'Add example successful!' })
+      }
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     } finally {

@@ -1,19 +1,18 @@
 import globalStyle from '@/style/appStyle'
 import { SyncOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { NotificationContext, TConfigNotification } from '@/context/notification.context'
 import { useAppDispatch, useAppSelector } from '@/core/hooks'
-import { useAutoComplete } from '@/helpers/hooks'
+import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IExample } from '@/models/item.model'
 import { exampleApi } from '@/services/api'
 import { exampleAsync } from '@/store/async/example.async'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme, Skeleton, Button, AutoComplete, Input } from 'antd'
-import { PropsWithChildren, useContext, useState, useEffect } from 'react'
+import { PropsWithChildren, useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { ExItem } from '../exItem/exItem'
 import styles from './style'
-import exstyles from '@/views/features/item/style'
+import exStyles from '@/views/features/item/style'
 import clsx from 'clsx'
 
 interface IProps {
@@ -25,22 +24,17 @@ interface IExampleForm {
   // translation: string
 }
 
-interface IExampleFormAdd {
-  origin: string
-  translation: string
-}
-
-export const ExampleOverView: React.FC<PropsWithChildren & IProps> = ({ title = '' }) => {
+export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
   const { token } = theme.useToken()
   const classes = styles()
-  const exClasses = exstyles()
+  const exClasses = exStyles()
   const gClasses = globalStyle()
 
   const dispatch = useAppDispatch()
   const { randomExamples } = useAppSelector((state) => state.example)
   const { configuration } = useAppSelector((state) => state.auth.user)
 
-  const { openNotification } = useContext(NotificationContext) as TConfigNotification
+  const { openNotification } = usePrompt()
 
   const [keyword, setKeyword] = useState<string>('')
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
@@ -106,9 +100,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = ({ title = 
     }
   }
 
-  useEffect(() => {
-    getRandomExamples()
-  }, [])
+  useEffect(() => getRandomExamples(), [])
 
   return (
     <>

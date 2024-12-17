@@ -4,7 +4,7 @@ import { Modal } from 'antd'
 import { appStyleConfig } from '@/style/appStyle'
 import { CloseSquareOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { ExampleFormAdd } from '../../exampleOverview/exampleFormAdd'
+import { ExampleForm } from '../../exampleOverview/exampleFormAdd'
 import { IExample } from '@/models/item.model'
 import { exampleAction } from '@/store/reducers/example.reducer'
 
@@ -41,7 +41,7 @@ export const ExampleModal: React.FC<IProps> = ({ open }) => {
       footer={null}
       maskClosable={true}
     >
-      <ExampleFormAdd data={selectedExample as IExample} themeMode={'light'} onSuccess={onSubmit} />
+      <ExampleForm data={selectedExample as IExample} themeMode={'light'} onSuccess={onSubmit} />
     </Modal>
   )
 }

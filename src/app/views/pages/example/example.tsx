@@ -1,5 +1,4 @@
 import globalStyle from '@/style/appStyle'
-import { NotificationContext, TConfigNotification } from '@/context/notification.context'
 import { useAppSelector, useAppDispatch } from '@/core/hooks'
 import { exampleApi } from '@/services/api'
 import { exampleAsync } from '@/store/async/example.async'
@@ -9,9 +8,10 @@ import { IDataOnChange, Pagination } from '@/views/components/pagination/paginat
 import { ExItem } from '@/views/features/exItem/exItem'
 import { FormSearchEx } from '@/views/features/formSearchEx/formSearchEx'
 import { theme, Row, Col } from 'antd'
-import { useContext, useEffect } from 'react'
+import { useEffect } from 'react'
 import styles from './style'
 import { Toolbar } from '@/views/features/toolbar/toolbar'
+import { usePrompt } from '@/helpers/hooks'
 
 export const Example: React.FC = () => {
   const { token } = theme.useToken()
@@ -19,7 +19,7 @@ export const Example: React.FC = () => {
   const classes = styles()
   const gClasses = globalStyle()
 
-  const { openNotification } = useContext(NotificationContext) as TConfigNotification
+  const { openNotification } = usePrompt()
 
   const { examples, pagination, formSearchQuery } = useAppSelector((state) => state.example)
 

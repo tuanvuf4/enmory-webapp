@@ -77,7 +77,7 @@ export const TextEditor = ({ content, onChange }: TextEditor) => {
             'bulletedList',
           ],
         }}
-        onChange={(event) => {
+        onChange={() => {
           onChange?.(editorRef.current?.getData())
         }}
         data={content}

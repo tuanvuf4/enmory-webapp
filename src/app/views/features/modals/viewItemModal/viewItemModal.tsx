@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
 import { Modal } from 'antd'
 import { appStyleConfig } from '@/style/appStyle'
@@ -6,9 +6,7 @@ import { IItem } from '@/models/item.model'
 import { CloseSquareOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { Item } from '../../item/Item'
-import { transformItemModelToClient } from '@/helpers/item'
-import { itemApi } from '@/services/api'
-import { NotificationContext, TConfigNotification } from '@/context/notification.context'
+import { usePrompt } from '@/helpers/hooks'
 
 interface IProps {
   onConfirm?: () => void
@@ -21,7 +19,7 @@ interface IProps {
 export const ViewItemModal: React.FC<IProps> = ({ open, title }) => {
   const { currentItem } = useAppSelector((state) => state.setting)
 
-  const { openNotification } = useContext(NotificationContext) as TConfigNotification
+  const { openNotification } = usePrompt()
 
   const dispatch = useAppDispatch()
 

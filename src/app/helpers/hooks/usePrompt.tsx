@@ -1,7 +1,10 @@
-import { App, ModalFuncProps } from 'antd'
+import { App, ModalFuncProps, theme } from 'antd'
+import { ArgsProps } from 'antd/es/notification'
 
 export const usePrompt = () => {
-  const { modal } = App.useApp()
+  const { modal, notification } = App.useApp()
+
+  const { token } = theme.useToken()
 
   const confirmDeleteModal = ({
     type = 'warning',
@@ -23,5 +26,14 @@ export const usePrompt = () => {
     })
   }
 
-  return { confirmDeleteModal }
+  const openNotification = ({ type = 'success', message, ...props }: ArgsProps) => {
+    notification.open({
+      type,
+      duration: 600,
+      message: <h4 style={{ color: token.colorText }}>{message}</h4>,
+      ...props,
+    })
+  }
+
+  return { confirmDeleteModal, openNotification }
 }

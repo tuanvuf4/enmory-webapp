@@ -1,6 +1,5 @@
 import { chromeStorage } from '@/extension/storageService'
 import { appConfig, EAppType } from '@/config/appConfig'
-import { NotificationContext, TConfigNotification } from '@/context/notification.context'
 import { axiosInstance } from '@/core/http/httpCore'
 import { initNotification } from '@/services/index'
 import { authAction } from '@/store/reducers/auth.reducer'
@@ -9,12 +8,13 @@ import { mediaAction } from '@/store/reducers/media.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import _ from 'lodash'
-import { useContext, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useAppDispatch } from './redux'
+import { usePrompt } from '@/helpers/hooks'
 
 const useErrorHandlerRequest = () => {
   const dispatch = useAppDispatch()
-  const { openNotification } = useContext(NotificationContext) as TConfigNotification
+  const { openNotification } = usePrompt()
 
   const errorInterceptor = axiosInstance.interceptors.response.use(
     (res) => res,

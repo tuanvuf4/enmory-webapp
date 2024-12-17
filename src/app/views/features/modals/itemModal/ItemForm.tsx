@@ -2,7 +2,6 @@ import { msgErrors } from '@/constant/validation'
 import { chromeStorage } from '@/extension/storageService'
 import globalStyle from '@/style/appStyle'
 import { defaultSetting, appConfig, EAppType } from '@/config/appConfig'
-import { NotificationContext, TConfigNotification } from '@/context/notification.context'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { transformItemModelToServer, transformItemModelToClient } from '@/helpers/item'
 import { isGroupWord } from '@/helpers/validate'
@@ -20,13 +19,14 @@ import { Reference } from '@/views/features/references/references'
 import { theme, Row, Space, Col, Select, AutoComplete, Input, Checkbox, Button } from 'antd'
 import classNames from 'clsx'
 import _ from 'lodash'
-import { useContext, useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useFormContext, useWatch, Controller } from 'react-hook-form'
 import { initItem, meaningItem } from '.'
 import MeaningItem from './meaningItem'
 import styles from './style'
 import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
 import { CloseCircleOutlined, Loading3QuartersOutlined } from '@ant-design/icons'
+import { usePrompt } from '@/helpers/hooks'
 
 interface ItemFormProps {
   categories: IPair<string, ECategory>[]
@@ -38,7 +38,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
   const classes = styles()
   const gClasses = globalStyle()
 
-  const { openNotification } = useContext(NotificationContext) as TConfigNotification
+  const { openNotification } = usePrompt()
 
   const dispatch = useAppDispatch()
 

@@ -1,7 +1,6 @@
 import { appStyleConfig } from '@/style/appStyle'
 import { ReloadOutlined, EditOutlined } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
-import { NotificationContext, TConfigNotification } from '@/context/notification.context'
 import { useAppDispatch, useAppSelector } from '@/core/hooks'
 import {
   transformItemModelToServer,
@@ -17,11 +16,12 @@ import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { IStudySetStatus, studySetAction } from '@/store/reducers/studySet.reducer'
 import { theme, InputRef, Button, Input } from 'antd'
-import { useState, useRef, useContext, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Item } from '../item/Item'
 import { EItemLevel } from '../modals/itemModal'
 import styles from './style'
 import clsx from 'clsx'
+import { usePrompt } from '@/helpers/hooks'
 
 export const StudySet: React.FC = () => {
   const { token } = theme.useToken()
@@ -30,7 +30,7 @@ export const StudySet: React.FC = () => {
   const [item, setItem] = useState<IItemQuiz<TQuiz, string[]>>()
   const inputEl = useRef<InputRef | null>(null)
 
-  const { openNotification } = useContext(NotificationContext) as TConfigNotification
+  const { openNotification } = usePrompt()
 
   const dispatch = useAppDispatch()
 

@@ -29,7 +29,7 @@ export const usePrompt = () => {
   const openNotification = ({ type = 'success', message, ...props }: ArgsProps) => {
     notification.open({
       type,
-      duration: 600,
+      duration: 2.5,
       message: <h4 style={{ color: token.colorText }}>{message}</h4>,
       ...props,
     })

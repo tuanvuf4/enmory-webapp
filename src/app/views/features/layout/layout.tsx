@@ -174,8 +174,6 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
 
           {isShowExModal && <ExampleModal open={isShowExModal} />}
 
-          {isShowDeleteExModal && <DeleteExModal />}
-
           {isShowViewItemModal && <ViewItemModal open={isShowViewItemModal} />}
 
           {isShowMediaUploadForm && <MediaUploadModal open={isShowMediaUploadForm} />}

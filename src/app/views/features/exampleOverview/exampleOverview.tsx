@@ -14,6 +14,7 @@ import { ExItem } from '../exItem/exItem'
 import styles from './style'
 import exStyles from '@/views/features/item/style'
 import clsx from 'clsx'
+import { NoResult } from '@/views/components'
 
 interface IProps {
   title?: string
@@ -42,7 +43,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
 
   const { options } = useAutoComplete(keyword, 'example')
 
-  const { control, handleSubmit, setValue } = useForm<IExampleForm>({
+  const { control, setValue } = useForm<IExampleForm>({
     defaultValues: {
       query: '',
     },
@@ -54,19 +55,6 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
       setValue('query', '')
       setSelected(content)
     })
-  }
-
-  const onSubmit = (data: IExampleForm) => {
-    // console.log(`data: `, data)
-  }
-
-  const NoResultInList = () => {
-    return [
-      {
-        value: 'noresult',
-        label: 'No result!',
-      },
-    ]
   }
 
   const getRandomExamples = () => {
@@ -110,7 +98,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
         <div className={classes.exampleOverview}>
           <form
             className={classes.overviewForm}
-            onSubmit={handleSubmit(onSubmit)}
+            // onSubmit={handleSubmit(onSubmit)}
             style={{ width: '100%' }}
           >
             <Button
@@ -137,6 +125,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
                     value={value}
                     placeholder='Keyword'
                     className={classes.autoSearchInput}
+                    notFoundContent={<NoResult showAddBtn={false} />}
                     children={
                       <Input
                         className={classes.searchExampleInput}
@@ -155,13 +144,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
                         }}
                       />
                     }
-                    options={
-                      options && options.length === 0 && value
-                        ? NoResultInList()
-                        : options.length > 0 && value
-                          ? options
-                          : []
-                    }
+                    options={options}
                     onSelect={(v, o) => onSelect(o)}
                     onClear={() => onChange('')}
                     onChange={(text) => {

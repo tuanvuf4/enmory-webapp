@@ -69,6 +69,10 @@ export const Item: React.FC<IProps> = ({
         onRelearn(data)
         break
 
+      case '5':
+        set5Stars(data)
+        break
+
       case '3':
         onReset(data)
         break
@@ -170,6 +174,13 @@ export const Item: React.FC<IProps> = ({
     dispatch(itemAction.update({ ...data, level: 0 }))
     dispatch(studySetAction.update({ ...data, level: 0 }))
     dispatch(iotdAction.update({ ...data, level: 0 }))
+  }
+
+  const set5Stars = (data: IItem) => {
+    itemApi.updateItem(data.id as number, { level: 5 })
+    dispatch(itemAction.update({ ...data, level: 5 }))
+    dispatch(studySetAction.update({ ...data, level: 5 }))
+    dispatch(iotdAction.update({ ...data, level: 5 }))
   }
 
   useEffect(() => {

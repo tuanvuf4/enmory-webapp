@@ -224,21 +224,21 @@ export const Library: React.FC = () => {
                               style={{ color: token.colorPrimary }}
                               icon={<EyeOutlined />}
                               onClick={() => onView(item.id || -1)}
-                            ></Button>
+                            />
 
                             <Button
                               type='text'
                               style={{ color: appStyleConfig.color.yellow[6] }}
                               icon={<EditOutlined />}
                               onClick={() => onEdit(item.id || -1)}
-                            ></Button>
+                            />
 
                             <Button
                               type='text'
                               style={{ color: appStyleConfig.color.red[5] }}
                               icon={<DeleteOutlined />}
                               onClick={() => onDelete(item.id || -1)}
-                            ></Button>
+                            />
                           </div>
                         </td>
                       </tr>

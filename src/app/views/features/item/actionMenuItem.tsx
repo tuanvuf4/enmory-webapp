@@ -43,7 +43,11 @@ export const actionMenuItems: ItemType[] = [
   },
   {
     key: 2,
-    label: <ActionItem label='Redo' icon={<StarFilled />} />,
+    label: <ActionItem label='Redo' icon={<StarFilled color={'yellow'} />} />,
+  },
+  {
+    key: 5,
+    label: <ActionItem label='5 Stars' icon={<StarFilled />} />,
   },
   {
     key: 3,

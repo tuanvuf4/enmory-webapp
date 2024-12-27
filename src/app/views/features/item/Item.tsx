@@ -134,39 +134,17 @@ export const Item: React.FC<IProps> = ({
 
   const onReset = (data: IItem) => {
     const now = new Date().getTime()
-    itemApi.updateItem(data.id as number, {
+    const newData = {
       level: 0,
       practiceCount: 0,
       created_date: now,
       last_update: now,
-    })
-    dispatch(
-      itemAction.update({
-        ...data,
-        level: 0,
-        practiceCount: 0,
-        created_date: now,
-        last_update: now,
-      }),
-    )
-    dispatch(
-      studySetAction.update({
-        ...data,
-        level: 0,
-        practiceCount: 0,
-        created_date: now,
-        last_update: now,
-      }),
-    )
-    dispatch(
-      iotdAction.update({
-        ...data,
-        level: 0,
-        practiceCount: 0,
-        created_date: now,
-        last_update: now,
-      }),
-    )
+    }
+    itemApi.updateItem(data.id as number, { ...newData })
+    dispatch(itemAction.update({ ...data, ...newData }))
+    dispatch(studySetAction.update({ ...data, ...newData }))
+    dispatch(iotdAction.update({ ...data, ...newData }))
+    dispatch(settingAction.setCurrentItem({ ...data, ...newData }))
   }
 
   const onRelearn = (data: IItem) => {
@@ -174,6 +152,7 @@ export const Item: React.FC<IProps> = ({
     dispatch(itemAction.update({ ...data, level: 0 }))
     dispatch(studySetAction.update({ ...data, level: 0 }))
     dispatch(iotdAction.update({ ...data, level: 0 }))
+    dispatch(settingAction.setCurrentItem({ ...data, level: 0 }))
   }
 
   const set5Stars = (data: IItem) => {
@@ -181,6 +160,7 @@ export const Item: React.FC<IProps> = ({
     dispatch(itemAction.update({ ...data, level: 5 }))
     dispatch(studySetAction.update({ ...data, level: 5 }))
     dispatch(iotdAction.update({ ...data, level: 5 }))
+    dispatch(settingAction.setCurrentItem({ ...data, level: 5 }))
   }
 
   useEffect(() => {

@@ -416,11 +416,9 @@ export const StudySet: React.FC = () => {
                       }}
                     >
                       <div>
-                        <span>{ans.label as string}</span>
+                        <span dangerouslySetInnerHTML={{ __html: `${ans.label}` }} />
                         <i
-                          dangerouslySetInnerHTML={{
-                            __html: `${isSubmit ? `${ans.key}` : ''}`,
-                          }}
+                          dangerouslySetInnerHTML={{ __html: `${isSubmit ? `${ans.key}` : ''}` }}
                         />
                         {isSubmit && ans.typeId && (
                           <i>{`(${getTypeOfItem(ans.typeId).toLowerCase()})`}</i>

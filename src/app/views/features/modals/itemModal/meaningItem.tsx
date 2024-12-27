@@ -398,28 +398,6 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                 <Col span={24}>
                   <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
                     <Col md={4} xs={24}>
-                      <label htmlFor=''>Translation:</label>
-                    </Col>
-
-                    <Col md={20} xs={24}>
-                      <Controller
-                        control={control}
-                        name={`meanings.${index}.translation`}
-                        render={({ field }) => (
-                          <TextArea
-                            {...field}
-                            autoSize={{ minRows: 2, maxRows: 4 }}
-                            placeholder='Translation'
-                          />
-                        )}
-                      />
-                    </Col>
-                  </Row>
-                </Col>
-
-                <Col span={24}>
-                  <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    <Col md={4} xs={24}>
                       <label htmlFor=''>Definition:</label>
                     </Col>
 
@@ -433,6 +411,28 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                             placeholder='Definition'
                             onChange={onChange}
                             value={value}
+                          />
+                        )}
+                      />
+                    </Col>
+                  </Row>
+                </Col>
+
+                <Col span={24}>
+                  <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
+                    <Col md={4} xs={24}>
+                      <label htmlFor=''>Translation:</label>
+                    </Col>
+
+                    <Col md={20} xs={24}>
+                      <Controller
+                        control={control}
+                        name={`meanings.${index}.translation`}
+                        render={({ field }) => (
+                          <TextArea
+                            {...field}
+                            autoSize={{ minRows: 2, maxRows: 4 }}
+                            placeholder='Translation'
                           />
                         )}
                       />

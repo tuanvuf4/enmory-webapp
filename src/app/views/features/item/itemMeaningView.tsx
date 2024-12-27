@@ -119,22 +119,33 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, type 
           {meaning.note && (
             <>
               <div className={'text-xs italic'}>Note:</div>
-              <div
-                className={classes.note}
-                dangerouslySetInnerHTML={{
-                  __html: meaning.note,
-                }}
-              />
+              <div className={classes.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
             </>
           )}
 
           {meaning.definition && (
-            <h3
-              className={classes.definition}
-              dangerouslySetInnerHTML={{
-                __html: meaning.definition.replace(/\n/g, '<br />'),
-              }}
-            />
+            // <h3
+            //   className={classes.definition}
+            //   dangerouslySetInnerHTML={{
+            //     __html: meaning.definition.replace(/\n/g, '<br />'),
+            //   }}
+            // />
+
+            <ul className={classes.listItem}>
+              {meaning.definition
+                .replace(/\n/g, '*')
+                .replace(/- /g, '')
+                .split('*')
+                .map((value, key) =>
+                  value ? (
+                    <li className={classes.definition} key={key}>
+                      {value}
+                    </li>
+                  ) : (
+                    ''
+                  ),
+                )}
+            </ul>
           )}
 
           {meaning.translation && (

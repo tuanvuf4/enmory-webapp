@@ -19,7 +19,7 @@ import { ItemType } from 'antd/es/menu/interface'
 import moment from 'moment'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { actionMenuItems } from './actionMenuItem'
+import { getActionMenuItems } from './actionMenuItem'
 import { MeaningItemView } from './itemMeaningView'
 import styles from './style'
 import clsx from 'clsx'
@@ -33,6 +33,7 @@ interface IProps {
   onDelete?: () => void
   onEdit?: () => void
   onView?: () => void
+  onArchive?: () => void
 }
 
 export const Item: React.FC<IProps> = ({
@@ -43,6 +44,7 @@ export const Item: React.FC<IProps> = ({
   onDelete,
   onEdit,
   onView,
+  onArchive,
 }) => {
   const { token } = theme.useToken()
 
@@ -66,11 +68,7 @@ export const Item: React.FC<IProps> = ({
         break
 
       case '2':
-        onRelearn(data)
-        break
-
-      case '5':
-        set5Stars(data)
+        onRedo(data)
         break
 
       case '3':
@@ -81,13 +79,18 @@ export const Item: React.FC<IProps> = ({
         if (onDelete) onDelete()
         break
 
+      case '5':
+        archive(data)
+        onArchive?.()
+        break
+
       default:
         if (onView) onView()
         break
     }
   }
 
-  const getActionMenus = (menus = actionMenuItems) => {
+  const getActionMenus = (menus = getActionMenuItems(data)) => {
     if (!onView && !onEdit && !onDelete) return []
     return menus
       .map((menu) => {
@@ -100,7 +103,7 @@ export const Item: React.FC<IProps> = ({
   }
 
   const menuProps = {
-    items: getActionMenus(actionMenuItems),
+    items: getActionMenus(getActionMenuItems(data)),
     onClick: handleMenuClick,
   }
 
@@ -147,20 +150,22 @@ export const Item: React.FC<IProps> = ({
     dispatch(settingAction.setCurrentItem({ ...data, ...newData }))
   }
 
-  const onRelearn = (data: IItem) => {
-    itemApi.updateItem(data.id as number, { level: 0 })
-    dispatch(itemAction.update({ ...data, level: 0 }))
-    dispatch(studySetAction.update({ ...data, level: 0 }))
-    dispatch(iotdAction.update({ ...data, level: 0 }))
-    dispatch(settingAction.setCurrentItem({ ...data, level: 0 }))
+  const onRedo = (data: IItem) => {
+    const level = data.level === 0 ? 5 : 0
+    itemApi.updateItem(data.id as number, { level })
+    dispatch(itemAction.update({ ...data, level }))
+    dispatch(studySetAction.update({ ...data, level }))
+    dispatch(iotdAction.update({ ...data, level }))
+    dispatch(settingAction.setCurrentItem({ ...data, level }))
   }
 
-  const set5Stars = (data: IItem) => {
-    itemApi.updateItem(data.id as number, { level: 5 })
-    dispatch(itemAction.update({ ...data, level: 5 }))
-    dispatch(studySetAction.update({ ...data, level: 5 }))
-    dispatch(iotdAction.update({ ...data, level: 5 }))
-    dispatch(settingAction.setCurrentItem({ ...data, level: 5 }))
+  const archive = (data: IItem) => {
+    const archive = !data.archive
+    itemApi.updateItem(data.id as number, { archive })
+    dispatch(itemAction.update({ ...data, archive }))
+    dispatch(studySetAction.update({ ...data, archive }))
+    dispatch(iotdAction.update({ ...data, archive }))
+    dispatch(settingAction.setCurrentItem({ ...data, archive }))
   }
 
   useEffect(() => {
@@ -181,7 +186,7 @@ export const Item: React.FC<IProps> = ({
           <div className={classes.contentItem}>
             <div className={classes.contentHead}>
               <div className={classes.title}>
-                <h2 className={classes.original} onDoubleClick={onView}>
+                <h2 className={classes.original}>
                   {type === 'brief' && !isDefect(data) && <span>{data.original}</span>}
 
                   {type === 'brief' && isDefect(data) && (
@@ -231,8 +236,24 @@ export const Item: React.FC<IProps> = ({
                       gap: token.size / 2,
                     }}
                   >
-                    <span>{getCategory(data.catId)}</span>
+                    {type === 'brief' && (
+                      <Button
+                        className={classes.quickView}
+                        type='text'
+                        size='small'
+                        icon={<EyeOutlined />}
+                        onClick={onView}
+                      >
+                        <span style={{ fontSize: 12 }}>{getCategory(data.catId)}</span>
+                      </Button>
+                    )}
                   </div>
+
+                  {data.catId && (
+                    <h5 className={classes.level}>
+                      <Level level={data.level as number} />
+                    </h5>
+                  )}
 
                   {data.user && (
                     <span
@@ -248,11 +269,11 @@ export const Item: React.FC<IProps> = ({
                 </h5>
               )}
 
-              {data.catId && (
+              {/* {data.catId && (
                 <h5 className={classes.level}>
                   <Level level={data.level as number} />
                 </h5>
-              )}
+              )} */}
 
               <Reference original={data.original} />
 

@@ -3,10 +3,12 @@ import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
+  ReadOutlined,
   StarFilled,
   SyncOutlined,
 } from '@ant-design/icons'
 import { ItemType } from 'antd/es/menu/interface'
+import { IItem } from '@/models/item.model'
 
 interface IActionItem {
   label: string
@@ -32,29 +34,36 @@ export const ActionItem: React.FC<IActionItem> = (props) => {
   )
 }
 
-export const actionMenuItems: ItemType[] = [
-  {
-    key: 0,
-    label: <ActionItem label='View' icon={<EyeOutlined />} />,
-  },
-  {
-    key: 1,
-    label: <ActionItem label='Edit' icon={<EditOutlined />} />,
-  },
-  {
-    key: 2,
-    label: <ActionItem label='Redo' icon={<StarFilled color={'yellow'} />} />,
-  },
-  {
-    key: 5,
-    label: <ActionItem label='5 Stars' icon={<StarFilled />} />,
-  },
-  {
-    key: 3,
-    label: <ActionItem label='Reset' icon={<SyncOutlined />} />,
-  },
-  {
-    key: 4,
-    label: <ActionItem label='Delete' icon={<DeleteOutlined />} />,
-  },
-]
+export const getActionMenuItems = (data: IItem): ItemType[] => {
+  return [
+    {
+      key: 0,
+      label: <ActionItem label='View' icon={<EyeOutlined />} />,
+    },
+    {
+      key: 1,
+      label: <ActionItem label='Edit' icon={<EditOutlined />} />,
+    },
+    {
+      key: 2,
+      label: (
+        <ActionItem
+          label={`${data.level === 0 ? '5' : '0'}`}
+          icon={<StarFilled color={'yellow'} />}
+        />
+      ),
+    },
+    {
+      key: 5,
+      label: <ActionItem label='Archive' icon={<ReadOutlined />} />,
+    },
+    {
+      key: 3,
+      label: <ActionItem label='Reset' icon={<SyncOutlined />} />,
+    },
+    {
+      key: 4,
+      label: <ActionItem label='Delete' icon={<DeleteOutlined />} />,
+    },
+  ]
+}

@@ -67,7 +67,7 @@ const styles = () => {
       borderRadius: token.size / 4,
 
       '& > *': {
-        margin: `${token.size / 2}px 0`,
+        margin: `${token.size / 4}px 0`,
       },
 
       '& img': {
@@ -83,10 +83,9 @@ const styles = () => {
     },
     title: {
       display: 'flex',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       justifyContent: 'space-between',
       wordBreak: 'break-word',
-      marginBottom: token.margin / 4,
       minHeight: token.controlHeight,
       gap: token.size / 2,
     },
@@ -173,7 +172,7 @@ const styles = () => {
       justifyContent: 'space-between',
       gap: token.size / 4,
       margin: [token.margin / 4, 0],
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: 'normal',
       fontStyle: 'italic',
       width: '100%',

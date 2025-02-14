@@ -74,33 +74,12 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                 <Col md={{ span: 20, offset: 4 }} xs={{ span: 24, offset: 0 }}>
                   <div className={classes.contentStyle}>
                     <Space
-                      size={[token.size, token.size]}
+                      size={[token.size / 2, token.size / 2]}
                       direction='vertical'
                       className={gClasses.fulWidth}
                     >
                       <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                        <Col
-                          md={4}
-                          xs={24}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            gap: token.size / 2,
-                          }}
-                        >
-                          <Button
-                            danger
-                            onClick={() => {
-                              confirmDeleteModal({
-                                onOk: () => {
-                                  remove(key)
-                                },
-                              })
-                            }}
-                            icon={<DeleteOutlined />}
-                          />
-
+                        <Col md={{ span: 2, order: 1 }}>
                           <Controller
                             control={control}
                             name={`meanings.${nestIndex}.examples.${key}.auto`}
@@ -119,16 +98,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           />
                         </Col>
 
-                        <Col
-                          md={20}
-                          xs={24}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            gap: token.size / 2,
-                          }}
-                        >
+                        <Col md={{ span: 20, order: 2 }}>
                           <AutoComplete
                             value={currentSearch}
                             disabled={!getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
@@ -143,21 +113,36 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                             className={clsx([gClasses.fulWidth])}
                           />
                         </Col>
+
+                        <Col md={{ span: 2, order: 3 }} align={'end'}>
+                          <Button
+                            className={'min-w-10'}
+                            danger
+                            onClick={() => {
+                              confirmDeleteModal({
+                                onOk: () => {
+                                  remove(key)
+                                },
+                              })
+                            }}
+                            icon={<DeleteOutlined />}
+                          />
+                        </Col>
                       </Row>
 
                       <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
-                        <Col md={4} xs={24}>
+                        {/* <Col md={4} xs={24}>
                           Original:
-                        </Col>
+                        </Col> */}
 
-                        <Col md={20} xs={24}>
+                        <Col md={24} xs={24}>
                           <Controller
                             control={control}
                             name={`meanings.${nestIndex}.examples.${key}.original`}
                             render={({ field }) => (
                               <TextArea
                                 disabled={getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
-                                autoSize={{ minRows: 2, maxRows: 4 }}
+                                autoSize={{ minRows: 1, maxRows: 4 }}
                                 placeholder='Original'
                                 {...field}
                               />
@@ -167,18 +152,18 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                       </Row>
 
                       <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
-                        <Col md={4} xs={24}>
+                        {/* <Col md={4} xs={24}>
                           Translation:
-                        </Col>
+                        </Col> */}
 
-                        <Col md={20} xs={24}>
+                        <Col md={24} xs={24}>
                           <Controller
                             control={control}
                             name={`meanings.${nestIndex}.examples.${key}.translation`}
                             render={({ field }) => (
                               <TextArea
                                 disabled={getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
-                                autoSize={{ minRows: 2, maxRows: 4 }}
+                                autoSize={{ minRows: 1, maxRows: 4 }}
                                 placeholder='Translation'
                                 {...field}
                               />

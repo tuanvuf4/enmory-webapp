@@ -117,43 +117,20 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, type 
           </div>
 
           {meaning.note && (
-            <>
-              <div className={'text-xs italic'}>Note:</div>
-              <div className={classes.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
-            </>
+            <div className={classes.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
           )}
 
           {meaning.definition && (
-            // <h3
-            //   className={classes.definition}
-            //   dangerouslySetInnerHTML={{
-            //     __html: meaning.definition.replace(/\n/g, '<br />'),
-            //   }}
-            // />
-
-            <ul className={classes.listItem}>
-              {meaning.definition
-                .replace(/\n/g, '*')
-                .replace(/- /g, '')
-                .split('*')
-                .map((value, key) =>
-                  value ? (
-                    <li className={classes.definition} key={key}>
-                      {value}
-                    </li>
-                  ) : (
-                    ''
-                  ),
-                )}
-            </ul>
+            <h3
+              className={classes.definition}
+              dangerouslySetInnerHTML={{ __html: meaning.definition }}
+            />
           )}
 
           {meaning.translation && (
             <h3
               className={classes.translate}
-              dangerouslySetInnerHTML={{
-                __html: meaning.translation.replace(/\n/g, '<br />'),
-              }}
+              dangerouslySetInnerHTML={{ __html: meaning.translation }}
             />
           )}
 
@@ -190,7 +167,7 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, type 
               {meaning.examples.filter((item) => item).length > 0 &&
                 meaning.examples.length > 0 && (
                   <div className={classes.examples}>
-                    <h4>Example:</h4>
+                    {/* <h4>Example:</h4> */}
                     <ul>
                       {meaning.examples.map((example, key) => {
                         return (

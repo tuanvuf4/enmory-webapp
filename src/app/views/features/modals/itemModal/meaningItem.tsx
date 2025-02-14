@@ -37,15 +37,16 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
   return (
     <Space
       direction='vertical'
-      size={[token.size, token.size]}
+      size={[token.size / 2, token.size / 2]}
       className={gClasses.fulWidth}
-      style={{ padding: `${token.size}px 0` }}
+      style={{ padding: `${token.size / 2}px 0` }}
     >
       <Col span={24}>
         <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
           <Col md={4} xs={8}>
             <label htmlFor=''>Meaning:</label>
           </Col>
+
           <Col md={20} xs={16}>
             <Button
               onClick={() => {
@@ -79,68 +80,25 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
             <Row>
               <Space
                 direction='vertical'
-                size={[token.size, token.size]}
+                size={[token.size / 2, token.size / 2]}
                 className={gClasses.fulWidth}
               >
                 <Col xs={24}>
-                  <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    <Col span={12} style={{ display: 'flex' }}>
+                  <Row
+                    gutter={[token.size / 2, token.size / 2]}
+                    align={'middle'}
+                    className={'mb-2'}
+                  >
+                    <Col span={6} style={{ display: 'flex' }}>
                       <Button
                         type={'text'}
-                        size={'large'}
                         onClick={onSubmit}
                         icon={<SaveOutlined />}
                         style={{ color: '#90C53F' }}
                       />
                     </Col>
 
-                    <Col
-                      span={12}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                      }}
-                    >
-                      <Button
-                        danger
-                        onClick={() => {
-                          confirmDeleteModal({
-                            onOk: () => {
-                              remove(index)
-                            },
-                          })
-                        }}
-                        icon={<DeleteOutlined />}
-                      />
-                    </Col>
-                  </Row>
-                </Col>
-
-                {catType === ECategory.WORD && (
-                  <Row gutter={[token.size / 2, token.size]} align={'middle'}>
-                    <Col
-                      md={{
-                        span: 4,
-                        order: 1,
-                      }}
-                      xs={{
-                        span: 12,
-                        order: 3,
-                      }}
-                    >
-                      <label htmlFor=''>Type:</label>
-                    </Col>
-
-                    <Col
-                      md={{
-                        span: 4,
-                        order: 2,
-                      }}
-                      xs={{
-                        span: 12,
-                        order: 4,
-                      }}
-                    >
+                    <Col span={12} style={{ display: 'flex' }}>
                       <Controller
                         control={control}
                         name={`meanings.${index}.typeId`}
@@ -156,13 +114,52 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                     </Col>
 
                     <Col
+                      span={6}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                      }}
+                    >
+                      <Button
+                        danger
+                        type={'text'}
+                        onClick={() => {
+                          confirmDeleteModal({
+                            onOk: () => {
+                              remove(index)
+                            },
+                          })
+                        }}
+                        icon={<DeleteOutlined />}
+                      />
+                    </Col>
+                  </Row>
+                </Col>
+
+                {catType === ECategory.WORD && (
+                  <Row gutter={[token.size / 2, token.size]} align={'middle'}>
+                    {/* <Col
                       md={{
-                        span: 5,
-                        order: 4,
+                        span: 8,
+                        order: 1,
+                      }}
+                      xs={{
+                        span: 8,
+                        order: 3,
+                      }}
+                    >
+                      <label htmlFor=''>Type:</label>
+                    </Col> */}
+
+                    <Col
+                      md={{
+                        span: 10,
+                        offset: 4,
+                        order: 2,
                       }}
                       xs={{
                         span: 12,
-                        order: 2,
+                        order: 1,
                       }}
                     >
                       <Controller
@@ -185,12 +182,11 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                     <Col
                       md={{
                         span: 5,
-                        offset: 6,
-                        order: 3,
+                        order: 2,
                       }}
                       xs={{
-                        span: 12,
-                        order: 1,
+                        span: 8,
+                        order: 2,
                       }}
                     >
                       <Controller
@@ -406,12 +402,19 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                         control={control}
                         name={`meanings.${index}.definition`}
                         render={({ field: { onChange, value } }) => (
-                          <TextArea
-                            autoSize={{ minRows: 2, maxRows: 4 }}
-                            placeholder='Definition'
-                            onChange={onChange}
-                            value={value}
+                          <TextEditor
+                            content={value}
+                            onChange={(content: any) => {
+                              setValue(`meanings.${index}.definition`, content ?? '')
+                              onChange(content)
+                            }}
                           />
+                          // <TextArea
+                          //   autoSize={{ minRows: 2, maxRows: 4 }}
+                          //   placeholder='Definition'
+                          //   onChange={onChange}
+                          //   value={value}
+                          // />
                         )}
                       />
                     </Col>
@@ -428,11 +431,18 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                       <Controller
                         control={control}
                         name={`meanings.${index}.translation`}
-                        render={({ field }) => (
-                          <TextArea
-                            {...field}
-                            autoSize={{ minRows: 2, maxRows: 4 }}
-                            placeholder='Translation'
+                        render={({ field: { onChange, value } }) => (
+                          // <TextArea
+                          //   {...field}
+                          //   autoSize={{ minRows: 2, maxRows: 4 }}
+                          //   placeholder='Translation'
+                          // />
+                          <TextEditor
+                            content={value}
+                            onChange={(content: any) => {
+                              setValue(`meanings.${index}.translation`, content ?? '')
+                              onChange(content)
+                            }}
                           />
                         )}
                       />

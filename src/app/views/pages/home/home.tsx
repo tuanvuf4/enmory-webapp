@@ -83,6 +83,7 @@ const Home = () => {
                     <Widget title='Word of the day'>
                       <Item
                         active
+                        reload
                         data={word}
                         type='full'
                         onEdit={() => onEdit(word.id as number)}
@@ -94,6 +95,7 @@ const Home = () => {
                     <Widget title='Phrase of the day'>
                       <Item
                         active
+                        reload
                         data={phrase}
                         type='full'
                         onEdit={() => onEdit(phrase.id as number)}
@@ -105,6 +107,7 @@ const Home = () => {
                     <Widget title='Idiom of the day'>
                       <Item
                         active
+                        reload
                         data={idiom}
                         type='full'
                         onEdit={() => onEdit(idiom.id as number)}
@@ -116,6 +119,7 @@ const Home = () => {
                     <Widget title='Slang of the day'>
                       <Item
                         active
+                        reload
                         data={slang}
                         type='full'
                         onEdit={() => onEdit(slang.id as number)}
@@ -127,6 +131,7 @@ const Home = () => {
                     <Widget title='Collocation of the day'>
                       <Item
                         active
+                        reload
                         data={collocation}
                         type='full'
                         onEdit={() => onEdit(collocation.id as number)}
@@ -138,6 +143,7 @@ const Home = () => {
                     <Widget title='sentence of the day'>
                       <Item
                         active
+                        reload
                         data={sentence}
                         type='full'
                         onEdit={() => onEdit(sentence.id as number)}

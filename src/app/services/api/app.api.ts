@@ -13,9 +13,9 @@ const getTypes = async () =>
     .get<IHttpResponse<IPair<string, EType>[]>>(httpConfig.apiEndPoint.type)
     .then((resp) => resp.data)
 
-const getItemOfTheDayByCatId = async (catId: number) =>
+const getItemOfTheDayByCatId = async (catId: number, generate: number = 0) =>
   http
-    .get<IHttpResponse<IIotd<string>>>(`${httpConfig.apiEndPoint.iotd}/${catId}`)
+    .get<IHttpResponse<IIotd<string>>>(`${httpConfig.apiEndPoint.iotd}/${catId}/${generate}`)
     .then((resp) => resp.data)
 
 export const appApi = {

@@ -27,16 +27,19 @@ const fetchTypes = createAsyncThunk('type/fetchTypes', async () => {
   return types
 })
 
-const fetchIotd = createAsyncThunk('iotd/fetchIotd', async (catId: number) => {
-  const iotd = await appApi.getItemOfTheDayByCatId(catId)
-  return {
-    ...iotd,
-    content: {
-      ...iotd.content,
-      item: { ...transformItemModelToClient(iotd.content.item) },
-    },
-  }
-})
+const fetchIotd = createAsyncThunk(
+  'iotd/fetchIotd',
+  async (data: { catId: number; generate?: number }) => {
+    const iotd = await appApi.getItemOfTheDayByCatId(data.catId, data.generate)
+    return {
+      ...iotd,
+      content: {
+        ...iotd.content,
+        item: { ...transformItemModelToClient(iotd.content.item) },
+      },
+    }
+  },
+)
 
 export const actionAsyncApp = {
   fetchCategories,

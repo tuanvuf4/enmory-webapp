@@ -1,5 +1,5 @@
 import { msgWarning } from '@/constant/index'
-import { MoreOutlined, EyeOutlined } from '@ant-design/icons'
+import { MoreOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
 import { useAppDispatch, useAppSelector } from '@/core/hooks'
 import { isDefect, getCategory } from '@/helpers/item'
@@ -24,10 +24,12 @@ import { MeaningItemView } from './itemMeaningView'
 import styles from './style'
 import clsx from 'clsx'
 import { Reference } from '../references/references'
+import { actionAsyncApp } from '@/store/async'
 
 interface IProps {
   groupAction?: boolean
   active?: boolean
+  reload?: boolean
   type: TItem
   data: IItem
   onDelete?: () => void
@@ -39,6 +41,7 @@ interface IProps {
 export const Item: React.FC<IProps> = ({
   groupAction = true,
   active = false,
+  reload = false,
   type = 'brief',
   data,
   onDelete,
@@ -199,8 +202,21 @@ export const Item: React.FC<IProps> = ({
                 </h2>
 
                 <Flex align={'center'} gap={token.size / 4}>
+                  {reload && (
+                    <Button
+                      size='small'
+                      type={'text'}
+                      icon={<ReloadOutlined style={{ color: token.colorWhite }} />}
+                      onClick={async () => {
+                        await dispatch(
+                          actionAsyncApp.fetchIotd({ catId: data.catId as ECategory, generate: 1 }),
+                        )
+                      }}
+                    />
+                  )}
+
                   {data.archive && (
-                    <Button className={classes.btnInactive} size='small'>
+                    <Button className={classes.btnInactive} size='small' type={'text'}>
                       A
                     </Button>
                   )}
@@ -243,10 +259,10 @@ export const Item: React.FC<IProps> = ({
                         size='small'
                         icon={<EyeOutlined />}
                         onClick={onView}
-                      >
-                        <span style={{ fontSize: 12 }}>{getCategory(data.catId)}</span>
-                      </Button>
+                      />
                     )}
+
+                    <span>{getCategory(data.catId)}</span>
                   </div>
 
                   {data.catId && (

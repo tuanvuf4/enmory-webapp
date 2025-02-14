@@ -94,7 +94,6 @@ export interface IItem<M = string[]> {
     phoneNumber: string
   }
   practiceCount?: number
-  category?: ECategory
   forms: M
   collocations: M
   word_family: M

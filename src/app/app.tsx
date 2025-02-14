@@ -19,7 +19,7 @@ export const App = () => {
   useHandleAuthRequest()
 
   const getCats = async (cats: IPair<string, ECategory>[]) => {
-    cats.map(async (cat) => await dispatch(actionAsyncApp.fetchIotd(cat.id)))
+    cats.map(async (cat) => await dispatch(actionAsyncApp.fetchIotd({ catId: cat.id })))
   }
 
   useEffect(() => {

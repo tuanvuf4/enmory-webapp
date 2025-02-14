@@ -15,7 +15,7 @@ const getTypes = async () =>
 
 const getItemOfTheDayByCatId = async (catId: number, generate: number = 0) =>
   http
-    .get<IHttpResponse<IIotd<string>>>(`${httpConfig.apiEndPoint.iotd}/${catId}/${generate}`)
+    .get<IHttpResponse<IIotd<string>>>(`${httpConfig.apiEndPoint.iotd}/${generate}/${catId}`)
     .then((resp) => resp.data)
 
 export const appApi = {

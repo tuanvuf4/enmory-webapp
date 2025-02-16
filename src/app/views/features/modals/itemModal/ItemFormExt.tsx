@@ -385,7 +385,40 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
           </Row>
 
           <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-            <Col md={{ span: 6, offset: 4 }} xs={{ span: 8, offset: 0 }}>
+            <Col md={{ span: 10, offset: 4 }} xs={{ span: 12 }}>
+              <Row gutter={[token.size / 2, token.size / 2]}>
+                <Col span={24}>
+                  <Controller
+                    control={control}
+                    name={`archive`}
+                    render={({ field: { onChange, value } }) => (
+                      <Checkbox
+                        checked={value}
+                        onChange={(e) => {
+                          onChange(e.target.checked)
+                        }}
+                      >
+                        Archive
+                      </Checkbox>
+                    )}
+                  />
+                </Col>
+
+                <Col span={24}>
+                  <Controller
+                    control={control}
+                    name={`favorite`}
+                    render={({ field: { onChange, value } }) => (
+                      <Checkbox checked={value} onChange={(e) => onChange(e.target.checked)}>
+                        Favorite
+                      </Checkbox>
+                    )}
+                  />
+                </Col>
+              </Row>
+            </Col>
+
+            <Col md={{ span: 10 }} xs={{ span: 12 }}>
               <Controller
                 control={control}
                 name={`level`}
@@ -396,35 +429,6 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
                     size={18}
                     onChange={(rate) => setValue('level', rate)}
                   />
-                )}
-              />
-            </Col>
-
-            <Col md={{ span: 6 }} xs={{ span: 8, offset: 0 }} className={'text-center'}>
-              <Controller
-                control={control}
-                name={`archive`}
-                render={({ field: { onChange, value } }) => (
-                  <Checkbox
-                    checked={value}
-                    onChange={(e) => {
-                      onChange(e.target.checked)
-                    }}
-                  >
-                    Archive
-                  </Checkbox>
-                )}
-              />
-            </Col>
-
-            <Col md={{ span: 6 }} xs={{ span: 8, offset: 0 }} className={'text-center'}>
-              <Controller
-                control={control}
-                name={`favorite`}
-                render={({ field: { onChange, value } }) => (
-                  <Checkbox checked={value} onChange={(e) => onChange(e.target.checked)}>
-                    Favorite
-                  </Checkbox>
                 )}
               />
             </Col>

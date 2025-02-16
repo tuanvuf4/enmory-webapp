@@ -17,7 +17,7 @@ import { InputTag } from '@/views/components/inputTag/inputTag'
 import { Level } from '@/views/components/level/level'
 import { Reference } from '@/views/features/references/references'
 import { theme, Row, Space, Col, Select, AutoComplete, Input, Checkbox, Button } from 'antd'
-import classNames from 'clsx'
+import clsx from 'clsx'
 import _ from 'lodash'
 import { useState, useEffect, Suspense } from 'react'
 import { useFormContext, useWatch, Controller } from 'react-hook-form'
@@ -329,7 +329,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
                   <>
                     <AutoComplete
                       value={value}
-                      className={classNames(gClasses.fulWidth)}
+                      className={clsx(gClasses.fulWidth)}
                       options={options}
                       children={
                         <Input
@@ -367,13 +367,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
                     />
 
                     {invalid && errors.original?.type === 'required' && (
-                      <p className={classNames(gClasses.errorMsg, gClasses.textLeft)}>
+                      <p className={clsx(gClasses.errorMsg, gClasses.textLeft)}>
                         {errors.original?.message as string}
                       </p>
                     )}
 
                     {invalid && errors.original?.type === 'existed' && (
-                      <p className={classNames(gClasses.errorMsg, gClasses.textLeft)}>
+                      <p className={clsx(gClasses.errorMsg, gClasses.textLeft)}>
                         {errors.original?.message as string}
                       </p>
                     )}
@@ -386,36 +386,40 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
           </Row>
 
           <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-            <Col md={{ span: 6, offset: 4 }} xs={{ span: 8, offset: 0 }}>
-              <Controller
-                control={control}
-                name={`archive`}
-                render={({ field: { onChange, value } }) => (
-                  <Checkbox
-                    checked={value}
-                    onChange={(e) => {
-                      onChange(e.target.checked)
-                    }}
-                  >
-                    Archive
-                  </Checkbox>
-                )}
-              />
+            <Col md={{ span: 10, offset: 4 }} xs={{ span: 12 }}>
+              <Row gutter={[token.size / 2, token.size / 2]}>
+                <Col span={24}>
+                  <Controller
+                    control={control}
+                    name={`archive`}
+                    render={({ field: { onChange, value } }) => (
+                      <Checkbox
+                        checked={value}
+                        onChange={(e) => {
+                          onChange(e.target.checked)
+                        }}
+                      >
+                        Archive
+                      </Checkbox>
+                    )}
+                  />
+                </Col>
+
+                <Col span={24}>
+                  <Controller
+                    control={control}
+                    name={`favorite`}
+                    render={({ field: { onChange, value } }) => (
+                      <Checkbox checked={value} onChange={(e) => onChange(e.target.checked)}>
+                        Favorite
+                      </Checkbox>
+                    )}
+                  />
+                </Col>
+              </Row>
             </Col>
 
-            <Col md={{ span: 6 }} xs={{ span: 8, offset: 0 }}>
-              <Controller
-                control={control}
-                name={`favorite`}
-                render={({ field: { onChange, value } }) => (
-                  <Checkbox checked={value} onChange={(e) => onChange(e.target.checked)}>
-                    Favorite
-                  </Checkbox>
-                )}
-              />
-            </Col>
-
-            <Col md={{ span: 6 }} xs={{ span: 8, offset: 0 }}>
+            <Col md={{ span: 10 }} xs={{ span: 12 }}>
               <Controller
                 control={control}
                 name={`level`}

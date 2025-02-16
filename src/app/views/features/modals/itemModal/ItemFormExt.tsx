@@ -283,12 +283,12 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
       <Row>
         <Space
           direction='vertical'
-          size={[token.size / 2, (token.size / 4) * 3]}
+          size={[token.size / 2, token.size / 2]}
           className={gClasses.fulWidth}
         >
           <Row align={'middle'}>
             <Col md={4} xs={12}>
-              <label htmlFor=''>Kind of item:</label>
+              <label htmlFor=''>Type:</label>
             </Col>
 
             <Col md={4} xs={12}>
@@ -385,7 +385,22 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
           </Row>
 
           <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-            <Col md={{ span: 20, offset: 4 }} xs={{ span: 24, offset: 0 }}>
+            <Col md={{ span: 6, offset: 4 }} xs={{ span: 8, offset: 0 }}>
+              <Controller
+                control={control}
+                name={`level`}
+                render={() => (
+                  <Level
+                    level={getValues('level')}
+                    disabled={false}
+                    size={18}
+                    onChange={(rate) => setValue('level', rate)}
+                  />
+                )}
+              />
+            </Col>
+
+            <Col md={{ span: 6 }} xs={{ span: 8, offset: 0 }} className={'text-center'}>
               <Controller
                 control={control}
                 name={`archive`}
@@ -401,10 +416,8 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
                 )}
               />
             </Col>
-          </Row>
 
-          <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-            <Col md={{ span: 20, offset: 4 }} xs={{ span: 24, offset: 0 }}>
+            <Col md={{ span: 6 }} xs={{ span: 8, offset: 0 }} className={'text-center'}>
               <Controller
                 control={control}
                 name={`favorite`}
@@ -417,31 +430,14 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
             </Col>
           </Row>
 
-          <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-            <Col md={{ span: 20, offset: 4 }} xs={{ span: 24, offset: 0 }}>
-              <Controller
-                control={control}
-                name={`level`}
-                render={() => (
-                  <Level
-                    level={getValues('level')}
-                    disabled={false}
-                    size={18}
-                    onChange={(rate) => setValue('level', rate)}
-                  />
-                )}
-              />
-            </Col>
-          </Row>
-
           {catType === ECategory.WORD && (
             <>
               <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-                <Col md={4} xs={24}>
+                <Col md={4} xs={6}>
                   Forms:
                 </Col>
 
-                <Col md={20} xs={24}>
+                <Col md={20} xs={18}>
                   <Controller
                     control={control}
                     name={`forms`}
@@ -458,31 +454,31 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
               </Row>
 
               {/* <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-                <Col md={4} xs={24}>
-                  Collocations:
-                </Col>
-                <Col md={20} xs={24}>
-                  <Controller
-                    control={control}
-                    name={`collocations`}
-                    render={() => (
-                      <InputTag
-                        tags={getValues('collocations')}
-                        onChange={(value: string[]) => {
-                          setValue('collocations', value)
-                        }}
+                    <Col md={4} xs={24}>
+                      Collocations:
+                    </Col>
+                    <Col md={20} xs={24}>
+                      <Controller
+                        control={control}
+                        name={`collocations`}
+                        render={() => (
+                          <InputTag
+                            tags={getValues('collocations')}
+                            onChange={(value: string[]) => {
+                              setValue('collocations', value)
+                            }}
+                          />
+                        )}
                       />
-                    )}
-                  />
-                </Col>
-              </Row> */}
+                    </Col>
+                  </Row> */}
 
               <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-                <Col md={4} xs={24}>
-                  Word Family:
+                <Col md={4} xs={6}>
+                  Family:
                 </Col>
 
-                <Col md={20} xs={24}>
+                <Col md={20} xs={18}>
                   <Controller
                     control={control}
                     name={`word_family`}
@@ -502,11 +498,11 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
           )}
 
           <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-            <Col md={4} xs={24}>
+            <Col md={4} xs={6}>
               Relation:
             </Col>
 
-            <Col md={20} xs={24}>
+            <Col md={20} xs={18}>
               <Controller
                 control={control}
                 name={`relation`}
@@ -523,11 +519,11 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
           </Row>
 
           <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-            <Col md={4} xs={24}>
+            <Col md={4} xs={6}>
               Quick add:
             </Col>
 
-            <Col md={20} xs={24}>
+            <Col md={20} xs={18}>
               <Controller
                 control={control}
                 name={`quickAdd`}

@@ -37,6 +37,7 @@ export const appTheme: ThemeConfig = {
     Input: {},
     Modal: {
       fontSizeHeading5: 24,
+      contentPadding: 18,
     },
     Layout: {
       headerBg: '#fff',

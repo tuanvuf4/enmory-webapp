@@ -39,11 +39,11 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
       direction='vertical'
       size={[token.size / 2, token.size / 2]}
       className={gClasses.fulWidth}
-      style={{ padding: `${token.size / 2}px 0` }}
+      style={{ marginBottom: `${token.size}px` }}
     >
       <Col span={24}>
         <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-          <Col md={4} xs={8}>
+          <Col md={4} xs={6}>
             <label htmlFor=''>Meaning:</label>
           </Col>
 
@@ -75,6 +75,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
               classes.contentStyle,
               getValues(`meanings.${index}.enable`) ? '' : classes.disableMeaning,
             )}
+            // style={{ paddingTop: `${token.size / 2}px` }}
             key={field.id || index}
           >
             <Row>
@@ -498,11 +499,11 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
 
                 <Col span={24}>
                   <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    <Col md={4} xs={24}>
+                    <Col md={4} xs={6}>
                       Synonyms:
                     </Col>
 
-                    <Col md={20} xs={24}>
+                    <Col md={20} xs={18}>
                       <Controller
                         control={control}
                         name={`meanings.${index}.synonyms`}
@@ -516,11 +517,11 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
 
                 <Col span={24}>
                   <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    <Col md={4} xs={24}>
+                    <Col md={4} xs={6}>
                       Antonyms:
                     </Col>
 
-                    <Col md={20} xs={24}>
+                    <Col md={20} xs={18}>
                       <Controller
                         control={control}
                         name={`meanings.${index}.antonyms`}

@@ -54,10 +54,14 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
 
   return (
     <>
-      <Space direction='vertical' size={[token.size, token.size]} className={gClasses.fulWidth}>
+      <Space
+        direction='vertical'
+        size={[token.size / 2, token.size / 2]}
+        className={gClasses.fulWidth}
+      >
         <Col xs={24}>
           <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-            <Col md={4} xs={8}>
+            <Col md={4} xs={6}>
               Example:
             </Col>
 
@@ -79,14 +83,14 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                       className={gClasses.fulWidth}
                     >
                       <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                        <Col md={{ span: 2, order: 1 }}>
+                        <Col md={{ span: 2, order: 1 }} xs={{ span: 4, order: 1 }}>
                           <Controller
                             control={control}
                             name={`meanings.${nestIndex}.examples.${key}.auto`}
                             render={({ field: { onChange, value, ref } }) => (
                               <Switch
                                 ref={ref}
-                                title={'Search an example with auto complete' + value + ''}
+                                title={'Type to search...' + value + ''}
                                 checked={value}
                                 defaultChecked={value}
                                 onChange={(e) => {
@@ -98,7 +102,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           />
                         </Col>
 
-                        <Col md={{ span: 20, order: 2 }}>
+                        <Col md={{ span: 20, order: 2 }} xs={{ span: 16, order: 1 }}>
                           <AutoComplete
                             value={currentSearch}
                             disabled={!getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
@@ -110,11 +114,11 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                             onSearch={onSearch}
                             onSelect={(value) => onSelect(nestIndex, key, value)}
                             placeholder='Search an example...'
-                            className={clsx([gClasses.fulWidth])}
+                            className={'w-full'}
                           />
                         </Col>
 
-                        <Col md={{ span: 2, order: 3 }} align={'end'}>
+                        <Col md={{ span: 2, order: 3 }} xs={{ span: 4, order: 1 }} align={'end'}>
                           <Button
                             className={'min-w-10'}
                             danger

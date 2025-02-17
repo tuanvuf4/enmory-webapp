@@ -29,7 +29,6 @@ export const StudySet: React.FC = () => {
 
   const [item, setItem] = useState<IItemQuiz<TQuiz, string[]>>()
   const inputEl = useRef<InputRef | null>(null)
-  console.log(`******* item ******* `, item)
 
   const { openNotification } = usePrompt()
 
@@ -430,13 +429,12 @@ export const StudySet: React.FC = () => {
                         <i
                           dangerouslySetInnerHTML={{ __html: `${isSubmit ? `${ans.key}` : ''}` }}
                         />
-
-                        {isSubmit && ans.typeId && (
-                          <i>{`(${getTypeOfItem(ans.typeId).toLowerCase()})`}</i>
-                        )}
                       </div>
 
-                      {isSubmit && ans.id !== item.id && (
+                      {isSubmit && ans.typeId && (
+                        <i>{`(${getTypeOfItem(ans.typeId).toLowerCase()})`}</i>
+                      )}
+                      {/* {isSubmit && ans.id !== item.id && (
                         <Button
                           type={'link'}
                           size={'small'}
@@ -449,7 +447,7 @@ export const StudySet: React.FC = () => {
                             style={{ color: appStyleConfig.color.yellow[6], fontSize: 18 }}
                           />
                         </Button>
-                      )}
+                      )} */}
                     </div>
                   </li>
                 )

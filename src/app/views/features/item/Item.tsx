@@ -154,7 +154,7 @@ export const Item: React.FC<IProps> = ({
   }
 
   const onRedo = (data: IItem) => {
-    const level = data.level === 0 ? 5 : 0
+    const level = data.level === 5 ? 0 : 5
     itemApi.updateItem(data.id as number, { level })
     dispatch(itemAction.update({ ...data, level }))
     dispatch(studySetAction.update({ ...data, level }))

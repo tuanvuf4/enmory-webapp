@@ -34,7 +34,7 @@ export const ActionItem: React.FC<IActionItem> = (props) => {
   )
 }
 
-export const getActionMenuItems = (data: IItem): ItemType[] => {
+export const getActionMenuItems = (data: IItem | undefined): ItemType[] => {
   return [
     {
       key: 0,
@@ -48,7 +48,7 @@ export const getActionMenuItems = (data: IItem): ItemType[] => {
       key: 2,
       label: (
         <ActionItem
-          label={`${data.level === 0 ? '5' : '0'}`}
+          label={`${data?.level === 5 ? '0 star' : '5 stars'}`}
           icon={<StarFilled color={'yellow'} />}
         />
       ),

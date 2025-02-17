@@ -44,17 +44,40 @@ export const studySetReducer = createSlice({
       }
     },
     update(state: IStudySet, action: PayloadAction<Partial<IItemQuiz<TQuiz, string[]>>>) {
-      const map = state.list.map((item) =>
+      state.list = state.list.map((item) =>
         item.id === action.payload.id ? { ...item, ...action.payload } : { ...item },
       )
-      state.list = map
     },
-    updateQuiz(state: IStudySet, action: PayloadAction<Partial<IQuiz<string>>>) {
+    updateQuiz(
+      state: IStudySet,
+      action: PayloadAction<Partial<IQuiz<string | Partial<IPair<string, boolean>>[]>>>,
+    ) {
       state.list[state.status.currentIndex] = {
         ...state.list[state.status.currentIndex],
         quiz: {
           ...state.list[state.status.currentIndex].quiz,
           ...action.payload,
+        },
+      }
+    },
+    updateQuizAnswer(state: IStudySet) {
+      state.list[state.status.currentIndex] = {
+        ...state.list[state.status.currentIndex],
+        quiz: {
+          ...state.list[state.status.currentIndex].quiz,
+          answer: [
+            ...(
+              state.list[state.status.currentIndex].quiz.answer as Partial<IPair<string, boolean>>[]
+            ).map((item) => {
+              if (item.id === 2673) {
+                return {
+                  ...item,
+                  label: '<ul><li>tấm thảm</li><li>tấm thảm</li></ul>',
+                }
+              }
+              return item
+            }),
+          ],
         },
       }
     },

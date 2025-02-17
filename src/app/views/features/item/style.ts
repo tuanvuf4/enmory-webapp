@@ -203,6 +203,10 @@ const styles = () => {
       color: appStyleConfig.color.blue[4],
       fontSize: token.fontSize,
       fontFamily: 'Lora, sans-serif',
+
+      '& li': {
+        display: 'list-item',
+      },
     },
     word_family: {
       // color: token.colorWhite,

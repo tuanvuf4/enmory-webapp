@@ -266,9 +266,9 @@ export const Item: React.FC<IProps> = ({
                   </div>
 
                   {data.catId && (
-                    <h5 className={classes.level}>
+                    <div className={classes.level}>
                       <Level level={data.level as number} />
-                    </h5>
+                    </div>
                   )}
 
                   {data.user && (

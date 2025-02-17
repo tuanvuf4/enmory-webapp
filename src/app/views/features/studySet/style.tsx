@@ -155,13 +155,20 @@ const styles = () => {
     mtc: {
       margin: [token.size * 2, 0, token.size / 2],
 
-      '& ul': {
+      '& > ul': {
         width: 600,
         maxWidth: '100%',
         margin: `${token.size}px auto`,
         textAlign: 'left',
 
         '& li': {
+          padding: `${token.size / 4}px ${token.size / 2}px `,
+          margin: `${token.size / 4}px 0`,
+          border: `2px solid ${hex2Rgba(token.colorWhite, 0.45)}`,
+          borderRadius: token.size / 2,
+        },
+
+        '& > li': {
           padding: `${(token.size / 4) * 3}px ${(token.size / 4) * 5}px `,
           margin: `${(token.size / 4) * 3}px 0`,
           borderRadius: token.size / 2,

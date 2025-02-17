@@ -1,6 +1,6 @@
 import { appStyleConfig } from '@/style/appStyle'
 import { ReloadOutlined, EditOutlined } from '@ant-design/icons'
-import { defaultSetting } from '@/config/appConfig'
+import { appConfig, defaultSetting } from '@/config/appConfig'
 import { useAppDispatch, useAppSelector } from '@/core/hooks'
 import {
   transformItemModelToServer,
@@ -29,6 +29,7 @@ export const StudySet: React.FC = () => {
 
   const [item, setItem] = useState<IItemQuiz<TQuiz, string[]>>()
   const inputEl = useRef<InputRef | null>(null)
+  console.log(`******* item ******* `, item)
 
   const { openNotification } = usePrompt()
 
@@ -139,7 +140,6 @@ export const StudySet: React.FC = () => {
       }),
       { headers: { loading: ELoading.NO } },
     )
-    // dispatch(studySetAction.updateQuiz({ result }))
   }
 
   const onSelectMultiChoice = (answer: IPair<string, boolean>) => {
@@ -319,9 +319,7 @@ export const StudySet: React.FC = () => {
     }
   }, [])
 
-  useEffect(() => {
-    setItem(list[status.currentIndex])
-  }, [list, status, currentIndex])
+  useEffect(() => setItem(list[currentIndex]), [list, currentIndex])
 
   return (
     <div className={classes.studySet} id='studySet' tabIndex={0}>
@@ -331,6 +329,17 @@ export const StudySet: React.FC = () => {
             {!isDone && (
               <Button icon={<ReloadOutlined />} type='primary' danger onClick={() => onReload()}>
                 Reload
+              </Button>
+            )}
+
+            {appConfig.env === 'development' && (
+              <Button
+                icon={<ReloadOutlined />}
+                type='primary'
+                danger
+                onClick={() => dispatch(studySetAction.updateQuizAnswer())}
+              >
+                load
               </Button>
             )}
 
@@ -346,7 +355,7 @@ export const StudySet: React.FC = () => {
       </div>
 
       <div className={classes.studySetBody}>
-        {!isDone && !inProgress && <h2>LET'S PRACTISE!</h2>}
+        {!isDone && !inProgress && <h2>LET'S PRACTICE!</h2>}
 
         {isDone && !inProgress && (
           <div className={classes.result}>
@@ -415,11 +424,13 @@ export const StudySet: React.FC = () => {
                         gap: token.size / 4,
                       }}
                     >
-                      <div>
+                      <div className={'flex items-center justify-between'}>
                         <span dangerouslySetInnerHTML={{ __html: `${ans.label}` }} />
+
                         <i
                           dangerouslySetInnerHTML={{ __html: `${isSubmit ? `${ans.key}` : ''}` }}
                         />
+
                         {isSubmit && ans.typeId && (
                           <i>{`(${getTypeOfItem(ans.typeId).toLowerCase()})`}</i>
                         )}

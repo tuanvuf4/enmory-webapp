@@ -29,7 +29,7 @@ const getRangeDate = (from: number, to: number, separator = '-') => {
   const range = []
   while (from < to) {
     range.push({
-      title: `${defaultSetting.shortDays[date.getDay()]} (${moment(date).format("MMM DD")})`,
+      title: `${defaultSetting.shortDays[date.getDay()]} (${moment(date).format('MMM DD')})`,
       from: moment(date).startOf('day').toDate().getTime(),
       to: moment(date).endOf('day').toDate().getTime(),
     })

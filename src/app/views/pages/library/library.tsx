@@ -18,6 +18,7 @@ import { Pagination } from '@/views/components/pagination/pagination'
 import { Item } from '@/views/features/item/Item'
 import { Reference } from '@/views/features/references/references'
 import { usePrompt } from '@/helpers/hooks'
+import { NotFound } from '@/views/components'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
@@ -174,7 +175,7 @@ export const Library: React.FC = () => {
 
                         <td>{getCategory(item.catId as ECategory)}</td>
 
-                        {item.meanings.length > 0 && (
+                        {item?.meanings && item.meanings.length > 0 && (
                           <>
                             {item.catId !== ECategory.WORD && <td></td>}
 
@@ -204,7 +205,7 @@ export const Library: React.FC = () => {
                           </>
                         )}
 
-                        {item.meanings.length === 0 && (
+                        {item.meanings && item.meanings.length === 0 && (
                           <>
                             <td></td>
                             <td></td>
@@ -249,11 +250,7 @@ export const Library: React.FC = () => {
           </div>
         )}
 
-        {listItem.length === 0 && (
-          <div className={classes.items}>
-            <h2>No record! </h2>
-          </div>
-        )}
+        {listItem.length === 0 && <NotFound />}
       </div>
     </>
   )

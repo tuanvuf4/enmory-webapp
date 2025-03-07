@@ -1,6 +1,7 @@
 import {
   AreaChartOutlined,
   BookOutlined,
+  CalendarOutlined,
   CustomerServiceOutlined,
   HomeOutlined,
   InfoCircleOutlined,
@@ -9,7 +10,7 @@ import {
   SearchOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import type { MenuProps } from 'antd'
+import { type MenuProps } from 'antd'
 import { EPageExt } from '@/models/app.model'
 
 export interface IMenus {
@@ -39,6 +40,11 @@ export const authMenus: MenuProps['items'] = [
     key: '10',
     icon: <BookOutlined className='icon' />,
     label: 'Example',
+  },
+  {
+    key: '11',
+    icon: <CalendarOutlined className='icon' />,
+    label: 'Schedule',
   },
   {
     key: '6',
@@ -133,5 +139,9 @@ export const keyPaths = [
   {
     key: '10',
     path: '/example',
+  },
+  {
+    key: '11',
+    path: '/schedule',
   },
 ]

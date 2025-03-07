@@ -1,6 +1,7 @@
 import { transformItemModelToClient } from '@/helpers/item'
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import { appApi } from '@/services/api'
+import { IIotdRequest } from '@/models/item.model'
 
 const fetchCategories = createAsyncThunk('categories/fetchCategories', async () => {
   const cats = await appApi.getCategories()
@@ -27,19 +28,16 @@ const fetchTypes = createAsyncThunk('type/fetchTypes', async () => {
   return types
 })
 
-const fetchIotd = createAsyncThunk(
-  'iotd/fetchIotd',
-  async (data: { catId: number; generate?: number }) => {
-    const iotd = await appApi.getItemOfTheDayByCatId(data.catId, data.generate)
-    return {
-      ...iotd,
-      content: {
-        ...iotd.content,
-        item: { ...transformItemModelToClient(iotd.content.item) },
-      },
-    }
-  },
-)
+const fetchIotd = createAsyncThunk('iotd/fetchIotd', async (data: IIotdRequest) => {
+  const iotd = await appApi.getItemOfTheDayByCatId(data)
+  return {
+    ...iotd,
+    content: {
+      ...iotd.content,
+      item: { ...transformItemModelToClient(iotd.content.item) },
+    },
+  }
+})
 
 export const actionAsyncApp = {
   fetchCategories,

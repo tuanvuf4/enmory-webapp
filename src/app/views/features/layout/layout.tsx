@@ -85,7 +85,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
             collapsed={isSidebarOpened}
             className={classes.sider}
           >
-            <SideBarMain></SideBarMain>
+            <SideBarMain />
           </Layout.Sider>
         )}
 
@@ -98,18 +98,18 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
             closable={false}
             destroyOnClose={true}
           >
-            <SideBarMain></SideBarMain>
+            <SideBarMain />
           </Drawer>
         )}
 
         <Layout style={{ paddingLeft: drawer ? 0 : appStyleConfig.sider.width }}>
-          <AppHeader></AppHeader>
+          <AppHeader />
 
           <Layout.Content className={classes.contentStyle}>
             <div className={classes.main}>{props.children}</div>
           </Layout.Content>
 
-          <AppFooter></AppFooter>
+          <AppFooter />
         </Layout>
       </Layout>
 

@@ -99,7 +99,7 @@ export interface IItem<M = string[]> {
   word_family: M
   relation: M
   quickAdd?: M
-  meanings: IMeaning<M>[]
+  meanings?: IMeaning<M>[]
 }
 
 export interface IIotd<M = string[]> {
@@ -109,6 +109,23 @@ export interface IIotd<M = string[]> {
   first_of_date: number
   last_of_date: number
   item: IItem<M>
+}
+
+export interface IIotdRequest {
+  catId: number
+  generate?: boolean
+  isMarked?: boolean
+}
+
+export interface MarkIotdRangeDateRequest {
+  itemId: number
+  isMarked: boolean
+}
+
+export interface GetIIotdRangeDateRequest {
+  from?: number
+  to?: number
+  isMarked: boolean
 }
 
 export interface IPair<K, V> {

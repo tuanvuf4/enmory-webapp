@@ -12,6 +12,7 @@ import { useEffect } from 'react'
 import styles from './style'
 import { Toolbar } from '@/views/features/toolbar/toolbar'
 import { usePrompt } from '@/helpers/hooks'
+import { NotFound } from '@/views/components'
 
 export const Example: React.FC = () => {
   const { token } = theme.useToken()
@@ -74,10 +75,10 @@ export const Example: React.FC = () => {
       </div>
 
       <div className={gClasses.container}>
-        <div className={classes.items}>
-          <Row gutter={[token.size, token.size * 2]}>
-            {examples.length > 0 &&
-              examples.map((item, idx) => {
+        {examples.length > 0 && (
+          <div className={classes.items}>
+            <Row gutter={[token.size, token.size * 2]}>
+              {examples.map((item, idx) => {
                 return (
                   <Col xs={24} sm={12} md={8} lg={8} key={idx}>
                     <ExItem
@@ -88,14 +89,11 @@ export const Example: React.FC = () => {
                   </Col>
                 )
               })}
-          </Row>
-        </div>
-
-        {examples.length === 0 && (
-          <div className={classes.items}>
-            <h2>No record! </h2>
+            </Row>
           </div>
         )}
+
+        {examples.length === 0 && <NotFound />}
       </div>
     </>
   )

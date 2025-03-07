@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/core/hooks'
 import { isDefect, getCategory } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
 import { TItem, IItem, ECategory } from '@/models/item.model'
-import { itemApi } from '@/services/api'
+import { appApi, itemApi } from '@/services/api'
 import { initSearchFormItem } from '@/services/index'
 import { itemAsync } from '@/store/async/item.async'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
@@ -25,6 +25,7 @@ import styles from './style'
 import clsx from 'clsx'
 import { Reference } from '../references/references'
 import { actionAsyncApp } from '@/store/async'
+import { usePrompt } from '@/helpers/hooks'
 
 interface IProps {
   groupAction?: boolean
@@ -58,6 +59,8 @@ export const Item: React.FC<IProps> = ({
   const location = useLocation()
   const dispatch = useAppDispatch()
 
+  const { openNotification } = usePrompt()
+
   const { viewMode } = useAppSelector((state) => state.config)
 
   const handleMenuClick: MenuProps['onClick'] = (e) => {
@@ -85,6 +88,10 @@ export const Item: React.FC<IProps> = ({
       case '5':
         archive(data)
         onArchive?.()
+        break
+
+      case '6':
+        markItem(data?.id as number)
         break
 
       default:
@@ -171,6 +178,18 @@ export const Item: React.FC<IProps> = ({
     dispatch(settingAction.setCurrentItem({ ...data, archive }))
   }
 
+  const markItem = async (id: number) => {
+    const { isSuccess, content } = await appApi.markIotd({ isMarked: true, itemId: id })
+
+    if (isSuccess && content) {
+      openNotification({
+        type: 'success',
+        message: 'Added to schedule!',
+        placement: 'top',
+      })
+    }
+  }
+
   useEffect(() => {
     viewMode === EViewMode.LIST ? setSize(24) : setSize(8)
   }, [viewMode])
@@ -209,7 +228,10 @@ export const Item: React.FC<IProps> = ({
                       icon={<ReloadOutlined style={{ color: token.colorWhite }} />}
                       onClick={async () => {
                         await dispatch(
-                          actionAsyncApp.fetchIotd({ catId: data.catId as ECategory, generate: 1 }),
+                          actionAsyncApp.fetchIotd({
+                            catId: data.catId as ECategory,
+                            generate: true,
+                          }),
                         )
                       }}
                     />
@@ -322,7 +344,7 @@ export const Item: React.FC<IProps> = ({
                 )}
             </div>
 
-            {type === 'brief' && data.meanings.length > 0 && (
+            {type === 'brief' && data.meanings && data.meanings.length > 0 && (
               <MeaningItemView
                 type={type}
                 meaning={data.meanings.find((item) => item.common) || data.meanings[0]}
@@ -331,6 +353,7 @@ export const Item: React.FC<IProps> = ({
             )}
 
             {type === 'full' &&
+              data.meanings &&
               data.meanings.length > 0 &&
               data.meanings.map((meaning, key) => {
                 return (

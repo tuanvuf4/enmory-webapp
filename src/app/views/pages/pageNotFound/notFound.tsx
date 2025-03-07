@@ -2,7 +2,7 @@ import classNames from 'clsx'
 import globalStyle from '@/style/appStyle'
 import styles from './style'
 
-export const NotFound = () => {
+export const PageNotFound = () => {
   const classes = styles()
   const gClasses = globalStyle()
 

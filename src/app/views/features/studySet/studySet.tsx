@@ -22,6 +22,7 @@ import { EItemLevel } from '../modals/itemModal'
 import styles from './style'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
+import { NotFound } from '@/views/components'
 
 export const StudySet: React.FC = () => {
   const { token } = theme.useToken()
@@ -365,7 +366,7 @@ export const StudySet: React.FC = () => {
           </div>
         )}
 
-        {inProgress && list.length === 0 && <h2>No record! </h2>}
+        {inProgress && list.length === 0 && <NotFound />}
 
         {inProgress && list.length > 0 && (
           <>

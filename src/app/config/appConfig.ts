@@ -112,6 +112,8 @@ export const defaultSetting = {
   numberItemOfAutoComplete: 10,
   dateFormat: 'MM/DD/YYYY',
   dateTimeFormat: 'MM/DD/YYYY | hh:mm A',
+  days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+  shortDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   pagination: {
     page: 0,
     size: 20,

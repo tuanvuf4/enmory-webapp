@@ -9,6 +9,7 @@ import { AppLayout } from '@/views/features/layout/layout'
 import { useEffect } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { RouterElement } from './router'
+import { appApi } from './services/api'
 
 export const App = () => {
   const { isAuth } = useAppSelector((state) => state.auth)

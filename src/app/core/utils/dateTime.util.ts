@@ -1,3 +1,6 @@
+import { defaultSetting } from '@/config/appConfig'
+import moment from 'moment'
+
 function isValidDate(dateString: string) {
   if (
     (Object.prototype.toString.call(dateString) && '[object Date]') ||
@@ -18,6 +21,22 @@ function getDateToEnd(d: number | string | Date): Date | undefined {
   if (typeof d === 'string' && !isValidDate(d)) return
   const date = new Date(d)
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
+}
+
+const getRangeDate = (from: number, to: number, separator = '-') => {
+  const day = 24 * 60 * 60 * 1000
+  const date = new Date(from)
+  const range = []
+  while (from < to) {
+    range.push({
+      title: `${defaultSetting.shortDays[date.getDay()]} (${moment(date).format("MMM DD")})`,
+      from: moment(date).startOf('day').toDate().getTime(),
+      to: moment(date).endOf('day').toDate().getTime(),
+    })
+    date.setDate(date.getDate() + 1)
+    from += day
+  }
+  return range
 }
 
 function getMonthName(d: Date) {
@@ -110,4 +129,5 @@ export const dateTimeUtils = {
   getDateToLastMonth,
   getDateFromBeginYear,
   getDateToEndYear,
+  getRangeDate,
 }

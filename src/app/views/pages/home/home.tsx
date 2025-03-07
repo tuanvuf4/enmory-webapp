@@ -103,30 +103,6 @@ const Home = () => {
                     </Widget>
                   )}
 
-                  {idiom && idiom.original && (
-                    <Widget title='Idiom of the day'>
-                      <Item
-                        active
-                        reload
-                        data={idiom}
-                        type='full'
-                        onEdit={() => onEdit(idiom.id as number)}
-                      />
-                    </Widget>
-                  )}
-
-                  {slang && slang.original && (
-                    <Widget title='Slang of the day'>
-                      <Item
-                        active
-                        reload
-                        data={slang}
-                        type='full'
-                        onEdit={() => onEdit(slang.id as number)}
-                      />
-                    </Widget>
-                  )}
-
                   {collocation && collocation.original && (
                     <Widget title='Collocation of the day'>
                       <Item
@@ -147,6 +123,30 @@ const Home = () => {
                         data={sentence}
                         type='full'
                         onEdit={() => onEdit(sentence.id as number)}
+                      />
+                    </Widget>
+                  )}
+
+                  {idiom && idiom.original && (
+                    <Widget title='Idiom of the day'>
+                      <Item
+                        active
+                        reload
+                        data={idiom}
+                        type='full'
+                        onEdit={() => onEdit(idiom.id as number)}
+                      />
+                    </Widget>
+                  )}
+
+                  {slang && slang.original && (
+                    <Widget title='Slang of the day'>
+                      <Item
+                        active
+                        reload
+                        data={slang}
+                        type='full'
+                        onEdit={() => onEdit(slang.id as number)}
                       />
                     </Widget>
                   )}

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { RouteObject, useRoutes } from 'react-router-dom'
 import { useAppSelector } from './core/hooks/redux'
-import { NotFound } from './views/pages/notFound/notFound'
+import { PageNotFound } from './views/pages/pageNotFound/notFound'
 
 export function lazyLoadRoutes(componentName: string) {
   const LazyElement = React.lazy(
@@ -10,7 +10,7 @@ export function lazyLoadRoutes(componentName: string) {
 
   return (
     <React.Suspense
-    // fallback={<NotFound />}
+    // fallback={<PageNotFound />}
     >
       <LazyElement />
     </React.Suspense>
@@ -42,7 +42,7 @@ export const RouterElement = () => {
       },
       {
         path: '*',
-        element: <NotFound />,
+        element: <PageNotFound />,
       },
     ]
   }, [])
@@ -70,6 +70,10 @@ export const RouterElement = () => {
         element: lazyLoadRoutes('statistic'),
       },
       {
+        path: '/schedule',
+        element: lazyLoadRoutes('schedule'),
+      },
+      {
         path: '/about',
         element: lazyLoadRoutes('about'),
       },
@@ -83,7 +87,7 @@ export const RouterElement = () => {
       },
       {
         path: '*',
-        element: <NotFound />,
+        element: <PageNotFound />,
       },
     ]
   }, [])

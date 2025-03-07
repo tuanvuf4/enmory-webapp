@@ -3,6 +3,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
+  PlusOutlined,
   ReadOutlined,
   StarFilled,
   SyncOutlined,
@@ -43,6 +44,10 @@ export const getActionMenuItems = (data: IItem | undefined): ItemType[] => {
     {
       key: 1,
       label: <ActionItem label='Edit' icon={<EditOutlined />} />,
+    },
+    {
+      key: 6,
+      label: <ActionItem label='Mark' icon={<PlusOutlined />} />,
     },
     {
       key: 2,

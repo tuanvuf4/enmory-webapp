@@ -22,8 +22,8 @@ export const RouterElement = () => {
 
   const { isAuth } = useAppSelector((state) => state.auth)
 
-  const route = useMemo(() => {
-    return [
+  const route: RouteObject[] = useMemo(
+    () => [
       // {
       //   path: '/',
       //   element: lazyLoadRoutes('home'),
@@ -44,14 +44,16 @@ export const RouterElement = () => {
         path: '*',
         element: <PageNotFound />,
       },
-    ]
-  }, [])
+    ],
+    [],
+  )
 
-  const authRoute = useMemo(() => {
-    return [
+  const authRoute: RouteObject[] = useMemo(
+    (): RouteObject[] => [
       {
         path: '/',
         element: lazyLoadRoutes('home'),
+        handle: () => {},
       },
       {
         path: '/library',
@@ -74,6 +76,10 @@ export const RouterElement = () => {
         element: lazyLoadRoutes('schedule'),
       },
       {
+        path: '/schedule',
+        element: 'ScheduleRoot',
+      },
+      {
         path: '/schedule/:id',
         element: lazyLoadRoutes('schedule'),
       },
@@ -93,8 +99,9 @@ export const RouterElement = () => {
         path: '*',
         element: <PageNotFound />,
       },
-    ]
-  }, [])
+    ],
+    [],
+  )
 
   useEffect(() => {
     isAuth ? setRouter(authRoute) : setRouter(route)

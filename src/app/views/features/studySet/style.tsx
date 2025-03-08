@@ -166,6 +166,11 @@ const styles = () => {
           margin: `${token.size / 4}px 0`,
           border: `2px solid ${hex2Rgba(token.colorWhite, 0.45)}`,
           borderRadius: token.size / 2,
+
+          '& p': {
+            margin: 0,
+            padding: 0,
+          },
         },
 
         '& > li': {

@@ -124,7 +124,21 @@ function getDateToEndYear(year = 0, d: number | string | Date = new Date()): Dat
   return new Date(date.getFullYear() + year, 11, 31, 23, 59, 59, 99)
 }
 
+const getStartOfDateUTC = (d: string | number | Date) => {
+  if (!d) return
+  const c = new Date(d)
+  return Date.UTC(c.getFullYear(), c.getMonth(), c.getDate(), 0, 0, 0, 0)
+}
+
+const getEndOfDateUTC = (d: string | number | Date) => {
+  if (!d) return
+  const c = new Date(d)
+  return Date.UTC(c.getFullYear(), c.getMonth(), c.getDate(), 23, 59, 59, 999)
+}
+
 export const dateTimeUtils = {
+  getStartOfDateUTC,
+  getEndOfDateUTC,
   isValidDate,
   getDateFromBegin,
   getDateToEnd,

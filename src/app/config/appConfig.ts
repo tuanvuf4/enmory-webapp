@@ -114,6 +114,7 @@ export const defaultSetting = {
   dateTimeFormat: 'MM/DD/YYYY | hh:mm A',
   days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
   shortDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+  millisecondsADay: 24 * 60 * 60 * 1000,
   pagination: {
     page: 0,
     size: 20,

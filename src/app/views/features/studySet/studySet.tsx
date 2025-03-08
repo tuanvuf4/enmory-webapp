@@ -15,7 +15,7 @@ import { itemAsync } from '@/store/async/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { IStudySetStatus, studySetAction } from '@/store/reducers/studySet.reducer'
-import { theme, InputRef, Button, Input } from 'antd'
+import { theme, InputRef, Button, Input, Flex } from 'antd'
 import { useState, useRef, useEffect } from 'react'
 import { Item } from '../item/Item'
 import { EItemLevel } from '../modals/itemModal'
@@ -416,14 +416,7 @@ export const StudySet: React.FC = () => {
                         : onSelectMultiChoice(ans as IPair<string, boolean>)
                     }}
                   >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: token.size / 4,
-                      }}
-                    >
+                    <Flex justify={'space-between'} align={'center'} gap={token.size / 4}>
                       <div className={'flex items-center justify-between'}>
                         <span dangerouslySetInnerHTML={{ __html: `${ans.label}` }} />
 
@@ -449,7 +442,7 @@ export const StudySet: React.FC = () => {
                           />
                         </Button>
                       )} */}
-                    </div>
+                    </Flex>
                   </li>
                 )
               })}

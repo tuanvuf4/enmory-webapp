@@ -11,8 +11,7 @@ import moment from 'moment'
 import { dateTimeUtils } from '@/core/utils'
 import { ColumnType } from 'antd/es/table'
 import { DeleteOutlined } from '@ant-design/icons'
-import { Navigate, redirect, useNavigate, useParams, useRoutes } from 'react-router-dom'
-import { isNil } from 'lodash'
+import { useNavigate, useParams } from 'react-router-dom'
 
 interface DataType {
   key: string | number
@@ -65,13 +64,6 @@ const Schedule = () => {
   const [range, setRange] = useState<[number, number]>(dateRange[1].value)
   const [currentDate, setCurrentDate] = useState<number>(Number(id || 0))
 
-  console.log(`******* id ******* `, id)
-
-  if (!id) {
-    // navigate(`/schedule/${2}`)
-    window.location.href = `/schedule/${2}`
-  }
-
   const dispatch = useAppDispatch()
 
   const gClasses = globalStyle()
@@ -91,8 +83,10 @@ const Schedule = () => {
   const fetchMarkedIotd = async (range: [number, number]) => {
     const { isSuccess, content } = await appApi.getIotdRange({
       isMarked: true,
-      from: range[0],
-      to: range[1],
+      // from: range[0],
+      // to: range[1],
+      from: dateTimeUtils.getStartOfDateUTC(range[0]),
+      to: dateTimeUtils.getEndOfDateUTC(range[1]),
     })
 
     const dateRange = dateTimeUtils.getRangeDate(range[0], range[1])
@@ -160,26 +154,16 @@ const Schedule = () => {
       const cats = Object.keys(ECategory).filter(
         (predicate) => !isNaN(Number(predicate)) && predicate !== '0',
       )
+      console.log(`******* content ******* `, content)
+
       const dataSource = cats.map((cat) => {
         const findItem = dateRange.map((range) => {
-          const findItems = content
-            .map((c) => ({
-              ...c,
-              from: moment(c.first_of_date)
-                .utcOffset(dateTimeUtils.getLocalTimeZone(c.first_of_date) ?? '')
-                .toDate()
-                .getTime(),
-              to: moment(c.last_of_date)
-                .utcOffset(dateTimeUtils.getLocalTimeZone(c.last_of_date) ?? '')
-                .toDate()
-                .getTime(),
-            }))
-            .filter(
-              (t) =>
-                range.from <= t.first_of_date &&
-                t.first_of_date <= range.to &&
-                Number(cat) === t.item.catId,
-            )
+          const findItems = content.filter(
+            (t) =>
+              range.from <= t.first_of_date &&
+              t.first_of_date <= range.to &&
+              Number(cat) === t.item.catId,
+          )
           if (findItems.length > 0) return findItems
           return undefined
         })
@@ -195,7 +179,14 @@ const Schedule = () => {
     }
   }
 
-  useEffect(() => void fetchMarkedIotd(range), [range])
+  useEffect(() => void fetchMarkedIotd(range), [range, id])
+
+  useEffect(() => {
+    if (id && dateRange.find((v) => v.id === Number(id))) {
+      setRange(dateRange[Number(id) - 1].value)
+      setCurrentDate(Number(id))
+    } else navigate('/schedule/2')
+  }, [dateRange, id])
 
   return (
     <div className={gClasses.containerFluid}>
@@ -206,6 +197,7 @@ const Schedule = () => {
           {dateRange.map((item, key) => (
             <Radio.Button
               key={key}
+              className={'select-none'}
               value={item.id}
               onClick={() => {
                 navigate(`/schedule/${item.id}`)

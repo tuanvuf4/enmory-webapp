@@ -28,8 +28,9 @@ const getRangeDate = (from: number, to: number, separator = '-') => {
   const date = new Date(from)
   const range = []
   while (from < to) {
+    const today = date.getDay() === 0 ? 6 : date.getDay() - 1
     range.push({
-      title: `${defaultSetting.shortDays[date.getDay()]} (${moment(date).format('MMM DD')})`,
+      title: `${defaultSetting.shortDays[today]} (${moment(date).format('MMM DD')})`,
       from: moment(date).startOf('day').toDate().getTime(),
       to: moment(date).endOf('day').toDate().getTime(),
     })
@@ -37,6 +38,13 @@ const getRangeDate = (from: number, to: number, separator = '-') => {
     from += day
   }
   return range
+}
+
+const getLocalTimeZone = (d: number | string | Date) => {
+  if (typeof d === 'string' && !isValidDate(d)) return
+  const date = new Date(d)
+
+  return date.getTimezoneOffset() / 60 + '00'
 }
 
 function getMonthName(d: Date) {
@@ -130,4 +138,5 @@ export const dateTimeUtils = {
   getDateFromBeginYear,
   getDateToEndYear,
   getRangeDate,
+  getLocalTimeZone,
 }

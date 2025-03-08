@@ -82,10 +82,10 @@ const Schedule = () => {
       to: range[1],
     })
 
-    const tmpDateRange = dateTimeUtils.getRangeDate(range[0], range[1])
+    const dateRange = dateTimeUtils.getRangeDate(range[0], range[1])
 
     if (isSuccess && content) {
-      const columns: TableColumnsType<DataType> = tmpDateRange.map((value, key) => ({
+      const columns: TableColumnsType<DataType> = dateRange.map((value, key) => ({
         title: value.title,
         align: 'center',
         minWidth: 120,
@@ -147,15 +147,26 @@ const Schedule = () => {
       const cats = Object.keys(ECategory).filter(
         (predicate) => !isNaN(Number(predicate)) && predicate !== '0',
       )
-
       const dataSource = cats.map((cat) => {
-        const findItem = tmpDateRange.map((range) => {
-          const findItems = content.filter(
-            (t) =>
-              range.from <= t.first_of_date &&
-              t.first_of_date <= range.to &&
-              Number(cat) === t.item.catId,
-          )
+        const findItem = dateRange.map((range) => {
+          const findItems = content
+            .map((c) => ({
+              ...c,
+              from: moment(c.first_of_date)
+                .utcOffset(dateTimeUtils.getLocalTimeZone(c.first_of_date) ?? '')
+                .toDate()
+                .getTime(),
+              to: moment(c.last_of_date)
+                .utcOffset(dateTimeUtils.getLocalTimeZone(c.last_of_date) ?? '')
+                .toDate()
+                .getTime(),
+            }))
+            .filter(
+              (t) =>
+                range.from <= t.first_of_date &&
+                t.first_of_date <= range.to &&
+                Number(cat) === t.item.catId,
+            )
           if (findItems.length > 0) return findItems
           return undefined
         })

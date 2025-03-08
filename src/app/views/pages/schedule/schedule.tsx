@@ -11,6 +11,8 @@ import moment from 'moment'
 import { dateTimeUtils } from '@/core/utils'
 import { ColumnType } from 'antd/es/table'
 import { DeleteOutlined } from '@ant-design/icons'
+import { Navigate, redirect, useNavigate, useParams, useRoutes } from 'react-router-dom'
+import { isNil } from 'lodash'
 
 interface DataType {
   key: string | number
@@ -54,10 +56,21 @@ const initialColumn: ColumnType<DataType> = {
 }
 
 const Schedule = () => {
-  const [range, setRange] = useState<[number, number]>(dateRange[1].value)
-  const [currentDate, setCurrentDate] = useState<number>(dateRange[1].id)
   const [dataSource, setDataSource] = useState<DataType[]>([])
   const [columns, setColumns] = useState<TableColumnsType<DataType>>([initialColumn])
+
+  const { id } = useParams()
+  const navigate = useNavigate()
+
+  const [range, setRange] = useState<[number, number]>(dateRange[1].value)
+  const [currentDate, setCurrentDate] = useState<number>(Number(id || 0))
+
+  console.log(`******* id ******* `, id)
+
+  if (!id) {
+    // navigate(`/schedule/${2}`)
+    window.location.href = `/schedule/${2}`
+  }
 
   const dispatch = useAppDispatch()
 
@@ -191,7 +204,14 @@ const Schedule = () => {
       <Flex className={'py-4 my-4'} justify={'center'}>
         <Radio.Group value={currentDate} onChange={(e) => setCurrentDate(e.target.value)}>
           {dateRange.map((item, key) => (
-            <Radio.Button key={key} value={item.id} onClick={() => setRange(item.value)}>
+            <Radio.Button
+              key={key}
+              value={item.id}
+              onClick={() => {
+                navigate(`/schedule/${item.id}`)
+                setRange(item.value)
+              }}
+            >
               {item.label}
             </Radio.Button>
           ))}

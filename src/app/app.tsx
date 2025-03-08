@@ -10,6 +10,7 @@ import { useEffect } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { RouterElement } from './router'
 import { appApi } from './services/api'
+import moment from 'moment'
 
 export const App = () => {
   const { isAuth } = useAppSelector((state) => state.auth)
@@ -18,6 +19,12 @@ export const App = () => {
 
   useErrorHandlerRequest()
   useHandleAuthRequest()
+
+  moment.locale('en', {
+    week: {
+      dow: 1,
+    },
+  })
 
   const getCats = async (cats: IPair<string, ECategory>[]) => {
     cats.map(async (cat) => await dispatch(actionAsyncApp.fetchIotd({ catId: cat.id })))

@@ -23,7 +23,7 @@ function getDateToEnd(d: number | string | Date): Date | undefined {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
 }
 
-const getRangeDate = (from: number, to: number, separator = '-') => {
+const getRangeDate = (from: number, to: number) => {
   const day = 24 * 60 * 60 * 1000
   const date = new Date(from)
   const range = []

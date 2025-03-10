@@ -176,7 +176,6 @@ const Schedule = () => {
           return undefined
         })
 
-
         return {
           key: cat,
           category: getCategory(Number(cat)),

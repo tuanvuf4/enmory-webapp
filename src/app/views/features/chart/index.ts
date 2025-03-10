@@ -49,31 +49,31 @@ export const queryPeriods: IQueryPeriods[] = [
   {
     id: 1,
     label: labelPeriods[1],
-    from: dateTimeUtils.getDateFromBeginingOfMonth(-12)?.getTime() as number,
+    from: dateTimeUtils.getDateFromBeginningOfMonth(-12)?.getTime() as number,
     to: new Date().getTime() as number,
   },
   {
     id: 2,
     label: labelPeriods[2],
-    from: dateTimeUtils.getDateFromBeginingOfMonth(-6)?.getTime() as number,
+    from: dateTimeUtils.getDateFromBeginningOfMonth(-6)?.getTime() as number,
     to: new Date().getTime() as number,
   },
   {
     id: 3,
     label: labelPeriods[3],
-    from: dateTimeUtils.getDateFromBeginingOfMonth(-3)?.getTime() as number,
+    from: dateTimeUtils.getDateFromBeginningOfMonth(-3)?.getTime() as number,
     to: new Date().getTime() as number,
   },
   {
     id: 4,
     label: labelPeriods[4],
-    from: dateTimeUtils.getDateFromBeginingOfMonth(-1)?.getTime() as number,
+    from: dateTimeUtils.getDateFromBeginningOfMonth(-1)?.getTime() as number,
     to: new Date().getTime() as number,
   },
   {
     id: 5,
     label: labelPeriods[5],
-    from: dateTimeUtils.getDateFromBeginingOfMonth()?.getTime() as number,
+    from: dateTimeUtils.getDateFromBeginningOfMonth()?.getTime() as number,
     to: new Date().getTime(),
   },
 ]

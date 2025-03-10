@@ -193,6 +193,8 @@ const Schedule = () => {
     if (id && dateRange.find((v) => v.id === Number(id))) {
       setRange(dateRange[Number(id) - 1].value)
       setCurrentDate(Number(id))
+
+      console.log(`******* id ******* `, id);
     } else navigate('/schedule/2')
   }, [dateRange, id])
 

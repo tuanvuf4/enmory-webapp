@@ -1,12 +1,14 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { Route, useNavigate, useParams } from 'react-router-dom'
+import Schedule from './schedule'
 
 const ScheduleRoot = () => {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  if (!id) navigate(`/schedule/${2}`)
+  if (!id) return <Route path={`/schedule/${2}`} element={<Schedule />} />
+  //  navigate(`/schedule/${2}`)
 
-  return null
+  return <Schedule />
 }
 
 export default ScheduleRoot

@@ -1,1 +1,0 @@
-import{az as a,aA as o,j as e,aB as r}from"./index-Cp7Bc3we.js";import t from"./schedule-CGKHrHZJ.js";import"./dateTime.util-DSqW_URz.js";import"./CaretDownOutlined-BS4CFR2l.js";import"./CaretUpOutlined-BVcClQAf.js";const x=()=>{const{id:s}=a();return o(),s?e.jsx(t,{}):e.jsx(r,{path:"/schedule/2",element:e.jsx(t,{})})};export{x as default};

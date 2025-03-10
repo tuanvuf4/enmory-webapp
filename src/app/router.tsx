@@ -76,14 +76,6 @@ export const RouterElement = () => {
         element: lazyLoadRoutes('schedule'),
       },
       {
-        path: '/schedule',
-        element: 'ScheduleRoot',
-      },
-      {
-        path: '/schedule/:id',
-        element: lazyLoadRoutes('schedule'),
-      },
-      {
         path: '/about',
         element: lazyLoadRoutes('about'),
       },

@@ -19,19 +19,13 @@ import { FormProvider, useForm } from 'react-hook-form'
 import { IItem } from '@/models/item.model'
 import { initItem } from '../modals/itemModal'
 import { ExampleModal } from '../modals/exampleModal/exampleModal'
-import { DeleteExModal } from '../modals/deleteExModal/deleteExModal'
 import { LoadingBar } from '../loading/loadingBar'
 
 export const AppLayout: React.FC<PropsWithChildren> = (props) => {
   const classes = styles()
 
-  const {
-    isShowViewItemModal,
-    isShowItemModal,
-    isShowExModal,
-    isShowDeleteExModal,
-    isShowMediaUploadForm,
-  } = useAppSelector((state) => state.setting)
+  const { isShowViewItemModal, isShowItemModal, isShowExModal, isShowMediaUploadForm } =
+    useAppSelector((state) => state.setting)
   const { isSidebarOpened, drawer } = useAppSelector((state) => state.config)
   const { isAuth } = useAppSelector((state) => state.auth)
 

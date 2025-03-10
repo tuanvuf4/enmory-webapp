@@ -11,8 +11,6 @@ import moment from 'moment'
 import { dateTimeUtils } from '@/core/utils'
 import { ColumnType } from 'antd/es/table'
 import { DeleteOutlined } from '@ant-design/icons'
-import { useNavigate, useParams } from 'react-router-dom'
-import { appConfig, defaultSetting } from '@/config/appConfig'
 
 interface DataType {
   key: string | number
@@ -59,11 +57,8 @@ const Schedule = () => {
   const [dataSource, setDataSource] = useState<DataType[]>([])
   const [columns, setColumns] = useState<TableColumnsType<DataType>>([initialColumn])
 
-  const { id } = useParams()
-  const navigate = useNavigate()
-
   const [range, setRange] = useState<[number, number]>(dateRange[1].value)
-  const [currentDate, setCurrentDate] = useState<number>(Number(id || 0))
+  const [currentDate, setCurrentDate] = useState<number>(Number(dateRange[1].id || 0))
 
   const dispatch = useAppDispatch()
 
@@ -84,8 +79,6 @@ const Schedule = () => {
   const fetchMarkedIotd = async (range: [number, number]) => {
     const { isSuccess, content } = await appApi.getIotdRange({
       isMarked: true,
-      // from: range[0],
-      // to: range[1],
       from: dateTimeUtils.getStartOfDateUTC(range[0]),
       to: dateTimeUtils.getEndOfDateUTC(range[1]),
     })
@@ -187,16 +180,7 @@ const Schedule = () => {
     }
   }
 
-  useEffect(() => void fetchMarkedIotd(range), [range, id])
-
-  useEffect(() => {
-    if (id && dateRange.find((v) => v.id === Number(id))) {
-      setRange(dateRange[Number(id) - 1].value)
-      setCurrentDate(Number(id))
-
-      console.log(`******* id ******* `, id)
-    } else navigate('/schedule/2')
-  }, [dateRange, id])
+  useEffect(() => void fetchMarkedIotd(range), [range])
 
   return (
     <div className={gClasses.containerFluid}>
@@ -209,10 +193,7 @@ const Schedule = () => {
               key={key}
               className={'select-none'}
               value={item.id}
-              onClick={() => {
-                navigate(`/schedule/${item.id}`)
-                setRange(item.value)
-              }}
+              onClick={() => setRange(item.value)}
             >
               {item.label}
             </Radio.Button>

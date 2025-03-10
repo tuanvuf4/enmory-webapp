@@ -194,7 +194,7 @@ const Schedule = () => {
       setRange(dateRange[Number(id) - 1].value)
       setCurrentDate(Number(id))
 
-      console.log(`******* id ******* `, id);
+      console.log(`******* id ******* `, id)
     } else navigate('/schedule/2')
   }, [dateRange, id])
 

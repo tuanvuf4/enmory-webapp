@@ -49,13 +49,13 @@ const Home = () => {
     <>
       {isAuth && (
         <>
-          {isShowSearchFormItem && (
+          {/* {isShowSearchFormItem && (
             <div className={gClasses.stickyBar}>
               <div className={gClasses.container}>
                 <FormSearchItem filter={false} submit={true} />
               </div>
             </div>
-          )}
+          )} */}
 
           <div className={gClasses.container}>
             <Space

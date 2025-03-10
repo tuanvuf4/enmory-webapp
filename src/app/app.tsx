@@ -9,7 +9,6 @@ import { AppLayout } from '@/views/features/layout/layout'
 import { useEffect } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { RouterElement } from './router'
-import { appApi } from './services/api'
 import moment from 'moment'
 
 export const App = () => {

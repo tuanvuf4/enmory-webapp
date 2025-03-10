@@ -40,11 +40,11 @@ const getRangeDate = (from: number, to: number) => {
   return range
 }
 
-const getLocalTimeZone = (d: number | string | Date) => {
+const getLocalTimeZoneInMilliseconds = (d: number | string | Date) => {
   if (typeof d === 'string' && !isValidDate(d)) return
   const date = new Date(d)
 
-  return date.getTimezoneOffset() / 60 + '00'
+  return (date.getTimezoneOffset() / 60) * 60 * 1000
 }
 
 function getMonthName(d: Date) {
@@ -89,7 +89,7 @@ function daysInMonth(year: number, month: number) {
   return new Date(year, month, 0).getDate()
 }
 
-function getDateFromBeginingOfMonth(
+function getDateFromBeginningOfMonth(
   day = 0,
   d: number | string | Date = new Date(),
 ): Date | undefined {
@@ -147,10 +147,10 @@ export const dateTimeUtils = {
   getTimezone,
   getDisplayDate,
   daysInMonth,
-  getDateFromBeginingOfMonth,
+  getDateFromBeginningOfMonth,
   getDateToLastMonth,
   getDateFromBeginYear,
   getDateToEndYear,
   getRangeDate,
-  getLocalTimeZone,
+  getLocalTimeZoneInMilliseconds,
 }

@@ -185,7 +185,6 @@ export const Item: React.FC<IProps> = ({
       openNotification({
         type: 'success',
         message: 'Added to schedule!',
-        placement: 'top',
       })
     }
   }

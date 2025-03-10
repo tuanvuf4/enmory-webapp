@@ -14,6 +14,7 @@ import { MainMenu } from '../mainMenu/mainMenu'
 import { items, addNewType } from './menus'
 import styles from './style'
 import clsx from 'clsx'
+import { FormSearchItem } from '../formSearchItem/formSearchItem'
 
 export const AppHeader = () => {
   const { token } = theme.useToken()
@@ -22,6 +23,7 @@ export const AppHeader = () => {
 
   const { isAuth, user } = useAppSelector((state) => state.auth)
   const { drawer } = useAppSelector((state) => state.config)
+  const { isShowSearchFormItem } = useAppSelector((state) => state.setting)
 
   const dispatch = useAppDispatch()
 
@@ -184,6 +186,14 @@ export const AppHeader = () => {
           </Col>
         </Row>
       </div>
+
+      {isShowSearchFormItem && (
+        <div className={gClasses.stickyBar}>
+          <div className={gClasses.container}>
+            <FormSearchItem filter={false} submit={true} />
+          </div>
+        </div>
+      )}
     </Layout.Header>
   )
 }

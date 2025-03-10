@@ -12,6 +12,7 @@ import { dateTimeUtils } from '@/core/utils'
 import { ColumnType } from 'antd/es/table'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
+import { appConfig, defaultSetting } from '@/config/appConfig'
 
 interface DataType {
   key: string | number
@@ -154,19 +155,27 @@ const Schedule = () => {
       const cats = Object.keys(ECategory).filter(
         (predicate) => !isNaN(Number(predicate)) && predicate !== '0',
       )
-      console.log(`******* content ******* `, content)
 
       const dataSource = cats.map((cat) => {
         const findItem = dateRange.map((range) => {
-          const findItems = content.filter(
-            (t) =>
-              range.from <= t.first_of_date &&
-              t.first_of_date <= range.to &&
-              Number(cat) === t.item.catId,
-          )
+          const findItems = content
+            .map((c) => ({
+              ...c,
+              first_of_date:
+                c.first_of_date - (dateTimeUtils.getLocalTimeZoneInMilliseconds(new Date()) || 0),
+              last_of_date:
+                c.last_of_date - (dateTimeUtils.getLocalTimeZoneInMilliseconds(new Date()) || 0),
+            }))
+            .filter(
+              (t) =>
+                range.from <= t.first_of_date &&
+                t.first_of_date <= range.to &&
+                Number(cat) === t.item.catId,
+            )
           if (findItems.length > 0) return findItems
           return undefined
         })
+
 
         return {
           key: cat,

@@ -100,18 +100,20 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                     </Col>
 
                     <Col span={12} style={{ display: 'flex' }}>
-                      <Controller
-                        control={control}
-                        name={`meanings.${index}.typeId`}
-                        render={({ field }) => (
-                          <Select
-                            className={gClasses.fulWidth}
-                            {...field}
-                            options={types.filter((item) => item.value !== EType.ALL)}
-                            defaultValue={EType.NOUN}
-                          />
-                        )}
-                      />
+                      {catType === ECategory.WORD && (
+                        <Controller
+                          control={control}
+                          name={`meanings.${index}.typeId`}
+                          render={({ field }) => (
+                            <Select
+                              className={gClasses.fulWidth}
+                              {...field}
+                              options={types.filter((item) => item.value !== EType.ALL)}
+                              defaultValue={EType.NOUN}
+                            />
+                          )}
+                        />
+                      )}
                     </Col>
 
                     <Col

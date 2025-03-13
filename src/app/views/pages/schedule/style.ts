@@ -1,11 +1,27 @@
-import { AliasToken } from 'antd/es/theme/internal'
+import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
 
-const styles = (token: AliasToken) => {
+const styles = () => {
+  const { token } = theme.useToken()
+
   return createUseStyles({
-    items: {
+    item: {
       margin: `${token.size}px 0`,
       padding: `${token.size}px 0`,
+
+      '& h2': {
+        color: token.colorTextSecondary,
+        fontSize: token.fontSizeHeading3,
+      },
+
+      '& ul': {
+        paddingLeft: token.size * 2,
+      },
+
+      '& li': {
+        fontSize: token.fontSizeHeading5,
+        display: 'list-item',
+      },
     },
   })()
 }

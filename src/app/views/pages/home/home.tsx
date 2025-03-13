@@ -5,19 +5,23 @@ import { itemApi } from '@/services/api'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { ExampleForm } from '@/views/features/exampleOverview/exampleFormAdd'
 import { ExampleOverView } from '@/views/features/exampleOverview/exampleOverview'
-import { FormSearchItem } from '@/views/features/formSearchItem/formSearchItem'
 import { StudySet } from '@/views/features/studySet/studySet'
 import { Widget } from '@/views/features/widget/widget'
 import { theme, Space, Row, Col } from 'antd'
-import About from '../about/about'
+// import About from '../schedule/schedule'
 import { Item } from '@/views/features/item/Item'
 import { ExampleMode } from '@/models/example.model'
 import { usePrompt } from '@/helpers/hooks'
+import registerStyle from '@/views/pages/register/style'
+import loginStyle from '@/views/pages/login/style'
+import { Link } from 'react-router-dom'
 
 const Home = () => {
   const { token } = theme.useToken()
 
   const gClasses = globalStyle()
+  const classesRegister = registerStyle()
+  const classesLogin = loginStyle()
 
   const { openNotification } = usePrompt()
 
@@ -157,7 +161,29 @@ const Home = () => {
         </>
       )}
 
-      {!isAuth && <About />}
+      {!isAuth && (
+        <Space direction='vertical' size={[token.size, token.size]} className={gClasses.fulWidth}>
+          <Row justify={'center'}>
+            <Col span={24}>
+              <div className={classesRegister.register}>
+                <p>
+                  Don't have a account? <Link to={'/register'}>Register now!</Link>
+                </p>
+              </div>
+            </Col>
+          </Row>
+
+          <Row justify={'center'}>
+            <Col span={24}>
+              <div className={classesLogin.register}>
+                <p>
+                  Already have an account? <Link to={'/login'}>Log in</Link>
+                </p>
+              </div>
+            </Col>
+          </Row>
+        </Space>
+      )}
     </>
   )
 }

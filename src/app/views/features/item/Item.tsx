@@ -184,7 +184,7 @@ export const Item: React.FC<IProps> = ({
     if (isSuccess && content) {
       openNotification({
         type: 'success',
-        message: 'Added to schedule!',
+        message: 'Added to progress!',
       })
     }
   }

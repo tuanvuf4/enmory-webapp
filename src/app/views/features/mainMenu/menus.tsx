@@ -44,17 +44,17 @@ export const authMenus: MenuProps['items'] = [
   {
     key: '11',
     icon: <CalendarOutlined className='icon' />,
-    label: 'Schedule',
+    label: 'Progress',
+  },
+  {
+    key: '7',
+    icon: <InfoCircleOutlined className='icon' />,
+    label: 'schedule',
   },
   {
     key: '6',
     icon: <AreaChartOutlined className='icon' />,
     label: 'statistic',
-  },
-  {
-    key: '7',
-    icon: <InfoCircleOutlined className='icon' />,
-    label: 'about',
   },
 ]
 
@@ -74,11 +74,11 @@ export const menus: MenuProps['items'] = [
     icon: <UserOutlined className='icon' />,
     label: 'Register',
   },
-  {
-    key: '7',
-    icon: <InfoCircleOutlined className='icon' />,
-    label: 'about',
-  },
+  // {
+  //   key: '7',
+  //   icon: <InfoCircleOutlined className='icon' />,
+  //   label: 'schedule',
+  // },
 ]
 
 export const menusExt: MenuProps['items'] = [
@@ -126,7 +126,7 @@ export const keyPaths = [
   },
   {
     key: '7',
-    path: '/about',
+    path: '/schedule',
   },
   {
     key: '8',
@@ -142,6 +142,6 @@ export const keyPaths = [
   },
   {
     key: '11',
-    path: '/schedule',
+    path: '/progress',
   },
 ]

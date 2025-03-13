@@ -53,7 +53,7 @@ const initialColumn: ColumnType<DataType> = {
   fixed: 'left',
 }
 
-const Progress = () => {
+const Marker = () => {
   const [dataSource, setDataSource] = useState<DataType[]>([])
   const [columns, setColumns] = useState<TableColumnsType<DataType>>([initialColumn])
 
@@ -184,7 +184,7 @@ const Progress = () => {
 
   return (
     <div className={gClasses.containerFluid}>
-      <h2 className={classNames(gClasses.pageTitle)}>Schedule</h2>
+      {/* <h2 className={classNames(gClasses.pageTitle)}>Marker</h2> */}
 
       <Flex className={'py-4 my-4'} justify={'center'}>
         <Radio.Group value={currentDate} onChange={(e) => setCurrentDate(e.target.value)}>
@@ -212,4 +212,4 @@ const Progress = () => {
   )
 }
 
-export default Progress
+export default Marker

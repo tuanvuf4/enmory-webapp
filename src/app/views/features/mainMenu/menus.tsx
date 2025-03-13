@@ -44,7 +44,7 @@ export const authMenus: MenuProps['items'] = [
   {
     key: '11',
     icon: <CalendarOutlined className='icon' />,
-    label: 'Progress',
+    label: 'Marker',
   },
   {
     key: '7',
@@ -142,6 +142,6 @@ export const keyPaths = [
   },
   {
     key: '11',
-    path: '/progress',
+    path: '/marker',
   },
 ]

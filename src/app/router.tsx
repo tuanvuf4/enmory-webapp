@@ -72,8 +72,8 @@ export const RouterElement = () => {
         element: lazyLoadRoutes('statistic'),
       },
       {
-        path: '/progress',
-        element: lazyLoadRoutes('progress'),
+        path: '/marker',
+        element: lazyLoadRoutes('marker'),
       },
       {
         path: '/schedule',

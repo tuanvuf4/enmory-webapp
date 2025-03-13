@@ -15,10 +15,6 @@ import logo from '@/assets/img/logo.png'
 import styles from './style'
 import loginStyle from '../login/style'
 
-interface IRegisterForm {
-  showBanner?: boolean
-}
-
 export const RegisterForm = ({ showBanner = true }) => {
   const { token } = theme.useToken()
   const classesLogin = loginStyle()
@@ -41,20 +37,20 @@ export const RegisterForm = ({ showBanner = true }) => {
     })
   }
 
-  const googleLogin = useGoogleLogin({
-    flow: 'auth-code',
-    onSuccess: (credentialResponse) => {
-      console.log('credentialResponse: ', credentialResponse)
-      if (credentialResponse) {
-        // getGoogleUserInfo(credentialResponse.credential).then((resp) => {
-        // console.log('resp: ', resp);
-        // });
-      }
-    },
-    onError: () => {
-      console.log('Login Failed')
-    },
-  })
+  // const googleLogin = useGoogleLogin({
+  //   flow: 'auth-code',
+  //   onSuccess: (credentialResponse) => {
+  //     console.log('credentialResponse: ', credentialResponse)
+  //     if (credentialResponse) {
+  //       // getGoogleUserInfo(credentialResponse.credential).then((resp) => {
+  //       // console.log('resp: ', resp);
+  //       // });
+  //     }
+  //   },
+  //   onError: () => {
+  //     console.log('Login Failed')
+  //   },
+  // })
 
   return (
     <div className={classNames([classes.registerForm])}>
@@ -253,7 +249,7 @@ export const RegisterForm = ({ showBanner = true }) => {
                       <Button className={gClasses.fulWidth}>Facebook</Button>
                     </Col>
                     <Col span={12}>
-                      <Button className={gClasses.fulWidth} onClick={googleLogin}>
+                      <Button className={gClasses.fulWidth} onClick={() => {}}>
                         Google
                       </Button>
                     </Col>

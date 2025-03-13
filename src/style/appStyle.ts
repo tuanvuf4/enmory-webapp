@@ -55,7 +55,7 @@ const globalStyle = () => {
 
   return createUseStyles({
     container: {
-      width: 1800,
+      width: 1600,
       margin: 'auto',
       padding: `${0}px ${token.size}px`,
       maxWidth: '100%',

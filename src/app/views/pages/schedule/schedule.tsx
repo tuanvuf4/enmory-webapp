@@ -58,7 +58,7 @@ const Schedule = () => {
       <div className={classNames(gClasses.contentPage, '!pt-24')}>
         <Timeline mode={'left'} items={timeline} />
 
-        {!isAuth && (
+        {/* {!isAuth && (
           <Space direction='vertical' size={[token.size, token.size]} className={gClasses.fulWidth}>
             <Row justify={'center'}>
               <Col span={24}>
@@ -80,7 +80,7 @@ const Schedule = () => {
               </Col>
             </Row>
           </Space>
-        )}
+        )} */}
       </div>
     </div>
   )

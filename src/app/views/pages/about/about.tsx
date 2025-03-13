@@ -1,4 +1,4 @@
-import { Col, Flex, Row, Space, theme } from 'antd'
+import { Col, Flex, Row, Space, theme, Timeline } from 'antd'
 import classNames from 'clsx'
 import globalStyle from '@/style/appStyle'
 import { Link } from 'react-router-dom'
@@ -17,49 +17,46 @@ const About = () => {
 
   const { isAuth } = useAppSelector((state) => state.auth)
 
+  const timeline = [
+    {
+      label: '8:00 - 10:00 (2 hours)',
+      children: 'Review and learn new words',
+    },
+    {
+      children: 'Speak with Elsa app',
+    },
+    {
+      label: '10:30 - 12:30 (2 hours)',
+      children: 'Listening (dictation / taking notes)',
+    },
+    {
+      children: 'Watching videos (listening + imitating)',
+    },
+    {
+      label: '15:00 - 17:00 (2 hours)',
+      children: 'Review words of the day',
+    },
+    {
+      children: 'Reading an article (aloud)',
+    },
+    {
+      label: '20:00 - 24:00',
+      children: 'Review words of the day',
+    },
+    {
+      children: 'Speak with Elsa app',
+    },
+    {
+      children: 'Listen to podcast/stories/YouTube (imitate)',
+    },
+  ]
+
   return (
     <div className={gClasses.container}>
       <h2 className={classNames(gClasses.pageTitle)}>About</h2>
 
-      <div className={classNames(gClasses.contentPage)}>
-        <Row className={style.item} gutter={[token.size / 2, token.size / 2]}>
-          <Col xs={{ span: 24 }} sm={{ span: 12 }} md={{ span: 6 }}>
-            <h2>8:00 am - 10:00 am (2 hours)</h2>
-
-            <ul>
-              <li>Review and learn new words</li>
-              <li>Speak with Elsa app</li>
-            </ul>
-          </Col>
-
-          <Col xs={{ span: 24 }} sm={{ span: 12 }} md={{ span: 6 }}>
-            <h2>10:30 am - 12:30 am (2 hours)</h2>
-
-            <ul>
-              <li>Listening (dictation / taking notes)</li>
-              <li>Watching videos (listening + imitating)</li>
-            </ul>
-          </Col>
-
-          <Col xs={{ span: 24 }} sm={{ span: 12 }} md={{ span: 6 }}>
-            <h2>3:00 pm - 5:00 pm (2 hours)</h2>
-
-            <ul>
-              <li>Reading an article (aloud)</li>
-              <li>Review words</li>
-            </ul>
-          </Col>
-
-          <Col xs={{ span: 24 }} sm={{ span: 12 }} md={{ span: 6 }}>
-            <h2>8:00 pm - 12:00 pm (4 hours)</h2>
-
-            <ul>
-              <li>Review words</li>
-              <li>Speak with Elsa app</li>
-              <li>Listen to podcast/stories/YouTube (imitate)</li>
-            </ul>
-          </Col>
-        </Row>
+      <div className={classNames(gClasses.contentPage, '!pt-24')}>
+        <Timeline mode={'left'} items={timeline} />
 
         {!isAuth && (
           <Space direction='vertical' size={[token.size, token.size]} className={gClasses.fulWidth}>

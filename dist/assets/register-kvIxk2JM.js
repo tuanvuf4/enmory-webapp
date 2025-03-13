@@ -1,1 +1,0 @@
-import{g as a,j as s,k as t,ay as r}from"./index-lkYTZFTY.js";const l=()=>{const e=a();return s.jsx("div",{className:e.container,children:s.jsx("div",{className:t(e.bodyContent),children:s.jsx(r,{})})})};export{l as default};

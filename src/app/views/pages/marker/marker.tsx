@@ -29,19 +29,25 @@ const dateRange: dateRangeType[] = [
     id: 1,
     label: 'Last week',
     value: [
-      moment().subtract(1, 'week').startOf('week').toDate().getTime(),
-      moment().subtract(1, 'week').endOf('week').toDate().getTime(),
+      moment().utc().subtract(1, 'week').startOf('week').toDate().getTime(),
+      moment().utc().subtract(1, 'week').endOf('week').toDate().getTime(),
     ],
   },
   {
     id: 2,
     label: 'Today',
-    value: [moment().startOf('day').toDate().getTime(), moment().endOf('day').toDate().getTime()],
+    value: [
+      moment().utc().utc().startOf('day').toDate().getTime(),
+      moment().utc().utc().endOf('day').toDate().getTime(),
+    ],
   },
   {
     id: 3,
     label: 'This week',
-    value: [moment().startOf('week').toDate().getTime(), moment().endOf('week').toDate().getTime()],
+    value: [
+      moment().utc().startOf('week').toDate().getTime(),
+      moment().utc().endOf('week').toDate().getTime(),
+    ],
   },
 ]
 
@@ -59,6 +65,8 @@ const Marker = () => {
 
   const [range, setRange] = useState<[number, number]>(dateRange[1].value)
   const [currentDate, setCurrentDate] = useState<number>(Number(dateRange[1].id || 0))
+
+  console.log(`******* dateRange ******* `, dateRange)
 
   const dispatch = useAppDispatch()
 

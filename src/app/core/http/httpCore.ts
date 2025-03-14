@@ -8,6 +8,7 @@ export const defaultHttpConfig: AxiosRequestConfig = {
   headers: {
     'Content-Type': 'application/json',
     loading: ELoading.YES,
+    TzOffset: new Date().getTimezoneOffset(),
   },
 }
 

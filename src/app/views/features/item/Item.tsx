@@ -179,7 +179,11 @@ export const Item: React.FC<IProps> = ({
   }
 
   const markItem = async (id: number) => {
-    const { isSuccess, content } = await appApi.markIotd({ isMarked: true, itemId: id })
+    const { isSuccess, content } = await appApi.markIotd({
+      isMarked: true,
+      itemId: id,
+      date: Date.now(),
+    })
 
     if (isSuccess && content) {
       openNotification({

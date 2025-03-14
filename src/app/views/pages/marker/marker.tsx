@@ -37,8 +37,8 @@ const dateRange: dateRangeType[] = [
     id: 2,
     label: 'Today',
     value: [
-      moment().utc().utc().startOf('day').toDate().getTime(),
-      moment().utc().utc().endOf('day').toDate().getTime(),
+      moment().utc().startOf('day').toDate().getTime(),
+      moment().utc().endOf('day').toDate().getTime(),
     ],
   },
   {

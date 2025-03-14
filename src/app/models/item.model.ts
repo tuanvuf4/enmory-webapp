@@ -120,6 +120,7 @@ export interface IIotdRequest {
 export interface MarkIotdRangeDateRequest {
   itemId: number
   isMarked: boolean
+  date?: number
 }
 
 export interface GetIIotdRangeDateRequest {

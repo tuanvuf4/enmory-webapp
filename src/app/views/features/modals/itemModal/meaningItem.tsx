@@ -42,7 +42,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
   const { fields, remove, prepend } = useFieldArray({ control, name: 'meanings' })
 
   useEffect(() => {
-    setShow(new Array(fields?.length).fill(true))
+    setShow(new Array(fields?.length).fill(false))
   }, [])
 
   return (
@@ -52,33 +52,31 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
       className={gClasses.fulWidth}
       style={{ marginBottom: `${token.size}px` }}
     >
-      <Col span={24}>
-        <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-          <Col md={4} xs={6}>
-            <label htmlFor=''>Meaning:</label>
-          </Col>
+      <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
+        <Col md={4} xs={6}>
+          <label htmlFor=''>Meaning:</label>
+        </Col>
 
-          <Col md={20} xs={16}>
-            <Button
-              onClick={() => {
-                setShow((prev) => [true, ...prev])
-                fields.length > 0
-                  ? prepend({
-                      ...meaningItem,
-                      pronunciation: {
-                        uk: getValues(`meanings.0.pronunciation.uk`),
-                        us: getValues(`meanings.0.pronunciation.us`),
-                        common: getValues(`meanings.0.pronunciation.common`),
-                      },
-                    })
-                  : prepend({ ...meaningItem })
-              }}
-              type='primary'
-              icon={<PlusOutlined />}
-            />
-          </Col>
-        </Row>
-      </Col>
+        <Col md={20} xs={16}>
+          <Button
+            onClick={() => {
+              setShow((prev) => [true, ...prev])
+              fields.length > 0
+                ? prepend({
+                    ...meaningItem,
+                    pronunciation: {
+                      uk: getValues(`meanings.0.pronunciation.uk`),
+                      us: getValues(`meanings.0.pronunciation.us`),
+                      common: getValues(`meanings.0.pronunciation.common`),
+                    },
+                  })
+                : prepend({ ...meaningItem })
+            }}
+            type='primary'
+            icon={<PlusOutlined />}
+          />
+        </Col>
+      </Row>
 
       {fields.map((field, index) => {
         return (
@@ -86,6 +84,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
             className={clsx(
               classes.contentStyle,
               getValues(`meanings.${index}.enable`) ? '' : classes.disableMeaning,
+              getValues(`meanings.${index}.translation`) ? '' : classes.disableMeaning,
             )}
             key={field.id || index}
           >
@@ -94,99 +93,98 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
               size={[token.size / 2, token.size]}
               className={gClasses.fulWidth}
             >
-              <Col xs={24}>
-                <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                  <Col span={6} style={{ display: 'flex' }}>
+              <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
+                <Col span={6} style={{ display: 'flex' }}>
+                  <Button
+                    type={'text'}
+                    onClick={() => {
+                      setShow((prev) => {
+                        const previous = [...prev]
+                        previous[index] = !prev[index]
+                        return previous
+                      })
+                    }}
+                    icon={show[index] ? <CaretDownOutlined /> : <CaretRightOutlined />}
+                    style={{ color: token.colorPrimary }}
+                  />
+                </Col>
+
+                <Col span={12} style={{ display: 'flex' }}>
+                  {show[index] && catType === ECategory.WORD && (
+                    <Controller
+                      control={control}
+                      name={`meanings.${index}.typeId`}
+                      render={({ field }) => (
+                        <Select
+                          className={gClasses.fulWidth}
+                          {...field}
+                          options={types.filter((item) => item.value !== EType.ALL)}
+                          defaultValue={EType.NOUN}
+                        />
+                      )}
+                    />
+                  )}
+
+                  {!show[index] && (
+                    <Flex
+                      align={'center'}
+                      gap={token.size / 2}
+                      wrap={'wrap'}
+                      className={'max-w-full'}
+                    >
+                      <div
+                        className={'text-xs self-center'}
+                      >{`(${getTypeOfItem(getValues(`meanings.${index}.typeId`))})`}</div>
+                      <div
+                        className={clsx('text-sm self-center flex-1', classes.showMeaningOption)}
+                        dangerouslySetInnerHTML={{
+                          __html: getValues(`meanings.${index}.translation`),
+                        }}
+                      ></div>
+                    </Flex>
+                  )}
+                </Col>
+
+                <Col
+                  span={6}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                  }}
+                >
+                  <Flex gap={token.size / 2}>
                     <Button
                       type={'text'}
-                      onClick={() => {
-                        setShow((prev) => {
-                          const previous = [...prev]
-                          previous[index] = !prev[index]
-                          return previous
-                        })
-                      }}
-                      icon={show[index] ? <CaretDownOutlined /> : <CaretRightOutlined />}
+                      onClick={onSubmit}
+                      icon={<SaveOutlined />}
                       style={{ color: token.colorPrimary }}
                     />
-                  </Col>
 
-                  <Col span={12} style={{ display: 'flex' }}>
-                    {show[index] && catType === ECategory.WORD && (
-                      <Controller
-                        control={control}
-                        name={`meanings.${index}.typeId`}
-                        render={({ field }) => (
-                          <Select
-                            className={gClasses.fulWidth}
-                            {...field}
-                            options={types.filter((item) => item.value !== EType.ALL)}
-                            defaultValue={EType.NOUN}
-                          />
-                        )}
-                      />
-                    )}
+                    <Button
+                      danger
+                      type={'text'}
+                      onClick={() => {
+                        confirmDeleteModal({
+                          onOk: () => {
+                            remove(index)
+                            setShow((prev) => prev.filter((_, key) => key !== index))
+                          },
+                        })
+                      }}
+                      icon={<DeleteOutlined />}
+                    />
+                  </Flex>
+                </Col>
+              </Row>
 
-                    {!show[index] && (
-                      <Flex
-                        align={'center'}
-                        gap={token.size}
-                        wrap={'wrap'}
-                        className={'max-w-full'}
-                      >
-                        <div
-                          className={'text-sm self-center'}
-                        >{`(${getTypeOfItem(getValues(`meanings.${index}.typeId`))})`}</div>
-                        <div
-                          className={clsx('text-sm self-center', classes.showMeaningOption)}
-                          dangerouslySetInnerHTML={{
-                            __html: getValues(`meanings.${index}.translation`),
-                          }}
-                        ></div>
-                      </Flex>
-                    )}
-                  </Col>
-
-                  <Col
-                    span={6}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                    }}
-                  >
-                    <Flex gap={token.size / 2}>
-                      <Button
-                        type={'text'}
-                        onClick={onSubmit}
-                        icon={<SaveOutlined />}
-                        style={{ color: token.colorPrimary }}
-                      />
-
-                      <Button
-                        danger
-                        type={'text'}
-                        onClick={() => {
-                          confirmDeleteModal({
-                            onOk: () => {
-                              remove(index)
-                              setShow((prev) => prev.filter((_, key) => key !== index))
-                            },
-                          })
-                        }}
-                        icon={<DeleteOutlined />}
-                      />
-                    </Flex>
-                  </Col>
-                </Row>
-              </Col>
-
-              <Space
-                direction='vertical'
-                size={[token.size / 2, token.size / 2]}
-                className={clsx(gClasses.fulWidth, show[index] ? '!flex' : '!hidden')}
-              >
-                <Row gutter={[token.size / 2, token.size]} align={'middle'}>
-                  {/* <Col
+              {show[index] && (
+                <Space
+                  direction='vertical'
+                  size={[token.size / 2, token.size / 2]}
+                  className={clsx(gClasses.fulWidth)}
+                >
+                  <Row gutter={[token.size / 2, token.size]} align={'middle'}>
+                    {/* <Col
                       md={{
                         span: 8,
                         order: 1,
@@ -199,101 +197,101 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                       <label htmlFor=''>Type:</label>
                     </Col> */}
 
-                  <Col
-                    md={{
-                      span: 10,
-                      offset: 4,
-                      order: 2,
-                    }}
-                    xs={{
-                      span: 12,
-                      order: 1,
-                    }}
-                  >
-                    <Controller
-                      control={control}
-                      name={`meanings.${index}.enable`}
-                      render={({ field: { onChange, value } }) => (
-                        <Checkbox
-                          checked={value}
-                          onChange={(e) => {
-                            onChange(e)
-                            trigger()
-                          }}
-                        >
-                          Enable
-                        </Checkbox>
-                      )}
-                    />
-                  </Col>
+                    <Col
+                      md={{
+                        span: 10,
+                        offset: 4,
+                        order: 2,
+                      }}
+                      xs={{
+                        span: 12,
+                        order: 1,
+                      }}
+                    >
+                      <Controller
+                        control={control}
+                        name={`meanings.${index}.enable`}
+                        render={({ field: { onChange, value } }) => (
+                          <Checkbox
+                            checked={value}
+                            onChange={(e) => {
+                              onChange(e)
+                              trigger()
+                            }}
+                          >
+                            Enable
+                          </Checkbox>
+                        )}
+                      />
+                    </Col>
 
-                  <Col
-                    md={{
-                      span: 5,
-                      order: 2,
-                    }}
-                    xs={{
-                      span: 8,
-                      order: 2,
-                    }}
-                  >
-                    <Controller
-                      control={control}
-                      name={`meanings.${index}.common`}
-                      render={({ field: { onChange, value } }) => (
-                        <Checkbox checked={value} onChange={onChange}>
-                          Common
-                        </Checkbox>
-                      )}
-                    />
-                  </Col>
-                </Row>
+                    <Col
+                      md={{
+                        span: 5,
+                        order: 2,
+                      }}
+                      xs={{
+                        span: 8,
+                        order: 2,
+                      }}
+                    >
+                      <Controller
+                        control={control}
+                        name={`meanings.${index}.common`}
+                        render={({ field: { onChange, value } }) => (
+                          <Checkbox checked={value} onChange={onChange}>
+                            Common
+                          </Checkbox>
+                        )}
+                      />
+                    </Col>
+                  </Row>
 
-                <Col span={24}>
-                  <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    {catType !== ECategory.WORD && (
-                      <>
-                        <Col md={4} xs={24}>
-                          <label htmlFor=''>
-                            Pronunciation:
-                            {/* {!getValues(`meanings.${index}.pronunciation.common`) && (
+                  <Col span={24}>
+                    <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
+                      {catType !== ECategory.WORD && (
+                        <>
+                          <Col md={4} xs={24}>
+                            <label htmlFor=''>
+                              Pronunciation:
+                              {/* {!getValues(`meanings.${index}.pronunciation.common`) && (
                               <Popover title={msgWarning.empty}>
                                 <WarningOutlined className={classes.alertIcon} />
                               </Popover>
                             )} */}
-                          </label>
-                        </Col>
+                            </label>
+                          </Col>
 
-                        <Col md={20} xs={24}>
-                          <Controller
-                            control={control}
-                            name={`meanings.${index}.pronunciation.common`}
-                            render={({ field }) => (
-                              <Input
-                                {...field}
-                                onBlur={() => trigger()}
-                                onInput={(e) => {
-                                  const input = e.target as HTMLInputElement
-                                  input.value = input.value
-                                    .toLowerCase()
-                                    .replace(patternValidation.specialCharacterPronouns, '')
-                                }}
-                              />
-                            )}
-                          />
-                        </Col>
-                      </>
-                    )}
+                          <Col md={20} xs={24}>
+                            <Controller
+                              control={control}
+                              name={`meanings.${index}.pronunciation.common`}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  onBlur={() => trigger()}
+                                  onInput={(e) => {
+                                    const input = e.target as HTMLInputElement
+                                    input.value = input.value
+                                      .toLowerCase()
+                                      .replace(patternValidation.specialCharacterPronouns, '')
+                                  }}
+                                />
+                              )}
+                            />
+                          </Col>
+                        </>
+                      )}
 
-                    {catType === ECategory.WORD && (
-                      <>
-                        <Col md={4} xs={24}>
-                          <label htmlFor=''>Pronunciation:</label>
-                        </Col>
+                      {catType === ECategory.WORD && (
+                        <>
+                          <Col md={4} xs={24}>
+                            <label htmlFor=''>Pronunciation:</label>
+                          </Col>
 
-                        <Col md={10} xs={12}>
-                          <Row gutter={[token.size / 4, token.size / 4]}>
-                            {/* <Col xs={24}>
+                          <Col md={10} xs={12}>
+                            <Row gutter={[token.size / 4, token.size / 4]}>
+                              {/* <Col xs={24}>
                               UK
                               {!getValues(`meanings.${index}.pronunciation.uk`) && (
                                 <Popover title={msgWarning.empty}>
@@ -301,31 +299,31 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                                 </Popover>
                               )}
                             </Col> */}
-                            <Col xs={24}>
-                              <Controller
-                                control={control}
-                                name={`meanings.${index}.pronunciation.uk`}
-                                render={({ field }) => (
-                                  <Input
-                                    {...field}
-                                    // placeholder='UK'
-                                    onBlur={() => trigger()}
-                                    onInput={(e) => {
-                                      const input = e.target as HTMLInputElement
-                                      input.value = input.value
-                                        .toLowerCase()
-                                        .replace(patternValidation.specialCharacterPronouns, '')
-                                    }}
-                                  />
-                                )}
-                              />
-                            </Col>
-                          </Row>
-                        </Col>
+                              <Col xs={24}>
+                                <Controller
+                                  control={control}
+                                  name={`meanings.${index}.pronunciation.uk`}
+                                  render={({ field }) => (
+                                    <Input
+                                      {...field}
+                                      // placeholder='UK'
+                                      onBlur={() => trigger()}
+                                      onInput={(e) => {
+                                        const input = e.target as HTMLInputElement
+                                        input.value = input.value
+                                          .toLowerCase()
+                                          .replace(patternValidation.specialCharacterPronouns, '')
+                                      }}
+                                    />
+                                  )}
+                                />
+                              </Col>
+                            </Row>
+                          </Col>
 
-                        <Col md={10} xs={12}>
-                          <Row gutter={[token.size / 4, token.size / 4]}>
-                            {/* <Col xs={24}>
+                          <Col md={10} xs={12}>
+                            <Row gutter={[token.size / 4, token.size / 4]}>
+                              {/* <Col xs={24}>
                               US
                               {!getValues(`meanings.${index}.pronunciation.us`) && (
                                 <Popover title='This field is missing!'>
@@ -333,207 +331,211 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                                 </Popover>
                               )}
                             </Col> */}
-                            <Col xs={24}>
-                              <Controller
-                                control={control}
-                                name={`meanings.${index}.pronunciation.us`}
-                                render={({ field }) => (
-                                  <Input
-                                    {...field}
-                                    // placeholder='US'
-                                    onBlur={() => trigger()}
-                                    onInput={(e) => {
-                                      const input = e.target as HTMLInputElement
-                                      input.value = input.value
-                                        .toLowerCase()
-                                        .replace(patternValidation.specialCharacterPronouns, '')
-                                    }}
-                                  />
-                                )}
+                              <Col xs={24}>
+                                <Controller
+                                  control={control}
+                                  name={`meanings.${index}.pronunciation.us`}
+                                  render={({ field }) => (
+                                    <Input
+                                      {...field}
+                                      // placeholder='US'
+                                      onBlur={() => trigger()}
+                                      onInput={(e) => {
+                                        const input = e.target as HTMLInputElement
+                                        input.value = input.value
+                                          .toLowerCase()
+                                          .replace(patternValidation.specialCharacterPronouns, '')
+                                      }}
+                                    />
+                                  )}
+                                />
+                              </Col>
+                            </Row>
+                          </Col>
+                        </>
+                      )}
+                    </Row>
+                  </Col>
+
+                  <Col span={24}>
+                    <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
+                      <Col md={4} xs={24}>
+                        <label htmlFor=''>Note:</label>
+                      </Col>
+
+                      <Col md={20} xs={24}>
+                        <Controller
+                          control={control}
+                          name={`meanings.${index}.note`}
+                          render={({ field: { onChange, value } }) => {
+                            return (
+                              // <TextArea
+                              //   autoSize={{ minRows: 2, maxRows: 4 }}
+                              //   value={value}
+                              //   placeholder='Note'
+                              //   onChange={onChange}
+                              // />
+                              <TextEditor
+                                content={value}
+                                onChange={(content: any) => {
+                                  setValue(`meanings.${index}.note`, content ?? '')
+                                  onChange(content)
+                                }}
                               />
-                            </Col>
-                          </Row>
-                        </Col>
-                      </>
-                    )}
-                  </Row>
-                </Col>
+                            )
+                          }}
+                        />
+                      </Col>
+                    </Row>
+                  </Col>
 
-                <Col span={24}>
-                  <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    <Col md={4} xs={24}>
-                      <label htmlFor=''>Note:</label>
-                    </Col>
+                  <Col span={24}>
+                    <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
+                      <Col md={4} xs={24}>
+                        <label htmlFor=''>Definition:</label>
+                      </Col>
 
-                    <Col md={20} xs={24}>
-                      <Controller
-                        control={control}
-                        name={`meanings.${index}.note`}
-                        render={({ field: { onChange, value } }) => {
-                          return (
+                      <Col md={20} xs={24}>
+                        <Controller
+                          control={control}
+                          name={`meanings.${index}.definition`}
+                          render={({ field: { onChange, value } }) => (
+                            <TextEditor
+                              content={value}
+                              onChange={(content: any) => {
+                                setValue(`meanings.${index}.definition`, content ?? '')
+                                onChange(content)
+                              }}
+                            />
                             // <TextArea
                             //   autoSize={{ minRows: 2, maxRows: 4 }}
-                            //   value={value}
-                            //   placeholder='Note'
+                            //   placeholder='Definition'
                             //   onChange={onChange}
+                            //   value={value}
+                            // />
+                          )}
+                        />
+                      </Col>
+                    </Row>
+                  </Col>
+
+                  <Col span={24}>
+                    <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
+                      <Col md={4} xs={24}>
+                        <label htmlFor=''>Translation:</label>
+                      </Col>
+
+                      <Col md={20} xs={24}>
+                        <Controller
+                          control={control}
+                          name={`meanings.${index}.translation`}
+                          render={({ field: { onChange, value } }) => (
+                            // <TextArea
+                            //   {...field}
+                            //   autoSize={{ minRows: 2, maxRows: 4 }}
+                            //   placeholder='Translation'
                             // />
                             <TextEditor
                               content={value}
                               onChange={(content: any) => {
-                                setValue(`meanings.${index}.note`, content ?? '')
+                                setValue(`meanings.${index}.translation`, content ?? '')
                                 onChange(content)
                               }}
                             />
-                          )
-                        }}
-                      />
-                    </Col>
-                  </Row>
-                </Col>
+                          )}
+                        />
+                      </Col>
+                    </Row>
+                  </Col>
 
-                <Col span={24}>
-                  <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    <Col md={4} xs={24}>
-                      <label htmlFor=''>Definition:</label>
-                    </Col>
+                  <Col span={24}>
+                    <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
+                      <Col md={4} xs={24}>
+                        <label htmlFor=''>Collocations:</label>
+                      </Col>
 
-                    <Col md={20} xs={24}>
-                      <Controller
-                        control={control}
-                        name={`meanings.${index}.definition`}
-                        render={({ field: { onChange, value } }) => (
-                          <TextEditor
-                            content={value}
-                            onChange={(content: any) => {
-                              setValue(`meanings.${index}.definition`, content ?? '')
-                              onChange(content)
-                            }}
-                          />
-                          // <TextArea
-                          //   autoSize={{ minRows: 2, maxRows: 4 }}
-                          //   placeholder='Definition'
-                          //   onChange={onChange}
-                          //   value={value}
-                          // />
-                        )}
-                      />
-                    </Col>
-                  </Row>
-                </Col>
+                      <Col md={20} xs={24}>
+                        <Controller
+                          control={control}
+                          name={`meanings.${index}.collocations`}
+                          render={({ field: { onChange, value } }) => (
+                            <TextArea
+                              autoSize={{ minRows: 2, maxRows: 4 }}
+                              value={value}
+                              placeholder=''
+                              onChange={onChange}
+                            />
+                          )}
+                        />
+                      </Col>
+                    </Row>
+                  </Col>
 
-                <Col span={24}>
-                  <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    <Col md={4} xs={24}>
-                      <label htmlFor=''>Translation:</label>
-                    </Col>
+                  <Col span={24}>
+                    <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
+                      <Col md={4} xs={24}>
+                        <label htmlFor=''>Grammar:</label>
+                      </Col>
 
-                    <Col md={20} xs={24}>
-                      <Controller
-                        control={control}
-                        name={`meanings.${index}.translation`}
-                        render={({ field: { onChange, value } }) => (
-                          // <TextArea
-                          //   {...field}
-                          //   autoSize={{ minRows: 2, maxRows: 4 }}
-                          //   placeholder='Translation'
-                          // />
-                          <TextEditor
-                            content={value}
-                            onChange={(content: any) => {
-                              setValue(`meanings.${index}.translation`, content ?? '')
-                              onChange(content)
-                            }}
-                          />
-                        )}
-                      />
-                    </Col>
-                  </Row>
-                </Col>
+                      <Col md={20} xs={24}>
+                        <Controller
+                          control={control}
+                          name={`meanings.${index}.grammar`}
+                          render={({ field: { onChange, value } }) => (
+                            <TextArea
+                              autoSize={{ minRows: 2, maxRows: 4 }}
+                              value={value}
+                              placeholder=''
+                              onChange={onChange}
+                            />
+                          )}
+                        />
+                      </Col>
+                    </Row>
+                  </Col>
 
-                <Col span={24}>
-                  <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    <Col md={4} xs={24}>
-                      <label htmlFor=''>Collocations:</label>
-                    </Col>
+                  <Col span={24}>
+                    <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
+                      <Col md={4} xs={6}>
+                        Synonyms:
+                      </Col>
 
-                    <Col md={20} xs={24}>
-                      <Controller
-                        control={control}
-                        name={`meanings.${index}.collocations`}
-                        render={({ field: { onChange, value } }) => (
-                          <TextArea
-                            autoSize={{ minRows: 2, maxRows: 4 }}
-                            value={value}
-                            placeholder=''
-                            onChange={onChange}
-                          />
-                        )}
-                      />
-                    </Col>
-                  </Row>
-                </Col>
+                      <Col md={20} xs={18}>
+                        <Controller
+                          control={control}
+                          name={`meanings.${index}.synonyms`}
+                          render={({ field: { onChange, value } }) => (
+                            <InputTag tags={value} onChange={(val: string[]) => onChange(val)} />
+                          )}
+                        />
+                      </Col>
+                    </Row>
+                  </Col>
 
-                <Col span={24}>
-                  <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    <Col md={4} xs={24}>
-                      <label htmlFor=''>Grammar:</label>
-                    </Col>
+                  <Col span={24}>
+                    <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
+                      <Col md={4} xs={6}>
+                        Antonyms:
+                      </Col>
 
-                    <Col md={20} xs={24}>
-                      <Controller
-                        control={control}
-                        name={`meanings.${index}.grammar`}
-                        render={({ field: { onChange, value } }) => (
-                          <TextArea
-                            autoSize={{ minRows: 2, maxRows: 4 }}
-                            value={value}
-                            placeholder=''
-                            onChange={onChange}
-                          />
-                        )}
-                      />
-                    </Col>
-                  </Row>
-                </Col>
+                      <Col md={20} xs={18}>
+                        <Controller
+                          control={control}
+                          name={`meanings.${index}.antonyms`}
+                          render={({ field: { onChange, value } }) => (
+                            <InputTag
+                              onChange={(value: string[]) => onChange(value)}
+                              tags={value}
+                            />
+                          )}
+                        />
+                      </Col>
+                    </Row>
+                  </Col>
 
-                <Col span={24}>
-                  <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    <Col md={4} xs={6}>
-                      Synonyms:
-                    </Col>
-
-                    <Col md={20} xs={18}>
-                      <Controller
-                        control={control}
-                        name={`meanings.${index}.synonyms`}
-                        render={({ field: { onChange, value } }) => (
-                          <InputTag tags={value} onChange={(val: string[]) => onChange(val)} />
-                        )}
-                      />
-                    </Col>
-                  </Row>
-                </Col>
-
-                <Col span={24}>
-                  <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                    <Col md={4} xs={6}>
-                      Antonyms:
-                    </Col>
-
-                    <Col md={20} xs={18}>
-                      <Controller
-                        control={control}
-                        name={`meanings.${index}.antonyms`}
-                        render={({ field: { onChange, value } }) => (
-                          <InputTag onChange={(value: string[]) => onChange(value)} tags={value} />
-                        )}
-                      />
-                    </Col>
-                  </Row>
-                </Col>
-
-                <ExampleItem nestIndex={index} />
-              </Space>
+                  <ExampleItem nestIndex={index} />
+                </Space>
+              )}
             </Space>
           </div>
         )

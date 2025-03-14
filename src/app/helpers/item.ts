@@ -10,7 +10,7 @@ export const transformItemModelToClient = (item: IItem<string>): IItem => ({
   forms: item.forms && item.forms.length > 0 ? item.forms.split(',') : [],
   relation: item.relation && item.relation.length > 0 ? item.relation.split(',') : [],
   quickAdd: [],
-  meanings: item.meanings.map((meaning) => ({
+  meanings: item.meanings?.map((meaning) => ({
     ...meaning,
     pronunciation: meaning.pronunciation
       ? {
@@ -64,7 +64,7 @@ export const transformItemModelToServer = (item: IItem): IItem<string> => {
       rest.relation && rest.relation.length > 0
         ? rest.relation.map((item) => item.trim()).join(',')
         : '',
-    meanings: rest.meanings.map((meaning) => ({
+    meanings: rest.meanings?.map((meaning) => ({
       ...meaning,
       note: meaning.note.trim().replace(/- /g, ''),
       translation: meaning.translation.trim(),

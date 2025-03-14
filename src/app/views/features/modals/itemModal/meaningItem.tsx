@@ -128,12 +128,17 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                     )}
 
                     {!show[index] && (
-                      <Flex gap={token.size}>
+                      <Flex
+                        align={'center'}
+                        gap={token.size}
+                        wrap={'wrap'}
+                        className={'max-w-full'}
+                      >
                         <div
                           className={'text-sm self-center'}
                         >{`(${getTypeOfItem(getValues(`meanings.${index}.typeId`))})`}</div>
                         <div
-                          className={'text-sm self-center'}
+                          className={clsx('text-sm self-center', classes.showMeaningOption)}
                           dangerouslySetInnerHTML={{
                             __html: getValues(`meanings.${index}.translation`),
                           }}

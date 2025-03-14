@@ -6,6 +6,19 @@ const styles = () => {
   const { token } = theme.useToken()
 
   return createUseStyles({
+    showMeaningOption: {
+      '& p': {
+        margin: 0,
+      },
+      '& ul': {
+        paddingLeft: token.size,
+
+        '& li': {
+          display: 'list-item',
+          wordBreak: 'break-word',
+        },
+      },
+    },
     contentStyle: {
       padding: token.size / 2,
       border: `1px solid ${token.colorPrimary}`,

@@ -1,1 +1,0 @@
-import{t as o,c as r,x as t}from"./index-BcVx9gIL.js";const s=()=>{const{token:e}=o.useToken();return r({registerForm:{width:"600px"},label:{display:"block",fontWeight:"500",marginBottom:e.size/4,color:t.color.neutral[6],fontStyle:"italic",fontSize:13},register:{textAlign:"center",color:t.color.neutral[4],"& p":{margin:0}}})()};export{s};

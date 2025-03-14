@@ -206,6 +206,7 @@ const styles = () => {
 
       '& li': {
         display: 'list-item',
+        wordBreak: 'break-word',
       },
     },
     word_family: {

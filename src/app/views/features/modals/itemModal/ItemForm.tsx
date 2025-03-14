@@ -85,7 +85,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
         : { ...itemBase, catId: ECategory.WORD }
     })
 
-    const synonyms = data.meanings.map((meaning) => {
+    const synonyms = data.meanings?.map((meaning) => {
       return meaning.synonyms.map((synonym) => {
         const itemBase = {
           ...initItem,
@@ -108,7 +108,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
       })
     })
 
-    const antonyms = data.meanings.map((meaning) => {
+    const antonyms = data.meanings?.map((meaning) => {
       return meaning.antonyms.map((antonym) => {
         const itemBase = {
           ...initItem,

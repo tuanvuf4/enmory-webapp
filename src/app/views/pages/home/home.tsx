@@ -85,35 +85,21 @@ const Home = () => {
                 <Col xs={24} md={8}>
                   {word && word.original && (
                     <Widget title='Word of the day'>
-                      <Item
-                        active
-                        reload
-                        data={word}
-                        type='full'
-                        onEdit={() => onEdit(word.id as number)}
-                      />
+                      <Item reload data={word} onEdit={() => onEdit(word.id as number)} />
                     </Widget>
                   )}
 
                   {phrase && phrase.original && (
                     <Widget title='Phrase of the day'>
-                      <Item
-                        active
-                        reload
-                        data={phrase}
-                        type='full'
-                        onEdit={() => onEdit(phrase.id as number)}
-                      />
+                      <Item reload data={phrase} onEdit={() => onEdit(phrase.id as number)} />
                     </Widget>
                   )}
 
                   {collocation && collocation.original && (
                     <Widget title='Collocation of the day'>
                       <Item
-                        active
                         reload
                         data={collocation}
-                        type='full'
                         onEdit={() => onEdit(collocation.id as number)}
                       />
                     </Widget>
@@ -121,37 +107,19 @@ const Home = () => {
 
                   {sentence && sentence.original && (
                     <Widget title='sentence of the day'>
-                      <Item
-                        active
-                        reload
-                        data={sentence}
-                        type='full'
-                        onEdit={() => onEdit(sentence.id as number)}
-                      />
+                      <Item reload data={sentence} onEdit={() => onEdit(sentence.id as number)} />
                     </Widget>
                   )}
 
                   {idiom && idiom.original && (
                     <Widget title='Idiom of the day'>
-                      <Item
-                        active
-                        reload
-                        data={idiom}
-                        type='full'
-                        onEdit={() => onEdit(idiom.id as number)}
-                      />
+                      <Item reload data={idiom} onEdit={() => onEdit(idiom.id as number)} />
                     </Widget>
                   )}
 
                   {slang && slang.original && (
                     <Widget title='Slang of the day'>
-                      <Item
-                        active
-                        reload
-                        data={slang}
-                        type='full'
-                        onEdit={() => onEdit(slang.id as number)}
-                      />
+                      <Item reload data={slang} onEdit={() => onEdit(slang.id as number)} />
                     </Widget>
                   )}
                 </Col>

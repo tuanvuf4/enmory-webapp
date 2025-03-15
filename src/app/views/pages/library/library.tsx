@@ -116,7 +116,6 @@ export const Library: React.FC = () => {
                   return (
                     <Col xs={24} sm={12} md={12} lg={8} xl={6} key={idx}>
                       <Item
-                        type='brief'
                         data={item}
                         onEdit={() => onEdit(item.id || -1)}
                         onDelete={() => onDelete(item.id || -1)}

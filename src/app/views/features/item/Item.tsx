@@ -1,10 +1,10 @@
 import { msgWarning } from '@/constant/index'
-import { MoreOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons'
+import { MoreOutlined, ReloadOutlined } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
 import { useAppDispatch, useAppSelector } from '@/core/hooks'
 import { isDefect, getCategory } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
-import { TItem, IItem, ECategory } from '@/models/item.model'
+import { IItem, ECategory } from '@/models/item.model'
 import { appApi, itemApi } from '@/services/api'
 import { initSearchFormItem } from '@/services/index'
 import { itemAsync } from '@/store/async/item.async'
@@ -31,7 +31,6 @@ interface IProps {
   groupAction?: boolean
   active?: boolean
   reload?: boolean
-  type: TItem
   data: IItem
   onDelete?: () => void
   onEdit?: () => void
@@ -43,7 +42,6 @@ export const Item: React.FC<IProps> = ({
   groupAction = true,
   active = false,
   reload = false,
-  type = 'brief',
   data,
   onDelete,
   onEdit,
@@ -201,7 +199,7 @@ export const Item: React.FC<IProps> = ({
     <div
       className={clsx({
         [classes.item]: true,
-        active: !active && type === 'full' ? true : false,
+        active: !!active,
       })}
     >
       {!data && <Skeleton />}
@@ -212,15 +210,13 @@ export const Item: React.FC<IProps> = ({
             <div className={classes.contentHead}>
               <div className={classes.title}>
                 <h2 className={classes.original}>
-                  {type === 'brief' && !isDefect(data) && <span>{data.original}</span>}
-
-                  {type === 'brief' && isDefect(data) && (
+                  {isDefect(data) && (
                     <Popover title={msgWarning.missingMeaning}>
                       <span className={classes.warnTitle}>{data.original}</span>
                     </Popover>
                   )}
 
-                  {type === 'full' && <span>{data.original}</span>}
+                  {!isDefect(data) && <span>{data.original}</span>}
                 </h2>
 
                 <Flex align={'center'} gap={token.size / 4}>
@@ -259,7 +255,7 @@ export const Item: React.FC<IProps> = ({
                         icon={<MoreOutlined />}
                         className={clsx({
                           [classes.btnActions]: true,
-                          active: !active && type === 'full' ? true : false,
+                          active: !!active,
                         })}
                       />
                     </Dropdown>
@@ -277,7 +273,7 @@ export const Item: React.FC<IProps> = ({
                       gap: token.size / 2,
                     }}
                   >
-                    {type === 'brief' && (
+                    {/* {type === 'brief' && (
                       <Button
                         className={classes.quickView}
                         type='text'
@@ -285,7 +281,7 @@ export const Item: React.FC<IProps> = ({
                         icon={<EyeOutlined />}
                         onClick={onView}
                       />
-                    )}
+                    )} */}
 
                     <span>{getCategory(data.catId)}</span>
                   </div>
@@ -309,12 +305,6 @@ export const Item: React.FC<IProps> = ({
                   )}
                 </h5>
               )}
-
-              {/* {data.catId && (
-                <h5 className={classes.level}>
-                  <Level level={data.level as number} />
-                </h5>
-              )} */}
 
               <Reference original={data.original} />
 
@@ -347,27 +337,11 @@ export const Item: React.FC<IProps> = ({
                 )}
             </div>
 
-            {type === 'brief' && data.meanings && data.meanings.length > 0 && (
-              <MeaningItemView
-                type={type}
-                meaning={data.meanings.find((item) => item.common) || data.meanings[0]}
-                catId={data.catId as ECategory}
-              />
-            )}
-
-            {type === 'full' &&
-              data.meanings &&
+            {data.meanings &&
               data.meanings.length > 0 &&
-              data.meanings.map((meaning, key) => {
-                return (
-                  <MeaningItemView
-                    key={key}
-                    type={type}
-                    meaning={meaning}
-                    catId={data.catId as ECategory}
-                  />
-                )
-              })}
+              data.meanings.map((meaning, key) => (
+                <MeaningItemView key={key} meaning={meaning} catId={data.catId as ECategory} />
+              ))}
           </div>
 
           <div className={classes.date}>

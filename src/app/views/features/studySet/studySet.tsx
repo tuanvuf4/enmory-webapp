@@ -513,9 +513,7 @@ export const StudySet: React.FC = () => {
         {isSubmit && (
           <div className={classes.resultReference}>
             <Item
-              type='full'
               data={item as IItem}
-              active
               onEdit={() => onEdit(item?.id as number)}
             />
           </div>

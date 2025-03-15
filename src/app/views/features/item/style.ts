@@ -8,7 +8,7 @@ const styles = () => {
 
   return createUseStyles({
     disableMeaning: {
-      border: `1px solid ${token['red-4']} !important`,
+      border: `1px solid ${appStyleConfig.color.red[3]} !important`,
     },
     btnInactive: {
       background: 'transparent !important',

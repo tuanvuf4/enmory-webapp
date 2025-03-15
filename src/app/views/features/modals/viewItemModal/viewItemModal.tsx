@@ -49,7 +49,7 @@ export const ViewItemModal: React.FC<IProps> = ({ open, title }) => {
       footer={null}
       maskClosable={true}
     >
-      <Item data={currentItem as IItem} type='full' onEdit={() => onEdit()} />
+      <Item active data={currentItem as IItem} onEdit={() => onEdit()} />
     </Modal>
   )
 }

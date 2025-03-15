@@ -512,10 +512,7 @@ export const StudySet: React.FC = () => {
 
         {isSubmit && (
           <div className={classes.resultReference}>
-            <Item
-              data={item as IItem}
-              onEdit={() => onEdit(item?.id as number)}
-            />
+            <Item data={item as IItem} onEdit={() => onEdit(item?.id as number)} />
           </div>
         )}
 

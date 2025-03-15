@@ -340,7 +340,12 @@ export const Item: React.FC<IProps> = ({
             {data.meanings &&
               data.meanings.length > 0 &&
               data.meanings.map((meaning, key) => (
-                <MeaningItemView key={key} meaning={meaning} catId={data.catId as ECategory} />
+                <MeaningItemView
+                  active={active}
+                  key={key}
+                  meaning={meaning}
+                  catId={data.catId as ECategory}
+                />
               ))}
           </div>
 

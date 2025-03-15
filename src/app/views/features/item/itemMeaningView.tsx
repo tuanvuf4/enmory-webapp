@@ -16,7 +16,7 @@ import { useState } from 'react'
 interface IMeaningProps {
   meaning: IMeaning<string[]>
   catId: ECategory
-  // type: TItem
+  active?: boolean
 }
 
 const Pronunciation = ({ catId, meaning }: { catId: ECategory; meaning: IMeaning<string[]> }) => {
@@ -58,7 +58,7 @@ const Pronunciation = ({ catId, meaning }: { catId: ECategory; meaning: IMeaning
   return null
 }
 
-export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning }) => {
+export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, active = false }) => {
   const { token } = theme.useToken()
   const classes = styles()
 
@@ -118,8 +118,8 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning }) => 
           icon={
             <AimOutlined
               style={{
-                fontSize: 16,
-                color: show ? token.colorPrimary : token.colorWhite,
+                fontSize: 14,
+                color: show ? token.colorPrimary : active ? token.colorText : token.colorWhite,
                 backgroundColor: 'transparent',
                 padding: 4,
               }}
@@ -132,20 +132,28 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning }) => 
         className={clsx(
           classes.meaningItem,
           meaning.enable ? '' : classes.disableMeaning,
-          'w-full',
           meaning.common ? classes.meaningCommon : '',
           meaning.translation ? '' : classes.disableMeaning,
         )}
       >
         <Row align={'middle'}>
-          <Col span={16}>
-            {(meaning.pronunciation.uk ||
-              meaning.pronunciation.us ||
-              meaning.pronunciation.common) && <Pronunciation catId={catId} meaning={meaning} />}
-          </Col>
+          {(meaning.pronunciation.uk ||
+            meaning.pronunciation.us ||
+            meaning.pronunciation.common) && (
+            <Col span={18}>
+              <Pronunciation catId={catId} meaning={meaning} />{' '}
+            </Col>
+          )}
 
           {catId === ECategory.WORD && (
-            <Col span={8} className={'m-0 p-1 text-right'}>
+            <Col
+              span={6}
+              className={`m-0 p-0 ${
+                meaning.pronunciation.uk || meaning.pronunciation.us || meaning.pronunciation.common
+                  ? 'text-right'
+                  : 'text-left'
+              } `}
+            >
               {getTypeOfItem(meaning.typeId)}
             </Col>
           )}

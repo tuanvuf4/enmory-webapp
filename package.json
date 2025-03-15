@@ -6,10 +6,9 @@
   "scripts": {
     "dev": "vite --port=9999 --host",
     "build": "tsc -b && vite build",
-    "build-prod": "vite build",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
-    "build:web-prod": "npm run format && env-cmd -f .env.web-prod npm run build-prod",
-    "build:ext-prod": "npm run format && env-cmd -f .env.ext-prod npm run build-prod",
+    "build:web": "npm run format && env-cmd -f .env.web-prod vite build",
+    "build:ext": "npm run format && env-cmd -f .env.ext-prod vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -1,7 +1,4 @@
-import {
-  AimOutlined,
-  AudioOutlined
-} from '@ant-design/icons'
+import { AimOutlined, AudioOutlined } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
 import { useAppDispatch } from '@/core/hooks'
 import { getTypeOfItem } from '@/helpers/item'

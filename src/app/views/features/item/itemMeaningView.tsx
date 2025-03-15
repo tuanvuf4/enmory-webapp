@@ -1,19 +1,16 @@
 import {
-  AudioOutlined,
-  CaretDownOutlined,
-  CaretLeftOutlined,
-  CaretRightOutlined,
-  CaretUpOutlined,
+  AimOutlined,
+  AudioOutlined
 } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
 import { useAppDispatch } from '@/core/hooks'
 import { getTypeOfItem } from '@/helpers/item'
-import { IMeaning, ECategory, TItem, EType } from '@/models/item.model'
+import { IMeaning, ECategory, EType } from '@/models/item.model'
 import { itemAsync } from '@/store/async/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { Tags } from '@/views/components/tags/tags'
-import { theme, Row, Col, Button, Flex } from 'antd'
+import { theme, Row, Col, Button } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
@@ -108,50 +105,29 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning }) => 
     }
   }
 
-  const getPronouns = (catId: ECategory) => {
-    if (catId === ECategory.WORD && (meaning.pronunciation.us || meaning.pronunciation.uk)) {
-      return (
-        <div className={`${classes.pronouns} flex flex-wrap gap-x-4 gap-y-1 items-center`}>
-          {meaning.pronunciation.uk && (
-            <div className={classes.audio}>
-              {/* <span className={classes.accent}>UK</span> */}
-              <AudioOutlined className={classes.audioIcon} />
-              {meaning.pronunciation?.uk || ''}
-            </div>
-          )}
-
-          {meaning.pronunciation.us && (
-            <div className={classes.audio}>
-              {/* <span className={classes.accent}>US</span> */}
-              <AudioOutlined className={classes.audioIcon} />
-              {meaning.pronunciation?.us || ''}
-            </div>
-          )}
-        </div>
-      )
-    }
-
-    if (catId !== ECategory.WORD && meaning.pronunciation.common) {
-      return (
-        <div className={classes.pronouns}>
-          <div className={classes.audio}>
-            <AudioOutlined className={classes.audioIcon} />
-            {meaning.pronunciation?.common || ''}
-          </div>
-        </div>
-      )
-    }
-  }
-
   return (
-    <Flex dir={''} gap={token.size / 2}>
-      <div className={'!p-0 text-center'}>
+    <div className={'relative my-4'}>
+      <div
+        className={'!p-0 text-center absolute z-10'}
+        style={{
+          left: '-18px',
+          top: 'calc(50% - 18px)',
+        }}
+      >
         <Button
           className={'!p-0'}
           type={'text'}
           onClick={() => setShow((prev) => !prev)}
-          icon={show ? <CaretDownOutlined /> : <CaretRightOutlined />}
-          style={{ color: token.colorPrimary }}
+          icon={
+            <AimOutlined
+              style={{
+                fontSize: 16,
+                color: show ? token.colorPrimary : token.colorWhite,
+                backgroundColor: 'transparent',
+                padding: 4,
+              }}
+            />
+          }
         />
       </div>
 
@@ -253,6 +229,6 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning }) => 
           </>
         )}
       </div>
-    </Flex>
+    </div>
   )
 }

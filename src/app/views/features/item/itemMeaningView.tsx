@@ -1,4 +1,4 @@
-import { AimOutlined, AudioOutlined } from '@ant-design/icons'
+import { AudioOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
 import { useAppDispatch } from '@/core/hooks'
 import { getTypeOfItem } from '@/helpers/item'
@@ -107,18 +107,42 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
       <div
         className={'!p-0 text-center absolute z-10'}
         style={{
-          left: '-18px',
-          top: 'calc(50% - 18px)',
+          left: '-19px',
+          height: '100%',
         }}
       >
         <Button
           className={'!p-0'}
           type={'text'}
           onClick={() => setShow((prev) => !prev)}
+          style={{
+            position: 'absolute',
+            top: '-16px',
+          }}
           icon={
-            <AimOutlined
+            <CaretDownOutlined
               style={{
-                fontSize: 14,
+                fontSize: 16,
+                color: show ? token.colorPrimary : active ? token.colorText : token.colorWhite,
+                backgroundColor: 'transparent',
+                padding: 4,
+              }}
+            />
+          }
+        />
+
+        <Button
+          className={'!p-0'}
+          type={'text'}
+          onClick={() => setShow((prev) => !prev)}
+          style={{
+            position: 'absolute',
+            bottom: '-16px',
+          }}
+          icon={
+            <CaretUpOutlined
+              style={{
+                fontSize: 16,
                 color: show ? token.colorPrimary : active ? token.colorText : token.colorWhite,
                 backgroundColor: 'transparent',
                 padding: 4,

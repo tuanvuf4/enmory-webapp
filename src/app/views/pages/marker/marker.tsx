@@ -1,5 +1,4 @@
 import { Button, Flex, Radio, Table, TableColumnsType } from 'antd'
-import classNames from 'clsx'
 import globalStyle, { appStyleConfig } from '@/style/appStyle'
 import { useEffect, useState } from 'react'
 import { appApi, itemApi } from '@/services/api'
@@ -104,29 +103,14 @@ const Marker = () => {
           return (
             <Flex gap={8} justify={'center'} align={'center'} wrap={'wrap'}>
               {record.items[key].map((value, index) => (
-                // <Tag
-                //   style={{ cursor: 'pointer', fontSize: token.fontSize }}
-                //   onClick={() => onView(value.item.id as number)}
-                //   key={index}
-                //   closeIcon={
-                //     <DeleteOutlined
-                //       style={{
-                //         color: appStyleConfig.color.red[3],
-                //       }}
-                //     />
-                //   }
-                //   onClose={async (e) => {
-                //     e.stopPropagation()
-                //     await appApi.deleteMarkIotd(value.id)
-                //     await fetchMarkedIotd(range)
-                //   }}
-                // >
-                //   {value.item.original}
-                // </Tag>
-
                 <Button
                   color='default'
-                  size={'small'}
+                  style={{
+                    whiteSpace: 'normal',
+                    maxWidth: 300,
+                    height: 'auto',
+                    textAlign: 'left',
+                  }}
                   key={index}
                   onClick={() => onView(value.item.id as number)}
                   icon={

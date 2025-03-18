@@ -426,7 +426,7 @@ export const StudySet: React.FC = () => {
                       </div>
 
                       {isSubmit && ans.typeId && (
-                        <i>{`(${getTypeOfItem(ans.typeId).toLowerCase()})`}</i>
+                        <i>{`(${getTypeOfItem(ans.typeId).origin.toLowerCase()})`}</i>
                       )}
                       {/* {isSubmit && ans.id !== item.id && (
                         <Button

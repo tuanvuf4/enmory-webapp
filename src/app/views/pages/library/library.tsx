@@ -179,7 +179,7 @@ export const Library: React.FC = () => {
                             {item.catId !== ECategory.WORD && <td></td>}
 
                             {item.catId === ECategory.WORD && (
-                              <td>{getTypeOfItem(item.meanings[0].typeId)}</td>
+                              <td>{getTypeOfItem(item.meanings[0].typeId).origin}</td>
                             )}
 
                             <td>

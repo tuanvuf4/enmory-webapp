@@ -108,37 +108,37 @@ export const transformItemModelToServer = (item: IItem): IItem<string> => {
 export const getTypeOfItem = (type: EType) => {
   switch (type) {
     case EType.NOUN:
-      return 'Noun'
+      return { origin: 'Noun', abbr: 'n' }
 
     case EType.VERB:
-      return 'Verb'
+      return { origin: 'Verb', abbr: 'v' }
 
     case EType.ADJECTIVE:
-      return 'Adjective'
+      return { origin: 'Adjective', abbr: 'a' }
 
     case EType.ADVERB:
-      return 'Adverb'
+      return { origin: 'Adverb', abbr: 'adv' }
 
     case EType.PREPOSITION:
-      return 'Preposition'
+      return { origin: 'Preposition', abbr: 'pre' }
 
     case EType.CONJUNCTION:
-      return 'Conjunction'
+      return { origin: 'Conjunction', abbr: 'conj' }
 
     case EType.PRONOUN:
-      return 'Pronoun'
+      return { origin: 'Pronoun', abbr: 'pr' }
 
     case EType.ARTICLE:
-      return 'Article'
+      return { origin: 'Article', abbr: 'article' }
 
     case EType.DETERMINER:
-      return 'Determiner'
+      return { origin: 'Determiner', abbr: 'deter' }
 
     case EType.INTERJECTION:
-      return 'Interjection'
+      return { origin: 'Interjection', abbr: 'inter' }
 
     default:
-      return ''
+      return { origin: 'All', abbr: 'all' }
   }
 }
 

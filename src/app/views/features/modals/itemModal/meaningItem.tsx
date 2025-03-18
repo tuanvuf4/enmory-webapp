@@ -35,6 +35,8 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
 
   const [show, setShow] = useState<boolean[]>([])
 
+  console.log(`******* show ******* `, show)
+
   const { confirmDeleteModal } = usePrompt()
 
   const { control, getValues, trigger, setValue } = useFormContext<IItem>()
@@ -94,7 +96,11 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
               className={gClasses.fulWidth}
             >
               <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                <Col span={6} style={{ display: 'flex' }}>
+                <Col
+                  xs={{ span: show[index] ? 6 : 3 }}
+                  sm={{ span: show[index] ? 6 : 2 }}
+                  style={{ display: 'flex' }}
+                >
                   <Button
                     type={'text'}
                     onClick={() => {
@@ -109,7 +115,11 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                   />
                 </Col>
 
-                <Col span={12} style={{ display: 'flex' }}>
+                <Col
+                  xs={{ span: show[index] ? 12 : 15 }}
+                  sm={{ span: show[index] ? 12 : 18 }}
+                  style={{ display: 'flex' }}
+                >
                   {show[index] && catType === ECategory.WORD && (
                     <Controller
                       control={control}
@@ -117,6 +127,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                       render={({ field }) => (
                         <Select
                           className={gClasses.fulWidth}
+                          rootClassName={'text-center'}
                           {...field}
                           options={types.filter((item) => item.value !== EType.ALL)}
                           defaultValue={EType.NOUN}
@@ -134,7 +145,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                     >
                       <div
                         className={'text-xs self-center'}
-                      >{`(${getTypeOfItem(getValues(`meanings.${index}.typeId`))})`}</div>
+                      >{`(${getTypeOfItem(getValues(`meanings.${index}.typeId`)).abbr})`}</div>
                       <div
                         className={clsx('text-sm self-center flex-1', classes.showMeaningOption)}
                         dangerouslySetInnerHTML={{
@@ -146,13 +157,14 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                 </Col>
 
                 <Col
-                  span={6}
+                  xs={{ span: 6 }}
+                  sm={{ span: show[index] ? 6 : 4 }}
                   style={{
                     display: 'flex',
                     justifyContent: 'flex-end',
                   }}
                 >
-                  <Flex gap={token.size / 2}>
+                  <Flex gap={token.size / 4} justify={'flex-end'}>
                     <Button
                       type={'text'}
                       onClick={onSubmit}

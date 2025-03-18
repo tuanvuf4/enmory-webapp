@@ -178,7 +178,7 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
                   : 'text-left'
               } `}
             >
-              {getTypeOfItem(meaning.typeId)}
+              {getTypeOfItem(meaning.typeId).origin}
             </Col>
           )}
         </Row>

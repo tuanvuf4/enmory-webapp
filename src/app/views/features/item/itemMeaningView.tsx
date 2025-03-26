@@ -1,4 +1,4 @@
-import { AudioOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons'
+import { AudioOutlined } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
 import { useAppDispatch } from '@/core/hooks'
 import { getTypeOfItem } from '@/helpers/item'
@@ -7,7 +7,7 @@ import { itemAsync } from '@/store/async/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { Tags } from '@/views/components/tags/tags'
-import { theme, Row, Col, Button } from 'antd'
+import { theme, Row, Col } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
@@ -105,60 +105,15 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
   return (
     <div className={'relative my-4'}>
       <div
-        className={'!p-0 text-center absolute z-10'}
-        style={{
-          left: '-19px',
-          height: '100%',
-        }}
-      >
-        <Button
-          className={'!p-0'}
-          type={'text'}
-          onClick={() => setShow((prev) => !prev)}
-          style={{
-            position: 'absolute',
-            top: '-16px',
-          }}
-          icon={
-            <CaretDownOutlined
-              style={{
-                fontSize: 16,
-                color: show ? token.colorPrimary : active ? token.colorText : token.colorWhite,
-                backgroundColor: 'transparent',
-                padding: 4,
-              }}
-            />
-          }
-        />
-
-        <Button
-          className={'!p-0'}
-          type={'text'}
-          onClick={() => setShow((prev) => !prev)}
-          style={{
-            position: 'absolute',
-            bottom: '-16px',
-          }}
-          icon={
-            <CaretUpOutlined
-              style={{
-                fontSize: 16,
-                color: show ? token.colorPrimary : active ? token.colorText : token.colorWhite,
-                backgroundColor: 'transparent',
-                padding: 4,
-              }}
-            />
-          }
-        />
-      </div>
-
-      <div
         className={clsx(
           classes.meaningItem,
           meaning.enable ? '' : classes.disableMeaning,
           meaning.common ? classes.meaningCommon : '',
           meaning.translation ? '' : classes.disableMeaning,
+          'cursor-pointer',
+          'select-none',
         )}
+        onDoubleClick={() => setShow((prev) => !prev)}
       >
         <Row align={'middle'}>
           {(meaning.pronunciation.uk ||

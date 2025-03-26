@@ -11,7 +11,7 @@ import { ECategory, IPair, EType, IItem } from '@/models/item.model'
 import { InputTag } from '@/views/components/inputTag/inputTag'
 import { theme, Space, Col, Row, Button, Select, Checkbox, Input, Flex } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
-import { useFormContext, useFieldArray, Controller, useWatch } from 'react-hook-form'
+import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { meaningItem } from '.'
 import { ExampleItem } from './exampleItem'
 import styles from './style'
@@ -34,8 +34,6 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
   const gClasses = globalStyle()
 
   const [show, setShow] = useState<boolean[]>([])
-
-  console.log(`******* show ******* `, show)
 
   const { confirmDeleteModal } = usePrompt()
 

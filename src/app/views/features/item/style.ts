@@ -62,7 +62,7 @@ const styles = () => {
     },
     meaningItem: {
       border: `1px solid ${appStyleConfig.color.neutral[0]}`,
-      padding: `${token.size / 4}px ${token.size / 2}px ${token.size / 4}px ${token.size}px`,
+      padding: `${token.size / 4}px ${token.size / 2}px`,
       margin: `${token.size / 4}px 0`,
       borderRadius: `0 ${token.size / 4}px ${token.size / 4}px ${token.size / 4}px`,
 

@@ -109,7 +109,7 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
           classes.meaningItem,
           meaning.enable ? '' : classes.disableMeaning,
           meaning.common ? classes.meaningCommon : '',
-          meaning.translation ? '' : classes.disableMeaning,
+          meaning.translation || meaning.definition ? '' : classes.disableMeaning,
           'cursor-pointer',
           'select-none',
         )}
@@ -139,10 +139,21 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
         </Row>
 
         {!show && (
-          <h3
-            className={classes.translate}
-            dangerouslySetInnerHTML={{ __html: meaning.translation }}
-          />
+          <>
+            {meaning.definition && (
+              <h3
+                className={classes.definition}
+                dangerouslySetInnerHTML={{ __html: meaning.definition }}
+              />
+            )}
+
+            {meaning.translation && (
+              <h3
+                className={classes.translate}
+                dangerouslySetInnerHTML={{ __html: meaning.translation }}
+              />
+            )}
+          </>
         )}
 
         {show && (

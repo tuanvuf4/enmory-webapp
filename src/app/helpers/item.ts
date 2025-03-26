@@ -183,7 +183,8 @@ export const isDefect = (item: IItem) => {
     item.meanings.length === 0 ||
     (item.meanings &&
       item.meanings.length > 0 &&
-      item.meanings.filter((item) => item.translation.trim() === '').length > 0)
+      item.meanings.filter((item) => item.translation.trim() === '').length > 0 &&
+      item.meanings.filter((item) => item.definition.trim() === '').length > 0)
   ) {
     return true
   } else {

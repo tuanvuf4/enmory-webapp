@@ -33,6 +33,6 @@ export const msgErrors = {
 }
 
 export const msgWarning = {
-  missingMeaning: 'Meaning item is missing so cannot be found in the study set.',
+  missingMeaning: 'Missing translation or definition could not be found in the study set.',
   empty: 'This item is empty!',
 }

@@ -141,9 +141,12 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                       wrap={'wrap'}
                       className={'max-w-full'}
                     >
-                      <div
-                        className={'text-xs self-center'}
-                      >{`(${getTypeOfItem(getValues(`meanings.${index}.typeId`)).abbr})`}</div>
+                      {catType === ECategory.WORD && (
+                        <div
+                          className={'text-xs self-center'}
+                        >{`(${getTypeOfItem(getValues(`meanings.${index}.typeId`)).abbr})`}</div>
+                      )}
+
                       <div
                         className={clsx('text-sm self-center flex-1', classes.showMeaningOption)}
                         dangerouslySetInnerHTML={{

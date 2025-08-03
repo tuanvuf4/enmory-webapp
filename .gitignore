@@ -19,6 +19,9 @@ dist-ssr
 .env
 .env.**
 
+# bootstrap
+bootstrap.sh
+
 # build
 **.tsbuildinfo
 dist_ext
@@ -33,3 +36,4 @@ dist_ext
 *.njsproj
 *.sln
 *.sw?
+

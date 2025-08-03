@@ -332,17 +332,6 @@ export const StudySet: React.FC = () => {
               </Button>
             )}
 
-            {appConfig.env === 'development' && (
-              <Button
-                icon={<ReloadOutlined />}
-                type='primary'
-                danger
-                onClick={() => dispatch(studySetAction.updateQuizAnswer())}
-              >
-                load
-              </Button>
-            )}
-
             <div className={classes.progress}>
               <div className={classes.progressCounter}>
                 {currentIndex + 1}

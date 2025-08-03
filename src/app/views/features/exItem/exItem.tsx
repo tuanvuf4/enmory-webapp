@@ -24,6 +24,7 @@ export const ExItem: React.FC<IProps> = ({
   onDelete,
   onEdit,
 }) => {
+  console.log(`******* data ******* `, data)
   const { token } = theme.useToken()
 
   const classes = styles()

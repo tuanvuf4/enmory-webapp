@@ -110,8 +110,8 @@ export const appConfig = {
 export const defaultSetting = {
   debounceTime: 1200,
   numberItemOfAutoComplete: 10,
-  dateFormat: 'MM/DD/YYYY',
-  dateTimeFormat: 'MM/DD/YYYY | hh:mm A',
+  dateFormat: 'MM-DD-YYYY',
+  dateTimeFormat: 'MM-DD-YYYY | HH:mm',
   days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
   shortDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   millisecondsInHour: 60 * 60 * 1000,

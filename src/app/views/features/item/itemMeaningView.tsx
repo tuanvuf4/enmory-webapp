@@ -111,11 +111,10 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
           meaning.common ? classes.meaningCommon : '',
           meaning.translation || meaning.definition ? '' : classes.disableMeaning,
           'cursor-pointer',
-          'select-none',
         )}
         onDoubleClick={() => setShow((prev) => !prev)}
       >
-        <Row align={'middle'}>
+        <Row align={'middle'} className={`select-none`}>
           {(meaning.pronunciation.uk ||
             meaning.pronunciation.us ||
             meaning.pronunciation.common) && (
@@ -140,6 +139,10 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
 
         {!show && (
           <>
+            {meaning.note && (
+              <div className={classes.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
+            )}
+
             {meaning.definition && (
               <h3
                 className={classes.definition}

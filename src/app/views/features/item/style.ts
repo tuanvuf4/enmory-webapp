@@ -224,6 +224,7 @@ const styles = () => {
       fontStyle: 'italic',
       fontSize: 14,
       fontFamily: 'Lora, sans-serif',
+      color: appStyleConfig.color.yellow[5],
 
       '& ul': {
         paddingLeft: token.size,

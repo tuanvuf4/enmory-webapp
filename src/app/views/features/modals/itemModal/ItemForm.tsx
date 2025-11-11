@@ -280,7 +280,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
   }, [isShowItemModal, onEditEvent])
 
   return (
-    <form onSubmit={handleSubmit(handleOk)}>
+    <form onSubmit={handleSubmit(handleOk)} style={{ padding: token.size }}>
       <Row>
         <Space
           direction='vertical'
@@ -439,7 +439,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
             <>
               <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
                 <Col md={4} xs={6}>
-                  Forms:
+                  Form:
                 </Col>
 
                 <Col md={20} xs={18}>
@@ -457,26 +457,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
                   />
                 </Col>
               </Row>
-
-              {/* <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-                <Col md={4} xs={24}>
-                  Collocations:
-                </Col>
-                <Col md={20} xs={24}>
-                  <Controller
-                    control={control}
-                    name={`collocations`}
-                    render={() => (
-                      <InputTag
-                        tags={getValues('collocations')}
-                        onChange={(value: string[]) => {
-                          setValue('collocations', value)
-                        }}
-                      />
-                    )}
-                  />
-                </Col>
-              </Row> */}
 
               <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
                 <Col md={4} xs={6}>

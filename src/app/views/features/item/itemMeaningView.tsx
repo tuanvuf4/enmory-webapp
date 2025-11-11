@@ -180,23 +180,29 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
             )}
 
             {meaning.collocations && (
-              <ul className={classes.listItem}>
-                {meaning.collocations
-                  .replace(/\n/g, '*')
-                  .replace(/- /g, '')
-                  .split('*')
-                  .map((value, key) => (value ? <li key={key}>{value}</li> : ''))}
-              </ul>
+              <>
+                <h5 className={'italic'}>Collocations:</h5>
+                <ul className={classes.listItem}>
+                  {meaning.collocations
+                    .replace(/\n/g, '*')
+                    .replace(/- /g, '')
+                    .split('*')
+                    .map((value, key) => (value ? <li key={key}>{value}</li> : ''))}
+                </ul>
+              </>
             )}
 
             {meaning.grammar && (
-              <ul className={classes.listItem}>
-                {meaning.grammar
-                  .replace(/\n/g, '*')
-                  .replace(/- /g, '')
-                  .split('*')
-                  .map((value, key) => (value ? <li key={key}>{value}</li> : ''))}
-              </ul>
+              <>
+                <h5 className={'italic'}>Grammar:</h5>
+                <ul className={classes.listItem}>
+                  {meaning.grammar
+                    .replace(/\n/g, '*')
+                    .replace(/- /g, '')
+                    .split('*')
+                    .map((value, key) => (value ? <li key={key}>{value}</li> : ''))}
+                </ul>
+              </>
             )}
 
             {meaning.synonyms.filter((item) => item).length > 0 && meaning.synonyms.length > 0 && (

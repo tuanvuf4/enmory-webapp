@@ -89,7 +89,7 @@ export const RouterElement = () => {
       },
       {
         path: '*',
-        element: <PageNotFound />,
+        element: lazyLoadRoutes('home'),
       },
     ],
     [],

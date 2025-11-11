@@ -100,7 +100,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
     <form
       className={clsx(classes.exampleFormAdd, themeMode === 'light' ? 'active' : '')}
       onSubmit={handleSubmit(onSubmit)}
-      style={{ width: '100%' }}
+      style={{ padding: token.size, width: '100%' }}
     >
       <Space direction='vertical' style={{ display: 'flex', width: '100%' }} size={token.size}>
         <Row>

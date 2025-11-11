@@ -1,7 +1,7 @@
 {
   "name": "Enmory",
   "version": "1.0",
-  "description": "Learn English in your own way!",
+  "description": "Learn English the way you like!",
   "manifest_version": 3,
   "permissions": ["tabs", "activeTab", "storage", "declarativeContent", "contextMenus"],
   "background": {

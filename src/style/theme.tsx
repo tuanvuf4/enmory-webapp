@@ -1,6 +1,7 @@
 import { ThemeConfig } from 'antd/es/config-provider'
 import { gray } from '@ant-design/colors'
 import { appStyleConfig } from './appStyle'
+import { hex2Rgba } from '@/core/utils'
 
 export const appTheme: ThemeConfig = {
   token: {
@@ -37,7 +38,14 @@ export const appTheme: ThemeConfig = {
     Input: {},
     Modal: {
       fontSizeHeading5: 24,
-      contentPadding: 18,
+      contentPadding: 0,
+      // contentBg: hex2Rgba(appStyleConfig.itemColorBg, 1),
+      headerBg: 'transparent',
+      headerPadding: 16,
+      // colorText: '#f4f4f4',
+    },
+    Checkbox: {
+      // colorText: appStyleConfig.color.white[0],
     },
     Layout: {
       headerBg: '#fff',

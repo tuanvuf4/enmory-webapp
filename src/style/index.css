@@ -179,6 +179,10 @@ input[type='range']:active::-moz-range-thumb {
   transform: scale(1.2);
 }
 
+.text-editor .ck-content {
+  min-height: 2em !important;
+}
+
 /* animation: borealisBar */
 @keyframes borealisBar {
   0% {

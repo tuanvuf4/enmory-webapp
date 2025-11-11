@@ -52,9 +52,6 @@ export const PopupExt = () => {
     if (!cats) cats = (await appApi.getCategories()).content
     if (!types) types = (await appApi.getTypes()).content
 
-    console.log(`cats: `, cats)
-    console.log(`types: `, types)
-
     setCats(cats.map((cat) => ({ ...cat, value: cat.id })))
     setTypes(types.map((type) => ({ ...type, value: type.id })))
   }

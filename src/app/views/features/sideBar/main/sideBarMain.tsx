@@ -20,7 +20,7 @@ export const SideBarMain: React.FC = () => {
 
       <div className={classes.slogan}>
         <h2>
-          <span>Learning English</span> <br /> in your own way!
+          <span>Learn English</span> <br /> the way you like!
         </h2>
       </div>
 

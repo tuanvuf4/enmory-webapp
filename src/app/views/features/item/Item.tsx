@@ -211,7 +211,7 @@ export const Item: React.FC<IProps> = ({
               <div className={classes.title}>
                 <h2 className={classes.original}>
                   {isDefect(data) && (
-                      <span className={classes.warnTitle}>{data.original}</span>
+                    <span className={classes.warnTitle}>{data.original}</span>
                     // <Popover title={msgWarning.missingMeaning}>
                     // </Popover>
                   )}

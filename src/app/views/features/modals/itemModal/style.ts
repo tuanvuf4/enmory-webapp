@@ -6,6 +6,9 @@ const styles = () => {
   const { token } = theme.useToken()
 
   return createUseStyles({
+    label: {
+      color: token.colorWhite,
+    },
     showMeaningOption: {
       '& p': {
         margin: 0,

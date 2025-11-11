@@ -152,7 +152,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                         dangerouslySetInnerHTML={{
                           __html: getValues(`meanings.${index}.translation`),
                         }}
-                      ></div>
+                      />
                     </Flex>
                   )}
                 </Col>
@@ -174,7 +174,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                     />
 
                     <Button
-                      danger
+                      style={{ color: token.colorTextSecondary }}
                       type={'text'}
                       onClick={() => {
                         confirmDeleteModal({
@@ -197,19 +197,6 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                   className={clsx(gClasses.fulWidth)}
                 >
                   <Row gutter={[token.size / 2, token.size]} align={'middle'}>
-                    {/* <Col
-                      md={{
-                        span: 8,
-                        order: 1,
-                      }}
-                      xs={{
-                        span: 8,
-                        order: 3,
-                      }}
-                    >
-                      <label htmlFor=''>Type:</label>
-                    </Col> */}
-
                     <Col
                       md={{
                         span: 10,
@@ -473,7 +460,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                           name={`meanings.${index}.collocations`}
                           render={({ field: { onChange, value } }) => (
                             <TextArea
-                              autoSize={{ minRows: 2, maxRows: 4 }}
+                              autoSize={{ minRows: 1, maxRows: 4 }}
                               value={value}
                               placeholder=''
                               onChange={onChange}
@@ -496,7 +483,7 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                           name={`meanings.${index}.grammar`}
                           render={({ field: { onChange, value } }) => (
                             <TextArea
-                              autoSize={{ minRows: 2, maxRows: 4 }}
+                              autoSize={{ minRows: 1, maxRows: 4 }}
                               value={value}
                               placeholder=''
                               onChange={onChange}

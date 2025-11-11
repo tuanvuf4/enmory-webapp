@@ -3,7 +3,7 @@ import { PlusOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/i
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IItem } from '@/models/item.model'
 import { exampleApi } from '@/services/api'
-import { theme, Space, Col, Row, Button, Switch, AutoComplete } from 'antd'
+import { theme, Space, Col, Row, Button, Switch, AutoComplete, Flex } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
@@ -83,7 +83,12 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                       className={gClasses.fulWidth}
                     >
                       <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                        <Col md={{ span: 2, order: 1 }} xs={{ span: 4, order: 1 }}>
+                        <Flex
+                          justify={'space-between'}
+                          align={'center'}
+                          className={'w-full'}
+                          gap={token.size}
+                        >
                           <Controller
                             control={control}
                             name={`meanings.${nestIndex}.examples.${key}.auto`}
@@ -100,9 +105,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                               />
                             )}
                           />
-                        </Col>
 
-                        <Col md={{ span: 20, order: 2 }} xs={{ span: 16, order: 1 }}>
                           <AutoComplete
                             value={currentSearch}
                             disabled={!getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
@@ -116,12 +119,11 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                             placeholder='Search an example...'
                             className={'w-full'}
                           />
-                        </Col>
 
-                        <Col md={{ span: 2, order: 3 }} xs={{ span: 4, order: 1 }} align={'end'}>
                           <Button
                             className={'min-w-10'}
                             danger
+                            style={{ color: token.colorTextSecondary }}
                             onClick={() => {
                               confirmDeleteModal({
                                 onOk: () => {
@@ -131,14 +133,10 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                             }}
                             icon={<DeleteOutlined />}
                           />
-                        </Col>
+                        </Flex>
                       </Row>
 
                       <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
-                        {/* <Col md={4} xs={24}>
-                          Original:
-                        </Col> */}
-
                         <Col md={24} xs={24}>
                           <Controller
                             control={control}
@@ -147,7 +145,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                               <TextArea
                                 disabled={getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
                                 autoSize={{ minRows: 1, maxRows: 4 }}
-                                placeholder='Original'
+                                placeholder='Original:'
                                 {...field}
                               />
                             )}
@@ -156,10 +154,6 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                       </Row>
 
                       <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
-                        {/* <Col md={4} xs={24}>
-                          Translation:
-                        </Col> */}
-
                         <Col md={24} xs={24}>
                           <Controller
                             control={control}
@@ -168,7 +162,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                               <TextArea
                                 disabled={getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
                                 autoSize={{ minRows: 1, maxRows: 4 }}
-                                placeholder='Translation'
+                                placeholder='Translation:'
                                 {...field}
                               />
                             )}

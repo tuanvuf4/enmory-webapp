@@ -34,16 +34,16 @@ const styles = () => {
       boxShadow: `0px 0px 30px 0px ${hex2Rgba('#ffffff', 0.2)}`,
       color: token.colorWhite,
 
-      '&.active': {
-        background: 'none',
-        border: 'none',
-        padding: 0,
-        color: token.colorTextBase,
+      // '&.active': {
+      //   background: 'none',
+      //   border: 'none',
+      //   padding: 0,
+      //   color: token.colorTextBase,
 
-        '& $translate': {
-          color: token.colorTextSecondary,
-        },
-      },
+      //   '& $translate': {
+      //     color: token.colorTextSecondary,
+      //   },
+      // },
 
       '& ul, & ol': {
         paddingLeft: token.size,
@@ -250,9 +250,9 @@ const styles = () => {
     btnActions: {
       color: `${token.colorWhite} !important`,
 
-      '&.active': {
-        color: `${token.colorText} !important`,
-      },
+      // '&.active': {
+      //   color: `${token.colorText} !important`,
+      // },
 
       '& span': {
         fontSize: `${token.fontSizeHeading4}px !important`,

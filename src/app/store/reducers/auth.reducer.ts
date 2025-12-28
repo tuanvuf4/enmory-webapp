@@ -45,6 +45,12 @@ export const authReducer = createSlice({
         state.user = action.payload.content
       },
     )
+    builder.addCase(
+      actionAsyncUser.refreshToken.fulfilled,
+      (state: IAuthState, action: PayloadAction<IHttpResponse<ILoginResponse>>) => {
+        state.authorization = action.payload.content
+      },
+    )
   },
 })
 

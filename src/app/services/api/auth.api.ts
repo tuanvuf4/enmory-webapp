@@ -27,6 +27,14 @@ const register = async (user: IUser) => {
     .then((resp) => resp.data)
 }
 
+const refreshToken = async (refreshToken: string) => {
+  return http
+    .post<IHttpResponse<ILoginResponse>>(httpConfig.apiEndPoint.auth + '/refresh', {
+      refresh_token: refreshToken,
+    })
+    .then((resp) => resp.data)
+}
+
 const getUserInfo = async () => {
   return http
     .get<IHttpResponse<IUser<string>>>(httpConfig.apiEndPoint.auth + '/me')
@@ -38,4 +46,5 @@ export const apiAuth = {
   getGoogleUserInfo,
   login,
   register,
+  refreshToken,
 }

@@ -7,7 +7,7 @@ const useHandleAuthRequest = () => {
   const { token_type, access_token } = useAppSelector((state) => state.auth.authorization)
 
   const requestInterceptor = axiosInstance.interceptors.request.use(async (request: any) => {
-    if (access_token && !request.url.includes('token') && !request.url.includes('login')) {
+    if (access_token && !request.url.includes('token') && !request.url.includes('login') && !request.url.includes('refresh') && !request.headers.Authorization) {
       request.headers = {
         ...request.headers,
         Authorization: `${token_type} ${access_token}`,

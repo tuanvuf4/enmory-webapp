@@ -37,8 +37,14 @@ const getUserInfo = createAsyncThunk('users/info', async () => {
   }
 })
 
+const refreshToken = createAsyncThunk(
+  httpConfig.apiEndPoint.auth + '/refresh',
+  async (refreshToken: string) => await apiAuth.refreshToken(refreshToken),
+)
+
 export const actionAsyncUser = {
   getUserInfo,
   login,
   register,
+  refreshToken,
 }

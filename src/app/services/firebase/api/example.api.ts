@@ -2,7 +2,7 @@ import { IHttpResponse } from '@/models/http.model'
 import { IExample } from '@/models/item.model'
 import { IExampleQuery } from '@/models/example.model'
 import { db } from '@/config/firebaseConfig'
-import { firebaseAuthService } from '@/services/firebase/firebaseAuth.service'
+import { firebaseAuthService } from '@/services/firebase/authService'
 import {
   collection,
   query,
@@ -238,7 +238,7 @@ const deleteExample = async (id: number): Promise<IHttpResponse<IExample>> => {
   }
 }
 
-export const exampleApiFirebase = {
+export const exampleApi = {
   createExample,
   getExamples,
   getExampleById,

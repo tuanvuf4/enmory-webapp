@@ -3,7 +3,7 @@ import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { transformItemModelToClient, isDefect, getCategory, getTypeOfItem } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
 import { ECategory, EType } from '@/models/item.model'
-import { apiFactory } from '@/services/api/apiFactory'
+import { itemApi } from '@/services/firebase/api/item.api'
 import { itemAsync } from '@/store/async/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -13,7 +13,7 @@ import { theme, Row, Col, Button } from 'antd'
 import { useEffect } from 'react'
 import styles from './style'
 import iStyles from '@/app/views/features/item/style'
-import { useAppDispatch, useAppSelector } from '@/core/hooks'
+import { useDispatch, useSelector } from '@/core/hooks'
 import { Pagination } from '@/views/components/pagination/pagination'
 import { Item } from '@/views/features/item/Item'
 import { Reference } from '@/views/features/references/references'
@@ -27,18 +27,18 @@ export const Library: React.FC = () => {
   const gClasses = globalStyle()
   const itemStyles = iStyles()
 
-  const { viewMode } = useAppSelector((state) => state.config)
+  const { viewMode } = useSelector((state) => state.config)
 
   const { confirmDeleteModal, openNotification } = usePrompt()
 
-  const { listItem, pagination, formSearchValue } = useAppSelector((state) => state.items)
+  const { listItem, pagination, formSearchValue } = useSelector((state) => state.items)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const onDelete = (id: number) => {
     confirmDeleteModal({
       onOk: () => {
-        apiFactory.item.deleteItem(id).then(() => {
+        itemApi.deleteItem(id).then(() => {
           dispatch(itemAction.removeItem(id))
         })
       },
@@ -47,7 +47,7 @@ export const Library: React.FC = () => {
 
   const onEdit = async (id: number) => {
     try {
-      const { content } = await apiFactory.item.getItemById(id)
+      const { content } = await itemApi.getItemById(id)
       dispatch(settingAction.setOnEditItem(true))
       dispatch(settingAction.toggleItemModal())
       dispatch(
@@ -61,7 +61,7 @@ export const Library: React.FC = () => {
   }
 
   const onView = async (id: number) => {
-    const { isSuccess, content: item } = await apiFactory.item.getItemById(id)
+    const { isSuccess, content: item } = await itemApi.getItemById(id)
     if (isSuccess) {
       dispatch(settingAction.toggleViewItemModal())
       dispatch(

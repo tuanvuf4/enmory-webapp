@@ -2,7 +2,6 @@
 
 import { AxiosResponse, AxiosRequestConfig } from 'axios'
 import { axiosInstance, defaultHttpConfig, getHttpConfig } from './httpCore'
-export { initializeFirebaseInterceptor } from './firebaseInterceptor'
 
 const get = <T = any>(
   url: string,

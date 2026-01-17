@@ -1,9 +1,9 @@
 import globalStyle from '@/style/appStyle'
 import { SyncOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { useAppDispatch, useAppSelector } from '@/core/hooks'
+import { useDispatch, useSelector } from '@/core/hooks'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IExample } from '@/models/item.model'
-import { apiFactory } from '@/services/api/apiFactory'
+import { exampleApi } from '@/services/firebase/api/example.api'
 import { exampleAsync } from '@/store/async/example.async'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -31,9 +31,13 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
   const exClasses = exStyles()
   const gClasses = globalStyle()
 
-  const dispatch = useAppDispatch()
-  const { randomExamples } = useAppSelector((state) => state.example)
-  const { configuration } = useAppSelector((state) => state.auth.user)
+  const dispatch = useDispatch()
+  const { randomExamples } = useSelector((state) => state.example)
+  const { user } = useSelector((state) => state.auth)
+  const configuration = user?.configuration
+
+  console.log(`*** user *** `, user)
+  console.log(`*** configuration *** `, configuration)
 
   const { openNotification } = usePrompt()
 
@@ -52,7 +56,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
 
   const onSelect = (option: any) => {
     dispatch(exampleAction.setSelectedExample(option.id))
-    apiFactory.example.getExampleById(option.id).then(({ content }) => {
+    exampleApi.getExampleById(option.id).then(({ content }) => {
       setValue('query', '')
       setSelected(content)
     })
@@ -65,7 +69,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
     dispatch(
       exampleAsync.fetchRandomExample({
         page: nextPage,
-        size: configuration.numberOfExampleReview,
+        size: configuration?.numberOfExampleReview,
       }),
     )
       .then(() => {
@@ -81,7 +85,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
 
   const onEdit = async (id: number) => {
     try {
-      const { content } = await apiFactory.example.getExampleById(id)
+      const { content } = await exampleApi.getExampleById(id)
       dispatch(exampleAction.setSelectedExample(content))
       dispatch(settingAction.toggleExModal())
     } catch (error) {
@@ -91,7 +95,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
 
   const onDelete = async (id: number) => {
     try {
-      const { content } = await apiFactory.example.getExampleById(id)
+      const { content } = await exampleApi.getExampleById(id)
       dispatch(exampleAction.setSelectedExample(content))
       dispatch(settingAction.toggleDeleteExModal())
     } catch (error) {

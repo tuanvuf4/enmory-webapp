@@ -8,7 +8,7 @@ import { transformItemModelToServer, transformItemModelToClient } from '@/helper
 import { isGroupWord } from '@/helpers/validate'
 import { ELoading } from '@/models/app.model'
 import { IPair, ECategory, EType, IItem } from '@/models/item.model'
-import { apiFactory } from '@/services/api/apiFactory'
+import { itemApi } from '@/services/firebase/api/item.api'
 import { itemAsync } from '@/store/async/item.async'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { itemAction } from '@/store/reducers/items.reducer'
@@ -24,7 +24,7 @@ import { useFormContext, useWatch, Controller } from 'react-hook-form'
 import { initItem, meaningItem } from '.'
 import MeaningItem from './meaningItem'
 import styles from './style'
-import { useAppDispatch, useAppSelector } from '@/core/hooks'
+import { useDispatch, useSelector } from '@/core/hooks'
 import clsx from 'clsx'
 
 interface ItemFormProps {
@@ -39,15 +39,15 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
 
   const { openNotification } = usePrompt()
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const [origin, setOrigin] = useState<IItem | null>(null)
 
-  const { user } = useAppSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.auth)
 
-  const { pagination, formSearchValue } = useAppSelector((state) => state.items)
-  const { currentItem, onEditEvent, isShowItemModal } = useAppSelector((state) => state.setting)
-  const { list } = useAppSelector((state) => state.studySet)
+  const { pagination, formSearchValue } = useSelector((state) => state.items)
+  const { currentItem, onEditEvent, isShowItemModal } = useSelector((state) => state.setting)
+  const { list } = useSelector((state) => state.studySet)
 
   const {
     control,
@@ -72,7 +72,7 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
   const { options, isSearching } = useAutoComplete(original, 'item', false)
 
   const prepareDataSubmit = (payload: IItem<string[]>): IItem<string> => ({
-    userId: user.id,
+    userId: user?.uid ? parseInt(user.uid) || 0 : 0,
     ...transformItemModelToServer({ ...payload }),
   })
 
@@ -137,15 +137,12 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
         const batch = getBatchItem(data)
         if (onEditEvent) {
           try {
-            const updatedItem = await apiFactory.item.updateItem(
-              currentItem?.id as number,
-              dataSubmit,
-            )
+            const updatedItem = await itemApi.updateItem(currentItem?.id as number, dataSubmit)
             const pr =
               batch.length > 0
                 ? [
                     updatedItem,
-                    await apiFactory.item.createItems(batch.map((item) => prepareDataSubmit(item))),
+                    await itemApi.createItems(batch.map((item) => prepareDataSubmit(item))),
                   ]
                 : [updatedItem]
             const [{ content }] = await Promise.all(pr)
@@ -179,12 +176,12 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
           }
         } else {
           try {
-            const createItem = await apiFactory.item.createItem(dataSubmit)
+            const createItem = await itemApi.createItem(dataSubmit)
             const pr =
               batch.length > 0
                 ? [
                     createItem,
-                    await apiFactory.item.createItems(batch.map((item) => prepareDataSubmit(item))),
+                    await itemApi.createItems(batch.map((item) => prepareDataSubmit(item))),
                   ]
                 : [createItem]
             const [{ isSuccess }] = await Promise.all(pr)
@@ -231,16 +228,14 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
       size: defaultSetting.numberItemOfAutoComplete * 2,
       exact: true,
     }
-    apiFactory.item
-      .getItemAutoComplete(params, { headers: { loading: ELoading.YES } })
-      .then((response) => {
-        dispatch(settingAction.setOnEditItem(true))
-        dispatch(
-          settingAction.setCurrentItem({
-            ...transformItemModelToClient(response.content.data[0]),
-          }),
-        )
-      })
+    itemApi.getItemAutoComplete(params, { headers: { loading: ELoading.YES } }).then((response) => {
+      dispatch(settingAction.setOnEditItem(true))
+      dispatch(
+        settingAction.setCurrentItem({
+          ...transformItemModelToClient(response.content.data[0]),
+        }),
+      )
+    })
   }
 
   useEffect(() => {

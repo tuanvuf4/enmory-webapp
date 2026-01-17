@@ -2,7 +2,8 @@ import { defaultSetting } from '@/config/appConfig'
 import { ELoading } from '@/models/app.model'
 import { IHttpResponse } from '@/models/http.model'
 import { IItem, IExample } from '@/models/item.model'
-import { apiFactory } from '@/services/api/apiFactory'
+import { itemApi } from '@/services/firebase/api/item.api'
+import { exampleApi } from '@/services/firebase/api/example.api'
 import _ from 'lodash'
 import { useState, useEffect } from 'react'
 
@@ -34,7 +35,7 @@ export const useAutoComplete = (
       handleSession = setTimeout(() => {
         setIsSearching(true)
         if (type === 'item') {
-          apiFactory.item
+          itemApi
             .getItemAutoComplete(exact ? _.merge(query, { exact }) : query, {
               headers: { loading: ELoading.NO },
             })
@@ -52,7 +53,7 @@ export const useAutoComplete = (
         }
 
         if (type === 'example') {
-          apiFactory.example
+          exampleApi
             .getExamples(query, {
               headers: { loading: ELoading.NO },
             })

@@ -2,7 +2,7 @@ import { PropsWithChildren, useEffect } from 'react'
 import { AppFooter } from '../footer/footer'
 import { AppHeader } from '../header/header'
 import { Drawer, FloatButton, Layout } from 'antd'
-import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
+import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { ArrowUpOutlined } from '@ant-design/icons'
 import { appTheme } from '@/style/theme'
 import styles from './style'
@@ -25,11 +25,11 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
   const classes = styles()
 
   const { isShowViewItemModal, isShowItemModal, isShowExModal, isShowMediaUploadForm } =
-    useAppSelector((state) => state.setting)
-  const { isSidebarOpened, drawer } = useAppSelector((state) => state.config)
-  const { isAuth } = useAppSelector((state) => state.auth)
+    useSelector((state) => state.setting)
+  const { isSidebarOpened, drawer } = useSelector((state) => state.config)
+  const { isAuth } = useSelector((state) => state.auth)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const location = useLocation()
   const navigate = useNavigate()

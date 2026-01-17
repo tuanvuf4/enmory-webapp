@@ -7,7 +7,7 @@ import {
   Loading3QuartersOutlined,
 } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
-import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { useSelector, useDispatch } from '@/core/hooks'
 import { useAutoComplete } from '@/helpers/hooks'
 import { transformItemModelToClient } from '@/helpers/item'
 import {
@@ -19,7 +19,6 @@ import {
 } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { EType, ECategory } from '@/models/item.model'
-import { apiFactory } from '@/services/api/apiFactory'
 import { initSearchFormItem, allSelect } from '@/services/index'
 import { itemAsync } from '@/store/async/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
@@ -53,10 +52,10 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
 
   const [showType, setShowType] = useState<boolean>(false)
 
-  const { formSearchValue } = useAppSelector((state) => state.items)
-  const { categories, types } = useAppSelector((state) => state.config)
+  const { formSearchValue } = useSelector((state) => state.items)
+  const { categories, types } = useSelector((state) => state.config)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const { control, handleSubmit, reset, setValue, getValues, watch } = useForm<IFormSearchItem>({
     defaultValues: initSearchFormItem,

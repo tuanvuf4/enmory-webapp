@@ -1,10 +1,10 @@
 import { SearchOutlined } from '@ant-design/icons'
-import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { useSelector, useDispatch } from '@/core/hooks'
 import { transformItemModelToClient } from '@/helpers/item'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme } from 'antd'
 import styles from './style'
-import { apiFactory } from '@/services/api/apiFactory'
+import { itemApi } from '@/services/firebase/api/item.api'
 
 interface IPros {
   onSearch?: (tag: string) => void
@@ -15,14 +15,14 @@ interface IPros {
 export const Tags: React.FC<IPros> = ({ label, tags, onSearch }) => {
   const { token } = theme.useToken()
 
-  const { isShowViewItemModal } = useAppSelector((state) => state.setting)
+  const { isShowViewItemModal } = useSelector((state) => state.setting)
 
   const classes = styles(token)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const getItem = async (origin: string, exact = true) => {
-    const { isSuccess, content } = await apiFactory.item.getItems({
+    const { isSuccess, content } = await itemApi.getItems({
       keyword: origin,
       page: 0,
       size: 1,

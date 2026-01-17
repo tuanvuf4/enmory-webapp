@@ -3,7 +3,7 @@ import { Button } from 'antd'
 import styles from './style'
 import React from 'react'
 import globalStyle from '@/style/appStyle'
-import { useAppSelector } from '@/core/hooks'
+import { useSelector } from '@/core/hooks'
 
 interface IPros {
   original: string
@@ -13,7 +13,7 @@ export const Reference: React.FC<IPros> = ({ original }) => {
   const classes = styles()
   const gClasses = globalStyle()
 
-  const { user } = useAppSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.auth)
 
   return (
     <div className={classes.references}>

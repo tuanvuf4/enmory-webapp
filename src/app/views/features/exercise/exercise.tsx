@@ -2,7 +2,7 @@ import { msgErrors } from '@/constant/index'
 import globalStyle from '@/style/appStyle'
 import { ReloadOutlined } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
-import { useAppSelector } from '@/core/hooks'
+import { useSelector } from '@/core/hooks'
 import { patternValidation, hex2Rgba } from '@/core/utils'
 import { getRandomArrayIndex } from '@/helpers/validate'
 import { theme, Row, Col, Button, Input } from 'antd'
@@ -39,7 +39,7 @@ export const Exercise: React.FC<IProps> = ({
   const [result, setResult] = useState<string[]>([])
   const [answers, setAnswers] = useState<string[]>([])
 
-  const { user } = useAppSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.auth)
 
   const generate = () => {
     if (!error) {

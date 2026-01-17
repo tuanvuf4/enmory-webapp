@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
+import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { notification as noti, theme } from 'antd'
 import styles from './style'
 import { NotificationType } from '@/models/app.model'
@@ -8,9 +8,9 @@ import { settingAction } from '@/store/reducers/setting.reducer'
 export const Notification: React.FC = () => {
   const classes = styles()
 
-  const { notification } = useAppSelector((state) => state.setting)
+  const { notification } = useSelector((state) => state.setting)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const [api, contextHolder] = noti.useNotification()
 

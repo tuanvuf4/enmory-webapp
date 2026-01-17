@@ -64,7 +64,7 @@ const markIotd = async (_body: MarkIotdRangeDateRequest) => unsupported('IOTD ma
 const getIotdRange = async (_body: GetIIotdRangeDateRequest) => unsupported('IOTD range')
 const deleteMarkIotd = async (_id: number) => unsupported('IOTD delete')
 
-export const appApiFirebase = {
+export const commonApi = {
   getCategories,
   getTypes,
   getItemOfTheDayByCatId,

@@ -1,5 +1,5 @@
 import React from 'react'
-import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
+import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { Modal } from 'antd'
 import { appStyleConfig } from '@/style/appStyle'
 import { CloseSquareOutlined } from '@ant-design/icons'
@@ -16,9 +16,9 @@ interface IProps {
 }
 
 export const ExampleModal: React.FC<IProps> = ({ open }) => {
-  const { selectedExample } = useAppSelector((state) => state.example)
+  const { selectedExample } = useSelector((state) => state.example)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const onSubmit = (content: IExample) => {
     dispatch(settingAction.toggleExModal())

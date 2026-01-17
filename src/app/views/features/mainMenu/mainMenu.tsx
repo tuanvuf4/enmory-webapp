@@ -2,7 +2,7 @@ import { Menu } from 'antd'
 import styles from './style'
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
+import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { authMenus, keyPaths, menus, menusExt } from './menus'
 import classNames from 'clsx'
 import type { MenuProps } from 'antd'
@@ -29,10 +29,10 @@ export const MainMenu: React.FC<IPros> = ({
   const [current, setCurrent] = useState('1')
 
   const navigate = useNavigate()
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
   const location = useLocation()
 
-  const { isAuth } = useAppSelector((state) => state.auth)
+  const { isAuth } = useSelector((state) => state.auth)
 
   const redirect = (key: string, cb: (router: string) => void) => {
     const item = keyPaths.find((item) => item.key === key)

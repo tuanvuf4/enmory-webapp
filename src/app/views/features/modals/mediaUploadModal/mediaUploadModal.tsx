@@ -2,12 +2,13 @@ import { msgErrors } from '@/constant/index'
 import globalStyle, { appStyleConfig } from '@/style/appStyle'
 import { CloseSquareOutlined, UploadOutlined } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
-import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { useSelector, useDispatch } from '@/core/hooks'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { EMediaSrc } from '@/models/dictation.model'
 import { IPair } from '@/models/item.model'
-import { apiFactory } from '@/services/api/apiFactory'
+// TODO: Media API not implemented in Firebase yet
+// import { mediaApi } from '@/services/firebase/api/media.api'
 import { actionAsyncMedia } from '@/store/async/media.async'
 import { mediaAction } from '@/store/reducers/media.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -33,9 +34,9 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
 
   const { TextArea } = Input
 
-  const { mediaSrc, isUpdating, list, currentUpdating } = useAppSelector((state) => state.media)
+  const { mediaSrc, isUpdating, list, currentUpdating } = useSelector((state) => state.media)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const extSrcOptions: IPair<string, TExternalSource>[] = [
     {
@@ -141,11 +142,14 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
 
   const onSubmit = async (data: IMediaForm) => {
     try {
-      isUpdating
-        ? (await apiFactory.media.updateMedia(data),
-          await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)))
-        : (await apiFactory.media.uploadMedia(data),
-          await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)))
+      // TODO: Implement media API
+      console.error('Media API not implemented in Firebase')
+      throw new Error('Media API not implemented')
+      // isUpdating
+      //   ? (await mediaApi.updateMedia(data),
+      //     await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)))
+      //   : (await mediaApi.uploadMedia(data),
+      //     await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)))
     } catch (error) {
       console.log(`error: `, error)
     } finally {

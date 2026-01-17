@@ -1,6 +1,6 @@
 import globalStyle from '@/style/appStyle'
 import { MenuOutlined, SearchOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons'
-import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { useSelector, useDispatch } from '@/core/hooks'
 import { useAuthLogout } from '@/core/hooks/useAuthLogout'
 import { configAction } from '@/store/reducers/config.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
@@ -21,11 +21,11 @@ export const AppHeader = () => {
   const classes = styles()
   const gClasses = globalStyle()
 
-  const { isAuth, user } = useAppSelector((state) => state.auth)
-  const { drawer } = useAppSelector((state) => state.config)
-  const { isShowSearchFormItem } = useAppSelector((state) => state.setting)
+  const { isAuth, user } = useSelector((state) => state.auth)
+  const { drawer } = useSelector((state) => state.config)
+  const { isShowSearchFormItem } = useSelector((state) => state.setting)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
   const { logout } = useAuthLogout()
 
   const navigate = useNavigate()

@@ -1,13 +1,9 @@
-import { useAppDispatch, useAppSelector } from '@/core/hooks'
-import useErrorHandlerRequest from '@/core/hooks/axiosErrorHandleRequest'
-import useHandleAuthRequest from '@/core/hooks/axiosHandleAuthRequest'
+import { useDispatch, useSelector } from '@/core/hooks'
 import { useAuthInit } from '@/core/hooks/useAuthInit'
-import { initializeFirebaseInterceptor } from '@/core/http'
 import { IHttpResponse } from '@/models/http.model'
 import { ECategory, IPair } from '@/models/item.model'
 import { actionAsyncApp } from '@/store/async/app.async'
 import { AppLayout } from '@/views/features/layout/layout'
-import { enableApiLogging } from '@/config/apiConfig'
 import { useEffect, useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { RouterElement } from './router'
@@ -19,17 +15,10 @@ export const App = () => {
   // Initialize Firebase auth
   useAuthInit()
 
-  // Log API configuration on app initialization
-  useEffect(() => {
-    enableApiLogging()
-    initializeFirebaseInterceptor()
-  }, [])
+  // Removed axios interceptors - not needed since using Firebase SDK directly
 
-  const { isAuth } = useAppSelector((state) => state.auth)
-  const dispatch = useAppDispatch()
-
-  useErrorHandlerRequest()
-  useHandleAuthRequest()
+  const { isAuth } = useSelector((state) => state.auth)
+  const dispatch = useDispatch()
 
   // Set initialization complete after brief delay to ensure auth is checked
   useEffect(() => {

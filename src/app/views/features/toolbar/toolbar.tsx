@@ -1,5 +1,5 @@
 import React from 'react'
-import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
+import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { Button, Col, Row, Space, theme } from 'antd'
 import styles from './style'
 import { FormSearchItem } from '../formSearchItem/formSearchItem'
@@ -19,9 +19,9 @@ export const Toolbar = ({ formSearch = <FormSearchItem />, pagination }: IProps)
   const classes = styles()
   const gClasses = globalStyle()
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
-  const { isShowSearchForm } = useAppSelector((state) => state.setting)
+  const { isShowSearchForm } = useSelector((state) => state.setting)
 
   return (
     <div className={classes.toolbar}>

@@ -1,6 +1,6 @@
 import { AudioOutlined } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
-import { useAppDispatch } from '@/core/hooks'
+import { useDispatch } from '@/core/hooks'
 import { getTypeOfItem } from '@/helpers/item'
 import { IMeaning, ECategory, EType } from '@/models/item.model'
 import { itemAsync } from '@/store/async/item.async'
@@ -62,7 +62,7 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
   const { token } = theme.useToken()
   const classes = styles()
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
 

@@ -26,13 +26,14 @@ export const appConfig = {
     redirect_uris: ['http://localhost:3000'],
   },
   firebase: {
-    apiKey: 'AIzaSyB4JZo53vES8993sqEdgCk-X5YawCi4DJQ',
-    authDomain: 'enmory-6b68e.firebaseapp.com',
-    projectId: 'enmory-6b68e',
-    storageBucket: 'enmory-6b68e.firebasestorage.app',
-    messagingSenderId: '192878645386',
-    appId: '1:192878645386:web:a6ebccf595a9a07c069d73',
-    measurementId: 'G-T1W134T0YE',
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyB4JZo53vES8993sqEdgCk-X5YawCi4DJQ',
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'enmory-6b68e.firebaseapp.com',
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'enmory-6b68e',
+    storageBucket:
+      import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'enmory-6b68e.firebasestorage.app',
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '192878645386',
+    appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:192878645386:web:a6ebccf595a9a07c069d73',
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-T1W134T0YE',
   },
   references: [
     {

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { RouteObject, useRoutes } from 'react-router-dom'
-import { useAppSelector } from './core/hooks/redux'
+import { useSelector } from './core/hooks/redux'
 import { PageNotFound } from './views/pages/pageNotFound/notFound'
 
 export function lazyLoadRoutes(componentName: string) {
@@ -20,7 +20,7 @@ export function lazyLoadRoutes(componentName: string) {
 export const RouterElement = () => {
   const [router, setRouter] = useState<RouteObject[]>([])
 
-  const { isAuth } = useAppSelector((state) => state.auth)
+  const { isAuth } = useSelector((state) => state.auth)
 
   const route: RouteObject[] = useMemo(
     () => [

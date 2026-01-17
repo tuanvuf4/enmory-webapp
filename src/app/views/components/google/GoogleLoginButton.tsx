@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google'
-import { signInWithGoogle, checkAuthState } from '../../../store/reducers/auth'
+import { signInWithGoogle, checkAuthState } from '../../../store/reducers/auth.reducer'
 import { appConfig } from '../../../config'
 import { IAppState } from '../../../store'
 
@@ -36,7 +36,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   className = '',
 }) => {
   const dispatch = useDispatch()
-  const { isLoading, error } = useSelector((state: IAppState) => state.firebaseAuth)
+  const { isLoading, error } = useSelector((state: IAppState) => state.auth)
 
   const handleGoogleLoginSuccess = async (credentialResponse: any) => {
     try {
@@ -124,7 +124,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallback = <LoginPage />,
   requiredRole,
 }) => {
-  const { user, isLoading } = useSelector((state: IAppState) => state.firebaseAuth)
+  const { user, isLoading } = useSelector((state: IAppState) => state.auth)
 
   if (isLoading) {
     return (
@@ -202,11 +202,11 @@ interface UserProfileMenuProps {
 
 export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ className = '', onLogout }) => {
   const dispatch = useDispatch()
-  const { user, userProfile } = useSelector((state: IAppState) => state.firebaseAuth)
+  const { user } = useSelector((state: IAppState) => state.auth)
   const [isOpen, setIsOpen] = useState(false)
 
   const handleLogout = async () => {
-    const { signOutUser } = await import('../../../store/reducers/auth')
+    const { signOutUser } = await import('../../../store/reducers/auth.reducer')
     await dispatch(signOutUser() as any)
     onLogout?.()
   }

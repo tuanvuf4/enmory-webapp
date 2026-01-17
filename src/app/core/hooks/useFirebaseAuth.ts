@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAppDispatch, useAppSelector } from '@/core/hooks'
-import { signInWithEmail, signInWithGoogle, registerWithEmail } from '@/store/reducers/auth'
+import { useDispatch, useSelector } from '@/core/hooks'
+import { signInWithEmail, signInWithGoogle, registerWithEmail } from '@/store/reducers/auth.reducer'
 import { authAction } from '@/store/reducers/auth.reducer'
 import { ILogin, IUser } from '@/models/user.model'
 
@@ -13,11 +13,9 @@ interface UseFirebaseAuthOptions {
 export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
   const { onRegisterSuccess, redirectAfterSuccess = true } = options
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { isLoading: firebaseLoading, error: firebaseError } = useAppSelector(
-    (state) => state.firebaseAuth,
-  )
+  const { isLoading: firebaseLoading, error: firebaseError } = useSelector((state) => state.auth)
 
   const [errorMsg, setErrorMsg] = useState<string>('')
   const [isRegistered, setIsRegistered] = useState<boolean>(false)

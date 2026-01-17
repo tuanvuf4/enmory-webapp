@@ -5,12 +5,12 @@
 
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAppDispatch } from './redux'
+import { useDispatch } from './redux'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { authAction } from '@/store/reducers/auth.reducer'
 
 export const useAuthLogout = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
   const navigate = useNavigate()
 
   const logout = useCallback(async () => {

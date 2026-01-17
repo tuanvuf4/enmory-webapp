@@ -1,8 +1,8 @@
 import { IHttpResponse } from '@/models/http.model'
 import { IUser, IUserConfig } from '@/models/user.model'
 import { db } from '@/config/firebaseConfig'
-import { firebaseAuthService } from '@/services/firebase/firebaseAuth.service'
-import { collection, getDocs, doc, updateDoc, Timestamp, query, where } from 'firebase/firestore'
+import { firebaseAuthService } from '@/services/firebase/authService'
+import { collection, getDocs, doc, updateDoc, Timestamp, query } from 'firebase/firestore'
 
 /**
  * Get all users (requires admin privileges)
@@ -15,7 +15,7 @@ const getUsers = async (): Promise<IHttpResponse<IUser[]>> => {
     const users = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    })) as IUser[]
+    })) as unknown as IUser[]
 
     return {
       isSuccess: true,

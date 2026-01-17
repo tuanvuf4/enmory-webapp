@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import Style from './style'
 import registerStyle from '../register/style'
 import loginStyle from '../login/style'
-import { useAppSelector } from '@/app/core/hooks/redux'
+import { useSelector } from '@/app/core/hooks/redux'
 
 const Schedule = () => {
   const { token } = theme.useToken()
@@ -15,7 +15,7 @@ const Schedule = () => {
   const classesLogin = loginStyle()
   const classesRegister = registerStyle()
 
-  const { isAuth } = useAppSelector((state) => state.auth)
+  const { isAuth } = useSelector((state) => state.auth)
 
   const timeline = [
     {

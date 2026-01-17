@@ -1,12 +1,11 @@
 import { transformItemModelToClient } from '@/app/helpers/item'
 import { IPair } from '@/app/models/item.model'
 import { GetStudySetByCatId } from '@/app/models/studySet.model'
-import { IItemRequestData } from '@/app/services/api/item.api'
-import { apiFactory } from '@/app/services/api/apiFactory'
+import { IItemRequestData, itemApi } from '@/services/firebase/api/item.api'
 import { createAsyncThunk } from '@reduxjs/toolkit'
 
 const fetchItems = createAsyncThunk('item/fetchItems', async (params: IItemRequestData) => {
-  const response = await apiFactory.item.getItems({
+  const response = await itemApi.getItems({
     ...params,
     cat: params.cat && (params.cat as number) > 0 ? params.cat : '',
     type: params.type && (params.type as number) > 0 ? params.type : '',
@@ -21,7 +20,7 @@ const fetchItems = createAsyncThunk('item/fetchItems', async (params: IItemReque
 })
 
 const fetchStudySet = createAsyncThunk('item/fetchStudySet', async (size: GetStudySetByCatId[]) => {
-  const response = await apiFactory.item.getStudySet(size)
+  const response = await itemApi.getStudySet(size)
   return {
     ...response,
     content: response.content.map((item) => {

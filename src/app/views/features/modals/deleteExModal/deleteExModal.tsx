@@ -1,5 +1,5 @@
-import { useAppSelector, useAppDispatch } from '@/core/hooks'
-import { apiFactory } from '@/services/api/apiFactory'
+import { useSelector, useDispatch } from '@/core/hooks'
+import { exampleApi } from '@/services/firebase/api/example.api'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { Modal } from 'antd'
@@ -14,10 +14,10 @@ interface IProps {
 }
 
 export const DeleteExModal: React.FC = () => {
-  const { selectedExample } = useAppSelector((state) => state.example)
-  const { isShowDeleteExModal } = useAppSelector((state) => state.setting)
+  const { selectedExample } = useSelector((state) => state.example)
+  const { isShowDeleteExModal } = useSelector((state) => state.setting)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const [modal, modalContextHolder] = Modal.useModal()
 
@@ -31,7 +31,7 @@ export const DeleteExModal: React.FC = () => {
         maskClosable: false,
         closable: true,
         onOk: () => {
-          apiFactory.example
+          exampleApi
             .deleteExample(selectedExample.id as number)
             .then(() => {
               dispatch(exampleAction.filterExamples(selectedExample))

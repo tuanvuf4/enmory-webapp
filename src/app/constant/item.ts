@@ -1,9 +1,9 @@
 import { defaultSetting } from '@/config/appConfig'
-import { INotification } from '../../models/app.model'
-import { EListeningTypes } from '../../models/dictation.model'
-import { IFormSearchEx, IFormSearchItem } from '../../models/formSearch.model'
-import { ECategory, EType, IItem, IPair } from '../../models/item.model'
-import { ILoginResponse, IUser } from '../../models/user.model'
+import { INotification } from '../models/app.model'
+import { EListeningTypes } from '../models/dictation.model'
+import { IFormSearchEx, IFormSearchItem } from '../models/formSearch.model'
+import { ECategory, EType, IItem, IPair } from '../models/item.model'
+import { ILoginResponse, IUser } from '../models/user.model'
 
 export const initAuth: ILoginResponse = {
   access_token: '',

@@ -1,7 +1,7 @@
 import { appStyleConfig } from '@/style/appStyle'
 import { ReloadOutlined, EditOutlined } from '@ant-design/icons'
 import { appConfig, defaultSetting } from '@/config/appConfig'
-import { useAppDispatch, useAppSelector } from '@/core/hooks'
+import { useDispatch, useSelector } from '@/core/hooks'
 import {
   transformItemModelToServer,
   transformItemModelToClient,
@@ -10,7 +10,8 @@ import {
 import { ELoading } from '@/models/app.model'
 import { IItemQuiz, TQuiz, ECategory, EQuiz, IPair, IAnswer, IItem } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
-import { apiFactory } from '@/services/api/apiFactory'
+import { itemApi } from '@/services/firebase/api/item.api'
+import { commonApi } from '@/services/firebase/api/common.api'
 import { itemAsync } from '@/store/async/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -33,12 +34,13 @@ export const StudySet: React.FC = () => {
 
   const { openNotification } = usePrompt()
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
-  const { list, status, respond, isSubmit } = useAppSelector((state) => state.studySet)
+  const { list, status, respond, isSubmit } = useSelector((state) => state.studySet)
 
-  const { configuration } = useAppSelector((state) => state.auth.user)
-  const { categories } = useAppSelector((state) => state.config)
+  const { user } = useSelector((state) => state.auth)
+  const configuration = user?.configuration
+  const { categories } = useSelector((state) => state.config)
 
   const { inProgress, isDone, currentIndex } = status
 
@@ -131,7 +133,7 @@ export const StudySet: React.FC = () => {
         quiz: { ...item.quiz, result: result },
       }),
     )
-    await apiFactory.item.updateItem(
+    await itemApi.updateItem(
       item.id as number,
       transformItemModelToServer({
         ...rest,
@@ -168,7 +170,7 @@ export const StudySet: React.FC = () => {
 
   const onSearch = async (id: number) => {
     try {
-      const { content: item } = await apiFactory.item.getItemById(id)
+      const { content: item } = await itemApi.getItemById(id)
       dispatch(settingAction.toggleViewItemModal())
       dispatch(
         settingAction.setCurrentItem({
@@ -290,7 +292,7 @@ export const StudySet: React.FC = () => {
 
   const onEdit = async (id: number) => {
     try {
-      const { content } = await apiFactory.item.getItemById(id as number)
+      const { content } = await itemApi.getItemById(id as number)
       dispatch(settingAction.setOnEditItem(true))
       dispatch(settingAction.toggleItemModal())
       dispatch(

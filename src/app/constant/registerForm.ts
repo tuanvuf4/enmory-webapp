@@ -1,4 +1,4 @@
-import { IUser } from '../../models/user.model'
+import { IUser } from '../models/user.model'
 
 export const initRegisterForm: Partial<IUser> = {
   username: '',

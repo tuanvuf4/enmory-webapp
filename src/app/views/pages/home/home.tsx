@@ -1,7 +1,7 @@
 import globalStyle from '@/style/appStyle'
-import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { useSelector, useDispatch } from '@/core/hooks'
 import { transformItemModelToClient } from '@/helpers/item'
-import { apiFactory } from '@/services/api/apiFactory'
+import { itemApi } from '@/services/firebase/api/item.api'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { ExampleForm } from '@/views/features/exampleOverview/exampleFormAdd'
 import { ExampleOverView } from '@/views/features/exampleOverview/exampleOverview'
@@ -26,18 +26,16 @@ const Home = () => {
 
   const { openNotification } = usePrompt()
 
-  const { isAuth } = useAppSelector((state) => state.auth)
-  const { isShowSearchFormItem } = useAppSelector((state) => state.setting)
+  const { isAuth } = useSelector((state) => state.auth)
+  const { isShowSearchFormItem } = useSelector((state) => state.setting)
 
-  const { word, phrase, idiom, slang, collocation, sentence } = useAppSelector(
-    (state) => state.iotd,
-  )
+  const { word, phrase, idiom, slang, collocation, sentence } = useSelector((state) => state.iotd)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const onEdit = async (id: number) => {
     try {
-      const { content } = await apiFactory.item.getItemById(id)
+      const { content } = await itemApi.getItemById(id)
       dispatch(
         settingAction.setCurrentItem({
           ...transformItemModelToClient(content),

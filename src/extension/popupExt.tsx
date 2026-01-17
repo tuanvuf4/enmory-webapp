@@ -1,10 +1,8 @@
-import useErrorHandlerRequest from '@/core/hooks/axiosErrorHandleRequest'
-import useHandleAuthRequest from '@/core/hooks/axiosHandleAuthRequest'
 import { EPageExt } from '@/models/app.model'
 import { IHttpResponse } from '@/models/http.model'
 import { ECategory, EType, IExample, IItem, IPair } from '@/models/item.model'
 import { ILoginResponse } from '@/models/user.model'
-import { apiFactory } from '@/services/api/apiFactory'
+import { commonApi } from '@/services/firebase/api/common.api'
 import { ExampleForm } from '@/views/features/exampleOverview/exampleFormAdd'
 import { HeaderExt } from '@/views/features/headerExt/header'
 import { LoginForm } from '@/views/features/loginForm/loginForm'
@@ -30,8 +28,7 @@ export const PopupExt = () => {
 
   const methods = useForm<IItem>({ defaultValues: initItem })
 
-  useErrorHandlerRequest()
-  useHandleAuthRequest()
+  // Removed axios interceptors - not needed since using Firebase SDK directly
 
   const onLogin = async ({ isSuccess, content }: IHttpResponse<ILoginResponse>) => {
     if (isSuccess) {
@@ -49,8 +46,8 @@ export const PopupExt = () => {
     let cats = (await chromeStorage.get(['cats'])).cats as IPair<string, ECategory>[]
     let types = (await chromeStorage.get(['types'])).types as IPair<string, EType>[]
 
-    if (!cats) cats = (await apiFactory.app.getCategories()).content
-    if (!types) types = (await apiFactory.app.getTypes()).content
+    if (!cats) cats = (await commonApi.getCategories()).content
+    if (!types) types = (await commonApi.getTypes()).content
 
     setCats(cats.map((cat) => ({ ...cat, value: cat.id })))
     setTypes(types.map((type) => ({ ...type, value: type.id })))

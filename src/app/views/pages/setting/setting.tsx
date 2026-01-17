@@ -1,8 +1,8 @@
 import globalStyle from '@/style/appStyle'
 import { appConfig, defaultSetting } from '@/config/appConfig'
-import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { useSelector, useDispatch } from '@/core/hooks'
 import { IUserConfig } from '@/models/user.model'
-import { apiFactory } from '@/services/api/apiFactory'
+import { apiUser } from '@/services/firebase/api/user.api'
 import { authAction } from '@/store/reducers/auth.reducer'
 import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
@@ -15,12 +15,12 @@ const Setting = () => {
   const gClasses = globalStyle()
 
   // User info comes from Firebase auth state
-  const { user } = useAppSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.auth)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const { control, handleSubmit } = useForm<IUserConfig<number[]>>({
-    defaultValues: user.configuration,
+    defaultValues: user?.configuration,
   })
 
   const convertDataToServer = (
@@ -39,15 +39,11 @@ const Setting = () => {
   }
 
   const onSubmit = (data: IUserConfig<number[]>) => {
-    apiFactory.user
-      .userConfig(convertDataToServer(data, false) as IUserConfig<string>)
-      .then((repsonse) => {
-        dispatch(
-          authAction.updateUserConfig(
-            convertDataToServer(repsonse.content) as IUserConfig<number[]>,
-          ),
-        )
-      })
+    apiUser.userConfig(convertDataToServer(data, false) as IUserConfig<string>).then((repsonse) => {
+      dispatch(
+        authAction.updateUserConfig(convertDataToServer(repsonse.content) as IUserConfig<number[]>),
+      )
+    })
   }
 
   const plainOptions: CheckboxOptionType[] = appConfig.references.map((refs) => {

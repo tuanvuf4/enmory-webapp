@@ -10,13 +10,13 @@ import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { actionAsyncUser } from '@/store/async/user'
 import _ from 'lodash'
 import { useEffect, useRef } from 'react'
-import { useAppDispatch, useAppSelector } from './redux'
+import { useDispatch, useSelector } from './redux'
 import { usePrompt } from '@/helpers/hooks'
 
 const useErrorHandlerRequest = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
   const { openNotification } = usePrompt()
-  const { refresh_token } = useAppSelector((state) => state.auth.authorization)
+  const { refresh_token } = useSelector((state) => state.auth.authorization)
   const isRefreshing = useRef(false)
   const failedQueue = useRef<any[]>([])
 

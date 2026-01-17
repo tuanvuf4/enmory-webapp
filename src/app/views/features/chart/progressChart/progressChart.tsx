@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Skeleton, theme } from 'antd'
 import styles from '../style'
-import { apiFactory } from '@/services/api/apiFactory'
+// TODO: Chart API not implemented in Firebase yet
+// import { chartApi } from '@/services/firebase/api/chart.api'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -56,18 +57,8 @@ export const ProgressChart: React.FC<IProps> = ({ title = 'Progress' }) => {
   const labels = ['Level 0', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5']
 
   const getApiChart = async () => {
-    const { isSuccess, content } = await apiFactory.chart.getProgressChart()
-    if (isSuccess) {
-      setIsLoaded(true)
-      setData({
-        labels,
-        datasets: content.map((value) => ({
-          label: value.label,
-          data: levelToSum(value.data.map((item) => item.level)),
-          backgroundColor: getBgColorByCatId(value.id, 0.8),
-        })),
-      })
-    }
+    // TODO: Implement chart API
+    throw new Error('Chart API not implemented in Firebase')
   }
 
   useEffect(() => {

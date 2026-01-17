@@ -7,11 +7,11 @@ import {
   Loading3QuartersOutlined,
 } from '@ant-design/icons'
 import { defaultSetting } from '@/config/appConfig'
-import { useAppSelector, useAppDispatch } from '@/core/hooks'
+import { useSelector, useDispatch } from '@/core/hooks'
 import { useAutoComplete } from '@/helpers/hooks'
 import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from '@/models/app.model'
 import { IFormSearchEx } from '@/models/formSearch.model'
-import { apiFactory } from '@/services/api/apiFactory'
+import { exampleApi } from '@/services/firebase/api/example.api'
 import { initSearchFormEx } from '@/services/index'
 import { exampleAsync } from '@/store/async/example.async'
 import { exampleAction } from '@/store/reducers/example.reducer'
@@ -31,9 +31,9 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const classes = styles()
   const gClasses = globalStyle()
 
-  const { formSearchQuery } = useAppSelector((state) => state.example)
+  const { formSearchQuery } = useSelector((state) => state.example)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const { control, handleSubmit, reset, watch } = useForm<IFormSearchEx>({
     defaultValues: initSearchFormEx,
@@ -44,7 +44,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const { options, isSearching } = useAutoComplete(keyword, 'example')
 
   const onSelect = (value: string) => {
-    apiFactory.example.getExampleById(value).then((resp) => {
+    exampleApi.getExampleById(value).then((resp) => {
       reset({ ...initSearchFormEx, keyword: '' })
       dispatch(exampleAction.setExample([resp.content]))
       dispatch(

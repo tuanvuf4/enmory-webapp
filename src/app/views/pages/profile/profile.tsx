@@ -2,7 +2,7 @@ import { Col, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
 import globalStyle from '@/style/appStyle'
 import styles from './style'
-import { useAppSelector } from '@/core/hooks/redux'
+import { useSelector } from '@/core/hooks/redux'
 import { ManOutlined, WomanOutlined } from '@ant-design/icons'
 import { AddedItemChart } from '@/views/features/chart/addedItemChart/addedItemChart'
 import { OverviewChart } from '@/views/features/chart/overviewChart/overviewChart'
@@ -15,7 +15,7 @@ const Profile = () => {
   const gClasses = globalStyle()
 
   // User info comes from Firebase auth state
-  const { user } = useAppSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.auth)
 
   return (
     <div className={gClasses.container}>

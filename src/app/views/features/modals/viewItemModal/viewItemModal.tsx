@@ -1,5 +1,5 @@
 import React from 'react'
-import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
+import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { Modal } from 'antd'
 import { appStyleConfig } from '@/style/appStyle'
 import { IItem } from '@/models/item.model'
@@ -17,11 +17,11 @@ interface IProps {
 }
 
 export const ViewItemModal: React.FC<IProps> = ({ open, title }) => {
-  const { currentItem } = useAppSelector((state) => state.setting)
+  const { currentItem } = useSelector((state) => state.setting)
 
   const { openNotification } = usePrompt()
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const onEdit = async () => {
     try {

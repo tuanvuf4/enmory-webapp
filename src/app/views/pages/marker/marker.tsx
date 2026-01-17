@@ -1,11 +1,12 @@
 import { Button, Flex, Radio, Table, TableColumnsType } from 'antd'
 import globalStyle, { appStyleConfig } from '@/style/appStyle'
 import { useEffect, useState } from 'react'
-import { apiFactory } from '@/services/api/apiFactory'
+import { itemApi } from '@/services/firebase/api/item.api'
+import { commonApi } from '@/services/firebase/api/common.api'
 import { ECategory, IIotd } from '@/models/item.model'
 import { getCategory, transformItemModelToClient } from '@/helpers/item'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { useAppDispatch } from '@/core/hooks'
+import { useDispatch } from '@/core/hooks'
 import moment from 'moment'
 import { dateTimeUtils } from '@/core/utils'
 import { ColumnType } from 'antd/es/table'
@@ -65,12 +66,12 @@ const Marker = () => {
   const [range, setRange] = useState<[number, number]>(dateRange[1].value)
   const [currentDate, setCurrentDate] = useState<number>(Number(dateRange[1].id || 0))
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const gClasses = globalStyle()
 
   const onView = async (id: number) => {
-    const { isSuccess, content: item } = await apiFactory.item.getItemById(id)
+    const { isSuccess, content: item } = await itemApi.getItemById(id)
     if (isSuccess) {
       dispatch(settingAction.toggleViewItemModal())
       dispatch(
@@ -82,7 +83,7 @@ const Marker = () => {
   }
 
   const fetchMarkedIotd = async (range: [number, number]) => {
-    const { isSuccess, content } = await apiFactory.app.getIotdRange({
+    const { isSuccess, content } = await commonApi.getIotdRange({
       isMarked: true,
       from: dateTimeUtils.getStartOfDateUTC(range[0]),
       to: dateTimeUtils.getEndOfDateUTC(range[1]),
@@ -118,7 +119,7 @@ const Marker = () => {
                       }}
                       onClick={async (e) => {
                         e.stopPropagation()
-                        await apiFactory.app.deleteMarkIotd(value.id)
+                        await commonApi.deleteMarkIotd(value.id)
                         await fetchMarkedIotd(range)
                       }}
                     />

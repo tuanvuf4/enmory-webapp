@@ -1,8 +1,9 @@
 import globalStyle from '@/style/appStyle'
 import { defaultSetting } from '@/config/appConfig'
-import { useAppDispatch, useAppSelector } from '@/core/hooks'
+import { useDispatch, useSelector } from '@/core/hooks'
 import { EMediaSrc, EListeningTypes } from '@/models/dictation.model'
-import { apiFactory } from '@/services/api/apiFactory'
+// TODO: Media API not implemented in Firebase yet
+// import { mediaApi } from '@/services/firebase/api/media.api'
 import { actionAsyncMedia } from '@/store/async/media.async'
 import { mediaAction } from '@/store/reducers/media.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -18,12 +19,16 @@ export const Listening = () => {
 
   const gClasses = globalStyle()
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
 
-  const { listeningType, player } = useAppSelector((state) => state.auth.user.configuration)
-  const { list, current, isPlaying, mediaSrc } = useAppSelector((state) => state.media)
+  const { user } = useSelector((state) => state.auth)
+  const { listeningType, player } = user?.configuration || {
+    listeningType: undefined,
+    player: undefined,
+  }
+  const { list, current, isPlaying, mediaSrc } = useSelector((state) => state.media)
 
   const setIsPlaying = (isPlaying: boolean) => {
     dispatch(mediaAction.play(isPlaying))
@@ -55,9 +60,11 @@ export const Listening = () => {
   }
 
   const onDelete = (id: number) => {
-    apiFactory.media.removeMedia(id).then(() => {
-      dispatch(mediaAction.remove(id))
-    })
+    // TODO: Implement media API
+    console.error('Media API not implemented in Firebase')
+    // mediaApi.removeMedia(id).then(() => {
+    //   dispatch(mediaAction.remove(id))
+    // })
   }
 
   const showExercise = () => {

@@ -3,7 +3,7 @@ import { IHttpResponse } from '@/models/http.model'
 import { IItem, IItemQuiz } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
 import { db } from '@/config/firebaseConfig'
-import { firebaseAuthService } from '@/services/firebase/firebaseAuth.service'
+import { firebaseAuthService } from '@/services/firebase/authService'
 import {
   collection,
   query,

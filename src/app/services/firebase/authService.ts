@@ -17,7 +17,7 @@ import {
   UserCredential,
 } from 'firebase/auth'
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore'
-import { app as firebaseApp } from '@/services/firebase'
+import { app as firebaseApp } from '@/config/firebaseConfig'
 
 export interface IAuthUser {
   uid: string
@@ -38,6 +38,7 @@ export interface IUserProfile {
   createdAt: number
   updatedAt: number
   provider: string
+  configuration?: any // User configuration/preferences
 }
 
 /**

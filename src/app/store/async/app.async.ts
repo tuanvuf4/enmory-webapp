@@ -1,10 +1,10 @@
 import { transformItemModelToClient } from '@/helpers/item'
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { apiFactory } from '@/services/api/apiFactory'
+import { commonApi } from '@/services/firebase/api/common.api'
 import { IIotdRequest } from '@/models/item.model'
 
 const fetchCategories = createAsyncThunk('categories/fetchCategories', async () => {
-  const cats = await apiFactory.app.getCategories()
+  const cats = await commonApi.getCategories()
   if (cats.isSuccess)
     return {
       ...cats,
@@ -14,7 +14,7 @@ const fetchCategories = createAsyncThunk('categories/fetchCategories', async () 
 })
 
 const fetchTypes = createAsyncThunk('type/fetchTypes', async () => {
-  const types = await apiFactory.app.getTypes()
+  const types = await commonApi.getTypes()
   if (types.isSuccess)
     return {
       ...types,
@@ -29,7 +29,7 @@ const fetchTypes = createAsyncThunk('type/fetchTypes', async () => {
 })
 
 const fetchIotd = createAsyncThunk('iotd/fetchIotd', async (data: IIotdRequest) => {
-  const iotd = await apiFactory.app.getItemOfTheDayByCatId(data)
+  const iotd = await commonApi.getItemOfTheDayByCatId(data)
   return {
     ...iotd,
     content: {

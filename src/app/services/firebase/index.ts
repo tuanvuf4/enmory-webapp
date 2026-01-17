@@ -1,6 +1,2 @@
-/**
- * Firebase Auth Services Export
- */
-
+export * from './api'
 export * from './authService'
-export * from './firebaseConfig'

@@ -1,6 +1,6 @@
 import globalStyle from '@/style/appStyle'
-import { useAppSelector, useAppDispatch } from '@/core/hooks'
-import { apiFactory } from '@/services/api/apiFactory'
+import { useSelector, useDispatch } from '@/core/hooks'
+import { exampleApi } from '@/services/firebase/api/example.api'
 import { exampleAsync } from '@/store/async/example.async'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -22,13 +22,13 @@ export const Example: React.FC = () => {
 
   const { openNotification } = usePrompt()
 
-  const { examples, pagination, formSearchQuery } = useAppSelector((state) => state.example)
+  const { examples, pagination, formSearchQuery } = useSelector((state) => state.example)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   const onEdit = async (id: number) => {
     try {
-      const { content } = await apiFactory.example.getExampleById(id)
+      const { content } = await exampleApi.getExampleById(id)
       dispatch(exampleAction.setSelectedExample(content))
       dispatch(settingAction.toggleExModal())
     } catch (error) {
@@ -38,7 +38,7 @@ export const Example: React.FC = () => {
 
   const onDelete = async (id: number) => {
     try {
-      const { content } = await apiFactory.example.getExampleById(id)
+      const { content } = await exampleApi.getExampleById(id)
       dispatch(exampleAction.setSelectedExample(content))
       dispatch(settingAction.toggleDeleteExModal())
     } catch (error) {

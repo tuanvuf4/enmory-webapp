@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from 'react'
 import { axiosInstance } from '../http/httpCore'
-import { useAppSelector } from './redux'
+import { useSelector } from './redux'
 
 const useHandleAuthRequest = () => {
-  const { token_type, access_token } = useAppSelector((state) => state.auth.authorization)
+  const { token_type, access_token } = useSelector((state) => state.auth.authorization)
 
   const requestInterceptor = axiosInstance.interceptors.request.use(async (request: any) => {
     if (

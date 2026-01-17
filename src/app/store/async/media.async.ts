@@ -2,11 +2,14 @@ import { appConfig } from '@/config/appConfig'
 import { httpConfig } from '@/config/httpConfig'
 import { EMediaSrc } from '@/models/dictation.model'
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { apiFactory } from '@/services/api/apiFactory'
+// TODO: Media API not implemented in Firebase yet
+// import { mediaApi } from '@/services/firebase/api/media.api'
 
 const fetchMedias = createAsyncThunk('media/fetchAllMedia', async (src: EMediaSrc) => {
   appConfig
-  const media = await apiFactory.media.getMedias(src)
+  // TODO: Implement media API
+  throw new Error('Media API not implemented in Firebase')
+  // const media = await mediaApi.getMedias(src)
   if (media.isSuccess)
     return {
       ...media,
@@ -24,9 +27,11 @@ const fetchMedias = createAsyncThunk('media/fetchAllMedia', async (src: EMediaSr
 })
 
 const deleteMedia = createAsyncThunk('media/fetchAllMedia', async (id: number) => {
-  const media = await apiFactory.media.removeMedia(id)
-  console.log(`media: `, media)
-  if (media.isSuccess) return media
+  // TODO: Implement media API
+  throw new Error('Media API not implemented in Firebase')
+  // const media = await mediaApi.removeMedia(id)
+  // console.log(`media: `, media)
+  // if (media.isSuccess) return media
 })
 
 export const actionAsyncMedia = {

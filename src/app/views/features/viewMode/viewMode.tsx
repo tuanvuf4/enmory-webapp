@@ -1,5 +1,5 @@
 import React from 'react'
-import { useAppDispatch, useAppSelector } from 'src/app/core/hooks/redux'
+import { useDispatch, useSelector } from 'src/app/core/hooks/redux'
 import { Button, theme, Tooltip } from 'antd'
 import styles from './style'
 import { AppstoreOutlined, MenuOutlined } from '@ant-design/icons'
@@ -12,9 +12,9 @@ export const ViewMode: React.FC = () => {
 
   const classes = styles()
 
-  const { viewMode } = useAppSelector((state) => state.config)
+  const { viewMode } = useSelector((state) => state.config)
 
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch()
 
   return (
     <div className={classes.viewOptions}>

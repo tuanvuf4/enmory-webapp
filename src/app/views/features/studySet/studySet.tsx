@@ -1,6 +1,6 @@
 import { appStyleConfig } from '@/style/appStyle'
 import { ReloadOutlined, EditOutlined } from '@ant-design/icons'
-import { appConfig, defaultSetting } from '@/config/appConfig'
+import { appConfig, setting } from '@/config/appConfig'
 import { useDispatch, useSelector } from '@/core/hooks'
 import {
   transformItemModelToServer,
@@ -57,7 +57,7 @@ export const StudySet: React.FC = () => {
 
     if (category === ECategory.SENTENCE) return configuration.numberOfSentencesInStudySet
 
-    return defaultSetting.studySet.numberOfWordsInStudySet
+    return setting.studySet.numberOfWordsInStudySet
   }
 
   const createStudySet = (params: Partial<IStudySetStatus>) => {

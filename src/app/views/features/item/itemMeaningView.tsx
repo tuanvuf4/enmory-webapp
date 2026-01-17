@@ -1,5 +1,5 @@
 import { AudioOutlined } from '@ant-design/icons'
-import { defaultSetting } from '@/config/appConfig'
+import { setting } from '@/config/appConfig'
 import { useDispatch } from '@/core/hooks'
 import { getTypeOfItem } from '@/helpers/item'
 import { IMeaning, ECategory, EType } from '@/models/item.model'
@@ -73,7 +73,7 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
     dispatch(
       itemAction.updatePagination({
         page: 0,
-        size: defaultSetting.pagination.size,
+        size: setting.pagination.size,
       }),
     )
     dispatch(
@@ -90,7 +90,7 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
         itemAsync.fetchItems({
           keyword: keyword,
           page: 0,
-          size: defaultSetting.pagination.size,
+          size: setting.pagination.size,
           cat: ECategory.ALL,
           type: EType.ALL,
           archive: false,

@@ -1,5 +1,5 @@
 import globalStyle from '@/style/appStyle'
-import { appConfig, defaultSetting } from '@/config/appConfig'
+import { appConfig, setting } from '@/config/appConfig'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { IUserConfig } from '@/models/user.model'
 import { apiUser } from '@/services/firebase/api/user.api'
@@ -86,9 +86,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={defaultSetting.studySet.numberOfWordsInStudySet}
+                                defaultValue={setting.studySet.numberOfWordsInStudySet}
                                 onChange={onChange}
-                                options={defaultSetting.studySet.options}
+                                options={setting.studySet.options}
                               />
                             )
                           }}
@@ -108,9 +108,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={defaultSetting.studySet.numberOfPhraseInStudySet}
+                                defaultValue={setting.studySet.numberOfPhraseInStudySet}
                                 onChange={onChange}
-                                options={defaultSetting.studySet.options}
+                                options={setting.studySet.options}
                               />
                             )
                           }}
@@ -130,9 +130,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={defaultSetting.studySet.numberOfIdiomInStudySet}
+                                defaultValue={setting.studySet.numberOfIdiomInStudySet}
                                 onChange={onChange}
-                                options={defaultSetting.studySet.stOptions}
+                                options={setting.studySet.stOptions}
                               />
                             )
                           }}
@@ -152,9 +152,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={defaultSetting.studySet.numberOfSlangInStudySet}
+                                defaultValue={setting.studySet.numberOfSlangInStudySet}
                                 onChange={onChange}
-                                options={defaultSetting.studySet.stOptions}
+                                options={setting.studySet.stOptions}
                               />
                             )
                           }}
@@ -174,11 +174,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={
-                                  defaultSetting.studySet.numberOfCollocationsInStudySet
-                                }
+                                defaultValue={setting.studySet.numberOfCollocationsInStudySet}
                                 onChange={onChange}
-                                options={defaultSetting.studySet.options}
+                                options={setting.studySet.options}
                               />
                             )
                           }}
@@ -198,9 +196,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={defaultSetting.studySet.numberOfSentencesInStudySet}
+                                defaultValue={setting.studySet.numberOfSentencesInStudySet}
                                 onChange={onChange}
-                                options={defaultSetting.studySet.options}
+                                options={setting.studySet.options}
                               />
                             )
                           }}
@@ -220,9 +218,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={defaultSetting.studySet.numberOfExampleReview}
+                                defaultValue={setting.studySet.numberOfExampleReview}
                                 onChange={onChange}
-                                options={defaultSetting.studySet.rdOptions}
+                                options={setting.studySet.rdOptions}
                               />
                             )
                           }}
@@ -277,9 +275,9 @@ const Setting = () => {
                             return (
                               <Select
                                 value={value}
-                                defaultValue={defaultSetting.listening.type.default}
+                                defaultValue={setting.listening.type.default}
                                 onChange={onChange}
-                                options={defaultSetting.listening.type.options}
+                                options={setting.listening.type.options}
                               />
                             )
                           }}
@@ -299,9 +297,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={defaultSetting.listening.exerciseItemOptions.default}
+                                defaultValue={setting.listening.exerciseItemOptions.default}
                                 onChange={onChange}
-                                options={defaultSetting.listening.exerciseItemOptions.options}
+                                options={setting.listening.exerciseItemOptions.options}
                               />
                             )
                           }}

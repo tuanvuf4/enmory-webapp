@@ -2,7 +2,7 @@ import { msgErrors } from '@/constant/index'
 import { chromeStorage } from '@/extension/storageService'
 import globalStyle from '@/style/appStyle'
 import { Loading3QuartersOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { defaultSetting, appConfig, EAppType } from '@/config/appConfig'
+import { setting, appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { transformItemModelToServer, transformItemModelToClient } from '@/helpers/item'
 import { isGroupWord } from '@/helpers/validate'
@@ -225,7 +225,7 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
     const params = {
       keyword: value,
       page: 0,
-      size: defaultSetting.numberItemOfAutoComplete * 2,
+      size: setting.numberItemOfAutoComplete * 2,
       exact: true,
     }
     itemApi.getItemAutoComplete(params, { headers: { loading: ELoading.YES } }).then((response) => {

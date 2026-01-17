@@ -46,6 +46,6 @@ export interface IUser<R = number[]> {
 }
 
 export interface ILogin {
-  username: string
+  email: string
   password: string
 }

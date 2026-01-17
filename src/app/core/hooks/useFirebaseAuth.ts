@@ -31,7 +31,7 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
   /**
    * Login with email and password using Firebase
    */
-  const loginWithEmail = async (email: string, password: string) => {
+  const loginWithEmail = async ({ email, password }: ILogin) => {
     setErrorMsg('')
     try {
       const result = await dispatch(signInWithEmail({ email, password }) as any)
@@ -87,14 +87,6 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
       return { success: false, error: errorMessage }
     }
     return { success: false, error: 'Unknown error occurred' }
-  }
-
-  /**
-   * Login with Firebase email authentication
-   */
-  const login = async (data: ILogin) => {
-    // Use Firebase email authentication
-    return await loginWithEmail(data.username, data.password)
   }
 
   /**
@@ -210,7 +202,6 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
 
   return {
     // Methods
-    login,
     loginWithEmail,
     loginWithGoogle,
     register,

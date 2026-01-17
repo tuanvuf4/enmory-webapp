@@ -6,7 +6,7 @@ import {
   SearchOutlined,
   Loading3QuartersOutlined,
 } from '@ant-design/icons'
-import { defaultSetting } from '@/config/appConfig'
+import { setting } from '@/config/appConfig'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { useAutoComplete } from '@/helpers/hooks'
 import { transformItemModelToClient } from '@/helpers/item'
@@ -69,8 +69,8 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
     reset({ ...initSearchFormItem, keyword: value })
     dispatch(
       itemAction.updatePagination({
-        page: defaultSetting.pagination.page,
-        size: defaultSetting.pagination.size,
+        page: setting.pagination.page,
+        size: setting.pagination.size,
       }),
     )
     dispatch(
@@ -88,15 +88,15 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
           exact: true,
           archive: false,
           defect: false,
-          page: defaultSetting.pagination.page,
-          size: defaultSetting.pagination.size,
+          page: setting.pagination.page,
+          size: setting.pagination.size,
         }),
       )
     } else {
       const params = {
         keyword: value,
         page: 0,
-        size: defaultSetting.numberItemOfAutoComplete * 2,
+        size: setting.numberItemOfAutoComplete * 2,
         exact: true,
       }
       itemApi
@@ -115,8 +115,8 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
   const onSubmit = (data: IFormSearchItem) => {
     dispatch(
       itemAction.updatePagination({
-        page: defaultSetting.pagination.page,
-        size: defaultSetting.pagination.size,
+        page: setting.pagination.page,
+        size: setting.pagination.size,
       }),
     )
     dispatch(itemAction.updateSearchFormValue({ ...data }))
@@ -124,8 +124,8 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
       dispatch(
         itemAsync.fetchItems({
           ...data,
-          page: defaultSetting.pagination.page,
-          size: defaultSetting.pagination.size,
+          page: setting.pagination.page,
+          size: setting.pagination.size,
         }),
       ).then(() => {
         // console.log(`resp: `, resp)

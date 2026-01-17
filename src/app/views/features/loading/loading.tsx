@@ -3,11 +3,14 @@ import { useAxiosLoader } from '@/core/hooks/axiosHttpCounter'
 import { Spin } from 'antd'
 import styles from './style'
 import classNames from 'clsx'
+import { useState } from 'react'
 
 export const Loading = () => {
   const classes = styles()
 
-  const [active] = useAxiosLoader()
+  // const [active] = useAxiosLoader()
+
+  const [active] = useState(true)
 
   return (
     <>

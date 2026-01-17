@@ -1,4 +1,4 @@
-import { defaultSetting } from '../config/appConfig'
+import { setting } from '../config/appConfig'
 import { INotification } from '../models/app.model'
 import { EListeningTypes } from '../models/dictation.model'
 import { IFormSearchEx, IFormSearchItem } from '../models/formSearch.model'
@@ -27,14 +27,14 @@ export const initUser: IUser<number[]> = {
   last_active: 0,
   configuration: {
     community: false,
-    numberOfWordsInStudySet: defaultSetting.studySet.numberOfWordsInStudySet,
-    numberOfPhraseInStudySet: defaultSetting.studySet.numberOfPhraseInStudySet,
-    numberOfIdiomInStudySet: defaultSetting.studySet.numberOfIdiomInStudySet,
-    numberOfSlangInStudySet: defaultSetting.studySet.numberOfSlangInStudySet,
-    numberOfCollocationsInStudySet: defaultSetting.studySet.numberOfCollocationsInStudySet,
-    numberOfSentencesInStudySet: defaultSetting.studySet.numberOfSentencesInStudySet,
-    numberOfExampleReview: defaultSetting.studySet.numberOfExampleReview,
-    numberOfDictationItem: defaultSetting.listening.type.default,
+    numberOfWordsInStudySet: setting.studySet.numberOfWordsInStudySet,
+    numberOfPhraseInStudySet: setting.studySet.numberOfPhraseInStudySet,
+    numberOfIdiomInStudySet: setting.studySet.numberOfIdiomInStudySet,
+    numberOfSlangInStudySet: setting.studySet.numberOfSlangInStudySet,
+    numberOfCollocationsInStudySet: setting.studySet.numberOfCollocationsInStudySet,
+    numberOfSentencesInStudySet: setting.studySet.numberOfSentencesInStudySet,
+    numberOfExampleReview: setting.studySet.numberOfExampleReview,
+    numberOfDictationItem: setting.listening.type.default,
     references: [],
     player: false,
     listeningType: EListeningTypes.Exercise,

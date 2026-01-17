@@ -1,4 +1,4 @@
-import { defaultSetting } from '@/config/appConfig'
+import { setting } from '@/config/appConfig'
 import { ELoading } from '@/models/app.model'
 import { IHttpResponse } from '@/models/http.model'
 import { IItem, IExample } from '@/models/item.model'
@@ -19,7 +19,7 @@ export const useAutoComplete = (
   searchText: string,
   type: searchType = 'item',
   exact = false,
-  timeout = defaultSetting.debounceTime,
+  timeout = setting.debounceTime,
 ) => {
   const [options, setOptions] = useState<Options[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -29,7 +29,7 @@ export const useAutoComplete = (
     const query = {
       keyword: searchText,
       page: 0,
-      size: defaultSetting.numberItemOfAutoComplete * 10,
+      size: setting.numberItemOfAutoComplete * 10,
     }
     if (searchText && searchText.length >= 2) {
       handleSession = setTimeout(() => {

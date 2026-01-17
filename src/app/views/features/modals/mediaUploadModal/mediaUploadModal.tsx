@@ -1,7 +1,7 @@
 import { msgErrors } from '@/constant/index'
 import globalStyle, { appStyleConfig } from '@/style/appStyle'
 import { CloseSquareOutlined, UploadOutlined } from '@ant-design/icons'
-import { defaultSetting } from '@/config/appConfig'
+import { setting } from '@/config/appConfig'
 import { useSelector, useDispatch } from '@/core/hooks'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -58,35 +58,35 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
           .string()
           .required(msgErrors.required)
           .max(
-            defaultSetting.listening.maxLengthShortInput,
-            msgErrors.maxLength('Title', defaultSetting.listening.maxLengthShortInput),
+            setting.listening.maxLengthShortInput,
+            msgErrors.maxLength('Title', setting.listening.maxLengthShortInput),
           ),
         description: yup
           .string()
           .max(
-            defaultSetting.listening.maxLengthTranscript,
-            msgErrors.maxLength('Description', defaultSetting.listening.maxLengthTranscript),
+            setting.listening.maxLengthTranscript,
+            msgErrors.maxLength('Description', setting.listening.maxLengthTranscript),
           ),
         transcript: yup
           .string()
           .max(
-            defaultSetting.listening.maxLengthTranscript,
-            msgErrors.maxLength('Transcript', defaultSetting.listening.maxLengthTranscript),
+            setting.listening.maxLengthTranscript,
+            msgErrors.maxLength('Transcript', setting.listening.maxLengthTranscript),
           ),
         externalUrl: yup
           .string()
           .max(
-            defaultSetting.listening.maxLengthInput,
-            msgErrors.maxLength('External url', defaultSetting.listening.maxLengthInput),
+            setting.listening.maxLengthInput,
+            msgErrors.maxLength('External url', setting.listening.maxLengthInput),
           ),
         file: yup.mixed().test(
           'maxSize',
-          msgErrors.maxSize('File', defaultSetting.listening.maxMediaSize),
+          msgErrors.maxSize('File', setting.listening.maxMediaSize),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (file: any) => {
-            if (file && file.size > defaultSetting.listening.maxMediaSize * 1024 * 1024) {
+            if (file && file.size > setting.listening.maxMediaSize * 1024 * 1024) {
               setError('file', {
-                message: msgErrors.maxSize('File', defaultSetting.listening.maxMediaSize),
+                message: msgErrors.maxSize('File', setting.listening.maxMediaSize),
               })
               return false
             }
@@ -219,8 +219,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                   <>
                     <Input
                       maxLength={
-                        defaultSetting.listening.maxLengthShortInput +
-                        defaultSetting.listening.threshold
+                        setting.listening.maxLengthShortInput + setting.listening.threshold
                       }
                       {...field}
                     />
@@ -246,8 +245,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                     <TextArea
                       rows={6}
                       maxLength={
-                        defaultSetting.listening.maxLengthTranscript +
-                        defaultSetting.listening.threshold
+                        setting.listening.maxLengthTranscript + setting.listening.threshold
                       }
                       placeholder='Description'
                       {...field}
@@ -299,8 +297,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                         <TextArea
                           autoSize={true}
                           maxLength={
-                            defaultSetting.listening.maxLengthTranscript +
-                            defaultSetting.listening.threshold
+                            setting.listening.maxLengthTranscript + setting.listening.threshold
                           }
                           placeholder='Transcript'
                           {...field}
@@ -323,8 +320,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                         <TextArea
                           autoSize={true}
                           maxLength={
-                            defaultSetting.listening.maxLengthTranscript +
-                            defaultSetting.listening.threshold
+                            setting.listening.maxLengthTranscript + setting.listening.threshold
                           }
                           placeholder='Translation'
                           {...field}
@@ -374,10 +370,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                     render={({ field }) => (
                       <>
                         <Input
-                          maxLength={
-                            defaultSetting.listening.maxLengthInput +
-                            defaultSetting.listening.threshold
-                          }
+                          maxLength={setting.listening.maxLengthInput + setting.listening.threshold}
                           {...field}
                           onChange={(e) => {
                             field.onChange(e)

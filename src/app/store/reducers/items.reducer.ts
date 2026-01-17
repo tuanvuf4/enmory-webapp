@@ -1,4 +1,4 @@
-import { defaultSetting } from '@/app/config/appConfig'
+import { setting } from '@/app/config/appConfig'
 import { IFormSearchItem } from '@/app/models/formSearch.model'
 import { IHttpResponse, IHttpResponseArray } from '@/app/models/http.model'
 import { IItem } from '@/app/models/item.model'
@@ -16,7 +16,7 @@ export interface IItemsState {
 export const initialState: IItemsState = {
   listItem: [],
   formSearchValue: initSearchFormItem,
-  pagination: defaultSetting.pagination,
+  pagination: setting.pagination,
 }
 
 export const itemsReducer = createSlice({
@@ -95,7 +95,7 @@ export const itemsReducer = createSlice({
       )
       .addCase(itemAsync.fetchItems.rejected, (state: IItemsState) => {
         state.listItem = []
-        state.pagination = defaultSetting.pagination
+        state.pagination = setting.pagination
       })
   },
 })

@@ -1,7 +1,7 @@
 import { msgErrors } from '@/constant/index'
 import globalStyle from '@/style/appStyle'
 import { ReloadOutlined } from '@ant-design/icons'
-import { defaultSetting } from '@/config/appConfig'
+import { setting } from '@/config/appConfig'
 import { useSelector } from '@/core/hooks'
 import { patternValidation, hex2Rgba } from '@/core/utils'
 import { getRandomArrayIndex } from '@/helpers/validate'
@@ -19,7 +19,7 @@ interface IProps {
 
 export const Exercise: React.FC<IProps> = ({
   player = true,
-  maxLengthTranscript = defaultSetting.listening.maxLengthTranscript,
+  maxLengthTranscript = setting.listening.maxLengthTranscript,
   transcript,
   translation,
 }) => {

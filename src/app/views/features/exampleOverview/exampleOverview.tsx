@@ -15,7 +15,7 @@ import styles from './style'
 import exStyles from '@/views/features/item/style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
-import { appConfig, defaultSetting } from '@/config/appConfig'
+import { appConfig, setting } from '@/config/appConfig'
 
 interface IProps {
   title?: string
@@ -67,7 +67,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
     dispatch(
       exampleAsync.fetchRandomExample({
         page: nextPage,
-        size: configuration?.numberOfExampleReview || defaultSetting.studySet.numberOfExampleReview,
+        size: configuration?.numberOfExampleReview || setting.studySet.numberOfExampleReview,
       }),
     )
       .then(() => {

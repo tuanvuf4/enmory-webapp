@@ -1,6 +1,6 @@
 import { msgWarning } from '@/constant/index'
 import { MoreOutlined, ReloadOutlined } from '@ant-design/icons'
-import { defaultSetting } from '@/config/appConfig'
+import { setting } from '@/config/appConfig'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { isDefect, getCategory } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
@@ -120,8 +120,8 @@ export const Item: React.FC<IProps> = ({
     dispatch(settingAction.updateViewItemModal(false))
     dispatch(
       itemAction.updatePagination({
-        page: defaultSetting.pagination.page,
-        size: defaultSetting.pagination.size,
+        page: setting.pagination.page,
+        size: setting.pagination.size,
       }),
     )
     dispatch(
@@ -135,8 +135,8 @@ export const Item: React.FC<IProps> = ({
         itemAsync.fetchItems({
           ...initSearchFormItem,
           keyword: keyword,
-          page: defaultSetting.pagination.page,
-          size: defaultSetting.pagination.size,
+          page: setting.pagination.page,
+          size: setting.pagination.size,
         }),
       )
     } else {
@@ -351,8 +351,8 @@ export const Item: React.FC<IProps> = ({
           </div>
 
           <div className={classes.date}>
-            <span>{moment(data.created_date).format(defaultSetting.dateTimeFormat)}</span>
-            <span>{moment(data.last_update).format(defaultSetting.dateTimeFormat)}</span>
+            <span>{moment(data.created_date).format(setting.dateTimeFormat)}</span>
+            <span>{moment(data.last_update).format(setting.dateTimeFormat)}</span>
           </div>
         </>
       )}

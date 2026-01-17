@@ -1,7 +1,7 @@
 import { msgErrors } from '@/constant/validation'
 import { chromeStorage } from '@/extension/storageService'
 import globalStyle from '@/style/appStyle'
-import { defaultSetting, appConfig, EAppType } from '@/config/appConfig'
+import { setting, appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { transformItemModelToServer, transformItemModelToClient } from '@/helpers/item'
 import { isGroupWord } from '@/helpers/validate'
@@ -228,7 +228,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
     const params = {
       keyword: value,
       page: 0,
-      size: defaultSetting.numberItemOfAutoComplete * 2,
+      size: setting.numberItemOfAutoComplete * 2,
       exact: true,
     }
     itemApi.getItemAutoComplete(params).then((response) => {

@@ -117,7 +117,7 @@ export const appConfig = {
   ],
 }
 
-export const defaultSetting = {
+export const setting = {
   debounceTime: 1200,
   numberItemOfAutoComplete: 10,
   dateFormat: 'MM-DD-YYYY',

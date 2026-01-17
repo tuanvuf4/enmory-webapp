@@ -6,7 +6,7 @@ import {
   SearchOutlined,
   Loading3QuartersOutlined,
 } from '@ant-design/icons'
-import { defaultSetting } from '@/config/appConfig'
+import { setting } from '@/config/appConfig'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { useAutoComplete } from '@/helpers/hooks'
 import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from '@/models/app.model'
@@ -70,8 +70,8 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
     dispatch(
       exampleAsync.fetchExamples({
         ...data,
-        page: defaultSetting.pagination.page,
-        size: defaultSetting.pagination.size,
+        page: setting.pagination.page,
+        size: setting.pagination.size,
       }),
     )
     window.scrollTo({ top: 0, behavior: 'smooth' })

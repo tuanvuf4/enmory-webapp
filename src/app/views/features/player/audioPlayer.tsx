@@ -16,7 +16,7 @@ import {
 } from '@ant-design/icons'
 import { ITracks } from '@/models/media.model'
 import { EMediaSrc } from '@/models/dictation.model'
-import { defaultSetting } from '@/config/appConfig'
+import { setting } from '@/config/appConfig'
 import classNames from 'clsx'
 import { TExternalSource } from '../modals/mediaUploadModal'
 
@@ -227,20 +227,19 @@ export const AudioPlayer: React.FC<IProps> = ({
             </Dropdown>
           </h2>
 
-          {tracks.length <= defaultSetting.listening.maxMediaItem &&
-            mediaSrc === EMediaSrc.INTERNAL && (
-              <Button
-                style={{
-                  background: 'transparent',
-                  color: token.colorWhite,
-                  border: 'none',
-                }}
-                icon={<PlusOutlined />}
-                onClick={onAdd}
-              />
-            )}
+          {tracks.length <= setting.listening.maxMediaItem && mediaSrc === EMediaSrc.INTERNAL && (
+            <Button
+              style={{
+                background: 'transparent',
+                color: token.colorWhite,
+                border: 'none',
+              }}
+              icon={<PlusOutlined />}
+              onClick={onAdd}
+            />
+          )}
 
-          {tracks.length <= defaultSetting.listening.maxMediaItem * 4 &&
+          {tracks.length <= setting.listening.maxMediaItem * 4 &&
             mediaSrc === EMediaSrc.EXTERNAL && (
               <Button
                 style={{

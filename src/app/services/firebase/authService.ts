@@ -17,7 +17,7 @@ import {
   UserCredential,
 } from 'firebase/auth'
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore'
-import { fbCollections, app as firebaseApp } from '@/config/firebaseConfig'
+import { dbCollections, app as firebaseApp } from '@/config/firebaseConfig'
 import { IUserConfig } from '@/models/user.model'
 
 export interface IAuthUser {
@@ -79,7 +79,7 @@ export class FirebaseAuthService {
       const user = result.user
 
       // Create user profile in Firestore
-      const userDocRef = doc(this.db, 'users', user.uid)
+      const userDocRef = doc(this.db, dbCollections.users, user.uid)
       const userProfile: IUserProfile = {
         uid: user.uid,
         email: user.email || '',

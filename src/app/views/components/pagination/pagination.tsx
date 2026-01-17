@@ -2,7 +2,7 @@ import { Button, Select, theme } from 'antd'
 import { CaretLeftOutlined, CaretRightOutlined } from '@ant-design/icons'
 import styles from './style'
 import { BaseOptionType } from 'antd/es/cascader'
-import { defaultSetting } from '@/app/config/appConfig'
+import { setting } from '@/app/config/appConfig'
 
 export interface IDataOnChange {
   page: number
@@ -19,11 +19,11 @@ interface IPros {
 }
 
 export const Pagination = ({
-  size = defaultSetting.pagination.size,
+  size = setting.pagination.size,
   page = 1,
   total = 0,
   totalPage = 1,
-  options = defaultSetting.pagination.options,
+  options = setting.pagination.options,
   onPageChange,
 }: IPros) => {
   const { token } = theme.useToken()

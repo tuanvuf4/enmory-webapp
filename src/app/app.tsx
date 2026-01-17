@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { RouterElement } from './router'
 import moment from 'moment'
+import { Loading } from './views/features/loading/loading'
 
 export const App = () => {
   const [isInitializing, setIsInitializing] = useState(true)
@@ -51,13 +52,7 @@ export const App = () => {
   }, [isAuth, isInitializing])
 
   if (isInitializing) {
-    return (
-      <div
-        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
-      >
-        <div style={{ fontSize: '18px', color: '#666' }}>Loading...</div>
-      </div>
-    )
+    return <Loading />
   }
 
   return (

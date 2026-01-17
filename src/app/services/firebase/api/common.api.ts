@@ -11,7 +11,7 @@ import {
 import { getCategory, getTypeOfItem } from '@/helpers/item'
 import { IUserConfig } from '@/models/user.model'
 import { collection, getDocs, query, QueryConstraint, where } from 'firebase/firestore'
-import { db, fbCollections } from '@/config/firebaseConfig'
+import { db, dbCollections } from '@/config/firebaseConfig'
 import { IUserProfile } from '../authService'
 
 const enumValues = <T extends Record<string, unknown>>(enm: T) =>
@@ -76,7 +76,7 @@ const getUserConfig = async (userId: string) => {
     const constraints: QueryConstraint[] = []
     constraints.push(where('userId', '==', userId))
 
-    const userConfigQuery = query(collection(db, fbCollections.configuration), ...constraints)
+    const userConfigQuery = query(collection(db, dbCollections.configuration), ...constraints)
     const snapshot = await getDocs(userConfigQuery)
 
     console.log(`*** snapshot *** `, snapshot.data())

@@ -7,7 +7,7 @@ import { appConfig } from './appConfig'
 // Initialize Firebase
 export const app = initializeApp({ ...appConfig.firebase })
 
-export const fbCollections = {
+export const dbCollections = {
   users: 'users',
   studySets: 'studySets',
   items: 'items',

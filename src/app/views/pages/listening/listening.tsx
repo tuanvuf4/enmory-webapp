@@ -1,5 +1,5 @@
 import globalStyle from '@/style/appStyle'
-import { defaultSetting } from '@/config/appConfig'
+import { setting } from '@/config/appConfig'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { EMediaSrc, EListeningTypes } from '@/models/dictation.model'
 // TODO: Media API not implemented in Firebase yet
@@ -36,7 +36,7 @@ export const Listening = () => {
 
   const onAdd = () => {
     if (
-      (list.length <= defaultSetting.listening.maxMediaItem && mediaSrc === EMediaSrc.INTERNAL) ||
+      (list.length <= setting.listening.maxMediaItem && mediaSrc === EMediaSrc.INTERNAL) ||
       mediaSrc === EMediaSrc.EXTERNAL
     )
       dispatch(settingAction.toggleMediaModal())

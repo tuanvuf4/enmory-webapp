@@ -2,7 +2,7 @@ import { Button, Col, Row, Space, Tooltip, theme } from 'antd'
 import styles from './style'
 import TextArea from 'antd/es/input/TextArea'
 import { useEffect, useState } from 'react'
-import { defaultSetting } from '@/config/appConfig'
+import { setting } from '@/config/appConfig'
 import { InfoCircleOutlined } from '@ant-design/icons'
 import classNames from 'clsx'
 
@@ -15,7 +15,7 @@ interface IProps {
 
 export const Dictation: React.FC<IProps> = ({
   player = true,
-  maxLengthTranscript = defaultSetting.listening.maxLengthTranscript,
+  maxLengthTranscript = setting.listening.maxLengthTranscript,
   transcript,
   translation,
 }) => {

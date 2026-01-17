@@ -3,7 +3,7 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { useFirebaseAuth } from '@/core/hooks'
 import { IHttpResponse } from '@/models/http.model'
-import { ILoginResponse, ILogin } from '@/models/user.model'
+import { ILoginResponse, ILogin, IUser } from '@/models/user.model'
 import { theme, Space, Row, Col, Input, Button } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { Link } from 'react-router-dom'
@@ -13,32 +13,28 @@ import logo from '@/assets/img/logo.png'
 import clsx from 'clsx'
 
 interface Login {
-  onLogin?: (payload: IHttpResponse<ILoginResponse>) => void
+  onLoginSuccess?: (userId: IUser) => void
   showBanner?: boolean
 }
 
-export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
+export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }) => {
   const { token } = theme.useToken()
   const classes = styles()
   const gClasses = globalStyle()
 
-  const {
-    login,
-    loginWithGoogle,
-    errorMsg,
-    isLoading: firebaseLoading,
-    firebaseError,
-  } = useFirebaseAuth({ onLoginSuccess: onLogin })
+  const { loginWithEmail, loginWithGoogle, isLoading, firebaseError } = useFirebaseAuth({
+    onLoginSuccess: onLoginSuccess,
+  })
 
   const { control, handleSubmit } = useForm<ILogin>({
     defaultValues: {
-      username: '',
+      email: '',
       password: '',
     },
   })
 
   const onSubmit = async (data: ILogin) => {
-    await login(data)
+    await loginWithEmail(data)
   }
 
   const handleGoogleLogin = async () => {
@@ -62,7 +58,7 @@ export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
                 <label htmlFor=''></label>
                 <Controller
                   control={control}
-                  name={`username`}
+                  name={`email`}
                   render={({ field: { onChange, value } }) => (
                     <Input
                       prefix={<UserOutlined />}
@@ -106,9 +102,9 @@ export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
                     className={gClasses.fulWidth}
                     type='primary'
                     htmlType='submit'
-                    loading={firebaseLoading}
+                    loading={isLoading}
                   >
-                    {firebaseLoading ? 'Logging in...' : 'Login'}
+                    {isLoading ? 'Logging in...' : 'Login'}
                   </Button>
                 </div>
               </Col>

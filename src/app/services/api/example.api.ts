@@ -1,7 +1,7 @@
 import { httpConfig } from '@/config/httpConfig'
 import { http } from '@/core/http'
 import { IExampleQuery } from '@/models/example.model'
-import { IHttpResponse, IHttpResponseArray } from '@/models/http.model'
+import { IHttpResponse } from '@/models/http.model'
 import { IExample } from '@/models/item.model'
 
 const createExample = async (body: IExample) => {
@@ -18,9 +18,7 @@ const getExampleById = async (id: number | string) => {
 
 const getExamples = async (querySearch: IExampleQuery, config = {}) => {
   return http
-    .get<
-      IHttpResponse<IHttpResponseArray<IExample>>
-    >(httpConfig.apiEndPoint.example.root, querySearch, config)
+    .get<IHttpResponse<IExample[]>>(httpConfig.apiEndPoint.example.root, querySearch, config)
     .then((resp) => resp.data)
 }
 

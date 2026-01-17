@@ -2,23 +2,7 @@
 
 import { AxiosResponse, AxiosRequestConfig } from 'axios'
 import { axiosInstance, defaultHttpConfig, getHttpConfig } from './httpCore'
-
-export interface ResponseArray<T> {
-  isSuccess: boolean
-  message: string
-  contents: T
-  paging: {
-    total: number
-    page: number
-    size: number
-  }
-}
-
-export interface Response<T> {
-  isSuccess: boolean
-  message: string
-  result: T
-}
+export { initializeFirebaseInterceptor } from './firebaseInterceptor'
 
 const get = <T = any>(
   url: string,
@@ -35,7 +19,7 @@ const get = <T = any>(
 
 const post = <T = any>(
   url: string,
-  data: { [key: string]: any },
+  data: { [key: string]: any } = {},
   httpConfig: AxiosRequestConfig = defaultHttpConfig,
 ): Promise<AxiosResponse<T>> =>
   new Promise((resolve, reject) => {

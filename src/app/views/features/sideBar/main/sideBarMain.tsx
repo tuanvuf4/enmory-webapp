@@ -18,11 +18,11 @@ export const SideBarMain: React.FC = () => {
         </Link>
       </div>
 
-      <div className={classes.slogan}>
+      {/* <div className={classes.slogan}>
         <h2>
           <span>Learn English</span> <br /> the way you like!
         </h2>
-      </div>
+      </div> */}
 
       <MainMenu direction='vertical' toggleDrawler></MainMenu>
     </div>

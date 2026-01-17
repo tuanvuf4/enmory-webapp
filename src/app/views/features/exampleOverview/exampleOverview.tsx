@@ -3,7 +3,7 @@ import { SyncOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { useAppDispatch, useAppSelector } from '@/core/hooks'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IExample } from '@/models/item.model'
-import { exampleApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { exampleAsync } from '@/store/async/example.async'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -35,11 +35,14 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
   const { randomExamples } = useAppSelector((state) => state.example)
   const { configuration } = useAppSelector((state) => state.auth.user)
 
+  console.log(`*** randomExamples *** `, randomExamples)
+
   const { openNotification } = usePrompt()
 
   const [keyword, setKeyword] = useState<string>('')
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
   const [selected, setSelected] = useState<IExample>()
+  const [currentPage, setCurrentPage] = useState<number>(0)
 
   const { options } = useAutoComplete(keyword, 'example')
 
@@ -51,26 +54,36 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
 
   const onSelect = (option: any) => {
     dispatch(exampleAction.setSelectedExample(option.id))
-    exampleApi.getExampleById(option.id).then(({ content }) => {
+    apiFactory.example.getExampleById(option.id).then(({ content }) => {
       setValue('query', '')
       setSelected(content)
     })
   }
 
   const getRandomExamples = () => {
+    setIsLoaded(false)
+    setSelected(undefined)
+    const nextPage = currentPage + 1
     dispatch(
       exampleAsync.fetchRandomExample({
-        page: 0,
+        page: nextPage,
         size: configuration.numberOfExampleReview,
       }),
-    ).then(() => {
-      setIsLoaded(true)
-    })
+    )
+      .then(() => {
+        setCurrentPage(nextPage)
+        setIsLoaded(true)
+      })
+      .catch((error) => {
+        console.error('Error fetching random examples:', error)
+        openNotification({ type: 'error', message: 'Failed to fetch examples' })
+        setIsLoaded(true)
+      })
   }
 
   const onEdit = async (id: number) => {
     try {
-      const { content } = await exampleApi.getExampleById(id)
+      const { content } = await apiFactory.example.getExampleById(id)
       dispatch(exampleAction.setSelectedExample(content))
       dispatch(settingAction.toggleExModal())
     } catch (error) {
@@ -80,7 +93,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
 
   const onDelete = async (id: number) => {
     try {
-      const { content } = await exampleApi.getExampleById(id)
+      const { content } = await apiFactory.example.getExampleById(id)
       dispatch(exampleAction.setSelectedExample(content))
       dispatch(settingAction.toggleDeleteExModal())
     } catch (error) {
@@ -171,7 +184,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
             </div>
           )}
 
-          {randomExamples.length > 0 && (
+          {randomExamples?.length > 0 && (
             <div className={clsx(exClasses.examples)}>
               <ul>
                 {randomExamples.map((example, key) => {

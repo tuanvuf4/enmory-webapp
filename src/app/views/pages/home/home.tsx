@@ -1,7 +1,7 @@
 import globalStyle from '@/style/appStyle'
 import { useAppSelector, useAppDispatch } from '@/core/hooks'
 import { transformItemModelToClient } from '@/helpers/item'
-import { itemApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { ExampleForm } from '@/views/features/exampleOverview/exampleFormAdd'
 import { ExampleOverView } from '@/views/features/exampleOverview/exampleOverview'
@@ -15,6 +15,7 @@ import { usePrompt } from '@/helpers/hooks'
 import registerStyle from '@/views/pages/register/style'
 import loginStyle from '@/views/pages/login/style'
 import { Link } from 'react-router-dom'
+import { FormSearchItem } from '@/views/features/formSearchItem/formSearchItem'
 
 const Home = () => {
   const { token } = theme.useToken()
@@ -36,7 +37,7 @@ const Home = () => {
 
   const onEdit = async (id: number) => {
     try {
-      const { content } = await itemApi.getItemById(id)
+      const { content } = await apiFactory.item.getItemById(id)
       dispatch(
         settingAction.setCurrentItem({
           ...transformItemModelToClient(content),
@@ -53,13 +54,13 @@ const Home = () => {
     <>
       {isAuth && (
         <>
-          {/* {isShowSearchFormItem && (
+          {isShowSearchFormItem && (
             <div className={gClasses.stickyBar}>
               <div className={gClasses.container}>
                 <FormSearchItem filter={false} submit={true} />
               </div>
             </div>
-          )} */}
+          )}
 
           <div className={gClasses.container}>
             <Space

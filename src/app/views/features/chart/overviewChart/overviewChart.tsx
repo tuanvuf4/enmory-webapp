@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Skeleton, theme } from 'antd'
 import styles from '../style'
-import { chartApi } from '@/services/api/chart.api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Pie } from 'react-chartjs-2'
 import { getBgColorByCatId } from '..'
@@ -45,7 +45,7 @@ export const OverviewChart: React.FC<IProps> = ({ title = 'Overview' }) => {
   }, [])
 
   useEffect(() => {
-    chartApi.getOverviewItems().then(({ content, isSuccess }) => {
+    apiFactory.chart.getOverviewItems().then(({ content, isSuccess }) => {
       if (isSuccess) {
         setData({
           labels: content.map((item) => item.label),

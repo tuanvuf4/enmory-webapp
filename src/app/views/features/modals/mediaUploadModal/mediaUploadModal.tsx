@@ -7,7 +7,7 @@ import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { EMediaSrc } from '@/models/dictation.model'
 import { IPair } from '@/models/item.model'
-import { mediaApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { actionAsyncMedia } from '@/store/async/media.async'
 import { mediaAction } from '@/store/reducers/media.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -142,8 +142,10 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
   const onSubmit = async (data: IMediaForm) => {
     try {
       isUpdating
-        ? (await mediaApi.updateMedia(data), await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)))
-        : (await mediaApi.uploadMedia(data), await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)))
+        ? (await apiFactory.media.updateMedia(data),
+          await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)))
+        : (await apiFactory.media.uploadMedia(data),
+          await dispatch(actionAsyncMedia.fetchMedias(mediaSrc)))
     } catch (error) {
       console.log(`error: `, error)
     } finally {

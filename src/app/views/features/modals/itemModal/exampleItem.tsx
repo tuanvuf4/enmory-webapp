@@ -2,7 +2,7 @@ import globalStyle from '@/style/appStyle'
 import { PlusOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IItem } from '@/models/item.model'
-import { exampleApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { theme, Space, Col, Row, Button, Switch, AutoComplete, Flex } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import { useState } from 'react'
@@ -42,7 +42,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
   }
 
   const onSelect = (idxNested: number, idxExp: number, value: string) => {
-    exampleApi.getExampleById(value).then(({ isSuccess, content }) => {
+    apiFactory.example.getExampleById(value).then(({ isSuccess, content }) => {
       if (isSuccess && content) {
         setCurrentSearch(content.original)
         setValue(`meanings.${idxNested}.examples.${idxExp}.original`, content.original)

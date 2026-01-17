@@ -1,8 +1,8 @@
-import { IHttpResponse } from '@/models/http.model'
-import { IUser, ILoginResponse, IUserConfig } from '@/models/user.model'
+import { IUserConfig } from '@/models/user.model'
+import { IUser } from '@/models/user.model'
+import { ILoginResponse } from '@/models/user.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { initUser, initAuth } from '@/services/index'
-import { actionAsyncUser } from '@/store/async/user'
 
 export interface IAuthState {
   isAuth: boolean
@@ -29,29 +29,21 @@ export const authReducer = createSlice({
         configuration: action.payload,
       }
     },
+    setGoogleAuth(state: IAuthState, action: PayloadAction<any>) {
+      state.isAuth = true
+      // Store Firebase user info if available
+      if (action.payload && action.payload.email) {
+        state.user = {
+          ...state.user,
+          email: action.payload.email,
+          firstName: action.payload.displayName || '',
+          avatar: action.payload.photoURL,
+        }
+      }
+    },
   },
-  extraReducers: (builder) => {
-    builder.addCase(
-      actionAsyncUser.login.fulfilled,
-      (state: IAuthState, action: PayloadAction<IHttpResponse<ILoginResponse>>) => {
-        state.isAuth = true
-        state.authorization = action.payload.content
-      },
-    )
-    builder.addCase(
-      actionAsyncUser.getUserInfo.fulfilled,
-      (state: IAuthState, action: PayloadAction<IHttpResponse<IUser>>) => {
-        state.isAuth = true
-        state.user = action.payload.content
-      },
-    )
-    builder.addCase(
-      actionAsyncUser.refreshToken.fulfilled,
-      (state: IAuthState, action: PayloadAction<IHttpResponse<ILoginResponse>>) => {
-        state.authorization = action.payload.content
-      },
-    )
-  },
+  // Firebase auth state is managed through Firebase auth listeners
+  // No extraReducers needed for REST API calls
 })
 
 export const authAction = authReducer.actions

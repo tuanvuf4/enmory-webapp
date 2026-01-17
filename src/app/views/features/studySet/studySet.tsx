@@ -10,7 +10,7 @@ import {
 import { ELoading } from '@/models/app.model'
 import { IItemQuiz, TQuiz, ECategory, EQuiz, IPair, IAnswer, IItem } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
-import { itemApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { itemAsync } from '@/store/async/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -131,7 +131,7 @@ export const StudySet: React.FC = () => {
         quiz: { ...item.quiz, result: result },
       }),
     )
-    await itemApi.updateItem(
+    await apiFactory.item.updateItem(
       item.id as number,
       transformItemModelToServer({
         ...rest,
@@ -168,7 +168,7 @@ export const StudySet: React.FC = () => {
 
   const onSearch = async (id: number) => {
     try {
-      const { content: item } = await itemApi.getItemById(id)
+      const { content: item } = await apiFactory.item.getItemById(id)
       dispatch(settingAction.toggleViewItemModal())
       dispatch(
         settingAction.setCurrentItem({
@@ -290,7 +290,7 @@ export const StudySet: React.FC = () => {
 
   const onEdit = async (id: number) => {
     try {
-      const { content } = await itemApi.getItemById(id as number)
+      const { content } = await apiFactory.item.getItemById(id as number)
       dispatch(settingAction.setOnEditItem(true))
       dispatch(settingAction.toggleItemModal())
       dispatch(

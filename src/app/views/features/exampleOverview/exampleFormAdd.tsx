@@ -1,6 +1,6 @@
 import { CloseOutlined, SyncOutlined } from '@ant-design/icons'
 import { IExample } from '@/models/item.model'
-import { exampleApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { theme, Space, Row, Col, Button, Select, Flex } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import { PropsWithChildren, useCallback, useEffect, useState } from 'react'
@@ -55,7 +55,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   const onSubmit = async (data: IExample) => {
     setLoading(true)
     try {
-      const { content, isSuccess } = await exampleApi.createExample(data)
+      const { content, isSuccess } = await apiFactory.example.createExample(data)
       setAnswer('')
       setLoading(false)
       setIsChecked(false)
@@ -84,7 +84,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   const getRandomExamples = useCallback(async () => {
     setLoading(true)
 
-    const { content } = await exampleApi.getRandomExamples({
+    const { content } = await apiFactory.example.getRandomExamples({
       page: 0,
       size: 1,
     })

@@ -1,5 +1,5 @@
 import { IFormSearchEx } from '@/models/formSearch.model'
-import { IHttpResponse, IHttpResponseArray } from '@/models/http.model'
+import { IHttpResponse } from '@/models/http.model'
 import { IExample } from '@/models/item.model'
 import { IPagination } from '@/models/pagination.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
@@ -117,14 +117,11 @@ export const exampleReducer = createSlice({
       })
       .addCase(
         exampleAsync.fetchExamples.fulfilled,
-        (
-          state: IExampleState,
-          action: PayloadAction<IHttpResponse<IHttpResponseArray<IExample>>>,
-        ) => {
-          state.examples = action.payload.content.data
+        (state: IExampleState, action: PayloadAction<IHttpResponse<IExample[]>>) => {
+          state.examples = action.payload.content
           state.pagination = {
             ...state.pagination,
-            ...action.payload.content.paging,
+            ...action.payload.paging,
           }
         },
       )

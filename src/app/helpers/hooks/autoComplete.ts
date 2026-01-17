@@ -1,9 +1,8 @@
 import { defaultSetting } from '@/config/appConfig'
 import { ELoading } from '@/models/app.model'
-import { IHttpResponse, IHttpResponseArray } from '@/models/http.model'
+import { IHttpResponse } from '@/models/http.model'
 import { IItem, IExample } from '@/models/item.model'
-import { exampleApi } from '@/services/api/example.api'
-import { itemApi } from '@/services/api/item.api'
+import { apiFactory } from '@/services/api/apiFactory'
 import _ from 'lodash'
 import { useState, useEffect } from 'react'
 
@@ -35,13 +34,13 @@ export const useAutoComplete = (
       handleSession = setTimeout(() => {
         setIsSearching(true)
         if (type === 'item') {
-          itemApi
+          apiFactory.item
             .getItemAutoComplete(exact ? _.merge(query, { exact }) : query, {
               headers: { loading: ELoading.NO },
             })
-            .then((response: IHttpResponse<IHttpResponseArray<IItem<string>>>) => {
+            .then((response: IHttpResponse<IItem<string>[]>) => {
               setOptions(
-                response.content.data.map((item) => ({
+                response.content.map((item) => ({
                   label: item.original,
                   value: item.original,
                 })),
@@ -53,13 +52,13 @@ export const useAutoComplete = (
         }
 
         if (type === 'example') {
-          exampleApi
+          apiFactory.example
             .getExamples(query, {
               headers: { loading: ELoading.NO },
             })
-            .then((response: IHttpResponse<IHttpResponseArray<IExample>>) => {
+            .then((response: IHttpResponse<IExample[]>) => {
               setOptions(
-                response.content.data.map((meaning) => {
+                response.content.map((meaning) => {
                   return {
                     id: meaning.id,
                     value: `${meaning.id}`,

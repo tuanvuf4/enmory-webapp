@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Skeleton, theme } from 'antd'
 import styles from '../style'
-import { chartApi } from '@/services/api/chart.api'
+import { apiFactory } from '@/services/api/apiFactory'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -56,7 +56,7 @@ export const ProgressChart: React.FC<IProps> = ({ title = 'Progress' }) => {
   const labels = ['Level 0', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5']
 
   const getApiChart = async () => {
-    const { isSuccess, content } = await chartApi.getProgressChart()
+    const { isSuccess, content } = await apiFactory.chart.getProgressChart()
     if (isSuccess) {
       setIsLoaded(true)
       setData({

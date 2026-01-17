@@ -6,11 +6,11 @@ import styles from './style'
 import globalStyle from '@/style/appStyle'
 import { useEffect, useState } from 'react'
 import { IUser } from '@/models/user.model'
-import { apiAuth } from '@/services/api/auth.api'
 import { EPageExt } from '@/models/app.model'
 import logo from '@/assets/img/logo.png'
 import { Link } from 'react-router-dom'
 import { addNewType } from '../header/menus'
+import { useAppSelector } from '@/core/hooks'
 interface IHeaderExt {
   isAuth: boolean
   onPageChange: (page: EPageExt) => void
@@ -22,7 +22,15 @@ export const HeaderExt: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) => {
   const classes = styles()
   const gClasses = globalStyle()
 
+  // Get user info from Redux state (Firebase auth)
+  const authUser = useAppSelector((state) => state.auth.user)
   const [userInfo, setUserInfo] = useState<IUser<string>>()
+
+  useEffect(() => {
+    if (authUser) {
+      setUserInfo(authUser as IUser<string>)
+    }
+  }, [authUser])
 
   const handleMenuClick: MenuProps['onClick'] = (e) => {
     if (e.key === 'logout') {
@@ -49,15 +57,6 @@ export const HeaderExt: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) => {
     items: addNewType,
     onClick: handleAddMenuClick,
   }
-
-  useEffect(() => {
-    const getUserInfo = async () => {
-      const { content } = await apiAuth.getUserInfo()
-      setUserInfo(content)
-    }
-
-    getUserInfo()
-  }, [])
 
   return (
     <Layout.Header className={classes.header}>

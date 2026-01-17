@@ -1,5 +1,3 @@
-import { useState } from 'react'
-import { useGoogleLogin } from '@react-oauth/google'
 import { Button, Col, Input, Radio, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
 import { Controller, useForm } from 'react-hook-form'
@@ -8,8 +6,8 @@ import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons'
 import globalStyle from '@/style/appStyle'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { IUser } from '@/models/user.model'
-import { apiAuth } from '@/services/api'
 import { initRegisterForm } from '@/services/registerForm'
+import { useFirebaseAuth } from '@/core/hooks'
 
 import logo from '@/assets/img/logo.png'
 import styles from './style'
@@ -21,20 +19,23 @@ export const RegisterForm = ({ showBanner = true }) => {
   const classes = styles()
   const gClasses = globalStyle()
 
-  const [isRegistered, setIsRegistered] = useState<boolean>(false)
-  const [registerSuccess, setRegisterSuccess] = useState<boolean>(false)
-  const [registerMsg, setRegisterMsg] = useState<string>('')
+  const {
+    register: registerUser,
+    errorMsg,
+    isLoading: firebaseLoading,
+    firebaseError,
+    isRegistered,
+    registerSuccess,
+    registerMsg,
+    setIsRegistered,
+  } = useFirebaseAuth()
 
   const { control, handleSubmit } = useForm<IUser>({
     defaultValues: initRegisterForm,
   })
 
-  const handleOk = (data: IUser) => {
-    apiAuth.register(data).then((response) => {
-      setIsRegistered(true)
-      setRegisterMsg(response.message)
-      response.isSuccess ? setRegisterSuccess(true) : setRegisterSuccess(false)
-    })
+  const handleOk = async (data: IUser) => {
+    await registerUser(data)
   }
 
   // const googleLogin = useGoogleLogin({
@@ -212,11 +213,34 @@ export const RegisterForm = ({ showBanner = true }) => {
                 </Col>
               </Row>
 
+              {errorMsg && (
+                <Row align={'middle'}>
+                  <Col span={24}>
+                    <p className={classNames(gClasses.errorMsg, gClasses.textLeft)}>{errorMsg}</p>
+                  </Col>
+                </Row>
+              )}
+
+              {firebaseError && (
+                <Row align={'middle'}>
+                  <Col span={24}>
+                    <p className={classNames(gClasses.errorMsg, gClasses.textLeft)}>
+                      {firebaseError}
+                    </p>
+                  </Col>
+                </Row>
+              )}
+
               <Row justify={'center'} gutter={[token.size, token.size]}>
                 <Col span={24}>
                   <div className={classNames([classesLogin.btnSubmit])}>
-                    <Button className={gClasses.fulWidth} type='primary' htmlType='submit'>
-                      register
+                    <Button
+                      className={gClasses.fulWidth}
+                      type='primary'
+                      htmlType='submit'
+                      loading={firebaseLoading}
+                    >
+                      {firebaseLoading ? 'Registering...' : 'register'}
                     </Button>
                   </div>
                 </Col>
@@ -245,10 +269,7 @@ export const RegisterForm = ({ showBanner = true }) => {
                   </Row>
 
                   <Row gutter={[token.size, token.size]}>
-                    <Col span={12}>
-                      <Button className={gClasses.fulWidth}>Facebook</Button>
-                    </Col>
-                    <Col span={12}>
+                    <Col span={24}>
                       <Button className={gClasses.fulWidth} onClick={() => {}}>
                         Google
                       </Button>

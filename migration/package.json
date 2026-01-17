@@ -1,0 +1,28 @@
+{
+  "name": "enmory-migration",
+  "version": "1.0.0",
+  "description": "MySQL to Firebase Firestore migration tool for enmory_webapp",
+  "type": "module",
+  "main": "migration.js",
+  "scripts": {
+    "migrate": "node migration.js",
+    "validate": "node validateSchema.js"
+  },
+  "keywords": [
+    "firebase",
+    "firestore",
+    "migration",
+    "mysql",
+    "database"
+  ],
+  "author": "Enmory Team",
+  "license": "MIT",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "mysql2": "^3.6.5",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

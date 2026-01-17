@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/core/hooks'
 import { isDefect, getCategory } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
 import { IItem, ECategory } from '@/models/item.model'
-import { appApi, itemApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { initSearchFormItem } from '@/services/index'
 import { itemAsync } from '@/store/async/item.async'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
@@ -151,7 +151,7 @@ export const Item: React.FC<IProps> = ({
       created_date: now,
       last_update: now,
     }
-    itemApi.updateItem(data.id as number, { ...newData })
+    apiFactory.item.updateItem(data.id as number, { ...newData })
     dispatch(itemAction.update({ ...data, ...newData }))
     dispatch(studySetAction.update({ ...data, ...newData }))
     dispatch(iotdAction.update({ ...data, ...newData }))
@@ -160,7 +160,7 @@ export const Item: React.FC<IProps> = ({
 
   const onRedo = (data: IItem) => {
     const level = data.level === 5 ? 0 : 5
-    itemApi.updateItem(data.id as number, { level })
+    apiFactory.item.updateItem(data.id as number, { level })
     dispatch(itemAction.update({ ...data, level }))
     dispatch(studySetAction.update({ ...data, level }))
     dispatch(iotdAction.update({ ...data, level }))
@@ -169,7 +169,7 @@ export const Item: React.FC<IProps> = ({
 
   const archive = (data: IItem) => {
     const archive = !data.archive
-    itemApi.updateItem(data.id as number, { archive })
+    apiFactory.item.updateItem(data.id as number, { archive })
     dispatch(itemAction.update({ ...data, archive }))
     dispatch(studySetAction.update({ ...data, archive }))
     dispatch(iotdAction.update({ ...data, archive }))
@@ -177,7 +177,7 @@ export const Item: React.FC<IProps> = ({
   }
 
   const markItem = async (id: number) => {
-    const { isSuccess, content } = await appApi.markIotd({
+    const { isSuccess, content } = await apiFactory.app.markIotd({
       isMarked: true,
       itemId: id,
       date: Date.now(),

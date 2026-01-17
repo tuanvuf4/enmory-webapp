@@ -17,5 +17,5 @@ export const shouldRefreshToken = (expiredIn: number): boolean => {
 export const getTokenExpirationTime = (expiredIn: number): number => {
   if (expiredIn === -1) return 0
   // Return the expiration time as timestamp
-  return Date.now() + (expiredIn * 1000)
+  return Date.now() + expiredIn * 1000
 }

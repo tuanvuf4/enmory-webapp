@@ -1,7 +1,7 @@
 import { Button, Flex, Radio, Table, TableColumnsType } from 'antd'
 import globalStyle, { appStyleConfig } from '@/style/appStyle'
 import { useEffect, useState } from 'react'
-import { appApi, itemApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { ECategory, IIotd } from '@/models/item.model'
 import { getCategory, transformItemModelToClient } from '@/helpers/item'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -65,14 +65,12 @@ const Marker = () => {
   const [range, setRange] = useState<[number, number]>(dateRange[1].value)
   const [currentDate, setCurrentDate] = useState<number>(Number(dateRange[1].id || 0))
 
-  console.log(`******* dateRange ******* `, dateRange)
-
   const dispatch = useAppDispatch()
 
   const gClasses = globalStyle()
 
   const onView = async (id: number) => {
-    const { isSuccess, content: item } = await itemApi.getItemById(id)
+    const { isSuccess, content: item } = await apiFactory.item.getItemById(id)
     if (isSuccess) {
       dispatch(settingAction.toggleViewItemModal())
       dispatch(
@@ -84,7 +82,7 @@ const Marker = () => {
   }
 
   const fetchMarkedIotd = async (range: [number, number]) => {
-    const { isSuccess, content } = await appApi.getIotdRange({
+    const { isSuccess, content } = await apiFactory.app.getIotdRange({
       isMarked: true,
       from: dateTimeUtils.getStartOfDateUTC(range[0]),
       to: dateTimeUtils.getEndOfDateUTC(range[1]),
@@ -120,7 +118,7 @@ const Marker = () => {
                       }}
                       onClick={async (e) => {
                         e.stopPropagation()
-                        await appApi.deleteMarkIotd(value.id)
+                        await apiFactory.app.deleteMarkIotd(value.id)
                         await fetchMarkedIotd(range)
                       }}
                     />

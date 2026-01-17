@@ -20,7 +20,10 @@ const useErrorHandlerRequest = () => {
   const isRefreshing = useRef(false)
   const failedQueue = useRef<any[]>([])
 
-  const processQueue = (error: any, tokenData: { token: string; tokenType: string } | null = null) => {
+  const processQueue = (
+    error: any,
+    tokenData: { token: string; tokenType: string } | null = null,
+  ) => {
     failedQueue.current.forEach((prom) => {
       if (error) {
         prom.reject(error)

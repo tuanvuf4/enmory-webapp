@@ -1,7 +1,7 @@
 import { httpConfig } from '@/config/httpConfig'
 import { http } from '@/core/http'
 import { AppOrderQuery, AppOrderByQuery } from '@/models/app.model'
-import { IHttpResponse, IHttpResponseArray } from '@/models/http.model'
+import { IHttpResponse } from '@/models/http.model'
 import { IItem, IItemQuiz } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
 
@@ -20,16 +20,14 @@ export interface IItemRequestData {
 
 const getItems = async (params: IItemRequestData, config = {}) => {
   return http
-    .get<
-      IHttpResponse<IHttpResponseArray<IItem<string>>>
-    >(httpConfig.apiEndPoint.item.root, params, config)
+    .get<IHttpResponse<IItem<string>[]>>(httpConfig.apiEndPoint.item.root, params, config)
     .then((resp) => resp.data)
 }
 
 const getItemAutoComplete = async (params: IItemRequestData, config = {}) => {
   return http
     .get<
-      IHttpResponse<IHttpResponseArray<IItem<string>>>
+      IHttpResponse<IItem<string>[]>
     >(httpConfig.apiEndPoint.item.root + httpConfig.apiEndPoint.item.children.autoComplete, params, config)
     .then((resp) => resp.data)
 }

@@ -1,7 +1,7 @@
 import globalStyle from '@/style/appStyle'
 import { MenuOutlined, SearchOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons'
 import { useAppSelector, useAppDispatch } from '@/core/hooks'
-import { authAction } from '@/store/reducers/auth.reducer'
+import { useAuthLogout } from '@/core/hooks/useAuthLogout'
 import { configAction } from '@/store/reducers/config.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { mediaAction } from '@/store/reducers/media.reducer'
@@ -26,10 +26,11 @@ export const AppHeader = () => {
   const { isShowSearchFormItem } = useAppSelector((state) => state.setting)
 
   const dispatch = useAppDispatch()
+  const { logout } = useAuthLogout()
 
   const navigate = useNavigate()
 
-  const handleMenuClick: MenuProps['onClick'] = (e) => {
+  const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
       case 'profile':
         navigate('/profile')
@@ -40,11 +41,12 @@ export const AppHeader = () => {
         break
 
       case 'logout':
-        dispatch(authAction.logOut())
+        // Clear Redux state before logout
         dispatch(studySetAction.resetStudySet())
         dispatch(iotdAction.resetIotd())
         dispatch(mediaAction.reset())
-        navigate('/login')
+        // Call complete logout (Firebase + auth state + redirect)
+        await logout()
         break
 
       default:

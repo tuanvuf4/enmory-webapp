@@ -14,6 +14,7 @@ export enum EAppType {
 export const appConfig = {
   appName: 'Enmory',
   appType: import.meta.env.VITE_APP_TYPE as EAppType,
+  apiSource: import.meta.env.VITE_API_SOURCE,
   env: import.meta.env.MODE, // development | production
   localKeyEncode: import.meta.env.LOCAL_KEY_TRANSFORM,
   googleAuth: {
@@ -24,6 +25,15 @@ export const appConfig = {
     auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
     client_secret: import.meta.env.GOOGLE_AUTH_CLIENT_SECRET,
     redirect_uris: ['http://localhost:3000'],
+  },
+  firebase: {
+    apiKey: 'AIzaSyB4JZo53vES8993sqEdgCk-X5YawCi4DJQ',
+    authDomain: 'enmory-6b68e.firebaseapp.com',
+    projectId: 'enmory-6b68e',
+    storageBucket: 'enmory-6b68e.firebasestorage.app',
+    messagingSenderId: '192878645386',
+    appId: '1:192878645386:web:a6ebccf595a9a07c069d73',
+    measurementId: 'G-T1W134T0YE',
   },
   references: [
     {

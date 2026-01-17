@@ -2,10 +2,8 @@ import { Col, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
 import globalStyle from '@/style/appStyle'
 import styles from './style'
-import { useAppDispatch, useAppSelector } from '@/core/hooks/redux'
+import { useAppSelector } from '@/core/hooks/redux'
 import { ManOutlined, WomanOutlined } from '@ant-design/icons'
-import { useEffect } from 'react'
-import { actionAsyncUser } from '@/store/async/user'
 import { AddedItemChart } from '@/views/features/chart/addedItemChart/addedItemChart'
 import { OverviewChart } from '@/views/features/chart/overviewChart/overviewChart'
 import { ProgressChart } from '@/views/features/chart/progressChart/progressChart'
@@ -16,13 +14,8 @@ const Profile = () => {
   const classes = styles()
   const gClasses = globalStyle()
 
+  // User info comes from Firebase auth state
   const { user } = useAppSelector((state) => state.auth)
-
-  const dispatch = useAppDispatch()
-
-  useEffect(() => {
-    dispatch(actionAsyncUser.getUserInfo())
-  }, [])
 
   return (
     <div className={gClasses.container}>

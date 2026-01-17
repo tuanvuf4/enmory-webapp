@@ -3,7 +3,7 @@ import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { transformItemModelToClient, isDefect, getCategory, getTypeOfItem } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
 import { ECategory, EType } from '@/models/item.model'
-import { itemApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { itemAsync } from '@/store/async/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -38,7 +38,7 @@ export const Library: React.FC = () => {
   const onDelete = (id: number) => {
     confirmDeleteModal({
       onOk: () => {
-        itemApi.deleteItem(id).then(() => {
+        apiFactory.item.deleteItem(id).then(() => {
           dispatch(itemAction.removeItem(id))
         })
       },
@@ -47,7 +47,7 @@ export const Library: React.FC = () => {
 
   const onEdit = async (id: number) => {
     try {
-      const { content } = await itemApi.getItemById(id)
+      const { content } = await apiFactory.item.getItemById(id)
       dispatch(settingAction.setOnEditItem(true))
       dispatch(settingAction.toggleItemModal())
       dispatch(
@@ -61,7 +61,7 @@ export const Library: React.FC = () => {
   }
 
   const onView = async (id: number) => {
-    const { isSuccess, content: item } = await itemApi.getItemById(id)
+    const { isSuccess, content: item } = await apiFactory.item.getItemById(id)
     if (isSuccess) {
       dispatch(settingAction.toggleViewItemModal())
       dispatch(

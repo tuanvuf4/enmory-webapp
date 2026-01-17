@@ -3,6 +3,10 @@ import { PersistConfig, createMigrate, persistReducer } from 'redux-persist'
 import autoMergeLevel2 from 'redux-persist/es/stateReconciler/autoMergeLevel2'
 import localStorage from 'redux-persist/lib/storage'
 import { authReducer, IAuthState, initialState as initialAuthState } from './reducers/auth.reducer'
+import firebaseAuthReducer, {
+  AuthState as IFirebaseAuthState,
+  initialState as initialFirebaseAuthState,
+} from './reducers/auth'
 import {
   configReducer,
   IConfigState,
@@ -37,6 +41,7 @@ import {
 
 export interface IAppState {
   auth: IAuthState
+  firebaseAuth: IFirebaseAuthState
   items: IItemsState
   config: IConfigState
   setting: ISettingState
@@ -48,6 +53,7 @@ export interface IAppState {
 
 const initialState: IAppState = {
   auth: initialAuthState,
+  firebaseAuth: initialFirebaseAuthState,
   items: initialItemsState,
   config: initialConfigState,
   setting: initialSettingState,
@@ -61,7 +67,7 @@ const persistConfig: PersistConfig<IAppState> = {
   version: 6,
   key: 'root',
   storage: localStorage,
-  blacklist: ['items', 'setting', 'media', 'example', 'iotd'],
+  blacklist: ['items', 'setting', 'media', 'example', 'iotd', 'firebaseAuth'],
   stateReconciler: autoMergeLevel2,
   // transforms: [{ in: (es) => es, out: (es) => es }],
   migrate: createMigrate({
@@ -83,6 +89,7 @@ const persistConfig: PersistConfig<IAppState> = {
 
 const rootReducers = combineReducers({
   auth: authReducer.reducer,
+  firebaseAuth: firebaseAuthReducer,
   config: configReducer.reducer,
   items: itemsReducer.reducer,
   setting: settingReducer.reducer,

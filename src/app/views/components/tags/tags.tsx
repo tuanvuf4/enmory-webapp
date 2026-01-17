@@ -4,7 +4,7 @@ import { transformItemModelToClient } from '@/helpers/item'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme } from 'antd'
 import styles from './style'
-import { itemApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 
 interface IPros {
   onSearch?: (tag: string) => void
@@ -22,7 +22,7 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch }) => {
   const dispatch = useAppDispatch()
 
   const getItem = async (origin: string, exact = true) => {
-    const { isSuccess, content } = await itemApi.getItems({
+    const { isSuccess, content } = await apiFactory.item.getItems({
       keyword: origin,
       page: 0,
       size: 1,

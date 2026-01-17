@@ -7,7 +7,7 @@ import { transformItemModelToServer, transformItemModelToClient } from '@/helper
 import { isGroupWord } from '@/helpers/validate'
 import { ELoading } from '@/models/app.model'
 import { IPair, ECategory, EType, IItem } from '@/models/item.model'
-import { itemApi } from '@/services/api/item.api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { itemAsync } from '@/store/async/item.async'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { itemAction } from '@/store/reducers/items.reducer'
@@ -138,12 +138,15 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
         const batch = getBatchItem(data)
         if (onEditEvent) {
           try {
-            const updatedItem = await itemApi.updateItem(currentItem?.id as number, dataSubmit)
+            const updatedItem = await apiFactory.item.updateItem(
+              currentItem?.id as number,
+              dataSubmit,
+            )
             const pr =
               batch.length > 0
                 ? [
                     updatedItem,
-                    await itemApi.createItems(batch.map((item) => prepareDataSubmit(item))),
+                    await apiFactory.item.createItems(batch.map((item) => prepareDataSubmit(item))),
                   ]
                 : [updatedItem]
             const [{ content }] = await Promise.all(pr)
@@ -177,12 +180,12 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
           }
         } else {
           try {
-            const createItem = await itemApi.createItem(dataSubmit)
+            const createItem = await apiFactory.item.createItem(dataSubmit)
             const pr =
               batch.length > 0
                 ? [
                     createItem,
-                    await itemApi.createItems(batch.map((item) => prepareDataSubmit(item))),
+                    await apiFactory.item.createItems(batch.map((item) => prepareDataSubmit(item))),
                   ]
                 : [createItem]
             const [{ isSuccess }] = await Promise.all(pr)
@@ -229,14 +232,16 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
       size: defaultSetting.numberItemOfAutoComplete * 2,
       exact: true,
     }
-    itemApi.getItemAutoComplete(params, { headers: { loading: ELoading.YES } }).then((response) => {
-      dispatch(settingAction.setOnEditItem(true))
-      dispatch(
-        settingAction.setCurrentItem({
-          ...transformItemModelToClient(response.content.data[0]),
-        }),
-      )
-    })
+    apiFactory.item
+      .getItemAutoComplete(params, { headers: { loading: ELoading.YES } })
+      .then((response) => {
+        dispatch(settingAction.setOnEditItem(true))
+        dispatch(
+          settingAction.setCurrentItem({
+            ...transformItemModelToClient(response.content.data[0]),
+          }),
+        )
+      })
   }
 
   useEffect(() => {

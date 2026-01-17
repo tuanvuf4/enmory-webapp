@@ -85,11 +85,11 @@ export const itemsReducer = createSlice({
     builder
       .addCase(
         itemAsync.fetchItems.fulfilled,
-        (state: IItemsState, action: PayloadAction<IHttpResponse<IHttpResponseArray<IItem>>>) => {
-          state.listItem = action.payload.content.data
+        (state: IItemsState, action: PayloadAction<IHttpResponse<IItem[]>>) => {
+          state.listItem = action.payload.content
           state.pagination = {
             ...state.pagination,
-            ...action.payload.content.paging,
+            ...action.payload.paging,
           }
         },
       )

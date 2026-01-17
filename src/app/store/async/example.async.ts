@@ -1,11 +1,11 @@
 import { IExampleQuery } from '@/app/models/example.model'
-import { exampleApi } from '@/app/services/api/example.api'
+import { apiFactory } from '@/app/services/api/apiFactory'
 import { createAsyncThunk } from '@reduxjs/toolkit'
 
 const fetchRandomExample = createAsyncThunk(
   'example/fetchRandomExample',
   async (query: Omit<IExampleQuery, 'keyword'>) => {
-    const examples = await exampleApi.getRandomExamples(query)
+    const examples = await apiFactory.example.getRandomExamples(query)
     if (examples.isSuccess)
       return {
         ...examples,
@@ -16,13 +16,10 @@ const fetchRandomExample = createAsyncThunk(
 )
 
 const fetchExamples = createAsyncThunk('example/fetchExamples', async (query: IExampleQuery) => {
-  const response = await exampleApi.getExamples(query)
+  const response = await apiFactory.example.getExamples(query)
   return {
     ...response,
-    content: {
-      data: response.content.data.map((example) => ({ ...example })),
-      paging: response.content.paging,
-    },
+    content: response.content.map((example) => ({ ...example })),
   }
 })
 

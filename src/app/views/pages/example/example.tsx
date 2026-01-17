@@ -1,6 +1,6 @@
 import globalStyle from '@/style/appStyle'
 import { useAppSelector, useAppDispatch } from '@/core/hooks'
-import { exampleApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { exampleAsync } from '@/store/async/example.async'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -28,7 +28,7 @@ export const Example: React.FC = () => {
 
   const onEdit = async (id: number) => {
     try {
-      const { content } = await exampleApi.getExampleById(id)
+      const { content } = await apiFactory.example.getExampleById(id)
       dispatch(exampleAction.setSelectedExample(content))
       dispatch(settingAction.toggleExModal())
     } catch (error) {
@@ -38,7 +38,7 @@ export const Example: React.FC = () => {
 
   const onDelete = async (id: number) => {
     try {
-      const { content } = await exampleApi.getExampleById(id)
+      const { content } = await apiFactory.example.getExampleById(id)
       dispatch(exampleAction.setSelectedExample(content))
       dispatch(settingAction.toggleDeleteExModal())
     } catch (error) {

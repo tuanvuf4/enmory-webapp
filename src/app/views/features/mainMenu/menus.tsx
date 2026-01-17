@@ -2,11 +2,10 @@ import {
   AreaChartOutlined,
   BookOutlined,
   CalendarOutlined,
-  CustomerServiceOutlined,
   HomeOutlined,
-  InfoCircleOutlined,
   LoginOutlined,
   PlusOutlined,
+  ReadOutlined,
   SearchOutlined,
   UserOutlined,
 } from '@ant-design/icons'
@@ -26,11 +25,11 @@ export const authMenus: MenuProps['items'] = [
     icon: <HomeOutlined className='icon' />,
     label: 'home',
   },
-  {
-    key: '4',
-    icon: <CustomerServiceOutlined className='icon' />,
-    label: 'listening',
-  },
+  // {
+  //   key: '4',
+  //   icon: <CustomerServiceOutlined className='icon' />,
+  //   label: 'listening',
+  // },
   {
     key: '5',
     icon: <BookOutlined className='icon' />,
@@ -38,7 +37,7 @@ export const authMenus: MenuProps['items'] = [
   },
   {
     key: '10',
-    icon: <BookOutlined className='icon' />,
+    icon: <ReadOutlined className='icon' />,
     label: 'Example',
   },
   {
@@ -46,11 +45,11 @@ export const authMenus: MenuProps['items'] = [
     icon: <CalendarOutlined className='icon' />,
     label: 'Marker',
   },
-  {
-    key: '7',
-    icon: <InfoCircleOutlined className='icon' />,
-    label: 'schedule',
-  },
+  // {
+  //   key: '7',
+  //   icon: <InfoCircleOutlined className='icon' />,
+  //   label: 'schedule',
+  // },
   {
     key: '6',
     icon: <AreaChartOutlined className='icon' />,

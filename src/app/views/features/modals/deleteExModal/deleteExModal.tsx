@@ -1,5 +1,5 @@
 import { useAppSelector, useAppDispatch } from '@/core/hooks'
-import { exampleApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { Modal } from 'antd'
@@ -31,7 +31,7 @@ export const DeleteExModal: React.FC = () => {
         maskClosable: false,
         closable: true,
         onOk: () => {
-          exampleApi
+          apiFactory.example
             .deleteExample(selectedExample.id as number)
             .then(() => {
               dispatch(exampleAction.filterExamples(selectedExample))

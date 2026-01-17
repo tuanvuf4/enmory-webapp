@@ -1,50 +1,70 @@
-import { httpConfig } from '@/config/httpConfig'
-import { http } from '@/core/http'
-import { IHttpResponse } from '@/models/http.model'
-import { ILogin, ILoginResponse, IUser } from '@/models/user.model'
+import { firebaseAuthService } from '@/services/firebase/authService'
 
-const getGoogleUserInfo = (access_token: string) => {
-  return http.get(
-    `https://www.googleapis.com/oauth2/v3/userinfo`,
-    {},
-    {
-      baseURL: httpConfig.baseUrl,
-      headers: {
-        Authorization: `Bearer ${access_token}`,
+/**
+ * Sign in with Google using Firebase
+ */
+const signInWithGoogle = async () => {
+  try {
+    // Authenticate with Firebase
+    const firebaseResult = await firebaseAuthService.signInWithGoogle()
+    const firebaseUser = firebaseResult.user
+    const idToken = await firebaseUser.getIdToken()
+
+    // Return Firebase authentication result
+    return {
+      status: 200,
+      message: 'Google authentication successful',
+      data: {
+        token: idToken,
+        user: {
+          id: firebaseUser.uid,
+          email: firebaseUser.email,
+          name: firebaseUser.displayName,
+          picture: firebaseUser.photoURL,
+        },
       },
-    },
-  )
-}
-const login = async (user: ILogin) => {
-  return http
-    .post<IHttpResponse<ILoginResponse>>(httpConfig.apiEndPoint.auth + '/login', user)
-    .then((resp) => resp.data)
+    }
+  } catch (error: any) {
+    console.error('Google sign in error:', error)
+    throw error
+  }
 }
 
-const register = async (user: IUser) => {
-  return http
-    .post<IHttpResponse<boolean>>(httpConfig.apiEndPoint.auth + '/register', user)
-    .then((resp) => resp.data)
+/**
+ * Sign out user from Firebase
+ */
+const signOut = async () => {
+  try {
+    // Sign out from Firebase
+    await firebaseAuthService.signOut()
+  } catch (error: any) {
+    console.error('Sign out error:', error)
+    throw error
+  }
 }
 
-const refreshToken = async (refreshToken: string) => {
-  return http
-    .post<IHttpResponse<ILoginResponse>>(httpConfig.apiEndPoint.auth + '/refresh', {
-      refresh_token: refreshToken,
-    })
-    .then((resp) => resp.data)
+/**
+ * Get current authentication token
+ */
+const getAuthToken = async () => {
+  try {
+    return await firebaseAuthService.getIdToken()
+  } catch (error) {
+    console.error('Get auth token error:', error)
+    return null
+  }
 }
 
-const getUserInfo = async () => {
-  return http
-    .get<IHttpResponse<IUser<string>>>(httpConfig.apiEndPoint.auth + '/me')
-    .then((resp) => resp.data)
+/**
+ * Check if user is authenticated
+ */
+const isAuthenticated = () => {
+  return firebaseAuthService.isAuthenticated()
 }
 
 export const apiAuth = {
-  getUserInfo,
-  getGoogleUserInfo,
-  login,
-  register,
-  refreshToken,
+  signInWithGoogle,
+  signOut,
+  getAuthToken,
+  isAuthenticated,
 }

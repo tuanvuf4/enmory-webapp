@@ -2,7 +2,7 @@ import globalStyle from '@/style/appStyle'
 import { defaultSetting } from '@/config/appConfig'
 import { useAppDispatch, useAppSelector } from '@/core/hooks'
 import { EMediaSrc, EListeningTypes } from '@/models/dictation.model'
-import { mediaApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { actionAsyncMedia } from '@/store/async/media.async'
 import { mediaAction } from '@/store/reducers/media.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -55,7 +55,7 @@ export const Listening = () => {
   }
 
   const onDelete = (id: number) => {
-    mediaApi.removeMedia(id).then(() => {
+    apiFactory.media.removeMedia(id).then(() => {
       dispatch(mediaAction.remove(id))
     })
   }

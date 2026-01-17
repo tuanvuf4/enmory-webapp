@@ -1,16 +1,12 @@
-import { msgErrors } from '@/constant/index'
 import globalStyle from '@/style/appStyle'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { appConfig, EAppType } from '@/config/appConfig'
-import { useAppDispatch } from '@/core/hooks'
+import { useFirebaseAuth } from '@/core/hooks'
 import { IHttpResponse } from '@/models/http.model'
-import { ILoginResponse, ILogin, IUser } from '@/models/user.model'
-import { PayloadAction } from '@reduxjs/toolkit'
-import { actionAsyncUser } from '@/store/async/user'
+import { ILoginResponse, ILogin } from '@/models/user.model'
 import { theme, Space, Row, Col, Input, Button } from 'antd'
-import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import styles from './style'
 
 import logo from '@/assets/img/logo.png'
@@ -26,11 +22,13 @@ export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
   const classes = styles()
   const gClasses = globalStyle()
 
-  const [errorMsg, setErrorMsg] = useState<string>('')
-
-  const dispatch = useAppDispatch()
-
-  const navigate = useNavigate()
+  const {
+    login,
+    loginWithGoogle,
+    errorMsg,
+    isLoading: firebaseLoading,
+    firebaseError,
+  } = useFirebaseAuth({ onLoginSuccess: onLogin })
 
   const { control, handleSubmit } = useForm<ILogin>({
     defaultValues: {
@@ -40,39 +38,12 @@ export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
   })
 
   const onSubmit = async (data: ILogin) => {
-    const result = await (dispatch(actionAsyncUser.login(data)) as Promise<
-      PayloadAction<IHttpResponse<ILoginResponse>>
-    >)
-    if (result.payload && result.payload?.isSuccess) {
-      setErrorMsg('')
-      if (onLogin) onLogin(result.payload)
-      const resultUser = await (dispatch(actionAsyncUser.getUserInfo()) as Promise<
-        PayloadAction<IHttpResponse<IUser>>
-      >)
-      if (resultUser.payload && resultUser.payload.isSuccess) {
-        navigate('/')
-      }
-    } else if (!result.payload) {
-      setErrorMsg(msgErrors.login.fail)
-    } else {
-      setErrorMsg('')
-    }
+    await login(data)
   }
 
-  // const googleLogin = useGoogleLogin({
-  //   flow: 'auth-code',
-  //   onSuccess: (credentialResponse) => {
-  //     console.log('credentialResponse: ', credentialResponse)
-  //     if (credentialResponse) {
-  //       // getGoogleUserInfo(credentialResponse.credential).then((resp) => {
-  //       // console.log('resp: ', resp);
-  //       // });
-  //     }
-  //   },
-  //   onError: () => {
-  //     console.log('Login Failed')
-  //   },
-  // })
+  const handleGoogleLogin = async () => {
+    await loginWithGoogle()
+  }
 
   return (
     <div className={classes.loginForm}>
@@ -97,7 +68,8 @@ export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
                       prefix={<UserOutlined />}
                       value={value}
                       onChange={onChange}
-                      placeholder='Username'
+                      placeholder='Username or Email'
+                      type='text'
                     />
                   )}
                 />
@@ -121,13 +93,22 @@ export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
               </Col>
             </Row>
 
-            {errorMsg && <p className={clsx(gClasses.errorMsg, gClasses.textLeft)}>{errorMsg}</p>}
+            {/* {errorMsg && <p className={clsx(gClasses.errorMsg, gClasses.textLeft)}>{errorMsg}</p>} */}
+
+            {firebaseError && (
+              <p className={clsx(gClasses.errorMsg, gClasses.textCenter)}>{firebaseError}</p>
+            )}
 
             <Row justify={'center'}>
               <Col span={24}>
                 <div className={clsx(classes.btnSubmit)}>
-                  <Button className={gClasses.fulWidth} type='primary' htmlType='submit'>
-                    login
+                  <Button
+                    className={gClasses.fulWidth}
+                    type='primary'
+                    htmlType='submit'
+                    loading={firebaseLoading}
+                  >
+                    {firebaseLoading ? 'Logging in...' : 'Login'}
                   </Button>
                 </div>
               </Col>
@@ -145,26 +126,22 @@ export const LoginForm: React.FC<Login> = ({ onLogin, showBanner = true }) => {
               </Row>
             )}
 
-            {appConfig.env === 'development' && (
-              <>
-                <Row justify={'center'}>
-                  <Col span={24}>
-                    <div className={classes.otherLoginMethod}>
-                      <h3>Log in with</h3>
-                    </div>
-                  </Col>
-                </Row>
+            {/* Google Login Section */}
+            <Row justify={'center'}>
+              <Col span={24}>
+                <div className={classes.otherLoginMethod}>
+                  <h3>Or continue with</h3>
+                </div>
+              </Col>
+            </Row>
 
-                <Row gutter={[token.size, token.size]}>
-                  <Col span={12}>
-                    <Button className={gClasses.fulWidth}>Facebook</Button>
-                  </Col>
-                  <Col span={12}>
-                    <Button className={gClasses.fulWidth}>Google</Button>
-                  </Col>
-                </Row>
-              </>
-            )}
+            <Row justify={'center'}>
+              <Col span={24}>
+                <Button className={gClasses.fulWidth} onClick={handleGoogleLogin}>
+                  Google
+                </Button>
+              </Col>
+            </Row>
           </Space>
         </form>
       </div>

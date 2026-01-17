@@ -19,7 +19,7 @@ import {
 } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { EType, ECategory } from '@/models/item.model'
-import { itemApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { initSearchFormItem, allSelect } from '@/services/index'
 import { itemAsync } from '@/store/async/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'

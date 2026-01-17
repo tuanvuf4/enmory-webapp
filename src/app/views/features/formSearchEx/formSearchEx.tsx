@@ -11,7 +11,7 @@ import { useAppSelector, useAppDispatch } from '@/core/hooks'
 import { useAutoComplete } from '@/helpers/hooks'
 import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from '@/models/app.model'
 import { IFormSearchEx } from '@/models/formSearch.model'
-import { exampleApi } from '@/services/api'
+import { apiFactory } from '@/services/api/apiFactory'
 import { initSearchFormEx } from '@/services/index'
 import { exampleAsync } from '@/store/async/example.async'
 import { exampleAction } from '@/store/reducers/example.reducer'
@@ -44,7 +44,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const { options, isSearching } = useAutoComplete(keyword, 'example')
 
   const onSelect = (value: string) => {
-    exampleApi.getExampleById(value).then((resp) => {
+    apiFactory.example.getExampleById(value).then((resp) => {
       reset({ ...initSearchFormEx, keyword: '' })
       dispatch(exampleAction.setExample([resp.content]))
       dispatch(

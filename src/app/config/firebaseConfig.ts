@@ -7,6 +7,15 @@ import { appConfig } from './appConfig'
 // Initialize Firebase
 export const app = initializeApp({ ...appConfig.firebase })
 
+export const fbCollections = {
+  users: 'users',
+  studySets: 'studySets',
+  items: 'items',
+  examples: 'examples',
+  iotd: 'iotd',
+  configuration: 'configuration',
+}
+
 // Get Firebase services
 export const auth = getAuth(app)
 export const db = getFirestore(app)

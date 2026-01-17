@@ -1,7 +1,7 @@
 import { IHttpResponse } from '@/app/models/http.model'
 import { IItem, IIotd, ECategory } from '@/app/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { actionAsyncApp } from '../async/app.async'
+import { actionAsyncApp } from '../asyncActions/app.async'
 
 export interface IIotdState {
   word: IItem | null

@@ -4,7 +4,7 @@ import { transformItemModelToClient, isDefect, getCategory, getTypeOfItem } from
 import { EViewMode } from '@/models/app.model'
 import { ECategory, EType } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
-import { itemAsync } from '@/store/async/item.async'
+import { itemAsync } from '@/store/asyncActions/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { AlertDefectItem } from '@/views/features/alertDefectItem/alertDefectItem'

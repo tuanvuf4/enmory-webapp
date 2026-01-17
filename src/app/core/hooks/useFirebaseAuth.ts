@@ -1,17 +1,23 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from '@/core/hooks'
-import { signInWithEmail, signInWithGoogle, registerWithEmail } from '@/store/reducers/auth.reducer'
+import {
+  signInWithEmail,
+  signInWithGoogle,
+  registerWithEmail,
+  getUserConfig,
+} from '@/store/reducers/auth.reducer'
 import { authAction } from '@/store/reducers/auth.reducer'
 import { ILogin, IUser } from '@/models/user.model'
 
 interface UseFirebaseAuthOptions {
   onRegisterSuccess?: () => void
+  onLoginSuccess?: (user: IUser) => void
   redirectAfterSuccess?: boolean
 }
 
 export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
-  const { onRegisterSuccess, redirectAfterSuccess = true } = options
+  const { onRegisterSuccess, onLoginSuccess, redirectAfterSuccess = true } = options
 
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -58,14 +64,17 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
     try {
       const result = await dispatch(signInWithGoogle() as any)
 
-      if (result.payload?.user) {
-        dispatch(authAction.setGoogleAuth(result.payload.user))
+      console.log(`*** result *** `, result)
+
+      if (result.payload?.uid) {
+        dispatch(authAction.setGoogleAuth(result.payload.uid))
+        onLoginSuccess?.(result.payload)
 
         // Firebase authentication successful
         if (redirectAfterSuccess) {
           navigate('/')
         }
-        return { success: true, user: result.payload.user }
+        return { success: true, user: result.payload }
       } else if (result.payload?.error) {
         const error = result.payload.error
         setErrorMsg(error)

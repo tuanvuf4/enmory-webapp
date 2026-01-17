@@ -1,7 +1,7 @@
 import { IHttpResponse } from '@/app/models/http.model'
 import { IItemQuiz, TQuiz, IQuiz, IPair } from '@/app/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { itemAsync } from '../async/item.async'
+import { itemAsync } from '../asyncActions/item.async'
 
 export interface IStudySetStatus {
   currentIndex: number

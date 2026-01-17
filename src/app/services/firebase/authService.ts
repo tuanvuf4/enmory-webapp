@@ -17,7 +17,8 @@ import {
   UserCredential,
 } from 'firebase/auth'
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore'
-import { app as firebaseApp } from '@/config/firebaseConfig'
+import { fbCollections, app as firebaseApp } from '@/config/firebaseConfig'
+import { IUserConfig } from '@/models/user.model'
 
 export interface IAuthUser {
   uid: string
@@ -38,7 +39,7 @@ export interface IUserProfile {
   createdAt: number
   updatedAt: number
   provider: string
-  configuration?: any // User configuration/preferences
+  configuration: IUserConfig | null // User configuration/preferences
 }
 
 /**
@@ -185,6 +186,7 @@ export class FirebaseAuthService {
           createdAt: Date.now(),
           updatedAt: Date.now(),
           provider: 'google',
+          configuration: null,
         }
 
         await setDoc(userDocRef, userProfile)

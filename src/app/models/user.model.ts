@@ -8,7 +8,7 @@ export interface ILoginResponse {
 }
 
 export interface IUserConfig<R = number[]> {
-  id?: number
+  userId?: number
   numberOfWordsInStudySet: number
   numberOfPhraseInStudySet: number
   numberOfIdiomInStudySet: number

@@ -3,7 +3,7 @@ import { IHttpResponse } from '@/models/http.model'
 import { IExample } from '@/models/item.model'
 import { IPagination } from '@/models/pagination.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { exampleAsync } from '@/store/async/example.async'
+import { exampleAsync } from '@/store/asyncActions/example.async'
 import { initSearchFormEx } from '@/services/index'
 
 export interface IExampleState {

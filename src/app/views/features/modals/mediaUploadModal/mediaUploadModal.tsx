@@ -9,7 +9,7 @@ import { EMediaSrc } from '@/models/dictation.model'
 import { IPair } from '@/models/item.model'
 // TODO: Media API not implemented in Firebase yet
 // import { mediaApi } from '@/services/firebase/api/media.api'
-import { actionAsyncMedia } from '@/store/async/media.async'
+import { actionAsyncMedia } from '@/store/asyncActions/media.async'
 import { mediaAction } from '@/store/reducers/media.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme, Input, UploadProps, Modal, Space, Row, Col, Radio, Upload, Button } from 'antd'

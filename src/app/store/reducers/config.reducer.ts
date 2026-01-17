@@ -2,7 +2,7 @@ import { EViewMode, EViewPort } from '@/models/app.model'
 import { IHttpResponse } from '@/models/http.model'
 import { IPair, ECategory, EType } from '@/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { actionAsyncApp } from '@/store/async/app.async'
+import { actionAsyncApp } from '@/store/asyncActions/app.async'
 
 export interface IConfigState {
   isSidebarOpened: boolean

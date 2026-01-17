@@ -1,7 +1,7 @@
 import globalStyle from '@/style/appStyle'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { exampleApi } from '@/services/firebase/api/example.api'
-import { exampleAsync } from '@/store/async/example.async'
+import { exampleAsync } from '@/store/asyncActions/example.async'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { IDataOnChange, Pagination } from '@/views/components/pagination/pagination'

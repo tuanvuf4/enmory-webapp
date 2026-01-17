@@ -5,7 +5,7 @@ import { IItem } from '@/app/models/item.model'
 import { IPagination } from '@/app/models/pagination.model'
 import { initSearchFormItem } from '@/app/services'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { itemAsync } from '../async/item.async'
+import { itemAsync } from '../asyncActions/item.async'
 
 export interface IItemsState {
   listItem: IItem[]

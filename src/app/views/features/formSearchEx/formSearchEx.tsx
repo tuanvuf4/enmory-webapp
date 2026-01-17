@@ -13,7 +13,7 @@ import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from '@/
 import { IFormSearchEx } from '@/models/formSearch.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import { initSearchFormEx } from '@/services/index'
-import { exampleAsync } from '@/store/async/example.async'
+import { exampleAsync } from '@/store/asyncActions/example.async'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { theme, AutoComplete, Input, Dropdown, Select, Button } from 'antd'
 import { useEffect } from 'react'

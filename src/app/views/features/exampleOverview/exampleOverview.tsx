@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from '@/core/hooks'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IExample } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
-import { exampleAsync } from '@/store/async/example.async'
+import { exampleAsync } from '@/store/asyncActions/example.async'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme, Skeleton, Button, AutoComplete, Input } from 'antd'
@@ -15,6 +15,7 @@ import styles from './style'
 import exStyles from '@/views/features/item/style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
+import { appConfig, defaultSetting } from '@/config/appConfig'
 
 interface IProps {
   title?: string
@@ -35,9 +36,6 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
   const { randomExamples } = useSelector((state) => state.example)
   const { user } = useSelector((state) => state.auth)
   const configuration = user?.configuration
-
-  console.log(`*** user *** `, user)
-  console.log(`*** configuration *** `, configuration)
 
   const { openNotification } = usePrompt()
 
@@ -69,7 +67,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
     dispatch(
       exampleAsync.fetchRandomExample({
         page: nextPage,
-        size: configuration?.numberOfExampleReview,
+        size: configuration?.numberOfExampleReview || defaultSetting.studySet.numberOfExampleReview,
       }),
     )
       .then(() => {

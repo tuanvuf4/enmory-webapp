@@ -35,8 +35,6 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
   const { randomExamples } = useAppSelector((state) => state.example)
   const { configuration } = useAppSelector((state) => state.auth.user)
 
-  console.log(`*** randomExamples *** `, randomExamples)
-
   const { openNotification } = usePrompt()
 
   const [keyword, setKeyword] = useState<string>('')

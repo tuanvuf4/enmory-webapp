@@ -14,7 +14,6 @@ export enum EAppType {
 export const appConfig = {
   appName: 'Enmory',
   appType: import.meta.env.VITE_APP_TYPE as EAppType,
-  apiSource: import.meta.env.VITE_API_SOURCE,
   env: import.meta.env.MODE, // development | production
   localKeyEncode: import.meta.env.LOCAL_KEY_TRANSFORM,
   googleAuth: {

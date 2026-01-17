@@ -28,6 +28,8 @@ dist
 dist_ext
 
 # Editor directories and files
+.firebase/
+.vscode
 .vscode/*
 !.vscode/extensions.json
 .idea

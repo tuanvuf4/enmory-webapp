@@ -24,6 +24,7 @@ bootstrap.sh
 
 # build
 **.tsbuildinfo
+dist
 dist_ext
 
 # Editor directories and files

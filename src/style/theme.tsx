@@ -1,7 +1,6 @@
 import { ThemeConfig } from 'antd/es/config-provider'
 import { gray } from '@ant-design/colors'
 import { styleConfig } from './appStyle'
-import { hex2Rgba } from '@/core/utils'
 
 export const appTheme: ThemeConfig = {
   token: {

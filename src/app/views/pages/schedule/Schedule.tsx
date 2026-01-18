@@ -1,21 +1,9 @@
-import { Col, Flex, Row, Space, theme, Timeline } from 'antd'
+import { Timeline } from 'antd'
 import classNames from 'clsx'
 import globalStyle from '@/style/appStyle'
-import { Link } from 'react-router-dom'
-import Style from './style'
-import registerStyle from '../register/style'
-import loginStyle from '../login/style'
-import { useSelector } from '@/app/core/hooks/redux'
 
 const Schedule = () => {
-  const { token } = theme.useToken()
-
   const gClasses = globalStyle()
-  const style = Style()
-  const classesLogin = loginStyle()
-  const classesRegister = registerStyle()
-
-  const { isAuth } = useSelector((state) => state.auth)
 
   const timeline = [
     {

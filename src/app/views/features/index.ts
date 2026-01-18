@@ -1,5 +1,5 @@
 export * from './alertDefectItem'
-export * from './chart'
+// export * from './chart'
 export * from './dictation'
 export * from './exItem'
 export * from './exampleOverview'

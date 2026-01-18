@@ -5,8 +5,8 @@ import styles from '../style'
 // import { chartApi } from '@/services/firebase/api/chart.api'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Pie } from 'react-chartjs-2'
-import { getBgColorByCatId } from '..'
 import { ECategory } from '@/models/item.model'
+import { getBgColorByCatId } from '../data'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -49,23 +49,23 @@ export const OverviewChart: React.FC<IProps> = ({ title = 'Overview' }) => {
     // TODO: Implement chart API
     console.error('Chart API not implemented in Firebase')
     // chartApi.getOverviewItems().then(({ content, isSuccess }) => {
-      if (isSuccess) {
-        setData({
-          labels: content.map((item) => item.label),
-          datasets: [
-            {
-              ...settingUI,
-              label: ' ',
-              data: content.map((item) => item.total),
-            },
-          ],
-        })
-        setIsLoaded(true)
-        let mergeTotal = 0
-        content.map((item) => (mergeTotal = mergeTotal + item.total))
-        setTotal(mergeTotal)
-      }
-    })
+    //   if (isSuccess) {
+    //     setData({
+    //       labels: content.map((item) => item.label),
+    //       datasets: [
+    //         {
+    //           ...settingUI,
+    //           label: ' ',
+    //           data: content.map((item) => item.total),
+    //         },
+    //       ],
+    //     })
+    //     setIsLoaded(true)
+    //     let mergeTotal = 0
+    //     content.map((item) => (mergeTotal = mergeTotal + item.total))
+    //     setTotal(mergeTotal)
+    //   }
+    // })
   }, [settingUI])
 
   return (

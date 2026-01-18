@@ -1,4 +1,4 @@
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import { hex2Rgba } from '@/core/utils'
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
@@ -8,7 +8,7 @@ const styles = () => {
 
   return createUseStyles({
     disableMeaning: {
-      border: `1px solid ${appStyleConfig.color.red[3]} !important`,
+      border: `1px solid ${styleConfig.color.red[3]} !important`,
     },
     btnInactive: {
       background: 'transparent !important',
@@ -28,9 +28,9 @@ const styles = () => {
         token.padding / 2,
         (token.padding / 4) * 3,
       ],
-      background: hex2Rgba(appStyleConfig.itemColorBg, 0.95),
+      background: hex2Rgba(styleConfig.itemColorBg, 0.95),
       borderRadius: 4,
-      border: `1px solid ${hex2Rgba(appStyleConfig.itemColorBg, 0.4)}`,
+      border: `1px solid ${hex2Rgba(styleConfig.itemColorBg, 0.4)}`,
       boxShadow: `0px 0px 30px 0px ${hex2Rgba('#ffffff', 0.2)}`,
       color: token.colorWhite,
 
@@ -61,7 +61,7 @@ const styles = () => {
       // marginBottom: token.size / 2,
     },
     meaningItem: {
-      border: `1px solid ${appStyleConfig.color.neutral[0]}`,
+      border: `1px solid ${styleConfig.color.neutral[0]}`,
       padding: `${token.size / 4}px ${token.size / 2}px`,
       margin: `${token.size / 4}px 0`,
       borderRadius: `0 ${token.size / 4}px ${token.size / 4}px ${token.size / 4}px`,
@@ -76,7 +76,7 @@ const styles = () => {
       },
     },
     meaningCommon: {
-      border: `1px solid ${appStyleConfig.border.blue[2]}`,
+      border: `1px solid ${styleConfig.border.blue[2]}`,
     },
     contentItem: {
       width: '100%',
@@ -103,7 +103,7 @@ const styles = () => {
     exampleItem: {
       display: 'block',
       padding: `${token.padding / 2}px ${token.padding / 2}px ${token.padding / 2}px 0px`,
-      borderTop: `1px solid ${appStyleConfig.border.red[2]}`,
+      borderTop: `1px solid ${styleConfig.border.red[2]}`,
       '&:first-child': {
         borderBottom: 'none',
       },
@@ -150,7 +150,7 @@ const styles = () => {
       gap: token.size / 4,
       fontSize: token.fontSizeHeading5,
       margin: [0, 0, 0, 0],
-      fontFamily: appStyleConfig.fontFamily.lato,
+      fontFamily: styleConfig.fontFamily.lato,
       cursor: 'pointer',
 
       '& span': {
@@ -212,7 +212,7 @@ const styles = () => {
       },
     },
     translate: {
-      color: appStyleConfig.color.blue[4],
+      color: styleConfig.color.blue[4],
       fontSize: token.fontSize,
       fontFamily: 'Lora, sans-serif',
 
@@ -236,7 +236,7 @@ const styles = () => {
       fontStyle: 'italic',
       fontSize: 14,
       fontFamily: 'Lora, sans-serif',
-      color: appStyleConfig.color.yellow[5],
+      color: styleConfig.color.yellow[5],
 
       '& ul': {
         paddingLeft: token.size,

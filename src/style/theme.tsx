@@ -1,6 +1,6 @@
 import { ThemeConfig } from 'antd/es/config-provider'
 import { gray } from '@ant-design/colors'
-import { appStyleConfig } from './appStyle'
+import { styleConfig } from './appStyle'
 import { hex2Rgba } from '@/core/utils'
 
 export const appTheme: ThemeConfig = {
@@ -32,20 +32,20 @@ export const appTheme: ThemeConfig = {
     sizeStep: 4,
     lineHeight: 1.5,
     borderRadius: 2,
-    fontFamily: appStyleConfig.fontFamily.default,
+    fontFamily: styleConfig.fontFamily.default,
   },
   components: {
     Input: {},
     Modal: {
       fontSizeHeading5: 24,
       contentPadding: 0,
-      // contentBg: hex2Rgba(appStyleConfig.itemColorBg, 1),
+      // contentBg: hex2Rgba(styleConfig.itemColorBg, 1),
       headerBg: 'transparent',
       headerPadding: 16,
       // colorText: '#f4f4f4',
     },
     Checkbox: {
-      // colorText: appStyleConfig.color.white[0],
+      // colorText: styleConfig.color.white[0],
     },
     Layout: {
       headerBg: '#fff',
@@ -63,7 +63,7 @@ export const appTheme: ThemeConfig = {
       itemSelectedColor: '#90C53F',
       itemSelectedBg: 'transparent',
       itemBorderRadius: 4,
-      fontFamily: appStyleConfig.fontFamily.lato,
+      fontFamily: styleConfig.fontFamily.lato,
     },
     Button: {
       padding: 12,

@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { ArrowUpOutlined } from '@ant-design/icons'
 import { appTheme } from '@/style/theme'
 import styles from './style'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import { ItemModal } from '../modals/itemModal/ItemModal'
 import { SideBarMain } from '../sideBar/SideBarMain'
 import { ViewItemModal } from '../modals/viewItemModal/ViewItemModal'
@@ -73,7 +73,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
       <Layout className={classes.wrapper}>
         {!drawer && (
           <Layout.Sider
-            width={appStyleConfig.sider.width}
+            width={styleConfig.sider.width}
             trigger={null}
             collapsible
             collapsed={isSidebarOpened}
@@ -86,7 +86,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
         {drawer && (
           <Drawer
             placement={'left'}
-            width={appStyleConfig.sider.width}
+            width={styleConfig.sider.width}
             onClose={() => dispatch(configAction.toggleSidebar())}
             open={isSidebarOpened}
             closable={false}
@@ -96,7 +96,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
           </Drawer>
         )}
 
-        <Layout style={{ paddingLeft: drawer ? 0 : appStyleConfig.sider.width }}>
+        <Layout style={{ paddingLeft: drawer ? 0 : styleConfig.sider.width }}>
           <AppHeader />
 
           <Layout.Content className={classes.contentStyle}>

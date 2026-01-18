@@ -1,6 +1,6 @@
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 
 const styles = () => {
   const { token } = theme.useToken()
@@ -10,13 +10,13 @@ const styles = () => {
       width: 400,
       maxWidth: '100%',
       margin: `${token.size * 4}px auto`,
-      background: appStyleConfig.color.white[0],
+      background: styleConfig.color.white[0],
     },
     loginFormHeader: {
       textAlign: 'center',
       // marginBottom: token.size * 4,
       padding: `${token.size * 3}px`,
-      background: appStyleConfig.bg.black[0],
+      background: styleConfig.bg.black[0],
       color: token.colorWhite,
 
       '& img': {
@@ -45,7 +45,7 @@ const styles = () => {
     },
     register: {
       textAlign: 'center',
-      color: appStyleConfig.color.neutral[4],
+      color: styleConfig.color.neutral[4],
 
       '& a': {
         marginLeft: token.size / 4,
@@ -58,7 +58,7 @@ const styles = () => {
     otherLoginMethod: {
       position: 'relative',
       textAlign: 'center',
-      color: appStyleConfig.color.neutral[4],
+      color: styleConfig.color.neutral[4],
       margin: `${token.size}px 0`,
 
       '&:before': {
@@ -77,7 +77,7 @@ const styles = () => {
         position: 'relative',
         display: 'inline-block',
         padding: `0 ${token.size * 2}px`,
-        background: appStyleConfig.color.white[0],
+        background: styleConfig.color.white[0],
         margin: 0,
         zIndex: 999,
       },

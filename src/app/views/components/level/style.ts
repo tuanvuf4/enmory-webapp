@@ -1,6 +1,6 @@
 import { AliasToken } from 'antd/es/theme/internal'
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 
 const styles = (token: AliasToken) => {
   return createUseStyles({
@@ -12,11 +12,11 @@ const styles = (token: AliasToken) => {
       },
     },
     rateItemDefault: {
-      color: appStyleConfig.color.neutral[0],
+      color: styleConfig.color.neutral[0],
       fontSize: 14,
     },
     rateItemActive: {
-      color: appStyleConfig.color.yellow[5],
+      color: styleConfig.color.yellow[5],
       fontSize: 16,
     },
   })()

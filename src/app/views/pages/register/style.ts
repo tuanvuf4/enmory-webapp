@@ -1,6 +1,6 @@
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 
 const styles = () => {
   const { token } = theme.useToken()
@@ -13,13 +13,13 @@ const styles = () => {
       display: 'block',
       fontWeight: '500',
       marginBottom: token.size / 4,
-      color: appStyleConfig.color.neutral[6],
+      color: styleConfig.color.neutral[6],
       fontStyle: 'italic',
       fontSize: 13,
     },
     register: {
       textAlign: 'center',
-      color: appStyleConfig.color.neutral[4],
+      color: styleConfig.color.neutral[4],
 
       '& p': {
         margin: 0,

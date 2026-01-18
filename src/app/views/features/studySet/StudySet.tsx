@@ -1,4 +1,4 @@
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import { ReloadOutlined, EditOutlined } from '@ant-design/icons'
 import { appConfig, setting } from '@/config/appConfig'
 import { useDispatch, useSelector } from '@/core/hooks'
@@ -421,7 +421,7 @@ export const StudySet: React.FC = () => {
                           }}
                         >
                           <EditOutlined
-                            style={{ color: appStyleConfig.color.yellow[6], fontSize: 18 }}
+                            style={{ color: styleConfig.color.yellow[6], fontSize: 18 }}
                           />
                         </Button>
                       )} */}

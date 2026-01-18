@@ -1,4 +1,4 @@
-import globalStyle, { appStyleConfig } from '@/style/appStyle'
+import globalStyle, { styleConfig } from '@/style/appStyle'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { isDefect, getCategory, getTypeOfItem } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
@@ -247,14 +247,14 @@ export const Library: React.FC = () => {
 
                             <Button
                               type='text'
-                              style={{ color: appStyleConfig.color.yellow[6] }}
+                              style={{ color: styleConfig.color.yellow[6] }}
                               icon={<EditOutlined />}
                               onClick={() => onEdit(item.id || '')}
                             />
 
                             <Button
                               type='text'
-                              style={{ color: appStyleConfig.color.red[5] }}
+                              style={{ color: styleConfig.color.red[5] }}
                               icon={<DeleteOutlined />}
                               onClick={() => onDelete(item.id || '')}
                             />

@@ -1,7 +1,7 @@
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
 import { hex2Rgba } from '@/core/utils/style.util'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 
 const styles = () => {
   const { token } = theme.useToken()
@@ -10,7 +10,7 @@ const styles = () => {
     header: {
       height: '60px !important',
       lineHeight: '60px !important',
-      borderBottom: `1px solid ${hex2Rgba(appStyleConfig.border.gray[0], 0.2)}`,
+      borderBottom: `1px solid ${hex2Rgba(styleConfig.border.gray[0], 0.2)}`,
       padding: `0px !important`,
       position: 'sticky',
       top: 0,
@@ -54,7 +54,7 @@ const styles = () => {
     },
     brandName: {
       margin: 0,
-      fontFamily: appStyleConfig.fontFamily.oswald,
+      fontFamily: styleConfig.fontFamily.oswald,
       fontStyle: 'normal',
       fontSize: token.fontSizeHeading4,
 

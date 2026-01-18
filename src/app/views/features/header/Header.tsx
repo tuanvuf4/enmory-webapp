@@ -55,7 +55,7 @@ export const AppHeader = () => {
   }
 
   const menuProps = {
-    items,
+    items: menu,
     onClick: handleMenuClick,
   }
 

@@ -1,11 +1,11 @@
 import React from 'react'
-import { useDispatch, useSelector } from 'src/app/core/hooks/redux'
 import { Button, theme, Tooltip } from 'antd'
 import styles from './style'
 import { AppstoreOutlined, MenuOutlined } from '@ant-design/icons'
-import { EViewMode } from 'src/app/models/app.model'
-import { appStyleConfig } from 'src/style/appStyle'
-import { configAction } from 'src/app/store/reducers/config.reducer'
+import { configAction } from '@/store/reducers/config.reducer'
+import { styleConfig } from '@/style/appStyle'
+import { useDispatch, useSelector } from '@/core/hooks'
+import { EViewMode } from '@/models/app.model'
 
 export const ViewMode: React.FC = () => {
   const { token } = theme.useToken()
@@ -27,8 +27,8 @@ export const ViewMode: React.FC = () => {
               style={{
                 color:
                   viewMode === EViewMode.LIST
-                    ? appStyleConfig.color.white[0]
-                    : appStyleConfig.color.neutral[1],
+                    ? styleConfig.color.white[0]
+                    : styleConfig.color.neutral[1],
               }}
             />
           }
@@ -45,8 +45,8 @@ export const ViewMode: React.FC = () => {
               style={{
                 color:
                   viewMode === EViewMode.GRID
-                    ? appStyleConfig.color.white[0]
-                    : appStyleConfig.color.neutral[13],
+                    ? styleConfig.color.white[0]
+                    : styleConfig.color.neutral[13],
               }}
             />
           }

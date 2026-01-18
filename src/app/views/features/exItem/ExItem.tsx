@@ -1,4 +1,4 @@
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import { MoreOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
 import { IExample } from '@/models/item.model'
@@ -85,7 +85,7 @@ export const ExItem: React.FC<IProps> = ({
               </div>
 
               <div className={classes.contentMain}>
-                <p style={{ color: appStyleConfig.border.blue[2] }}>{data.translation}</p>
+                <p style={{ color: styleConfig.border.blue[2] }}>{data.translation}</p>
 
                 {data.note && <p style={{ fontSize: 13, fontStyle: 'italic' }}>{data.note}</p>}
               </div>

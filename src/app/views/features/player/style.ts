@@ -1,7 +1,7 @@
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
 import { hex2Rgba } from '@/core/utils/style.util'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 
 const styles = () => {
   const { token } = theme.useToken()
@@ -17,7 +17,7 @@ const styles = () => {
       margin: `${token.size}px auto`,
       color: token.colorWhite,
       // background: hex2Rgba('#00000', 0.8),
-      fontFamily: appStyleConfig.fontFamily.oswald,
+      fontFamily: styleConfig.fontFamily.oswald,
       border: `1px solid ${hex2Rgba('#f4f4f4', 0.1)}`,
       borderRadius: token.size / 4,
       boxShadow: `0px 0px 30px 0px ${hex2Rgba('#ffffff', 0.2)}`,
@@ -50,7 +50,7 @@ const styles = () => {
     },
     title: {
       color: token.colorPrimary,
-      fontFamily: appStyleConfig.fontFamily.lora,
+      fontFamily: styleConfig.fontFamily.lora,
       fontSize: token.fontSizeHeading3,
       margin: 0,
       padding: [token.size / 4, token.size / 2],
@@ -62,7 +62,7 @@ const styles = () => {
       padding: [token.size / 4, token.size / 2],
       fontSize: token.fontSizeHeading4,
       fontWeight: 'normal',
-      fontFamily: appStyleConfig.fontFamily.lora,
+      fontFamily: styleConfig.fontFamily.lora,
       // backgroundColor: hex2Rgba('#00000', 0.2),
     },
     description: {
@@ -71,7 +71,7 @@ const styles = () => {
       padding: [token.size / 4, token.size / 2],
       fontSize: token.fontSizeHeading5,
       fontWeight: 'normal',
-      fontFamily: appStyleConfig.fontFamily.lora,
+      fontFamily: styleConfig.fontFamily.lora,
       // backgroundColor: hex2Rgba('#00000', 0.2),
     },
     iconWrapper: {
@@ -192,12 +192,12 @@ const styles = () => {
       lineHeight: '2em',
     },
     selectSrc: {
-      [`& .${appStyleConfig.prefixClassCss}-select-selector`]: {
+      [`& .${styleConfig.prefixClassCss}-select-selector`]: {
         background: 'transparent !important',
         color: `${token.colorWhite} !important`,
         border: `none !important`,
       },
-      [`& .${appStyleConfig.prefixClassCss}-select-selection-item`]: {
+      [`& .${styleConfig.prefixClassCss}-select-selection-item`]: {
         padding: `0 !important`,
       },
     },
@@ -228,7 +228,7 @@ const styles = () => {
       top: 0,
       left: 0,
       width: `100vw`,
-      background: hex2Rgba(appStyleConfig.itemColorBg, 1),
+      background: hex2Rgba(styleConfig.itemColorBg, 1),
       zIndex: 999,
     },
     '@media screen and (max-width: 767px)': {

@@ -1,7 +1,7 @@
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
 import { hex2Rgba } from '@/core/utils/style.util'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 
 const styles = () => {
   const { token } = theme.useToken()
@@ -25,11 +25,11 @@ const styles = () => {
       position: 'sticky',
       top: 60,
       zIndex: 999,
-      background: appStyleConfig.color.white[0],
-      borderBottom: `1px solid ${hex2Rgba(appStyleConfig.border.gray[0], 0.2)}`,
+      background: styleConfig.color.white[0],
+      borderBottom: `1px solid ${hex2Rgba(styleConfig.border.gray[0], 0.2)}`,
     },
     itemTable: {
-      background: appStyleConfig.color.white[0],
+      background: styleConfig.color.white[0],
       margin: `${token.size}px 0px`,
       padding: `${token.size}px`,
       overflow: 'auto',
@@ -39,7 +39,7 @@ const styles = () => {
         minWidth: 1200,
 
         '& tbody tr': {
-          borderBottom: `1px solid ${hex2Rgba(appStyleConfig.border.gray[0], 0.2)}`,
+          borderBottom: `1px solid ${hex2Rgba(styleConfig.border.gray[0], 0.2)}`,
 
           '&:last-child': {
             border: 'none',
@@ -59,7 +59,7 @@ const styles = () => {
         },
 
         '& thead tr': {
-          borderBottom: `1px solid ${hex2Rgba(appStyleConfig.border.gray[0], 0.2)}`,
+          borderBottom: `1px solid ${hex2Rgba(styleConfig.border.gray[0], 0.2)}`,
         },
 
         '& td': {

@@ -38,7 +38,7 @@ export const authMenus: MenuProps['items'] = [
   {
     key: '10',
     icon: <ReadOutlined className='icon' />,
-    label: 'Example',
+    label: 'example',
   },
   // {
   //   key: '11',
@@ -66,12 +66,12 @@ export const menus: MenuProps['items'] = [
   {
     key: '2',
     icon: <LoginOutlined className='icon' />,
-    label: 'Login',
+    label: 'login',
   },
   {
     key: '3',
     icon: <UserOutlined className='icon' />,
-    label: 'Register',
+    label: 'register',
   },
   // {
   //   key: '7',
@@ -84,17 +84,17 @@ export const menusExt: MenuProps['items'] = [
   {
     key: EPageExt.ADD,
     icon: <PlusOutlined className='icon' />,
-    label: 'Item',
+    label: 'item',
   },
   {
     key: EPageExt.ADD_EX,
     icon: <PlusOutlined className='icon' />,
-    label: 'Example',
+    label: 'example',
   },
   {
     key: EPageExt.SEARCH,
     icon: <SearchOutlined className='icon' />,
-    label: 'Search',
+    label: 'search',
   },
 ]
 
@@ -105,27 +105,27 @@ export const keyPaths = [
   },
   {
     key: '2',
-    path: '/Login',
+    path: '/login',
   },
   {
     key: '3',
-    path: '/Register',
+    path: '/register',
   },
   {
     key: '4',
-    path: '/Listening',
+    path: '/listening',
   },
   {
     key: '5',
-    path: '/Library',
+    path: '/library',
   },
   {
     key: '6',
-    path: '/Statistic',
+    path: '/statistic',
   },
   {
     key: '7',
-    path: '/Schedule',
+    path: '/schedule',
   },
   {
     key: '8',
@@ -137,10 +137,10 @@ export const keyPaths = [
   },
   {
     key: '10',
-    path: '/Example',
+    path: '/example',
   },
   {
     key: '11',
-    path: '/Marker',
+    path: '/marker',
   },
 ]

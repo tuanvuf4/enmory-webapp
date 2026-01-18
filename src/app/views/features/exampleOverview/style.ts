@@ -1,4 +1,4 @@
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import { hex2Rgba } from '@/core/utils'
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
@@ -9,9 +9,9 @@ const styles = () => {
   return createUseStyles({
     exampleOverview: {
       marginBottom: `${token.size}px`,
-      background: hex2Rgba(appStyleConfig.itemColorBg, 0.9),
+      background: hex2Rgba(styleConfig.itemColorBg, 0.9),
       borderRadius: 4,
-      border: `1px solid ${hex2Rgba(appStyleConfig.itemColorBg, 0.4)}`,
+      border: `1px solid ${hex2Rgba(styleConfig.itemColorBg, 0.4)}`,
       boxShadow: `0px 0px 30px 0px ${hex2Rgba('#ffffff', 0.2)}`,
       color: token.colorWhite,
       padding: [token.size, token.size],
@@ -25,9 +25,9 @@ const styles = () => {
     },
     exampleFormAdd: {
       marginBottom: `${token.size}px`,
-      background: hex2Rgba(appStyleConfig.itemColorBg, 0.9),
+      background: hex2Rgba(styleConfig.itemColorBg, 0.9),
       borderRadius: 4,
-      // border: `1px solid ${hex2Rgba(appStyleConfig.itemColorBg, 0.4)}`,
+      // border: `1px solid ${hex2Rgba(styleConfig.itemColorBg, 0.4)}`,
       boxShadow: `0px 0px 30px 0px ${hex2Rgba('#ffffff', 0.2)}`,
       color: token.colorWhite,
       padding: [token.size, token.size],
@@ -108,9 +108,9 @@ const styles = () => {
     exampleSelectedEx: {
       // marginTop: token.size,
       // paddingTop: token.size,
-      borderBottom: `1px solid ${appStyleConfig.border.red[2]}`,
-      borderTop: `1px solid ${appStyleConfig.border.red[2]}`,
-      background: hex2Rgba(appStyleConfig.border.blue[2], 0.15),
+      borderBottom: `1px solid ${styleConfig.border.red[2]}`,
+      borderTop: `1px solid ${styleConfig.border.red[2]}`,
+      background: hex2Rgba(styleConfig.border.blue[2], 0.15),
     },
   })()
 }

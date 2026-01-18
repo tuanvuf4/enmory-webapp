@@ -1,4 +1,4 @@
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import { hex2Rgba } from '@/core/utils'
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
@@ -12,7 +12,7 @@ const styles = () => {
       alignItems: 'center',
       justifyContent: 'space-between',
       flexFlow: 'column wrap',
-      background: hex2Rgba(appStyleConfig.itemColorBg, 0.95),
+      background: hex2Rgba(styleConfig.itemColorBg, 0.95),
 
       '&:focus-visible, &:focus, &:focus-within': {
         boxShadow: `0 0 ${token.size}px 0 ${hex2Rgba(token.colorTextBase)}`,
@@ -69,7 +69,7 @@ const styles = () => {
     fibInput: {
       display: 'inline-block',
       minWidth: `${token.size}px !important`,
-      color: appStyleConfig.color.neutral[1],
+      color: styleConfig.color.neutral[1],
       fontSize: `${token.fontSizeHeading3}px !important`,
       background: 'transparent',
       boxShadow: 'none',
@@ -82,27 +82,27 @@ const styles = () => {
       },
 
       '&::-moz-selection': {
-        color: appStyleConfig.color.neutral[1],
+        color: styleConfig.color.neutral[1],
         background: 'transparent',
       },
 
       '&::selection': {
-        color: appStyleConfig.color.neutral[1],
+        color: styleConfig.color.neutral[1],
         background: 'transparent',
       },
 
       '&::placeholder': {
-        color: appStyleConfig.color.neutral[1],
+        color: styleConfig.color.neutral[1],
         background: 'transparent',
       },
 
       '&:-ms-input-placeholder': {
-        color: appStyleConfig.color.neutral[1],
+        color: styleConfig.color.neutral[1],
         background: 'transparent',
       },
 
       '&::-ms-input-placeholder': {
-        color: appStyleConfig.color.neutral[1],
+        color: styleConfig.color.neutral[1],
         background: 'transparent',
       },
     },
@@ -131,14 +131,14 @@ const styles = () => {
 
       '& h4': {
         fontSize: token.fontSizeHeading4,
-        color: appStyleConfig.color.blue[4],
+        color: styleConfig.color.blue[4],
         marginBottom: token.size / 2,
         lineHeight: token.lineHeight,
       },
 
       '& h5': {
         fontSize: token.fontSizeHeading5,
-        color: appStyleConfig.color.yellow[6],
+        color: styleConfig.color.yellow[6],
         lineHeight: token.lineHeight,
       },
     },
@@ -195,7 +195,7 @@ const styles = () => {
 
           '&.active': {
             background: token.colorWhite,
-            color: appStyleConfig.itemColorBg,
+            color: styleConfig.itemColorBg,
           },
 
           '&.correct': {

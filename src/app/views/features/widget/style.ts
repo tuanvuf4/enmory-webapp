@@ -1,5 +1,5 @@
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import { theme } from 'antd'
 
 const styles = () => {
@@ -15,13 +15,13 @@ const styles = () => {
       textTransform: 'capitalize',
       padding: `${(token.size / 4) * 3}px ${token.size}px`,
       fontSize: `${token.fontSizeHeading4}px`,
-      fontFamily: appStyleConfig.fontFamily.lato,
+      fontFamily: styleConfig.fontFamily.lato,
       fontWeight: 800,
       letterSpacing: 0.5,
       color: token.colorTextSecondary,
     },
     widgetContent: {
-      // background: hex2Rgba(appStyleConfig.itemColorBg, 0.9),
+      // background: hex2Rgba(styleConfig.itemColorBg, 0.9),
     },
   })()
 }

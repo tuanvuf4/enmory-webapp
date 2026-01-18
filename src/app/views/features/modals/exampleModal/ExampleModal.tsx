@@ -1,7 +1,7 @@
 import React from 'react'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { Modal } from 'antd'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import { CloseSquareOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { ExampleForm } from '../../exampleOverview/ExampleFormAdd'
@@ -37,7 +37,7 @@ export const ExampleModal: React.FC<IProps> = ({ open }) => {
       }}
       onOk={() => dispatch(settingAction.toggleExModal())}
       okText={'Close'}
-      width={appStyleConfig.modal.medium}
+      width={styleConfig.modal.medium}
       footer={null}
       maskClosable={true}
     >

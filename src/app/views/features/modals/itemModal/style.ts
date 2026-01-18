@@ -1,6 +1,6 @@
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 
 const styles = () => {
   const { token } = theme.useToken()
@@ -34,7 +34,7 @@ const styles = () => {
       marginRight: token.size / 2,
     },
     alertIcon: {
-      color: appStyleConfig.color.yellow[6],
+      color: styleConfig.color.yellow[6],
       marginLeft: token.size / 2,
     },
     action: {

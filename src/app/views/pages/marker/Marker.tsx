@@ -1,5 +1,5 @@
 import { Button, Flex, Radio, Table, TableColumnsType } from 'antd'
-import globalStyle, { appStyleConfig } from '@/style/appStyle'
+import globalStyle, { styleConfig } from '@/style/appStyle'
 import { useEffect, useState } from 'react'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { commonApi } from '@/services/firebase/api/common.api'
@@ -115,7 +115,7 @@ const Marker = () => {
                   icon={
                     <DeleteOutlined
                       style={{
-                        color: appStyleConfig.color.red[3],
+                        color: styleConfig.color.red[3],
                       }}
                       onClick={async (e) => {
                         e.stopPropagation()

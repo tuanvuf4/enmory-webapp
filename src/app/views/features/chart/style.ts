@@ -1,6 +1,6 @@
 import { AliasToken } from 'antd/es/theme/internal'
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 
 const styles = (token: AliasToken) => {
   return createUseStyles({
@@ -11,7 +11,7 @@ const styles = (token: AliasToken) => {
       textTransform: 'capitalize',
       padding: `${(token.size / 4) * 3}px ${token.size}px`,
       fontSize: `${token.fontSizeHeading4}px`,
-      fontFamily: appStyleConfig.fontFamily.oswald,
+      fontFamily: styleConfig.fontFamily.oswald,
       fontWeight: 500,
       letterSpacing: 0.5,
       color: token.colorTextSecondary,

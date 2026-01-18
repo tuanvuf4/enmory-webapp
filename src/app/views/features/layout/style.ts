@@ -1,6 +1,6 @@
 import { theme } from 'antd'
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 
 const styles = () => {
   const { token } = theme.useToken()
@@ -26,10 +26,10 @@ const styles = () => {
       padding: `0 0 ${token.size * 2}px 0`,
     },
     siteLayout: {
-      marginLeft: appStyleConfig.sider.width,
+      marginLeft: styleConfig.sider.width,
     },
     show: {
-      marginLeft: appStyleConfig.sider.widthCollapse,
+      marginLeft: styleConfig.sider.widthCollapse,
       transition: 'all 0.2s',
     },
   })()

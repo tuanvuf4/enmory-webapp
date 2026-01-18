@@ -1,6 +1,6 @@
 import { createUseStyles } from 'react-jss'
 import { hex2Rgba } from '@/app/core/utils/style.util'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import { theme } from 'antd'
 
 const styles = () => {
@@ -28,9 +28,9 @@ const styles = () => {
         token.padding / 2,
         (token.padding / 4) * 3,
       ],
-      background: hex2Rgba(appStyleConfig.itemColorBg, 0.95),
+      background: hex2Rgba(styleConfig.itemColorBg, 0.95),
       borderRadius: 4,
-      border: `1px solid ${hex2Rgba(appStyleConfig.itemColorBg, 0.4)}`,
+      border: `1px solid ${hex2Rgba(styleConfig.itemColorBg, 0.4)}`,
       boxShadow: `0px 0px 30px 0px ${hex2Rgba('#ffffff', 0.2)}`,
       color: token.colorWhite,
 
@@ -52,7 +52,7 @@ const styles = () => {
       // fontFamily: 'Lato, sans-serif',
     },
     meaningItem: {
-      border: `1px solid ${appStyleConfig.color.neutral[0]}`,
+      border: `1px solid ${styleConfig.color.neutral[0]}`,
       padding: `${token.size / 4}px ${(token.size / 4) * 3}px`,
       margin: `${token.size / 4}px 0`,
       borderRadius: token.size / 4,
@@ -73,7 +73,7 @@ const styles = () => {
       width: '100%',
     },
     meaningCommon: {
-      border: `1px solid ${appStyleConfig.border.blue[2]}`,
+      border: `1px solid ${styleConfig.border.blue[2]}`,
     },
     contentItem: {
       width: '100%',
@@ -100,7 +100,7 @@ const styles = () => {
       padding: `${token.padding / 2}px ${token.padding / 2}px ${token.padding / 2}px ${
         token.padding * 2
       }px`,
-      borderTop: `1px solid ${appStyleConfig.border.red[2]}`,
+      borderTop: `1px solid ${styleConfig.border.red[2]}`,
       '&:first-child': {
         borderBottom: 'none',
       },
@@ -134,7 +134,7 @@ const styles = () => {
       gap: token.size / 4,
       fontSize: token.fontSizeHeading5,
       margin: [0, 0, 0, 0],
-      fontFamily: appStyleConfig.fontFamily.lato,
+      fontFamily: styleConfig.fontFamily.lato,
 
       '& span': {
         display: 'block',
@@ -179,7 +179,7 @@ const styles = () => {
       fontSize: token.fontSize,
     },
     translate: {
-      color: appStyleConfig.color.blue[4],
+      color: styleConfig.color.blue[4],
       fontSize: token.fontSize,
     },
     word_family: {

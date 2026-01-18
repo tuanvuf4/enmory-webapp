@@ -3,7 +3,7 @@ import { Controls } from './Controls'
 import { ProgressBar } from './ProgressBar'
 import { Button, Dropdown, MenuProps, theme } from 'antd'
 import styles from './style'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import {
   CaretDownOutlined,
   CaretRightOutlined,
@@ -18,7 +18,7 @@ import { ITracks } from '@/models/media.model'
 import { EMediaSrc } from '@/models/dictation.model'
 import { setting } from '@/config/appConfig'
 import classNames from 'clsx'
-import { TExternalSource } from '../modals/MediaUploadModal'
+import { TExternalSource } from '@/constant/media'
 
 interface IProps {
   tracks: ITracks[]
@@ -316,7 +316,7 @@ export const AudioPlayer: React.FC<IProps> = ({
                     type='text'
                     style={{
                       background: 'transparent',
-                      color: appStyleConfig.color.yellow[4],
+                      color: styleConfig.color.yellow[4],
                     }}
                     onClick={() => onCurrentUpdating(track.id as number)}
                   >

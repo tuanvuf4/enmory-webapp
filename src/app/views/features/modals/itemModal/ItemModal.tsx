@@ -2,7 +2,7 @@ import { Modal } from 'antd'
 import React from 'react'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import { CloseSquareOutlined } from '@ant-design/icons'
 import { ItemForm } from './ItemForm'
 
@@ -24,7 +24,7 @@ export const ItemModal: React.FC = () => {
       open={isShowItemModal}
       okText={'Save'}
       onCancel={onCancel}
-      width={appStyleConfig.modal.large}
+      width={styleConfig.modal.large}
       maskClosable={false}
       footer={false}
       keyboard={false}

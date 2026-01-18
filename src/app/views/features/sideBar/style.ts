@@ -1,12 +1,12 @@
 import { AliasToken } from 'antd/es/theme/internal'
 import { createUseStyles } from 'react-jss'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 
 const styles = (token: AliasToken) => {
   return createUseStyles({
     aside: {
       padding: `${token.size}px 0`,
-      // background: `${appStyleConfig.sider.background} !important`,
+      // background: `${styleConfig.sider.background} !important`,
       height: '100%',
       overflow: 'auto',
     },
@@ -34,7 +34,7 @@ const styles = (token: AliasToken) => {
       '& h2': {
         fontSize: token.fontSizeHeading4,
         paddingBottom: token.size * 2,
-        borderBottom: `1px solid ${appStyleConfig.border.gray[0]}`,
+        borderBottom: `1px solid ${styleConfig.border.gray[0]}`,
         margin: 0,
       },
 

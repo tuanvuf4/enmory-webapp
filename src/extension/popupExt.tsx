@@ -4,7 +4,6 @@ import { ECategory, EType, IExample, IItem, IOption } from '@/models/item.model'
 import { ILoginResponse } from '@/models/user.model'
 import { commonApi } from '@/services/firebase/api/common.api'
 import { ExampleForm } from '@/views/features/exampleOverview/ExampleFormAdd'
-import { HeaderExt } from '@/views/features/header/headerExtension/HeaderExtension'
 import { LoginForm } from '@/views/features/loginForm/LoginForm'
 import { initItem } from '@/views/features/modals/itemModal/data'
 import { ItemFormExt } from '@/views/features/modals/itemModal/ItemFormExt'
@@ -15,6 +14,7 @@ import { FormProvider, useForm } from 'react-hook-form'
 import { chromeStorage } from './storageService'
 import styles from './style'
 import { LoadingBar } from '@/views/features/loading/LoadingBar'
+import { HeaderExtension } from '@/views/features'
 
 export const PopupExt = () => {
   const { token } = theme.useToken()
@@ -77,13 +77,13 @@ export const PopupExt = () => {
 
   return (
     <div className={classes.ext}>
-      <HeaderExt isAuth={isLogin} onPageChange={onPageChange} />
+      <HeaderExtension isAuth={isLogin} onPageChange={onPageChange} />
 
       {!isLogin && (
         <>
           {currentPage === EPageExt.LOGIN && (
             <div className={classes.loginForm}>
-              <LoginForm onLogin={onLogin} showBanner={false} />
+              <LoginForm onLoginSuccess={onLogin} showBanner={false} />
             </div>
           )}
 

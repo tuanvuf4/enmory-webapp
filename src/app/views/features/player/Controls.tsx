@@ -150,7 +150,7 @@ export const Controls: React.FC<IProps> = ({
           value={volume}
           onChange={(e) => setVolume(parseInt(e.target.value))}
           style={{
-            background: `linear-gradient(to right, ${appStyleConfig.color.yellow[6]} ${volume}%, #ccc ${volume}%)`,
+            background: `linear-gradient(to right, ${styleConfig.color.yellow[6]} ${volume}%, #ccc ${volume}%)`,
           }}
         /> */}
       </div>

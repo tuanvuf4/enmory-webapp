@@ -11,7 +11,7 @@ import { App as AntdApp } from 'antd'
 import { appTheme } from './style/theme'
 import { JssProvider } from 'react-jss'
 import { App } from './app/app'
-import { appStyleConfig } from './style/appStyle'
+import { styleConfig } from './style/appStyle'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { appConfig, EAppType } from './app/config/appConfig'
 import { PopupExt } from './extension/popupExt'
@@ -23,7 +23,7 @@ import { store } from '@/store/store'
 if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
   const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
   root.render(
-    <JssProvider classNamePrefix={`${appStyleConfig.prefixClassCss}-`}>
+    <JssProvider classNamePrefix={`${styleConfig.prefixClassCss}-`}>
       <Provider store={store}>
         <AppContext>
           <GoogleOAuthProvider clientId={appConfig.googleAuth.client_id as string}>
@@ -31,7 +31,7 @@ if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
               popupMatchSelectWidth={true}
               componentSize='middle'
               theme={appTheme}
-              prefixCls={appStyleConfig.prefixClassCss}
+              prefixCls={styleConfig.prefixClassCss}
             >
               <StyleProvider hashPriority='high'>
                 <AntdApp>
@@ -52,7 +52,7 @@ if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
   const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
   root.render(
     <React.StrictMode>
-      <JssProvider classNamePrefix={`${appStyleConfig.prefixClassCss}-`}>
+      <JssProvider classNamePrefix={`${styleConfig.prefixClassCss}-`}>
         <Provider store={store}>
           <AppContext>
             <GoogleOAuthProvider clientId={appConfig.googleAuth.client_id as string}>
@@ -60,7 +60,7 @@ if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
                 popupMatchSelectWidth={true}
                 componentSize='middle'
                 theme={appTheme}
-                prefixCls={appStyleConfig.prefixClassCss}
+                prefixCls={styleConfig.prefixClassCss}
               >
                 <StyleProvider hashPriority='high'>
                   <AntdApp>

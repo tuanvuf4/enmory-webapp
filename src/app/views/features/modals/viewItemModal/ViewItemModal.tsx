@@ -1,7 +1,7 @@
 import React from 'react'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { Modal } from 'antd'
-import { appStyleConfig } from '@/style/appStyle'
+import { styleConfig } from '@/style/appStyle'
 import { IItem } from '@/models/item.model'
 import { CloseSquareOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -45,7 +45,7 @@ export const ViewItemModal: React.FC<IProps> = ({ open, title }) => {
       }}
       onOk={() => dispatch(settingAction.toggleViewItemModal())}
       okText={'Close'}
-      width={appStyleConfig.modal.large}
+      width={styleConfig.modal.large}
       footer={null}
       maskClosable={true}
     >

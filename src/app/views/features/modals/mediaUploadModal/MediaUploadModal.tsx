@@ -1,5 +1,5 @@
 import { msgErrors } from '@/constant/index'
-import globalStyle, { appStyleConfig } from '@/style/appStyle'
+import globalStyle, { styleConfig } from '@/style/appStyle'
 import { CloseSquareOutlined, UploadOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
 import { useSelector, useDispatch } from '@/core/hooks'
@@ -200,7 +200,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
       okType={isValid ? 'primary' : 'danger'}
       onCancel={handleCancel}
       okText={'Upload'}
-      width={appStyleConfig.modal.large}
+      width={styleConfig.modal.large}
       footer={false}
       maskClosable={false}
     >

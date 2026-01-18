@@ -3,7 +3,7 @@ import { gray, volcano, yellow, blue, red, cyan, green, gold, lime } from '@ant-
 import { hex2Rgba } from '@/core/utils'
 import { theme } from 'antd'
 
-export const appStyleConfig = {
+export const styleConfig = {
   prefixClassCss: 'emr',
   fontFamily: {
     default: 'Lora, Lato, Oswald, sans-serif',
@@ -67,7 +67,7 @@ const globalStyle = () => {
       maxWidth: '100%',
     },
     innerContainer: {
-      background: hex2Rgba(appStyleConfig.itemColorBg, 0.9),
+      background: hex2Rgba(styleConfig.itemColorBg, 0.9),
       color: token.colorWhite,
       padding: token.size,
       width: 800,
@@ -80,8 +80,8 @@ const globalStyle = () => {
       top: 60,
       zIndex: 999,
       padding: [token.size / 2, 0],
-      background: appStyleConfig.color.white[0],
-      borderBottom: `1px solid ${hex2Rgba(appStyleConfig.border.gray[0], 0.2)}`,
+      background: styleConfig.color.white[0],
+      borderBottom: `1px solid ${hex2Rgba(styleConfig.border.gray[0], 0.2)}`,
     },
     bodyContent: {
       margin: `${token.size * 2}px 0`,
@@ -92,7 +92,7 @@ const globalStyle = () => {
     },
     dark: {
       color: token.colorWhite,
-      background: hex2Rgba(appStyleConfig.itemColorBg, 0.9),
+      background: hex2Rgba(styleConfig.itemColorBg, 0.9),
     },
     fulHeight: {
       height: '100%',
@@ -113,7 +113,7 @@ const globalStyle = () => {
       color: token.colorTextSecondary,
       margin: [(token.size / 2) * 3, 0],
       letterSpacing: 1,
-      fontFamily: appStyleConfig.fontFamily.oswald,
+      fontFamily: styleConfig.fontFamily.oswald,
       textAlign: 'center',
       fontSize: token.fontSizeHeading2,
     },
@@ -141,10 +141,10 @@ const globalStyle = () => {
       // margin: `${token.size / 4}px ${token.size / 2}px ${token.size / 4}px 0`,
       height: `auto !important`,
       fontSize: 12,
-      color: `${appStyleConfig.color.yellow[0]} !important`,
-      background: `${hex2Rgba(appStyleConfig.color.cyan[7], 0.9)} !important`,
+      color: `${styleConfig.color.yellow[0]} !important`,
+      background: `${hex2Rgba(styleConfig.color.cyan[7], 0.9)} !important`,
       '&:hover': {
-        color: `${appStyleConfig.color.yellow[4]} !important`,
+        color: `${styleConfig.color.yellow[4]} !important`,
       },
     },
     '@media screen and (min-width: 768px)': {

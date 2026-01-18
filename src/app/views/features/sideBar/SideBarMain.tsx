@@ -3,7 +3,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
 import styles from './style'
-import { MainMenu } from '../../mainMenu/MainMenu'
+import { MainMenu } from '../mainMenu/MainMenu'
 
 export const SideBarMain: React.FC = () => {
   const { token } = theme.useToken()

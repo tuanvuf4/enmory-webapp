@@ -15,7 +15,7 @@ import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme, Input, UploadProps, Modal, Space, Row, Col, Radio, Upload, Button } from 'antd'
 import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { TExternalSource, IMediaForm, initMediaForm } from '.'
+import { TExternalSource, IMediaForm, initMediaForm } from './data'
 import { styles } from './style'
 import clsx from 'clsx'
 

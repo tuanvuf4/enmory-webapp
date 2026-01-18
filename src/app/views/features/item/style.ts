@@ -114,6 +114,18 @@ const styles = () => {
       padding: `0 0 0 0`,
       lineHeight: '2em',
 
+      '& ul': {
+        paddingLeft: 0,
+
+        '& li:before': {
+          content: '"\u201C"',
+        },
+
+        '& li:after': {
+          content: '"\u201D"',
+        },
+      },
+
       '& textarea': {
         resize: 'none !important',
         color: `${token.colorWhite} !important`,
@@ -130,7 +142,7 @@ const styles = () => {
         },
       },
     },
-    original: {
+    origin: {
       display: 'flex',
       flex: 1,
       alignItems: 'flex-start',

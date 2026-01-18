@@ -81,37 +81,37 @@ const Home = () => {
                 </Col>
 
                 <Col xs={24} md={8}>
-                  {word && word.original && (
+                  {word && word.origin && (
                     <Widget title='Word of the day'>
                       <Item reload data={word} onEdit={() => onEdit(word.id || '')} />
                     </Widget>
                   )}
 
-                  {phrase && phrase.original && (
+                  {phrase && phrase.origin && (
                     <Widget title='Phrase of the day'>
                       <Item reload data={phrase} onEdit={() => onEdit(phrase.id || '')} />
                     </Widget>
                   )}
 
-                  {collocation && collocation.original && (
+                  {collocation && collocation.origin && (
                     <Widget title='Collocation of the day'>
                       <Item reload data={collocation} onEdit={() => onEdit(collocation.id || '')} />
                     </Widget>
                   )}
 
-                  {sentence && sentence.original && (
+                  {sentence && sentence.origin && (
                     <Widget title='sentence of the day'>
                       <Item reload data={sentence} onEdit={() => onEdit(sentence.id || '')} />
                     </Widget>
                   )}
 
-                  {idiom && idiom.original && (
+                  {idiom && idiom.origin && (
                     <Widget title='Idiom of the day'>
                       <Item reload data={idiom} onEdit={() => onEdit(idiom.id || '')} />
                     </Widget>
                   )}
 
-                  {slang && slang.original && (
+                  {slang && slang.origin && (
                     <Widget title='Slang of the day'>
                       <Item reload data={slang} onEdit={() => onEdit(slang.id || '')} />
                     </Widget>

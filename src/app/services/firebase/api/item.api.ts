@@ -53,7 +53,7 @@ const buildQueryConstraints = (params: IItemRequestData): QueryConstraint[] => {
 
   // Filter by keyword (search in original field)
   if (params.keyword && params.exact) {
-    constraints.push(where('original', '==', params.keyword))
+    constraints.push(where('origin', '==', params.keyword))
   }
 
   // Filter by archive status
@@ -81,13 +81,20 @@ const getExamplesByIds = async (exampleIds: string[]): Promise<IExample[]> => {
     return []
   }
 
+  // Filter out any non-string values and ensure we have valid IDs
+  const validIds = exampleIds.filter((id) => id && typeof id === 'string')
+
+  if (validIds.length === 0) {
+    return []
+  }
+
   try {
     // Firestore 'in' query supports up to 10 items at a time
     const batchSize = 10
     const batches: string[][] = []
 
-    for (let i = 0; i < exampleIds.length; i += batchSize) {
-      batches.push(exampleIds.slice(i, i + batchSize))
+    for (let i = 0; i < validIds.length; i += batchSize) {
+      batches.push(validIds.slice(i, i + batchSize))
     }
 
     const examplePromises = batches.map(async (batch) => {
@@ -129,6 +136,16 @@ const getItems = async (params: IItemRequestData): Promise<IHttpResponse<IItem[]
       const meaningsWithExamples = await Promise.all(
         meanings.map(async (meaning: any) => {
           const exampleIds = meaning.examples || []
+
+          // Check if exampleIds is actually an array of strings
+          if (!Array.isArray(exampleIds)) {
+            console.warn('Example IDs is not an array:', exampleIds)
+            return {
+              ...meaning,
+              examples: [],
+            }
+          }
+
           const examples = await getExamplesByIds(exampleIds)
           return {
             ...meaning,
@@ -148,7 +165,7 @@ const getItems = async (params: IItemRequestData): Promise<IHttpResponse<IItem[]
 
     if (params.keyword && !params.exact) {
       items = items.filter((item) =>
-        item.original.toLowerCase().includes(params.keyword.toLowerCase()),
+        item.origin.toLowerCase().includes(params.keyword.toLowerCase()),
       )
     }
 
@@ -191,7 +208,7 @@ const getItemAutoComplete = async (
     // Filter by keyword
     if (params.keyword) {
       items = items.filter((item) =>
-        item.original.toLowerCase().includes(params.keyword.toLowerCase()),
+        item.origin.toLowerCase().includes(params.keyword.toLowerCase()),
       )
     }
 

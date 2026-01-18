@@ -17,7 +17,7 @@ export interface IExampleState {
 
 export const initialState: IExampleState = {
   selectedExample: {
-    original: '',
+    origin: '',
     translation: '',
   },
   examples: [],
@@ -31,7 +31,7 @@ export const initialState: IExampleState = {
   formSearchQuery: initSearchFormEx,
   currentEditting: {
     id: -1,
-    original: '',
+    origin: '',
     translation: '',
     note: '',
   },

@@ -40,11 +40,11 @@ export const authMenus: MenuProps['items'] = [
     icon: <ReadOutlined className='icon' />,
     label: 'Example',
   },
-  {
-    key: '11',
-    icon: <CalendarOutlined className='icon' />,
-    label: 'Marker',
-  },
+  // {
+  //   key: '11',
+  //   icon: <CalendarOutlined className='icon' />,
+  //   label: 'Marker',
+  // },
   // {
   //   key: '7',
   //   icon: <InfoCircleOutlined className='icon' />,

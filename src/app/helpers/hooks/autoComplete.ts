@@ -42,8 +42,8 @@ export const useAutoComplete = (
             .then((response: IHttpResponse<IItem<string>[]>) => {
               setOptions(
                 response.content.map((item) => ({
-                  label: item.original,
-                  value: item.original,
+                  label: item.origin,
+                  value: item.origin,
                 })),
               )
             })
@@ -63,7 +63,7 @@ export const useAutoComplete = (
                   return {
                     id: meaning.id,
                     value: `${meaning.id}`,
-                    label: meaning.original,
+                    label: meaning.origin,
                   }
                 }),
               )

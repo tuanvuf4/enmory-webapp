@@ -29,7 +29,7 @@ export interface IPronouns {
 export interface IExample {
   id?: string
   uid: string
-  original: string
+  origin: string
   translation: string
   created_date?: number
   last_update?: number
@@ -80,7 +80,7 @@ export interface IItem<M = string[]> {
   id?: string
   uid?: string
   catId?: ECategory
-  original: string
+  origin: string
   favorite?: boolean
   level: number
   last_update?: number

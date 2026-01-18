@@ -210,9 +210,9 @@ export const Item: React.FC<IProps> = ({
             <div className={classes.contentHead}>
               <div className={classes.title}>
                 <h2 className={classes.original}>
-                  {isDefect(data) && <span className={classes.warnTitle}>{data.original}</span>}
+                  {isDefect(data) && <span className={classes.warnTitle}>{data.origin}</span>}
 
-                  {!isDefect(data) && <span>{data.original}</span>}
+                  {!isDefect(data) && <span>{data.origin}</span>}
                 </h2>
 
                 <Flex align={'center'} gap={token.size / 4}>
@@ -302,7 +302,7 @@ export const Item: React.FC<IProps> = ({
                 </h5>
               )}
 
-              <Reference original={data.original} />
+              <Reference origin={data.origin} />
 
               {data.catId === ECategory.WORD && (
                 <>

@@ -15,7 +15,7 @@ import { IStudySetStatus, studySetAction } from '@/store/reducers/studySet.reduc
 import { theme, InputRef, Button, Input, Flex } from 'antd'
 import { useState, useRef, useEffect } from 'react'
 import { Item } from '../item/Item'
-import { EItemLevel } from '../modals/itemModal'
+import { EItemLevel } from '../modals/itemModal/data'
 import styles from './style'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'

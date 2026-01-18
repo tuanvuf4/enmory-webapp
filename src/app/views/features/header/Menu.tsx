@@ -6,7 +6,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons/lib/icons'
 
-export const items: MenuProps['items'] = [
+export const menu: MenuProps['items'] = [
   {
     key: 'profile',
     label: 'Profile',

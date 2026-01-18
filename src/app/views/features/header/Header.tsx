@@ -11,10 +11,10 @@ import { theme, MenuProps, Layout, Row, Col, Button, Dropdown, Space } from 'ant
 import { useNavigate, Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
 import { MainMenu } from '../mainMenu/MainMenu'
-import { items, addNewType } from './Menus'
+import { menu, addNewType } from './Menu'
 import styles from './style'
 import clsx from 'clsx'
-import { FormSearchItem } from '../formSearchItem/FormSearchItem'
+import { FormSearchItem } from '../formSearchItem'
 
 export const AppHeader = () => {
   const { token } = theme.useToken()
@@ -164,7 +164,17 @@ export const AppHeader = () => {
                 <Dropdown trigger={['click']} menu={menuProps} placement='bottomLeft' arrow>
                   <Button type='text' onClick={(e) => e.preventDefault()}>
                     <Space>
-                      {`Hi,` + ' ' + user?.displayName + '!'}
+                      {user?.photoURL ? (
+                        <img
+                          src={user.photoURL}
+                          alt='avatar'
+                          className={classes.avatar}
+                          width={32}
+                          height={32}
+                        />
+                      ) : null}
+
+                      {!user?.photoURL && <span>{`Hi,` + ' ' + user?.displayName + '!'}</span>}
                       <DownOutlined />
                     </Space>
                   </Button>

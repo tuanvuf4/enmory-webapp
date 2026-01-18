@@ -64,7 +64,7 @@ export const ExItem: React.FC<IProps> = ({
             <div className={classes.contentHead}>
               <div className={classes.title}>
                 <h2 className={classes.original}>
-                  <p style={{ color: token.colorPrimary, marginBottom: 0 }}>{data.original}</p>
+                  <p style={{ color: token.colorPrimary, marginBottom: 0 }}>{data.origin}</p>
                 </h2>
 
                 {groupAction && (onEdit || onDelete) && (

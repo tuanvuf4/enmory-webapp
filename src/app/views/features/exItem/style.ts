@@ -127,7 +127,7 @@ const styles = () => {
         },
       },
     },
-    original: {
+    origin: {
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'space-between',

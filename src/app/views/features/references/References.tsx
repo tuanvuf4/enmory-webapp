@@ -6,10 +6,10 @@ import globalStyle from '@/style/appStyle'
 import { useSelector } from '@/core/hooks'
 
 interface IPros {
-  original: string
+  origin: string
 }
 
-export const Reference: React.FC<IPros> = ({ original }) => {
+export const Reference: React.FC<IPros> = ({ origin }) => {
   const classes = styles()
   const gClasses = globalStyle()
 
@@ -26,7 +26,7 @@ export const Reference: React.FC<IPros> = ({ original }) => {
               type='text'
               size='small'
               onClick={() => {
-                window.open(reference.url + original, reference.target)
+                window.open(reference.url + origin, reference.target)
               }}
             >
               {reference.src}

@@ -18,7 +18,7 @@ import clsx from 'clsx'
 import _ from 'lodash'
 import { useState, useEffect, Suspense } from 'react'
 import { useFormContext, useWatch, Controller } from 'react-hook-form'
-import { initItem, meaningItem } from '.'
+import { initItem, meaningItem } from './data'
 import { MeaningItemForm } from './MeaningItemForm'
 import styles from './style'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
@@ -66,7 +66,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
     defaultValue: ECategory.WORD,
   })
 
-  const original = useWatch({ control, name: 'original' })
+  const original = useWatch({ control, name: 'origin' })
 
   const { options, isSearching } = useAutoComplete(original, 'item', false)
 
@@ -75,13 +75,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
       return meaning.synonyms.map((synonym) => {
         const itemBase = {
           ...initItem,
-          original: synonym.trim(),
+          origin: synonym.trim(),
           catId: isGroupWord(synonym.trim()) ? ECategory.PHRASE : ECategory.WORD,
           meanings: [
             {
               ...meaningItem,
               typeId: isGroupWord(synonym) ? EType.NOUN : meaning.typeId,
-              synonyms: [data.original.trim()].concat(
+              synonyms: [data.origin.trim()].concat(
                 meaning.synonyms.filter((item) => item.trim() !== synonym.trim()),
               ),
               antonyms: meaning.antonyms,
@@ -98,13 +98,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
       return meaning.antonyms.map((antonym) => {
         const itemBase = {
           ...initItem,
-          original: antonym.trim(),
+          origin: antonym.trim(),
           catId: isGroupWord(antonym.trim()) ? ECategory.PHRASE : ECategory.WORD,
           meanings: [
             {
               ...meaningItem,
               typeId: isGroupWord(antonym) ? EType.NOUN : meaning.typeId,
-              antonyms: [data.original.trim()],
+              antonyms: [data.origin.trim()],
             },
           ],
         }
@@ -216,21 +216,22 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
     dispatch(settingAction.setCurrentItem(null))
   }
 
-  const loadItem = (value: string) => {
+  const loadItem = async (value: string) => {
     const params = {
       keyword: value,
       page: 0,
       size: setting.numberItemOfAutoComplete * 2,
       exact: true,
     }
-    itemApi.getItemAutoComplete(params).then((response) => {
+    const { isSuccess, content } = await itemApi.getItemAutoComplete(params)
+    if (isSuccess) {
       dispatch(settingAction.setOnEditItem(true))
       dispatch(
         settingAction.setCurrentItem({
-          ...response.content[0],
+          ...content?.[0],
         }),
       )
-    })
+    }
   }
 
   useEffect(() => {
@@ -239,15 +240,15 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
 
   useEffect(() => {
     if (!original) {
-      setError('original', { type: 'required', message: msgErrors.required })
+      setError('origin', { type: 'required', message: msgErrors.required })
     } else if (
       onEditEvent &&
       options.length > 0 &&
-      original !== origin?.original &&
+      original !== origin?.origin &&
       options.findIndex((option) => option.value === original) > -1
     ) {
-      setError('original', { type: 'existed', message: msgErrors.existed })
-    } else clearErrors('original')
+      setError('origin', { type: 'existed', message: msgErrors.existed })
+    } else clearErrors('origin')
   }, [options, original])
 
   useEffect(() => {
@@ -256,8 +257,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
       reset(currentItem)
     } else {
       if (appConfig.appType === EAppType.EXTENSION)
-        chromeStorage.get(['original']).then((resp) => {
-          reset({ ...initItem, original: resp.original || '' })
+        chromeStorage.get(['origin']).then((resp) => {
+          reset({ ...initItem, origin: resp.origin || '' })
         })
     }
   }, [currentItem, origin])
@@ -265,7 +266,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
   useEffect(() => {
     if (isShowItemModal && !original && !onEditEvent) {
       reset({ ...initItem })
-      setError('original', { type: 'required', message: msgErrors.required })
+      setError('origin', { type: 'required', message: msgErrors.required })
     }
 
     return () => {
@@ -312,7 +313,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
             <Col md={20} xs={24}>
               <Controller
                 control={control}
-                name={`original`}
+                name={`origin`}
                 rules={{
                   required: {
                     value: true,
@@ -357,25 +358,25 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
                         />
                       }
                       onSelect={loadItem}
-                      onClear={() => setValue('original', '')}
+                      onClear={() => setValue('origin', '')}
                     />
 
-                    {invalid && errors.original?.type === 'required' && (
+                    {invalid && errors.origin?.type === 'required' && (
                       <p className={clsx(gClasses.errorMsg, gClasses.textLeft)}>
-                        {errors.original?.message as string}
+                        {errors.origin?.message as string}
                       </p>
                     )}
 
-                    {invalid && errors.original?.type === 'existed' && (
+                    {invalid && errors.origin?.type === 'existed' && (
                       <p className={clsx(gClasses.errorMsg, gClasses.textLeft)}>
-                        {errors.original?.message as string}
+                        {errors.origin?.message as string}
                       </p>
                     )}
                   </>
                 )}
               />
 
-              {original && <Reference original={original} />}
+              {original && <Reference origin={original} />}
             </Col>
           </Row>
 

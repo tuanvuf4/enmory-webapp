@@ -46,7 +46,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
     formState: { isValid },
   } = useForm<IExample>({
     defaultValues: data || {
-      original: '',
+      origin: '',
       translation: '',
       note: '',
     },
@@ -59,7 +59,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
       setAnswer('')
       setLoading(false)
       setIsChecked(false)
-      reset({ original: '', translation: '' })
+      reset({ origin: '', translation: '' })
       if (isSuccess) {
         onSuccess?.(content)
         data.id
@@ -76,7 +76,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 
   const onReload = async () => {
     setAnswer('')
-    reset({ original: '', translation: '' })
+    reset({ origin: '', translation: '' })
     await getRandomExamples()
     setIsChecked(false)
   }

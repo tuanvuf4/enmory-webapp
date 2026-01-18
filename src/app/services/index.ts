@@ -42,7 +42,7 @@ export const allSelect: IOption<string, ECategory> = {
 }
 
 export const itemDefault: IItem = {
-  original: '',
+  origin: '',
   favorite: false,
   archive: false,
   is_deleted: false,

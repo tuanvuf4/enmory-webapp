@@ -170,7 +170,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
             />
           </form>
 
-          {selected && selected.original && (
+          {selected && selected.origin && (
             <div className={clsx(exClasses.examples, classes.exampleSelectedEx)}>
               <ul>
                 <li className={clsx(exClasses.exampleItem)} style={{ paddingLeft: 8 }}>

@@ -29,7 +29,7 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
-import { initItem } from '../modals/itemModal'
+import { initItem } from '../modals/itemModal/data'
 
 interface ISearchFormComp {
   filter?: boolean
@@ -206,7 +206,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                         dispatch(
                           settingAction.setCurrentItem({
                             ...initItem,
-                            original: getValues('keyword'),
+                            origin: getValues('keyword'),
                           }),
                         )
                         dispatch(settingAction.toggleItemModal())

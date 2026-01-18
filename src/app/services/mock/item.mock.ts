@@ -6,7 +6,7 @@ export const meaningClient: IMeaning<string[]> = {
   common: false,
   definition: '',
   translation: '',
-  examples: [{ original: '', translation: '', note: '' }],
+  examples: [{ origin: '', translation: '', note: '' }],
   note: '',
   grammar: '',
   collocations: '',
@@ -27,7 +27,7 @@ export const meaningServer: IMeaning<string> = {
   synonyms: '',
   antonyms: '',
   pronunciation: { uk: '', us: '', common: '' },
-  examples: [{ original: '', translation: '', note: '' }],
+  examples: [{ origin: '', translation: '', note: '' }],
 }
 
 export const itemClient: IItem<string[]> = {
@@ -41,7 +41,7 @@ export const itemClient: IItem<string[]> = {
   level: 0,
   practiceCount: 0,
   userId: 1,
-  original: '',
+  origin: '',
   favorite: false,
   forms: [],
   collocations: [],
@@ -61,7 +61,7 @@ export const itemServer: IItem<string> = {
   level: 0,
   practiceCount: 0,
   userId: 1,
-  original: '',
+  origin: '',
   favorite: false,
   forms: '',
   collocations: '',

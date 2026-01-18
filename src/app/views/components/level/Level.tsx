@@ -1,7 +1,7 @@
 import { Rate, theme } from 'antd'
 import { StarFilled } from '@ant-design/icons'
 import styles from './style'
-import { EItemLevel } from '../../features/modals/itemModal'
+import { EItemLevel } from '../../features/modals/itemModal/data'
 
 interface IPros {
   level: number

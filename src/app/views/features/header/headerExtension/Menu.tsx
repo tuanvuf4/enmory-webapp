@@ -1,7 +1,7 @@
 import { MenuProps } from 'antd'
 import { PoweroffOutlined } from '@ant-design/icons/lib/icons'
 
-export const items: MenuProps['items'] = [
+export const menuExtension: MenuProps['items'] = [
   {
     key: 'logout',
     label: 'Log Out',

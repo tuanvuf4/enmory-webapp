@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { commonApi } from '@/services/firebase/api/common.api'
 import { ECategory, IIotd } from '@/models/item.model'
-import { getCategory, transformItemModelToClient } from '@/helpers/item'
+import { getCategory } from '@/helpers/item'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { useDispatch } from '@/core/hooks'
 import moment from 'moment'
@@ -70,13 +70,13 @@ const Marker = () => {
 
   const gClasses = globalStyle()
 
-  const onView = async (id: number) => {
+  const onView = async (id: string) => {
     const { isSuccess, content: item } = await itemApi.getItemById(id)
     if (isSuccess) {
       dispatch(settingAction.toggleViewItemModal())
       dispatch(
         settingAction.setCurrentItem({
-          ...transformItemModelToClient(item),
+          ...item,
         }),
       )
     }
@@ -111,7 +111,7 @@ const Marker = () => {
                     textAlign: 'left',
                   }}
                   key={index}
-                  onClick={() => onView(value.item.id as number)}
+                  onClick={() => onView(value.id)}
                   icon={
                     <DeleteOutlined
                       style={{
@@ -126,7 +126,7 @@ const Marker = () => {
                   }
                   iconPosition={'end'}
                 >
-                  {value.item.original}
+                  {value.item.origin}
                 </Button>
               ))}
             </Flex>

@@ -7,7 +7,7 @@ interface IActionItem {
   icon: React.ReactNode
 }
 
-export const ActionItem: React.FC<IActionItem> = (props) => {
+export const ActionItemExtension: React.FC<IActionItem> = (props) => {
   const { label = '', icon } = props
   const { token } = theme.useToken()
   const itemStyle = {
@@ -29,25 +29,25 @@ export const ActionItem: React.FC<IActionItem> = (props) => {
 export const actionMenuItems: ItemType[] = [
   {
     key: 0,
-    label: <ActionItem label='View' icon={<EyeOutlined />} />,
+    label: <ActionItemExtension label='View' icon={<EyeOutlined />} />,
   },
   {
     key: 1,
-    label: <ActionItem label='Edit' icon={<EditOutlined />} />,
+    label: <ActionItemExtension label='Edit' icon={<EditOutlined />} />,
   },
   {
     key: 2,
-    label: <ActionItem label='Delete' icon={<DeleteOutlined />} />,
+    label: <ActionItemExtension label='Delete' icon={<DeleteOutlined />} />,
   },
 ]
 
 export const actionMenuEx: ItemType[] = [
   {
     key: 1,
-    label: <ActionItem label='Edit' icon={<EditOutlined />} />,
+    label: <ActionItemExtension label='Edit' icon={<EditOutlined />} />,
   },
   {
     key: 2,
-    label: <ActionItem label='Delete' icon={<DeleteOutlined />} />,
+    label: <ActionItemExtension label='Delete' icon={<DeleteOutlined />} />,
   },
 ]

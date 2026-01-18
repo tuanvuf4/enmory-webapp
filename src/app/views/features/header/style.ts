@@ -27,6 +27,12 @@ const styles = () => {
     rowHeader: {
       margin: `${0}px -${token.size}px !important`,
     },
+    avatar: {
+      width: 32,
+      height: 32,
+      borderRadius: '50%',
+      objectFit: 'cover',
+    },
     logo: {
       textTransform: 'capitalize',
       fontStyle: 'italic',

@@ -1,0 +1,470 @@
+import globalStyle from '@/style/appStyle'
+import {
+  CloseCircleOutlined,
+  FilterOutlined,
+  SyncOutlined,
+  SearchOutlined,
+  Loading3QuartersOutlined,
+} from '@ant-design/icons'
+import { setting } from '@/config/appConfig'
+import { useSelector, useDispatch } from '@/core/hooks'
+import { useAutoComplete } from '@/helpers/hooks'
+import {
+  ELoading,
+  AppOrderByQuery,
+  orderByOptions,
+  AppOrderQuery,
+  orderOptions,
+} from '@/models/app.model'
+import { IFormSearchItem } from '@/models/formSearch.model'
+import { EType, ECategory } from '@/models/item.model'
+import { initSearchFormItem, allSelect } from '@/services/index'
+import { itemAsync } from '@/store/asyncActions/item.async'
+import { itemAction } from '@/store/reducers/items.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
+import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select } from 'antd'
+import { useState, useEffect } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import styles from './style'
+import clsx from 'clsx'
+import { NoResult } from '@/views/components'
+import { initItem } from '../modals/itemModal/data'
+
+interface ISearchFormComp {
+  filter?: boolean
+  resetForm?: boolean
+  submit?: boolean
+}
+
+export const FormSearchItem: React.FC<ISearchFormComp> = ({
+  filter = true,
+  submit = true,
+  resetForm = true,
+}) => {
+  const { token } = theme.useToken()
+  const classes = styles()
+  const gClasses = globalStyle()
+
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const [showType, setShowType] = useState<boolean>(false)
+
+  const { categories, types } = useSelector((state) => state.config)
+
+  const dispatch = useDispatch()
+
+  // Read form values from URL params
+  const formSearchValue: IFormSearchItem = {
+    keyword: searchParams.get('keyword') || '',
+    cat: searchParams.get('cat') ? Number(searchParams.get('cat')) : ECategory.ALL,
+    type: searchParams.get('type') ? Number(searchParams.get('type')) : EType.ALL,
+    defect: searchParams.get('defect') === 'true',
+    archive: searchParams.get('archive') === 'true',
+    order: (searchParams.get('order') as AppOrderQuery) || 'DESC',
+    orderBy: (searchParams.get('orderBy') as AppOrderByQuery) || 'created_date',
+  }
+
+  const { control, handleSubmit, reset, setValue, getValues, watch } = useForm<IFormSearchItem>({
+    defaultValues: formSearchValue,
+  })
+
+  const keyword = watch('keyword')
+
+  const { options, isSearching } = useAutoComplete(keyword)
+
+  const updateUrlParams = (data: Partial<IFormSearchItem>) => {
+    const params = new URLSearchParams(searchParams)
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== '' && value !== ECategory.ALL && value !== EType.ALL) {
+        params.set(key, String(value))
+      } else {
+        params.delete(key)
+      }
+    })
+    setSearchParams(params)
+  }
+
+  const onSelect = (value: string) => {
+    reset({ ...initSearchFormItem, keyword: value })
+    dispatch(
+      itemAction.updatePagination({
+        page: setting.pagination.page,
+        size: setting.pagination.size,
+      }),
+    )
+
+    // Update URL params
+    updateUrlParams({
+      keyword: value,
+      archive: false,
+      defect: false,
+    })
+
+    if (location.pathname.includes('library')) {
+      dispatch(
+        itemAsync.fetchItems({
+          keyword: value,
+          exact: true,
+          archive: false,
+          defect: false,
+          page: setting.pagination.page,
+          size: setting.pagination.size,
+        }),
+      )
+    } else {
+      const params = {
+        keyword: value,
+        page: 0,
+        size: setting.numberItemOfAutoComplete * 2,
+        exact: true,
+      }
+      itemApi
+        .getItemAutoComplete(params, { headers: { loading: ELoading.YES } })
+        .then((response) => {
+          dispatch(settingAction.toggleViewItemModal())
+          dispatch(
+            settingAction.setCurrentItem({
+              ...response.content[0],
+            }),
+          )
+        })
+    }
+  }
+
+  const onSubmit = (data: IFormSearchItem) => {
+    dispatch(
+      itemAction.updatePagination({
+        page: setting.pagination.page,
+        size: setting.pagination.size,
+      }),
+    )
+
+    // Update URL params instead of Redux
+    updateUrlParams(data)
+
+    if (location.pathname.includes('library')) {
+      dispatch(
+        itemAsync.fetchItems({
+          ...data,
+          page: setting.pagination.page,
+          size: setting.pagination.size,
+        }),
+      ).then(() => {
+        // console.log(`resp: `, resp)
+      })
+    } else {
+      navigate(
+        '/library?' +
+          new URLSearchParams(
+            Object.entries(data).reduce(
+              (acc, [key, value]) => {
+                if (
+                  value !== undefined &&
+                  value !== '' &&
+                  value !== ECategory.ALL &&
+                  value !== EType.ALL
+                ) {
+                  acc[key] = String(value)
+                }
+                return acc
+              },
+              {} as Record<string, string>,
+            ),
+          ).toString(),
+      )
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Sync form with URL params on mount and when URL changes
+  useEffect(() => {
+    reset(formSearchValue)
+    // Set showType based on category from URL
+    if (formSearchValue.cat === ECategory.WORD) {
+      setShowType(true)
+    }
+  }, [searchParams])
+
+  return (
+    <div className={classes.searchForm}>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
+        <Controller
+          control={control}
+          name={`keyword`}
+          render={({ field: { onChange, value } }) => {
+            return (
+              <div className={classes.autoSearchInputGroup}>
+                <AutoComplete
+                  value={value}
+                  placeholder='Enter keyword...'
+                  notFoundContent={
+                    <NoResult
+                      onAdd={() => {
+                        dispatch(
+                          settingAction.setCurrentItem({
+                            ...initItem,
+                            original: getValues('keyword'),
+                          }),
+                        )
+                        dispatch(settingAction.toggleItemModal())
+                      }}
+                    />
+                  }
+                  children={
+                    <Input
+                      className={classes.searchExampleInput}
+                      suffix={isSearching ? <Loading3QuartersOutlined spin /> : undefined}
+                      allowClear={
+                        isSearching
+                          ? false
+                          : {
+                              clearIcon: (
+                                <CloseCircleOutlined
+                                  style={{
+                                    background: token.colorWhite,
+                                    padding: token.size / 4,
+                                    borderRadius: '50%',
+                                    color: token.colorBgLayout,
+                                    fontSize: 14,
+                                  }}
+                                />
+                              ),
+                            }
+                      }
+                    />
+                  }
+                  className={clsx(classes.autoSearchInput, gClasses.fulWidth)}
+                  options={options}
+                  onSelect={onSelect}
+                  onClear={() => {
+                    updateUrlParams({ keyword: '' })
+                    onChange('')
+                  }}
+                  onChange={(text) => onChange(text)}
+                />
+              </div>
+            )
+          }}
+        />
+
+        {filter && (
+          <Dropdown
+            trigger={['click']}
+            dropdownRender={() => (
+              <div className={classes.filterWrapper}>
+                <Controller
+                  control={control}
+                  name={`archive`}
+                  render={({ field: { onChange, value } }) => (
+                    <Checkbox
+                      className={gClasses.fulWidth}
+                      checked={value}
+                      onChange={(e) => {
+                        onChange(e.target.checked)
+                        updateUrlParams({
+                          archive: e.target.checked,
+                        })
+                      }}
+                    >
+                      Archive
+                    </Checkbox>
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name={`defect`}
+                  render={({ field: { onChange, value } }) => (
+                    <Checkbox
+                      className={gClasses.fulWidth}
+                      checked={value}
+                      onChange={(e) => {
+                        onChange(e.target.checked)
+                        updateUrlParams({
+                          defect: e.target.checked,
+                          type: EType.ALL,
+                        })
+                      }}
+                    >
+                      Missing
+                    </Checkbox>
+                  )}
+                />
+
+                <p style={{ margin: 0 }}>Category:</p>
+
+                <Controller
+                  control={control}
+                  name={`cat`}
+                  render={({ field: { onChange, value } }) => (
+                    <Select
+                      className={gClasses.fulWidth}
+                      value={value}
+                      onChange={(e) => {
+                        onChange(e)
+                        if (e === ECategory.WORD) {
+                          setValue('type', EType.ALL)
+                          setShowType(true)
+                          updateUrlParams({ cat: e })
+                        } else {
+                          setShowType(false)
+                          updateUrlParams({
+                            cat: e,
+                            type: EType.ALL,
+                          })
+                        }
+                      }}
+                      options={[allSelect, ...categories]}
+                      defaultValue={ECategory.ALL}
+                      placeholder={'Category'}
+                    />
+                  )}
+                />
+
+                {showType && !getValues('defect') && (
+                  <Controller
+                    control={control}
+                    name={`type`}
+                    render={({ field: { onChange, value } }) => (
+                      <Select
+                        className={gClasses.fulWidth}
+                        value={value}
+                        onChange={(e) => {
+                          onChange(e)
+                          updateUrlParams({ type: e })
+                        }}
+                        options={[allSelect, ...types]}
+                        defaultValue={EType.ALL}
+                      />
+                    )}
+                  />
+                )}
+
+                <p style={{ margin: 0 }}>Order By:</p>
+
+                <Controller
+                  control={control}
+                  name={`orderBy`}
+                  render={({ field: { onChange, value } }) => (
+                    <Select
+                      className={gClasses.fulWidth}
+                      value={value}
+                      onChange={(e) => {
+                        onChange(e)
+                        updateUrlParams({ orderBy: e as AppOrderByQuery })
+                      }}
+                      options={[
+                        {
+                          label: 'Level',
+                          value: 'level',
+                        },
+                        ...orderByOptions,
+                      ]}
+                      defaultValue={'created_date'}
+                    />
+                  )}
+                />
+
+                <p style={{ margin: 0 }}>Order:</p>
+
+                <Controller
+                  control={control}
+                  name={`order`}
+                  render={({ field: { onChange, value } }) => (
+                    <Select
+                      className={gClasses.fulWidth}
+                      value={value}
+                      onChange={(e) => {
+                        onChange(e)
+                        updateUrlParams({ order: e as AppOrderQuery })
+                      }}
+                      options={orderOptions}
+                      defaultValue={'DESC'}
+                    />
+                  )}
+                />
+
+                <hr style={{ margin: `${token.size / 4}px 0px` }} />
+
+                <Button
+                  type={'primary'}
+                  htmlType='submit'
+                  className={gClasses.fulWidth}
+                  onClick={() => handleSubmit(onSubmit)()}
+                >
+                  Apply
+                </Button>
+              </div>
+            )}
+          >
+            <Button
+              type='default'
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <FilterOutlined />
+            </Button>
+          </Dropdown>
+        )}
+
+        {resetForm && (
+          <Button
+            type='default'
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onClick={() => {
+              const resetValues = {
+                keyword: '',
+                cat: ECategory.ALL,
+                type: EType.ALL,
+                archive: false,
+                defect: false,
+                order: 'DESC' as AppOrderQuery,
+                orderBy: 'created_date' as AppOrderByQuery,
+              }
+              reset(resetValues)
+              setSearchParams({})
+              if (location.pathname.includes('library')) {
+                dispatch(
+                  itemAsync.fetchItems({
+                    ...resetValues,
+                    page: setting.pagination.page,
+                    size: setting.pagination.size,
+                  }),
+                )
+              }
+            }}
+          >
+            <SyncOutlined />
+            <span className={gClasses.fromTablet}>Reset</span>
+          </Button>
+        )}
+
+        {submit && (
+          <Button
+            type='primary'
+            htmlType='submit'
+            onClick={() => handleSubmit(onSubmit)()}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <SearchOutlined />
+            <span className={gClasses.fromTablet}>Search</span>
+          </Button>
+        )}
+      </form>
+    </div>
+  )
+}

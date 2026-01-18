@@ -12,7 +12,7 @@ import { Toolbar } from '@/views/features/toolbar/Toolbar'
 import { theme, Row, Col, Button } from 'antd'
 import { useEffect } from 'react'
 import styles from './style'
-import iStyles from '@/app/views/features/item/Style'
+import iStyles from '@/app/views/features/item/style'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { Pagination } from '@/views/components'
 import { Item } from '@/views/features/item/Item'
@@ -68,7 +68,7 @@ export const Library: React.FC = () => {
       dispatch(
         settingAction.setCurrentItem({
           ...content,
-          original: content?.original || '',
+          origin: content?.origin || '',
           level: content?.level || 0,
         } as IItem),
       )
@@ -84,7 +84,7 @@ export const Library: React.FC = () => {
       dispatch(
         settingAction.setCurrentItem({
           ...item,
-          original: item?.original || '',
+          origin: item?.origin || '',
           level: item?.level || 0,
         } as IItem),
       )
@@ -173,7 +173,7 @@ export const Library: React.FC = () => {
                         <td>{index + 1}</td>
 
                         <td>
-                          {item.original}
+                          {item.origin}
                           {isDefect(item) && <AlertDefectItem item={item} />}
                         </td>
 
@@ -233,7 +233,7 @@ export const Library: React.FC = () => {
                         )}
 
                         <td>
-                          <Reference original={item.original} />
+                          <Reference origin={item.origin} />
                         </td>
 
                         <td>

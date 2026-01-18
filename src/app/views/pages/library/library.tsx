@@ -1,6 +1,6 @@
 import globalStyle, { appStyleConfig } from '@/style/appStyle'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import { transformItemModelToClient, isDefect, getCategory, getTypeOfItem } from '@/helpers/item'
+import { isDefect, getCategory, getTypeOfItem } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
 import { ECategory, EType } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
@@ -35,7 +35,7 @@ export const Library: React.FC = () => {
 
   const dispatch = useDispatch()
 
-  const onDelete = (id: number) => {
+  const onDelete = (id: string) => {
     confirmDeleteModal({
       onOk: () => {
         itemApi.deleteItem(id).then(() => {
@@ -45,14 +45,14 @@ export const Library: React.FC = () => {
     })
   }
 
-  const onEdit = async (id: number) => {
+  const onEdit = async (id: string) => {
     try {
       const { content } = await itemApi.getItemById(id)
       dispatch(settingAction.setOnEditItem(true))
       dispatch(settingAction.toggleItemModal())
       dispatch(
         settingAction.setCurrentItem({
-          ...transformItemModelToClient(content),
+          ...content,
         }),
       )
     } catch (error) {
@@ -60,15 +60,11 @@ export const Library: React.FC = () => {
     }
   }
 
-  const onView = async (id: number) => {
+  const onView = async (id: string) => {
     const { isSuccess, content: item } = await itemApi.getItemById(id)
     if (isSuccess) {
       dispatch(settingAction.toggleViewItemModal())
-      dispatch(
-        settingAction.setCurrentItem({
-          ...transformItemModelToClient(item),
-        }),
-      )
+      dispatch(settingAction.setCurrentItem({ ...item }))
     }
   }
 
@@ -117,9 +113,9 @@ export const Library: React.FC = () => {
                     <Col xs={24} sm={12} md={12} lg={8} xl={6} key={idx}>
                       <Item
                         data={item}
-                        onEdit={() => onEdit(item.id || -1)}
-                        onDelete={() => onDelete(item.id || -1)}
-                        onView={() => onView(item.id || -1)}
+                        onEdit={() => onEdit(item.id || '')}
+                        onDelete={() => onDelete(item.id || '')}
+                        onView={() => onView(item.id || '')}
                       />
                     </Col>
                   )
@@ -223,21 +219,21 @@ export const Library: React.FC = () => {
                               type='text'
                               style={{ color: token.colorPrimary }}
                               icon={<EyeOutlined />}
-                              onClick={() => onView(item.id || -1)}
+                              onClick={() => onView(item.id || '')}
                             />
 
                             <Button
                               type='text'
                               style={{ color: appStyleConfig.color.yellow[6] }}
                               icon={<EditOutlined />}
-                              onClick={() => onEdit(item.id || -1)}
+                              onClick={() => onEdit(item.id || '')}
                             />
 
                             <Button
                               type='text'
                               style={{ color: appStyleConfig.color.red[5] }}
                               icon={<DeleteOutlined />}
-                              onClick={() => onDelete(item.id || -1)}
+                              onClick={() => onDelete(item.id || '')}
                             />
                           </div>
                         </td>

@@ -28,15 +28,15 @@ const createExample = async (body: IExample): Promise<IHttpResponse<IExample>> =
       throw new Error('User not authenticated')
     }
 
-    const exampleData = {
+    const exampleData: IExample = {
       ...body,
-      userId: currentUser.uid,
+      uid: currentUser.uid,
       created_date: Timestamp.now().toMillis(),
       last_update: Timestamp.now().toMillis(),
     }
 
     const docRef = await addDoc(collection(db, 'examples'), exampleData)
-    const newExample = { ...exampleData, id: Number(docRef.id) }
+    const newExample = { ...exampleData, id: docRef.id }
 
     return {
       isSuccess: true,
@@ -63,7 +63,7 @@ const getExampleById = async (id: number | string): Promise<IHttpResponse<IExamp
     }
 
     const example = {
-      id: Number(exampleDoc.id),
+      id: exampleDoc.id,
       ...exampleDoc.data(),
     } as IExample
 
@@ -101,7 +101,7 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
     const snapshot = await getDocs(examplesQuery)
 
     let examples = snapshot.docs.map((doc) => ({
-      id: Number(doc.id),
+      id: doc.id,
       ...doc.data(),
     })) as IExample[]
 
@@ -158,7 +158,7 @@ const getRandomExamples = async (
     const snapshot = await getDocs(examplesQuery)
 
     let examples = snapshot.docs.map((doc) => ({
-      id: Number(doc.id),
+      id: doc.id,
       ...doc.data(),
     })) as IExample[]
 
@@ -202,7 +202,7 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
 
     const updatedDoc = await getDoc(exampleDocRef)
     const updatedExample = {
-      id: Number(updatedDoc.id),
+      id: updatedDoc.id,
       ...updatedDoc.data(),
     } as IExample
 

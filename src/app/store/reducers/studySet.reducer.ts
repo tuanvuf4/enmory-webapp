@@ -1,5 +1,5 @@
 import { IHttpResponse } from '@/app/models/http.model'
-import { IItemQuiz, TQuiz, IQuiz, IPair } from '@/app/models/item.model'
+import { IItemQuiz, TQuiz, IQuiz, IOption } from '@/app/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { itemAsync } from '../asyncActions/item.async'
 
@@ -50,7 +50,7 @@ export const studySetReducer = createSlice({
     },
     updateQuiz(
       state: IStudySet,
-      action: PayloadAction<Partial<IQuiz<string | Partial<IPair<string, boolean>>[]>>>,
+      action: PayloadAction<Partial<IQuiz<string | Partial<IOption<string, boolean>>[]>>>,
     ) {
       state.list[state.status.currentIndex] = {
         ...state.list[state.status.currentIndex],
@@ -67,7 +67,9 @@ export const studySetReducer = createSlice({
           ...state.list[state.status.currentIndex].quiz,
           answer: [
             ...(
-              state.list[state.status.currentIndex].quiz.answer as Partial<IPair<string, boolean>>[]
+              state.list[state.status.currentIndex].quiz.answer as Partial<
+                IOption<string, boolean>
+              >[]
             ).map((item) => {
               if (item.id === 2673) {
                 return {
@@ -81,14 +83,16 @@ export const studySetReducer = createSlice({
         },
       }
     },
-    onSelectAnswer(state: IStudySet, action: PayloadAction<Partial<IPair<string, boolean>>>) {
+    onSelectAnswer(state: IStudySet, action: PayloadAction<Partial<IOption<string, boolean>>>) {
       state.list[state.status.currentIndex] = {
         ...state.list[state.status.currentIndex],
         quiz: {
           ...state.list[state.status.currentIndex].quiz,
           answer: [
             ...(
-              state.list[state.status.currentIndex].quiz.answer as Partial<IPair<string, boolean>>[]
+              state.list[state.status.currentIndex].quiz.answer as Partial<
+                IOption<string, boolean>
+              >[]
             ).map((item) => {
               if (item.id === action.payload.id) {
                 return { ...action.payload }

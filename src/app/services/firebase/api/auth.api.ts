@@ -27,7 +27,7 @@ const getGoogleUserInfo = async (accessToken: string) => {
  */
 const login = async (user: ILogin): Promise<IHttpResponse<ILoginResponse>> => {
   try {
-    const userCredential = await firebaseAuthService.signInWithEmail(user.username, user.password)
+    const userCredential = await firebaseAuthService.signInWithEmail(user.email, user.password)
     const idToken = await userCredential.user.getIdToken()
 
     return {

@@ -1,6 +1,5 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { useSelector, useDispatch } from '@/core/hooks'
-import { transformItemModelToClient } from '@/helpers/item'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme } from 'antd'
 import styles from './style'
@@ -28,9 +27,9 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch }) => {
       size: 1,
       exact,
     })
-    if (isSuccess && content.data.length > 0) {
+    if (isSuccess && content.length > 0) {
       if (!isShowViewItemModal) dispatch(settingAction.showViewItemModal(true))
-      dispatch(settingAction.setCurrentItem(transformItemModelToClient(content.data[0])))
+      dispatch(settingAction.setCurrentItem(content[0]))
     }
   }
 

@@ -19,6 +19,10 @@ import {
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore'
 import { dbCollections, app as firebaseApp } from '@/config/firebaseConfig'
 import { IUserConfig } from '@/models/user.model'
+import { commonApi } from './api'
+import { appConfig, setting } from '@/config/appConfig'
+import { config } from 'process'
+import { EListeningTypes } from '@/models/dictation.model'
 
 export interface IAuthUser {
   uid: string
@@ -80,6 +84,7 @@ export class FirebaseAuthService {
 
       // Create user profile in Firestore
       const userDocRef = doc(this.db, dbCollections.users, user.uid)
+
       const userProfile: IUserProfile = {
         uid: user.uid,
         email: user.email || '',
@@ -90,7 +95,9 @@ export class FirebaseAuthService {
         createdAt: Date.now(),
         updatedAt: Date.now(),
         provider: 'email',
-        ...userData,
+        configuration: {
+          ...setting.meta,
+        },
       }
 
       await setDoc(userDocRef, userProfile)
@@ -139,6 +146,9 @@ export class FirebaseAuthService {
           createdAt: Date.now(),
           updatedAt: Date.now(),
           provider: 'email',
+          configuration: {
+            ...setting.meta,
+          },
         }
 
         await setDoc(userDocRef, userProfile)
@@ -171,8 +181,11 @@ export class FirebaseAuthService {
       const user = result.user
 
       // Check if this is a new user
-      const userDocRef = doc(this.db, 'users', user.uid)
+      const userDocRef = doc(this.db, dbCollections.users, user.uid)
       const userDoc = await getDoc(userDocRef)
+
+      // const configDocRef = doc(this.db, dbCollections.configuration, user.uid)
+      // const configDoc = await getDoc(configDocRef)
 
       // If new user, create user profile in Firestore
       if (!userDoc.exists()) {
@@ -186,11 +199,18 @@ export class FirebaseAuthService {
           createdAt: Date.now(),
           updatedAt: Date.now(),
           provider: 'google',
-          configuration: null,
+          configuration: {
+            ...setting.meta,
+          },
         }
 
         await setDoc(userDocRef, userProfile)
       }
+
+      // if (!configDoc.exists()) {
+      //   const response = await commonApi.createUserConfig(user.uid)
+      //   console.log(`*** response *** `, response)
+      // }
 
       return result
     } catch (error) {

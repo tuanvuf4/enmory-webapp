@@ -22,7 +22,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
   const classes = styles()
   const gClasses = globalStyle()
 
-  const { loginWithEmail, loginWithGoogle, isLoading, firebaseError } = useFirebaseAuth({
+  const { loginWithEmail, loginWithGoogle, isLoading, authError } = useFirebaseAuth({
     onLoginSuccess: onLoginSuccess,
   })
 
@@ -91,8 +91,8 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
 
             {/* {errorMsg && <p className={clsx(gClasses.errorMsg, gClasses.textLeft)}>{errorMsg}</p>} */}
 
-            {firebaseError && (
-              <p className={clsx(gClasses.errorMsg, gClasses.textCenter)}>{firebaseError}</p>
+            {authError && (
+              <p className={clsx(gClasses.errorMsg, gClasses.textCenter)}>{authError}</p>
             )}
 
             <Row justify={'center'}>

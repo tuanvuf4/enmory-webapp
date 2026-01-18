@@ -2,7 +2,7 @@ import { setting } from '@/config/appConfig'
 import { INotification } from '../models/app.model'
 import { EListeningTypes } from '../models/dictation.model'
 import { IFormSearchEx, IFormSearchItem } from '../models/formSearch.model'
-import { ECategory, EType, IItem, IPair } from '../models/item.model'
+import { ECategory, EType, IItem, IOption } from '../models/item.model'
 import { ILoginResponse, IUser } from '../models/user.model'
 
 export const initAuth: ILoginResponse = {
@@ -13,31 +13,17 @@ export const initAuth: ILoginResponse = {
 }
 
 export const initUser: IUser<number[]> = {
-  username: '',
+  uid: '',
   password: '',
   email: '',
   firstName: '',
   lastName: '',
-  avatar: '',
-  phoneNumber: '',
-  status: true,
-  sex: false,
-  is_active: false,
-  actived_date: 0,
-  last_active: 0,
+  updatedAt: 0,
+  displayName: '',
+  photoURL: '',
+  provider: '',
   configuration: {
-    community: false,
-    numberOfWordsInStudySet: setting.studySet.numberOfWordsInStudySet,
-    numberOfPhraseInStudySet: setting.studySet.numberOfPhraseInStudySet,
-    numberOfIdiomInStudySet: setting.studySet.numberOfIdiomInStudySet,
-    numberOfSlangInStudySet: setting.studySet.numberOfSlangInStudySet,
-    numberOfCollocationsInStudySet: setting.studySet.numberOfCollocationsInStudySet,
-    numberOfSentencesInStudySet: setting.studySet.numberOfSentencesInStudySet,
-    numberOfExampleReview: setting.studySet.numberOfExampleReview,
-    numberOfDictationItem: setting.listening.type.default,
-    references: [],
-    player: false,
-    listeningType: EListeningTypes.Exercise,
+    ...setting.meta,
   },
 }
 
@@ -48,7 +34,7 @@ export const initNotification: INotification = {
   description: '',
 }
 
-export const allSelect: IPair<string, ECategory> = {
+export const allSelect: IOption<string, ECategory> = {
   id: ECategory.ALL,
   label: 'All',
   value: ECategory.ALL,

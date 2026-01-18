@@ -1,6 +1,6 @@
 import { EViewMode, EViewPort } from '@/models/app.model'
 import { IHttpResponse } from '@/models/http.model'
-import { IPair, ECategory, EType } from '@/models/item.model'
+import { IOption, ECategory, EType } from '@/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { actionAsyncApp } from '@/store/asyncActions/app.async'
 
@@ -9,8 +9,8 @@ export interface IConfigState {
   drawer: boolean
   viewMode: EViewMode
   viewPort: EViewPort
-  categories: IPair<string, ECategory>[]
-  types: IPair<string, EType>[]
+  categories: IOption<string, ECategory>[]
+  types: IOption<string, EType>[]
 }
 
 export const initialState: IConfigState = {
@@ -46,7 +46,10 @@ export const configReducer = createSlice({
     builder
       .addCase(
         actionAsyncApp.fetchCategories.fulfilled,
-        (state: IConfigState, action: PayloadAction<IHttpResponse<IPair<string, ECategory>[]>>) => {
+        (
+          state: IConfigState,
+          action: PayloadAction<IHttpResponse<IOption<string, ECategory>[]>>,
+        ) => {
           state.categories = action.payload.content
         },
       )
@@ -55,7 +58,7 @@ export const configReducer = createSlice({
       })
       .addCase(
         actionAsyncApp.fetchTypes.fulfilled,
-        (state: IConfigState, action: PayloadAction<IHttpResponse<IPair<string, EType>[]>>) => {
+        (state: IConfigState, action: PayloadAction<IHttpResponse<IOption<string, EType>[]>>) => {
           state.types = action.payload.content
         },
       )

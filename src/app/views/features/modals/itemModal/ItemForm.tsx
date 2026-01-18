@@ -3,9 +3,8 @@ import { chromeStorage } from '@/extension/storageService'
 import globalStyle from '@/style/appStyle'
 import { setting, appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
-import { transformItemModelToServer, transformItemModelToClient } from '@/helpers/item'
 import { isGroupWord } from '@/helpers/validate'
-import { IPair, ECategory, EType, IItem } from '@/models/item.model'
+import { IOption, ECategory, EType, IItem, IExample, IMeaning } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { itemAsync } from '@/store/asyncActions/item.async'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
@@ -26,10 +25,12 @@ import styles from './style'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { CloseCircleOutlined, Loading3QuartersOutlined } from '@ant-design/icons'
 import { usePrompt } from '@/helpers/hooks'
+import { exampleApi } from '@/services/firebase'
+import { Timestamp } from 'firebase/firestore'
 
 interface ItemFormProps {
-  categories: IPair<string, ECategory>[]
-  types: IPair<string, EType>[]
+  categories: IOption<string, ECategory>[]
+  types: IOption<string, EType>[]
 }
 
 export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
@@ -45,9 +46,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
 
   const { user } = useSelector((state) => state.auth)
 
-  console.log(`*** user *** `, user)
-
-  const { pagination, formSearchValue } = useSelector((state) => state.items)
   const { currentItem, onEditEvent, isShowItemModal } = useSelector((state) => state.setting)
   const { list } = useSelector((state) => state.studySet)
 
@@ -73,19 +71,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
 
   const { options, isSearching } = useAutoComplete(original, 'item', false)
 
-  const prepareDataSubmit = (payload: IItem<string[]>): IItem<string> => ({
-    userId: user?.uid ? parseInt(user.uid) || 0 : 0,
-    ...transformItemModelToServer({ ...payload }),
-  })
-
   const getBatchItem = (data: IItem) => {
-    const quickAdd = (data.quickAdd as string[]).map((word) => {
-      const itemBase = { ...initItem, original: word }
-      return isGroupWord(word)
-        ? { ...itemBase, catId: ECategory.PHRASE }
-        : { ...itemBase, catId: ECategory.WORD }
-    })
-
     const synonyms = data.meanings?.map((meaning) => {
       return meaning.synonyms.map((synonym) => {
         const itemBase = {
@@ -129,26 +115,43 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
       })
     })
 
-    return [...quickAdd, ..._.flattenDeep(synonyms), ..._.flattenDeep(antonyms)]
+    return [..._.flattenDeep(synonyms), ..._.flattenDeep(antonyms)]
+  }
+
+  const createExample = async (meanings: IMeaning) => {
+    const examplePromises = meanings.examples.map(async (example) => ({
+      ...(await exampleApi.createExample(example as IExample)).content,
+    }))
+    return await Promise.all(examplePromises)
   }
 
   const handleOk = async () => {
     if (isValid) {
       handleSubmit(async (data: IItem) => {
-        const dataSubmit = prepareDataSubmit(data)
-        const batch = getBatchItem(data)
+        const meanings = []
+        if (data.meanings && data.meanings.length > 0) {
+          const meaningPromises: Promise<IMeaning>[] = data.meanings.map(async (meaning) => {
+            return {
+              ...meaning,
+              itemId: data.id || '',
+              uid: user?.uid || '',
+              created_date: Timestamp.now().toMillis(),
+              last_update: Timestamp.now().toMillis(),
+              examples:
+                ((await createExample(meaning)).map((example) => example.id) as string[]) ?? [],
+            }
+          })
+          meanings.push(...(await Promise.all(meaningPromises)))
+        }
+        const dataSubmit: IItem<string[]> = { ...data, meanings: meanings }
+
+        console.log(`*** dataSubmit *** `, dataSubmit)
+
         if (onEditEvent) {
           try {
             const updatedItem = await itemApi.updateItem(String(currentItem?.id), dataSubmit)
-            const pr =
-              batch.length > 0
-                ? [
-                    updatedItem,
-                    await itemApi.createItems(batch.map((item) => prepareDataSubmit(item))),
-                  ]
-                : [updatedItem]
-            const [{ content }] = await Promise.all(pr)
-            const itemUpdated = transformItemModelToClient(content)
+
+            const [{ content: itemUpdated }] = await Promise.all([updatedItem])
             if (list.find((item) => item.id === itemUpdated.id)) {
               dispatch(studySetAction.update(itemUpdated))
             }
@@ -158,15 +161,15 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
             dispatch(settingAction.setOnEditItem(false))
             reset(initItem)
             openNotification({ type: 'success', message: 'Update item successful!' })
-            await dispatch(
-              itemAsync.fetchItems({
-                ...formSearchValue,
-                page: pagination.page,
-                size: pagination.size,
-              }),
-            ).catch(() => {
-              openNotification({ type: 'error', message: 'Cannot get item!' })
-            })
+            // await dispatch(
+            //   itemAsync.fetchItems({
+            //     ...formSearchValue,
+            //     page: pagination.page,
+            //     size: pagination.size,
+            //   }),
+            // ).catch(() => {
+            //   openNotification({ type: 'error', message: 'Cannot get item!' })
+            // })
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
             dispatch(settingAction.toggleItemModal())
@@ -178,32 +181,22 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
           }
         } else {
           try {
-            console.log(`*** dataSubmit *** `, dataSubmit)
-            const createItem = await itemApi.createItem(dataSubmit)
-            console.log(`*** createItem *** `, createItem)
-            const pr =
-              batch.length > 0
-                ? [
-                    createItem,
-                    await itemApi.createItems(batch.map((item) => prepareDataSubmit(item))),
-                  ]
-                : [createItem]
-            const [{ isSuccess }] = await Promise.all(pr)
+            const { isSuccess } = await itemApi.createItem(dataSubmit)
 
             if (isSuccess) {
               dispatch(settingAction.toggleItemModal())
               reset(initItem)
               openNotification({ type: 'success', message: 'Create a item successful!' })
-              await dispatch(
-                itemAsync.fetchItems({
-                  ...formSearchValue,
-                  page: pagination.page,
-                  size: pagination.size,
-                }),
-              ).catch((error) => {
-                openNotification({ type: 'error', message: JSON.stringify(error) })
-              })
-              dispatch(settingAction.setCurrentItem(null))
+              // await dispatch(
+              //   itemAsync.fetchItems({
+              //     ...formSearchValue,
+              //     page: pagination.page,
+              //     size: pagination.size,
+              //   }),
+              // ).catch((error) => {
+              //   openNotification({ type: 'error', message: JSON.stringify(error) })
+              // })
+              // dispatch(settingAction.setCurrentItem(null))
             }
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
@@ -235,7 +228,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
       dispatch(settingAction.setOnEditItem(true))
       dispatch(
         settingAction.setCurrentItem({
-          ...transformItemModelToClient(response.content[0]),
+          ...response.content[0],
         }),
       )
     })
@@ -499,26 +492,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
                     onChange={(value: string[]) => {
                       setValue('relation', value)
                     }}
-                  />
-                )}
-              />
-            </Col>
-          </Row>
-
-          <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-            <Col md={4} xs={6}>
-              Quick add:
-            </Col>
-
-            <Col md={20} xs={18}>
-              <Controller
-                control={control}
-                name={`quickAdd`}
-                render={() => (
-                  <InputTag
-                    tags={getValues('quickAdd') as string[]}
-                    onChange={(value: string[]) => setValue('quickAdd', value)}
-                    allowSpace={true}
                   />
                 )}
               />

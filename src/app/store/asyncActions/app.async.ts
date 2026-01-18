@@ -1,4 +1,3 @@
-import { transformItemModelToClient } from '@/helpers/item'
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import { commonApi } from '@/services/firebase/api/common.api'
 import { IIotdRequest } from '@/models/item.model'
@@ -34,7 +33,7 @@ const fetchIotd = createAsyncThunk('iotd/fetchIotd', async (data: IIotdRequest) 
     ...iotd,
     content: {
       ...iotd.content,
-      item: { ...transformItemModelToClient(iotd.content.item) },
+      item: iotd.content.item,
     },
   }
 })

@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from '@/core/hooks'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { EMediaSrc } from '@/models/dictation.model'
-import { IPair } from '@/models/item.model'
+import { IOption } from '@/models/item.model'
 // TODO: Media API not implemented in Firebase yet
 // import { mediaApi } from '@/services/firebase/api/media.api'
 import { actionAsyncMedia } from '@/store/asyncActions/media.async'
@@ -38,7 +38,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
 
   const dispatch = useDispatch()
 
-  const extSrcOptions: IPair<string, TExternalSource>[] = [
+  const extSrcOptions: IOption<string, TExternalSource>[] = [
     {
       id: 1,
       value: TExternalSource.IFRAME,

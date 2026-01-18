@@ -41,17 +41,12 @@ const createUser = async (item: IUser): Promise<IHttpResponse<IUser>> => {
 
     const userDocRef = doc(db, 'users', currentUser.uid)
     const userData: Partial<IUser> = {
-      username: item.username,
       email: item.email,
       firstName: item.firstName,
       lastName: item.lastName,
-      sex: item.sex,
-      avatar: item.avatar,
-      phoneNumber: item.phoneNumber,
-      status: true,
-      is_active: true,
-      created_date: Timestamp.now().toMillis(),
-      last_active: Timestamp.now().toMillis(),
+      photoURL: item.photoURL,
+      createdAt: Timestamp.now().toMillis(),
+      updatedAt: Timestamp.now().toMillis(),
       configuration: item.configuration,
     }
 
@@ -61,7 +56,7 @@ const createUser = async (item: IUser): Promise<IHttpResponse<IUser>> => {
       isSuccess: true,
       message: 'User created successfully',
       content: {
-        id: currentUser.uid as any,
+        uid: currentUser.uid as any,
         ...userData,
       } as IUser,
       statusCode: 200,

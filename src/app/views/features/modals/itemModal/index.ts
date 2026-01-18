@@ -1,10 +1,14 @@
 import { ECategory, EType, IExample, IItem, IMeaning } from '@/app/models/item.model'
+import { Timestamp } from 'firebase/firestore'
 
 export const exampleItem: IExample = {
   auto: false,
+  uid: '',
   original: '',
   translation: '',
   note: '',
+  created_date: Timestamp.now().toMillis(),
+  last_update: Timestamp.now().toMillis(),
 }
 
 export const meaningItem: IMeaning<string[]> = {
@@ -37,7 +41,6 @@ export const initItem: IItem = {
   word_family: [],
   relation: [],
   meanings: [],
-  quickAdd: [],
 }
 
 export type TItemLevel = 'Level 1' | 'Level 2' | 'Level 3' | 'Level 4' | 'Level 5'

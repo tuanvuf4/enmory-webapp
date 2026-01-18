@@ -9,7 +9,6 @@ import {
 import { setting } from '@/config/appConfig'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { useAutoComplete } from '@/helpers/hooks'
-import { transformItemModelToClient } from '@/helpers/item'
 import {
   ELoading,
   AppOrderByQuery,
@@ -105,7 +104,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
           dispatch(settingAction.toggleViewItemModal())
           dispatch(
             settingAction.setCurrentItem({
-              ...transformItemModelToClient(response.content.data[0]),
+              ...response.content[0],
             }),
           )
         })

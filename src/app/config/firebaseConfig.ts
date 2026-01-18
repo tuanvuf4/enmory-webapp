@@ -13,7 +13,6 @@ export const dbCollections = {
   items: 'items',
   examples: 'examples',
   iotd: 'iotd',
-  configuration: 'configuration',
 }
 
 // Get Firebase services

@@ -1,5 +1,3 @@
-export * from './axiosErrorHandleRequest'
-export * from './axiosHandleAuthRequest'
 export * from './axiosHttpCounter'
 export * from './clickOutsideElement'
 export * from './debounce'

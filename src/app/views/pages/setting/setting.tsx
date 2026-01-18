@@ -86,9 +86,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.studySet.numberOfWordsInStudySet}
+                                defaultValue={setting.meta.numberOfWordsInStudySet}
                                 onChange={onChange}
-                                options={setting.studySet.options}
+                                options={setting.options}
                               />
                             )
                           }}
@@ -108,9 +108,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.studySet.numberOfPhraseInStudySet}
+                                defaultValue={setting.meta.numberOfPhraseInStudySet}
                                 onChange={onChange}
-                                options={setting.studySet.options}
+                                options={setting.options}
                               />
                             )
                           }}
@@ -130,9 +130,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.studySet.numberOfIdiomInStudySet}
+                                defaultValue={setting.meta.numberOfIdiomInStudySet}
                                 onChange={onChange}
-                                options={setting.studySet.stOptions}
+                                options={setting.options}
                               />
                             )
                           }}
@@ -152,9 +152,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.studySet.numberOfSlangInStudySet}
+                                defaultValue={setting.meta.numberOfSlangInStudySet}
                                 onChange={onChange}
-                                options={setting.studySet.stOptions}
+                                options={setting.options}
                               />
                             )
                           }}
@@ -174,9 +174,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.studySet.numberOfCollocationsInStudySet}
+                                defaultValue={setting.meta.numberOfCollocationsInStudySet}
                                 onChange={onChange}
-                                options={setting.studySet.options}
+                                options={setting.options}
                               />
                             )
                           }}
@@ -196,9 +196,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.studySet.numberOfSentencesInStudySet}
+                                defaultValue={setting.meta.numberOfSentencesInStudySet}
                                 onChange={onChange}
-                                options={setting.studySet.options}
+                                options={setting.options}
                               />
                             )
                           }}
@@ -218,9 +218,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.studySet.numberOfExampleReview}
+                                defaultValue={setting.meta.numberOfExampleReview}
                                 onChange={onChange}
-                                options={setting.studySet.rdOptions}
+                                options={setting.options}
                               />
                             )
                           }}

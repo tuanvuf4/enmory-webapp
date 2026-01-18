@@ -90,7 +90,7 @@ export const Item: React.FC<IProps> = ({
         break
 
       case '6':
-        markItem(data?.id as number)
+        markItem(data?.id)
         break
 
       default:
@@ -152,7 +152,7 @@ export const Item: React.FC<IProps> = ({
       created_date: now,
       last_update: now,
     }
-    itemApi.updateItem(data.id as number, { ...newData })
+    itemApi.updateItem(data.id, { ...newData })
     dispatch(itemAction.update({ ...data, ...newData }))
     dispatch(studySetAction.update({ ...data, ...newData }))
     dispatch(iotdAction.update({ ...data, ...newData }))
@@ -161,7 +161,7 @@ export const Item: React.FC<IProps> = ({
 
   const onRedo = (data: IItem) => {
     const level = data.level === 5 ? 0 : 5
-    itemApi.updateItem(data.id as number, { level })
+    itemApi.updateItem(data.id, { level })
     dispatch(itemAction.update({ ...data, level }))
     dispatch(studySetAction.update({ ...data, level }))
     dispatch(iotdAction.update({ ...data, level }))
@@ -170,14 +170,14 @@ export const Item: React.FC<IProps> = ({
 
   const archive = (data: IItem) => {
     const archive = !data.archive
-    itemApi.updateItem(data.id as number, { archive })
+    itemApi.updateItem(data.id, { archive })
     dispatch(itemAction.update({ ...data, archive }))
     dispatch(studySetAction.update({ ...data, archive }))
     dispatch(iotdAction.update({ ...data, archive }))
     dispatch(settingAction.setCurrentItem({ ...data, archive }))
   }
 
-  const markItem = async (id: number) => {
+  const markItem = async (id: string) => {
     const { isSuccess, content } = await commonApi.markIotd({
       isMarked: true,
       itemId: id,
@@ -211,11 +211,7 @@ export const Item: React.FC<IProps> = ({
             <div className={classes.contentHead}>
               <div className={classes.title}>
                 <h2 className={classes.original}>
-                  {isDefect(data) && (
-                    <span className={classes.warnTitle}>{data.original}</span>
-                    // <Popover title={msgWarning.missingMeaning}>
-                    // </Popover>
-                  )}
+                  {isDefect(data) && <span className={classes.warnTitle}>{data.original}</span>}
 
                   {!isDefect(data) && <span>{data.original}</span>}
                 </h2>

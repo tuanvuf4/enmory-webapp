@@ -3,7 +3,7 @@
  * Manages authentication state in Redux store using Firebase
  */
 
-import { commonApi, firebaseAuthService, IUserProfile } from '@/services/firebase'
+import { firebaseAuthService, IUserProfile } from '@/services/firebase'
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
 export interface IAuthState {
@@ -105,19 +105,6 @@ export const updateUserProfile = createAsyncThunk(
       await firebaseAuthService.updateUserProfile(uid, data)
       const updatedProfile = await firebaseAuthService.getUserProfile(uid)
       return updatedProfile
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to update user profile')
-    }
-  },
-)
-
-export const getUserConfig = createAsyncThunk(
-  'auth/getUserConfig',
-  async ({ userId }: { userId: string }, { rejectWithValue }) => {
-    try {
-      const userProfile = await commonApi.getUserConfig(userId)
-      console.log(`*** userProfile *** `, userProfile)
-      return userProfile
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to update user profile')
     }
@@ -249,25 +236,6 @@ export const authReducer = createSlice({
         state.error = null
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
-        state.isLoading = false
-        state.error = action.payload as string
-      })
-
-    // get user config
-    builder
-      .addCase(getUserConfig.pending, (state) => {
-        state.isLoading = true
-        state.error = null
-      })
-      .addCase(getUserConfig.fulfilled, (state, action) => {
-        state.isLoading = false
-        state.user = {
-          ...state.user,
-          configuration: action.payload?.configuration || null,
-        }
-        state.error = null
-      })
-      .addCase(getUserConfig.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload as string
       })

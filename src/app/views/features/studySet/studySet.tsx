@@ -2,13 +2,9 @@ import { appStyleConfig } from '@/style/appStyle'
 import { ReloadOutlined, EditOutlined } from '@ant-design/icons'
 import { appConfig, setting } from '@/config/appConfig'
 import { useDispatch, useSelector } from '@/core/hooks'
-import {
-  transformItemModelToServer,
-  transformItemModelToClient,
-  getTypeOfItem,
-} from '@/helpers/item'
+import { getTypeOfItem } from '@/helpers/item'
 import { ELoading } from '@/models/app.model'
-import { IItemQuiz, TQuiz, ECategory, EQuiz, IPair, IAnswer, IItem } from '@/models/item.model'
+import { IItemQuiz, TQuiz, ECategory, EQuiz, IOption, IAnswer, IItem } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { commonApi } from '@/services/firebase/api/common.api'
@@ -45,19 +41,19 @@ export const StudySet: React.FC = () => {
   const { inProgress, isDone, currentIndex } = status
 
   const getNumberOfItem = (category: ECategory) => {
-    if (category === ECategory.WORD) return configuration.numberOfWordsInStudySet
+    if (category === ECategory.WORD) return configuration?.numberOfWordsInStudySet
 
-    if (category === ECategory.PHRASE) return configuration.numberOfPhraseInStudySet
+    if (category === ECategory.PHRASE) return configuration?.numberOfPhraseInStudySet
 
-    if (category === ECategory.IDIOM) return configuration.numberOfIdiomInStudySet
+    if (category === ECategory.IDIOM) return configuration?.numberOfIdiomInStudySet
 
-    if (category === ECategory.SLANG) return configuration.numberOfSlangInStudySet
+    if (category === ECategory.SLANG) return configuration?.numberOfSlangInStudySet
 
-    if (category === ECategory.COLLOCATION) return configuration.numberOfCollocationsInStudySet
+    if (category === ECategory.COLLOCATION) return configuration?.numberOfCollocationsInStudySet
 
-    if (category === ECategory.SENTENCE) return configuration.numberOfSentencesInStudySet
+    if (category === ECategory.SENTENCE) return configuration?.numberOfSentencesInStudySet
 
-    return setting.studySet.numberOfWordsInStudySet
+    return setting.meta.numberOfWordsInStudySet
   }
 
   const createStudySet = (params: Partial<IStudySetStatus>) => {
@@ -127,24 +123,20 @@ export const StudySet: React.FC = () => {
     dispatch(itemAction.update({ level: level, practiceCount: (rest.practiceCount as number) + 1 }))
     dispatch(
       studySetAction.update({
-        id: item.id as number,
+        id: item.id,
         level: level,
         practiceCount: (rest.practiceCount as number) + 1,
         quiz: { ...item.quiz, result: result },
       }),
     )
-    await itemApi.updateItem(
-      item.id as number,
-      transformItemModelToServer({
-        ...rest,
-        level: level,
-        practiceCount: (rest.practiceCount as number) + 1,
-      }),
-      { headers: { loading: ELoading.NO } },
-    )
+    await itemApi.updateItem(item.id ?? '', {
+      ...rest,
+      level: level,
+      practiceCount: (rest.practiceCount as number) + 1,
+    })
   }
 
-  const onSelectMultiChoice = (answer: IPair<string, boolean>) => {
+  const onSelectMultiChoice = (answer: IOption<string, boolean>) => {
     dispatch(studySetAction.updateUserRespond(answer.id))
     dispatch(
       studySetAction.onSelectAnswer({
@@ -168,13 +160,13 @@ export const StudySet: React.FC = () => {
     })
   }
 
-  const onSearch = async (id: number) => {
+  const onSearch = async (id: string) => {
     try {
       const { content: item } = await itemApi.getItemById(id)
       dispatch(settingAction.toggleViewItemModal())
       dispatch(
         settingAction.setCurrentItem({
-          ...transformItemModelToClient(item),
+          ...item,
         }),
       )
     } catch (error) {
@@ -183,8 +175,8 @@ export const StudySet: React.FC = () => {
   }
 
   const getClassValidate = (
-    ans: IPair<string, boolean>,
-    item: IItemQuiz<IPair<string, boolean>[], string[]>,
+    ans: IOption<string, boolean>,
+    item: IItemQuiz<IOption<string, boolean>[], string[]>,
     isSubmit: boolean,
   ) => {
     if (isSubmit && ans.value && ans.id === item.id) return 'correct'
@@ -223,16 +215,16 @@ export const StudySet: React.FC = () => {
 
       if (item?.quiz.type === EQuiz.MULTI_CHOICE) {
         const index = (
-          list[status.currentIndex].quiz.answer as Partial<IPair<string, boolean>>[]
+          list[status.currentIndex].quiz.answer as Partial<IOption<string, boolean>>[]
         ).findIndex((item) => item.value)
 
         if (!isSubmit) {
           if (e.code === 'ArrowUp' && index > 0) {
-            onSelectMultiChoice(item?.quiz.answer[index - 1] as IPair<string, boolean>)
+            onSelectMultiChoice(item?.quiz.answer[index - 1] as IOption<string, boolean>)
           }
 
           if (e.code === 'ArrowDown' && index < 3) {
-            onSelectMultiChoice(item?.quiz.answer[index + 1] as IPair<string, boolean>)
+            onSelectMultiChoice(item?.quiz.answer[index + 1] as IOption<string, boolean>)
           }
         }
 
@@ -290,14 +282,14 @@ export const StudySet: React.FC = () => {
     )
   }
 
-  const onEdit = async (id: number) => {
+  const onEdit = async (id: string) => {
     try {
-      const { content } = await itemApi.getItemById(id as number)
+      const { content } = await itemApi.getItemById(id)
       dispatch(settingAction.setOnEditItem(true))
       dispatch(settingAction.toggleItemModal())
       dispatch(
         settingAction.setCurrentItem({
-          ...transformItemModelToClient(content),
+          ...content,
         }),
       )
     } catch (error) {
@@ -395,16 +387,16 @@ export const StudySet: React.FC = () => {
                   <li
                     className={clsx(
                       getClassValidate(
-                        ans as IPair<string, boolean>,
-                        item as IItemQuiz<IPair<string, boolean>[], string[]>,
+                        ans as IOption<string, boolean>,
+                        item as IItemQuiz<IOption<string, boolean>[], string[]>,
                         isSubmit,
                       ),
                     )}
                     key={key}
                     onClick={() => {
                       isSubmit
-                        ? onSearch(ans.id as number)
-                        : onSelectMultiChoice(ans as IPair<string, boolean>)
+                        ? onSearch(ans.id)
+                        : onSelectMultiChoice(ans as IOption<string, boolean>)
                     }}
                   >
                     <Flex justify={'space-between'} align={'center'} gap={token.size / 4}>
@@ -503,7 +495,7 @@ export const StudySet: React.FC = () => {
 
         {isSubmit && (
           <div className={classes.resultReference}>
-            <Item data={item as IItem} onEdit={() => onEdit(item?.id as number)} />
+            <Item data={item as IItem} onEdit={() => onEdit(item?.id || '')} />
           </div>
         )}
 

@@ -21,7 +21,7 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
 
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { isLoading: firebaseLoading, error: firebaseError } = useSelector((state) => state.auth)
+  const { isLoading: firebaseLoading, error: authError } = useSelector((state) => state.auth)
 
   const [errorMsg, setErrorMsg] = useState<string>('')
   const [isRegistered, setIsRegistered] = useState<boolean>(false)
@@ -211,7 +211,7 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
     // State
     errorMsg,
     isLoading: firebaseLoading,
-    firebaseError,
+    authError,
     isRegistered,
     registerSuccess,
     registerMsg,

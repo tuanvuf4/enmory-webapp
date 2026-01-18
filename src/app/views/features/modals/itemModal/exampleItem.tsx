@@ -4,12 +4,11 @@ import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IItem } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import { theme, Space, Col, Row, Button, Switch, AutoComplete, Flex } from 'antd'
-import TextArea from 'antd/es/input/TextArea'
 import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { exampleItem } from '.'
 import styles from './style'
-import clsx from 'clsx'
+import { TextEditor } from '@/views/components'
 
 interface IProps {
   nestIndex: number
@@ -141,12 +140,16 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           <Controller
                             control={control}
                             name={`meanings.${nestIndex}.examples.${key}.original`}
-                            render={({ field }) => (
-                              <TextArea
-                                disabled={getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
-                                autoSize={{ minRows: 1, maxRows: 4 }}
-                                placeholder='Original:'
-                                {...field}
+                            render={({ field: { onChange, value } }) => (
+                              <TextEditor
+                                content={value}
+                                onChange={(content: any) => {
+                                  setValue(
+                                    `meanings.${nestIndex}.examples.${key}.original`,
+                                    content ?? '',
+                                  )
+                                  onChange(content)
+                                }}
                               />
                             )}
                           />
@@ -158,13 +161,23 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           <Controller
                             control={control}
                             name={`meanings.${nestIndex}.examples.${key}.translation`}
-                            render={({ field }) => (
-                              <TextArea
-                                disabled={getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
-                                autoSize={{ minRows: 1, maxRows: 4 }}
-                                placeholder='Translation:'
-                                {...field}
+                            render={({ field: { onChange, value } }) => (
+                              <TextEditor
+                                content={value}
+                                onChange={(content: any) => {
+                                  setValue(
+                                    `meanings.${nestIndex}.examples.${key}.translation`,
+                                    content ?? '',
+                                  )
+                                  onChange(content)
+                                }}
                               />
+                              // <TextArea
+                              //   disabled={getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
+                              //   autoSize={{ minRows: 1, maxRows: 4 }}
+                              //   placeholder='Translation:'
+                              //   {...field}
+                              // />
                             )}
                           />
                         </Col>

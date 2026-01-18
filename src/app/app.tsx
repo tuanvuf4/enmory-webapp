@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from '@/core/hooks'
 import { useAuthInit } from '@/core/hooks/useAuthInit'
 import { IHttpResponse } from '@/models/http.model'
-import { ECategory, IPair } from '@/models/item.model'
+import { ECategory, IOption } from '@/models/item.model'
 import { actionAsyncApp } from '@/store/asyncActions/app.async'
 import { AppLayout } from '@/views/features/layout/layout'
 import { useEffect, useState } from 'react'
@@ -36,7 +36,7 @@ export const App = () => {
     },
   })
 
-  const getCats = async (cats: IPair<string, ECategory>[]) => {
+  const getCats = async (cats: IOption<string, ECategory>[]) => {
     cats.map(async (cat) => await dispatch(actionAsyncApp.fetchIotd({ catId: cat.id })))
   }
 
@@ -45,7 +45,7 @@ export const App = () => {
       // User info is handled through Firebase Auth
       dispatch(actionAsyncApp.fetchTypes())
       dispatch(actionAsyncApp.fetchCategories()).then((response) => {
-        const payload = response.payload as IHttpResponse<IPair<string, ECategory>[]>
+        const payload = response.payload as IHttpResponse<IOption<string, ECategory>[]>
         if (payload && payload.isSuccess) getCats(payload.content)
       })
     }

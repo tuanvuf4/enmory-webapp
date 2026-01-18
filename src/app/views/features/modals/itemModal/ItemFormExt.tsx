@@ -4,10 +4,8 @@ import globalStyle from '@/style/appStyle'
 import { Loading3QuartersOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { setting, appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
-import { transformItemModelToServer, transformItemModelToClient } from '@/helpers/item'
 import { isGroupWord } from '@/helpers/validate'
-import { ELoading } from '@/models/app.model'
-import { IPair, ECategory, EType, IItem } from '@/models/item.model'
+import { ECategory, EType, IItem, IOption } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { itemAsync } from '@/store/asyncActions/item.async'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
@@ -28,8 +26,8 @@ import { useDispatch, useSelector } from '@/core/hooks'
 import clsx from 'clsx'
 
 interface ItemFormProps {
-  categories: IPair<string, ECategory>[]
-  types: IPair<string, EType>[]
+  categories: IOption<string, ECategory>[]
+  types: IOption<string, EType>[]
 }
 
 export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
@@ -71,20 +69,8 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
 
   const { options, isSearching } = useAutoComplete(original, 'item', false)
 
-  const prepareDataSubmit = (payload: IItem<string[]>): IItem<string> => ({
-    userId: user?.uid ? parseInt(user.uid) || 0 : 0,
-    ...transformItemModelToServer({ ...payload }),
-  })
-
   const getBatchItem = (data: IItem) => {
-    const quickAdd = (data.quickAdd as string[]).map((word) => {
-      const itemBase = { ...initItem, original: word }
-      return isGroupWord(word)
-        ? { ...itemBase, catId: ECategory.PHRASE }
-        : { ...itemBase, catId: ECategory.WORD }
-    })
-
-    const synonyms = data.meanings.map((meaning) => {
+    const synonyms = data?.meanings.map((meaning) => {
       return meaning.synonyms.map((synonym) => {
         const itemBase = {
           ...initItem,
@@ -127,26 +113,17 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
       })
     })
 
-    return [...quickAdd, ..._.flattenDeep(synonyms), ..._.flattenDeep(antonyms)]
+    return [..._.flattenDeep(synonyms), ..._.flattenDeep(antonyms)]
   }
 
   const handleOk = async () => {
     if (isValid) {
       handleSubmit(async (data: IItem) => {
-        const dataSubmit = prepareDataSubmit(data)
-        const batch = getBatchItem(data)
         if (onEditEvent) {
           try {
-            const updatedItem = await itemApi.updateItem(currentItem?.id as number, dataSubmit)
-            const pr =
-              batch.length > 0
-                ? [
-                    updatedItem,
-                    await itemApi.createItems(batch.map((item) => prepareDataSubmit(item))),
-                  ]
-                : [updatedItem]
-            const [{ content }] = await Promise.all(pr)
-            const itemUpdated = transformItemModelToClient(content)
+            const updatedItem = await itemApi.updateItem(currentItem?.id || '', data)
+
+            const [{ content: itemUpdated }] = await Promise.all([updatedItem])
             if (list.find((item) => item.id === itemUpdated.id)) {
               dispatch(studySetAction.update(itemUpdated))
             }
@@ -176,15 +153,9 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
           }
         } else {
           try {
-            const createItem = await itemApi.createItem(dataSubmit)
-            const pr =
-              batch.length > 0
-                ? [
-                    createItem,
-                    await itemApi.createItems(batch.map((item) => prepareDataSubmit(item))),
-                  ]
-                : [createItem]
-            const [{ isSuccess }] = await Promise.all(pr)
+            const createItem = await itemApi.createItem(data)
+
+            const [{ isSuccess }] = await Promise.all([createItem])
 
             if (isSuccess) {
               dispatch(settingAction.toggleItemModal())
@@ -228,11 +199,11 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
       size: setting.numberItemOfAutoComplete * 2,
       exact: true,
     }
-    itemApi.getItemAutoComplete(params, { headers: { loading: ELoading.YES } }).then((response) => {
+    itemApi.getItemAutoComplete(params).then((response) => {
       dispatch(settingAction.setOnEditItem(true))
       dispatch(
         settingAction.setCurrentItem({
-          ...transformItemModelToClient(response.content.data[0]),
+          ...response.content[0],
         }),
       )
     })
@@ -516,26 +487,6 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
                     onChange={(value: string[]) => {
                       setValue('relation', value)
                     }}
-                  />
-                )}
-              />
-            </Col>
-          </Row>
-
-          <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-            <Col md={4} xs={6}>
-              Quick add:
-            </Col>
-
-            <Col md={20} xs={18}>
-              <Controller
-                control={control}
-                name={`quickAdd`}
-                render={() => (
-                  <InputTag
-                    tags={getValues('quickAdd') as string[]}
-                    onChange={(value: string[]) => setValue('quickAdd', value)}
-                    allowSpace={true}
                   />
                 )}
               />

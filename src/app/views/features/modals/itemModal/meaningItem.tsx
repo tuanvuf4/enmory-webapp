@@ -7,10 +7,9 @@ import {
   CaretRightOutlined,
 } from '@ant-design/icons'
 import { patternValidation } from '@/core/utils'
-import { ECategory, IPair, EType, IItem } from '@/models/item.model'
+import { ECategory, IOption, EType, IItem } from '@/models/item.model'
 import { InputTag } from '@/views/components/inputTag/inputTag'
 import { theme, Space, Col, Row, Button, Select, Checkbox, Input, Flex } from 'antd'
-import TextArea from 'antd/es/input/TextArea'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { meaningItem } from '.'
 import { ExampleItem } from './exampleItem'
@@ -24,7 +23,7 @@ import { getTypeOfItem } from '@/helpers/item'
 interface IProps {
   origin?: string
   catType: ECategory
-  types: IPair<string, EType>[]
+  types: IOption<string, EType>[]
   onSubmit?: () => void
 }
 
@@ -459,12 +458,19 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                           control={control}
                           name={`meanings.${index}.collocations`}
                           render={({ field: { onChange, value } }) => (
-                            <TextArea
-                              autoSize={{ minRows: 1, maxRows: 4 }}
-                              value={value}
-                              placeholder=''
-                              onChange={onChange}
+                            <TextEditor
+                              content={value}
+                              onChange={(content: any) => {
+                                setValue(`meanings.${index}.collocations`, content ?? '')
+                                onChange(content)
+                              }}
                             />
+                            // <TextArea
+                            //   autoSize={{ minRows: 1, maxRows: 4 }}
+                            //   value={value}
+                            //   placeholder=''
+                            //   onChange={onChange}
+                            // />
                           )}
                         />
                       </Col>
@@ -482,12 +488,19 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
                           control={control}
                           name={`meanings.${index}.grammar`}
                           render={({ field: { onChange, value } }) => (
-                            <TextArea
-                              autoSize={{ minRows: 1, maxRows: 4 }}
-                              value={value}
-                              placeholder=''
-                              onChange={onChange}
+                            <TextEditor
+                              content={value}
+                              onChange={(content: any) => {
+                                setValue(`meanings.${index}.grammar`, content ?? '')
+                                onChange(content)
+                              }}
                             />
+                            // <TextArea
+                            //   autoSize={{ minRows: 1, maxRows: 4 }}
+                            //   value={value}
+                            //   placeholder=''
+                            //   onChange={onChange}
+                            // />
                           )}
                         />
                       </Col>

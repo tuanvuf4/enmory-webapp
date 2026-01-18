@@ -27,13 +27,14 @@ export interface IPronouns {
 }
 
 export interface IExample {
-  id?: number
+  id?: string
+  uid: string
   auto?: boolean
   original: string
   translation: string
   created_date?: number
   last_update?: number
-  note?: string
+  note: string
 }
 
 export interface IType {
@@ -56,9 +57,10 @@ export enum EType {
   INTERJECTION,
 }
 
-export interface IMeaning<S> {
-  id?: number
-  itemId?: number
+export interface IMeaning<S = string[]> {
+  id?: string
+  uid?: string
+  itemId?: string
   typeId: EType
   common: boolean
   enable: boolean
@@ -70,13 +72,14 @@ export interface IMeaning<S> {
   collocations: string
   synonyms: S
   antonyms: S
+  created_date?: number
   last_update?: number
-  examples: IExample[]
+  examples: IExample[] | S
 }
 
 export interface IItem<M = string[]> {
-  id?: number
-  userId?: number
+  id?: string
+  uid?: string
   catId?: ECategory
   original: string
   favorite?: boolean
@@ -95,15 +98,13 @@ export interface IItem<M = string[]> {
   }
   practiceCount?: number
   forms: M
-  collocations: M
   word_family: M
   relation: M
-  quickAdd?: M
   meanings?: IMeaning<M>[]
 }
 
 export interface IIotd<M = string[]> {
-  id: number
+  id: string
   itemId: number
   userId: number
   first_of_date: number
@@ -118,7 +119,7 @@ export interface IIotdRequest {
 }
 
 export interface MarkIotdRangeDateRequest {
-  itemId: number
+  itemId: string
   isMarked: boolean
   date?: number
 }
@@ -129,15 +130,15 @@ export interface GetIIotdRangeDateRequest {
   isMarked: boolean
 }
 
-export interface IPair<K, V> {
-  id: number
-  label: K
+export interface IOption<L, V> {
+  id: string
+  label: L
   value: V
   key?: string
 }
 
 export interface IAnswer<K, V> {
-  id: number
+  id: string
   label: K
   value: V
   typeId: number
@@ -160,7 +161,7 @@ export interface IQuiz<A> {
   result?: boolean
 }
 
-export type TQuiz = string | Partial<IPair<string, boolean>>[]
+export type TQuiz = string | Partial<IOption<string, boolean>>[]
 
 export interface IItemQuiz<A = TQuiz, S = string> extends IItem<S> {
   quiz: IQuiz<A>

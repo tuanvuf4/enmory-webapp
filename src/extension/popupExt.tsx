@@ -1,6 +1,6 @@
 import { EPageExt } from '@/models/app.model'
 import { IHttpResponse } from '@/models/http.model'
-import { ECategory, EType, IExample, IItem, IPair } from '@/models/item.model'
+import { ECategory, EType, IExample, IItem, IOption } from '@/models/item.model'
 import { ILoginResponse } from '@/models/user.model'
 import { commonApi } from '@/services/firebase/api/common.api'
 import { ExampleForm } from '@/views/features/exampleOverview/exampleFormAdd'
@@ -22,8 +22,8 @@ export const PopupExt = () => {
   const classes = styles()
 
   const [isLogin, setIsLogin] = useState<boolean>(true)
-  const [cats, setCats] = useState<IPair<string, ECategory>[]>([])
-  const [types, setTypes] = useState<IPair<string, EType>[]>([])
+  const [cats, setCats] = useState<IOption<string, ECategory>[]>([])
+  const [types, setTypes] = useState<IOption<string, EType>[]>([])
   const [currentPage, setCurrentPage] = useState<EPageExt>(EPageExt.ADD)
 
   const methods = useForm<IItem>({ defaultValues: initItem })
@@ -43,8 +43,8 @@ export const PopupExt = () => {
   }
 
   const getStaticData = async () => {
-    let cats = (await chromeStorage.get(['cats'])).cats as IPair<string, ECategory>[]
-    let types = (await chromeStorage.get(['types'])).types as IPair<string, EType>[]
+    let cats = (await chromeStorage.get(['cats'])).cats as IOption<string, ECategory>[]
+    let types = (await chromeStorage.get(['types'])).types as IOption<string, EType>[]
 
     if (!cats) cats = (await commonApi.getCategories()).content
     if (!types) types = (await commonApi.getTypes()).content

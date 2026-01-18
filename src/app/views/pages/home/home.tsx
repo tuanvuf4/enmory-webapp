@@ -1,6 +1,5 @@
 import globalStyle from '@/style/appStyle'
 import { useSelector, useDispatch } from '@/core/hooks'
-import { transformItemModelToClient } from '@/helpers/item'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { ExampleForm } from '@/views/features/exampleOverview/exampleFormAdd'
@@ -33,12 +32,12 @@ const Home = () => {
 
   const dispatch = useDispatch()
 
-  const onEdit = async (id: number) => {
+  const onEdit = async (id: string) => {
     try {
       const { content } = await itemApi.getItemById(id)
       dispatch(
         settingAction.setCurrentItem({
-          ...transformItemModelToClient(content),
+          ...content,
         }),
       )
       dispatch(settingAction.setOnEditItem(true))
@@ -84,41 +83,37 @@ const Home = () => {
                 <Col xs={24} md={8}>
                   {word && word.original && (
                     <Widget title='Word of the day'>
-                      <Item reload data={word} onEdit={() => onEdit(word.id as number)} />
+                      <Item reload data={word} onEdit={() => onEdit(word.id || '')} />
                     </Widget>
                   )}
 
                   {phrase && phrase.original && (
                     <Widget title='Phrase of the day'>
-                      <Item reload data={phrase} onEdit={() => onEdit(phrase.id as number)} />
+                      <Item reload data={phrase} onEdit={() => onEdit(phrase.id || '')} />
                     </Widget>
                   )}
 
                   {collocation && collocation.original && (
                     <Widget title='Collocation of the day'>
-                      <Item
-                        reload
-                        data={collocation}
-                        onEdit={() => onEdit(collocation.id as number)}
-                      />
+                      <Item reload data={collocation} onEdit={() => onEdit(collocation.id || '')} />
                     </Widget>
                   )}
 
                   {sentence && sentence.original && (
                     <Widget title='sentence of the day'>
-                      <Item reload data={sentence} onEdit={() => onEdit(sentence.id as number)} />
+                      <Item reload data={sentence} onEdit={() => onEdit(sentence.id || '')} />
                     </Widget>
                   )}
 
                   {idiom && idiom.original && (
                     <Widget title='Idiom of the day'>
-                      <Item reload data={idiom} onEdit={() => onEdit(idiom.id as number)} />
+                      <Item reload data={idiom} onEdit={() => onEdit(idiom.id || '')} />
                     </Widget>
                   )}
 
                   {slang && slang.original && (
                     <Widget title='Slang of the day'>
-                      <Item reload data={slang} onEdit={() => onEdit(slang.id as number)} />
+                      <Item reload data={slang} onEdit={() => onEdit(slang.id || '')} />
                     </Widget>
                   )}
                 </Col>

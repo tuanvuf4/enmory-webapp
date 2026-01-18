@@ -182,26 +182,28 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
             {meaning.collocations && (
               <>
                 <h5 className={'italic'}>Collocations:</h5>
-                <ul className={classes.listItem}>
+                <div dangerouslySetInnerHTML={{ __html: meaning.collocations }} />
+                {/* <ul className={classes.listItem}>
                   {meaning.collocations
                     .replace(/\n/g, '*')
                     .replace(/- /g, '')
                     .split('*')
                     .map((value, key) => (value ? <li key={key}>{value}</li> : ''))}
-                </ul>
+                </ul> */}
               </>
             )}
 
             {meaning.grammar && (
               <>
                 <h5 className={'italic'}>Grammar:</h5>
-                <ul className={classes.listItem}>
+                <div dangerouslySetInnerHTML={{ __html: meaning.grammar }} />
+                {/* <ul className={classes.listItem}>
                   {meaning.grammar
                     .replace(/\n/g, '*')
                     .replace(/- /g, '')
                     .split('*')
                     .map((value, key) => (value ? <li key={key}>{value}</li> : ''))}
-                </ul>
+                </ul> */}
               </>
             )}
 

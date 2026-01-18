@@ -2,22 +2,18 @@ import { IHttpResponse } from '@/models/http.model'
 import {
   ECategory,
   EType,
-  IPair,
+  IOption,
   IIotd,
   IIotdRequest,
   MarkIotdRangeDateRequest,
   GetIIotdRangeDateRequest,
 } from '@/models/item.model'
 import { getCategory, getTypeOfItem } from '@/helpers/item'
-import { IUserConfig } from '@/models/user.model'
-import { collection, getDocs, query, QueryConstraint, where } from 'firebase/firestore'
-import { db, dbCollections } from '@/config/firebaseConfig'
-import { IUserProfile } from '../authService'
 
 const enumValues = <T extends Record<string, unknown>>(enm: T) =>
   Object.values(enm).filter((v) => typeof v === 'number') as number[]
 
-const getCategories = async (): Promise<IHttpResponse<IPair<string, ECategory>[]>> => {
+const getCategories = async (): Promise<IHttpResponse<IOption<string, ECategory>[]>> => {
   const cats = enumValues(ECategory)
     .filter((value) => value !== ECategory.ALL)
     .map((value) => ({
@@ -35,7 +31,7 @@ const getCategories = async (): Promise<IHttpResponse<IPair<string, ECategory>[]
   }
 }
 
-const getTypes = async (): Promise<IHttpResponse<IPair<string, EType>[]>> => {
+const getTypes = async (): Promise<IHttpResponse<IOption<string, EType>[]>> => {
   const types = enumValues(EType)
     .filter((value) => value !== EType.ALL)
     .map((value) => {
@@ -71,27 +67,6 @@ const getIotdRange = async (_body: GetIIotdRangeDateRequest) => unsupported('IOT
 
 const deleteMarkIotd = async (_id: number) => unsupported('IOTD delete')
 
-const getUserConfig = async (userId: string) => {
-  try {
-    const constraints: QueryConstraint[] = []
-    constraints.push(where('userId', '==', userId))
-
-    const userConfigQuery = query(collection(db, dbCollections.configuration), ...constraints)
-    const snapshot = await getDocs(userConfigQuery)
-
-    console.log(`*** snapshot *** `, snapshot.data())
-
-    if (snapshot.exists()) {
-      console.log(`*** userDoc.data() *** `, snapshot.data())
-      return snapshot.data() as IUserProfile
-    }
-    return null
-  } catch (error) {
-    console.error('Error getting user config:', error)
-    return null
-  }
-}
-
 export const commonApi = {
   getCategories,
   getTypes,
@@ -99,5 +74,4 @@ export const commonApi = {
   markIotd,
   getIotdRange,
   deleteMarkIotd,
-  getUserConfig,
 }

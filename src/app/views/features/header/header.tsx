@@ -164,7 +164,7 @@ export const AppHeader = () => {
                 <Dropdown trigger={['click']} menu={menuProps} placement='bottomLeft' arrow>
                   <Button type='text' onClick={(e) => e.preventDefault()}>
                     <Space>
-                      {`Hi,` + ' ' + user.firstName + '!'}
+                      {`Hi,` + ' ' + user?.displayName + '!'}
                       <DownOutlined />
                     </Space>
                   </Button>

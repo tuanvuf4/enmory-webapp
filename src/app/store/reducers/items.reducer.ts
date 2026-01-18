@@ -1,6 +1,6 @@
 import { setting } from '@/app/config/appConfig'
 import { IFormSearchItem } from '@/app/models/formSearch.model'
-import { IHttpResponse, IHttpResponseArray } from '@/app/models/http.model'
+import { IHttpResponse } from '@/app/models/http.model'
 import { IItem } from '@/app/models/item.model'
 import { IPagination } from '@/app/models/pagination.model'
 import { initSearchFormItem } from '@/app/services'
@@ -57,7 +57,7 @@ export const itemsReducer = createSlice({
     addItems(state: IItemsState, action: PayloadAction<IItem[]>) {
       state.listItem = [...state.listItem, ...action.payload]
     },
-    removeItem(state: IItemsState, action: PayloadAction<number>) {
+    removeItem(state: IItemsState, action: PayloadAction<string>) {
       state.listItem = state.listItem.filter((item) => item.id !== action.payload)
     },
     updatePagination(state: IItemsState, action: PayloadAction<Partial<IPagination>>) {

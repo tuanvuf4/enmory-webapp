@@ -2,7 +2,7 @@ import { AppOrderQuery, AppOrderByQuery } from '@/models/app.model'
 import { IHttpResponse } from '@/models/http.model'
 import { IItem, IItemQuiz } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
-import { db } from '@/config/firebaseConfig'
+import { db, dbCollections } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import {
   collection,
@@ -73,21 +73,21 @@ const buildQueryConstraints = (params: IItemRequestData): QueryConstraint[] => {
 /**
  * Get items with pagination
  */
-const getItems = async (params: IItemRequestData): Promise<IHttpResponse<IItem<string>[]>> => {
+const getItems = async (params: IItemRequestData): Promise<IHttpResponse<IItem[]>> => {
   try {
     const constraints = buildQueryConstraints(params)
 
     // Add pagination
     constraints.push(limit(params.size))
 
-    const itemsQuery = query(collection(db, 'items'), ...constraints)
+    const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
     const snapshot = await getDocs(itemsQuery)
 
     // Handle keyword search for non-exact matches
     let items = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    })) as unknown as IItem<string>[]
+    })) as unknown as IItem[]
 
     if (params.keyword && !params.exact) {
       items = items.filter((item) =>
@@ -123,7 +123,7 @@ const getItemAutoComplete = async (
     const constraints = buildQueryConstraints(params)
     constraints.push(limit(20)) // Limit for autocomplete
 
-    const itemsQuery = query(collection(db, 'items'), ...constraints)
+    const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
     const snapshot = await getDocs(itemsQuery)
 
     let items = snapshot.docs.map((doc) => ({
@@ -159,19 +159,24 @@ const getItemAutoComplete = async (
 /**
  * Get single item by ID
  */
-const getItemById = async (itemId: string): Promise<IHttpResponse<IItem<string>>> => {
+const getItemById = async (itemId: string): Promise<IHttpResponse<IItem>> => {
   try {
-    const itemDocRef = doc(db, 'items', itemId)
+    const itemDocRef = doc(db, dbCollections.items, itemId)
     const itemDoc = await getDoc(itemDocRef)
 
     if (!itemDoc.exists()) {
-      throw new Error('Item not found')
+      return {
+        isSuccess: false,
+        message: 'Item not found',
+        content: null,
+        statusCode: 200,
+      }
     }
 
     const item = {
       id: itemDoc.id,
       ...itemDoc.data(),
-    } as unknown as IItem<string>
+    } as unknown as IItem
 
     return {
       isSuccess: true,
@@ -205,7 +210,7 @@ const getStudySet = async (
       constraints.push(where('is_deleted', '==', false))
       constraints.push(limit(studySet.size || 10))
 
-      const itemsQuery = query(collection(db, 'items'), ...constraints)
+      const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
       const snapshot = await getDocs(itemsQuery)
 
       const items = snapshot.docs.map((doc) => ({
@@ -231,7 +236,7 @@ const getStudySet = async (
 /**
  * Create a new item
  */
-const createItem = async (item: IItem<string>): Promise<IHttpResponse<IItem<string>>> => {
+const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) {
@@ -247,7 +252,7 @@ const createItem = async (item: IItem<string>): Promise<IHttpResponse<IItem<stri
       is_deleted: false,
     }
 
-    const itemsRef = collection(db, 'items')
+    const itemsRef = collection(db, dbCollections.items)
     const docRef = await addDoc(itemsRef, newItem)
 
     return {
@@ -256,7 +261,7 @@ const createItem = async (item: IItem<string>): Promise<IHttpResponse<IItem<stri
       content: {
         id: docRef.id,
         ...newItem,
-      } as unknown as IItem<string>,
+      } as unknown as IItem,
       statusCode: 200,
     }
   } catch (error) {
@@ -268,7 +273,7 @@ const createItem = async (item: IItem<string>): Promise<IHttpResponse<IItem<stri
 /**
  * Create multiple items (batch)
  */
-const createItems = async (items: IItem<string>[]): Promise<IHttpResponse<IItem<string>>> => {
+const createItems = async (items: IItem[]): Promise<IHttpResponse<IItem>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) {
@@ -276,7 +281,7 @@ const createItems = async (items: IItem<string>[]): Promise<IHttpResponse<IItem<
     }
 
     const now = Timestamp.now().toMillis()
-    const createdItems: IItem<string>[] = []
+    const createdItems: IItem[] = []
 
     for (const item of items) {
       const newItem = {
@@ -287,13 +292,13 @@ const createItems = async (items: IItem<string>[]): Promise<IHttpResponse<IItem<
         is_deleted: false,
       }
 
-      const itemsRef = collection(db, 'items')
+      const itemsRef = collection(db, dbCollections.items)
       const docRef = await addDoc(itemsRef, newItem)
 
       createdItems.push({
         id: docRef.id,
         ...newItem,
-      } as unknown as IItem<string>)
+      } as unknown as IItem)
     }
 
     return {
@@ -311,17 +316,14 @@ const createItems = async (items: IItem<string>[]): Promise<IHttpResponse<IItem<
 /**
  * Update an existing item
  */
-const updateItem = async (
-  id: string,
-  item: Partial<IItem<string>>,
-): Promise<IHttpResponse<IItem<string>>> => {
+const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpResponse<IItem>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) {
       throw new Error('User not authenticated')
     }
 
-    const itemDocRef = doc(db, 'items', id)
+    const itemDocRef = doc(db, dbCollections.items, id)
     const updateData = {
       ...item,
       last_update: Timestamp.now().toMillis(),
@@ -334,7 +336,7 @@ const updateItem = async (
     const updatedItem = {
       id: updatedDoc.id,
       ...updatedDoc.data(),
-    } as unknown as IItem<string>
+    } as unknown as IItem
 
     return {
       isSuccess: true,
@@ -358,7 +360,7 @@ const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
       throw new Error('User not authenticated')
     }
 
-    const itemDocRef = doc(db, 'items', id)
+    const itemDocRef = doc(db, dbCollections.items, id)
     await updateDoc(itemDocRef, {
       is_deleted: true,
       deleted_date: Timestamp.now().toMillis(),

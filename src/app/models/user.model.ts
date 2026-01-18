@@ -8,7 +8,6 @@ export interface ILoginResponse {
 }
 
 export interface IUserConfig<R = number[]> {
-  userId?: number
   numberOfWordsInStudySet: number
   numberOfPhraseInStudySet: number
   numberOfIdiomInStudySet: number
@@ -24,24 +23,17 @@ export interface IUserConfig<R = number[]> {
 }
 
 export interface IUser<R = number[]> {
-  id?: number
-  username: string
+  uid?: string
+  displayName: string
+  photoURL: string
   email: string
   password: string
   cpassword?: string
   firstName: string
   lastName: string
-  avatar?: string
-  phoneNumber?: string
-  status?: boolean
-  sex: boolean
-  is_active?: boolean
-  actived_date?: number
-  created_date?: number
-  last_active?: number
-  last_update?: number
-  deletedDate?: number
-  usertypeId?: number
+  provider: string
+  createdAt?: number
+  updatedAt?: number
   configuration: IUserConfig<R>
 }
 

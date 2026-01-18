@@ -1,5 +1,4 @@
-import { transformItemModelToClient } from '@/app/helpers/item'
-import { IPair } from '@/app/models/item.model'
+import { IOption } from '@/app/models/item.model'
 import { GetStudySetByCatId } from '@/app/models/studySet.model'
 import { IItemRequestData, itemApi } from '@/services/firebase/api/item.api'
 import { createAsyncThunk } from '@reduxjs/toolkit'
@@ -13,9 +12,7 @@ const fetchItems = createAsyncThunk('item/fetchItems', async (params: IItemReque
 
   return {
     ...response,
-    content: response.content.map((item) => ({
-      ...transformItemModelToClient(item),
-    })),
+    content: response.content,
   }
 })
 
@@ -25,13 +22,13 @@ const fetchStudySet = createAsyncThunk('item/fetchStudySet', async (size: GetStu
     ...response,
     content: response.content.map((item) => {
       return {
-        ...transformItemModelToClient(item),
+        ...item,
         quiz: {
           ...item.quiz,
           answer:
             typeof item.quiz.answer === 'string'
               ? item.quiz.answer
-              : (item.quiz.answer as IPair<string, boolean>[]).map((ans) => ({
+              : (item.quiz.answer as IOption<string, boolean>[]).map((ans) => ({
                   ...ans,
                   value: false,
                 })),

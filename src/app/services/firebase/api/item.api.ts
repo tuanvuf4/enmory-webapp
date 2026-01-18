@@ -17,7 +17,9 @@ import {
   limit,
   QueryConstraint,
   orderBy as firestoreOrderBy,
+  documentId,
 } from 'firebase/firestore'
+import { IExample } from '@/models/item.model'
 
 export interface IItemRequestData {
   keyword: string
@@ -71,6 +73,41 @@ const buildQueryConstraints = (params: IItemRequestData): QueryConstraint[] => {
 }
 
 /**
+ * Helper function to fetch examples by their IDs from the examples collection
+ * Handles batch fetching since Firestore 'in' query supports up to 10 items at a time
+ */
+const getExamplesByIds = async (exampleIds: string[]): Promise<IExample[]> => {
+  if (!exampleIds || exampleIds.length === 0) {
+    return []
+  }
+
+  try {
+    // Firestore 'in' query supports up to 10 items at a time
+    const batchSize = 10
+    const batches: string[][] = []
+
+    for (let i = 0; i < exampleIds.length; i += batchSize) {
+      batches.push(exampleIds.slice(i, i + batchSize))
+    }
+
+    const examplePromises = batches.map(async (batch) => {
+      const examplesQuery = query(collection(db, 'examples'), where(documentId(), 'in', batch))
+      const snapshot = await getDocs(examplesQuery)
+      return snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as IExample[]
+    })
+
+    const results = await Promise.all(examplePromises)
+    return results.flat()
+  } catch (error) {
+    console.error('Error fetching examples:', error)
+    return []
+  }
+}
+
+/**
  * Get items with pagination
  */
 const getItems = async (params: IItemRequestData): Promise<IHttpResponse<IItem[]>> => {
@@ -84,10 +121,30 @@ const getItems = async (params: IItemRequestData): Promise<IHttpResponse<IItem[]
     const snapshot = await getDocs(itemsQuery)
 
     // Handle keyword search for non-exact matches
-    let items = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as unknown as IItem[]
+    const itemsPromises = snapshot.docs.map(async (doc) => {
+      const itemData = doc.data()
+      const meanings = itemData.meanings || []
+
+      // Fetch examples for each meaning
+      const meaningsWithExamples = await Promise.all(
+        meanings.map(async (meaning: any) => {
+          const exampleIds = meaning.examples || []
+          const examples = await getExamplesByIds(exampleIds)
+          return {
+            ...meaning,
+            examples: examples,
+          }
+        }),
+      )
+
+      return {
+        id: doc.id,
+        ...itemData,
+        meanings: meaningsWithExamples,
+      } as IItem
+    })
+
+    let items: IItem[] = await Promise.all(itemsPromises)
 
     if (params.keyword && !params.exact) {
       items = items.filter((item) =>
@@ -173,9 +230,25 @@ const getItemById = async (itemId: string): Promise<IHttpResponse<IItem>> => {
       }
     }
 
+    const itemData = itemDoc.data()
+    const meanings = itemData.meanings || []
+
+    // Fetch examples for each meaning
+    const meaningsWithExamples = await Promise.all(
+      meanings.map(async (meaning: any) => {
+        const exampleIds = meaning.examples || []
+        const examples = await getExamplesByIds(exampleIds)
+        return {
+          ...meaning,
+          examples: examples,
+        }
+      }),
+    )
+
     const item = {
       id: itemDoc.id,
-      ...itemDoc.data(),
+      ...itemData,
+      meanings: meaningsWithExamples,
     } as unknown as IItem
 
     return {

@@ -4,9 +4,9 @@ import globalStyle from '@/style/appStyle'
 import styles from './style'
 import { useSelector } from '@/core/hooks/redux'
 import { ManOutlined, WomanOutlined } from '@ant-design/icons'
-import { AddedItemChart } from '@/views/features/chart/addedItemChart/addedItemChart'
-import { OverviewChart } from '@/views/features/chart/overviewChart/overviewChart'
-import { ProgressChart } from '@/views/features/chart/progressChart/progressChart'
+import { AddedItemChart } from '@/views/features/chart/addedItemChart/AddedItemChart'
+import { OverviewChart } from '@/views/features/chart/overviewChart/OverviewChart'
+import { ProgressChart } from '@/views/features/chart/progressChart/ProgressChart'
 
 const Profile = () => {
   const { token } = theme.useToken()

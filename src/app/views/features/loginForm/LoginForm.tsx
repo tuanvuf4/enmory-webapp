@@ -2,8 +2,7 @@ import globalStyle from '@/style/appStyle'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { useFirebaseAuth } from '@/core/hooks'
-import { IHttpResponse } from '@/models/http.model'
-import { ILoginResponse, ILogin, IUser } from '@/models/user.model'
+import { ILogin, IUser } from '@/models/user.model'
 import { theme, Space, Row, Col, Input, Button } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { Link } from 'react-router-dom'
@@ -115,7 +114,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
                 <Col span={24}>
                   <div className={classes.register}>
                     <p>
-                      Don't have a account? <Link to={'/register'}></Link>
+                      Don't have a account? <Link to={'/Register'}></Link>
                     </p>
                   </div>
                 </Col>

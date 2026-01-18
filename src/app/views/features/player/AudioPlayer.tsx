@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Controls } from './controls'
-import { ProgressBar } from './progressBar'
+import { Controls } from './Controls'
+import { ProgressBar } from './ProgressBar'
 import { Button, Dropdown, MenuProps, theme } from 'antd'
 import styles from './style'
 import { appStyleConfig } from '@/style/appStyle'
@@ -18,7 +18,7 @@ import { ITracks } from '@/models/media.model'
 import { EMediaSrc } from '@/models/dictation.model'
 import { setting } from '@/config/appConfig'
 import classNames from 'clsx'
-import { TExternalSource } from '../modals/mediaUploadModal'
+import { TExternalSource } from '../modals/MediaUploadModal'
 
 interface IProps {
   tracks: ITracks[]

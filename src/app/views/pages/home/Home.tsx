@@ -2,19 +2,19 @@ import globalStyle from '@/style/appStyle'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { ExampleForm } from '@/views/features/exampleOverview/exampleFormAdd'
-import { ExampleOverView } from '@/views/features/exampleOverview/exampleOverview'
-import { StudySet } from '@/views/features/studySet/studySet'
-import { Widget } from '@/views/features/widget/widget'
+import { ExampleForm } from '@/views/features/exampleOverview/ExampleFormAdd'
+import { ExampleOverView } from '@/views/features/exampleOverview/ExampleOverview'
+import { StudySet } from '@/views/features/studySet/StudySet'
+import { Widget } from '@/views/features/widget/Widget'
 import { theme, Space, Row, Col } from 'antd'
-// import About from '../schedule/schedule'
+// import About from '../schedule/Schedule'
 import { Item } from '@/views/features/item/Item'
 import { ExampleMode } from '@/models/example.model'
 import { usePrompt } from '@/helpers/hooks'
 import registerStyle from '@/views/pages/register/style'
 import loginStyle from '@/views/pages/login/style'
 import { Link } from 'react-router-dom'
-import { FormSearchItem } from '@/views/features/formSearchItem/formSearchItem'
+import { FormSearchItem } from '@/views/features/formSearchItem/FormSearchItem'
 
 const Home = () => {
   const { token } = theme.useToken()
@@ -129,7 +129,7 @@ const Home = () => {
             <Col span={24}>
               <div className={classesRegister.register}>
                 <p>
-                  Don't have a account? <Link to={'/register'}>Register now!</Link>
+                  Don't have a account? <Link to={'/Register'}>Register now!</Link>
                 </p>
               </div>
             </Col>
@@ -139,7 +139,7 @@ const Home = () => {
             <Col span={24}>
               <div className={classesLogin.register}>
                 <p>
-                  Already have an account? <Link to={'/login'}>Log in</Link>
+                  Already have an account? <Link to={'/Login'}>Log in</Link>
                 </p>
               </div>
             </Col>

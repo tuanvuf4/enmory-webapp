@@ -1,12 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from '@/core/hooks'
-import {
-  signInWithEmail,
-  signInWithGoogle,
-  registerWithEmail,
-  getUserConfig,
-} from '@/store/reducers/auth.reducer'
+import { signInWithEmail, signInWithGoogle, registerWithEmail } from '@/store/reducers/auth.reducer'
 import { authAction } from '@/store/reducers/auth.reducer'
 import { ILogin, IUser } from '@/models/user.model'
 
@@ -63,8 +58,6 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
     setErrorMsg('')
     try {
       const result = await dispatch(signInWithGoogle() as any)
-
-      console.log(`*** result *** `, result)
 
       if (result.payload?.uid) {
         dispatch(authAction.setGoogleAuth(result.payload.uid))
@@ -188,8 +181,8 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
     return await registerWithEmailAndPassword(data.email, data.password, {
       firstName: data.firstName,
       lastName: data.lastName,
-      username: data.username,
-      photoURL: data.avatar,
+      displayName: data.displayName,
+      photoURL: data.photoURL,
     })
   }
 

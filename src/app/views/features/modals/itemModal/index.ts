@@ -2,7 +2,6 @@ import { ECategory, EType, IExample, IItem, IMeaning } from '@/app/models/item.m
 import { Timestamp } from 'firebase/firestore'
 
 export const exampleItem: IExample = {
-  auto: false,
   uid: '',
   original: '',
   translation: '',

@@ -1,4 +1,4 @@
-import { TExternalSource } from '../views/features/modals/mediaUploadModal'
+import { TExternalSource } from '../views/features/modals/MediaUploadModal'
 
 export interface ITracks {
   id?: number

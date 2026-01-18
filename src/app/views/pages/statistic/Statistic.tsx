@@ -1,9 +1,9 @@
 import { Col, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
 import globalStyle from '@/style/appStyle'
-import { AddedItemChart } from '@/views/features/chart/addedItemChart/addedItemChart'
-import { OverviewChart } from '@/views/features/chart/overviewChart/overviewChart'
-import { ProgressChart } from '@/views/features/chart/progressChart/progressChart'
+import { AddedItemChart } from '@/views/features/chart/addedItemChart/AddedItemChart'
+import { OverviewChart } from '@/views/features/chart/overviewChart/OverviewChart'
+import { ProgressChart } from '@/views/features/chart/progressChart/ProgressChart'
 
 const Statistic = () => {
   const { token } = theme.useToken()

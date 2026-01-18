@@ -1,2 +1,2 @@
-export * from './level'
+export * from './Level'
 export * from './style'

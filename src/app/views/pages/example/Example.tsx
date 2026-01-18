@@ -4,15 +4,17 @@ import { exampleApi } from '@/services/firebase/api/example.api'
 import { exampleAsync } from '@/store/asyncActions/example.async'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { IDataOnChange, Pagination } from '@/views/components/pagination/pagination'
-import { ExItem } from '@/views/features/exItem/exItem'
-import { FormSearchEx } from '@/views/features/formSearchEx/formSearchEx'
+import { IDataOnChange, Pagination } from '@/views/components'
+import { ExItem } from '@/views/features/exItem/ExItem'
+import { FormSearchEx } from '@/views/features/formSearchEx/FormSearchEx'
 import { theme, Row, Col } from 'antd'
 import { useEffect } from 'react'
 import styles from './style'
-import { Toolbar } from '@/views/features/toolbar/toolbar'
+import { Toolbar } from '@/views/features/toolbar/Toolbar'
 import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
+import { useSearchParams } from 'react-router-dom'
+import { IFormSearchEx } from '@/models/formSearch.model'
 
 export const Example: React.FC = () => {
   const { token } = theme.useToken()
@@ -22,7 +24,16 @@ export const Example: React.FC = () => {
 
   const { openNotification } = usePrompt()
 
-  const { examples, pagination, formSearchQuery } = useSelector((state) => state.example)
+  const { examples, pagination } = useSelector((state) => state.example)
+
+  const [searchParams] = useSearchParams()
+
+  // Read form search values from URL params
+  const formSearchQuery: IFormSearchEx = {
+    keyword: searchParams.get('keyword') || '',
+    order: (searchParams.get('order') as 'ASC' | 'DESC') || 'DESC',
+    orderBy: (searchParams.get('orderBy') as 'created_date' | 'last_update') || 'created_date',
+  }
 
   const dispatch = useDispatch()
 

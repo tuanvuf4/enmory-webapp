@@ -1,4 +1,3 @@
-import { msgWarning } from '@/constant/index'
 import { MoreOutlined, ReloadOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
 import { useDispatch, useSelector } from '@/core/hooks'
@@ -13,18 +12,18 @@ import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
-import { Level } from '@/views/components/level/level'
-import { Tags } from '@/views/components/tags/tags'
-import { MenuProps, Skeleton, Popover, Dropdown, Button, theme, Flex } from 'antd'
+import { Level } from '@/views/components'
+import { Tags } from '@/views/components'
+import { MenuProps, Skeleton, Dropdown, Button, theme, Flex } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import moment from 'moment'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { getActionMenuItems } from './actionMenuItem'
-import { MeaningItemView } from './itemMeaningView'
+import { getActionMenuItems } from './ActionMenuItem'
+import { MeaningItem } from './MeaningItem'
 import styles from './style'
 import clsx from 'clsx'
-import { Reference } from '../references/references'
+import { Reference } from '../references/References'
 import { actionAsyncApp } from '@/store/asyncActions'
 import { usePrompt } from '@/helpers/hooks'
 
@@ -140,7 +139,7 @@ export const Item: React.FC<IProps> = ({
         }),
       )
     } else {
-      navigate('/library')
+      navigate('/Library')
     }
   }
 
@@ -337,7 +336,7 @@ export const Item: React.FC<IProps> = ({
             {data.meanings &&
               data.meanings.length > 0 &&
               data.meanings.map((meaning, key) => (
-                <MeaningItemView
+                <MeaningItem
                   active={active}
                   key={key}
                   meaning={meaning}

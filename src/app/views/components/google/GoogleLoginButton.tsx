@@ -236,7 +236,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ className = ''
 
       {isOpen && (
         <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50'>
-          <a href='/profile' className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'>
+          <a href='/Profile' className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'>
             View Profile
           </a>
           <a href='/settings' className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'>

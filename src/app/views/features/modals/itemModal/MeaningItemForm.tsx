@@ -8,11 +8,11 @@ import {
 } from '@ant-design/icons'
 import { patternValidation } from '@/core/utils'
 import { ECategory, IOption, EType, IItem } from '@/models/item.model'
-import { InputTag } from '@/views/components/inputTag/inputTag'
+import { InputTag } from '@/views/components'
 import { theme, Space, Col, Row, Button, Select, Checkbox, Input, Flex } from 'antd'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { meaningItem } from '.'
-import { ExampleItem } from './exampleItem'
+import { ExampleItem } from './ExampleItem'
 import styles from './style'
 import clsx from 'clsx'
 import { TextEditor } from '@/views/components'
@@ -27,7 +27,7 @@ interface IProps {
   onSubmit?: () => void
 }
 
-export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
+export const MeaningItemForm: React.FC<IProps> = ({ catType, types, onSubmit }) => {
   const { token } = theme.useToken()
   const classes = styles()
   const gClasses = globalStyle()
@@ -556,5 +556,3 @@ export const MeaningItem: React.FC<IProps> = ({ catType, types, onSubmit }) => {
     </Space>
   )
 }
-
-export default MeaningItem

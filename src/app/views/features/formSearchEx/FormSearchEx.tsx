@@ -18,6 +18,7 @@ import { exampleAction } from '@/store/reducers/example.reducer'
 import { theme, AutoComplete, Input, Dropdown, Select, Button } from 'antd'
 import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
@@ -31,13 +32,32 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const classes = styles()
   const gClasses = globalStyle()
 
-  const { formSearchQuery } = useSelector((state) => state.example)
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const dispatch = useDispatch()
 
+  // Read form values from URL params
+  const formSearchQuery: IFormSearchEx = {
+    keyword: searchParams.get('keyword') || '',
+    order: (searchParams.get('order') as AppOrderQuery) || 'DESC',
+    orderBy: (searchParams.get('orderBy') as AppOrderByQuery) || 'created_date',
+  }
+
   const { control, handleSubmit, reset, watch } = useForm<IFormSearchEx>({
-    defaultValues: initSearchFormEx,
+    defaultValues: formSearchQuery,
   })
+
+  const updateUrlParams = (data: Partial<IFormSearchEx>) => {
+    const params = new URLSearchParams(searchParams)
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.set(key, String(value))
+      } else {
+        params.delete(key)
+      }
+    })
+    setSearchParams(params)
+  }
 
   const keyword = watch('keyword')
 
@@ -55,18 +75,18 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
           size: 20,
         }),
       )
-      dispatch(
-        exampleAction.updateSearchFormValue({
-          keyword: '',
-          order: 'DESC',
-          orderBy: 'created_date',
-        }),
-      )
+      // Update URL params
+      updateUrlParams({
+        keyword: '',
+        order: 'DESC',
+        orderBy: 'created_date',
+      })
     })
   }
 
   const onSubmit = (data: IFormSearchEx) => {
-    dispatch(exampleAction.updateSearchFormValue({ ...data }))
+    // Update URL params instead of Redux
+    updateUrlParams(data)
     dispatch(
       exampleAsync.fetchExamples({
         ...data,
@@ -77,9 +97,10 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  useEffect(() => reset(formSearchQuery), [])
-
-  useEffect(() => reset(formSearchQuery), [formSearchQuery])
+  // Sync form with URL params on mount and when URL changes
+  useEffect(() => {
+    reset(formSearchQuery)
+  }, [searchParams])
 
   return (
     <div className={classes.searchForm}>
@@ -121,7 +142,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                   options={options}
                   onSelect={onSelect}
                   onClear={() => {
-                    dispatch(exampleAction.updateSearchFormValue({ keyword: '' }))
+                    updateUrlParams({ keyword: '' })
                     onChange('')
                   }}
                   onChange={(text) => onChange(text)}
@@ -147,9 +168,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                       value={value}
                       onChange={(e) => {
                         onChange(e)
-                        dispatch(
-                          exampleAction.updateSearchFormValue({ orderBy: e as AppOrderByQuery }),
-                        )
+                        updateUrlParams({ orderBy: e as AppOrderByQuery })
                       }}
                       options={orderByOptions}
                       defaultValue={'created_date'}
@@ -168,7 +187,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                       value={value}
                       onChange={(e) => {
                         onChange(e)
-                        dispatch(exampleAction.updateSearchFormValue({ order: e as AppOrderQuery }))
+                        updateUrlParams({ order: e as AppOrderQuery })
                       }}
                       options={orderOptions}
                       defaultValue={'DESC'}
@@ -209,10 +228,20 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
             justifyContent: 'center',
           }}
           onClick={() => {
-            dispatch(exampleAction.resetQuery())
-            reset({
+            const resetValues = {
               keyword: '',
-            })
+              order: 'DESC' as AppOrderQuery,
+              orderBy: 'created_date' as AppOrderByQuery,
+            }
+            reset(resetValues)
+            setSearchParams({})
+            dispatch(
+              exampleAsync.fetchExamples({
+                ...resetValues,
+                page: setting.pagination.page,
+                size: setting.pagination.size,
+              }),
+            )
           }}
         >
           <SyncOutlined />

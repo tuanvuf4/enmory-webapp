@@ -2,23 +2,25 @@ import globalStyle, { appStyleConfig } from '@/style/appStyle'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { isDefect, getCategory, getTypeOfItem } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
-import { ECategory, EType } from '@/models/item.model'
+import { ECategory, EType, IItem } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { itemAsync } from '@/store/asyncActions/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { AlertDefectItem } from '@/views/features/alertDefectItem/alertDefectItem'
-import { Toolbar } from '@/views/features/toolbar/toolbar'
+import { AlertDefectItem } from '@/views/features/alertDefectItem/AlertDefectItem'
+import { Toolbar } from '@/views/features/toolbar/Toolbar'
 import { theme, Row, Col, Button } from 'antd'
 import { useEffect } from 'react'
 import styles from './style'
-import iStyles from '@/app/views/features/item/style'
+import iStyles from '@/app/views/features/item/Style'
 import { useDispatch, useSelector } from '@/core/hooks'
-import { Pagination } from '@/views/components/pagination/pagination'
+import { Pagination } from '@/views/components'
 import { Item } from '@/views/features/item/Item'
-import { Reference } from '@/views/features/references/references'
+import { Reference } from '@/views/features/references/References'
 import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
+import { useSearchParams } from 'react-router-dom'
+import { IFormSearchItem } from '@/models/formSearch.model'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
@@ -31,7 +33,20 @@ export const Library: React.FC = () => {
 
   const { confirmDeleteModal, openNotification } = usePrompt()
 
-  const { listItem, pagination, formSearchValue } = useSelector((state) => state.items)
+  const { listItem, pagination } = useSelector((state) => state.items)
+
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Read form search values from URL params
+  const formSearchValue: IFormSearchItem = {
+    keyword: searchParams.get('keyword') || '',
+    cat: searchParams.get('cat') ? Number(searchParams.get('cat')) : ECategory.ALL,
+    type: searchParams.get('type') ? Number(searchParams.get('type')) : EType.ALL,
+    defect: searchParams.get('defect') === 'true',
+    archive: searchParams.get('archive') === 'true',
+    order: (searchParams.get('order') as 'ASC' | 'DESC') || 'DESC',
+    orderBy: (searchParams.get('orderBy') as 'created_date' | 'last_update') || 'created_date',
+  }
 
   const dispatch = useDispatch()
 
@@ -53,7 +68,9 @@ export const Library: React.FC = () => {
       dispatch(
         settingAction.setCurrentItem({
           ...content,
-        }),
+          original: content?.original || '',
+          level: content?.level || 0,
+        } as IItem),
       )
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
@@ -64,7 +81,13 @@ export const Library: React.FC = () => {
     const { isSuccess, content: item } = await itemApi.getItemById(id)
     if (isSuccess) {
       dispatch(settingAction.toggleViewItemModal())
-      dispatch(settingAction.setCurrentItem({ ...item }))
+      dispatch(
+        settingAction.setCurrentItem({
+          ...item,
+          original: item?.original || '',
+          level: item?.level || 0,
+        } as IItem),
+      )
     }
   }
 

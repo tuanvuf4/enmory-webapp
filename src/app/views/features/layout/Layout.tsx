@@ -1,25 +1,25 @@
 import { PropsWithChildren, useEffect } from 'react'
-import { AppFooter } from '../footer/footer'
-import { AppHeader } from '../header/header'
+import { AppFooter } from '../footer/Footer'
+import { AppHeader } from '../header/Header'
 import { Drawer, FloatButton, Layout } from 'antd'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { ArrowUpOutlined } from '@ant-design/icons'
 import { appTheme } from '@/style/theme'
 import styles from './style'
 import { appStyleConfig } from '@/style/appStyle'
-import { ItemModal } from '../modals/itemModal/itemModal'
-import { SideBarMain } from '../sideBar/main/sideBarMain'
-import { ViewItemModal } from '../modals/viewItemModal/viewItemModal'
-import { Notification } from '../../components/notification/notification'
+import { ItemModal } from '../modals/itemModal/ItemModal'
+import { SideBarMain } from '../sideBar/main/SideBarMain'
+import { ViewItemModal } from '../modals/viewItemModal/ViewItemModal'
+import { Notification } from '../../components/notification/Notification'
 import { configAction } from '@/store/reducers/config.reducer'
-import { MediaUploadModal } from '../modals/mediaUploadModal/mediaUploadModal'
+import { MediaUploadModal } from '../modals/mediaUploadModal/MediaUploadModal'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { EViewPort } from '@/models/app.model'
 import { FormProvider, useForm } from 'react-hook-form'
 import { IItem } from '@/models/item.model'
 import { initItem } from '../modals/itemModal'
-import { ExampleModal } from '../modals/exampleModal/exampleModal'
-import { LoadingBar } from '../loading/loadingBar'
+import { ExampleModal } from '../modals/exampleModal/ExampleModal'
+import { LoadingBar } from '../loading/LoadingBar'
 
 export const AppLayout: React.FC<PropsWithChildren> = (props) => {
   const classes = styles()
@@ -64,7 +64,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
 
   useEffect(() => {
     if (location.pathname === '/' && !isAuth) {
-      navigate('/login')
+      navigate('/Login')
     }
   }, [location, isAuth])
 

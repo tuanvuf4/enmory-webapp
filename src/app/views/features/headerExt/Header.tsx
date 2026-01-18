@@ -1,7 +1,7 @@
 import { DownOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Col, Dropdown, Layout, MenuProps, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
-import { items } from './menus'
+import { items } from './Menus'
 import styles from './style'
 import globalStyle from '@/style/appStyle'
 import { useEffect, useState } from 'react'
@@ -9,7 +9,7 @@ import { IUser } from '@/models/user.model'
 import { EPageExt } from '@/models/app.model'
 import logo from '@/assets/img/logo.png'
 import { Link } from 'react-router-dom'
-import { addNewType } from '../header/menus'
+import { addNewType } from '../header/Menus'
 import { useSelector } from '@/core/hooks'
 interface IHeaderExt {
   isAuth: boolean

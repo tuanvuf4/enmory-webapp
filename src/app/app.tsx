@@ -3,12 +3,12 @@ import { useAuthInit } from '@/core/hooks/useAuthInit'
 import { IHttpResponse } from '@/models/http.model'
 import { ECategory, IOption } from '@/models/item.model'
 import { actionAsyncApp } from '@/store/asyncActions/app.async'
-import { AppLayout } from '@/views/features/layout/layout'
+import { AppLayout } from '@/views/features/layout/Layout'
 import { useEffect, useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { RouterElement } from './router'
 import moment from 'moment'
-import { Loading } from './views/features/loading/loading'
+import { Loading } from './views/features/loading/Loading'
 
 export const App = () => {
   const [isInitializing, setIsInitializing] = useState(true)

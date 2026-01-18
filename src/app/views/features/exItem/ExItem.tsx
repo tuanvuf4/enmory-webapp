@@ -5,7 +5,7 @@ import { IExample } from '@/models/item.model'
 import { theme, MenuProps, Skeleton, Dropdown, Button } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import moment from 'moment'
-import { actionMenuItems, actionMenuEx } from './actionMenuItem'
+import { actionMenuItems, actionMenuEx } from './ActionMenuItem'
 import styles from './style'
 import clsx from 'clsx'
 

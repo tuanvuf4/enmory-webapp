@@ -4,7 +4,7 @@ import { Modal } from 'antd'
 import { appStyleConfig } from '@/style/appStyle'
 import { CloseSquareOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { ExampleForm } from '../../exampleOverview/exampleFormAdd'
+import { ExampleForm } from '../../exampleOverview/ExampleFormAdd'
 import { IExample } from '@/models/item.model'
 import { exampleAction } from '@/store/reducers/example.reducer'
 

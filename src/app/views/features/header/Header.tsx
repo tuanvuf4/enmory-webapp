@@ -10,11 +10,11 @@ import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { theme, MenuProps, Layout, Row, Col, Button, Dropdown, Space } from 'antd'
 import { useNavigate, Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
-import { MainMenu } from '../mainMenu/mainMenu'
-import { items, addNewType } from './menus'
+import { MainMenu } from '../mainMenu/MainMenu'
+import { items, addNewType } from './Menus'
 import styles from './style'
 import clsx from 'clsx'
-import { FormSearchItem } from '../formSearchItem/formSearchItem'
+import { FormSearchItem } from '../formSearchItem/FormSearchItem'
 
 export const AppHeader = () => {
   const { token } = theme.useToken()
@@ -33,11 +33,11 @@ export const AppHeader = () => {
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
       case 'profile':
-        navigate('/profile')
+        navigate('/Profile')
         break
 
       case 'setting':
-        navigate('/setting')
+        navigate('/Setting')
         break
 
       case 'logout':
@@ -176,11 +176,11 @@ export const AppHeader = () => {
               <div className={classes.userContainer}>
                 {/* <Button onClick={() => googleLogin}>Sign in with Google 🚀 </Button> */}
 
-                <Button type='primary' onClick={() => navigate('/login')}>
+                <Button type='primary' onClick={() => navigate('/Login')}>
                   Login
                 </Button>
 
-                <Button type='default' onClick={() => navigate('/register')}>
+                <Button type='default' onClick={() => navigate('/Register')}>
                   Register
                 </Button>
               </div>

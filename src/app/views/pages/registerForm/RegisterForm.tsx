@@ -251,7 +251,7 @@ export const RegisterForm = ({ showBanner = true }) => {
                   <Col span={24}>
                     <div className={classesLogin.register}>
                       <p>
-                        Already have an account? <Link to={'/login'}>Log in</Link>
+                        Already have an account? <Link to={'/Login'}>Log in</Link>
                       </p>
                     </div>
                   </Col>
@@ -286,7 +286,7 @@ export const RegisterForm = ({ showBanner = true }) => {
             <Col span={24}>
               <div className={classesLogin.register}>
                 <p>
-                  {registerMsg} <Link to={'/login'}>Log in</Link>
+                  {registerMsg} <Link to={'/Login'}>Log in</Link>
                 </p>
               </div>
             </Col>
@@ -299,7 +299,7 @@ export const RegisterForm = ({ showBanner = true }) => {
               <div className={classesLogin.register}>
                 <p>
                   {registerMsg}
-                  <Link to={'/register'} onClick={() => setIsRegistered(false)}>
+                  <Link to={'/Register'} onClick={() => setIsRegistered(false)}>
                     Retry
                   </Link>
                 </p>

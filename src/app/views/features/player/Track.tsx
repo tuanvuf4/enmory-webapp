@@ -1,7 +1,7 @@
 import { CustomerServiceOutlined } from '@ant-design/icons'
 import { RefObject } from 'react'
 import styles from './style'
-import { ITrack } from './data/tracks'
+import { ITrack } from './data/Tracks'
 
 interface IProps {
   currentTrack: ITrack

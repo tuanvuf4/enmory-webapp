@@ -29,7 +29,6 @@ export interface IPronouns {
 export interface IExample {
   id?: string
   uid: string
-  auto?: boolean
   original: string
   translation: string
   created_date?: number
@@ -98,6 +97,7 @@ export interface IItem<M = string[]> {
   }
   practiceCount?: number
   forms: M
+  collocations: M
   word_family: M
   relation: M
   meanings?: IMeaning<M>[]
@@ -131,7 +131,7 @@ export interface GetIIotdRangeDateRequest {
 }
 
 export interface IOption<L, V> {
-  id: string
+  id: string | number
   label: L
   value: V
   key?: string

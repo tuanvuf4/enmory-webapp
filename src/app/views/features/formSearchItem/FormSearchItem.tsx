@@ -25,7 +25,7 @@ import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select } from 'antd'
 import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
@@ -48,21 +48,44 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
 
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [showType, setShowType] = useState<boolean>(false)
 
-  const { formSearchValue } = useSelector((state) => state.items)
   const { categories, types } = useSelector((state) => state.config)
 
   const dispatch = useDispatch()
 
+  // Read form values from URL params
+  const formSearchValue: IFormSearchItem = {
+    keyword: searchParams.get('keyword') || '',
+    cat: searchParams.get('cat') ? Number(searchParams.get('cat')) : ECategory.ALL,
+    type: searchParams.get('type') ? Number(searchParams.get('type')) : EType.ALL,
+    defect: searchParams.get('defect') === 'true',
+    archive: searchParams.get('archive') === 'true',
+    order: (searchParams.get('order') as AppOrderQuery) || 'DESC',
+    orderBy: (searchParams.get('orderBy') as AppOrderByQuery) || 'created_date',
+  }
+
   const { control, handleSubmit, reset, setValue, getValues, watch } = useForm<IFormSearchItem>({
-    defaultValues: initSearchFormItem,
+    defaultValues: formSearchValue,
   })
 
   const keyword = watch('keyword')
 
   const { options, isSearching } = useAutoComplete(keyword)
+
+  const updateUrlParams = (data: Partial<IFormSearchItem>) => {
+    const params = new URLSearchParams(searchParams)
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== '' && value !== ECategory.ALL && value !== EType.ALL) {
+        params.set(key, String(value))
+      } else {
+        params.delete(key)
+      }
+    })
+    setSearchParams(params)
+  }
 
   const onSelect = (value: string) => {
     reset({ ...initSearchFormItem, keyword: value })
@@ -72,13 +95,13 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
         size: setting.pagination.size,
       }),
     )
-    dispatch(
-      itemAction.updateSearchFormValue({
-        keyword: value,
-        archive: false,
-        defect: false,
-      }),
-    )
+
+    // Update URL params
+    updateUrlParams({
+      keyword: value,
+      archive: false,
+      defect: false,
+    })
 
     if (location.pathname.includes('library')) {
       dispatch(
@@ -118,7 +141,10 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
         size: setting.pagination.size,
       }),
     )
-    dispatch(itemAction.updateSearchFormValue({ ...data }))
+
+    // Update URL params instead of Redux
+    updateUrlParams(data)
+
     if (location.pathname.includes('library')) {
       dispatch(
         itemAsync.fetchItems({
@@ -130,14 +156,37 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
         // console.log(`resp: `, resp)
       })
     } else {
-      navigate('/library')
+      navigate(
+        '/library?' +
+          new URLSearchParams(
+            Object.entries(data).reduce(
+              (acc, [key, value]) => {
+                if (
+                  value !== undefined &&
+                  value !== '' &&
+                  value !== ECategory.ALL &&
+                  value !== EType.ALL
+                ) {
+                  acc[key] = String(value)
+                }
+                return acc
+              },
+              {} as Record<string, string>,
+            ),
+          ).toString(),
+      )
     }
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  useEffect(() => reset(formSearchValue), [])
-
-  useEffect(() => reset(formSearchValue), [formSearchValue])
+  // Sync form with URL params on mount and when URL changes
+  useEffect(() => {
+    reset(formSearchValue)
+    // Set showType based on category from URL
+    if (formSearchValue.cat === ECategory.WORD) {
+      setShowType(true)
+    }
+  }, [searchParams])
 
   return (
     <div className={classes.searchForm}>
@@ -191,7 +240,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                   options={options}
                   onSelect={onSelect}
                   onClear={() => {
-                    dispatch(itemAction.updateSearchFormValue({ keyword: '' }))
+                    updateUrlParams({ keyword: '' })
                     onChange('')
                   }}
                   onChange={(text) => onChange(text)}
@@ -215,11 +264,9 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                       checked={value}
                       onChange={(e) => {
                         onChange(e.target.checked)
-                        dispatch(
-                          itemAction.updateSearchFormValue({
-                            archive: e.target.checked,
-                          }),
-                        )
+                        updateUrlParams({
+                          archive: e.target.checked,
+                        })
                       }}
                     >
                       Archive
@@ -236,12 +283,10 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                       checked={value}
                       onChange={(e) => {
                         onChange(e.target.checked)
-                        dispatch(
-                          itemAction.updateSearchFormValue({
-                            defect: e.target.checked,
-                            type: EType.ALL,
-                          }),
-                        )
+                        updateUrlParams({
+                          defect: e.target.checked,
+                          type: EType.ALL,
+                        })
                       }}
                     >
                       Missing
@@ -263,15 +308,13 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                         if (e === ECategory.WORD) {
                           setValue('type', EType.ALL)
                           setShowType(true)
-                          dispatch(itemAction.updateSearchFormValue({ cat: e }))
+                          updateUrlParams({ cat: e })
                         } else {
                           setShowType(false)
-                          dispatch(
-                            itemAction.updateSearchFormValue({
-                              cat: e,
-                              type: EType.ALL,
-                            }),
-                          )
+                          updateUrlParams({
+                            cat: e,
+                            type: EType.ALL,
+                          })
                         }
                       }}
                       options={[allSelect, ...categories]}
@@ -291,7 +334,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                         value={value}
                         onChange={(e) => {
                           onChange(e)
-                          dispatch(itemAction.updateSearchFormValue({ type: e }))
+                          updateUrlParams({ type: e })
                         }}
                         options={[allSelect, ...types]}
                         defaultValue={EType.ALL}
@@ -311,9 +354,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                       value={value}
                       onChange={(e) => {
                         onChange(e)
-                        dispatch(
-                          itemAction.updateSearchFormValue({ orderBy: e as AppOrderByQuery }),
-                        )
+                        updateUrlParams({ orderBy: e as AppOrderByQuery })
                       }}
                       options={[
                         {
@@ -338,7 +379,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                       value={value}
                       onChange={(e) => {
                         onChange(e)
-                        dispatch(itemAction.updateSearchFormValue({ order: e as AppOrderQuery }))
+                        updateUrlParams({ order: e as AppOrderQuery })
                       }}
                       options={orderOptions}
                       defaultValue={'DESC'}
@@ -381,14 +422,26 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
               justifyContent: 'center',
             }}
             onClick={() => {
-              dispatch(itemAction.resetQuery())
-              reset({
+              const resetValues = {
                 keyword: '',
-                cat: 0,
-                type: 0,
+                cat: ECategory.ALL,
+                type: EType.ALL,
                 archive: false,
                 defect: false,
-              })
+                order: 'DESC' as AppOrderQuery,
+                orderBy: 'created_date' as AppOrderByQuery,
+              }
+              reset(resetValues)
+              setSearchParams({})
+              if (location.pathname.includes('library')) {
+                dispatch(
+                  itemAsync.fetchItems({
+                    ...resetValues,
+                    page: setting.pagination.page,
+                    size: setting.pagination.size,
+                  }),
+                )
+              }
             }}
           >
             <SyncOutlined />

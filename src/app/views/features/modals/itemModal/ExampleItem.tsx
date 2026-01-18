@@ -88,26 +88,8 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           className={'w-full'}
                           gap={token.size}
                         >
-                          <Controller
-                            control={control}
-                            name={`meanings.${nestIndex}.examples.${key}.auto`}
-                            render={({ field: { onChange, value, ref } }) => (
-                              <Switch
-                                ref={ref}
-                                title={'Type to search...' + value + ''}
-                                checked={value}
-                                defaultChecked={value}
-                                onChange={(e) => {
-                                  onChange(e)
-                                  trigger()
-                                }}
-                              />
-                            )}
-                          />
-
                           <AutoComplete
                             value={currentSearch}
-                            disabled={!getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
                             autoFocus={true}
                             allowClear={{
                               clearIcon: <CloseCircleOutlined style={{ fontSize: 14 }} />,
@@ -172,12 +154,6 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                                   onChange(content)
                                 }}
                               />
-                              // <TextArea
-                              //   disabled={getValues(`meanings.${nestIndex}.examples.${key}.auto`)}
-                              //   autoSize={{ minRows: 1, maxRows: 4 }}
-                              //   placeholder='Translation:'
-                              //   {...field}
-                              // />
                             )}
                           />
                         </Col>

@@ -1,5 +1,5 @@
 import { App, ModalFuncProps, theme } from 'antd'
-import { ArgsProps } from 'antd/es/notification'
+import { ArgsProps } from 'antd/es/Notification'
 
 export const usePrompt = () => {
   const { modal, notification } = App.useApp()

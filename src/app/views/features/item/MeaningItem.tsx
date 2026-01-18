@@ -2,11 +2,11 @@ import { AudioOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
 import { useDispatch } from '@/core/hooks'
 import { getTypeOfItem } from '@/helpers/item'
-import { IMeaning, ECategory, EType } from '@/models/item.model'
+import { IMeaning, ECategory, EType, IExample } from '@/models/item.model'
 import { itemAsync } from '@/store/asyncActions/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { Tags } from '@/views/components/tags/tags'
+import { Tags } from '@/views/components'
 import { theme, Row, Col } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './style'
@@ -58,7 +58,7 @@ const Pronunciation = ({ catId, meaning }: { catId: ECategory; meaning: IMeaning
   return null
 }
 
-export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, active = false }) => {
+export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, active = false }) => {
   const { token } = theme.useToken()
   const classes = styles()
 
@@ -98,7 +98,7 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
         }),
       )
     } else {
-      navigate('/library')
+      navigate('/Library')
     }
   }
 
@@ -166,65 +166,69 @@ export const MeaningItemView: React.FC<IMeaningProps> = ({ catId, meaning, activ
             )}
 
             {meaning.definition && (
-              <h3
-                className={classes.definition}
-                dangerouslySetInnerHTML={{ __html: meaning.definition }}
-              />
+              <>
+                <h5 className={'italic'}>Definition:</h5>
+                <h3
+                  className={classes.definition}
+                  dangerouslySetInnerHTML={{ __html: meaning.definition }}
+                />
+              </>
             )}
 
             {meaning.translation && (
-              <h3
-                className={classes.translate}
-                dangerouslySetInnerHTML={{ __html: meaning.translation }}
-              />
+              <>
+                <h5 className={'italic'}>Translation:</h5>
+                <h3
+                  className={classes.translate}
+                  dangerouslySetInnerHTML={{ __html: meaning.translation }}
+                />
+              </>
             )}
 
             {meaning.collocations && (
               <>
                 <h5 className={'italic'}>Collocations:</h5>
-                <div dangerouslySetInnerHTML={{ __html: meaning.collocations }} />
-                {/* <ul className={classes.listItem}>
-                  {meaning.collocations
-                    .replace(/\n/g, '*')
-                    .replace(/- /g, '')
-                    .split('*')
-                    .map((value, key) => (value ? <li key={key}>{value}</li> : ''))}
-                </ul> */}
+                <div
+                  className={classes.definition}
+                  dangerouslySetInnerHTML={{ __html: meaning.collocations }}
+                />
               </>
             )}
 
             {meaning.grammar && (
               <>
                 <h5 className={'italic'}>Grammar:</h5>
-                <div dangerouslySetInnerHTML={{ __html: meaning.grammar }} />
-                {/* <ul className={classes.listItem}>
-                  {meaning.grammar
-                    .replace(/\n/g, '*')
-                    .replace(/- /g, '')
-                    .split('*')
-                    .map((value, key) => (value ? <li key={key}>{value}</li> : ''))}
-                </ul> */}
+                <div
+                  className={classes.translate}
+                  dangerouslySetInnerHTML={{ __html: meaning.grammar }}
+                />
               </>
             )}
 
-            {meaning.synonyms.filter((item) => item).length > 0 && meaning.synonyms.length > 0 && (
+            {meaning.synonyms.length > 0 && (
               <Tags label={'Synonyms'} tags={meaning.synonyms} onSearch={onSearch} />
             )}
 
-            {meaning.antonyms.filter((item) => item).length > 0 && meaning.antonyms.length > 0 && (
+            {meaning.antonyms.length > 0 && (
               <Tags label={'Antonyms'} tags={meaning.antonyms} onSearch={onSearch} />
             )}
 
-            {meaning.examples.filter((item) => item).length > 0 && meaning.examples.length > 0 && (
+            {meaning.examples.length > 0 && (
               <div className={classes.examples}>
-                {/* <h4>Example:</h4> */}
+                <h5 className={'italic'}>Example:</h5>
                 <ul>
-                  {meaning.examples.map((example, key) => {
+                  {(meaning.examples as IExample[]).map((example, key) => {
                     return (
                       <li key={key} className={classes.exampleItem}>
                         <ul>
-                          <li className={classes.nestedExampleItem}>{example.original}</li>
-                          <li className={classes.nestedExampleItem}>{example.translation}</li>
+                          <li
+                            className={classes.nestedExampleItem}
+                            dangerouslySetInnerHTML={{ __html: example.original }}
+                          />
+                          <li
+                            className={classes.nestedExampleItem}
+                            dangerouslySetInnerHTML={{ __html: example.translation }}
+                          />
                         </ul>
                       </li>
                     )

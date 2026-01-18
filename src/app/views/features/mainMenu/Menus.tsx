@@ -105,27 +105,27 @@ export const keyPaths = [
   },
   {
     key: '2',
-    path: '/login',
+    path: '/Login',
   },
   {
     key: '3',
-    path: '/register',
+    path: '/Register',
   },
   {
     key: '4',
-    path: '/listening',
+    path: '/Listening',
   },
   {
     key: '5',
-    path: '/library',
+    path: '/Library',
   },
   {
     key: '6',
-    path: '/statistic',
+    path: '/Statistic',
   },
   {
     key: '7',
-    path: '/schedule',
+    path: '/Schedule',
   },
   {
     key: '8',
@@ -137,10 +137,10 @@ export const keyPaths = [
   },
   {
     key: '10',
-    path: '/example',
+    path: '/Example',
   },
   {
     key: '11',
-    path: '/marker',
+    path: '/Marker',
   },
 ]

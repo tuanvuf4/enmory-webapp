@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { RouteObject, useRoutes } from 'react-router-dom'
 import { useSelector } from './core/hooks/redux'
-import { PageNotFound } from './views/pages/pageNotFound/notFound'
+import { PageNotFound } from './views/pages/pageNotFound/NotFound'
 
 export function lazyLoadRoutes(componentName: string) {
-  const LazyElement = React.lazy(
-    () => import(`./views/pages/${componentName}/${componentName}.tsx`),
-  )
+  // Capitalize first letter for PascalCase file names
+  const fileName = componentName.charAt(0).toUpperCase() + componentName.slice(1)
+  const LazyElement = React.lazy(() => import(`./views/pages/${componentName}/${fileName}.tsx`))
 
   return (
     <React.Suspense
@@ -29,11 +29,11 @@ export const RouterElement = () => {
       //   element: lazyLoadRoutes('home'),
       // },
       {
-        path: '/login',
+        path: '/Login',
         element: lazyLoadRoutes('login'),
       },
       {
-        path: '/register',
+        path: '/Register',
         element: lazyLoadRoutes('register'),
       },
       {
@@ -56,35 +56,35 @@ export const RouterElement = () => {
         handle: () => {},
       },
       {
-        path: '/library',
+        path: '/Library',
         element: lazyLoadRoutes('library'),
       },
       {
-        path: '/example',
+        path: '/Example',
         element: lazyLoadRoutes('example'),
       },
       {
-        path: '/listening',
+        path: '/Listening',
         element: lazyLoadRoutes('listening'),
       },
       {
-        path: '/statistic',
+        path: '/Statistic',
         element: lazyLoadRoutes('statistic'),
       },
       {
-        path: '/marker',
+        path: '/Marker',
         element: lazyLoadRoutes('marker'),
       },
       {
-        path: '/schedule',
+        path: '/Schedule',
         element: lazyLoadRoutes('schedule'),
       },
       {
-        path: '/setting',
+        path: '/Setting',
         element: lazyLoadRoutes('setting'),
       },
       {
-        path: '/profile',
+        path: '/Profile',
         element: lazyLoadRoutes('profile'),
       },
       {

@@ -1,5 +1,5 @@
 import globalStyle from '@/style/appStyle'
-import { LoginForm } from '@/views/features/loginForm/loginForm'
+import { LoginForm } from '@/views/features/loginForm/LoginForm'
 import classNames from 'clsx'
 
 const Login = () => {

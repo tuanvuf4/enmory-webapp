@@ -12,15 +12,15 @@ import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
-import { InputTag } from '@/views/components/inputTag/inputTag'
-import { Level } from '@/views/components/level/level'
-import { Reference } from '@/views/features/references/references'
+import { InputTag } from '@/views/components'
+import { Level } from '@/views/components'
+import { Reference } from '@/views/features/references/References'
 import { theme, Row, Space, Col, Select, AutoComplete, Input, Checkbox, Button } from 'antd'
 import _ from 'lodash'
 import { useState, useEffect, Suspense } from 'react'
 import { useFormContext, useWatch, Controller } from 'react-hook-form'
 import { initItem, meaningItem } from '.'
-import MeaningItem from './meaningItem'
+import { MeaningItemForm } from './MeaningItemForm'
 import styles from './style'
 import { useDispatch, useSelector } from '@/core/hooks'
 import clsx from 'clsx'
@@ -494,7 +494,7 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
           </Row>
 
           <Suspense fallback={<div>Loading...</div>}>
-            <MeaningItem
+            <MeaningItemForm
               origin={original}
               catType={catType as ECategory}
               types={types}

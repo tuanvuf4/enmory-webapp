@@ -1,2 +1,2 @@
-export * from './pagination'
+export * from './Pagination'
 export * from './style'

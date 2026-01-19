@@ -1,11 +1,9 @@
 import globalStyle from '@/style/appStyle'
 import { SyncOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { useDispatch, useSelector } from '@/core/hooks'
+import { useDispatch } from '@/core/hooks'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IExample } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
-import { exampleAsync } from '@/store/asyncActions/example.async'
-import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme, Skeleton, Button, AutoComplete, Input } from 'antd'
 import { PropsWithChildren, useState, useEffect } from 'react'
@@ -15,7 +13,6 @@ import styles from './style'
 import exStyles from '@/views/features/item/style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
-import { appConfig, setting } from '@/config/appConfig'
 
 interface IProps {
   title?: string
@@ -30,18 +27,16 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
   const { token } = theme.useToken()
   const classes = styles()
   const exClasses = exStyles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const dispatch = useDispatch()
-  const { randomExamples } = useSelector((state) => state.example)
-  const { user } = useSelector((state) => state.auth)
-  const configuration = user?.configuration
 
   const { openNotification } = usePrompt()
 
   const [keyword, setKeyword] = useState<string>('')
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
   const [selected, setSelected] = useState<IExample>()
+  const [randomExamples, setRandomExamples] = useState<IExample[]>([])
   const [currentPage, setCurrentPage] = useState<number>(0)
 
   const { options } = useAutoComplete(keyword, 'example')
@@ -53,55 +48,55 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
   })
 
   const onSelect = (option: any) => {
-    dispatch(exampleAction.setSelectedExample(option.id))
     exampleApi.getExampleById(option.id).then(({ content }) => {
       setValue('query', '')
-      setSelected(content)
+      if (content) {
+        setSelected(content)
+      }
     })
   }
 
-  const getRandomExamples = () => {
+  const getRandomExamples = async () => {
     setIsLoaded(false)
     setSelected(undefined)
     const nextPage = currentPage + 1
-    dispatch(
-      exampleAsync.fetchRandomExample({
+    try {
+      const response = await exampleApi.getRandomExamples({
         page: nextPage,
-        size: configuration?.numberOfExampleReview || setting.studySet.numberOfExampleReview,
-      }),
-    )
-      .then(() => {
-        setCurrentPage(nextPage)
-        setIsLoaded(true)
+        size: 10,
       })
-      .catch((error) => {
-        console.error('Error fetching random examples:', error)
-        openNotification({ type: 'error', message: 'Failed to fetch examples' })
-        setIsLoaded(true)
-      })
+      setRandomExamples(response.content || [])
+      setCurrentPage(nextPage)
+    } catch (error) {
+      console.error('Error fetching random examples:', error)
+      openNotification({ type: 'error', message: 'Failed to fetch examples' })
+      setRandomExamples([])
+    } finally {
+      setIsLoaded(true)
+    }
   }
 
-  const onEdit = async (id: number) => {
+  const onEdit = async (id: number | string) => {
     try {
-      const { content } = await exampleApi.getExampleById(id)
-      dispatch(exampleAction.setSelectedExample(content))
+      await exampleApi.getExampleById(id)
       dispatch(settingAction.toggleExModal())
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }
   }
 
-  const onDelete = async (id: number) => {
+  const onDelete = async (id: number | string) => {
     try {
-      const { content } = await exampleApi.getExampleById(id)
-      dispatch(exampleAction.setSelectedExample(content))
+      await exampleApi.getExampleById(id)
       dispatch(settingAction.toggleDeleteExModal())
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }
   }
 
-  useEffect(() => getRandomExamples(), [])
+  useEffect(() => {
+    getRandomExamples()
+  }, [])
 
   return (
     <>
@@ -126,7 +121,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
               onClick={getRandomExamples}
             >
               <SyncOutlined />
-              <span className={gClasses.fromTablet}>Refresh</span>
+              <span className={globalClasses.fromTablet}>Refresh</span>
             </Button>
 
             <Controller
@@ -158,7 +153,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
                       />
                     }
                     options={options}
-                    onSelect={(v, o) => onSelect(o)}
+                    onSelect={(_, o) => onSelect(o)}
                     onClear={() => onChange('')}
                     onChange={(text) => {
                       onChange(text)

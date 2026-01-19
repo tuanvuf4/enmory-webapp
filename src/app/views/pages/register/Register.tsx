@@ -3,11 +3,11 @@ import globalStyle from '@/style/appStyle'
 import { RegisterForm } from '../registerForm/RegisterForm'
 
 const Register = () => {
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   return (
-    <div className={gClasses.container}>
-      <div className={classNames(gClasses.bodyContent)}>
+    <div className={globalClasses.container}>
+      <div className={classNames(globalClasses.bodyContent)}>
         <RegisterForm />
       </div>
     </div>

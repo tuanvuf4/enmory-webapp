@@ -19,7 +19,7 @@ interface Login {
 export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const { loginWithEmail, loginWithGoogle, isLoading, authError } = useFirebaseAuth({
     onLoginSuccess: onLoginSuccess,
@@ -51,7 +51,11 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
 
       <div className={classes.loginFormContent}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Space direction='vertical' size={[token.size, token.size]} className={gClasses.fulWidth}>
+          <Space
+            direction='vertical'
+            size={[token.size, token.size]}
+            className={globalClasses.fulWidth}
+          >
             <Row align={'middle'}>
               <Col span={24}>
                 <label htmlFor=''></label>
@@ -88,17 +92,17 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
               </Col>
             </Row>
 
-            {/* {errorMsg && <p className={clsx(gClasses.errorMsg, gClasses.textLeft)}>{errorMsg}</p>} */}
+            {/* {errorMsg && <p className={clsx(globalClasses.errorMsg, globalClasses.textLeft)}>{errorMsg}</p>} */}
 
             {authError && (
-              <p className={clsx(gClasses.errorMsg, gClasses.textCenter)}>{authError}</p>
+              <p className={clsx(globalClasses.errorMsg, globalClasses.textCenter)}>{authError}</p>
             )}
 
             <Row justify={'center'}>
               <Col span={24}>
                 <div className={clsx(classes.btnSubmit)}>
                   <Button
-                    className={gClasses.fulWidth}
+                    className={globalClasses.fulWidth}
                     type='primary'
                     htmlType='submit'
                     loading={isLoading}
@@ -132,7 +136,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
 
             <Row justify={'center'}>
               <Col span={24}>
-                <Button className={gClasses.fulWidth} onClick={handleGoogleLogin}>
+                <Button className={globalClasses.fulWidth} onClick={handleGoogleLogin}>
                   Google
                 </Button>
               </Col>

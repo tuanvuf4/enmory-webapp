@@ -26,7 +26,7 @@ export const Exercise: React.FC<IProps> = ({
   const { token } = theme.useToken()
 
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const [isGenerate, setIsGenerate] = useState<boolean>(false)
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
@@ -210,7 +210,7 @@ export const Exercise: React.FC<IProps> = ({
                     : `Paste the transcript here, a maximum of ${maxLengthTranscript} words`}
                 </span>
 
-                {error && <div className={clsx(gClasses.errorMsg)}>{error}</div>}
+                {error && <div className={clsx(globalClasses.errorMsg)}>{error}</div>}
               </div>
 
               <div className={classes.textareaItem}>

@@ -9,11 +9,6 @@ import {
   initialState as initialConfigState,
 } from './reducers/config.reducer'
 import {
-  itemsReducer,
-  IItemsState,
-  initialState as initialItemsState,
-} from './reducers/items.reducer'
-import {
   IStudySet,
   studySetReducer,
   initialState as initialStudySet,
@@ -29,39 +24,30 @@ import {
   IMediaState,
   initialState as initialMediaState,
 } from './reducers/media.reducer'
-import {
-  IExampleState,
-  exampleReducer,
-  initialState as initialExampleState,
-} from './reducers/example.reducer'
 
 export interface IAppState {
   auth: IAuthState
-  items: IItemsState
   config: IConfigState
   setting: ISettingState
   studySet: IStudySet
   iotd: IIotdState
   media: IMediaState
-  example: IExampleState
 }
 
 const initialState: IAppState = {
   auth: initialAuthState,
-  items: initialItemsState,
   config: initialConfigState,
   setting: initialSettingState,
   studySet: initialStudySet,
   iotd: initialIotdState,
   media: initialMediaState,
-  example: initialExampleState,
 }
 
 const persistConfig: PersistConfig<IAppState> = {
   version: 6,
   key: 'root',
   storage: localStorage,
-  blacklist: ['items', 'setting', 'media', 'example', 'iotd'],
+  blacklist: ['setting', 'media', 'iotd'],
   stateReconciler: autoMergeLevel2,
   // transforms: [{ in: (es) => es, out: (es) => es }],
   migrate: createMigrate({
@@ -84,12 +70,10 @@ const persistConfig: PersistConfig<IAppState> = {
 const rootReducers = combineReducers({
   auth: authReducer.reducer,
   config: configReducer.reducer,
-  items: itemsReducer.reducer,
   setting: settingReducer.reducer,
   studySet: studySetReducer.reducer,
   iotd: iotdReducer.reducer,
   media: mediaReducer.reducer,
-  example: exampleReducer.reducer,
 })
 
 export const store = configureStore({

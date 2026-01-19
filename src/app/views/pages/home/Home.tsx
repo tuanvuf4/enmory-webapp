@@ -19,7 +19,7 @@ import { FormSearchItem } from '@/views/features/formSearchItem/FormSearchItem'
 const Home = () => {
   const { token } = theme.useToken()
 
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
   const classesRegister = registerStyle()
   const classesLogin = loginStyle()
 
@@ -52,18 +52,18 @@ const Home = () => {
       {isAuth && (
         <>
           {isShowSearchFormItem && (
-            <div className={gClasses.stickyBar}>
-              <div className={gClasses.container}>
+            <div className={globalClasses.stickyBar}>
+              <div className={globalClasses.container}>
                 <FormSearchItem filter={false} submit={true} />
               </div>
             </div>
           )}
 
-          <div className={gClasses.container}>
+          <div className={globalClasses.container}>
             <Space
               direction='vertical'
               size={[token.size, token.size]}
-              className={gClasses.fulWidth}
+              className={globalClasses.fulWidth}
             >
               <Row justify={'start'} align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={16}>
@@ -124,7 +124,11 @@ const Home = () => {
       )}
 
       {!isAuth && (
-        <Space direction='vertical' size={[token.size, token.size]} className={gClasses.fulWidth}>
+        <Space
+          direction='vertical'
+          size={[token.size, token.size]}
+          className={globalClasses.fulWidth}
+        >
           <Row justify={'center'}>
             <Col span={24}>
               <div className={classesRegister.register}>

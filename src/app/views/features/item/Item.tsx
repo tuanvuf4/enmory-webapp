@@ -6,8 +6,6 @@ import { EViewMode } from '@/models/app.model'
 import { IItem, ECategory } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { commonApi } from '@/services/firebase/api/common.api'
-import { initSearchFormItem } from '@/services/index'
-import { itemAsync } from '@/store/asyncActions/item.async'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -117,29 +115,17 @@ export const Item: React.FC<IProps> = ({
 
   const onSearch = (keyword: string) => {
     dispatch(settingAction.updateViewItemModal(false))
-    dispatch(
-      itemAction.updatePagination({
-        page: setting.pagination.page,
-        size: setting.pagination.size,
-      }),
-    )
-    dispatch(
-      itemAction.updateSearchFormValue({
-        ...initSearchFormItem,
-        keyword: keyword,
-      }),
-    )
+
+    // Navigate to library with search params
+    const params = new URLSearchParams()
+    params.set('keyword', keyword)
+    params.set('page', '0')
+    params.set('size', setting.pagination.size.toString())
+
     if (location.pathname.includes('library')) {
-      dispatch(
-        itemAsync.fetchItems({
-          ...initSearchFormItem,
-          keyword: keyword,
-          page: setting.pagination.page,
-          size: setting.pagination.size,
-        }),
-      )
+      navigate(`/library?${params.toString()}`)
     } else {
-      navigate('/Library')
+      navigate(`/library?${params.toString()}`)
     }
   }
 

@@ -4,13 +4,11 @@ import { isDefect, getCategory, getTypeOfItem } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
 import { ECategory, EType, IItem } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
-import { itemAsync } from '@/store/asyncActions/item.async'
-import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { AlertDefectItem } from '@/views/features/alertDefectItem/AlertDefectItem'
 import { Toolbar } from '@/views/features/toolbar/Toolbar'
 import { theme, Row, Col, Button } from 'antd'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import styles from './style'
 import iStyles from '@/app/views/features/item/style'
 import { useDispatch, useSelector } from '@/core/hooks'
@@ -21,21 +19,28 @@ import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
 import { useSearchParams } from 'react-router-dom'
 import { IFormSearchItem } from '@/models/formSearch.model'
+import { IPagination } from '@/models/pagination.model'
+import { setting } from '@/config/appConfig'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
 
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
   const itemStyles = iStyles()
 
   const { viewMode } = useSelector((state) => state.config)
 
   const { confirmDeleteModal, openNotification } = usePrompt()
 
-  const { listItem, pagination } = useSelector((state) => state.items)
+  const [listItem, setListItem] = useState<IItem[]>([])
+  const [loading, setLoading] = useState(false)
 
   const [searchParams, setSearchParams] = useSearchParams()
+
+  // Read pagination from URL params
+  const page = searchParams.get('page') ? Number(searchParams.get('page')) : 0
+  const size = searchParams.get('size') ? Number(searchParams.get('size')) : 20
 
   // Read form search values from URL params
   const formSearchValue: IFormSearchItem = {
@@ -50,11 +55,14 @@ export const Library: React.FC = () => {
 
   const dispatch = useDispatch()
 
+  // Local state to store pagination response from API
+  const [pagination, setPagination] = useState<IPagination>(setting.pagination)
+
   const onDelete = (id: string) => {
     confirmDeleteModal({
       onOk: () => {
         itemApi.deleteItem(id).then(() => {
-          dispatch(itemAction.removeItem(id))
+          setListItem((prevItems) => prevItems.filter((item) => item.id !== id))
         })
       },
     })
@@ -92,32 +100,47 @@ export const Library: React.FC = () => {
   }
 
   useEffect(() => {
-    dispatch(
-      itemAsync.fetchItems({
-        keyword: formSearchValue.keyword || '',
-        cat: ECategory.ALL,
-        type: EType.ALL,
-        defect: false,
-        archive: false,
-        page: pagination.page,
-        size: pagination.size,
-        order: 'DESC',
-        orderBy: 'created_date',
-      }),
-    )
-  }, [])
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const response = await itemApi.getItems({
+          ...formSearchValue,
+          page,
+          size,
+        })
+
+        setListItem(response.content || [])
+        if (response.paging) {
+          setPagination(response.paging)
+        }
+      } catch (error) {
+        openNotification({ type: 'error', message: JSON.stringify(error) })
+        setListItem([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [searchParams])
 
   return (
     <>
-      <div className={gClasses.stickyBar}>
-        <div className={gClasses.container}>
+      <div className={globalClasses.stickyBar}>
+        <div className={globalClasses.container}>
           <Toolbar
             pagination={
               <Pagination
-                {...pagination}
+                page={page}
+                size={size}
+                total={pagination.total}
+                totalPage={pagination.totalPage}
+                options={pagination.options}
                 onPageChange={(data) => {
-                  dispatch(itemAction.updatePagination(data))
-                  dispatch(itemAsync.fetchItems({ ...formSearchValue, ...data }))
+                  const newParams = new URLSearchParams(searchParams)
+                  newParams.set('page', data.page.toString())
+                  newParams.set('size', data.size.toString())
+                  setSearchParams(newParams)
                   window.scrollTo({ top: 0, behavior: 'smooth' })
                 }}
               />
@@ -126,8 +149,9 @@ export const Library: React.FC = () => {
         </div>
       </div>
 
-      <div className={gClasses.container}>
-        {viewMode === EViewMode.GRID && listItem.length > 0 && (
+      <div className={globalClasses.container}>
+        {loading && <div>Loading...</div>}
+        {!loading && viewMode === EViewMode.GRID && listItem.length > 0 && (
           <div className={classes.items}>
             <Row gutter={[token.size, token.size * 2]}>
               {listItem.length > 0 &&
@@ -147,7 +171,7 @@ export const Library: React.FC = () => {
           </div>
         )}
 
-        {viewMode === EViewMode.LIST && listItem.length > 0 && (
+        {!loading && viewMode === EViewMode.LIST && listItem.length > 0 && (
           <div className={classes.itemTable}>
             <table>
               <thead>
@@ -268,7 +292,7 @@ export const Library: React.FC = () => {
           </div>
         )}
 
-        {listItem.length === 0 && <NotFound />}
+        {!loading && listItem.length === 0 && <NotFound />}
       </div>
     </>
   )

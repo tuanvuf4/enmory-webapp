@@ -122,7 +122,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
               width: 50,
               height: 50,
             }}
-            className={gClasses.toSm}
+            className={globalClasses.toSm}
             icon={
               <PlusOutlined
                 style={{

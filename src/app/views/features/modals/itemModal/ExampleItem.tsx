@@ -17,7 +17,7 @@ interface IProps {
 export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const [currentSearch, setCurrentSearch] = useState<string>('')
 
@@ -56,7 +56,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
       <Space
         direction='vertical'
         size={[token.size / 2, token.size / 2]}
-        className={gClasses.fulWidth}
+        className={globalClasses.fulWidth}
       >
         <Col xs={24}>
           <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
@@ -79,7 +79,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                     <Space
                       size={[token.size / 2, token.size / 2]}
                       direction='vertical'
-                      className={gClasses.fulWidth}
+                      className={globalClasses.fulWidth}
                     >
                       <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
                         <Flex

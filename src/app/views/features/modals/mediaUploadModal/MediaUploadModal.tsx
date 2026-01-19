@@ -30,7 +30,7 @@ interface IProps {
 export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const { TextArea } = Input
 
@@ -208,7 +208,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
         <Space direction='vertical' size={[token.size / 2, token.size]} style={{ display: 'flex' }}>
           <Row gutter={[token.size / 2, token.size / 2]}>
             <Col xs={24}>
-              Title: <span className={clsx(gClasses.errorMsg)}>*</span>
+              Title: <span className={clsx(globalClasses.errorMsg)}>*</span>
             </Col>
 
             <Col xs={24}>
@@ -225,7 +225,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                     />
 
                     {errors.title && (
-                      <div className={clsx(gClasses.errorMsg)}>{errors.title.message}</div>
+                      <div className={clsx(globalClasses.errorMsg)}>{errors.title.message}</div>
                     )}
                   </>
                 )}
@@ -252,7 +252,9 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                     />
 
                     {errors.description && (
-                      <div className={clsx(gClasses.errorMsg)}>{errors.description.message}</div>
+                      <div className={clsx(globalClasses.errorMsg)}>
+                        {errors.description.message}
+                      </div>
                     )}
                   </>
                 )}
@@ -304,7 +306,9 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                         />
 
                         {errors.transcript && (
-                          <div className={clsx(gClasses.errorMsg)}>{errors.transcript.message}</div>
+                          <div className={clsx(globalClasses.errorMsg)}>
+                            {errors.transcript.message}
+                          </div>
                         )}
                       </>
                     )}
@@ -327,7 +331,9 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                         />
 
                         {errors.transcript && (
-                          <div className={clsx(gClasses.errorMsg)}>{errors.transcript.message}</div>
+                          <div className={clsx(globalClasses.errorMsg)}>
+                            {errors.transcript.message}
+                          </div>
                         )}
                       </>
                     )}
@@ -360,7 +366,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
 
               <Row gutter={[token.size / 2, token.size / 2]}>
                 <Col xs={24}>
-                  External Url: <span className={clsx(gClasses.errorMsg)}>*</span>
+                  External Url: <span className={clsx(globalClasses.errorMsg)}>*</span>
                 </Col>
 
                 <Col xs={24}>
@@ -380,7 +386,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                         />
 
                         {errors.externalUrl && (
-                          <div className={clsx(gClasses.errorMsg)}>
+                          <div className={clsx(globalClasses.errorMsg)}>
                             {errors.externalUrl.message}
                           </div>
                         )}
@@ -400,7 +406,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                 {!isUpdating && (
                   <>
                     Upload:
-                    <span className={clsx(gClasses.errorMsg)}>*</span>
+                    <span className={clsx(globalClasses.errorMsg)}>*</span>
                   </>
                 )}
               </Col>
@@ -423,7 +429,7 @@ export const MediaUploadModal: React.FC<IProps> = ({ open, title }) => {
                       </Upload>
 
                       {errors.file && (
-                        <div className={clsx(gClasses.errorMsg)}>{errors.file.message}</div>
+                        <div className={clsx(globalClasses.errorMsg)}>{errors.file.message}</div>
                       )}
                     </>
                   )}

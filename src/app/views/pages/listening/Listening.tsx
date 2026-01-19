@@ -17,7 +17,7 @@ import clsx from 'clsx'
 export const Listening = () => {
   const { token } = theme.useToken()
 
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const dispatch = useDispatch()
 
@@ -106,13 +106,13 @@ export const Listening = () => {
   }, [])
 
   return (
-    <div className={gClasses.container}>
-      <h2 className={clsx(gClasses.pageTitle)}>Practice listening skill</h2>
+    <div className={globalClasses.container}>
+      <h2 className={clsx(globalClasses.pageTitle)}>Practice listening skill</h2>
 
       {!isLoaded && <Skeleton />}
 
       {isLoaded && (
-        <div className={clsx(gClasses.contentPage, gClasses.dark)}>
+        <div className={clsx(globalClasses.contentPage, globalClasses.dark)}>
           <Space direction='vertical' style={{ display: 'flex' }}>
             <Row gutter={[token.size, token.size]}>
               {player && (

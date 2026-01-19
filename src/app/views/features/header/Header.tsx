@@ -19,7 +19,7 @@ import { FormSearchItem } from '../formSearchItem'
 export const AppHeader = () => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const { isAuth, user } = useSelector((state) => state.auth)
   const { drawer } = useSelector((state) => state.config)
@@ -76,7 +76,7 @@ export const AppHeader = () => {
 
   return (
     <Layout.Header className={classes.header}>
-      <div className={gClasses.containerFluid}>
+      <div className={globalClasses.containerFluid}>
         <Row
           gutter={[token.size, token.size * 2]}
           justify={'space-between'}
@@ -136,7 +136,7 @@ export const AppHeader = () => {
           </Col>
 
           {isAuth && (
-            <Col xs={12} md={16} className={gClasses.fromTablet}>
+            <Col xs={12} md={16} className={globalClasses.fromTablet}>
               <MainMenu direction='horizontal' />
             </Col>
           )}
@@ -200,8 +200,8 @@ export const AppHeader = () => {
       </div>
 
       {isShowSearchFormItem && (
-        <div className={gClasses.stickyBar}>
-          <div className={gClasses.container}>
+        <div className={globalClasses.stickyBar}>
+          <div className={globalClasses.container}>
             <FormSearchItem filter={false} submit={true} />
           </div>
         </div>

@@ -17,7 +17,7 @@ export const RegisterForm = ({ showBanner = true }) => {
   const { token } = theme.useToken()
   const classesLogin = loginStyle()
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const {
     register: registerUser,
@@ -68,7 +68,7 @@ export const RegisterForm = ({ showBanner = true }) => {
             <Space
               direction='vertical'
               size={[token.size, token.size]}
-              className={gClasses.fulWidth}
+              className={globalClasses.fulWidth}
             >
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={12}>
@@ -216,7 +216,9 @@ export const RegisterForm = ({ showBanner = true }) => {
               {errorMsg && (
                 <Row align={'middle'}>
                   <Col span={24}>
-                    <p className={classNames(gClasses.errorMsg, gClasses.textLeft)}>{errorMsg}</p>
+                    <p className={classNames(globalClasses.errorMsg, globalClasses.textLeft)}>
+                      {errorMsg}
+                    </p>
                   </Col>
                 </Row>
               )}
@@ -224,7 +226,7 @@ export const RegisterForm = ({ showBanner = true }) => {
               {firebaseError && (
                 <Row align={'middle'}>
                   <Col span={24}>
-                    <p className={classNames(gClasses.errorMsg, gClasses.textLeft)}>
+                    <p className={classNames(globalClasses.errorMsg, globalClasses.textLeft)}>
                       {firebaseError}
                     </p>
                   </Col>
@@ -235,7 +237,7 @@ export const RegisterForm = ({ showBanner = true }) => {
                 <Col span={24}>
                   <div className={classNames([classesLogin.btnSubmit])}>
                     <Button
-                      className={gClasses.fulWidth}
+                      className={globalClasses.fulWidth}
                       type='primary'
                       htmlType='submit'
                       loading={firebaseLoading}
@@ -270,7 +272,7 @@ export const RegisterForm = ({ showBanner = true }) => {
 
                   <Row gutter={[token.size, token.size]}>
                     <Col span={24}>
-                      <Button className={gClasses.fulWidth} onClick={() => {}}>
+                      <Button className={globalClasses.fulWidth} onClick={() => {}}>
                         Google
                       </Button>
                     </Col>

@@ -109,7 +109,7 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
     if (querySearch.keyword) {
       examples = examples.filter(
         (example) =>
-          example.original.toLowerCase().includes(querySearch.keyword.toLowerCase()) ||
+          example.origin.toLowerCase().includes(querySearch.keyword.toLowerCase()) ||
           example.translation.toLowerCase().includes(querySearch.keyword.toLowerCase()),
       )
     }

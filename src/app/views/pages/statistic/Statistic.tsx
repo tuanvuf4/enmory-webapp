@@ -7,14 +7,18 @@ import { ProgressChart } from '@/views/features/chart/progressChart/ProgressChar
 
 const Statistic = () => {
   const { token } = theme.useToken()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   return (
-    <div className={gClasses.container}>
-      <h2 className={classNames(gClasses.pageTitle)}>Statistic</h2>
+    <div className={globalClasses.container}>
+      <h2 className={classNames(globalClasses.pageTitle)}>Statistic</h2>
 
-      <div className={classNames(gClasses.contentPage)}>
-        <Space direction='vertical' size={[token.size, token.size]} className={gClasses.fulWidth}>
+      <div className={classNames(globalClasses.contentPage)}>
+        <Space
+          direction='vertical'
+          size={[token.size, token.size]}
+          className={globalClasses.fulWidth}
+        >
           <Row justify={'start'} align={'top'} gutter={[token.size * 2, token.size * 2]}>
             <Col xs={24} md={15}>
               <AddedItemChart />

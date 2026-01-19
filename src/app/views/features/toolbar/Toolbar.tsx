@@ -17,7 +17,7 @@ export const Toolbar = ({ formSearch = <FormSearchItem />, pagination }: IProps)
   const { token } = theme.useToken()
 
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const dispatch = useDispatch()
 
@@ -25,7 +25,11 @@ export const Toolbar = ({ formSearch = <FormSearchItem />, pagination }: IProps)
 
   return (
     <div className={classes.toolbar}>
-      <Space direction='vertical' size={[token.size, token.size]} className={gClasses.fulWidth}>
+      <Space
+        direction='vertical'
+        size={[token.size, token.size]}
+        className={globalClasses.fulWidth}
+      >
         <Row justify={'space-between'} align={'top'} gutter={[token.size / 2, token.size / 2]}>
           <Col
             xs={24}
@@ -39,7 +43,7 @@ export const Toolbar = ({ formSearch = <FormSearchItem />, pagination }: IProps)
 
           <Col xs={24} sm={12} md={9} lg={10}>
             <Row justify={'end'} gutter={[token.size / 2, token.size / 2]}>
-              <Col className={gClasses.toXs}>
+              <Col className={globalClasses.toXs}>
                 <Button
                   type='text'
                   size='small'

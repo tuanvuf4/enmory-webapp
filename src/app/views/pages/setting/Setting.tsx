@@ -12,7 +12,7 @@ import clsx from 'clsx'
 const Setting = () => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   // User info comes from Firebase auth state
   const { user } = useSelector((state) => state.auth)
@@ -54,11 +54,11 @@ const Setting = () => {
   })
 
   return (
-    <div className={gClasses.container}>
-      <div className={clsx(gClasses.bodyContent)}>
-        <Row className={gClasses.innerContainer}>
+    <div className={globalClasses.container}>
+      <div className={clsx(globalClasses.bodyContent)}>
+        <Row className={globalClasses.innerContainer}>
           <Col xs={24} className={classes.sep}>
-            <h2 className={gClasses.pageTitle}>Settings</h2>
+            <h2 className={globalClasses.pageTitle}>Settings</h2>
 
             <form onSubmit={handleSubmit(onSubmit)}>
               <Space direction='vertical' style={{ display: 'flex' }}>

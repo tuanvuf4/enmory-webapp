@@ -30,7 +30,7 @@ interface IProps {
 export const MeaningItemForm: React.FC<IProps> = ({ catType, types, onSubmit }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const [show, setShow] = useState<boolean[]>([])
 
@@ -48,7 +48,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, types, onSubmit }) 
     <Space
       direction='vertical'
       size={[token.size / 2, token.size / 2]}
-      className={gClasses.fulWidth}
+      className={globalClasses.fulWidth}
       style={{ marginBottom: `${token.size}px` }}
     >
       <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
@@ -90,7 +90,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, types, onSubmit }) 
             <Space
               direction='vertical'
               size={[token.size / 2, token.size]}
-              className={gClasses.fulWidth}
+              className={globalClasses.fulWidth}
             >
               <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
                 <Col
@@ -123,7 +123,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, types, onSubmit }) 
                       name={`meanings.${index}.typeId`}
                       render={({ field }) => (
                         <Select
-                          className={gClasses.fulWidth}
+                          className={globalClasses.fulWidth}
                           rootClassName={'text-center'}
                           {...field}
                           options={types.filter((item) => item.value !== EType.ALL)}
@@ -193,7 +193,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, types, onSubmit }) 
                 <Space
                   direction='vertical'
                   size={[token.size / 2, token.size / 2]}
-                  className={clsx(gClasses.fulWidth)}
+                  className={clsx(globalClasses.fulWidth)}
                 >
                   <Row gutter={[token.size / 2, token.size]} align={'middle'}>
                     <Col

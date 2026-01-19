@@ -20,7 +20,7 @@ import { IFormSearchItem } from '@/models/formSearch.model'
 import { EType, ECategory } from '@/models/item.model'
 import { initSearchFormItem, allSelect } from '@/services/index'
 import { itemAsync } from '@/store/asyncActions/item.async'
-import { itemAction } from '@/store/reducers/items.reducer'
+import { itemApi } from '@/services/firebase/api/item.api'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select } from 'antd'
 import { useState, useEffect } from 'react'
@@ -44,7 +44,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
 }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -89,12 +89,6 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
 
   const onSelect = (value: string) => {
     reset({ ...initSearchFormItem, keyword: value })
-    dispatch(
-      itemAction.updatePagination({
-        page: setting.pagination.page,
-        size: setting.pagination.size,
-      }),
-    )
 
     // Update URL params
     updateUrlParams({
@@ -121,27 +115,18 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
         size: setting.numberItemOfAutoComplete * 2,
         exact: true,
       }
-      itemApi
-        .getItemAutoComplete(params, { headers: { loading: ELoading.YES } })
-        .then((response) => {
-          dispatch(settingAction.toggleViewItemModal())
-          dispatch(
-            settingAction.setCurrentItem({
-              ...response.content[0],
-            }),
-          )
-        })
+      itemApi.getItemAutoComplete(params).then((response) => {
+        dispatch(settingAction.toggleViewItemModal())
+        dispatch(
+          settingAction.setCurrentItem({
+            ...response.content[0],
+          }),
+        )
+      })
     }
   }
 
   const onSubmit = (data: IFormSearchItem) => {
-    dispatch(
-      itemAction.updatePagination({
-        page: setting.pagination.page,
-        size: setting.pagination.size,
-      }),
-    )
-
     // Update URL params instead of Redux
     updateUrlParams(data)
 
@@ -236,7 +221,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                       }
                     />
                   }
-                  className={clsx(classes.autoSearchInput, gClasses.fulWidth)}
+                  className={clsx(classes.autoSearchInput, globalClasses.fulWidth)}
                   options={options}
                   onSelect={onSelect}
                   onClear={() => {
@@ -260,7 +245,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                   name={`archive`}
                   render={({ field: { onChange, value } }) => (
                     <Checkbox
-                      className={gClasses.fulWidth}
+                      className={globalClasses.fulWidth}
                       checked={value}
                       onChange={(e) => {
                         onChange(e.target.checked)
@@ -279,7 +264,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                   name={`defect`}
                   render={({ field: { onChange, value } }) => (
                     <Checkbox
-                      className={gClasses.fulWidth}
+                      className={globalClasses.fulWidth}
                       checked={value}
                       onChange={(e) => {
                         onChange(e.target.checked)
@@ -301,7 +286,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                   name={`cat`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={gClasses.fulWidth}
+                      className={globalClasses.fulWidth}
                       value={value}
                       onChange={(e) => {
                         onChange(e)
@@ -330,7 +315,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                     name={`type`}
                     render={({ field: { onChange, value } }) => (
                       <Select
-                        className={gClasses.fulWidth}
+                        className={globalClasses.fulWidth}
                         value={value}
                         onChange={(e) => {
                           onChange(e)
@@ -350,7 +335,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                   name={`orderBy`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={gClasses.fulWidth}
+                      className={globalClasses.fulWidth}
                       value={value}
                       onChange={(e) => {
                         onChange(e)
@@ -375,7 +360,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                   name={`order`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={gClasses.fulWidth}
+                      className={globalClasses.fulWidth}
                       value={value}
                       onChange={(e) => {
                         onChange(e)
@@ -392,7 +377,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                 <Button
                   type={'primary'}
                   htmlType='submit'
-                  className={gClasses.fulWidth}
+                  className={globalClasses.fulWidth}
                   onClick={() => handleSubmit(onSubmit)()}
                 >
                   Apply
@@ -445,7 +430,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
             }}
           >
             <SyncOutlined />
-            <span className={gClasses.fromTablet}>Reset</span>
+            <span className={globalClasses.fromTablet}>Reset</span>
           </Button>
         )}
 
@@ -461,7 +446,7 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
             }}
           >
             <SearchOutlined />
-            <span className={gClasses.fromTablet}>Search</span>
+            <span className={globalClasses.fromTablet}>Search</span>
           </Button>
         )}
       </form>

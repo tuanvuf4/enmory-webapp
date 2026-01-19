@@ -1,32 +1,39 @@
 import globalStyle from '@/style/appStyle'
-import { useSelector, useDispatch } from '@/core/hooks'
+import { useDispatch } from '@/core/hooks'
 import { exampleApi } from '@/services/firebase/api/example.api'
-import { exampleAsync } from '@/store/asyncActions/example.async'
-import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { IDataOnChange, Pagination } from '@/views/components'
 import { ExItem } from '@/views/features/exItem/ExItem'
 import { FormSearchEx } from '@/views/features/formSearchExtension/FormSearchExtension'
 import { theme, Row, Col } from 'antd'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import styles from './style'
 import { Toolbar } from '@/views/features/toolbar/Toolbar'
 import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
 import { useSearchParams } from 'react-router-dom'
 import { IFormSearchEx } from '@/models/formSearch.model'
+import { IExample } from '@/models/item.model'
+import { IPagination } from '@/models/pagination.model'
+import { setting } from '@/config/appConfig'
 
 export const Example: React.FC = () => {
   const { token } = theme.useToken()
 
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const { openNotification } = usePrompt()
 
-  const { examples, pagination } = useSelector((state) => state.example)
+  const [examples, setExamples] = useState<IExample[]>([])
+  const [pagination, setPagination] = useState<IPagination>(setting.pagination)
+  const [loading, setLoading] = useState(false)
 
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Read pagination from URL params
+  const page = searchParams.get('page') ? Number(searchParams.get('page')) : 0
+  const size = searchParams.get('size') ? Number(searchParams.get('size')) : 20
 
   // Read form search values from URL params
   const formSearchQuery: IFormSearchEx = {
@@ -37,20 +44,38 @@ export const Example: React.FC = () => {
 
   const dispatch = useDispatch()
 
-  const onEdit = async (id: number) => {
+  const fetchExamples = async () => {
+    setLoading(true)
     try {
-      const { content } = await exampleApi.getExampleById(id)
-      dispatch(exampleAction.setSelectedExample(content))
+      const response = await exampleApi.getExamples({
+        ...formSearchQuery,
+        page,
+        size,
+      })
+      setExamples(response.content || [])
+      if (response.paging) {
+        setPagination(response.paging)
+      }
+    } catch (error) {
+      openNotification({ type: 'error', message: JSON.stringify(error) })
+      setExamples([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const onEdit = async (id: number | string) => {
+    try {
+      await exampleApi.getExampleById(id)
       dispatch(settingAction.toggleExModal())
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }
   }
 
-  const onDelete = async (id: number) => {
+  const onDelete = async (id: number | string) => {
     try {
-      const { content } = await exampleApi.getExampleById(id)
-      dispatch(exampleAction.setSelectedExample(content))
+      await exampleApi.getExampleById(id)
       dispatch(settingAction.toggleDeleteExModal())
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
@@ -58,35 +83,40 @@ export const Example: React.FC = () => {
   }
 
   const onPageChange = (data: IDataOnChange) => {
-    dispatch(exampleAsync.fetchExamples({ ...formSearchQuery, ...data }))
+    const newParams = new URLSearchParams(searchParams)
+    newParams.set('page', data.page.toString())
+    newParams.set('size', data.size.toString())
+    setSearchParams(newParams)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   useEffect(() => {
-    dispatch(
-      exampleAsync.fetchExamples({
-        keyword: '',
-        page: pagination.page,
-        size: pagination.size,
-        order: 'DESC',
-        orderBy: 'created_date',
-      }),
-    )
-  }, [])
+    fetchExamples()
+  }, [searchParams])
 
   return (
     <>
-      <div className={gClasses.stickyBar}>
-        <div className={gClasses.container}>
+      <div className={globalClasses.stickyBar}>
+        <div className={globalClasses.container}>
           <Toolbar
             formSearch={<FormSearchEx />}
-            pagination={<Pagination {...pagination} onPageChange={onPageChange} />}
+            pagination={
+              <Pagination
+                page={page}
+                size={size}
+                total={pagination.total}
+                totalPage={pagination.totalPage}
+                options={pagination.options}
+                onPageChange={onPageChange}
+              />
+            }
           />
         </div>
       </div>
 
-      <div className={gClasses.container}>
-        {examples.length > 0 && (
+      <div className={globalClasses.container}>
+        {loading && <div>Loading...</div>}
+        {!loading && examples.length > 0 && (
           <div className={classes.items}>
             <Row gutter={[token.size, token.size * 2]}>
               {examples.map((item, idx) => {
@@ -104,7 +134,7 @@ export const Example: React.FC = () => {
           </div>
         )}
 
-        {examples.length === 0 && <NotFound />}
+        {!loading && examples.length === 0 && <NotFound />}
       </div>
     </>
   )

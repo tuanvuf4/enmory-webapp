@@ -139,8 +139,4 @@ export const keyPaths = [
     key: '10',
     path: '/example',
   },
-  {
-    key: '11',
-    path: '/marker',
-  },
 ]

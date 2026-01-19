@@ -3,7 +3,7 @@ import classNames from 'clsx'
 import globalStyle from '@/style/appStyle'
 
 const Schedule = () => {
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const timeline = [
     {
@@ -40,14 +40,14 @@ const Schedule = () => {
   ]
 
   return (
-    <div className={gClasses.container}>
-      <h2 className={classNames(gClasses.pageTitle)}>Schedule</h2>
+    <div className={globalClasses.container}>
+      <h2 className={classNames(globalClasses.pageTitle)}>Schedule</h2>
 
-      <div className={classNames(gClasses.contentPage, '!pt-24')}>
+      <div className={classNames(globalClasses.contentPage, '!pt-24')}>
         <Timeline mode={'left'} items={timeline} />
 
         {/* {!isAuth && (
-          <Space direction='vertical' size={[token.size, token.size]} className={gClasses.fulWidth}>
+          <Space direction='vertical' size={[token.size, token.size]} className={globalClasses.fulWidth}>
             <Row justify={'center'}>
               <Col span={24}>
                 <div className={classesRegister.register}>

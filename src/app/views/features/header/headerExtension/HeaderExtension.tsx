@@ -20,7 +20,7 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
   const { token } = theme.useToken()
 
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   // Get user info from Redux state (Firebase auth)
   const authUser = useSelector((state) => state.auth.user)
@@ -60,7 +60,7 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
 
   return (
     <Layout.Header className={classes.header}>
-      <div className={gClasses.containerFluid}>
+      <div className={globalClasses.containerFluid}>
         <Row
           gutter={[token.size, token.size * 2]}
           justify={'space-between'}

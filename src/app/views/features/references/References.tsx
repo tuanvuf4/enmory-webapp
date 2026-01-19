@@ -11,7 +11,7 @@ interface IPros {
 
 export const Reference: React.FC<IPros> = ({ origin }) => {
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const { user } = useSelector((state) => state.auth)
 
@@ -22,7 +22,7 @@ export const Reference: React.FC<IPros> = ({ origin }) => {
           return (
             <Button
               key={key}
-              className={gClasses.referenceBtn}
+              className={globalClasses.referenceBtn}
               type='text'
               size='small'
               onClick={() => {

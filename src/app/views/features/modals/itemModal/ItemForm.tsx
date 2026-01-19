@@ -35,7 +35,7 @@ interface ItemFormProps {
 export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const { openNotification } = usePrompt()
 
@@ -280,7 +280,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
         <Space
           direction='vertical'
           size={[token.size / 2, token.size / 2]}
-          className={gClasses.fulWidth}
+          className={globalClasses.fulWidth}
         >
           <Row align={'middle'}>
             <Col md={4} xs={12}>
@@ -294,7 +294,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
                 render={({ field: { onChange, value, ref } }) => (
                   <Select
                     ref={ref}
-                    className={gClasses.fulWidth}
+                    className={globalClasses.fulWidth}
                     onChange={onChange}
                     options={categories}
                     value={value}
@@ -324,7 +324,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
                   <>
                     <AutoComplete
                       value={value}
-                      className={clsx(gClasses.fulWidth)}
+                      className={clsx(globalClasses.fulWidth)}
                       options={options}
                       children={
                         <Input
@@ -362,13 +362,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
                     />
 
                     {invalid && errors.origin?.type === 'required' && (
-                      <p className={clsx(gClasses.errorMsg, gClasses.textLeft)}>
+                      <p className={clsx(globalClasses.errorMsg, globalClasses.textLeft)}>
                         {errors.origin?.message as string}
                       </p>
                     )}
 
                     {invalid && errors.origin?.type === 'existed' && (
-                      <p className={clsx(gClasses.errorMsg, gClasses.textLeft)}>
+                      <p className={clsx(globalClasses.errorMsg, globalClasses.textLeft)}>
                         {errors.origin?.message as string}
                       </p>
                     )}

@@ -3,11 +3,11 @@ import { LoginForm } from '@/views/features/loginForm/LoginForm'
 import classNames from 'clsx'
 
 const Login = () => {
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   return (
-    <div className={gClasses.container}>
-      <div className={classNames(gClasses.bodyContent)}>
+    <div className={globalClasses.container}>
+      <div className={classNames(globalClasses.bodyContent)}>
         <LoginForm />
       </div>
     </div>

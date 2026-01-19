@@ -12,17 +12,17 @@ const Profile = () => {
   const { token } = theme.useToken()
 
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   // User info comes from Firebase auth state
   const { user } = useSelector((state) => state.auth)
 
   return (
-    <div className={gClasses.container}>
-      <h2 className={classNames(gClasses.pageTitle)}>Profile</h2>
+    <div className={globalClasses.container}>
+      <h2 className={classNames(globalClasses.pageTitle)}>Profile</h2>
 
-      <div className={classNames(gClasses.contentPage)}>
-        <Row className={gClasses.innerContainer}>
+      <div className={classNames(globalClasses.contentPage)}>
+        <Row className={globalClasses.innerContainer}>
           <Col xs={24} md={24}>
             <div className={classes.inner}>
               <div>
@@ -58,8 +58,12 @@ const Profile = () => {
           </Col>
         </Row>
 
-        <div className={classNames(gClasses.contentPage)}>
-          <Space direction='vertical' size={[token.size, token.size]} className={gClasses.fulWidth}>
+        <div className={classNames(globalClasses.contentPage)}>
+          <Space
+            direction='vertical'
+            size={[token.size, token.size]}
+            className={globalClasses.fulWidth}
+          >
             <Row justify={'start'} align={'top'} gutter={[token.size * 2, token.size * 2]}>
               <Col xs={24} md={15}>
                 <AddedItemChart />

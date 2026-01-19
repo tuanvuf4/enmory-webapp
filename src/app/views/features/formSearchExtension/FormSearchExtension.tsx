@@ -30,7 +30,7 @@ interface IProps {
 export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const { token } = theme.useToken()
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -138,7 +138,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                       }
                     />
                   }
-                  className={clsx(classes.autoSearchInput, gClasses.fulWidth)}
+                  className={clsx(classes.autoSearchInput, globalClasses.fulWidth)}
                   options={options}
                   onSelect={onSelect}
                   onClear={() => {
@@ -164,7 +164,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                   name={`orderBy`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={gClasses.fulWidth}
+                      className={globalClasses.fulWidth}
                       value={value}
                       onChange={(e) => {
                         onChange(e)
@@ -183,7 +183,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                   name={`order`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={gClasses.fulWidth}
+                      className={globalClasses.fulWidth}
                       value={value}
                       onChange={(e) => {
                         onChange(e)
@@ -199,7 +199,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
 
                 <Button
                   htmlType='submit'
-                  className={gClasses.fulWidth}
+                  className={globalClasses.fulWidth}
                   onClick={() => handleSubmit(onSubmit)()}
                 >
                   Apply
@@ -245,7 +245,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
           }}
         >
           <SyncOutlined />
-          <span className={gClasses.fromTablet}>Reset</span>
+          <span className={globalClasses.fromTablet}>Reset</span>
         </Button>
 
         <Button
@@ -259,7 +259,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
           }}
         >
           <SearchOutlined />
-          <span className={gClasses.fromTablet}>Search</span>
+          <span className={globalClasses.fromTablet}>Search</span>
         </Button>
       </form>
     </div>

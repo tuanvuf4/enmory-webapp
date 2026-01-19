@@ -1,22 +1,15 @@
-import { setting } from '@/app/config/appConfig'
-import { IFormSearchItem } from '@/app/models/formSearch.model'
 import { IHttpResponse } from '@/app/models/http.model'
 import { IItem } from '@/app/models/item.model'
-import { IPagination } from '@/app/models/pagination.model'
 import { initSearchFormItem } from '@/app/services'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { itemAsync } from '../asyncActions/item.async'
 
 export interface IItemsState {
   listItem: IItem[]
-  formSearchValue: IFormSearchItem
-  pagination: IPagination
 }
 
 export const initialState: IItemsState = {
   listItem: [],
-  formSearchValue: initSearchFormItem,
-  pagination: setting.pagination,
 }
 
 export const itemsReducer = createSlice({
@@ -60,18 +53,6 @@ export const itemsReducer = createSlice({
     removeItem(state: IItemsState, action: PayloadAction<string>) {
       state.listItem = state.listItem.filter((item) => item.id !== action.payload)
     },
-    updatePagination(state: IItemsState, action: PayloadAction<Partial<IPagination>>) {
-      state.pagination = {
-        ...state.pagination,
-        ...action.payload,
-      }
-    },
-    updateSearchFormValue(state: IItemsState, action: PayloadAction<Partial<IFormSearchItem>>) {
-      state.formSearchValue = {
-        ...state.formSearchValue,
-        ...action.payload,
-      }
-    },
     resetQuery(state: IItemsState) {
       return {
         ...state,
@@ -86,16 +67,11 @@ export const itemsReducer = createSlice({
       .addCase(
         itemAsync.fetchItems.fulfilled,
         (state: IItemsState, action: PayloadAction<IHttpResponse<IItem[]>>) => {
-          state.listItem = action.payload.content
-          state.pagination = {
-            ...state.pagination,
-            ...action.payload.paging,
-          }
+          state.listItem = action.payload.content || []
         },
       )
       .addCase(itemAsync.fetchItems.rejected, (state: IItemsState) => {
         state.listItem = []
-        state.pagination = setting.pagination
       })
   },
 })

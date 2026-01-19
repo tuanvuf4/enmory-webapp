@@ -3,8 +3,6 @@ import { setting } from '@/config/appConfig'
 import { useDispatch } from '@/core/hooks'
 import { getTypeOfItem } from '@/helpers/item'
 import { IMeaning, ECategory, EType, IExample } from '@/models/item.model'
-import { itemAsync } from '@/store/asyncActions/item.async'
-import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { Tags } from '@/views/components'
 import { theme, Row, Col } from 'antd'
@@ -70,35 +68,17 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, active = 
 
   const onSearch = (keyword: string) => {
     dispatch(settingAction.updateViewItemModal(false))
-    dispatch(
-      itemAction.updatePagination({
-        page: 0,
-        size: setting.pagination.size,
-      }),
-    )
-    dispatch(
-      itemAction.updateSearchFormValue({
-        keyword: keyword,
-        cat: ECategory.ALL,
-        type: EType.ALL,
-        archive: false,
-        defect: false,
-      }),
-    )
+
+    // Navigate to library with search params
+    const params = new URLSearchParams()
+    params.set('keyword', keyword)
+    params.set('page', '0')
+    params.set('size', setting.pagination.size.toString())
+
     if (location.pathname.includes('library')) {
-      dispatch(
-        itemAsync.fetchItems({
-          keyword: keyword,
-          page: 0,
-          size: setting.pagination.size,
-          cat: ECategory.ALL,
-          type: EType.ALL,
-          archive: false,
-          defect: false,
-        }),
-      )
+      navigate(`/library?${params.toString()}`)
     } else {
-      navigate('/Library')
+      navigate(`/library?${params.toString()}`)
     }
   }
 
@@ -223,7 +203,7 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, active = 
                         <ul>
                           <li
                             className={classes.nestedExampleItem}
-                            dangerouslySetInnerHTML={{ __html: example.original }}
+                            dangerouslySetInnerHTML={{ __html: example.origin }}
                           />
                           <li
                             className={classes.nestedExampleItem}

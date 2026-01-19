@@ -4,11 +4,11 @@ import styles from './style'
 
 export const PageNotFound = () => {
   const classes = styles()
-  const gClasses = globalStyle()
+  const globalClasses = globalStyle()
 
   return (
-    <div className={gClasses.container}>
-      <h2 className={classNames([classes.notFound, gClasses.bodyContent])}>Page not found!</h2>
+    <div className={globalClasses.container}>
+      <h2 className={classNames([classes.notFound, globalClasses.bodyContent])}>Page not found!</h2>
     </div>
   )
 }

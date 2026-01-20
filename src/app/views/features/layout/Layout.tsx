@@ -12,7 +12,6 @@ import { SideBarMain } from '../sideBar/SideBarMain'
 import { ViewItemModal } from '../modals/viewItemModal/ViewItemModal'
 import { Notification } from '../../components/notification/Notification'
 import { configAction } from '@/store/reducers/config.reducer'
-import { MediaUploadModal } from '../modals/mediaUploadModal/MediaUploadModal'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { EViewPort } from '@/models/app.model'
 import { FormProvider, useForm } from 'react-hook-form'
@@ -24,8 +23,9 @@ import { LoadingBar } from '../loading/LoadingBar'
 export const AppLayout: React.FC<PropsWithChildren> = (props) => {
   const classes = styles()
 
-  const { isShowViewItemModal, isShowItemModal, isShowExModal, isShowMediaUploadForm } =
-    useSelector((state) => state.setting)
+  const { isShowViewItemModal, isShowItemModal, isShowExModal } = useSelector(
+    (state) => state.setting,
+  )
   const { isSidebarOpened, drawer } = useSelector((state) => state.config)
   const { isAuth } = useSelector((state) => state.auth)
 
@@ -169,8 +169,6 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
           {isShowExModal && <ExampleModal open={isShowExModal} />}
 
           {isShowViewItemModal && <ViewItemModal open={isShowViewItemModal} />}
-
-          {isShowMediaUploadForm && <MediaUploadModal open={isShowMediaUploadForm} />}
         </>
       )}
     </>

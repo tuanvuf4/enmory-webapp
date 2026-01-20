@@ -7,7 +7,7 @@ import { itemApi } from '@/services/firebase/api/item.api'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { AlertDefectItem } from '@/views/features/alertDefectItem/AlertDefectItem'
 import { Toolbar } from '@/views/features/toolbar/Toolbar'
-import { theme, Row, Col, Button } from 'antd'
+import { theme, Row, Col, Button, App } from 'antd'
 import { useEffect } from 'react'
 import styles from './style'
 import iStyles from '@/app/views/features/item/style'
@@ -21,9 +21,12 @@ import { useSearchParams } from 'react-router-dom'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { setting } from '@/config/appConfig'
 import { useItems, useDeleteItem } from '@/core/hooks/useItems'
+import { useModal } from '@/context/modal.context'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
+
+  const { showModal, hideModal, updateModal } = useModal()
 
   const classes = styles()
   const globalClasses = globalStyle()
@@ -61,8 +64,8 @@ export const Library: React.FC = () => {
 
   const deleteMutation = useDeleteItem()
 
-  const listItem = data?.items || []
-  const pagination = data?.pagination || setting.pagination
+  const listItem = data?.content || []
+  const pagination = data?.paging || setting.pagination
 
   const onDelete = (id: string) => {
     confirmDeleteModal({
@@ -97,14 +100,12 @@ export const Library: React.FC = () => {
   const onView = async (id: string) => {
     const { isSuccess, content: item } = await itemApi.getItemById(id)
     if (isSuccess) {
-      dispatch(settingAction.toggleViewItemModal())
-      dispatch(
-        settingAction.setCurrentItem({
-          ...item,
-          origin: item?.origin || '',
-          level: item?.level || 0,
-        } as IItem),
-      )
+      showModal({
+        title: 'View Item',
+        width: 800,
+        footer: null,
+        content: <Item data={item as IItem} active={false} />,
+      })
     }
   }
 
@@ -124,9 +125,9 @@ export const Library: React.FC = () => {
               <Pagination
                 page={page}
                 size={size}
-                total={pagination.total}
-                totalPage={pagination.totalPage}
-                options={pagination.options}
+                total={pagination?.total}
+                totalPage={pagination?.totalPage}
+                options={setting.pagination.options}
                 onPageChange={(data) => {
                   const newParams = new URLSearchParams(searchParams)
                   newParams.set('page', data.page.toString())

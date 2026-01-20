@@ -4,7 +4,6 @@ import { useSelector, useDispatch } from '@/core/hooks'
 import { useAuthLogout } from '@/core/hooks/useAuthLogout'
 import { configAction } from '@/store/reducers/config.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
-import { mediaAction } from '@/store/reducers/media.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { theme, MenuProps, Layout, Row, Col, Button, Dropdown, Space } from 'antd'
@@ -44,7 +43,6 @@ export const AppHeader = () => {
         // Clear Redux state before logout
         dispatch(studySetAction.resetStudySet())
         dispatch(iotdAction.resetIotd())
-        dispatch(mediaAction.reset())
         // Call complete logout (Firebase + auth state + redirect)
         await logout()
         break

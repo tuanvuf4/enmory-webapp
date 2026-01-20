@@ -135,6 +135,8 @@ const styles = () => {
       fontSize: token.fontSizeHeading5,
       margin: [0, 0, 0, 0],
       fontFamily: styleConfig.fontFamily.lato,
+      color: token.colorPrimary,
+      marginBottom: 0,
 
       '& span': {
         display: 'block',

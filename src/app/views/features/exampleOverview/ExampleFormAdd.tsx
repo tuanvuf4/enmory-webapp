@@ -9,6 +9,7 @@ import styles from './style'
 import clsx from 'clsx'
 import { ExampleMode } from '@/models/example.model'
 import { usePrompt } from '@/helpers/hooks'
+import { useCreateExample, useUpdateExample } from '@/core/hooks/useExamples'
 
 interface IProps {
   data?: IExample
@@ -36,6 +37,9 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   const [answer, setAnswer] = useState<string>('')
   const [exMode, setMode] = useState<ExampleMode>(mode)
 
+  const createMutation = useCreateExample()
+  const updateMutation = useUpdateExample()
+
   const showTranslation =
     mode === ExampleMode.Default || (isChecked && mode === ExampleMode.Translation)
 
@@ -52,25 +56,29 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
     },
   })
 
-  const onSubmit = async (data: IExample) => {
+  const onSubmit = async (formData: IExample) => {
     setLoading(true)
     try {
-      const { content, isSuccess } = await exampleApi.createExample(data)
+      let result: IExample
+
+      if (data?.id) {
+        // Update existing example
+        result = await updateMutation.mutateAsync({ ...formData, id: data.id })
+        openNotification({ type: 'success', message: 'Update example successful!' })
+      } else {
+        // Create new example
+        result = await createMutation.mutateAsync(formData)
+        openNotification({ type: 'success', message: 'Add example successful!' })
+      }
+
       setAnswer('')
-      setLoading(false)
       setIsChecked(false)
       reset({ origin: '', translation: '' })
-      if (isSuccess) {
-        onSuccess?.(content)
-        data.id
-          ? openNotification({ type: 'success', message: 'Update example successful!' })
-          : openNotification({ type: 'success', message: 'Add example successful!' })
-      }
+      onSuccess?.(result)
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     } finally {
       setLoading(false)
-      reset()
     }
   }
 
@@ -137,7 +145,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
           <Col xs={24}>
             <Controller
               control={control}
-              name={`original`}
+              name={`origin`}
               rules={{
                 required: {
                   value: true,

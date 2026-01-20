@@ -1,21 +1,19 @@
 import globalStyle from '@/style/appStyle'
 import { useDispatch } from '@/core/hooks'
-import { exampleApi } from '@/services/firebase/api/example.api'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { IDataOnChange, Pagination } from '@/views/components'
-import { ExItem } from '@/views/features/exItem/ExItem'
 import { FormSearchEx } from '@/views/features/formSearchExtension/FormSearchExtension'
 import { theme, Row, Col } from 'antd'
-import { useEffect, useState } from 'react'
 import styles from './style'
 import { Toolbar } from '@/views/features/toolbar/Toolbar'
 import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
 import { useSearchParams } from 'react-router-dom'
 import { IFormSearchEx } from '@/models/formSearch.model'
-import { IExample } from '@/models/item.model'
-import { IPagination } from '@/models/pagination.model'
 import { setting } from '@/config/appConfig'
+import { useExamples, useDeleteExample } from '@/core/hooks/useExamples'
+import { exampleAction } from '@/store/reducers/example.reducer'
+import { ExampleItem } from '@/views/features'
 
 export const Example: React.FC = () => {
   const { token } = theme.useToken()
@@ -24,10 +22,6 @@ export const Example: React.FC = () => {
   const globalClasses = globalStyle()
 
   const { openNotification } = usePrompt()
-
-  const [examples, setExamples] = useState<IExample[]>([])
-  const [pagination, setPagination] = useState<IPagination>(setting.pagination)
-  const [loading, setLoading] = useState(false)
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -44,30 +38,26 @@ export const Example: React.FC = () => {
 
   const dispatch = useDispatch()
 
-  const fetchExamples = async () => {
-    setLoading(true)
-    try {
-      const response = await exampleApi.getExamples({
-        ...formSearchQuery,
-        page,
-        size,
-      })
-      setExamples(response.content || [])
-      if (response.paging) {
-        setPagination(response.paging)
-      }
-    } catch (error) {
-      openNotification({ type: 'error', message: JSON.stringify(error) })
-      setExamples([])
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Fetch examples using React Query
+  const { data: examplesResponse, isLoading } = useExamples({
+    ...formSearchQuery,
+    page,
+    size,
+  })
+
+  const deleteMutation = useDeleteExample()
+
+  const examples = examplesResponse?.content || []
+  const pagination = examplesResponse?.paging || setting.pagination
 
   const onEdit = async (id: number | string) => {
     try {
-      await exampleApi.getExampleById(id)
-      dispatch(settingAction.toggleExModal())
+      // Set the selected example for editing
+      const example = examples.find((ex) => ex.id === id)
+      if (example) {
+        dispatch(exampleAction.setSelectedExample(example))
+        dispatch(settingAction.toggleExModal())
+      }
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }
@@ -75,8 +65,8 @@ export const Example: React.FC = () => {
 
   const onDelete = async (id: number | string) => {
     try {
-      await exampleApi.getExampleById(id)
-      dispatch(settingAction.toggleDeleteExModal())
+      await deleteMutation.mutateAsync(id)
+      openNotification({ type: 'success', message: 'Example deleted successfully' })
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }
@@ -89,10 +79,6 @@ export const Example: React.FC = () => {
     setSearchParams(newParams)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-
-  useEffect(() => {
-    fetchExamples()
-  }, [searchParams])
 
   return (
     <>
@@ -115,14 +101,14 @@ export const Example: React.FC = () => {
       </div>
 
       <div className={globalClasses.container}>
-        {loading && <div>Loading...</div>}
-        {!loading && examples.length > 0 && (
+        {isLoading && <div>Loading...</div>}
+        {!isLoading && examples.length > 0 && (
           <div className={classes.items}>
             <Row gutter={[token.size, token.size * 2]}>
               {examples.map((item, idx) => {
                 return (
                   <Col xs={24} sm={12} md={8} lg={8} key={idx}>
-                    <ExItem
+                    <ExampleItem
                       data={item}
                       onEdit={() => onEdit(item.id || -1)}
                       onDelete={() => onDelete(item.id || -1)}
@@ -134,7 +120,7 @@ export const Example: React.FC = () => {
           </div>
         )}
 
-        {!loading && examples.length === 0 && <NotFound />}
+        {!isLoading && examples.length === 0 && <NotFound />}
       </div>
     </>
   )

@@ -116,5 +116,7 @@ export const usePrefetchAllIotd = () => {
 export const useRefetchIotd = () => {
   const queryClient = useQueryClient()
 
-  return (catId: number) => {}
+  return (catId: number) => {
+    queryClient.invalidateQueries({ queryKey: commonKeys.iotdByCategory(catId) })
+  }
 }

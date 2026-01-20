@@ -20,10 +20,9 @@ export const ExampleModal: React.FC<IProps> = ({ open }) => {
 
   const dispatch = useDispatch()
 
-  const onSubmit = (content: IExample) => {
+  const onSubmit = () => {
     dispatch(settingAction.toggleExModal())
-    dispatch(exampleAction.updateExamples(content))
-    dispatch(exampleAction.updateRandomExamples(content))
+    dispatch(exampleAction.setSelectedExample(null))
   }
 
   return (

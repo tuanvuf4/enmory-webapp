@@ -17,7 +17,7 @@ interface IProps {
   onEdit?: () => void
 }
 
-export const ExItem: React.FC<IProps> = ({
+export const ExampleItem: React.FC<IProps> = ({
   groupAction = true,
   active = false,
   data,
@@ -63,9 +63,7 @@ export const ExItem: React.FC<IProps> = ({
           <div className={classes.contentItem}>
             <div className={classes.contentHead}>
               <div className={classes.title}>
-                <h2 className={classes.original}>
-                  <p style={{ color: token.colorPrimary, marginBottom: 0 }}>{data.origin}</p>
-                </h2>
+                <h2 className={classes.origin} dangerouslySetInnerHTML={{ __html: data.origin }} />
 
                 {groupAction && (onEdit || onDelete) && (
                   <Dropdown
@@ -85,7 +83,10 @@ export const ExItem: React.FC<IProps> = ({
               </div>
 
               <div className={classes.contentMain}>
-                <p style={{ color: styleConfig.border.blue[2] }}>{data.translation}</p>
+                <p
+                  style={{ color: styleConfig.border.blue[2] }}
+                  dangerouslySetInnerHTML={{ __html: data.translation }}
+                />
 
                 {data.note && <p style={{ fontSize: 13, fontStyle: 'italic' }}>{data.note}</p>}
               </div>

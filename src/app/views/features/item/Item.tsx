@@ -38,7 +38,7 @@ interface IProps {
 
 export const Item: React.FC<IProps> = ({
   groupAction = true,
-  active = false,
+  active = true,
   reload = false,
   data,
   onDelete,
@@ -186,7 +186,7 @@ export const Item: React.FC<IProps> = ({
     <div
       className={clsx({
         [classes.item]: true,
-        active: !!active,
+        active: active,
       })}
     >
       {!data && <Skeleton />}

@@ -1,9 +1,9 @@
 import { useSelector, useDispatch } from '@/core/hooks'
-import { exampleApi } from '@/services/firebase/api/example.api'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { Modal } from 'antd'
 import { useEffect } from 'react'
+import { useDeleteExample } from '@/core/hooks/useExamples'
 
 interface IProps {
   onConfirm?: () => void
@@ -18,6 +18,7 @@ export const DeleteExModal: React.FC = () => {
   const { isShowDeleteExModal } = useSelector((state) => state.setting)
 
   const dispatch = useDispatch()
+  const deleteMutation = useDeleteExample()
 
   const [modal, modalContextHolder] = Modal.useModal()
 
@@ -30,17 +31,14 @@ export const DeleteExModal: React.FC = () => {
         okText: 'Delete',
         maskClosable: false,
         closable: true,
-        onOk: () => {
-          exampleApi
-            .deleteExample(selectedExample.id as number)
-            .then(() => {
-              dispatch(exampleAction.filterExamples(selectedExample))
-              dispatch(exampleAction.filterRandomExamples(selectedExample))
-              dispatch(settingAction.toggleDeleteExModal())
-            })
-            .catch(() => {
-              dispatch(settingAction.toggleDeleteExModal())
-            })
+        onOk: async () => {
+          try {
+            await deleteMutation.mutateAsync(selectedExample.id as string | number)
+            dispatch(settingAction.toggleDeleteExModal())
+            dispatch(exampleAction.setSelectedExample(null))
+          } catch (error) {
+            dispatch(settingAction.toggleDeleteExModal())
+          }
         },
         onCancel: () => {
           dispatch(settingAction.toggleDeleteExModal())

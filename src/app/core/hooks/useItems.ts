@@ -17,16 +17,7 @@ export const useItems = (params: IItemRequestData) => {
     queryKey: itemKeys.list(params),
     queryFn: async () => {
       const response = await itemApi.getItems(params)
-      return {
-        items: response.content || [],
-        pagination: response.paging || {
-          page: 0,
-          size: 20,
-          total: 0,
-          totalPage: 0,
-          options: [10, 20, 30, 50, 100],
-        },
-      }
+      return response
     },
   })
 }

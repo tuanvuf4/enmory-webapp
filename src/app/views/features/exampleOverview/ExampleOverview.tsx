@@ -8,11 +8,11 @@ import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme, Skeleton, Button, AutoComplete, Input } from 'antd'
 import { PropsWithChildren, useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { ExItem } from '../exItem/ExItem'
 import styles from './style'
 import exStyles from '@/views/features/item/style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
+import { ExampleItem } from '../exampleItem'
 
 interface IProps {
   title?: string
@@ -169,7 +169,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
             <div className={clsx(exClasses.examples, classes.exampleSelectedEx)}>
               <ul>
                 <li className={clsx(exClasses.exampleItem)} style={{ paddingLeft: 8 }}>
-                  <ExItem
+                  <ExampleItem
                     data={selected}
                     onEdit={() => onEdit(selected.id || -1)}
                     onDelete={() => onDelete(selected.id || -1)}
@@ -189,7 +189,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
                       className={clsx(exClasses.exampleItem)}
                       style={{ paddingLeft: 8 }}
                     >
-                      <ExItem
+                      <ExampleItem
                         data={example}
                         onEdit={() => onEdit(example.id || -1)}
                         onDelete={() => onDelete(example.id || -1)}

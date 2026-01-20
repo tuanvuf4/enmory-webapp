@@ -26,50 +26,22 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
       retry: 1,
       staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
 })
 
-if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
-  const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
-  root.render(
+interface IAppTypeProps {
+  type: EAppType
+}
+
+const AppWrapper: React.FC<IAppTypeProps> = ({ type }) => (
+  <React.StrictMode>
     <JssProvider classNamePrefix={`${styleConfig.prefixClassCss}-`}>
       <Provider store={store}>
-        <QueryClientProvider client={queryClient}>
-          <AppContext>
-            <GoogleOAuthProvider clientId={appConfig.googleAuth.client_id as string}>
-              <ConfigProvider
-                popupMatchSelectWidth={true}
-                componentSize='middle'
-                theme={appTheme}
-                prefixCls={styleConfig.prefixClassCss}
-              >
-                <StyleProvider hashPriority='high'>
-                  <AntdApp>
-                    <PersistGate loading={null} persistor={persistStore(store)}>
-                      <BrowserRouter data-testid='browser-router-element'>
-                        <PopupExt />
-                      </BrowserRouter>
-                    </PersistGate>
-                  </AntdApp>
-                </StyleProvider>
-              </ConfigProvider>
-            </GoogleOAuthProvider>
-          </AppContext>
-          <ReactQueryDevtools initialIsOpen={false} />
-        </QueryClientProvider>
-      </Provider>
-    </JssProvider>,
-  )
-} else {
-  const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
-  root.render(
-    <React.StrictMode>
-      <JssProvider classNamePrefix={`${styleConfig.prefixClassCss}-`}>
-        <Provider store={store}>
+        <BrowserRouter data-testid='browser-router-element'>
           <QueryClientProvider client={queryClient}>
             <AppContext>
               <GoogleOAuthProvider clientId={appConfig.googleAuth.client_id as string}>
@@ -79,23 +51,26 @@ if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
                   theme={appTheme}
                   prefixCls={styleConfig.prefixClassCss}
                 >
-                  <StyleProvider hashPriority='high'>
-                    <AntdApp>
+                  <AntdApp>
+                    <StyleProvider hashPriority='high'>
                       <PersistGate loading={null} persistor={persistStore(store)}>
-                        <App />
+                        {type === EAppType.EXTENSION ? <PopupExt /> : <App />}
                       </PersistGate>
-                    </AntdApp>
-                  </StyleProvider>
+                    </StyleProvider>
+                  </AntdApp>
                 </ConfigProvider>
               </GoogleOAuthProvider>
             </AppContext>
             <ReactQueryDevtools initialIsOpen={false} />
           </QueryClientProvider>
-        </Provider>
-      </JssProvider>
-    </React.StrictMode>,
-  )
-}
+        </BrowserRouter>
+      </Provider>
+    </JssProvider>
+  </React.StrictMode>
+)
+
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
+root.render(<AppWrapper type={import.meta.env.VITE_APP_TYPE as EAppType} />)
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

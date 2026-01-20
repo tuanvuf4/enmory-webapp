@@ -22,28 +22,28 @@ const styles = () => {
       justifyContent: 'space-between',
       flexDirection: 'column',
       height: '100%',
-      padding: [
-        token.padding / 2,
-        (token.padding / 4) * 3,
-        token.padding / 2,
-        (token.padding / 4) * 3,
-      ],
-      background: hex2Rgba(styleConfig.itemColorBg, 0.95),
+      padding: 0,
       borderRadius: 4,
-      border: `1px solid ${hex2Rgba(styleConfig.itemColorBg, 0.4)}`,
+      border: 'none',
       boxShadow: `0px 0px 30px 0px ${hex2Rgba('#ffffff', 0.2)}`,
-      color: token.colorWhite,
+      color: token.colorTextBase,
 
-      // '&.active': {
-      //   background: 'none',
-      //   border: 'none',
-      //   padding: 0,
-      //   color: token.colorTextBase,
+      '&.active': {
+        background: hex2Rgba(styleConfig.itemColorBg, 0.95),
+        border: `1px solid ${hex2Rgba(styleConfig.itemColorBg, 0.4)}`,
+        color: token.colorWhite,
 
-      //   '& $translate': {
-      //     color: token.colorTextSecondary,
-      //   },
-      // },
+        padding: [
+          token.padding / 2,
+          (token.padding / 4) * 3,
+          token.padding / 2,
+          (token.padding / 4) * 3,
+        ],
+
+        '& $translate': {
+          color: token.colorTextSecondary,
+        },
+      },
 
       '& ul, & ol': {
         paddingLeft: token.size,

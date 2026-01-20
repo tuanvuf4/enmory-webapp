@@ -64,11 +64,9 @@ export const App = () => {
 
   return (
     <>
-      <BrowserRouter data-testid='browser-router-element'>
-        <AppLayout>
-          <RouterElement />
-        </AppLayout>
-      </BrowserRouter>
+      <AppLayout>
+        <RouterElement />
+      </AppLayout>
     </>
   )
 }

@@ -1,7 +1,7 @@
 export * from './alertDefectItem'
 // export * from './chart'
 export * from './dictation'
-export * from './exItem'
+export * from './exampleItem'
 export * from './exampleOverview'
 export * from './exercise'
 export * from './footer'

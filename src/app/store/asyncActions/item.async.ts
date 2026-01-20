@@ -1,20 +1,7 @@
 import { IOption } from '@/app/models/item.model'
 import { GetStudySetByCatId } from '@/app/models/studySet.model'
-import { IItemRequestData, itemApi } from '@/services/firebase/api/item.api'
+import { itemApi } from '@/services/firebase/api/item.api'
 import { createAsyncThunk } from '@reduxjs/toolkit'
-
-const fetchItems = createAsyncThunk('item/fetchItems', async (params: IItemRequestData) => {
-  const response = await itemApi.getItems({
-    ...params,
-    cat: params.cat && (params.cat as number) > 0 ? params.cat : '',
-    type: params.type && (params.type as number) > 0 ? params.type : '',
-  })
-
-  return {
-    ...response,
-    content: response.content,
-  }
-})
 
 const fetchStudySet = createAsyncThunk('item/fetchStudySet', async (size: GetStudySetByCatId[]) => {
   const response = await itemApi.getStudySet(size)
@@ -40,6 +27,5 @@ const fetchStudySet = createAsyncThunk('item/fetchStudySet', async (size: GetStu
 })
 
 export const itemAsync = {
-  fetchItems,
   fetchStudySet,
 }

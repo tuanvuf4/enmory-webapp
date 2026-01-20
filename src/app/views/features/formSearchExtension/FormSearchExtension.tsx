@@ -13,8 +13,6 @@ import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from '@/
 import { IFormSearchEx } from '@/models/formSearch.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import { initSearchFormEx } from '@/services/index'
-import { exampleAsync } from '@/store/asyncActions/example.async'
-import { exampleAction } from '@/store/reducers/example.reducer'
 import { theme, AutoComplete, Input, Dropdown, Select, Button } from 'antd'
 import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
@@ -66,15 +64,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const onSelect = (value: string) => {
     exampleApi.getExampleById(value).then((resp) => {
       reset({ ...initSearchFormEx, keyword: '' })
-      dispatch(exampleAction.setExample([resp.content]))
-      dispatch(
-        exampleAction.updatePagination({
-          page: 0,
-          total: 1,
-          totalPage: 1,
-          size: 20,
-        }),
-      )
+
       // Update URL params
       updateUrlParams({
         keyword: '',
@@ -87,13 +77,6 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const onSubmit = (data: IFormSearchEx) => {
     // Update URL params instead of Redux
     updateUrlParams(data)
-    dispatch(
-      exampleAsync.fetchExamples({
-        ...data,
-        page: setting.pagination.page,
-        size: setting.pagination.size,
-      }),
-    )
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -235,13 +218,6 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
             }
             reset(resetValues)
             setSearchParams({})
-            dispatch(
-              exampleAsync.fetchExamples({
-                ...resetValues,
-                page: setting.pagination.page,
-                size: setting.pagination.size,
-              }),
-            )
           }}
         >
           <SyncOutlined />

@@ -20,7 +20,6 @@ export const NoResultInList = () => {
               />
             }
             onClick={() => {
-              dispatch(settingAction.toggleItemModal());
               dispatch(
                 itemAction.updateSearchFormValue({
                   keyword: getValues('keyword'),

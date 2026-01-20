@@ -16,11 +16,11 @@ import loginStyle from '@/views/pages/login/style'
 import { Link } from 'react-router-dom'
 import { FormSearchItem } from '@/views/features/formSearchItem/FormSearchItem'
 import { useAllIotd } from '@/core/hooks/useCommon'
-import { ECategory } from '@/models/item.model'
+import { useModal } from '@/context/modal.context'
 
 const Home = () => {
   const { token } = theme.useToken()
-
+  const { showModal } = useModal()
   const globalClasses = globalStyle()
   const classesRegister = registerStyle()
   const classesLogin = loginStyle()
@@ -32,21 +32,20 @@ const Home = () => {
 
   const { word, phrase, idiom, slang, collocation, sentence } = useSelector((state) => state.iotd)
 
-  const dispatch = useDispatch()
-
   // Fetch all IOTD categories when authenticated
   useAllIotd(isAuth)
 
   const onEdit = async (id: string) => {
     try {
-      const { content } = await itemApi.getItemById(id)
-      dispatch(
-        settingAction.setCurrentItem({
-          ...content,
-        }),
-      )
-      dispatch(settingAction.setOnEditItem(true))
-      dispatch(settingAction.toggleItemModal())
+      const { isSuccess, content } = await itemApi.getItemById(id)
+      if (isSuccess && content) {
+        showModal({
+          title: 'Edit Item',
+          width: 800,
+          footer: null,
+          content: <Item data={content} active={false} />,
+        })
+      }
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }

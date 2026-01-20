@@ -117,11 +117,6 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
       }
       itemApi.getItemAutoComplete(params).then((response) => {
         dispatch(settingAction.toggleViewItemModal())
-        dispatch(
-          settingAction.setCurrentItem({
-            ...response.content[0],
-          }),
-        )
       })
     }
   }
@@ -191,10 +186,9 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                         dispatch(
                           settingAction.setCurrentItem({
                             ...initItem,
-                            original: getValues('keyword'),
+                            origin: getValues('keyword'),
                           }),
                         )
-                        dispatch(settingAction.toggleItemModal())
                       }}
                     />
                   }

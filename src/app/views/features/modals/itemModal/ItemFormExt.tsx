@@ -44,7 +44,7 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
   const { user } = useSelector((state) => state.auth)
 
   const { pagination, formSearchValue } = useSelector((state) => state.items)
-  const { currentItem, onEditEvent, isShowItemModal } = useSelector((state) => state.setting)
+  const { currentItem, onEditEvent } = useSelector((state) => state.setting)
   const { list } = useSelector((state) => state.studySet)
 
   const {
@@ -129,7 +129,6 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
             }
             dispatch(itemAction.replace(itemUpdated))
             dispatch(iotdAction.update(itemUpdated))
-            dispatch(settingAction.toggleItemModal())
             dispatch(settingAction.setOnEditItem(false))
             reset(initItem)
             openNotification({ type: 'success', message: 'Update item successful!' })
@@ -144,7 +143,6 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
             })
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
-            dispatch(settingAction.toggleItemModal())
             dispatch(settingAction.setOnEditItem(false))
           } finally {
             reset(initItem)
@@ -158,7 +156,6 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
             const [{ isSuccess }] = await Promise.all([createItem])
 
             if (isSuccess) {
-              dispatch(settingAction.toggleItemModal())
               reset(initItem)
               openNotification({ type: 'success', message: 'Create a item successful!' })
               await dispatch(
@@ -173,7 +170,6 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
             }
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
-            dispatch(settingAction.toggleItemModal())
           } finally {
             reset({ ...initItem })
             setOrigin(null)
@@ -187,7 +183,6 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
   const handleCancel = () => {
     reset(initItem)
     setOrigin(null)
-    dispatch(settingAction.toggleItemModal())
     dispatch(settingAction.setOnEditItem(false))
     dispatch(settingAction.setCurrentItem(null))
   }
@@ -200,12 +195,7 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
       exact: true,
     }
     itemApi.getItemAutoComplete(params).then((response) => {
-      dispatch(settingAction.setOnEditItem(true))
-      dispatch(
-        settingAction.setCurrentItem({
-          ...response.content[0],
-        }),
-      )
+      // dispatch(settingAction.setOnEditItem(true))
     })
   }
 
@@ -239,7 +229,7 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
   }, [currentItem, origin])
 
   useEffect(() => {
-    if (isShowItemModal && !original && !onEditEvent) {
+    if (!original && !onEditEvent) {
       reset({ ...initItem })
       setError('origin', { type: 'required', message: msgErrors.required })
     }
@@ -247,7 +237,7 @@ export const ItemFormExt: React.FC<ItemFormProps> = ({ categories, types }) => {
     return () => {
       reset({ ...initItem })
     }
-  }, [isShowItemModal, onEditEvent])
+  }, [onEditEvent])
 
   return (
     <form onSubmit={handleSubmit(handleOk)}>

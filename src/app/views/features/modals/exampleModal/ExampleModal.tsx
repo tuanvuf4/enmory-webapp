@@ -6,7 +6,6 @@ import { CloseSquareOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { ExampleForm } from '../../exampleOverview/ExampleFormAdd'
 import { IExample } from '@/models/item.model'
-import { exampleAction } from '@/store/reducers/example.reducer'
 
 interface IProps {
   onConfirm?: () => void
@@ -16,23 +15,19 @@ interface IProps {
 }
 
 export const ExampleModal: React.FC<IProps> = ({ open }) => {
-  const { selectedExample } = useSelector((state) => state.example)
-
   const dispatch = useDispatch()
 
   const onSubmit = () => {
     dispatch(settingAction.toggleExModal())
-    dispatch(exampleAction.setSelectedExample(null))
   }
 
   return (
     <Modal
-      title={selectedExample ? 'Edit Example' : 'Add Example'}
+      title={'Add Example'}
       closeIcon={<CloseSquareOutlined />}
       open={open}
       onCancel={() => {
         dispatch(settingAction.toggleExModal())
-        dispatch(exampleAction.setSelectedExample(null))
       }}
       onOk={() => dispatch(settingAction.toggleExModal())}
       okText={'Close'}

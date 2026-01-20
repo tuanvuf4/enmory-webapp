@@ -8,7 +8,6 @@ export interface ISettingState {
   onEditEvent: boolean
   currentItem: IItem | null
   isShowSearchFormItem: boolean
-  isShowItemModal: boolean
   isShowExModal: boolean
   isShowDeleteExModal: boolean
   isShowViewItemModal: boolean
@@ -22,7 +21,6 @@ export const initialState: ISettingState = {
   onEditEvent: false,
   currentItem: null,
   isShowSearchFormItem: false,
-  isShowItemModal: false,
   isShowExModal: false,
   isShowDeleteExModal: false,
   isShowViewItemModal: false,
@@ -44,9 +42,6 @@ export const settingReducer = createSlice({
     },
     toggleSearchForm(state: ISettingState) {
       state.isShowSearchForm = !state.isShowSearchForm
-    },
-    toggleItemModal(state: ISettingState) {
-      state.isShowItemModal = !state.isShowItemModal
     },
     toggleExModal(state: ISettingState) {
       state.isShowExModal = !state.isShowExModal

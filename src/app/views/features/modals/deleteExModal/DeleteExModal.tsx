@@ -1,5 +1,4 @@
 import { useSelector, useDispatch } from '@/core/hooks'
-import { exampleAction } from '@/store/reducers/example.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { Modal } from 'antd'
 import { useEffect } from 'react'
@@ -14,7 +13,6 @@ interface IProps {
 }
 
 export const DeleteExModal: React.FC = () => {
-  const { selectedExample } = useSelector((state) => state.example)
   const { isShowDeleteExModal } = useSelector((state) => state.setting)
 
   const dispatch = useDispatch()
@@ -23,7 +21,7 @@ export const DeleteExModal: React.FC = () => {
   const [modal, modalContextHolder] = Modal.useModal()
 
   useEffect(() => {
-    if (isShowDeleteExModal && selectedExample) {
+    if (isShowDeleteExModal) {
       modal.confirm({
         type: 'warning',
         title: 'Deleting...!',
@@ -33,9 +31,8 @@ export const DeleteExModal: React.FC = () => {
         closable: true,
         onOk: async () => {
           try {
-            await deleteMutation.mutateAsync(selectedExample.id as string | number)
+            // await deleteMutation.mutateAsync()
             dispatch(settingAction.toggleDeleteExModal())
-            dispatch(exampleAction.setSelectedExample(null))
           } catch (error) {
             dispatch(settingAction.toggleDeleteExModal())
           }
@@ -45,7 +42,7 @@ export const DeleteExModal: React.FC = () => {
         },
       })
     }
-  }, [isShowDeleteExModal, selectedExample])
+  }, [isShowDeleteExModal])
 
   return <>{modalContextHolder}</>
 }

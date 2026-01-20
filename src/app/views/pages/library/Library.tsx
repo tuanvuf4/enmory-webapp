@@ -7,7 +7,7 @@ import { itemApi } from '@/services/firebase/api/item.api'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { AlertDefectItem } from '@/views/features/alertDefectItem/AlertDefectItem'
 import { Toolbar } from '@/views/features/toolbar/Toolbar'
-import { theme, Row, Col, Button, App } from 'antd'
+import { theme, Row, Col, Button } from 'antd'
 import { useEffect } from 'react'
 import styles from './style'
 import iStyles from '@/app/views/features/item/style'
@@ -21,13 +21,13 @@ import { useSearchParams } from 'react-router-dom'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { setting } from '@/config/appConfig'
 import { useItems, useDeleteItem } from '@/core/hooks/useItems'
-import { useModal } from '@/context/modal.context'
+import { Loading } from '@/views/features'
+import { useItemForm } from '@/helpers/hooks/useItemForm'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
 
-  const { showModal, hideModal, updateModal } = useModal()
-
+  const { openItemForm, openViewItemForm } = useItemForm()
   const classes = styles()
   const globalClasses = globalStyle()
   const itemStyles = iStyles()
@@ -84,28 +84,16 @@ export const Library: React.FC = () => {
     try {
       const { content } = await itemApi.getItemById(id)
       dispatch(settingAction.setOnEditItem(true))
-      dispatch(settingAction.toggleItemModal())
-      dispatch(
-        settingAction.setCurrentItem({
-          ...content,
-          origin: content?.origin || '',
-          level: content?.level || 0,
-        } as IItem),
-      )
+      openItemForm('edit', content as IItem)
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }
   }
 
   const onView = async (id: string) => {
-    const { isSuccess, content: item } = await itemApi.getItemById(id)
-    if (isSuccess) {
-      showModal({
-        title: 'View Item',
-        width: 800,
-        footer: null,
-        content: <Item data={item as IItem} active={false} />,
-      })
+    const { isSuccess, content } = await itemApi.getItemById(id)
+    if (isSuccess && content) {
+      openViewItemForm(content)
     }
   }
 
@@ -142,7 +130,7 @@ export const Library: React.FC = () => {
       </div>
 
       <div className={globalClasses.container}>
-        {isLoading && <div>Loading...</div>}
+        {isLoading && <Loading />}
         {!isLoading && viewMode === EViewMode.GRID && listItem.length > 0 && (
           <div className={classes.items}>
             <Row gutter={[token.size, token.size * 2]}>

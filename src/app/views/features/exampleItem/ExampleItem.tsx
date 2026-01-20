@@ -2,7 +2,7 @@ import { styleConfig } from '@/style/appStyle'
 import { MoreOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
 import { IExample } from '@/models/item.model'
-import { theme, MenuProps, Skeleton, Dropdown, Button } from 'antd'
+import { MenuProps, Skeleton, Dropdown, Button } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import moment from 'moment'
 import { actionMenuItems, actionMenuEx } from './ActionMenuItem'
@@ -24,8 +24,6 @@ export const ExampleItem: React.FC<IProps> = ({
   onDelete,
   onEdit,
 }) => {
-  const { token } = theme.useToken()
-
   const classes = styles()
 
   const handleMenuClick: MenuProps['onClick'] = (e) => {

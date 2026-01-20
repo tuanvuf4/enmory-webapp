@@ -43,24 +43,24 @@ const AppWrapper: React.FC<IAppTypeProps> = ({ type }) => (
       <Provider store={store}>
         <BrowserRouter data-testid='browser-router-element'>
           <QueryClientProvider client={queryClient}>
-            <AppContext>
-              <GoogleOAuthProvider clientId={appConfig.googleAuth.client_id as string}>
-                <ConfigProvider
-                  popupMatchSelectWidth={true}
-                  componentSize='middle'
-                  theme={appTheme}
-                  prefixCls={styleConfig.prefixClassCss}
-                >
+            <GoogleOAuthProvider clientId={appConfig.googleAuth.client_id as string}>
+              <ConfigProvider
+                popupMatchSelectWidth={true}
+                componentSize='middle'
+                theme={appTheme}
+                prefixCls={styleConfig.prefixClassCss}
+              >
+                <StyleProvider hashPriority='high'>
                   <AntdApp>
-                    <StyleProvider hashPriority='high'>
+                    <AppContext>
                       <PersistGate loading={null} persistor={persistStore(store)}>
                         {type === EAppType.EXTENSION ? <PopupExt /> : <App />}
                       </PersistGate>
-                    </StyleProvider>
+                    </AppContext>
                   </AntdApp>
-                </ConfigProvider>
-              </GoogleOAuthProvider>
-            </AppContext>
+                </StyleProvider>
+              </ConfigProvider>
+            </GoogleOAuthProvider>
             <ReactQueryDevtools initialIsOpen={false} />
           </QueryClientProvider>
         </BrowserRouter>

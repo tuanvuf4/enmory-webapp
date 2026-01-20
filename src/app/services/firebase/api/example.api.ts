@@ -88,7 +88,7 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
     const currentUser = firebaseAuthService.getCurrentUser()
 
     if (currentUser) {
-      constraints.push(where('userId', '==', currentUser.uid))
+      constraints.push(where('uid', '==', currentUser.uid))
     }
 
     if (querySearch.itemId) {
@@ -143,7 +143,7 @@ const getRandomExamples = async (
     const currentUser = firebaseAuthService.getCurrentUser()
 
     if (currentUser) {
-      constraints.push(where('userId', '==', currentUser.uid))
+      constraints.push(where('uid', '==', currentUser.uid))
     }
 
     if (querySearch.itemId) {

@@ -301,7 +301,6 @@ export const StudySet: React.FC = () => {
     try {
       const { content } = await itemApi.getItemById(id)
       dispatch(settingAction.setOnEditItem(true))
-      dispatch(settingAction.toggleItemModal())
       dispatch(
         settingAction.setCurrentItem({
           ...content,

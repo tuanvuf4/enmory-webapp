@@ -7,7 +7,6 @@ import { ArrowUpOutlined } from '@ant-design/icons'
 import { appTheme } from '@/style/theme'
 import styles from './style'
 import { styleConfig } from '@/style/appStyle'
-import { ItemModal } from '../modals/itemModal/ItemModal'
 import { SideBarMain } from '../sideBar/SideBarMain'
 import { ViewItemModal } from '../modals/viewItemModal/ViewItemModal'
 import { Notification } from '../../components/notification/Notification'
@@ -23,9 +22,7 @@ import { LoadingBar } from '../loading/LoadingBar'
 export const AppLayout: React.FC<PropsWithChildren> = (props) => {
   const classes = styles()
 
-  const { isShowViewItemModal, isShowItemModal, isShowExModal } = useSelector(
-    (state) => state.setting,
-  )
+  const { isShowViewItemModal, isShowExModal } = useSelector((state) => state.setting)
   const { isSidebarOpened, drawer } = useSelector((state) => state.config)
   const { isAuth } = useSelector((state) => state.auth)
 
@@ -133,7 +130,6 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
                 color={appTheme.token?.colorPrimary}
               />
             }
-            onClick={() => dispatch(toggleItemModal())}
           /> */}
 
           <FloatButton
@@ -159,12 +155,6 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
           />
 
           <Notification />
-
-          {isShowItemModal && (
-            <FormProvider {...methods}>
-              <ItemModal />
-            </FormProvider>
-          )}
 
           {isShowExModal && <ExampleModal open={isShowExModal} />}
 

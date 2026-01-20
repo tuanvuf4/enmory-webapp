@@ -196,7 +196,6 @@ export const FormSearchItem: React.FC<ISearchFormComp> = ({
                             origin: getValues('keyword'),
                           }),
                         )
-                        dispatch(settingAction.toggleItemModal())
                       }}
                     />
                   }

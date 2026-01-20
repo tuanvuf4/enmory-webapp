@@ -12,7 +12,6 @@ import { useSearchParams } from 'react-router-dom'
 import { IFormSearchEx } from '@/models/formSearch.model'
 import { setting } from '@/config/appConfig'
 import { useExamples, useDeleteExample } from '@/core/hooks/useExamples'
-import { exampleAction } from '@/store/reducers/example.reducer'
 import { ExampleItem } from '@/views/features'
 
 export const Example: React.FC = () => {
@@ -39,7 +38,7 @@ export const Example: React.FC = () => {
   const dispatch = useDispatch()
 
   // Fetch examples using React Query
-  const { data: examplesResponse, isLoading } = useExamples({
+  const { data, isLoading } = useExamples({
     ...formSearchQuery,
     page,
     size,
@@ -47,15 +46,14 @@ export const Example: React.FC = () => {
 
   const deleteMutation = useDeleteExample()
 
-  const examples = examplesResponse?.content || []
-  const pagination = examplesResponse?.paging || setting.pagination
+  const examples = data?.content || []
+  const pagination = data?.paging || setting.pagination
 
   const onEdit = async (id: number | string) => {
     try {
       // Set the selected example for editing
       const example = examples.find((ex) => ex.id === id)
       if (example) {
-        dispatch(exampleAction.setSelectedExample(example))
         dispatch(settingAction.toggleExModal())
       }
     } catch (error) {

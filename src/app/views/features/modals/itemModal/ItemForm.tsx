@@ -28,12 +28,7 @@ import { exampleApi } from '@/services/firebase'
 import { Timestamp } from 'firebase/firestore'
 import { useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
 
-interface ItemFormProps {
-  categories: IOption<string, ECategory>[]
-  types: IOption<string, EType>[]
-}
-
-export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
+export const ItemForm: React.FC = () => {
   const { token } = theme.useToken()
   const classes = styles()
   const globalClasses = globalStyle()
@@ -46,8 +41,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
 
   const { user } = useSelector((state) => state.auth)
 
-  const { currentItem, onEditEvent, isShowItemModal } = useSelector((state) => state.setting)
+  const { currentItem, onEditEvent } = useSelector((state) => state.setting)
   const { list } = useSelector((state) => state.studySet)
+
+  const categories: any[] = []
+  const types: any[] = []
 
   // React Query mutations
   const createMutation = useCreateItem()
@@ -166,13 +164,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
               dispatch(itemAction.replace(itemUpdated))
               dispatch(iotdAction.update(itemUpdated))
             }
-            dispatch(settingAction.toggleItemModal())
             dispatch(settingAction.setOnEditItem(false))
             reset(initItem)
             openNotification({ type: 'success', message: 'Update item successful!' })
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
-            dispatch(settingAction.toggleItemModal())
             dispatch(settingAction.setOnEditItem(false))
           } finally {
             reset(initItem)
@@ -184,7 +180,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
             const response = await createMutation.mutateAsync(dataSubmit)
 
             if (response.isSuccess) {
-              dispatch(settingAction.toggleItemModal())
               reset(initItem)
               openNotification({ type: 'success', message: 'Create a item successful!' })
             }
@@ -202,7 +197,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
   const handleCancel = () => {
     reset(initItem)
     setOrigin(null)
-    dispatch(settingAction.toggleItemModal())
     dispatch(settingAction.setOnEditItem(false))
     dispatch(settingAction.setCurrentItem(null))
   }
@@ -217,11 +211,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
     const { isSuccess, content } = await itemApi.getItemAutoComplete(params)
     if (isSuccess) {
       dispatch(settingAction.setOnEditItem(true))
-      dispatch(
-        settingAction.setCurrentItem({
-          ...content?.[0],
-        }),
-      )
     }
   }
 
@@ -255,7 +244,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
   }, [currentItem, origin])
 
   useEffect(() => {
-    if (isShowItemModal && !original && !onEditEvent) {
+    if (!original && !onEditEvent) {
       reset({ ...initItem })
       setError('origin', { type: 'required', message: msgErrors.required })
     }
@@ -263,7 +252,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
     return () => {
       reset({ ...initItem })
     }
-  }, [isShowItemModal, onEditEvent])
+  }, [onEditEvent])
 
   return (
     <form onSubmit={handleSubmit(handleOk)} style={{ padding: token.size }}>

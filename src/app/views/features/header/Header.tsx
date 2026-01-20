@@ -14,6 +14,11 @@ import { menu, addNewType } from './Menu'
 import styles from './style'
 import clsx from 'clsx'
 import { FormSearchItem } from '../formSearchItem'
+import { useModal } from '@/context/modal.context'
+import { initItem, ItemForm } from '../modals/itemModal'
+import { FormProvider, useForm } from 'react-hook-form'
+import { IItem } from '@/models/item.model'
+import { useItemForm } from '@/helpers/hooks/useItemForm'
 
 export const AppHeader = () => {
   const { token } = theme.useToken()
@@ -27,7 +32,13 @@ export const AppHeader = () => {
   const dispatch = useDispatch()
   const { logout } = useAuthLogout()
 
+  const { showModal } = useModal()
+
   const navigate = useNavigate()
+
+  const { openItemForm } = useItemForm()
+
+  const methods = useForm<IItem>({ defaultValues: initItem })
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
@@ -59,7 +70,7 @@ export const AppHeader = () => {
 
   const handleAddMenuClick: MenuProps['onClick'] = (e) => {
     if (e.key === 'addItem') {
-      dispatch(settingAction.toggleItemModal())
+      openItemForm('add', initItem)
     }
 
     if (e.key === 'addEx') {

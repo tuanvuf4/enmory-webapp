@@ -26,7 +26,6 @@ export const ViewItemModal: React.FC<IProps> = ({ open, title }) => {
   const onEdit = async () => {
     try {
       dispatch(settingAction.setOnEditItem(true))
-      dispatch(settingAction.toggleItemModal())
       dispatch(settingAction.toggleViewItemModal())
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })

@@ -8,7 +8,7 @@ import { settingAction } from '@/store/reducers/setting.reducer'
 import { AlertDefectItem } from '@/views/features/alertDefectItem/AlertDefectItem'
 import { Toolbar } from '@/views/features/toolbar/Toolbar'
 import { theme, Row, Col, Button } from 'antd'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import styles from './style'
 import iStyles from '@/app/views/features/item/style'
 import { useDispatch, useSelector } from '@/core/hooks'
@@ -19,8 +19,8 @@ import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
 import { useSearchParams } from 'react-router-dom'
 import { IFormSearchItem } from '@/models/formSearch.model'
-import { IPagination } from '@/models/pagination.model'
 import { setting } from '@/config/appConfig'
+import { useItems, useDeleteItem } from '@/core/hooks/useItems'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
@@ -32,9 +32,6 @@ export const Library: React.FC = () => {
   const { viewMode } = useSelector((state) => state.config)
 
   const { confirmDeleteModal, openNotification } = usePrompt()
-
-  const [listItem, setListItem] = useState<IItem[]>([])
-  const [loading, setLoading] = useState(false)
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -55,15 +52,27 @@ export const Library: React.FC = () => {
 
   const dispatch = useDispatch()
 
-  // Local state to store pagination response from API
-  const [pagination, setPagination] = useState<IPagination>(setting.pagination)
+  // Use React Query hooks
+  const { data, isLoading, error } = useItems({
+    ...formSearchValue,
+    page,
+    size,
+  })
+
+  const deleteMutation = useDeleteItem()
+
+  const listItem = data?.items || []
+  const pagination = data?.pagination || setting.pagination
 
   const onDelete = (id: string) => {
     confirmDeleteModal({
-      onOk: () => {
-        itemApi.deleteItem(id).then(() => {
-          setListItem((prevItems) => prevItems.filter((item) => item.id !== id))
-        })
+      onOk: async () => {
+        try {
+          await deleteMutation.mutateAsync(id)
+          openNotification({ type: 'success', message: 'Item deleted successfully!' })
+        } catch (error) {
+          openNotification({ type: 'error', message: JSON.stringify(error) })
+        }
       },
     })
   }
@@ -99,30 +108,12 @@ export const Library: React.FC = () => {
     }
   }
 
+  // Handle errors
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      try {
-        const response = await itemApi.getItems({
-          ...formSearchValue,
-          page,
-          size,
-        })
-
-        setListItem(response.content || [])
-        if (response.paging) {
-          setPagination(response.paging)
-        }
-      } catch (error) {
-        openNotification({ type: 'error', message: JSON.stringify(error) })
-        setListItem([])
-      } finally {
-        setLoading(false)
-      }
+    if (error) {
+      openNotification({ type: 'error', message: JSON.stringify(error) })
     }
-
-    fetchData()
-  }, [searchParams])
+  }, [error])
 
   return (
     <>
@@ -150,8 +141,8 @@ export const Library: React.FC = () => {
       </div>
 
       <div className={globalClasses.container}>
-        {loading && <div>Loading...</div>}
-        {!loading && viewMode === EViewMode.GRID && listItem.length > 0 && (
+        {isLoading && <div>Loading...</div>}
+        {!isLoading && viewMode === EViewMode.GRID && listItem.length > 0 && (
           <div className={classes.items}>
             <Row gutter={[token.size, token.size * 2]}>
               {listItem.length > 0 &&
@@ -171,7 +162,7 @@ export const Library: React.FC = () => {
           </div>
         )}
 
-        {!loading && viewMode === EViewMode.LIST && listItem.length > 0 && (
+        {!isLoading && viewMode === EViewMode.LIST && listItem.length > 0 && (
           <div className={classes.itemTable}>
             <table>
               <thead>
@@ -292,7 +283,7 @@ export const Library: React.FC = () => {
           </div>
         )}
 
-        {!loading && listItem.length === 0 && <NotFound />}
+        {!isLoading && listItem.length === 0 && <NotFound />}
       </div>
     </>
   )

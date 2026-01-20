@@ -22,8 +22,8 @@ import { MeaningItem } from './MeaningItem'
 import styles from './style'
 import clsx from 'clsx'
 import { Reference } from '../references/References'
-import { actionAsyncApp } from '@/store/asyncActions'
 import { usePrompt } from '@/helpers/hooks'
+import { useRefetchIotd } from '@/core/hooks/useCommon'
 
 interface IProps {
   groupAction?: boolean
@@ -56,6 +56,7 @@ export const Item: React.FC<IProps> = ({
   const dispatch = useDispatch()
 
   const { openNotification } = usePrompt()
+  const refetchIotd = useRefetchIotd()
 
   const { viewMode } = useSelector((state) => state.config)
 
@@ -87,7 +88,7 @@ export const Item: React.FC<IProps> = ({
         break
 
       case '6':
-        markItem(data?.id)
+        markItem(data?.id || '')
         break
 
       default:
@@ -137,7 +138,7 @@ export const Item: React.FC<IProps> = ({
       created_date: now,
       last_update: now,
     }
-    itemApi.updateItem(data.id, { ...newData })
+    itemApi.updateItem(data.id || '', { ...newData })
     dispatch(itemAction.update({ ...data, ...newData }))
     dispatch(studySetAction.update({ ...data, ...newData }))
     dispatch(iotdAction.update({ ...data, ...newData }))
@@ -146,7 +147,7 @@ export const Item: React.FC<IProps> = ({
 
   const onRedo = (data: IItem) => {
     const level = data.level === 5 ? 0 : 5
-    itemApi.updateItem(data.id, { level })
+    itemApi.updateItem(data.id || '', { level })
     dispatch(itemAction.update({ ...data, level }))
     dispatch(studySetAction.update({ ...data, level }))
     dispatch(iotdAction.update({ ...data, level }))
@@ -155,7 +156,7 @@ export const Item: React.FC<IProps> = ({
 
   const archive = (data: IItem) => {
     const archive = !data.archive
-    itemApi.updateItem(data.id, { archive })
+    itemApi.updateItem(data.id || '', { archive })
     dispatch(itemAction.update({ ...data, archive }))
     dispatch(studySetAction.update({ ...data, archive }))
     dispatch(iotdAction.update({ ...data, archive }))
@@ -195,7 +196,7 @@ export const Item: React.FC<IProps> = ({
           <div className={classes.contentItem}>
             <div className={classes.contentHead}>
               <div className={classes.title}>
-                <h2 className={classes.original}>
+                <h2 className={classes.origin}>
                   {isDefect(data) && <span className={classes.warnTitle}>{data.origin}</span>}
 
                   {!isDefect(data) && <span>{data.origin}</span>}
@@ -207,13 +208,8 @@ export const Item: React.FC<IProps> = ({
                       size='small'
                       type={'text'}
                       icon={<ReloadOutlined style={{ color: token.colorWhite }} />}
-                      onClick={async () => {
-                        await dispatch(
-                          actionAsyncApp.fetchIotd({
-                            catId: data.catId as ECategory,
-                            generate: true,
-                          }),
-                        )
+                      onClick={() => {
+                        refetchIotd(data.catId as ECategory)
                       }}
                     />
                   )}
@@ -292,19 +288,19 @@ export const Item: React.FC<IProps> = ({
 
               {data.catId === ECategory.WORD && (
                 <>
-                  {data.word_family &&
-                    data.word_family.filter((word) => word).length > 0 &&
-                    data.word_family.length > 0 && (
-                      <div className={classes.word_family}>
-                        <Tags label={'Word Family'} tags={data.word_family} onSearch={onSearch} />
-                      </div>
-                    )}
-
                   {data.forms &&
                     data.forms.filter((word) => word).length > 0 &&
                     data.forms.length > 0 && (
                       <div className={classes.word_family}>
-                        <Tags label={'Forms'} tags={data.forms} onSearch={onSearch} />
+                        <Tags label={'Form'} tags={data.forms} onSearch={onSearch} />
+                      </div>
+                    )}
+
+                  {data.word_family &&
+                    data.word_family.filter((word) => word).length > 0 &&
+                    data.word_family.length > 0 && (
+                      <div className={classes.word_family}>
+                        <Tags label={'Family'} tags={data.word_family} onSearch={onSearch} />
                       </div>
                     )}
                 </>

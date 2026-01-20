@@ -15,6 +15,8 @@ import registerStyle from '@/views/pages/register/style'
 import loginStyle from '@/views/pages/login/style'
 import { Link } from 'react-router-dom'
 import { FormSearchItem } from '@/views/features/formSearchItem/FormSearchItem'
+import { useAllIotd } from '@/core/hooks/useCommon'
+import { ECategory } from '@/models/item.model'
 
 const Home = () => {
   const { token } = theme.useToken()
@@ -31,6 +33,9 @@ const Home = () => {
   const { word, phrase, idiom, slang, collocation, sentence } = useSelector((state) => state.iotd)
 
   const dispatch = useDispatch()
+
+  // Fetch all IOTD categories when authenticated
+  useAllIotd(isAuth)
 
   const onEdit = async (id: string) => {
     try {

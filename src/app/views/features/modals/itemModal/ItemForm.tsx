@@ -26,6 +26,7 @@ import { CloseCircleOutlined, Loading3QuartersOutlined } from '@ant-design/icons
 import { usePrompt } from '@/helpers/hooks'
 import { exampleApi } from '@/services/firebase'
 import { Timestamp } from 'firebase/firestore'
+import { useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
 
 interface ItemFormProps {
   categories: IOption<string, ECategory>[]
@@ -47,6 +48,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
 
   const { currentItem, onEditEvent, isShowItemModal } = useSelector((state) => state.setting)
   const { list } = useSelector((state) => state.studySet)
+
+  // React Query mutations
+  const createMutation = useCreateItem()
+  const updateMutation = useUpdateItem()
 
   const {
     control,
@@ -148,27 +153,23 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
 
         if (onEditEvent) {
           try {
-            const updatedItem = await itemApi.updateItem(String(currentItem?.id), dataSubmit)
+            const response = await updateMutation.mutateAsync({
+              id: String(currentItem?.id),
+              data: dataSubmit,
+            })
 
-            const [{ content: itemUpdated }] = await Promise.all([updatedItem])
-            if (list.find((item) => item.id === itemUpdated.id)) {
+            const itemUpdated = response.content
+            if (itemUpdated && list.find((item) => item.id === itemUpdated.id)) {
               dispatch(studySetAction.update(itemUpdated))
             }
-            dispatch(itemAction.replace(itemUpdated))
-            dispatch(iotdAction.update(itemUpdated))
+            if (itemUpdated) {
+              dispatch(itemAction.replace(itemUpdated))
+              dispatch(iotdAction.update(itemUpdated))
+            }
             dispatch(settingAction.toggleItemModal())
             dispatch(settingAction.setOnEditItem(false))
             reset(initItem)
             openNotification({ type: 'success', message: 'Update item successful!' })
-            // await dispatch(
-            //   itemAsync.fetchItems({
-            //     ...formSearchValue,
-            //     page: pagination.page,
-            //     size: pagination.size,
-            //   }),
-            // ).catch(() => {
-            //   openNotification({ type: 'error', message: 'Cannot get item!' })
-            // })
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
             dispatch(settingAction.toggleItemModal())
@@ -180,22 +181,12 @@ export const ItemForm: React.FC<ItemFormProps> = ({ categories, types }) => {
           }
         } else {
           try {
-            const { isSuccess } = await itemApi.createItem(dataSubmit)
+            const response = await createMutation.mutateAsync(dataSubmit)
 
-            if (isSuccess) {
+            if (response.isSuccess) {
               dispatch(settingAction.toggleItemModal())
               reset(initItem)
               openNotification({ type: 'success', message: 'Create a item successful!' })
-              // await dispatch(
-              //   itemAsync.fetchItems({
-              //     ...formSearchValue,
-              //     page: pagination.page,
-              //     size: pagination.size,
-              //   }),
-              // ).catch((error) => {
-              //   openNotification({ type: 'error', message: JSON.stringify(error) })
-              // })
-              // dispatch(settingAction.setCurrentItem(null))
             }
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })

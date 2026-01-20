@@ -1,8 +1,6 @@
-import { IHttpResponse } from '@/app/models/http.model'
 import { IItem } from '@/app/models/item.model'
 import { initSearchFormItem } from '@/app/services'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { itemAsync } from '../asyncActions/item.async'
 
 export interface IItemsState {
   listItem: IItem[]
@@ -61,18 +59,6 @@ export const itemsReducer = createSlice({
         },
       }
     },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(
-        itemAsync.fetchItems.fulfilled,
-        (state: IItemsState, action: PayloadAction<IHttpResponse<IItem[]>>) => {
-          state.listItem = action.payload.content || []
-        },
-      )
-      .addCase(itemAsync.fetchItems.rejected, (state: IItemsState) => {
-        state.listItem = []
-      })
   },
 })
 

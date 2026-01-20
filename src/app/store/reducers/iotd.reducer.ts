@@ -1,7 +1,5 @@
-import { IHttpResponse } from '@/app/models/http.model'
 import { IItem, IIotd, ECategory } from '@/app/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { actionAsyncApp } from '../asyncActions/app.async'
 
 export interface IIotdState {
   word: IItem | null
@@ -35,68 +33,35 @@ export const iotdReducer = createSlice({
         }
       }
     },
+    setIotd(state: IIotdState, action: PayloadAction<IIotd<string[]>>) {
+      const { item } = action.payload
+      switch (item.catId) {
+        case ECategory.WORD:
+          state.word = { ...state.word, ...item }
+          break
+        case ECategory.PHRASE:
+          state.phrase = { ...state.phrase, ...item }
+          break
+        case ECategory.IDIOM:
+          state.idiom = { ...state.idiom, ...item }
+          break
+        case ECategory.SLANG:
+          state.slang = { ...state.slang, ...item }
+          break
+        case ECategory.COLLOCATION:
+          state.collocation = { ...state.collocation, ...item }
+          break
+        case ECategory.SENTENCE:
+          state.sentence = { ...state.sentence, ...item }
+          break
+        default:
+          state.word = { ...state.word, ...item }
+          break
+      }
+    },
     resetIotd() {
       return initialState
     },
-  },
-  extraReducers: (builder) => {
-    builder.addCase(
-      actionAsyncApp.fetchIotd.fulfilled,
-      (state: IIotdState, action: PayloadAction<IHttpResponse<IIotd<string[]>>>) => {
-        const { content } = action.payload
-        switch (content.item.catId) {
-          case ECategory.WORD:
-            state.word = {
-              ...state.word,
-              ...content.item,
-            }
-            break
-
-          case ECategory.PHRASE:
-            state.phrase = {
-              ...state.phrase,
-              ...content.item,
-            }
-
-            break
-
-          case ECategory.IDIOM:
-            state.idiom = {
-              ...state.idiom,
-              ...content.item,
-            }
-            break
-
-          case ECategory.SLANG:
-            state.slang = {
-              ...state.slang,
-              ...content.item,
-            }
-            break
-
-          case ECategory.COLLOCATION:
-            state.collocation = {
-              ...state.collocation,
-              ...content.item,
-            }
-            break
-
-          case ECategory.SENTENCE:
-            state.sentence = {
-              ...state.sentence,
-              ...content.item,
-            }
-            break
-
-          default:
-            state.word = {
-              ...state.word,
-              ...content.item,
-            }
-            return
-        }
-      },
-    )
   },
 })
 

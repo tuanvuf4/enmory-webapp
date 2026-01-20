@@ -8,7 +8,6 @@ import { IItemQuiz, TQuiz, ECategory, EQuiz, IOption, IAnswer, IItem } from '@/m
 import { GetStudySetByCatId } from '@/models/studySet.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { commonApi } from '@/services/firebase/api/common.api'
-import { itemAsync } from '@/store/asyncActions/item.async'
 import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { IStudySetStatus, studySetAction } from '@/store/reducers/studySet.reducer'
@@ -20,6 +19,7 @@ import styles from './style'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
+import { useStudySet } from '@/core/hooks/useStudySet'
 
 export const StudySet: React.FC = () => {
   const { token } = theme.useToken()
@@ -40,6 +40,15 @@ export const StudySet: React.FC = () => {
 
   const { inProgress, isDone, currentIndex } = status
 
+  // Prepare study set params
+  const studySetParams: GetStudySetByCatId[] = categories.map((cat) => ({
+    id: cat.id,
+    size: getNumberOfItem(cat.id),
+  }))
+
+  // Fetch study set using React Query
+  const { data: studySetData, refetch: refetchStudySet } = useStudySet(studySetParams)
+
   const getNumberOfItem = (category: ECategory) => {
     if (category === ECategory.WORD) return configuration?.numberOfWordsInStudySet
 
@@ -57,14 +66,20 @@ export const StudySet: React.FC = () => {
   }
 
   const createStudySet = (params: Partial<IStudySetStatus>) => {
-    const body: GetStudySetByCatId[] = categories.map((cat) => ({
-      id: cat.id,
-      size: getNumberOfItem(cat.id),
-    }))
-    dispatch(itemAsync.fetchStudySet(body)).then(() => {
-      dispatch(studySetAction.updateProgress({ ...params }))
+    refetchStudySet().then((result) => {
+      if (result.data) {
+        dispatch(studySetAction.setList(result.data))
+        dispatch(studySetAction.updateProgress({ ...params }))
+      }
     })
   }
+
+  // Update Redux store when study set data changes
+  useEffect(() => {
+    if (studySetData) {
+      dispatch(studySetAction.setList(studySetData))
+    }
+  }, [studySetData, dispatch])
 
   const onNext = () => {
     const studySet = document.getElementById('studySet')

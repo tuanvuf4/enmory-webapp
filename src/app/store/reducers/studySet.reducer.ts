@@ -1,7 +1,5 @@
-import { IHttpResponse } from '@/app/models/http.model'
 import { IItemQuiz, TQuiz, IQuiz, IOption } from '@/app/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { itemAsync } from '../asyncActions/item.async'
 
 export interface IStudySetStatus {
   currentIndex: number
@@ -106,21 +104,12 @@ export const studySetReducer = createSlice({
     updateUserRespond(state: IStudySet, action: PayloadAction<string | number | null>) {
       state.respond = action.payload
     },
+    setList(state: IStudySet, action: PayloadAction<IItemQuiz<TQuiz, string[]>[]>) {
+      state.list = action.payload
+    },
     resetStudySet() {
       return initialState
     },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(
-        itemAsync.fetchStudySet.fulfilled,
-        (state: IStudySet, action: PayloadAction<IHttpResponse<IItemQuiz<TQuiz, string[]>[]>>) => {
-          state.list = action.payload.content
-        },
-      )
-      .addCase(itemAsync.fetchStudySet.rejected, (state: IStudySet) => {
-        state.list = []
-      })
   },
 })
 

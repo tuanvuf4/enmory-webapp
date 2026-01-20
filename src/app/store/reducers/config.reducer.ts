@@ -1,8 +1,6 @@
 import { EViewMode, EViewPort } from '@/models/app.model'
-import { IHttpResponse } from '@/models/http.model'
 import { IOption, ECategory, EType } from '@/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { actionAsyncApp } from '@/store/asyncActions/app.async'
 
 export interface IConfigState {
   isSidebarOpened: boolean
@@ -38,33 +36,15 @@ export const configReducer = createSlice({
     setViewMode(state: IConfigState, action: PayloadAction<EViewMode>) {
       state.viewMode = action.payload
     },
+    setCategories(state: IConfigState, action: PayloadAction<IOption<string, ECategory>[]>) {
+      state.categories = action.payload
+    },
+    setTypes(state: IConfigState, action: PayloadAction<IOption<string, EType>[]>) {
+      state.types = action.payload
+    },
     reset() {
       return initialState
     },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(
-        actionAsyncApp.fetchCategories.fulfilled,
-        (
-          state: IConfigState,
-          action: PayloadAction<IHttpResponse<IOption<string, ECategory>[]>>,
-        ) => {
-          state.categories = action.payload.content
-        },
-      )
-      .addCase(actionAsyncApp.fetchCategories.rejected, (state: IConfigState) => {
-        state.categories = []
-      })
-      .addCase(
-        actionAsyncApp.fetchTypes.fulfilled,
-        (state: IConfigState, action: PayloadAction<IHttpResponse<IOption<string, EType>[]>>) => {
-          state.types = action.payload.content
-        },
-      )
-      .addCase(actionAsyncApp.fetchTypes.rejected, (state: IConfigState) => {
-        state.types = []
-      })
   },
 })
 

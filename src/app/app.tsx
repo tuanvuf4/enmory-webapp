@@ -1,14 +1,13 @@
 import { useDispatch, useSelector } from '@/core/hooks'
 import { useAuthInit } from '@/core/hooks/useAuthInit'
-import { IHttpResponse } from '@/models/http.model'
-import { ECategory, IOption } from '@/models/item.model'
-import { actionAsyncApp } from '@/store/asyncActions/app.async'
 import { AppLayout } from '@/views/features/layout/Layout'
 import { useEffect, useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { RouterElement } from './router'
 import moment from 'moment'
 import { Loading } from './views/features/loading/Loading'
+import { useCategories, useTypes, usePrefetchAllIotd } from '@/core/hooks/useCommon'
+import { configAction } from '@/store/reducers/config.reducer'
 
 export const App = () => {
   const [isInitializing, setIsInitializing] = useState(true)
@@ -16,10 +15,13 @@ export const App = () => {
   // Initialize Firebase auth
   useAuthInit()
 
-  // Removed axios interceptors - not needed since using Firebase SDK directly
-
   const { isAuth } = useSelector((state) => state.auth)
   const dispatch = useDispatch()
+
+  // Fetch categories and types using React Query
+  const { data: categories } = useCategories()
+  const { data: types } = useTypes()
+  const prefetchAllIotd = usePrefetchAllIotd()
 
   // Set initialization complete after brief delay to ensure auth is checked
   useEffect(() => {
@@ -36,20 +38,25 @@ export const App = () => {
     },
   })
 
-  const getCats = async (cats: IOption<string, ECategory>[]) => {
-    cats.map(async (cat) => await dispatch(actionAsyncApp.fetchIotd({ catId: cat.id })))
-  }
+  // Update Redux store when categories and types are fetched
+  useEffect(() => {
+    if (categories) {
+      dispatch(configAction.setCategories(categories))
+    }
+  }, [categories, dispatch])
 
   useEffect(() => {
-    if (isAuth && !isInitializing) {
-      // User info is handled through Firebase Auth
-      dispatch(actionAsyncApp.fetchTypes())
-      dispatch(actionAsyncApp.fetchCategories()).then((response) => {
-        const payload = response.payload as IHttpResponse<IOption<string, ECategory>[]>
-        if (payload && payload.isSuccess) getCats(payload.content)
-      })
+    if (types) {
+      dispatch(configAction.setTypes(types))
     }
-  }, [isAuth, isInitializing])
+  }, [types, dispatch])
+
+  // Prefetch IOTD when authenticated and categories are loaded
+  useEffect(() => {
+    if (isAuth && !isInitializing && categories && categories.length > 0) {
+      prefetchAllIotd(categories)
+    }
+  }, [isAuth, isInitializing, categories, prefetchAllIotd])
 
   if (isInitializing) {
     return <Loading />

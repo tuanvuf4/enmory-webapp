@@ -19,41 +19,26 @@ import { BrowserRouter } from 'react-router-dom'
 import React from 'react'
 import { AppContext } from './app/context/app.context'
 import { store } from '@/store/store'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+})
 
 if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
   const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
   root.render(
     <JssProvider classNamePrefix={`${styleConfig.prefixClassCss}-`}>
       <Provider store={store}>
-        <AppContext>
-          <GoogleOAuthProvider clientId={appConfig.googleAuth.client_id as string}>
-            <ConfigProvider
-              popupMatchSelectWidth={true}
-              componentSize='middle'
-              theme={appTheme}
-              prefixCls={styleConfig.prefixClassCss}
-            >
-              <StyleProvider hashPriority='high'>
-                <AntdApp>
-                  <PersistGate loading={null} persistor={persistStore(store)}>
-                    <BrowserRouter data-testid='browser-router-element'>
-                      <PopupExt />
-                    </BrowserRouter>
-                  </PersistGate>
-                </AntdApp>
-              </StyleProvider>
-            </ConfigProvider>
-          </GoogleOAuthProvider>
-        </AppContext>
-      </Provider>
-    </JssProvider>,
-  )
-} else {
-  const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
-  root.render(
-    <React.StrictMode>
-      <JssProvider classNamePrefix={`${styleConfig.prefixClassCss}-`}>
-        <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
           <AppContext>
             <GoogleOAuthProvider clientId={appConfig.googleAuth.client_id as string}>
               <ConfigProvider
@@ -65,13 +50,47 @@ if (import.meta.env.VITE_APP_TYPE === EAppType.EXTENSION) {
                 <StyleProvider hashPriority='high'>
                   <AntdApp>
                     <PersistGate loading={null} persistor={persistStore(store)}>
-                      <App />
+                      <BrowserRouter data-testid='browser-router-element'>
+                        <PopupExt />
+                      </BrowserRouter>
                     </PersistGate>
                   </AntdApp>
                 </StyleProvider>
               </ConfigProvider>
             </GoogleOAuthProvider>
           </AppContext>
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </Provider>
+    </JssProvider>,
+  )
+} else {
+  const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
+  root.render(
+    <React.StrictMode>
+      <JssProvider classNamePrefix={`${styleConfig.prefixClassCss}-`}>
+        <Provider store={store}>
+          <QueryClientProvider client={queryClient}>
+            <AppContext>
+              <GoogleOAuthProvider clientId={appConfig.googleAuth.client_id as string}>
+                <ConfigProvider
+                  popupMatchSelectWidth={true}
+                  componentSize='middle'
+                  theme={appTheme}
+                  prefixCls={styleConfig.prefixClassCss}
+                >
+                  <StyleProvider hashPriority='high'>
+                    <AntdApp>
+                      <PersistGate loading={null} persistor={persistStore(store)}>
+                        <App />
+                      </PersistGate>
+                    </AntdApp>
+                  </StyleProvider>
+                </ConfigProvider>
+              </GoogleOAuthProvider>
+            </AppContext>
+            <ReactQueryDevtools initialIsOpen={false} />
+          </QueryClientProvider>
         </Provider>
       </JssProvider>
     </React.StrictMode>,

@@ -32,7 +32,7 @@ export const AppHeader = () => {
   const dispatch = useDispatch()
   const { logout } = useAuthLogout()
 
-  const { showModal } = useModal()
+  const { openModal } = useModal()
 
   const navigate = useNavigate()
 
@@ -74,7 +74,7 @@ export const AppHeader = () => {
     }
 
     if (e.key === 'addEx') {
-      dispatch(settingAction.toggleExModal())
+      // dispatch(settingAction.toggleExModal())
     }
   }
 

@@ -28,10 +28,10 @@ import { useModal } from '@/context/modal.context'
 
 ```tsx
 const MyComponent = () => {
-  const { showModal, hideModal } = useModal()
+  const { openModal, closeModal } = useModal()
 
   const handleClick = () => {
-    showModal({
+    openModal({
       title: 'Hello World',
       content: <p>This is a simple modal</p>,
       onConfirm: () => {
@@ -46,7 +46,7 @@ const MyComponent = () => {
 
 ## API Reference
 
-### `showModal(config)`
+### `openModal(config)`
 
 Opens a modal with the provided configuration.
 
@@ -69,7 +69,7 @@ interface ModalConfig {
 **Example:**
 
 ```tsx
-showModal({
+openModal({
   title: 'Confirm Delete',
   content: <p>Are you sure you want to delete this item?</p>,
   okText: 'Delete',
@@ -98,10 +98,10 @@ hideModal()
 Updates the modal configuration while it's open.
 
 ```tsx
-const { showModal, updateModal } = useModal()
+const { openModal, updateModal } = useModal()
 
 // Show initial modal
-showModal({
+openModal({
   title: 'Loading...',
   content: <Spinner />,
   footer: null,
@@ -122,7 +122,7 @@ setTimeout(() => {
 ### Confirmation Dialog
 
 ```tsx
-showModal({
+openModal({
   title: 'Confirm Action',
   content: <p>Are you sure?</p>,
   okText: 'Yes',
@@ -136,7 +136,7 @@ showModal({
 ```tsx
 const [form] = Form.useForm()
 
-showModal({
+openModal({
   title: 'Edit Profile',
   width: 600,
   content: (
@@ -156,7 +156,7 @@ showModal({
 ### Custom Content (No Footer)
 
 ```tsx
-showModal({
+openModal({
   title: 'Custom Content',
   footer: null,
   content: (
@@ -171,7 +171,7 @@ showModal({
 ### Async Operation with Loading
 
 ```tsx
-showModal({
+openModal({
   title: 'Delete Item',
   content: <p>This will permanently delete the item.</p>,
   okText: 'Delete',
@@ -187,7 +187,7 @@ showModal({
 ### Warning Modal
 
 ```tsx
-showModal({
+openModal({
   title: 'Warning',
   content: (
     <div>
@@ -203,7 +203,7 @@ showModal({
 ### Info Display (View Only)
 
 ```tsx
-showModal({
+openModal({
   title: 'Item Details',
   width: 800,
   footer: null,
@@ -216,7 +216,7 @@ showModal({
 ### Custom Styling
 
 ```tsx
-showModal({
+openModal({
   title: 'Styled Modal',
   content: <MyContent />,
   width: 1000,
@@ -233,7 +233,7 @@ To show multiple modals sequentially:
 
 ```tsx
 const showFirstModal = () => {
-  showModal({
+  openModal({
     title: 'First Modal',
     content: <p>First modal content</p>,
     onConfirm: () => {
@@ -244,7 +244,7 @@ const showFirstModal = () => {
 }
 
 const showSecondModal = () => {
-  showModal({
+  openModal({
     title: 'Second Modal',
     content: <p>Second modal content</p>,
   })
@@ -271,7 +271,7 @@ dispatch(settingAction.toggleItemModal())
 **After:**
 
 ```tsx
-showModal({
+openModal({
   title: 'Add Item',
   content: <ItemForm />,
 })

@@ -1,7 +1,7 @@
 import { AudioOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
 import { useDispatch } from '@/core/hooks'
-import { getTypeOfItem } from '@/helpers/item'
+import { getType } from '@/helpers/item'
 import { IMeaning, ECategory, EType, IExample } from '@/models/item.model'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { Tags } from '@/views/components'
@@ -67,8 +67,6 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, active = 
   const [show, setShow] = useState<boolean>(false)
 
   const onSearch = (keyword: string) => {
-    dispatch(settingAction.updateViewItemModal(false))
-
     // Navigate to library with search params
     const params = new URLSearchParams()
     params.set('keyword', keyword)
@@ -112,7 +110,7 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, active = 
                   : 'text-left'
               } `}
             >
-              {getTypeOfItem(meaning.typeId).origin}
+              {getType(meaning.typeId).origin}
             </Col>
           )}
         </Row>

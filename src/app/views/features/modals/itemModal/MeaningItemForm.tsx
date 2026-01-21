@@ -18,21 +18,23 @@ import clsx from 'clsx'
 import { TextEditor } from '@/views/components'
 import { usePrompt } from '@/helpers/hooks'
 import { useEffect, useState } from 'react'
-import { getTypeOfItem } from '@/helpers/item'
+import { getType } from '@/helpers/item'
+import { useSelector } from '@/core/hooks'
 
 interface IProps {
   origin?: string
   catType: ECategory
-  types: IOption<string, EType>[]
   onSubmit?: () => void
 }
 
-export const MeaningItemForm: React.FC<IProps> = ({ catType, types, onSubmit }) => {
+export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
   const { token } = theme.useToken()
   const classes = styles()
   const globalClasses = globalStyle()
 
   const [show, setShow] = useState<boolean[]>([])
+
+  const { types } = useSelector((state) => state.config)
 
   const { confirmDeleteModal } = usePrompt()
 
@@ -126,7 +128,14 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, types, onSubmit }) 
                           className={globalClasses.fulWidth}
                           rootClassName={'text-center'}
                           {...field}
-                          options={types.filter((item) => item.value !== EType.ALL)}
+                          options={types
+                            .filter((item) => item.value !== EType.ALL)
+                            .map((item) => {
+                              return {
+                                ...item,
+                                label: getType(item.value).origin,
+                              }
+                            })}
                           defaultValue={EType.NOUN}
                         />
                       )}
@@ -143,7 +152,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, types, onSubmit }) 
                       {catType === ECategory.WORD && (
                         <div
                           className={'text-xs self-center'}
-                        >{`(${getTypeOfItem(getValues(`meanings.${index}.typeId`)).abbr})`}</div>
+                        >{`(${getType(getValues(`meanings.${index}.typeId`)).abbr})`}</div>
                       )}
 
                       <div

@@ -1,9 +1,21 @@
 import { setting } from '@/config/appConfig'
 import { INotification } from '../models/app.model'
-import { EListeningTypes } from '../models/dictation.model'
 import { IFormSearchEx, IFormSearchItem } from '../models/formSearch.model'
 import { ECategory, EType, IItem, IOption } from '../models/item.model'
 import { ILoginResponse, IUser } from '../models/user.model'
+import { enumValues, getCategory, getType } from '../helpers'
+
+export const categories = enumValues(ECategory).map((value) => ({
+  id: value,
+  label: getCategory(value as ECategory),
+  value: value as ECategory,
+}))
+
+export const types = enumValues(EType).map((value) => ({
+  id: value,
+  label: getType(value as EType),
+  value: value as EType,
+}))
 
 export const initAuth: ILoginResponse = {
   access_token: '',

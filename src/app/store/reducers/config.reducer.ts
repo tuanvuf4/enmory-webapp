@@ -8,7 +8,7 @@ export interface IConfigState {
   viewMode: EViewMode
   viewPort: EViewPort
   categories: IOption<string, ECategory>[]
-  types: IOption<string, EType>[]
+  types: IOption<{ origin: string; abbr: string }, EType>[]
 }
 
 export const initialState: IConfigState = {
@@ -39,7 +39,10 @@ export const configReducer = createSlice({
     setCategories(state: IConfigState, action: PayloadAction<IOption<string, ECategory>[]>) {
       state.categories = action.payload
     },
-    setTypes(state: IConfigState, action: PayloadAction<IOption<string, EType>[]>) {
+    setTypes(
+      state: IConfigState,
+      action: PayloadAction<IOption<{ origin: string; abbr: string }, EType>[]>,
+    ) {
       state.types = action.payload
     },
     reset() {

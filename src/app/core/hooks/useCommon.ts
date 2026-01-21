@@ -19,9 +19,9 @@ export const useCategories = () => {
   return useQuery({
     queryKey: commonKeys.categories(),
     queryFn: async () => {
-      const cats = await commonApi.getCategories()
-      if (cats.isSuccess && cats.content) {
-        return cats.content.map((cat) => ({ ...cat, value: cat.id }))
+      const { isSuccess, content: cats } = await commonApi.getCategories()
+      if (isSuccess && cats) {
+        return cats
       }
       return []
     },
@@ -34,12 +34,9 @@ export const useTypes = () => {
   return useQuery({
     queryKey: commonKeys.types(),
     queryFn: async () => {
-      const types = await commonApi.getTypes()
-      if (types.isSuccess && types.content) {
-        return types.content.map((type) => ({
-          ...type,
-          value: type.id,
-        }))
+      const { isSuccess, content: types } = await commonApi.getTypes()
+      if (isSuccess && types) {
+        return types
       }
       return []
     },
@@ -54,11 +51,14 @@ export const useIotd = (data: IIotdRequest, enabled = true) => {
   const query = useQuery({
     queryKey: commonKeys.iotdByCategory(data.catId),
     queryFn: async () => {
-      const iotd = await commonApi.getItemOfTheDayByCatId(data)
-      return {
-        ...iotd.content,
-        item: iotd.content.item,
+      const { isSuccess, content: iotd } = await commonApi.getItemOfTheDayByCatId(data)
+      if (isSuccess && iotd) {
+        return {
+          ...iotd,
+          item: iotd.item,
+        }
       }
+      return null
     },
     enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes

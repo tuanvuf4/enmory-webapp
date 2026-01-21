@@ -204,6 +204,7 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
     // State
     errorMsg,
     isLoading: firebaseLoading,
+    // firebaseError,
     authError,
     isRegistered,
     registerSuccess,

@@ -7,6 +7,7 @@ import classNames from 'clsx'
 import { CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { SearchItemForm } from '../searchItemForm'
+import { ViewMode } from '../viewMode'
 
 interface IProps {
   formSearch?: React.JSX.Element
@@ -21,7 +22,7 @@ export const Toolbar = ({ formSearch = <SearchItemForm />, pagination }: IProps)
 
   const dispatch = useDispatch()
 
-  const { isShowSearchForm } = useSelector((state) => state.setting)
+  const { isShowSearchFormItem } = useSelector((state) => state.setting)
 
   return (
     <div className={classes.toolbar}>
@@ -30,35 +31,24 @@ export const Toolbar = ({ formSearch = <SearchItemForm />, pagination }: IProps)
         size={[token.size, token.size]}
         className={globalClasses.fulWidth}
       >
-        <Row justify={'space-between'} align={'top'} gutter={[token.size / 2, token.size / 2]}>
-          <Col
-            xs={24}
-            sm={12}
-            md={15}
-            lg={14}
-            className={classNames(isShowSearchForm ? classes.toggleForm : '')}
-          >
-            {formSearch}
-          </Col>
+        <Row
+          justify={isShowSearchFormItem ? 'space-between' : 'end'}
+          align={'top'}
+          gutter={[token.size / 2, token.size / 2]}
+        >
+          {isShowSearchFormItem && (
+            <Col xs={24} sm={12} md={15} lg={14}>
+              {formSearch}
+            </Col>
+          )}
 
           <Col xs={24} sm={12} md={9} lg={10}>
             <Row justify={'end'} gutter={[token.size / 2, token.size / 2]}>
-              <Col className={globalClasses.toXs}>
-                <Button
-                  type='text'
-                  size='small'
-                  onClick={() => dispatch(settingAction.toggleSearchForm())}
-                  className={classes.btnToggle}
-                >
-                  {isShowSearchForm ? <CaretDownOutlined /> : <CaretUpOutlined />}
-                </Button>
-              </Col>
-
               <Col>{pagination}</Col>
 
-              {/* <Col> */}
-              {/* <ViewMode></ViewMode> */}
-              {/* </Col> */}
+              {/* <Col>
+                <ViewMode />
+              </Col> */}
             </Row>
           </Col>
         </Row>

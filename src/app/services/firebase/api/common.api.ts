@@ -8,42 +8,20 @@ import {
   MarkIotdRangeDateRequest,
   GetIIotdRangeDateRequest,
 } from '@/models/item.model'
-import { getCategory, getTypeOfItem } from '@/helpers/item'
-
-const enumValues = <T extends Record<string, unknown>>(enm: T) =>
-  Object.values(enm).filter((v) => typeof v === 'number') as number[]
+import { categories, types } from '@/constant/item'
 
 const getCategories = async (): Promise<IHttpResponse<IOption<string, ECategory>[]>> => {
-  const cats = enumValues(ECategory)
-    .filter((value) => value !== ECategory.ALL)
-    .map((value) => ({
-      id: value,
-      label: getCategory(value as ECategory),
-      value: value as ECategory,
-      key: String(value),
-    }))
-
   return {
     isSuccess: true,
     message: 'Fetched categories from Firebase enum',
-    content: cats,
+    content: categories,
     statusCode: 200,
   }
 }
 
-const getTypes = async (): Promise<IHttpResponse<IOption<string, EType>[]>> => {
-  const types = enumValues(EType)
-    .filter((value) => value !== EType.ALL)
-    .map((value) => {
-      const { origin } = getTypeOfItem(value as EType)
-      return {
-        id: value,
-        label: origin,
-        value: value as EType,
-        key: String(value),
-      }
-    })
-
+const getTypes = async (): Promise<
+  IHttpResponse<IOption<{ origin: string; abbr: string }, EType>[]>
+> => {
   return {
     isSuccess: true,
     message: 'Fetched types from Firebase enum',

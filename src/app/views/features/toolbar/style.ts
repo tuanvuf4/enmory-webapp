@@ -8,12 +8,6 @@ const styles = () => {
       top: 0,
       zIndex: 999,
     },
-    toggleForm: {},
-    '@media screen and (max-width: 575px)': {
-      toggleForm: {
-        display: 'none !important',
-      },
-    },
     btnToggle: {
       height: `38px !important`,
     },

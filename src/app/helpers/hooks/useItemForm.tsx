@@ -5,20 +5,20 @@ import { initItem, ItemForm } from '@/views/features/modals/itemModal'
 import { FormProvider, useForm } from 'react-hook-form'
 
 export const useItemForm = () => {
-  const { showModal } = useModal()
+  const { openModal, closeModal } = useModal()
 
-  const ItemFormContext = ({ data }: { data: IItem }) => {
+  const ItemFormContext = ({ data, mode }: { data: IItem; mode: 'edit' | 'add' }) => {
     const methods = useForm<IItem>({ defaultValues: data })
 
     return (
       <FormProvider {...methods}>
-        <ItemForm />
+        <ItemForm mode={mode} item={data} />
       </FormProvider>
     )
   }
 
   const openViewItemForm = (data: IItem) => {
-    showModal({
+    openModal({
       title: null,
       width: 800,
       footer: null,
@@ -29,22 +29,22 @@ export const useItemForm = () => {
 
   const openItemForm = (mode: 'edit' | 'add' = 'add', data: IItem = initItem) => {
     if (mode === 'add') {
-      showModal({
-        title: 'Add New Item',
+      openModal({
+        title: 'Add Item',
         width: 800,
         footer: null,
         maskClosable: false,
-        content: <ItemFormContext data={data} />,
+        content: <ItemFormContext data={data} mode={mode} />,
       })
     }
 
     if (mode === 'edit') {
-      showModal({
-        title: 'Edit New Item',
+      openModal({
+        title: 'Edit Item',
         width: 800,
         footer: null,
         maskClosable: false,
-        content: <ItemFormContext data={data} />,
+        content: <ItemFormContext data={data} mode={mode} />,
       })
     }
   }

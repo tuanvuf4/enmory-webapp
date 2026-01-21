@@ -134,7 +134,6 @@ export interface IOption<L, V> {
   id: string | number
   label: L
   value: V
-  key?: string
 }
 
 export interface IAnswer<K, V> {

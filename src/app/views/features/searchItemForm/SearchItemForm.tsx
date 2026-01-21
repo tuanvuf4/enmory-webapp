@@ -9,19 +9,11 @@ import {
 import { setting } from '@/config/appConfig'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { useAutoComplete } from '@/helpers/hooks'
-import {
-  ELoading,
-  AppOrderByQuery,
-  orderByOptions,
-  AppOrderQuery,
-  orderOptions,
-} from '@/models/app.model'
+import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { EType, ECategory } from '@/models/item.model'
 import { initSearchFormItem, allSelect } from '@/services/index'
 import { itemAsync } from '@/store/asyncActions/item.async'
-import { itemApi } from '@/services/firebase/api/item.api'
-import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select } from 'antd'
 import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
@@ -29,7 +21,6 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
-import { initItem } from '../modals/itemModal/data'
 
 interface ISearchFormComp {
   filter?: boolean
@@ -96,36 +87,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
       archive: false,
       defect: false,
     })
-
-    if (location.pathname.includes('library')) {
-      dispatch(
-        itemAsync.fetchItems({
-          keyword: value,
-          exact: true,
-          archive: false,
-          defect: false,
-          page: setting.pagination.page,
-          size: setting.pagination.size,
-        }),
-      )
-    } else {
-      const params = {
-        keyword: value,
-        page: 0,
-        size: setting.numberItemOfAutoComplete * 2,
-        exact: true,
-      }
-      itemApi
-        .getItemAutoComplete(params, { headers: { loading: ELoading.YES } })
-        .then((response) => {
-          dispatch(settingAction.toggleViewItemModal())
-          dispatch(
-            settingAction.setCurrentItem({
-              ...response.content[0],
-            }),
-          )
-        })
-    }
   }
 
   const onSubmit = (data: IFormSearchItem) => {
@@ -133,15 +94,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
     updateUrlParams(data)
 
     if (location.pathname.includes('library')) {
-      dispatch(
-        itemAsync.fetchItems({
-          ...data,
-          page: setting.pagination.page,
-          size: setting.pagination.size,
-        }),
-      ).then(() => {
-        // console.log(`resp: `, resp)
-      })
     } else {
       navigate(
         '/library?' +
@@ -189,14 +141,14 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   placeholder='Enter keyword...'
                   notFoundContent={
                     <NoResult
-                      onAdd={() => {
-                        dispatch(
-                          settingAction.setCurrentItem({
-                            ...initItem,
-                            origin: getValues('keyword'),
-                          }),
-                        )
-                      }}
+                    // onAdd={() => {
+                    //   dispatch(
+                    //     settingAction.setCurrentItem({
+                    //       ...initItem,
+                    //       origin: getValues('keyword'),
+                    //     }),
+                    //   )
+                    // }}
                     />
                   }
                   children={
@@ -419,15 +371,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
               }
               reset(resetValues)
               setSearchParams({})
-              if (location.pathname.includes('library')) {
-                dispatch(
-                  itemAsync.fetchItems({
-                    ...resetValues,
-                    page: setting.pagination.page,
-                    size: setting.pagination.size,
-                  }),
-                )
-              }
             }}
           >
             <SyncOutlined />

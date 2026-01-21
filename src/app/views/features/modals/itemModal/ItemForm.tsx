@@ -27,8 +27,15 @@ import { usePrompt } from '@/helpers/hooks'
 import { exampleApi } from '@/services/firebase'
 import { Timestamp } from 'firebase/firestore'
 import { useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
+import { useItemForm } from '@/helpers/hooks/useItemForm'
+import { useModal } from '@/context/modal.context'
 
-export const ItemForm: React.FC = () => {
+interface ItemFormProps {
+  mode: 'add' | 'edit'
+  item: IItem
+}
+
+export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
   const { token } = theme.useToken()
   const classes = styles()
   const globalClasses = globalStyle()
@@ -40,12 +47,9 @@ export const ItemForm: React.FC = () => {
   const [origin, setOrigin] = useState<IItem | null>(null)
 
   const { user } = useSelector((state) => state.auth)
+  const { categories, types } = useSelector((state) => state.config)
 
-  const { currentItem, onEditEvent } = useSelector((state) => state.setting)
   const { list } = useSelector((state) => state.studySet)
-
-  const categories: any[] = []
-  const types: any[] = []
 
   // React Query mutations
   const createMutation = useCreateItem()
@@ -72,6 +76,8 @@ export const ItemForm: React.FC = () => {
   const original = useWatch({ control, name: 'origin' })
 
   const { options, isSearching } = useAutoComplete(original, 'item', false)
+
+  const { closeModal } = useModal()
 
   const getBatchItem = (data: IItem) => {
     const synonyms = data.meanings?.map((meaning) => {
@@ -149,10 +155,10 @@ export const ItemForm: React.FC = () => {
 
         console.log(`*** dataSubmit *** `, dataSubmit)
 
-        if (onEditEvent) {
+        if (mode === 'edit') {
           try {
             const response = await updateMutation.mutateAsync({
-              id: String(currentItem?.id),
+              id: String(item?.id),
               data: dataSubmit,
             })
 
@@ -164,16 +170,14 @@ export const ItemForm: React.FC = () => {
               dispatch(itemAction.replace(itemUpdated))
               dispatch(iotdAction.update(itemUpdated))
             }
-            dispatch(settingAction.setOnEditItem(false))
             reset(initItem)
             openNotification({ type: 'success', message: 'Update item successful!' })
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
-            dispatch(settingAction.setOnEditItem(false))
           } finally {
             reset(initItem)
             setOrigin(null)
-            dispatch(settingAction.setCurrentItem(null))
+            closeModal()
           }
         } else {
           try {
@@ -188,6 +192,7 @@ export const ItemForm: React.FC = () => {
           } finally {
             reset({ ...initItem })
             setOrigin(null)
+            closeModal()
           }
         }
       })()
@@ -197,8 +202,7 @@ export const ItemForm: React.FC = () => {
   const handleCancel = () => {
     reset(initItem)
     setOrigin(null)
-    dispatch(settingAction.setOnEditItem(false))
-    dispatch(settingAction.setCurrentItem(null))
+    closeModal()
   }
 
   const loadItem = async (value: string) => {
@@ -210,7 +214,6 @@ export const ItemForm: React.FC = () => {
     }
     const { isSuccess, content } = await itemApi.getItemAutoComplete(params)
     if (isSuccess) {
-      dispatch(settingAction.setOnEditItem(true))
     }
   }
 
@@ -222,7 +225,7 @@ export const ItemForm: React.FC = () => {
     if (!original) {
       setError('origin', { type: 'required', message: msgErrors.required })
     } else if (
-      onEditEvent &&
+      mode === 'edit' &&
       options.length > 0 &&
       original !== origin?.origin &&
       options.findIndex((option) => option.value === original) > -1
@@ -232,19 +235,19 @@ export const ItemForm: React.FC = () => {
   }, [options, original])
 
   useEffect(() => {
-    if (currentItem) {
-      setOrigin(currentItem as IItem<string[]>)
-      reset(currentItem)
+    if (item) {
+      setOrigin(item as IItem<string[]>)
+      reset(item)
     } else {
       if (appConfig.appType === EAppType.EXTENSION)
         chromeStorage.get(['origin']).then((resp) => {
           reset({ ...initItem, origin: resp.origin || '' })
         })
     }
-  }, [currentItem, origin])
+  }, [item, origin])
 
   useEffect(() => {
-    if (!original && !onEditEvent) {
+    if (!original && mode !== 'edit') {
       reset({ ...initItem })
       setError('origin', { type: 'required', message: msgErrors.required })
     }
@@ -252,7 +255,7 @@ export const ItemForm: React.FC = () => {
     return () => {
       reset({ ...initItem })
     }
-  }, [onEditEvent])
+  }, [mode, item])
 
   return (
     <form onSubmit={handleSubmit(handleOk)} style={{ padding: token.size }}>
@@ -479,12 +482,7 @@ export const ItemForm: React.FC = () => {
           </Row>
 
           <Suspense fallback={<div>Loading...</div>}>
-            <MeaningItemForm
-              origin={original}
-              catType={catType as ECategory}
-              types={types}
-              onSubmit={handleOk}
-            />
+            <MeaningItemForm origin={original} catType={catType as ECategory} onSubmit={handleOk} />
           </Suspense>
         </Space>
       </Row>

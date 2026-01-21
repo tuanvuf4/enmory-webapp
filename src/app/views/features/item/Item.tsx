@@ -148,8 +148,6 @@ export const Item: React.FC<IProps> = ({
   }
 
   const onSearch = (keyword: string) => {
-    dispatch(settingAction.updateViewItemModal(false))
-
     // Navigate to library with search params
     const params = new URLSearchParams()
     params.set('keyword', keyword)

@@ -1,7 +1,7 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
 import { useDispatch, useSelector } from '@/core/hooks'
-import { getTypeOfItem } from '@/helpers/item'
+import { getType } from '@/helpers/item'
 import { IItemQuiz, TQuiz, ECategory, EQuiz, IOption, IAnswer, IItem } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
 import { itemApi } from '@/services/firebase/api/item.api'
@@ -37,16 +37,7 @@ export const StudySet: React.FC = () => {
 
   const { inProgress, isDone, currentIndex } = status
 
-  // Prepare study set params
-  const studySetParams: GetStudySetByCatId[] = categories.map((cat) => ({
-    id: cat.id,
-    size: getNumberOfItem(cat.id),
-  }))
-
-  // Fetch study set using React Query
-  const { data: studySetData, refetch: refetchStudySet } = useStudySet(studySetParams)
-
-  const getNumberOfItem = (category: ECategory) => {
+  const getStudySetSizeByCategory = (category: ECategory) => {
     if (category === ECategory.WORD) return configuration?.numberOfWordsInStudySet
 
     if (category === ECategory.PHRASE) return configuration?.numberOfPhraseInStudySet
@@ -62,10 +53,19 @@ export const StudySet: React.FC = () => {
     return setting.meta.numberOfWordsInStudySet
   }
 
+  // Prepare study set params
+  const studySetParams = categories.map((cat) => ({
+    id: cat.id,
+    size: getStudySetSizeByCategory(cat.value),
+  })) as GetStudySetByCatId[]
+
+  // Fetch study set using React Query
+  const { data: studySetData, refetch: refetchStudySet } = useStudySet(studySetParams)
+
   const createStudySet = (params: Partial<IStudySetStatus>) => {
     refetchStudySet().then((result) => {
       if (result.data) {
-        dispatch(studySetAction.setList(result.data))
+        // dispatch(studySetAction.setList(result.data))
         dispatch(studySetAction.updateProgress({ ...params }))
       }
     })
@@ -74,7 +74,7 @@ export const StudySet: React.FC = () => {
   // Update Redux store when study set data changes
   useEffect(() => {
     if (studySetData) {
-      dispatch(studySetAction.setList(studySetData))
+      // dispatch(studySetAction.setList(studySetData))
     }
   }, [studySetData, dispatch])
 
@@ -175,12 +175,6 @@ export const StudySet: React.FC = () => {
   const onSearch = async (id: string) => {
     try {
       const { content: item } = await itemApi.getItemById(id)
-      dispatch(settingAction.toggleViewItemModal())
-      dispatch(
-        settingAction.setCurrentItem({
-          ...item,
-        }),
-      )
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }
@@ -297,12 +291,6 @@ export const StudySet: React.FC = () => {
   const onEdit = async (id: string) => {
     try {
       const { content } = await itemApi.getItemById(id)
-      dispatch(settingAction.setOnEditItem(true))
-      dispatch(
-        settingAction.setCurrentItem({
-          ...content,
-        }),
-      )
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }
@@ -420,7 +408,7 @@ export const StudySet: React.FC = () => {
                       </div>
 
                       {isSubmit && ans.typeId && (
-                        <i>{`(${getTypeOfItem(ans.typeId).origin.toLowerCase()})`}</i>
+                        <i>{`(${getType(ans.typeId).origin.toLowerCase()})`}</i>
                       )}
                       {/* {isSubmit && ans.id !== item.id && (
                         <Button
@@ -506,7 +494,7 @@ export const StudySet: React.FC = () => {
 
         {isSubmit && (
           <div className={classes.resultReference}>
-            <Item data={item as IItem} onEdit={() => onEdit(item?.id || '')} />
+            <Item data={item as IItem} />
           </div>
         )}
 

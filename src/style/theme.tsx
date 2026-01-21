@@ -37,7 +37,7 @@ export const appTheme: ThemeConfig = {
     Input: {},
     Modal: {
       fontSizeHeading5: 24,
-      contentPadding: 0,
+      contentPadding: 12,
       // contentBg: hex2Rgba(styleConfig.itemColorBg, 1),
       headerBg: 'transparent',
       headerPadding: 16,

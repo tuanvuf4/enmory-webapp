@@ -146,14 +146,11 @@ const getRandomExamples = async (
       constraints.push(where('uid', '==', currentUser.uid))
     }
 
-    if (querySearch.itemId) {
-      constraints.push(where('itemId', '==', querySearch.itemId))
-    }
+    // if (querySearch.itemId) {
+    //   constraints.push(where('itemId', '==', querySearch.itemId))
+    // }
 
-    const random = Math.floor(Math.random() * 1000001)
-    constraints.push(where('random', '==', random))
-
-    // Fetch all examples and randomize on client side for better random distribution
+    // Fetch all examples and randomize on client side
     const examplesQuery = query(collection(db, 'examples'), ...constraints)
     const snapshot = await getDocs(examplesQuery)
 

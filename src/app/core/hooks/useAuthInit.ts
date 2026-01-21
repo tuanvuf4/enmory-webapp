@@ -13,7 +13,7 @@ export const useAuthInit = () => {
         // Check Firebase authentication state
         const firebaseUser = firebaseAuthService.getCurrentAuthUser()
         if (firebaseUser) {
-          console.log('[Auth Init] Firebase user found:', firebaseUser.email)
+          // console.log('[Auth Init] Firebase user found:', firebaseUser.email)
           // User is logged in via Firebase
           // The auth state will be set through Firebase auth listener
         }

@@ -1,7 +1,11 @@
 import { IItem, EType, ECategory } from '@/models/item.model'
 import { compact } from 'lodash'
 
-export const getTypeOfItem = (type: EType) => {
+export const enumValues = <T extends Record<string, unknown>>(value: T) => {
+  return Object.values(value).filter((v) => typeof v === 'number') as number[]
+}
+
+export const getType = (type: EType) => {
   switch (type) {
     case EType.NOUN:
       return { origin: 'Noun', abbr: 'n' }

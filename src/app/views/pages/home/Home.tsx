@@ -1,31 +1,24 @@
 import globalStyle from '@/style/appStyle'
-import { useSelector, useDispatch } from '@/core/hooks'
-import { itemApi } from '@/services/firebase/api/item.api'
-import { settingAction } from '@/store/reducers/setting.reducer'
+import { useSelector } from '@/core/hooks'
 import { ExampleForm } from '@/views/features/exampleOverview/ExampleFormAdd'
 import { ExampleOverView } from '@/views/features/exampleOverview/ExampleOverview'
 import { StudySet } from '@/views/features/studySet/StudySet'
 import { Widget } from '@/views/features/widget/Widget'
 import { theme, Space, Row, Col } from 'antd'
-// import About from '../schedule/Schedule'
 import { Item } from '@/views/features/item/Item'
 import { ExampleMode } from '@/models/example.model'
-import { usePrompt } from '@/helpers/hooks'
 import registerStyle from '@/views/pages/register/style'
 import loginStyle from '@/views/pages/login/style'
 import { Link } from 'react-router-dom'
-import { FormSearchItem } from '@/views/features/formSearchItem/FormSearchItem'
+
 import { useAllIotd } from '@/core/hooks/useCommon'
-import { useModal } from '@/context/modal.context'
+import { SearchItemForm } from '@/views/features'
 
 const Home = () => {
   const { token } = theme.useToken()
-  const { showModal } = useModal()
   const globalClasses = globalStyle()
   const classesRegister = registerStyle()
   const classesLogin = loginStyle()
-
-  const { openNotification } = usePrompt()
 
   const { isAuth } = useSelector((state) => state.auth)
   const { isShowSearchFormItem } = useSelector((state) => state.setting)
@@ -35,22 +28,6 @@ const Home = () => {
   // Fetch all IOTD categories when authenticated
   useAllIotd(isAuth)
 
-  const onEdit = async (id: string) => {
-    try {
-      const { isSuccess, content } = await itemApi.getItemById(id)
-      if (isSuccess && content) {
-        showModal({
-          title: 'Edit Item',
-          width: 800,
-          footer: null,
-          content: <Item data={content} active={false} />,
-        })
-      }
-    } catch (error) {
-      openNotification({ type: 'error', message: JSON.stringify(error) })
-    }
-  }
-
   return (
     <>
       {isAuth && (
@@ -58,7 +35,7 @@ const Home = () => {
           {isShowSearchFormItem && (
             <div className={globalClasses.stickyBar}>
               <div className={globalClasses.container}>
-                <FormSearchItem filter={false} submit={true} />
+                <SearchItemForm filter={false} submit={true} />
               </div>
             </div>
           )}
@@ -87,37 +64,37 @@ const Home = () => {
                 <Col xs={24} md={8}>
                   {word && word.origin && (
                     <Widget title='Word of the day'>
-                      <Item reload data={word} onEdit={() => onEdit(word.id || '')} />
+                      <Item reload data={word} />
                     </Widget>
                   )}
 
                   {phrase && phrase.origin && (
                     <Widget title='Phrase of the day'>
-                      <Item reload data={phrase} onEdit={() => onEdit(phrase.id || '')} />
+                      <Item reload data={phrase} />
                     </Widget>
                   )}
 
                   {collocation && collocation.origin && (
                     <Widget title='Collocation of the day'>
-                      <Item reload data={collocation} onEdit={() => onEdit(collocation.id || '')} />
+                      <Item reload data={collocation} />
                     </Widget>
                   )}
 
                   {sentence && sentence.origin && (
                     <Widget title='sentence of the day'>
-                      <Item reload data={sentence} onEdit={() => onEdit(sentence.id || '')} />
+                      <Item reload data={sentence} />
                     </Widget>
                   )}
 
                   {idiom && idiom.origin && (
                     <Widget title='Idiom of the day'>
-                      <Item reload data={idiom} onEdit={() => onEdit(idiom.id || '')} />
+                      <Item reload data={idiom} />
                     </Widget>
                   )}
 
                   {slang && slang.origin && (
                     <Widget title='Slang of the day'>
-                      <Item reload data={slang} onEdit={() => onEdit(slang.id || '')} />
+                      <Item reload data={slang} />
                     </Widget>
                   )}
                 </Col>

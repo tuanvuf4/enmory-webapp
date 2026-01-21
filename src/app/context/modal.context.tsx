@@ -10,8 +10,8 @@ interface ModalConfig extends Omit<ModalProps, 'open' | 'onCancel' | 'onOk'> {
 }
 
 interface ModalContextType {
-  showModal: (config: ModalConfig) => void
-  hideModal: () => void
+  openModal: (config: ModalConfig) => void
+  closeModal: () => void
   updateModal: (config: Partial<ModalConfig>) => void
 }
 
@@ -22,12 +22,12 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [modalConfig, setModalConfig] = useState<ModalConfig | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const showModal = (config: ModalConfig) => {
+  const openModal = (config: ModalConfig) => {
     setModalConfig(config)
     setIsOpen(true)
   }
 
-  const hideModal = () => {
+  const closeModal = () => {
     setIsOpen(false)
     setLoading(false)
     // Clear config after animation completes
@@ -43,24 +43,24 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
       try {
         setLoading(true)
         await modalConfig.onConfirm()
-        hideModal()
+        closeModal()
       } catch (error) {
         console.error('Modal confirm error:', error)
       } finally {
         setLoading(false)
       }
     } else {
-      hideModal()
+      closeModal()
     }
   }
 
   const handleCancel = () => {
     modalConfig?.onClose?.()
-    hideModal()
+    closeModal()
   }
 
   return (
-    <ModalContext.Provider value={{ showModal, hideModal, updateModal }}>
+    <ModalContext.Provider value={{ openModal, closeModal, updateModal }}>
       {children}
       {modalConfig && (
         <Modal

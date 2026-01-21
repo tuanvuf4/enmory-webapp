@@ -37,7 +37,7 @@ interface ISearchFormComp {
   submit?: boolean
 }
 
-export const FormSearchItem: React.FC<ISearchFormComp> = ({
+export const SearchItemForm: React.FC<ISearchFormComp> = ({
   filter = true,
   submit = true,
   resetForm = true,

@@ -2,18 +2,18 @@ import React from 'react'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { Button, Col, Row, Space, theme } from 'antd'
 import styles from './style'
-import { FormSearchItem } from '../formSearchItem/FormSearchItem'
 import globalStyle from '@/style/appStyle'
 import classNames from 'clsx'
 import { CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
+import { SearchItemForm } from '../searchItemForm'
 
 interface IProps {
   formSearch?: React.JSX.Element
   pagination?: React.JSX.Element
 }
 
-export const Toolbar = ({ formSearch = <FormSearchItem />, pagination }: IProps) => {
+export const Toolbar = ({ formSearch = <SearchItemForm />, pagination }: IProps) => {
   const { token } = theme.useToken()
 
   const classes = styles()

@@ -291,7 +291,12 @@ export const Item: React.FC<IProps> = ({
                     data.forms.filter((word) => word).length > 0 &&
                     data.forms.length > 0 && (
                       <div className={classes.word_family}>
-                        <Tags label={'Form'} tags={data.forms} onSearch={onSearch} active />
+                        <Tags
+                          label={'Form'}
+                          tags={data.forms}
+                          onSearch={onSearch}
+                          active={active}
+                        />
                       </div>
                     )}
 
@@ -299,7 +304,12 @@ export const Item: React.FC<IProps> = ({
                     data.word_family.filter((word) => word).length > 0 &&
                     data.word_family.length > 0 && (
                       <div className={classes.word_family}>
-                        <Tags label={'Family'} tags={data.word_family} onSearch={onSearch} active />
+                        <Tags
+                          label={'Family'}
+                          tags={data.word_family}
+                          onSearch={onSearch}
+                          active={active}
+                        />
                       </div>
                     )}
                 </>
@@ -309,7 +319,12 @@ export const Item: React.FC<IProps> = ({
                 data.relation.filter((word) => word).length > 0 &&
                 data.relation.length > 0 && (
                   <div className={classes.word_family}>
-                    <Tags label={'Relation'} tags={data.relation} onSearch={onSearch} active />
+                    <Tags
+                      label={'Relation'}
+                      tags={data.relation}
+                      onSearch={onSearch}
+                      active={active}
+                    />
                   </div>
                 )}
             </div>

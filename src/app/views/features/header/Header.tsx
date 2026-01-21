@@ -70,7 +70,7 @@ export const AppHeader = () => {
 
   const handleAddMenuClick: MenuProps['onClick'] = (e) => {
     if (e.key === 'addItem') {
-      openItemForm('add', initItem)
+      openItemForm()
     }
 
     if (e.key === 'addEx') {
@@ -211,7 +211,7 @@ export const AppHeader = () => {
       {isShowSearchFormItem && (
         <div className={globalClasses.stickyBar}>
           <div className={globalClasses.container}>
-            <FormSearchItem filter={false} submit={true} />
+            <SearchItemForm filter={false} submit={true} />
           </div>
         </div>
       )}

@@ -46,10 +46,6 @@ export const getActionMenuItems = (data: IItem | undefined): ItemType[] => {
       label: <ActionItem label='Edit' icon={<EditOutlined />} />,
     },
     {
-      key: 6,
-      label: <ActionItem label='Mark' icon={<PlusOutlined />} />,
-    },
-    {
       key: 2,
       label: (
         <ActionItem

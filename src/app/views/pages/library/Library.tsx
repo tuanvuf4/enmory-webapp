@@ -1,40 +1,30 @@
-import globalStyle, { styleConfig } from '@/style/appStyle'
-import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import { isDefect, getCategory, getTypeOfItem } from '@/helpers/item'
+import globalStyle from '@/style/appStyle'
 import { EViewMode } from '@/models/app.model'
-import { ECategory, EType, IItem } from '@/models/item.model'
-import { itemApi } from '@/services/firebase/api/item.api'
-import { settingAction } from '@/store/reducers/setting.reducer'
-import { AlertDefectItem } from '@/views/features/alertDefectItem/AlertDefectItem'
+import { ECategory, EType } from '@/models/item.model'
 import { Toolbar } from '@/views/features/toolbar/Toolbar'
-import { theme, Row, Col, Button } from 'antd'
+import { theme, Row, Col } from 'antd'
 import { useEffect } from 'react'
 import styles from './style'
-import iStyles from '@/app/views/features/item/style'
-import { useDispatch, useSelector } from '@/core/hooks'
+import { useSelector } from '@/core/hooks'
 import { Pagination } from '@/views/components'
 import { Item } from '@/views/features/item/Item'
-import { Reference } from '@/views/features/references/References'
 import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
 import { useSearchParams } from 'react-router-dom'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { setting } from '@/config/appConfig'
-import { useItems, useDeleteItem } from '@/core/hooks/useItems'
+import { useItems } from '@/core/hooks/useItems'
 import { Loading } from '@/views/features'
-import { useItemForm } from '@/helpers/hooks/useItemForm'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
 
-  const { openItemForm, openViewItemForm } = useItemForm()
   const classes = styles()
   const globalClasses = globalStyle()
-  const itemStyles = iStyles()
 
   const { viewMode } = useSelector((state) => state.config)
 
-  const { confirmDeleteModal, openNotification } = usePrompt()
+  const { openNotification } = usePrompt()
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -53,8 +43,6 @@ export const Library: React.FC = () => {
     orderBy: (searchParams.get('orderBy') as 'created_date' | 'last_update') || 'created_date',
   }
 
-  const dispatch = useDispatch()
-
   // Use React Query hooks
   const { data, isLoading, error } = useItems({
     ...formSearchValue,
@@ -62,40 +50,8 @@ export const Library: React.FC = () => {
     size,
   })
 
-  const deleteMutation = useDeleteItem()
-
   const listItem = data?.content || []
   const pagination = data?.paging || setting.pagination
-
-  const onDelete = (id: string) => {
-    confirmDeleteModal({
-      onOk: async () => {
-        try {
-          await deleteMutation.mutateAsync(id)
-          openNotification({ type: 'success', message: 'Item deleted successfully!' })
-        } catch (error) {
-          openNotification({ type: 'error', message: JSON.stringify(error) })
-        }
-      },
-    })
-  }
-
-  const onEdit = async (id: string) => {
-    try {
-      const { content } = await itemApi.getItemById(id)
-      dispatch(settingAction.setOnEditItem(true))
-      openItemForm('edit', content as IItem)
-    } catch (error) {
-      openNotification({ type: 'error', message: JSON.stringify(error) })
-    }
-  }
-
-  const onView = async (id: string) => {
-    const { isSuccess, content } = await itemApi.getItemById(id)
-    if (isSuccess && content) {
-      openViewItemForm(content)
-    }
-  }
 
   // Handle errors
   useEffect(() => {
@@ -138,138 +94,11 @@ export const Library: React.FC = () => {
                 listItem.map((item, idx) => {
                   return (
                     <Col xs={24} sm={12} md={12} lg={8} xl={6} key={idx}>
-                      <Item
-                        data={item}
-                        onEdit={() => onEdit(item.id || '')}
-                        onDelete={() => onDelete(item.id || '')}
-                        onView={() => onView(item.id || '')}
-                        active
-                      />
+                      <Item data={item} action active />
                     </Col>
                   )
                 })}
             </Row>
-          </div>
-        )}
-
-        {!isLoading && viewMode === EViewMode.LIST && listItem.length > 0 && (
-          <div className={classes.itemTable}>
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Item</th>
-                  <th>Status</th>
-                  <th>Category</th>
-                  <th>Type</th>
-                  <th>Pronunciation</th>
-                  <th>Definition</th>
-                  <th>Translation</th>
-                  <th>References</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {listItem.length > 0 &&
-                  listItem.map((item, index) => {
-                    return (
-                      <tr key={item.id}>
-                        <td>{index + 1}</td>
-
-                        <td>
-                          {item.origin}
-                          {isDefect(item) && <AlertDefectItem item={item} />}
-                        </td>
-
-                        <th>
-                          {item.archive && (
-                            <Button className={classes.btnInactive} size='small'>
-                              disable
-                            </Button>
-                          )}
-
-                          {!item.archive && (
-                            <Button type='default' size='small' className={classes.btnActive}>
-                              enable
-                            </Button>
-                          )}
-                        </th>
-
-                        <td>{getCategory(item.catId as ECategory)}</td>
-
-                        {item?.meanings && item.meanings.length > 0 && (
-                          <>
-                            {item.catId !== ECategory.WORD && <td></td>}
-
-                            {item.catId === ECategory.WORD && (
-                              <td>{getTypeOfItem(item.meanings[0].typeId).origin}</td>
-                            )}
-
-                            <td>
-                              {item.catId === ECategory.WORD && (
-                                <div className={itemStyles.pronouns}>
-                                  <div className={itemStyles.audio}>
-                                    <span className={itemStyles.accent}>UK:</span>
-                                    {item.meanings[0].pronunciation?.uk || ''}
-                                  </div>
-
-                                  <div className={itemStyles.audio}>
-                                    <span className={itemStyles.accent}>US:</span>
-                                    {item.meanings[0].pronunciation?.us || ''}
-                                  </div>
-                                </div>
-                              )}
-                            </td>
-
-                            <td>{item.meanings[0].definition}</td>
-
-                            <td>{item.meanings[0].translation}</td>
-                          </>
-                        )}
-
-                        {item.meanings && item.meanings.length === 0 && (
-                          <>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                          </>
-                        )}
-
-                        <td>
-                          <Reference origin={item.origin} />
-                        </td>
-
-                        <td>
-                          <div className={classes.btnActions}>
-                            <Button
-                              type='text'
-                              style={{ color: token.colorPrimary }}
-                              icon={<EyeOutlined />}
-                              onClick={() => onView(item.id || '')}
-                            />
-
-                            <Button
-                              type='text'
-                              style={{ color: styleConfig.color.yellow[6] }}
-                              icon={<EditOutlined />}
-                              onClick={() => onEdit(item.id || '')}
-                            />
-
-                            <Button
-                              type='text'
-                              style={{ color: styleConfig.color.red[5] }}
-                              icon={<DeleteOutlined />}
-                              onClick={() => onDelete(item.id || '')}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            </table>
           </div>
         )}
 

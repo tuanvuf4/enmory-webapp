@@ -119,10 +119,6 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, active = 
 
         {!show && (
           <>
-            {meaning.note && (
-              <div className={classes.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
-            )}
-
             {meaning.definition && (
               <h3
                 className={classes.definition}
@@ -147,7 +143,7 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, active = 
 
             {meaning.definition && (
               <>
-                <h5 className={'italic'}>Definition:</h5>
+                {/* <h5 className={'italic'}>Definition:</h5> */}
                 <h3
                   className={classes.definition}
                   dangerouslySetInnerHTML={{ __html: meaning.definition }}
@@ -157,7 +153,7 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, active = 
 
             {meaning.translation && (
               <>
-                <h5 className={'italic'}>Translation:</h5>
+                {/* <h5 className={'italic'}>Translation:</h5> */}
                 <h3
                   className={classes.translate}
                   dangerouslySetInnerHTML={{ __html: meaning.translation }}

@@ -1,38 +1,34 @@
-import { MoreOutlined, ReloadOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
-import { useDispatch, useSelector } from '@/core/hooks'
-import { isDefect, getCategory } from '@/helpers/item'
+import { useDeleteItem, useDispatch, useSelector } from '@/core/hooks'
+import { useRefetchIotd } from '@/core/hooks/useCommon'
+import { usePrompt } from '@/helpers/hooks'
+import { getCategory, isDefect } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
-import { IItem, ECategory } from '@/models/item.model'
+import { ECategory, IItem } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
-import { commonApi } from '@/services/firebase/api/common.api'
-import { iotdAction } from '@/store/reducers/iotd.reducer'
-import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { studySetAction } from '@/store/reducers/studySet.reducer'
-import { Level } from '@/views/components'
-import { Tags } from '@/views/components'
-import { MenuProps, Skeleton, Dropdown, Button, theme, Flex } from 'antd'
+import { Level, Tags } from '@/views/components'
+import { MoreOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Button, Dropdown, Flex, MenuProps, Skeleton, theme } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
+import clsx from 'clsx'
 import moment from 'moment'
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Reference } from '../references/References'
 import { getActionMenuItems } from './ActionMenuItem'
 import { MeaningItem } from './MeaningItem'
 import styles from './style'
-import clsx from 'clsx'
-import { Reference } from '../references/References'
-import { usePrompt } from '@/helpers/hooks'
-import { useRefetchIotd } from '@/core/hooks/useCommon'
+import { useItemForm } from '@/helpers/hooks/useItemForm'
 
 interface IProps {
   action?: boolean
   active?: boolean
   reload?: boolean
   data: IItem
-  onDelete?: () => void
-  onEdit?: () => void
-  onView?: () => void
+  onDeleteSuccess?: () => void
+  onEditSuccess?: () => void
+  onViewSuccess?: () => void
   onArchive?: () => void
 }
 
@@ -41,9 +37,9 @@ export const Item: React.FC<IProps> = ({
   active = true,
   reload = false,
   data,
-  onDelete,
-  onEdit,
-  onView,
+  onDeleteSuccess,
+  onEditSuccess,
+  onViewSuccess,
   onArchive,
 }) => {
   const { token } = theme.useToken()
@@ -51,58 +47,96 @@ export const Item: React.FC<IProps> = ({
   const classes = styles()
 
   const [, setSize] = useState<number>(8)
+
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch()
 
-  const { openNotification } = usePrompt()
+  const { openItemForm, openViewItemForm } = useItemForm()
+  const { mutate: mutateDeleteItem } = useDeleteItem()
+
+  const { confirmDeleteModal, openNotification } = usePrompt()
   const refetchIotd = useRefetchIotd()
 
   const { viewMode } = useSelector((state) => state.config)
 
-  const handleMenuClick: MenuProps['onClick'] = (e) => {
+  const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
       case '0':
-        if (onView) onView()
+        onView(data.id || '')
         break
 
       case '1':
-        if (onEdit) onEdit()
+        onEdit(data.id || '')
         break
 
       case '2':
-        onRedo(data)
+        await onRedo(data)
         break
 
       case '3':
-        onReset(data)
+        await onReset(data)
         break
 
       case '4':
-        if (onDelete) onDelete()
+        onDelete(data.id || '')
         break
 
       case '5':
-        archive(data)
+        await archive(data)
         onArchive?.()
         break
 
       case '6':
-        markItem(data?.id || '')
+        // markItem(data?.id || '')
         break
 
       default:
-        if (onView) onView()
+        if (onViewSuccess) onViewSuccess()
         break
+    }
+  }
+
+  const onEdit = async (id: string) => {
+    try {
+      const { content } = await itemApi.getItemById(id)
+      openItemForm('edit', content as IItem)
+      onEditSuccess?.()
+    } catch (error) {
+      openNotification({ type: 'error', message: JSON.stringify(error) })
+    }
+  }
+
+  const onDelete = (id: string) => {
+    confirmDeleteModal({
+      onOk: async () => {
+        try {
+          mutateDeleteItem(id, {
+            onSuccess: () => {
+              onDeleteSuccess?.()
+              openNotification({ type: 'success', message: 'Item deleted successfully!' })
+            },
+          })
+        } catch (error) {
+          openNotification({ type: 'error', message: JSON.stringify(error) })
+        }
+      },
+    })
+  }
+
+  const onView = async (id: string) => {
+    const { isSuccess, content } = await itemApi.getItemById(id)
+    if (isSuccess && content) {
+      openViewItemForm(content)
     }
   }
 
   const getActionMenus = (menus = getActionMenuItems(data)) => {
     return menus
       .map((menu) => {
-        if (!onView && menu?.key === 0) return false
-        if (!onEdit && menu?.key === 1) return false
-        if (!onDelete && menu?.key === 4) return false
+        if (!onViewSuccess && !action && menu?.key === 0) return false
+        if (!onEditSuccess && !action && menu?.key === 1) return false
+        if (!onDeleteSuccess && !action && menu?.key === 4) return false
         return menu
       })
       .filter(Boolean) as ItemType[]
@@ -129,7 +163,7 @@ export const Item: React.FC<IProps> = ({
     }
   }
 
-  const onReset = (data: IItem) => {
+  const onReset = async (data: IItem) => {
     const now = new Date().getTime()
     const newData = {
       level: 0,
@@ -137,44 +171,17 @@ export const Item: React.FC<IProps> = ({
       created_date: now,
       last_update: now,
     }
-    itemApi.updateItem(data.id || '', { ...newData })
-    dispatch(itemAction.update({ ...data, ...newData }))
-    dispatch(studySetAction.update({ ...data, ...newData }))
-    dispatch(iotdAction.update({ ...data, ...newData }))
-    dispatch(settingAction.setCurrentItem({ ...data, ...newData }))
+    await itemApi.updateItem(data.id || '', { ...newData })
   }
 
-  const onRedo = (data: IItem) => {
+  const onRedo = async (data: IItem) => {
     const level = data.level === 5 ? 0 : 5
-    itemApi.updateItem(data.id || '', { level })
-    dispatch(itemAction.update({ ...data, level }))
-    dispatch(studySetAction.update({ ...data, level }))
-    dispatch(iotdAction.update({ ...data, level }))
-    dispatch(settingAction.setCurrentItem({ ...data, level }))
+    await itemApi.updateItem(data.id || '', { level })
   }
 
-  const archive = (data: IItem) => {
+  const archive = async (data: IItem) => {
     const archive = !data.archive
-    itemApi.updateItem(data.id || '', { archive })
-    dispatch(itemAction.update({ ...data, archive }))
-    dispatch(studySetAction.update({ ...data, archive }))
-    dispatch(iotdAction.update({ ...data, archive }))
-    dispatch(settingAction.setCurrentItem({ ...data, archive }))
-  }
-
-  const markItem = async (id: string) => {
-    const { isSuccess, content } = await commonApi.markIotd({
-      isMarked: true,
-      itemId: id,
-      date: Date.now(),
-    })
-
-    if (isSuccess && content) {
-      openNotification({
-        type: 'success',
-        message: 'Added to Marker!',
-      })
-    }
+    await itemApi.updateItem(data.id || '', { archive })
   }
 
   useEffect(() => {

@@ -28,33 +28,24 @@ export const useItemForm = () => {
   }
 
   const openItemForm = (mode: 'edit' | 'add' = 'add', data: IItem = initItem) => {
-    switch (mode) {
-      case 'add':
-        showModal({
-          title: 'Add New Item',
-          width: 800,
-          footer: null,
-          content: <ItemFormContext data={data} />,
-        })
-        break
+    if (mode === 'add') {
+      showModal({
+        title: 'Add New Item',
+        width: 800,
+        footer: null,
+        maskClosable: false,
+        content: <ItemFormContext data={data} />,
+      })
+    }
 
-      case 'edit':
-        showModal({
-          title: 'Edit Item',
-          width: 800,
-          footer: null,
-          content: <ItemFormContext data={data} />,
-        })
-        break
-
-      default:
-        showModal({
-          title: 'Add New Item',
-          width: 800,
-          footer: null,
-          content: <ItemFormContext data={data} />,
-        })
-        break
+    if (mode === 'edit') {
+      showModal({
+        title: 'Edit New Item',
+        width: 800,
+        footer: null,
+        maskClosable: false,
+        content: <ItemFormContext data={data} />,
+      })
     }
   }
 

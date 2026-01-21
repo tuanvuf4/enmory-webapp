@@ -186,11 +186,11 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, active = 
             )}
 
             {meaning.synonyms.length > 0 && (
-              <Tags label={'Synonyms'} tags={meaning.synonyms} onSearch={onSearch} />
+              <Tags active label={'Synonyms'} tags={meaning.synonyms} onSearch={onSearch} />
             )}
 
             {meaning.antonyms.length > 0 && (
-              <Tags label={'Antonyms'} tags={meaning.antonyms} onSearch={onSearch} />
+              <Tags active label={'Antonyms'} tags={meaning.antonyms} onSearch={onSearch} />
             )}
 
             {meaning.examples.length > 0 && (

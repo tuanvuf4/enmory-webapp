@@ -26,7 +26,7 @@ import { usePrompt } from '@/helpers/hooks'
 import { useRefetchIotd } from '@/core/hooks/useCommon'
 
 interface IProps {
-  groupAction?: boolean
+  action?: boolean
   active?: boolean
   reload?: boolean
   data: IItem
@@ -37,7 +37,7 @@ interface IProps {
 }
 
 export const Item: React.FC<IProps> = ({
-  groupAction = true,
+  action = true,
   active = true,
   reload = false,
   data,
@@ -98,7 +98,6 @@ export const Item: React.FC<IProps> = ({
   }
 
   const getActionMenus = (menus = getActionMenuItems(data)) => {
-    if (!onView && !onEdit && !onDelete) return []
     return menus
       .map((menu) => {
         if (!onView && menu?.key === 0) return false
@@ -220,7 +219,7 @@ export const Item: React.FC<IProps> = ({
                     </Button>
                   )}
 
-                  {groupAction && (onView || onEdit || onDelete) && (
+                  {action && (
                     <Dropdown
                       placement='bottomRight'
                       menu={menuProps}
@@ -233,7 +232,7 @@ export const Item: React.FC<IProps> = ({
                         icon={<MoreOutlined />}
                         className={clsx({
                           [classes.btnActions]: true,
-                          active: !!active,
+                          active: active,
                         })}
                       />
                     </Dropdown>
@@ -292,7 +291,7 @@ export const Item: React.FC<IProps> = ({
                     data.forms.filter((word) => word).length > 0 &&
                     data.forms.length > 0 && (
                       <div className={classes.word_family}>
-                        <Tags label={'Form'} tags={data.forms} onSearch={onSearch} />
+                        <Tags label={'Form'} tags={data.forms} onSearch={onSearch} active />
                       </div>
                     )}
 
@@ -300,7 +299,7 @@ export const Item: React.FC<IProps> = ({
                     data.word_family.filter((word) => word).length > 0 &&
                     data.word_family.length > 0 && (
                       <div className={classes.word_family}>
-                        <Tags label={'Family'} tags={data.word_family} onSearch={onSearch} />
+                        <Tags label={'Family'} tags={data.word_family} onSearch={onSearch} active />
                       </div>
                     )}
                 </>
@@ -310,7 +309,7 @@ export const Item: React.FC<IProps> = ({
                 data.relation.filter((word) => word).length > 0 &&
                 data.relation.length > 0 && (
                   <div className={classes.word_family}>
-                    <Tags label={'Relation'} tags={data.relation} onSearch={onSearch} />
+                    <Tags label={'Relation'} tags={data.relation} onSearch={onSearch} active />
                   </div>
                 )}
             </div>

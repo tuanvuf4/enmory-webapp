@@ -19,10 +19,11 @@ export const useItemForm = () => {
 
   const openViewItemForm = (data: IItem) => {
     showModal({
-      title: 'View Item',
+      title: null,
       width: 800,
       footer: null,
-      content: <Item data={data} />,
+      closable: false,
+      content: <Item data={data} active={false} />,
     })
   }
 

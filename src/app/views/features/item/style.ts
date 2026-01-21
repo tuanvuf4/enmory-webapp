@@ -22,7 +22,12 @@ const styles = () => {
       justifyContent: 'space-between',
       flexDirection: 'column',
       height: '100%',
-      padding: 0,
+      padding: [
+        token.padding / 2,
+        (token.padding / 4) * 3,
+        token.padding / 2,
+        (token.padding / 4) * 3,
+      ],
       borderRadius: 4,
       border: 'none',
       boxShadow: `0px 0px 30px 0px ${hex2Rgba('#ffffff', 0.2)}`,
@@ -32,13 +37,6 @@ const styles = () => {
         background: hex2Rgba(styleConfig.itemColorBg, 0.95),
         border: `1px solid ${hex2Rgba(styleConfig.itemColorBg, 0.4)}`,
         color: token.colorWhite,
-
-        padding: [
-          token.padding / 2,
-          (token.padding / 4) * 3,
-          token.padding / 2,
-          (token.padding / 4) * 3,
-        ],
 
         '& $translate': {
           color: token.colorTextSecondary,
@@ -260,11 +258,11 @@ const styles = () => {
       // marginRight: token.size / 2,
     },
     btnActions: {
-      color: `${token.colorWhite} !important`,
+      color: `${token.colorText} !important`,
 
-      // '&.active': {
-      //   color: `${token.colorText} !important`,
-      // },
+      '&.active': {
+        color: `${token.colorWhite} !important`,
+      },
 
       '& span': {
         fontSize: `${token.fontSizeHeading4}px !important`,

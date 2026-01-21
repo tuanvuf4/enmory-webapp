@@ -4,17 +4,17 @@ import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme } from 'antd'
 import styles from './style'
 import { itemApi } from '@/services/firebase/api/item.api'
+import clsx from 'clsx'
 
 interface IPros {
-  onSearch?: (tag: string) => void
   label?: string
   tags: string[]
+  active?: boolean
+  onSearch?: (tag: string) => void
 }
 
-export const Tags: React.FC<IPros> = ({ label, tags, onSearch }) => {
+export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
   const { token } = theme.useToken()
-
-  const { isShowViewItemModal } = useSelector((state) => state.setting)
 
   const classes = styles(token)
 
@@ -27,8 +27,7 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch }) => {
       size: 1,
       exact,
     })
-    if (isSuccess && content.length > 0) {
-      if (!isShowViewItemModal) dispatch(settingAction.showViewItemModal(true))
+    if (isSuccess && content) {
       dispatch(settingAction.setCurrentItem(content[0]))
     }
   }
@@ -39,7 +38,14 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch }) => {
 
       {tags.map((tag, key) => {
         return (
-          <div key={key} className={classes.tagItem} onClick={() => getItem(tag)}>
+          <div
+            key={key}
+            className={clsx({
+              [classes.tagItem]: true,
+              active,
+            })}
+            onClick={() => getItem(tag)}
+          >
             <div className={classes.tagItemContainer}>
               <span>{tag}</span>
               <button

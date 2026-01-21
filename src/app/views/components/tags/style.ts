@@ -31,7 +31,7 @@ const styles = (token: AliasToken) => {
         padding: [token.size / 8, token.size / 4],
         background: 'transparent !important',
         border: 'none',
-        borderLeft: `1px solid ${token.colorWhite}`,
+        borderLeft: `1px solid ${token.colorText}`,
         outline: 'none',
         cursor: 'pointer',
         borderRadius: 0,
@@ -45,7 +45,15 @@ const styles = (token: AliasToken) => {
       display: 'inline-block',
       margin: [token.size / 4, token.size / 4],
       borderRadius: token.size / 4,
-      border: `1px solid ${token.colorWhite}`,
+      border: `1px solid ${token.colorText}`,
+
+      '&.active': {
+        border: `1px solid ${token.colorWhite}`,
+
+        '& button': {
+          borderLeft: `1px solid ${token.colorWhite}`,
+        },
+      },
     },
   })()
 }

@@ -143,6 +143,7 @@ export const Library: React.FC = () => {
                         onEdit={() => onEdit(item.id || '')}
                         onDelete={() => onDelete(item.id || '')}
                         onView={() => onView(item.id || '')}
+                        active
                       />
                     </Col>
                   )

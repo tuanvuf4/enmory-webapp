@@ -19,10 +19,7 @@ import {
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore'
 import { dbCollections, app as firebaseApp } from '@/config/firebaseConfig'
 import { IUserConfig } from '@/models/user.model'
-import { commonApi } from './api'
-import { appConfig, setting } from '@/config/appConfig'
-import { config } from 'process'
-import { EListeningTypes } from '@/models/dictation.model'
+import { setting } from '@/config/appConfig'
 
 export interface IAuthUser {
   uid: string

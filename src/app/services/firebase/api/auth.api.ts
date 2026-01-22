@@ -2,7 +2,7 @@ import { IHttpResponse } from '@/models/http.model'
 import { ILogin, ILoginResponse, IUser } from '@/models/user.model'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { db } from '@/config/firebaseConfig'
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 /**
  * Get Google user info from Firebase Auth user
@@ -50,7 +50,7 @@ const login = async (user: ILogin): Promise<IHttpResponse<ILoginResponse>> => {
 /**
  * Register a new user
  */
-const register = async (user: IUser): Promise<IHttpResponse<boolean>> => {
+const register = async (user: ILogin): Promise<IHttpResponse<boolean>> => {
   try {
     // Create auth user
     const userCredential = await firebaseAuthService.registerWithEmail(user.email, user.password)
@@ -58,18 +58,7 @@ const register = async (user: IUser): Promise<IHttpResponse<boolean>> => {
     // Create user document in Firestore
     const userDocRef = doc(db, 'users', userCredential.user.uid)
     const userData: Partial<IUser> = {
-      username: user.username,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      sex: user.sex,
-      avatar: user.avatar,
-      phoneNumber: user.phoneNumber,
-      status: true,
-      is_active: true,
-      created_date: Timestamp.now().toMillis(),
-      last_active: Timestamp.now().toMillis(),
-      configuration: user.configuration,
+      ...user,
     }
 
     await setDoc(userDocRef, userData)
@@ -134,7 +123,7 @@ const getUserInfo = async (): Promise<IHttpResponse<IUser<string>>> => {
     }
 
     const userData = userDoc.data() as IUser<string>
-    userData.id = currentUser.uid as any
+    userData.uid = currentUser.uid as any
 
     return {
       isSuccess: true,

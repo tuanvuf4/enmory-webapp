@@ -1,7 +1,6 @@
 import {
   AreaChartOutlined,
   BookOutlined,
-  CalendarOutlined,
   HomeOutlined,
   LoginOutlined,
   PlusOutlined,

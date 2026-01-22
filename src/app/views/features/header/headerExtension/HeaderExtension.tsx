@@ -24,11 +24,11 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
 
   // Get user info from Redux state (Firebase auth)
   const authUser = useSelector((state) => state.auth.user)
-  const [userInfo, setUserInfo] = useState<IUser<string>>()
+  const [userInfo, setUserInfo] = useState<IUser>()
 
   useEffect(() => {
     if (authUser) {
-      setUserInfo(authUser as IUser<string>)
+      setUserInfo(authUser as IUser)
     }
   }, [authUser])
 

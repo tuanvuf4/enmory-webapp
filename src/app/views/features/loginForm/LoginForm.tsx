@@ -21,7 +21,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
   const classes = styles()
   const globalClasses = globalStyle()
 
-  const { loginWithEmail, loginWithGoogle, isLoading, authError } = useFirebaseAuth({
+  const { loginWithEmail, loginWithGoogle, isLoading, authError, errorMsg } = useFirebaseAuth({
     onLoginSuccess: onLoginSuccess,
   })
 
@@ -92,9 +92,11 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
               </Col>
             </Row>
 
-            {/* {errorMsg && <p className={clsx(globalClasses.errorMsg, globalClasses.textLeft)}>{errorMsg}</p>} */}
+            {errorMsg && (
+              <p className={clsx(globalClasses.errorMsg, globalClasses.textLeft)}>{errorMsg}</p>
+            )}
 
-            {authError && (
+            {authError && !errorMsg && (
               <p className={clsx(globalClasses.errorMsg, globalClasses.textCenter)}>{authError}</p>
             )}
 
@@ -118,7 +120,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
                 <Col span={24}>
                   <div className={classes.register}>
                     <p>
-                      Don't have a account? <Link to={'/Register'}></Link>
+                      Don't have a account? <Link to={'/register'}></Link>
                     </p>
                   </div>
                 </Col>

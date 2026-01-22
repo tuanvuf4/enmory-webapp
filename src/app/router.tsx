@@ -29,11 +29,11 @@ export const RouterElement = () => {
       //   element: lazyLoadRoutes('home'),
       // },
       {
-        path: '/Login',
+        path: '/login',
         element: lazyLoadRoutes('login'),
       },
       {
-        path: '/Register',
+        path: '/register',
         element: lazyLoadRoutes('register'),
       },
       {
@@ -56,35 +56,35 @@ export const RouterElement = () => {
         handle: () => {},
       },
       {
-        path: '/Library',
+        path: '/library',
         element: lazyLoadRoutes('library'),
       },
       {
-        path: '/Example',
+        path: '/example',
         element: lazyLoadRoutes('example'),
       },
       {
-        path: '/Listening',
+        path: '/listening',
         element: lazyLoadRoutes('listening'),
       },
       {
-        path: '/Statistic',
+        path: '/statistic',
         element: lazyLoadRoutes('statistic'),
       },
+      // {
+      //   path: '/marker',
+      //   element: lazyLoadRoutes('marker'),
+      // },
+      // {
+      //   path: '/schedule',
+      //   element: lazyLoadRoutes('schedule'),
+      // },
       {
-        path: '/Marker',
-        element: lazyLoadRoutes('marker'),
-      },
-      {
-        path: '/Schedule',
-        element: lazyLoadRoutes('schedule'),
-      },
-      {
-        path: '/Setting',
+        path: '/setting',
         element: lazyLoadRoutes('setting'),
       },
       {
-        path: '/Profile',
+        path: '/profile',
         element: lazyLoadRoutes('profile'),
       },
       {

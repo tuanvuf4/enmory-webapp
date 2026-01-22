@@ -1,5 +1,4 @@
 import { setting } from '@/config/appConfig'
-import { ELoading } from '@/models/app.model'
 import { IHttpResponse } from '@/models/http.model'
 import { IItem, IExample } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
@@ -36,16 +35,20 @@ export const useAutoComplete = (
         setIsSearching(true)
         if (type === 'item') {
           itemApi
-            .getItemAutoComplete(exact ? _.merge(query, { exact }) : query, {
-              headers: { loading: ELoading.NO },
-            })
+            .getItemAutoComplete(exact ? _.merge(query, { exact }) : query)
             .then((response: IHttpResponse<IItem<string>[]>) => {
-              setOptions(
-                response.content.map((item) => ({
-                  label: item.origin,
-                  value: item.origin,
-                })),
-              )
+              if (!response.content || response.content.length === 0) {
+                setOptions([])
+              }
+
+              if (response.content && response.content.length > 0) {
+                setOptions(
+                  response.content.map((item) => ({
+                    label: item.origin,
+                    value: item.origin,
+                  })),
+                )
+              }
             })
             .finally(() => {
               setIsSearching(false)
@@ -54,10 +57,12 @@ export const useAutoComplete = (
 
         if (type === 'example') {
           exampleApi
-            .getExamples(query, {
-              headers: { loading: ELoading.NO },
-            })
+            .getExamples(query)
             .then((response: IHttpResponse<IExample[]>) => {
+              if (!response.content || response.content.length === 0) {
+                setOptions([])
+                return
+              }
               setOptions(
                 response.content.map((meaning) => {
                   return {

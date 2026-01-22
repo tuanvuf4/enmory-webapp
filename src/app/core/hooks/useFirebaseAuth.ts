@@ -64,8 +64,6 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
         onLoginSuccess?.(result.payload)
 
         console.log(`*** result *** `, result)
-        console.log(`*** result.payload *** `, result.payload)
-
         // Firebase authentication successful
         if (redirectAfterSuccess) {
           navigate('/')

@@ -2,9 +2,8 @@ import globalStyle from '@/style/appStyle'
 import { MenuOutlined, SearchOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { useAuthLogout } from '@/core/hooks/useAuthLogout'
-import { configAction } from '@/store/reducers/config.reducer'
-import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
+import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { theme, MenuProps, Layout, Row, Col, Button, Dropdown, Space } from 'antd'
 import { useNavigate, Link } from 'react-router-dom'
@@ -14,10 +13,6 @@ import { menu, addNewType } from './Menu'
 import styles from './style'
 import clsx from 'clsx'
 import { SearchItemForm } from '../searchItemForm'
-import { useModal } from '@/context/modal.context'
-import { initItem, ItemForm } from '../modals/itemModal'
-import { FormProvider, useForm } from 'react-hook-form'
-import { IItem } from '@/models/item.model'
 import { useItemForm } from '@/helpers/hooks/useItemForm'
 
 export const AppHeader = () => {
@@ -26,28 +21,24 @@ export const AppHeader = () => {
   const globalClasses = globalStyle()
 
   const { isAuth, user } = useSelector((state) => state.auth)
-  const { drawer } = useSelector((state) => state.config)
+  const { drawer } = useSelector((state) => state.setting)
   const { isShowSearchFormItem } = useSelector((state) => state.setting)
 
   const dispatch = useDispatch()
   const { logout } = useAuthLogout()
 
-  const { openModal } = useModal()
-
   const navigate = useNavigate()
 
   const { openItemForm } = useItemForm()
 
-  const methods = useForm<IItem>({ defaultValues: initItem })
-
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
       case 'profile':
-        navigate('/Profile')
+        navigate('/profile')
         break
 
       case 'setting':
-        navigate('/Setting')
+        navigate('/setting')
         break
 
       case 'logout':
@@ -94,14 +85,14 @@ export const AppHeader = () => {
         >
           <Col xs={10} md={4}>
             {drawer && (
-              <div className={classes.toogleSidebarBtn}>
+              <div className={classes.toggleSidebarBtn}>
                 <Button
                   type='text'
                   shape='default'
                   className={classes.btnToggle}
                   icon={<MenuOutlined style={{ color: token.colorTextBase }} />}
                   onClick={() => {
-                    dispatch(configAction.toggleSidebar())
+                    dispatch(settingAction.toggleSidebar())
                   }}
                 />
 
@@ -130,14 +121,14 @@ export const AppHeader = () => {
             )}
 
             {!drawer && (
-              <div className={classes.toogleSidebarBtn}>
+              <div className={classes.toggleSidebarBtn}>
                 <Button
                   type='text'
                   shape='default'
                   className={classes.btnToggle}
                   icon={<MenuOutlined style={{ color: token.colorTextBase }} />}
                   onClick={() => {
-                    dispatch(configAction.toggleSidebar())
+                    dispatch(settingAction.toggleSidebar())
                   }}
                 />
               </div>
@@ -193,14 +184,16 @@ export const AppHeader = () => {
 
             {!isAuth && (
               <div className={classes.userContainer}>
-                {/* <Button onClick={() => googleLogin}>Sign in with Google 🚀 </Button> */}
-
-                <Button type='primary' onClick={() => navigate('/Login')}>
-                  Login
+                <Button type='primary' onClick={() => navigate('/login')} style={{ minWidth: 100 }}>
+                  LOGIN
                 </Button>
 
-                <Button type='default' onClick={() => navigate('/Register')}>
-                  Register
+                <Button
+                  type='default'
+                  onClick={() => navigate('/register')}
+                  style={{ minWidth: 100 }}
+                >
+                  REGISTER
                 </Button>
               </div>
             )}

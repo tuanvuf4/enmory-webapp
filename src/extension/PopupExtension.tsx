@@ -24,8 +24,8 @@ export const PopupExtension = () => {
 
   const [currentPage, setCurrentPage] = useState<EPageExt>(EPageExt.ADD)
 
-  const { data: cats } = useCategories()
-  const { data: types } = useTypes()
+  useCategories()
+  useTypes()
 
   const methods = useForm<IItem>({ defaultValues: initItem })
 

@@ -28,12 +28,12 @@ export const useAuthLogout = () => {
       localStorage.removeItem('user')
 
       // Redirect to login
-      navigate('/Login')
+      navigate('/login')
     } catch (error) {
       console.error('[Auth Logout] Error during logout:', error)
       // Still redirect to login even if logout fails
       dispatch(authAction.logOut())
-      navigate('/Login')
+      navigate('/login')
     }
   }, [dispatch, navigate])
 

@@ -1,4 +1,4 @@
-import { Button, Col, Input, Radio, Row, Space, theme } from 'antd'
+import { Button, Col, Input, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
@@ -21,37 +21,29 @@ export const RegisterForm = ({ showBanner = true }) => {
 
   const {
     register: registerUser,
+    loginWithGoogle,
     errorMsg,
     isLoading: firebaseLoading,
-    firebaseError,
+    authError,
     isRegistered,
     registerSuccess,
     registerMsg,
     setIsRegistered,
   } = useFirebaseAuth()
 
-  const { control, handleSubmit } = useForm<IUser>({
+  const { control, handleSubmit, watch } = useForm<IUser>({
     defaultValues: initRegisterForm,
+    reValidateMode: 'onChange',
+    mode: 'all',
   })
 
   const handleOk = async (data: IUser) => {
     await registerUser(data)
   }
 
-  // const googleLogin = useGoogleLogin({
-  //   flow: 'auth-code',
-  //   onSuccess: (credentialResponse) => {
-  //     console.log('credentialResponse: ', credentialResponse)
-  //     if (credentialResponse) {
-  //       // getGoogleUserInfo(credentialResponse.credential).then((resp) => {
-  //       // console.log('resp: ', resp);
-  //       // });
-  //     }
-  //   },
-  //   onError: () => {
-  //     console.log('Login Failed')
-  //   },
-  // })
+  const handleGoogleLogin = async () => {
+    await loginWithGoogle()
+  }
 
   return (
     <div className={classNames([classes.registerForm])}>
@@ -71,27 +63,28 @@ export const RegisterForm = ({ showBanner = true }) => {
               className={globalClasses.fulWidth}
             >
               <Row align={'top'} gutter={[token.size, token.size]}>
-                <Col xs={24} md={12}>
-                  <label className={classes.label} htmlFor=''>
-                    Username:
-                  </label>
-                  <Controller
-                    control={control}
-                    name={`username`}
-                    render={({ field: { onChange, value } }) => (
-                      <Input value={value} onChange={onChange} placeholder='Username' />
-                    )}
-                  />
-                </Col>
-                <Col xs={24} md={12}>
+                <Col xs={24} md={24}>
                   <label className={classes.label} htmlFor=''>
                     Email:
                   </label>
                   <Controller
-                    control={control}
                     name={`email`}
-                    render={({ field: { onChange, value } }) => (
-                      <Input value={value} onChange={onChange} placeholder='Email' />
+                    rules={{
+                      required: 'Email is required',
+                    }}
+                    control={control}
+                    render={({ field: { onChange, value }, fieldState: { error } }) => (
+                      <>
+                        <Input
+                          value={value}
+                          onChange={onChange}
+                          placeholder='Email'
+                          status={error ? 'error' : ''}
+                        />
+                        {error && (
+                          <span style={{ color: 'red', fontSize: '12px' }}>{error.message}</span>
+                        )}
+                      </>
                     )}
                   />
                 </Col>
@@ -103,17 +96,26 @@ export const RegisterForm = ({ showBanner = true }) => {
                     Password:
                   </label>
                   <Controller
-                    control={control}
                     name={`password`}
-                    render={({ field: { onChange, value } }) => (
-                      <Input.Password
-                        value={value}
-                        onChange={onChange}
-                        placeholder='Password'
-                        iconRender={(visible) =>
-                          visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
-                        }
-                      />
+                    control={control}
+                    rules={{
+                      required: 'Password is required',
+                    }}
+                    render={({ field: { onChange, value }, fieldState: { error } }) => (
+                      <>
+                        <Input.Password
+                          value={value}
+                          onChange={onChange}
+                          placeholder='Password'
+                          status={error ? 'error' : ''}
+                          iconRender={(visible) =>
+                            visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                          }
+                        />
+                        {error && (
+                          <span style={{ color: 'red', fontSize: '12px' }}>{error.message}</span>
+                        )}
+                      </>
                     )}
                   />
                 </Col>
@@ -122,17 +124,27 @@ export const RegisterForm = ({ showBanner = true }) => {
                     Confirm password:
                   </label>
                   <Controller
-                    control={control}
                     name={`cpassword`}
-                    render={({ field: { onChange, value } }) => (
-                      <Input.Password
-                        value={value}
-                        onChange={onChange}
-                        placeholder='Confirm password'
-                        iconRender={(visible) =>
-                          visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
-                        }
-                      />
+                    rules={{
+                      required: 'Confirm password is required',
+                      validate: (value) => value === watch('password') || 'Passwords do not match',
+                    }}
+                    control={control}
+                    render={({ field: { onChange, value }, fieldState: { error } }) => (
+                      <>
+                        <Input.Password
+                          value={value}
+                          onChange={onChange}
+                          placeholder='Confirm password'
+                          status={error ? 'error' : ''}
+                          iconRender={(visible) =>
+                            visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                          }
+                        />
+                        {error && (
+                          <span style={{ color: 'red', fontSize: '12px' }}>{error.message}</span>
+                        )}
+                      </>
                     )}
                   />
                 </Col>
@@ -144,10 +156,23 @@ export const RegisterForm = ({ showBanner = true }) => {
                     First name:
                   </label>
                   <Controller
-                    control={control}
                     name={`firstName`}
-                    render={({ field: { onChange, value } }) => (
-                      <Input value={value} onChange={onChange} placeholder='First name' />
+                    rules={{
+                      required: 'First name is required',
+                    }}
+                    control={control}
+                    render={({ field: { onChange, value }, fieldState: { error } }) => (
+                      <>
+                        <Input
+                          value={value}
+                          onChange={onChange}
+                          placeholder='First name'
+                          status={error ? 'error' : ''}
+                        />
+                        {error && (
+                          <span style={{ color: 'red', fontSize: '12px' }}>{error.message}</span>
+                        )}
+                      </>
                     )}
                   />
                 </Col>
@@ -156,10 +181,23 @@ export const RegisterForm = ({ showBanner = true }) => {
                     Last name:
                   </label>
                   <Controller
-                    control={control}
                     name={`lastName`}
-                    render={({ field: { onChange, value } }) => (
-                      <Input value={value} onChange={onChange} placeholder='Last name' />
+                    rules={{
+                      required: 'Last name is required',
+                    }}
+                    control={control}
+                    render={({ field: { onChange, value }, fieldState: { error } }) => (
+                      <>
+                        <Input
+                          value={value}
+                          onChange={onChange}
+                          placeholder='Last name'
+                          status={error ? 'error' : ''}
+                        />
+                        {error && (
+                          <span style={{ color: 'red', fontSize: '12px' }}>{error.message}</span>
+                        )}
+                      </>
                     )}
                   />
                 </Col>
@@ -168,67 +206,32 @@ export const RegisterForm = ({ showBanner = true }) => {
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col span={24} md={24}>
                   <label className={classes.label} htmlFor=''>
-                    Avatar:
+                    Photo URL:
                   </label>
                   <Controller
                     control={control}
-                    name={`avatar`}
+                    name={`photoURL`}
                     render={({ field: { onChange, value } }) => (
-                      <Input value={value} onChange={onChange} placeholder='Avatar' />
+                      <Input value={value} onChange={onChange} placeholder='Photo URL' />
                     )}
                   />
                 </Col>
               </Row>
 
-              <Row align={'top'} gutter={[token.size, token.size]}>
-                <Col xs={24} md={12}>
-                  <label className={classes.label} htmlFor=''>
-                    Phone number:
-                  </label>
-                  <Controller
-                    control={control}
-                    name={`phoneNumber`}
-                    render={({ field: { onChange, value } }) => (
-                      <Input value={value} onChange={onChange} placeholder='Phone number' />
-                    )}
-                  />
-                </Col>
-                <Col xs={24} md={12}>
-                  <label className={classes.label} htmlFor=''>
-                    Sex:
-                  </label>
-                  <Controller
-                    control={control}
-                    name={`sex`}
-                    render={({ field: { onChange, value } }) => (
-                      <Radio.Group onChange={(e) => onChange(e.target.value)} value={value}>
-                        <Space direction='vertical'>
-                          <Radio value={true}>Male</Radio>
-                          <Radio value={false}>Female</Radio>
-                          {/* <Radio value={2}>Others</Radio> */}
-                        </Space>
-                      </Radio.Group>
-                    )}
-                  />
-                </Col>
-              </Row>
-
-              {errorMsg && (
+              {(authError || errorMsg) && (
                 <Row align={'middle'}>
                   <Col span={24}>
-                    <p className={classNames(globalClasses.errorMsg, globalClasses.textLeft)}>
-                      {errorMsg}
-                    </p>
-                  </Col>
-                </Row>
-              )}
+                    {errorMsg && (
+                      <p className={classNames(globalClasses.errorMsg, globalClasses.textLeft)}>
+                        {authError}
+                      </p>
+                    )}
 
-              {firebaseError && (
-                <Row align={'middle'}>
-                  <Col span={24}>
-                    <p className={classNames(globalClasses.errorMsg, globalClasses.textLeft)}>
-                      {firebaseError}
-                    </p>
+                    {!errorMsg && authError && (
+                      <p className={classNames(globalClasses.errorMsg, globalClasses.textLeft)}>
+                        {authError}
+                      </p>
+                    )}
                   </Col>
                 </Row>
               )}
@@ -253,32 +256,32 @@ export const RegisterForm = ({ showBanner = true }) => {
                   <Col span={24}>
                     <div className={classesLogin.register}>
                       <p>
-                        Already have an account? <Link to={'/Login'}>Log in</Link>
+                        Already have an account? <Link to={'/login'}>Log in</Link>
                       </p>
                     </div>
                   </Col>
                 </Row>
               )}
 
-              {appConfig.env === 'development' && (
-                <>
-                  <Row justify={'center'} gutter={[token.size, token.size]}>
-                    <Col span={24}>
-                      <div className={classesLogin.otherLoginMethod}>
-                        <h3>Register with</h3>
-                      </div>
-                    </Col>
-                  </Row>
+              <Row justify={'center'} gutter={[token.size, token.size]}>
+                <Col span={24}>
+                  <div className={classesLogin.otherLoginMethod}>
+                    <h3>Register with</h3>
+                  </div>
+                </Col>
+              </Row>
 
-                  <Row gutter={[token.size, token.size]}>
-                    <Col span={24}>
-                      <Button className={globalClasses.fulWidth} onClick={() => {}}>
-                        Google
-                      </Button>
-                    </Col>
-                  </Row>
-                </>
-              )}
+              <Row gutter={[token.size, token.size]}>
+                <Col span={24}>
+                  <Button
+                    className={globalClasses.fulWidth}
+                    onClick={handleGoogleLogin}
+                    loading={firebaseLoading}
+                  >
+                    Google
+                  </Button>
+                </Col>
+              </Row>
             </Space>
           </form>
         )}
@@ -288,7 +291,7 @@ export const RegisterForm = ({ showBanner = true }) => {
             <Col span={24}>
               <div className={classesLogin.register}>
                 <p>
-                  {registerMsg} <Link to={'/Login'}>Log in</Link>
+                  {registerMsg} <Link to={'/login'}>Log in</Link>
                 </p>
               </div>
             </Col>
@@ -301,7 +304,7 @@ export const RegisterForm = ({ showBanner = true }) => {
               <div className={classesLogin.register}>
                 <p>
                   {registerMsg}
-                  <Link to={'/Register'} onClick={() => setIsRegistered(false)}>
+                  <Link to={'/register'} onClick={() => setIsRegistered(false)}>
                     Retry
                   </Link>
                 </p>

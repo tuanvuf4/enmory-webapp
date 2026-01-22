@@ -468,6 +468,230 @@ const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
   }
 }
 
+/**
+ * Get new added items by period for chart data
+ * Groups items by category and time period
+ */
+const getNewAddedItemByPeriod = async (
+  periods: Array<{ id: number; label: string; from: number; to: number }>,
+): Promise<IHttpResponse<Array<{ id: number; label: string; data: number[] }>>> => {
+  try {
+    const currentUser = firebaseAuthService.getCurrentUser()
+    if (!currentUser) {
+      throw new Error('User not authenticated')
+    }
+
+    // Define all categories
+    const categories = [
+      { id: 1, label: 'Word' },
+      { id: 2, label: 'Phrase' },
+      { id: 3, label: 'Idiom' },
+      { id: 4, label: 'Slang' },
+      { id: 5, label: 'Collocation' },
+      { id: 6, label: 'Sentence' },
+    ]
+
+    // Initialize result structure
+    const chartData = categories.map((cat) => ({
+      id: cat.id,
+      label: cat.label,
+      data: new Array(periods.length).fill(0),
+    }))
+
+    // Fetch all non-deleted items for the user
+    const itemsRef = collection(db, dbCollections.items)
+    const constraints: QueryConstraint[] = [
+      where('uid', '==', currentUser.uid),
+      where('is_deleted', '==', false),
+    ]
+
+    const q = query(itemsRef, ...constraints)
+    const querySnapshot = await getDocs(q)
+
+    // Get all items
+    const allItems = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+
+    // Process each period
+    periods.forEach((period, periodIndex) => {
+      // Filter items for this period
+      const periodItems = allItems.filter((item: any) => {
+        const itemDate = item.created_date || 0
+        return (
+          itemDate >= period.from && itemDate <= period.to && item.archive === false // Only count enabled items
+        )
+      })
+
+      // Count by category
+      periodItems.forEach((item: any) => {
+        const catId = item.catId
+        const categoryIndex = chartData.findIndex((cat) => cat.id === catId)
+        if (categoryIndex !== -1) {
+          chartData[categoryIndex].data[periodIndex]++
+        }
+      })
+    })
+
+    return {
+      isSuccess: true,
+      message: 'Chart data fetched successfully',
+      content: chartData,
+      statusCode: 200,
+    }
+  } catch (error) {
+    console.error('Error fetching chart data:', error)
+    return {
+      isSuccess: false,
+      message: error instanceof Error ? error.message : 'Failed to fetch chart data',
+      content: [],
+      statusCode: 500,
+    }
+  }
+}
+
+/**
+ * Get items grouped by level for progress chart
+ * Returns count of items at each level (0-5) for each category
+ */
+const getItemsByLevel = async (): Promise<
+  IHttpResponse<Array<{ id: number; label: string; data: number[] }>>
+> => {
+  try {
+    const currentUser = firebaseAuthService.getCurrentUser()
+    if (!currentUser) {
+      throw new Error('User not authenticated')
+    }
+
+    // Define all categories
+    const categories = [
+      { id: 1, label: 'Word' },
+      { id: 2, label: 'Phrase' },
+      { id: 3, label: 'Idiom' },
+      { id: 4, label: 'Slang' },
+      { id: 5, label: 'Collocation' },
+      { id: 6, label: 'Sentence' },
+    ]
+
+    // Initialize result structure - 6 levels (0-5)
+    const chartData = categories.map((cat) => ({
+      id: cat.id,
+      label: cat.label,
+      data: new Array(6).fill(0),
+    }))
+
+    // Fetch all non-deleted, enabled items for the user
+    const itemsRef = collection(db, dbCollections.items)
+    const constraints: QueryConstraint[] = [
+      where('uid', '==', currentUser.uid),
+      where('is_deleted', '==', false),
+      where('archive', '==', false), // Only count enabled items
+    ]
+
+    const q = query(itemsRef, ...constraints)
+    const querySnapshot = await getDocs(q)
+
+    // Count items by category and level
+    querySnapshot.docs.forEach((doc) => {
+      const itemData = doc.data()
+      const catId = itemData.catId
+      const level = itemData.level || 0
+
+      // Find the category in chartData
+      const categoryIndex = chartData.findIndex((cat) => cat.id === catId)
+      if (categoryIndex !== -1 && level >= 0 && level <= 5) {
+        chartData[categoryIndex].data[level]++
+      }
+    })
+
+    return {
+      isSuccess: true,
+      message: 'Progress chart data fetched successfully',
+      content: chartData,
+      statusCode: 200,
+    }
+  } catch (error) {
+    console.error('Error fetching progress chart data:', error)
+    return {
+      isSuccess: false,
+      message: error instanceof Error ? error.message : 'Failed to fetch progress chart data',
+      content: [],
+      statusCode: 500,
+    }
+  }
+}
+
+/**
+ * Get overview of items grouped by category
+ * Returns count of items for each category
+ */
+const getOverviewItems = async (): Promise<
+  IHttpResponse<Array<{ id: number; label: string; total: number }>>
+> => {
+  try {
+    const currentUser = firebaseAuthService.getCurrentUser()
+    if (!currentUser) {
+      throw new Error('User not authenticated')
+    }
+
+    // Define all categories
+    const categories = [
+      { id: 1, label: 'Word' },
+      { id: 2, label: 'Phrase' },
+      { id: 3, label: 'Idiom' },
+      { id: 4, label: 'Slang' },
+      { id: 5, label: 'Collocation' },
+      { id: 6, label: 'Sentence' },
+    ]
+
+    // Initialize result structure
+    const overviewData = categories.map((cat) => ({
+      id: cat.id,
+      label: cat.label,
+      total: 0,
+    }))
+
+    // Fetch all non-deleted, enabled items for the user
+    const itemsRef = collection(db, dbCollections.items)
+    const constraints: QueryConstraint[] = [
+      where('uid', '==', currentUser.uid),
+      where('is_deleted', '==', false),
+      where('archive', '==', false), // Only count enabled items
+    ]
+
+    const q = query(itemsRef, ...constraints)
+    const querySnapshot = await getDocs(q)
+
+    // Count items by category
+    querySnapshot.docs.forEach((doc) => {
+      const itemData = doc.data()
+      const catId = itemData.catId
+
+      // Find the category in overviewData and increment count
+      const categoryIndex = overviewData.findIndex((cat) => cat.id === catId)
+      if (categoryIndex !== -1) {
+        overviewData[categoryIndex].total++
+      }
+    })
+
+    return {
+      isSuccess: true,
+      message: 'Overview data fetched successfully',
+      content: overviewData,
+      statusCode: 200,
+    }
+  } catch (error) {
+    console.error('Error fetching overview data:', error)
+    return {
+      isSuccess: false,
+      message: error instanceof Error ? error.message : 'Failed to fetch overview data',
+      content: [],
+      statusCode: 500,
+    }
+  }
+}
+
 export const itemApi = {
   getItems,
   getItemAutoComplete,
@@ -477,4 +701,7 @@ export const itemApi = {
   updateItem,
   deleteItem,
   getStudySet,
+  getNewAddedItemByPeriod,
+  getItemsByLevel,
+  getOverviewItems,
 }

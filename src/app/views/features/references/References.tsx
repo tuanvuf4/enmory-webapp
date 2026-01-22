@@ -18,7 +18,10 @@ export const Reference: React.FC<IPros> = ({ origin }) => {
   return (
     <div className={classes.references}>
       {appConfig.references.map((reference, key) => {
-        if (user.configuration.references.findIndex((item) => item === reference.id) > -1)
+        if (
+          user?.configuration &&
+          user.configuration.references.findIndex((item) => item === reference.id) > -1
+        )
           return (
             <Button
               key={key}

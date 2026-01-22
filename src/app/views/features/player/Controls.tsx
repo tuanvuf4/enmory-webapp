@@ -41,7 +41,7 @@ export const Controls: React.FC<IProps> = ({
 }) => {
   const classes = styles()
 
-  const [volume, setVolume] = useState(100)
+  const [volume] = useState(100)
   const [muteVolume, setMuteVolume] = useState(false)
 
   const togglePlayPause = () => {

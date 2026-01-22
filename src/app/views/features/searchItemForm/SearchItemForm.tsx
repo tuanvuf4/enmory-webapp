@@ -6,14 +6,12 @@ import {
   SearchOutlined,
   Loading3QuartersOutlined,
 } from '@ant-design/icons'
-import { setting } from '@/config/appConfig'
-import { useSelector, useDispatch } from '@/core/hooks'
+import { useSelector } from '@/core/hooks'
 import { useAutoComplete } from '@/helpers/hooks'
 import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { EType, ECategory } from '@/models/item.model'
 import { initSearchFormItem, allSelect } from '@/services/index'
-import { itemAsync } from '@/store/asyncActions/item.async'
 import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select } from 'antd'
 import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
@@ -43,9 +41,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
 
   const [showType, setShowType] = useState<boolean>(false)
 
-  const { categories, types } = useSelector((state) => state.config)
-
-  const dispatch = useDispatch()
+  const { categories, types } = useSelector((state) => state.setting)
 
   // Read form values from URL params
   const formSearchValue: IFormSearchItem = {

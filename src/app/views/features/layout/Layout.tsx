@@ -8,22 +8,14 @@ import { appTheme } from '@/style/theme'
 import styles from './style'
 import { styleConfig } from '@/style/appStyle'
 import { SideBarMain } from '../sideBar/SideBarMain'
-import { ViewItemModal } from '../modals/viewItemModal/ViewItemModal'
-import { Notification } from '../../components/notification/Notification'
-import { configAction } from '@/store/reducers/config.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { EViewPort } from '@/models/app.model'
-import { FormProvider, useForm } from 'react-hook-form'
-import { IItem } from '@/models/item.model'
-import { initItem } from '../modals/itemModal/data'
-import { ExampleModal } from '../modals/exampleModal/ExampleModal'
 import { LoadingBar } from '../loading/LoadingBar'
 
 export const AppLayout: React.FC<PropsWithChildren> = (props) => {
   const classes = styles()
 
-  const { isShowViewItemModal, isShowExModal } = useSelector((state) => state.setting)
-  const { isSidebarOpened, drawer } = useSelector((state) => state.config)
+  const { isSidebarOpened, drawer } = useSelector((state) => state.setting)
   const { isAuth } = useSelector((state) => state.auth)
 
   const dispatch = useDispatch()
@@ -31,25 +23,23 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const methods = useForm<IItem>({ defaultValues: initItem })
-
-  const updateViewMode = (width: number) => {
-    if (width < 576) {
-      dispatch(configAction.setViewPort(EViewPort.XS))
-    }
-    if (width >= 576) {
-      dispatch(configAction.setViewPort(EViewPort.SM))
-    }
-    if (width >= 768) {
-      dispatch(configAction.setViewPort(EViewPort.MD))
-    }
-    if (width >= 992) {
-      dispatch(configAction.setViewPort(EViewPort.LG))
-    }
-    if (width >= 1200) {
-      dispatch(configAction.setViewPort(EViewPort.XL))
-    }
-  }
+  // const updateViewMode = (width: number) => {
+  //   if (width < 576) {
+  //     dispatch(configAction.setViewPort(EViewPort.XS))
+  //   }
+  //   if (width >= 576) {
+  //     dispatch(configAction.setViewPort(EViewPort.SM))
+  //   }
+  //   if (width >= 768) {
+  //     dispatch(configAction.setViewPort(EViewPort.MD))
+  //   }
+  //   if (width >= 992) {
+  //     dispatch(configAction.setViewPort(EViewPort.LG))
+  //   }
+  //   if (width >= 1200) {
+  //     dispatch(configAction.setViewPort(EViewPort.XL))
+  //   }
+  // }
 
   // useEffect(() => {
   //   window.addEventListener('resize', () => updateViewMode(window.innerWidth))
@@ -61,7 +51,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
 
   useEffect(() => {
     if (location.pathname === '/' && !isAuth) {
-      navigate('/Login')
+      navigate('/login')
     }
   }, [location, isAuth])
 
@@ -84,7 +74,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
           <Drawer
             placement={'left'}
             width={styleConfig.sider.width}
-            onClose={() => dispatch(configAction.toggleSidebar())}
+            onClose={() => dispatch(settingAction.toggleSidebar())}
             open={isSidebarOpened}
             closable={false}
             destroyOnClose={true}
@@ -153,12 +143,6 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
             }
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           />
-
-          <Notification />
-
-          {isShowExModal && <ExampleModal open={isShowExModal} />}
-
-          {isShowViewItemModal && <ViewItemModal open={isShowViewItemModal} />}
         </>
       )}
     </>

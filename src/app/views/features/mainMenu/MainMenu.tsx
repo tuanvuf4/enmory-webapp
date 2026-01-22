@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { authMenus, keyPaths, menus, menusExt } from './Menus'
 import classNames from 'clsx'
 import type { MenuProps } from 'antd'
-import { configAction } from '@/store/reducers/config.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { EPageExt } from '@/models/app.model'
 
@@ -46,7 +46,7 @@ export const MainMenu: React.FC<IPros> = ({
     } else {
       setCurrent(menu.key)
       redirect(menu.key, navigate)
-      if (toggleDrawler) dispatch(configAction.toggleSidebar())
+      if (toggleDrawler) dispatch(settingAction.toggleSidebar())
     }
   }
 

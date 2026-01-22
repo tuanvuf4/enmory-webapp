@@ -1,9 +1,8 @@
-import { Button, Col, Row, Space, Tooltip, theme } from 'antd'
+import { Button, Col, Row, Space, theme } from 'antd'
 import styles from './style'
 import TextArea from 'antd/es/input/TextArea'
 import { useEffect, useState } from 'react'
 import { setting } from '@/config/appConfig'
-import { InfoCircleOutlined } from '@ant-design/icons'
 import classNames from 'clsx'
 
 interface IProps {
@@ -33,15 +32,15 @@ export const Dictation: React.FC<IProps> = ({
   const [, setTranscriptLable] = useState<string>('Transcript')
   const [, setTranslationLabel] = useState<string>('Translation')
 
-  const getTooltip = () => {
-    return (
-      <Tooltip
-        title={`Maximum of ${maxLengthTranscript} words, separated by a dot to display better`}
-      >
-        <InfoCircleOutlined style={{ fontSize: 20 }} />
-      </Tooltip>
-    )
-  }
+  // const getTooltip = () => {
+  //   return (
+  //     <Tooltip
+  //       title={`Maximum of ${maxLengthTranscript} words, separated by a dot to display better`}
+  //     >
+  //       <InfoCircleOutlined style={{ fontSize: 20 }} />
+  //     </Tooltip>
+  //   )
+  // }
 
   useEffect(() => {
     setSource(transcript)

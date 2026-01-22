@@ -1,6 +1,4 @@
 import { SearchOutlined } from '@ant-design/icons'
-import { useSelector, useDispatch } from '@/core/hooks'
-import { settingAction } from '@/store/reducers/setting.reducer'
 import { theme } from 'antd'
 import styles from './style'
 import { itemApi } from '@/services/firebase/api/item.api'
@@ -18,8 +16,6 @@ export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
 
   const classes = styles(token)
 
-  const dispatch = useDispatch()
-
   const getItem = async (origin: string, exact = true) => {
     const { isSuccess, content } = await itemApi.getItems({
       keyword: origin,
@@ -28,7 +24,7 @@ export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
       exact,
     })
     if (isSuccess && content) {
-      dispatch(settingAction.setCurrentItem(content[0]))
+      // dispatch(settingAction.setCurrentItem(content[0]))
     }
   }
 

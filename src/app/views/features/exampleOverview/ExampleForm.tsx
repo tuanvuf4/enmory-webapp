@@ -64,7 +64,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
     console.log(`*** formData *** `, formData)
     setLoading(true)
     try {
-      let result: IExample
+      let result: IExample | null
 
       if (data?.id) {
         // Update existing example
@@ -79,7 +79,9 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
       setAnswer('')
       setIsChecked(false)
       reset(initValues)
-      onSuccess?.(result)
+      if (result) {
+        onSuccess?.(result)
+      }
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     } finally {

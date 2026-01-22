@@ -12,13 +12,11 @@ export interface IUserConfig<R = number[]> {
   numberOfPhraseInStudySet: number
   numberOfIdiomInStudySet: number
   numberOfSlangInStudySet: number
-  numberOfDictationItem: number
   numberOfCollocationsInStudySet: number
   numberOfSentencesInStudySet: number
   numberOfExampleReview: number
   references: R
   community: boolean
-  player: boolean
   listeningType: EListeningTypes
 }
 
@@ -27,7 +25,7 @@ export interface IUser<R = number[]> {
   displayName: string
   photoURL: string
   email: string
-  password: string
+  password?: string
   cpassword?: string
   firstName: string
   lastName: string

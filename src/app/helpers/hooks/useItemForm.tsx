@@ -5,7 +5,7 @@ import { initItem, ItemForm } from '@/views/features/modals/itemModal'
 import { FormProvider, useForm } from 'react-hook-form'
 
 export const useItemForm = () => {
-  const { openModal, closeModal } = useModal()
+  const { openModal } = useModal()
 
   const ItemFormContext = ({ data, mode }: { data: IItem; mode: 'edit' | 'add' }) => {
     const methods = useForm<IItem>({ defaultValues: data })

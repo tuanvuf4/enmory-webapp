@@ -3,7 +3,7 @@ import { PlusOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/i
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IItem } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
-import { theme, Space, Col, Row, Button, Switch, AutoComplete, Flex } from 'antd'
+import { theme, Space, Col, Row, Button, AutoComplete, Flex } from 'antd'
 import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { exampleItem } from './data'
@@ -25,7 +25,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
 
   const { options } = useAutoComplete(currentSearch, 'example')
 
-  const { control, setValue, getValues, trigger } = useFormContext<IItem>()
+  const { control, setValue } = useFormContext<IItem>()
 
   const { fields, remove, prepend } = useFieldArray({
     control,

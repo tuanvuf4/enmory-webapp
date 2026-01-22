@@ -4,8 +4,9 @@ import { useSelector, useDispatch } from '@/core/hooks'
 import { IUserConfig } from '@/models/user.model'
 import { apiUser } from '@/services/firebase/api/user.api'
 import { authAction } from '@/store/reducers/auth.reducer'
-import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button } from 'antd'
+import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button, message } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
+import { useState } from 'react'
 import styles from './style'
 import clsx from 'clsx'
 
@@ -18,32 +19,32 @@ const Setting = () => {
   const { user } = useSelector((state) => state.auth)
 
   const dispatch = useDispatch()
+  const [isLoading, setIsLoading] = useState(false)
 
-  const { control, handleSubmit } = useForm<IUserConfig<number[]>>({
-    defaultValues: user?.configuration,
+  const { control, handleSubmit } = useForm<IUserConfig>({
+    defaultValues: user?.configuration || setting.meta,
   })
 
-  const convertDataToServer = (
-    data: IUserConfig<number[] | string>,
-    toClient = true,
-  ): IUserConfig<number[] | string> => {
-    return {
-      ...data,
-      references: toClient
-        ? (data as IUserConfig<string>).references
-            .replaceAll(' ', '')
-            .split(',')
-            .map((item) => parseInt(item))
-        : (data as IUserConfig<number[]>).references.join(','),
-    }
-  }
+  const onSubmit = async (data: IUserConfig) => {
+    setIsLoading(true)
+    console.log(`*** data *** `, data)
+    try {
+      const result = await apiUser.updateUserConfig(data)
 
-  const onSubmit = (data: IUserConfig<number[]>) => {
-    apiUser.userConfig(convertDataToServer(data, false) as IUserConfig<string>).then((repsonse) => {
-      dispatch(
-        authAction.updateUserConfig(convertDataToServer(repsonse.content) as IUserConfig<number[]>),
-      )
-    })
+      if (result.isSuccess) {
+        message.success('Settings saved successfully!')
+
+        // Update user configuration in Redux store
+        dispatch(authAction.updateUserConfig(data))
+      } else {
+        message.error(result.message || 'Failed to save settings')
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error)
+      message.error('Failed to save settings. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const plainOptions: CheckboxOptionType[] = appConfig.references.map((refs) => {
@@ -55,11 +56,11 @@ const Setting = () => {
 
   return (
     <div className={globalClasses.container}>
+      <h2 className={globalClasses.pageTitle}>Settings</h2>
+
       <div className={clsx(globalClasses.bodyContent)}>
         <Row className={globalClasses.innerContainer}>
-          <Col xs={24} className={classes.sep}>
-            <h2 className={globalClasses.pageTitle}>Settings</h2>
-
+          <Col xs={24}>
             <form onSubmit={handleSubmit(onSubmit)}>
               <Space direction='vertical' style={{ display: 'flex' }}>
                 <Row
@@ -110,7 +111,7 @@ const Setting = () => {
                                 value={value}
                                 defaultValue={setting.meta.numberOfPhraseInStudySet}
                                 onChange={onChange}
-                                options={setting.options}
+                                options={setting.rdOptions}
                               />
                             )
                           }}
@@ -132,7 +133,7 @@ const Setting = () => {
                                 value={value}
                                 defaultValue={setting.meta.numberOfIdiomInStudySet}
                                 onChange={onChange}
-                                options={setting.options}
+                                options={setting.rdOptions}
                               />
                             )
                           }}
@@ -154,7 +155,7 @@ const Setting = () => {
                                 value={value}
                                 defaultValue={setting.meta.numberOfSlangInStudySet}
                                 onChange={onChange}
-                                options={setting.options}
+                                options={setting.rdOptions}
                               />
                             )
                           }}
@@ -176,7 +177,7 @@ const Setting = () => {
                                 value={value}
                                 defaultValue={setting.meta.numberOfCollocationsInStudySet}
                                 onChange={onChange}
-                                options={setting.options}
+                                options={setting.rdOptions}
                               />
                             )
                           }}
@@ -198,7 +199,7 @@ const Setting = () => {
                                 value={value}
                                 defaultValue={setting.meta.numberOfSentencesInStudySet}
                                 onChange={onChange}
-                                options={setting.options}
+                                options={setting.rdOptions}
                               />
                             )
                           }}
@@ -220,86 +221,7 @@ const Setting = () => {
                                 value={value}
                                 defaultValue={setting.meta.numberOfExampleReview}
                                 onChange={onChange}
-                                options={setting.options}
-                              />
-                            )
-                          }}
-                        />
-                      </Col>
-                    </Row>
-                  </Col>
-                </Row>
-
-                <Row
-                  align={'top'}
-                  gutter={[token.size, token.size]}
-                  style={{ marginBottom: token.size }}
-                >
-                  <Col xs={24} md={8}>
-                    <h3 className={classes.grTitle}>Dictation</h3>
-                  </Col>
-
-                  <Col xs={24} md={16}>
-                    <Row align={'middle'} gutter={[token.size, token.size]}>
-                      <Col xs={12} md={12}>
-                        <h4 className={classes.title}>Player:</h4>
-                      </Col>
-
-                      <Col xs={12} md={12}>
-                        <Controller
-                          control={control}
-                          name={`player`}
-                          render={({ field: { onChange, value } }) => {
-                            return (
-                              <Checkbox
-                                checked={value}
-                                onChange={(e) => onChange(e.target.checked)}
-                                className={classes.checkbox}
-                              >
-                                {value ? 'Display' : 'Hide'}
-                              </Checkbox>
-                            )
-                          }}
-                        />
-                      </Col>
-
-                      <Col xs={12} md={12}>
-                        <h4 className={classes.title}>Type:</h4>
-                      </Col>
-
-                      <Col xs={12} md={12}>
-                        <Controller
-                          control={control}
-                          name={`listeningType`}
-                          render={({ field: { onChange, value } }) => {
-                            return (
-                              <Select
-                                value={value}
-                                defaultValue={setting.listening.type.default}
-                                onChange={onChange}
-                                options={setting.listening.type.options}
-                              />
-                            )
-                          }}
-                        />
-                      </Col>
-
-                      <Col xs={12} md={12}>
-                        <h4 className={classes.title}>Exercise Items:</h4>
-                      </Col>
-
-                      <Col xs={12} md={12}>
-                        <Controller
-                          control={control}
-                          name={`numberOfDictationItem`}
-                          render={({ field: { onChange, value } }) => {
-                            return (
-                              <Select
-                                style={{ minWidth: 60 }}
-                                value={value}
-                                defaultValue={setting.listening.exerciseItemOptions.default}
-                                onChange={onChange}
-                                options={setting.listening.exerciseItemOptions.options}
+                                options={setting.rdOptions}
                               />
                             )
                           }}
@@ -368,8 +290,8 @@ const Setting = () => {
                             return (
                               <Checkbox.Group
                                 options={plainOptions}
-                                value={value as number[]}
-                                onChange={(e) => onChange(e as number[])}
+                                value={value}
+                                onChange={(e) => onChange(e)}
                                 className={classes.checkboxGroup}
                               >
                                 Active
@@ -383,7 +305,7 @@ const Setting = () => {
                 </Row>
 
                 <div className={classes.formAction}>
-                  <Button type='primary' htmlType='submit'>
+                  <Button type='primary' htmlType='submit' loading={isLoading}>
                     Save
                   </Button>
                 </div>

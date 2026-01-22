@@ -7,12 +7,12 @@ import {
   CaretRightOutlined,
 } from '@ant-design/icons'
 import { patternValidation } from '@/core/utils'
-import { ECategory, IOption, EType, IItem } from '@/models/item.model'
+import { ECategory, EType, IItem } from '@/models/item.model'
 import { InputTag } from '@/views/components'
 import { theme, Space, Col, Row, Button, Select, Checkbox, Input, Flex } from 'antd'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { meaningItem } from './data'
-import { ExampleItem } from './ExampleItem'
+import { ExampleItem } from './ExampleItemForm'
 import styles from './style'
 import clsx from 'clsx'
 import { TextEditor } from '@/views/components'
@@ -34,7 +34,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
 
   const [show, setShow] = useState<boolean[]>([])
 
-  const { types } = useSelector((state) => state.config)
+  const { types } = useSelector((state) => state.setting)
 
   const { confirmDeleteModal } = usePrompt()
 

@@ -1,11 +1,9 @@
 import { AudioOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
-import { useDispatch } from '@/core/hooks'
 import { getType } from '@/helpers/item'
-import { IMeaning, ECategory, EType, IExample } from '@/models/item.model'
-import { settingAction } from '@/store/reducers/setting.reducer'
+import { IMeaning, ECategory, IExample } from '@/models/item.model'
 import { Tags } from '@/views/components'
-import { theme, Row, Col } from 'antd'
+import { Row, Col } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
@@ -56,11 +54,9 @@ const Pronunciation = ({ catId, meaning }: { catId: ECategory; meaning: IMeaning
   return null
 }
 
-export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, active = false }) => {
-  const { token } = theme.useToken()
+export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning }) => {
   const classes = styles()
 
-  const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
 

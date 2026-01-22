@@ -38,7 +38,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   const dispatch = useDispatch()
   const { isLoading, error } = useSelector((state: IAppState) => state.auth)
 
-  const handleGoogleLoginSuccess = async (credentialResponse: any) => {
+  const handleGoogleLoginSuccess = async () => {
     try {
       // Dispatch sign in with Google
       const result = await dispatch(signInWithGoogle() as any)
@@ -122,7 +122,6 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   fallback = <LoginPage />,
-  requiredRole,
 }) => {
   const { user, isLoading } = useSelector((state: IAppState) => state.auth)
 

@@ -57,7 +57,7 @@ export const Item: React.FC<IProps> = ({
 
   const { confirmDeleteModal, openNotification } = usePrompt()
 
-  const { viewMode } = useSelector((state) => state.config)
+  const { viewMode } = useSelector((state) => state.setting)
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {

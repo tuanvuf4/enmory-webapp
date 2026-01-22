@@ -3,7 +3,6 @@ import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
-  PlusOutlined,
   ReadOutlined,
   StarFilled,
   SyncOutlined,

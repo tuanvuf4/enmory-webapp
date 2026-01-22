@@ -2,7 +2,7 @@ import React from 'react'
 import { Button, theme, Tooltip } from 'antd'
 import styles from './style'
 import { AppstoreOutlined, MenuOutlined } from '@ant-design/icons'
-import { configAction } from '@/store/reducers/config.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
 import { styleConfig } from '@/style/appStyle'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { EViewMode } from '@/models/app.model'
@@ -12,7 +12,7 @@ export const ViewMode: React.FC = () => {
 
   const classes = styles()
 
-  const { viewMode } = useSelector((state) => state.config)
+  const { viewMode } = useSelector((state) => state.setting)
 
   const dispatch = useDispatch()
 
@@ -32,7 +32,7 @@ export const ViewMode: React.FC = () => {
               }}
             />
           }
-          onClick={() => dispatch(configAction.setViewMode(EViewMode.LIST))}
+          onClick={() => dispatch(settingAction.setViewMode(EViewMode.LIST))}
         />
       </Tooltip>
 
@@ -50,7 +50,7 @@ export const ViewMode: React.FC = () => {
               }}
             />
           }
-          onClick={() => dispatch(configAction.setViewMode(EViewMode.GRID))}
+          onClick={() => dispatch(settingAction.setViewMode(EViewMode.GRID))}
         />
       </Tooltip>
     </div>

@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Skeleton, theme } from 'antd'
 import styles from '../style'
-// TODO: Chart API not implemented in Firebase yet
-// import { chartApi } from '@/services/firebase/api/chart.api'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Pie } from 'react-chartjs-2'
 import { ECategory } from '@/models/item.model'
 import { getBgColorByCatId } from '../data'
+import { itemApi } from '@/services/firebase'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -46,26 +45,24 @@ export const OverviewChart: React.FC<IProps> = ({ title = 'Overview' }) => {
   }, [])
 
   useEffect(() => {
-    // TODO: Implement chart API
-    console.error('Chart API not implemented in Firebase')
-    // chartApi.getOverviewItems().then(({ content, isSuccess }) => {
-    //   if (isSuccess) {
-    //     setData({
-    //       labels: content.map((item) => item.label),
-    //       datasets: [
-    //         {
-    //           ...settingUI,
-    //           label: ' ',
-    //           data: content.map((item) => item.total),
-    //         },
-    //       ],
-    //     })
-    //     setIsLoaded(true)
-    //     let mergeTotal = 0
-    //     content.map((item) => (mergeTotal = mergeTotal + item.total))
-    //     setTotal(mergeTotal)
-    //   }
-    // })
+    itemApi.getOverviewItems().then(({ content, isSuccess }) => {
+      if (isSuccess && content) {
+        setData({
+          labels: content.map((item) => item.label),
+          datasets: [
+            {
+              ...settingUI,
+              label: ' ',
+              data: content.map((item) => item.total),
+            },
+          ],
+        })
+        setIsLoaded(true)
+        let mergeTotal = 0
+        content.map((item) => (mergeTotal = mergeTotal + item.total))
+        setTotal(mergeTotal)
+      }
+    })
   }, [settingUI])
 
   return (

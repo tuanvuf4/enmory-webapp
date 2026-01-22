@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Skeleton, theme } from 'antd'
 import styles from '../style'
-// TODO: Chart API not implemented in Firebase yet
-// import { chartApi } from '@/services/firebase/api/chart.api'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,8 +11,8 @@ import {
   Legend,
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
-import { ECategory } from '@/models/item.model'
 import { getBgColorByCatId } from '..'
+import { itemApi } from '@/services/firebase'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
@@ -42,27 +40,26 @@ export const ProgressChart: React.FC<IProps> = ({ title = 'Progress' }) => {
     },
   }
 
-  const levelToSum = (levels: ECategory[]) => {
-    const tmp: number[] = []
-    for (let index = 0; index <= 5; index++) {
-      let sum = 0
-      levels.forEach((level) => {
-        if (level === index) sum++
-      })
-      tmp.push(sum)
-    }
-    return tmp
-  }
-
   const labels = ['Level 0', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5']
 
-  const getApiChart = async () => {
-    // TODO: Implement chart API
-    throw new Error('Chart API not implemented in Firebase')
+  const getChartData = async () => {
+    const { isSuccess, content } = await itemApi.getItemsByLevel()
+    if (isSuccess && content) {
+      const datasets = content.map((value) => ({
+        label: value.label,
+        data: value.data,
+        borderColor: getBgColorByCatId(value.id),
+        backgroundColor: getBgColorByCatId(value.id, 0.7),
+      }))
+      setIsLoaded(true)
+      setData({ labels, datasets })
+    } else {
+      setIsLoaded(false)
+    }
   }
 
   useEffect(() => {
-    getApiChart()
+    getChartData()
   }, [])
 
   return (

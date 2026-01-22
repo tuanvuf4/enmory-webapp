@@ -5,7 +5,6 @@ import { getType } from '@/helpers/item'
 import { IItemQuiz, TQuiz, ECategory, EQuiz, IOption, IAnswer, IItem } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
 import { itemApi } from '@/services/firebase/api/item.api'
-import { settingAction } from '@/store/reducers/setting.reducer'
 import { IStudySetStatus, studySetAction } from '@/store/reducers/studySet.reducer'
 import { theme, InputRef, Button, Input, Flex } from 'antd'
 import { useState, useRef, useEffect } from 'react'
@@ -32,7 +31,7 @@ export const StudySet: React.FC = () => {
 
   const { user } = useSelector((state) => state.auth)
   const configuration = user?.configuration
-  const { categories } = useSelector((state) => state.config)
+  const { categories } = useSelector((state) => state.setting)
 
   const { inProgress, isDone, currentIndex } = status
 
@@ -172,7 +171,7 @@ export const StudySet: React.FC = () => {
 
   const onSearch = async (id: string) => {
     try {
-      const { content: item } = await itemApi.getItemById(id)
+      await itemApi.getItemById(id)
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }
@@ -286,13 +285,13 @@ export const StudySet: React.FC = () => {
     )
   }
 
-  const onEdit = async (id: string) => {
-    try {
-      const { content } = await itemApi.getItemById(id)
-    } catch (error) {
-      openNotification({ type: 'error', message: JSON.stringify(error) })
-    }
-  }
+  // const onEdit = async (id: string) => {
+  //   try {
+  //     const { content } = await itemApi.getItemById(id)
+  //   } catch (error) {
+  //     openNotification({ type: 'error', message: JSON.stringify(error) })
+  //   }
+  // }
 
   useEffect(() => {
     window.addEventListener('keydown', onKeyBoardPress)

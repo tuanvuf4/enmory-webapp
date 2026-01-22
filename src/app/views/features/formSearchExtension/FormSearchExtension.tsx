@@ -6,8 +6,6 @@ import {
   SearchOutlined,
   Loading3QuartersOutlined,
 } from '@ant-design/icons'
-import { setting } from '@/config/appConfig'
-import { useSelector, useDispatch } from '@/core/hooks'
 import { useAutoComplete } from '@/helpers/hooks'
 import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from '@/models/app.model'
 import { IFormSearchEx } from '@/models/formSearch.model'
@@ -31,8 +29,6 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const globalClasses = globalStyle()
 
   const [searchParams, setSearchParams] = useSearchParams()
-
-  const dispatch = useDispatch()
 
   // Read form values from URL params
   const formSearchQuery: IFormSearchEx = {
@@ -62,7 +58,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const { options, isSearching } = useAutoComplete(keyword, 'example')
 
   const onSelect = (value: string) => {
-    exampleApi.getExampleById(value).then((resp) => {
+    exampleApi.getExampleById(value).then(() => {
       reset({ ...initSearchFormEx, keyword: '' })
 
       // Update URL params

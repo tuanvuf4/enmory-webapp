@@ -1,4 +1,4 @@
-export * from './ExampleItem'
+export * from './ExampleItemForm'
 export * from './ItemForm'
 export * from './MeaningItemForm'
 export * from './data'

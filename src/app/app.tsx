@@ -6,7 +6,7 @@ import { RouterElement } from './router'
 import moment from 'moment'
 import { Loading } from './views/features/loading/Loading'
 import { useCategories, useTypes } from '@/core/hooks/useCommon'
-import { configAction } from '@/store/reducers/config.reducer'
+import { settingAction } from '@/store/reducers/setting.reducer'
 
 export const App = () => {
   const [isInitializing, setIsInitializing] = useState(true)
@@ -33,13 +33,13 @@ export const App = () => {
   // Update Redux store when categories and types are fetched
   useEffect(() => {
     if (categories) {
-      dispatch(configAction.setCategories(categories))
+      dispatch(settingAction.setCategories(categories))
     }
   }, [categories, dispatch])
 
   useEffect(() => {
     if (types) {
-      dispatch(configAction.setTypes(types))
+      dispatch(settingAction.setTypes(types))
     }
   }, [types, dispatch])
 

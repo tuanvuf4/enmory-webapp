@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Skeleton, theme } from 'antd'
 import styles from '../style'
-import { chartApi } from '@/app/services/api/chart.api'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,6 +12,7 @@ import {
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
 import { getBgColorByCatId, labelPeriods, queryPeriods } from '..'
+import { itemApi } from '@/services/firebase'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
@@ -45,9 +45,10 @@ export const AddedItemChart: React.FC<IProps> = ({ title = 'Added Items' }) => {
   const [data, setData] = useState<any>()
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
 
-  const getChartData = () => {
-    chartApi.getNewAddedItemByPeriod(queryPeriods).then(({ isSuccess, content }) => {
-      if (isSuccess) {
+  useEffect(() => {
+    const getChartData = async () => {
+      const { isSuccess, content } = await itemApi.getNewAddedItemByPeriod(queryPeriods)
+      if (isSuccess && content) {
         const datasets = content.map((value) => ({
           label: value.label,
           data: value.data,
@@ -59,10 +60,8 @@ export const AddedItemChart: React.FC<IProps> = ({ title = 'Added Items' }) => {
       } else {
         setIsLoaded(false)
       }
-    })
-  }
+    }
 
-  useEffect(() => {
     getChartData()
   }, [])
 

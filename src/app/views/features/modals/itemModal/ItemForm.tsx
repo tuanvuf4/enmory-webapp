@@ -1,11 +1,10 @@
 import { msgErrors } from '@/constant/validation'
 import { chromeStorage } from '@/extension/storageService'
 import globalStyle from '@/style/appStyle'
-import { setting, appConfig, EAppType } from '@/config/appConfig'
+import { appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { isGroupWord } from '@/helpers/validate'
-import { ECategory, EType, IItem, IExample, IMeaning } from '@/models/item.model'
-import { itemApi } from '@/services/firebase/api/item.api'
+import { ECategory, IItem, IExample, IMeaning } from '@/models/item.model'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { InputTag } from '@/views/components'
@@ -13,10 +12,9 @@ import { Level } from '@/views/components'
 import { Reference } from '@/views/features/references/References'
 import { theme, Row, Space, Col, Select, AutoComplete, Input, Checkbox, Button } from 'antd'
 import clsx from 'clsx'
-import _ from 'lodash'
 import { useState, useEffect, Suspense } from 'react'
 import { useFormContext, useWatch, Controller } from 'react-hook-form'
-import { initItem, meaningItem } from './data'
+import { initItem } from './data'
 import { MeaningItemForm } from './MeaningItemForm'
 import styles from './style'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
@@ -44,7 +42,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
   const [origin, setOrigin] = useState<IItem | null>(null)
 
   const { user } = useSelector((state) => state.auth)
-  const { categories, types } = useSelector((state) => state.config)
+  const { categories } = useSelector((state) => state.setting)
 
   const { list } = useSelector((state) => state.studySet)
 
@@ -75,53 +73,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
   const { options, isSearching } = useAutoComplete(original, 'item', false)
 
   const { closeModal } = useModal()
-
-  const getBatchItem = (data: IItem) => {
-    const synonyms = data.meanings?.map((meaning) => {
-      return meaning.synonyms.map((synonym) => {
-        const itemBase = {
-          ...initItem,
-          origin: synonym.trim(),
-          catId: isGroupWord(synonym.trim()) ? ECategory.PHRASE : ECategory.WORD,
-          meanings: [
-            {
-              ...meaningItem,
-              typeId: isGroupWord(synonym) ? EType.NOUN : meaning.typeId,
-              synonyms: [data.origin.trim()].concat(
-                meaning.synonyms.filter((item) => item.trim() !== synonym.trim()),
-              ),
-              antonyms: meaning.antonyms,
-            },
-          ],
-        }
-        return isGroupWord(synonym)
-          ? { ...itemBase, catId: ECategory.PHRASE }
-          : { ...itemBase, catId: ECategory.WORD }
-      })
-    })
-
-    const antonyms = data.meanings?.map((meaning) => {
-      return meaning.antonyms.map((antonym) => {
-        const itemBase = {
-          ...initItem,
-          origin: antonym.trim(),
-          catId: isGroupWord(antonym.trim()) ? ECategory.PHRASE : ECategory.WORD,
-          meanings: [
-            {
-              ...meaningItem,
-              typeId: isGroupWord(antonym) ? EType.NOUN : meaning.typeId,
-              antonyms: [data.origin.trim()],
-            },
-          ],
-        }
-        return isGroupWord(antonym)
-          ? { ...itemBase, catId: ECategory.PHRASE }
-          : { ...itemBase, catId: ECategory.WORD }
-      })
-    })
-
-    return [..._.flattenDeep(synonyms), ..._.flattenDeep(antonyms)]
-  }
 
   const createExample = async (meanings: IMeaning) => {
     const examplePromises = meanings.examples.map(async (example) => ({
@@ -202,15 +153,16 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
   }
 
   const loadItem = async (value: string) => {
-    const params = {
-      keyword: value,
-      page: 0,
-      size: setting.numberItemOfAutoComplete * 2,
-      exact: true,
-    }
-    const { isSuccess, content } = await itemApi.getItemAutoComplete(params)
-    if (isSuccess) {
-    }
+    console.log(`*** value *** `, value)
+    // const params = {
+    //   keyword: value,
+    //   page: 0,
+    //   size: setting.numberItemOfAutoComplete * 2,
+    //   exact: true,
+    // }
+    // const { isSuccess, content } = await itemApi.getItemAutoComplete(params)
+    // if (isSuccess) {
+    // }
   }
 
   useEffect(() => {

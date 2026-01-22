@@ -1,6 +1,4 @@
 import globalStyle from '@/style/appStyle'
-import { useDispatch } from '@/core/hooks'
-import { settingAction } from '@/store/reducers/setting.reducer'
 import { IDataOnChange, Pagination } from '@/views/components'
 import { FormSearchEx } from '@/views/features/formSearchExtension/FormSearchExtension'
 import { theme, Row, Col } from 'antd'
@@ -35,8 +33,6 @@ export const Example: React.FC = () => {
     orderBy: (searchParams.get('orderBy') as 'created_date' | 'last_update') || 'created_date',
   }
 
-  const dispatch = useDispatch()
-
   // Fetch examples using React Query
   const { data, isLoading } = useExamples({
     ...formSearchQuery,
@@ -54,7 +50,7 @@ export const Example: React.FC = () => {
       // Set the selected example for editing
       const example = examples.find((ex) => ex.id === id)
       if (example) {
-        dispatch(settingAction.toggleExModal())
+        // dispatch(settingAction.toggleExModal())
       }
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })

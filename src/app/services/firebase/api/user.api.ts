@@ -99,8 +99,53 @@ const userConfig = async (
   }
 }
 
+/**
+ * Update user configuration with proper type conversion
+ */
+const updateUserConfig = async (
+  config: IUserConfig<number[] | string>,
+): Promise<IHttpResponse<IUserConfig<string>>> => {
+  try {
+    const currentUser = firebaseAuthService.getCurrentUser()
+    if (!currentUser) {
+      throw new Error('User not authenticated')
+    }
+
+    // Convert references array to string if needed
+    const configToSave: IUserConfig<string> = {
+      ...config,
+      references:
+        typeof config.references === 'string' ? config.references : config.references.join(','),
+    }
+
+    const userDocRef = doc(db, 'users', currentUser.uid)
+    const updateData = {
+      configuration: configToSave,
+      updatedAt: Timestamp.now().toMillis(),
+    }
+
+    await updateDoc(userDocRef, updateData)
+
+    return {
+      isSuccess: true,
+      message: 'User configuration updated successfully',
+      content: configToSave,
+      statusCode: 200,
+    }
+  } catch (error) {
+    console.error('Error updating user configuration:', error)
+    return {
+      isSuccess: false,
+      message: error instanceof Error ? error.message : 'Failed to update user configuration',
+      content: null as any,
+      statusCode: 500,
+    }
+  }
+}
+
 export const apiUser = {
   getUsers,
   createUser,
   userConfig,
+  updateUserConfig,
 }

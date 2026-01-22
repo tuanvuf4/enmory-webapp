@@ -1,5 +1,4 @@
 // import loading from 'src/assets/img/loading.gif'
-import { useAxiosLoader } from '@/core/hooks/axiosHttpCounter'
 import { Spin } from 'antd'
 import styles from './style'
 import classNames from 'clsx'

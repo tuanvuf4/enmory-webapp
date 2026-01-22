@@ -123,7 +123,7 @@ const Home = () => {
             <Col span={24}>
               <div className={classesRegister.register}>
                 <p>
-                  Don't have a account? <Link to={'/Register'}>Register now!</Link>
+                  Don't have a account? <Link to={'/register'}>Register now!</Link>
                 </p>
               </div>
             </Col>
@@ -133,7 +133,7 @@ const Home = () => {
             <Col span={24}>
               <div className={classesLogin.register}>
                 <p>
-                  Already have an account? <Link to={'/Login'}>Log in</Link>
+                  Already have an account? <Link to={'/login'}>Log in</Link>
                 </p>
               </div>
             </Col>

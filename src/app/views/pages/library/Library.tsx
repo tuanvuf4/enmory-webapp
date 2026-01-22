@@ -22,7 +22,7 @@ export const Library: React.FC = () => {
   const classes = styles()
   const globalClasses = globalStyle()
 
-  const { viewMode } = useSelector((state) => state.config)
+  const { viewMode } = useSelector((state) => state.setting)
 
   const { openNotification } = usePrompt()
 

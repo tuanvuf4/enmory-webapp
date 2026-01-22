@@ -1,6 +1,5 @@
 import { setting } from '../config/appConfig'
 import { INotification } from '../models/app.model'
-import { EListeningTypes } from '../models/dictation.model'
 import { IFormSearchEx, IFormSearchItem } from '../models/formSearch.model'
 import { ECategory, EType, IItem, IOption } from '../models/item.model'
 import { ILoginResponse, IUser } from '../models/user.model'

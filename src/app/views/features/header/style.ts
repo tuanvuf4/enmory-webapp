@@ -72,7 +72,7 @@ const styles = () => {
       justifyContent: 'flex-start',
       alignItems: 'center',
     },
-    toogleSidebarBtn: {
+    toggleSidebarBtn: {
       height: '100%',
       display: 'flex',
       alignItems: 'center',

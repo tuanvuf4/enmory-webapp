@@ -29,7 +29,6 @@ const styles = () => {
         color: `${token.colorWhite} !important`,
       },
     },
-    sep: {},
     title: {
       fontWeight: '500',
       fontSize: token.fontSize,

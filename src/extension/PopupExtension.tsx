@@ -1,7 +1,7 @@
 import { EPageExt } from '@/models/app.model'
 import { IExample, IItem } from '@/models/item.model'
 import { IUser } from '@/models/user.model'
-import { ExampleForm } from '@/views/features/exampleOverview/ExampleFormAdd'
+import { ExampleForm } from '@/views/features/exampleOverview/ExampleForm'
 import { LoginForm } from '@/views/features/loginForm/LoginForm'
 import { initItem } from '@/views/features/modals/itemModal/data'
 import { RegisterForm } from '@/views/pages/registerForm/RegisterForm'

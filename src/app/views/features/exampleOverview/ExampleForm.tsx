@@ -10,6 +10,7 @@ import clsx from 'clsx'
 import { ExampleMode } from '@/models/example.model'
 import { usePrompt } from '@/helpers/hooks'
 import { useCreateExample, useUpdateExample } from '@/core/hooks/useExamples'
+import { TextEditor } from '@/views/components'
 
 interface IProps {
   data?: IExample
@@ -43,20 +44,24 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   const showTranslation =
     mode === ExampleMode.Default || (isChecked && mode === ExampleMode.Translation)
 
+  const initValues: IExample = {
+    origin: '',
+    translation: '',
+    note: '',
+  }
+
   const {
     control,
+    setValue,
     handleSubmit,
     reset,
     formState: { isValid },
   } = useForm<IExample>({
-    defaultValues: data || {
-      origin: '',
-      translation: '',
-      note: '',
-    },
+    defaultValues: data || initValues,
   })
 
   const onSubmit = async (formData: IExample) => {
+    console.log(`*** formData *** `, formData)
     setLoading(true)
     try {
       let result: IExample
@@ -73,7 +78,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 
       setAnswer('')
       setIsChecked(false)
-      reset({ origin: '', translation: '' })
+      reset(initValues)
       onSuccess?.(result)
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
@@ -96,7 +101,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
       page: 0,
       size: 1,
     })
-    reset({ ...content[0] })
+    reset(content ? { ...content[0] } : { ...initValues })
     setLoading(false)
   }, [])
 
@@ -154,27 +159,39 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
               }}
               render={({ field: { onChange, value } }) => {
                 return (
-                  <TextArea
-                    disabled={!showTranslation && exMode === ExampleMode.Translation}
-                    autoSize
-                    value={value}
-                    placeholder='Origin'
-                    className={classes.autoSearchInput}
-                    onChange={(text) => onChange(text.target.value)}
-                    allowClear={{
-                      clearIcon: (
-                        <CloseOutlined
-                          style={{
-                            background: token.colorWhite,
-                            padding: token.size / 8,
-                            borderRadius: '50%',
-                            color: token.colorBgLayout,
-                            fontSize: 10,
-                          }}
-                        />
-                      ),
-                    }}
-                  />
+                  <>
+                    {showTranslation && exMode === ExampleMode.Translation ? (
+                      <TextEditor
+                        content={value}
+                        onChange={(content: any) => {
+                          setValue('origin', content ?? '')
+                          onChange(content)
+                        }}
+                      />
+                    ) : (
+                      <TextArea
+                        disabled={!showTranslation && exMode === ExampleMode.Translation}
+                        autoSize
+                        value={value}
+                        placeholder='Origin'
+                        className={classes.autoSearchInput}
+                        onChange={(text) => onChange(text.target.value)}
+                        allowClear={{
+                          clearIcon: (
+                            <CloseOutlined
+                              style={{
+                                background: token.colorWhite,
+                                padding: token.size / 8,
+                                borderRadius: '50%',
+                                color: token.colorBgLayout,
+                                fontSize: 10,
+                              }}
+                            />
+                          ),
+                        }}
+                      />
+                    )}
+                  </>
                 )
               }}
             />
@@ -196,26 +213,34 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
               }}
               render={({ field: { onChange, value } }) => {
                 return (
-                  <TextArea
-                    value={value}
-                    autoSize
-                    placeholder='Translation'
-                    className={classes.autoSearchInput}
-                    onChange={(text) => onChange(text.target.value)}
-                    allowClear={{
-                      clearIcon: (
-                        <CloseOutlined
-                          style={{
-                            background: token.colorWhite,
-                            padding: token.size / 8,
-                            borderRadius: '50%',
-                            color: token.colorBgLayout,
-                            fontSize: 10,
-                          }}
-                        />
-                      ),
+                  <TextEditor
+                    content={value}
+                    onChange={(content: any) => {
+                      setValue('translation', content ?? '')
+                      onChange(content)
                     }}
                   />
+
+                  // <TextArea
+                  //   value={value}
+                  //   autoSize
+                  //   placeholder='Translation'
+                  //   className={classes.autoSearchInput}
+                  //   onChange={(text) => onChange(text.target.value)}
+                  //   allowClear={{
+                  //     clearIcon: (
+                  //       <CloseOutlined
+                  //         style={{
+                  //           background: token.colorWhite,
+                  //           padding: token.size / 8,
+                  //           borderRadius: '50%',
+                  //           color: token.colorBgLayout,
+                  //           fontSize: 10,
+                  //         }}
+                  //       />
+                  //     ),
+                  //   }}
+                  // />
                 )
               }}
             />
@@ -232,26 +257,33 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                 name={`note`}
                 render={({ field: { onChange, value } }) => {
                   return (
-                    <TextArea
-                      value={value}
-                      autoSize
-                      placeholder='Note'
-                      className={classes.autoSearchInput}
-                      onChange={(text) => onChange(text.target.value)}
-                      allowClear={{
-                        clearIcon: (
-                          <CloseOutlined
-                            style={{
-                              background: token.colorWhite,
-                              padding: token.size / 8,
-                              borderRadius: '50%',
-                              color: token.colorBgLayout,
-                              fontSize: 10,
-                            }}
-                          />
-                        ),
+                    <TextEditor
+                      content={value}
+                      onChange={(content: any) => {
+                        setValue('note', content ?? '')
+                        onChange(content)
                       }}
                     />
+                    // <TextArea
+                    //   value={value}
+                    //   autoSize
+                    //   placeholder='Note'
+                    //   className={classes.autoSearchInput}
+                    //   onChange={(text) => onChange(text.target.value)}
+                    //   allowClear={{
+                    //     clearIcon: (
+                    //       <CloseOutlined
+                    //         style={{
+                    //           background: token.colorWhite,
+                    //           padding: token.size / 8,
+                    //           borderRadius: '50%',
+                    //           color: token.colorBgLayout,
+                    //           fontSize: 10,
+                    //         }}
+                    //       />
+                    //     ),
+                    //   }}
+                    // />
                   )
                 }}
               />
@@ -264,7 +296,15 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
             <Col xs={24}>Your Translation:</Col>
 
             <Col xs={24}>
-              <TextArea
+              <TextEditor
+                content={answer}
+                onChange={(content: any) => {
+                  // setValue('translation', content ?? '')
+                  setAnswer(content)
+                }}
+              />
+
+              {/* <TextArea
                 value={answer}
                 autoSize
                 placeholder='Text here...'
@@ -283,7 +323,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                     />
                   ),
                 }}
-              />
+              /> */}
             </Col>
           </Row>
         )}

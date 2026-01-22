@@ -1,6 +1,5 @@
 import globalStyle from '@/style/appStyle'
 import { usePrefetchAllIotd, useSelector } from '@/core/hooks'
-import { ExampleForm } from '@/views/features/exampleOverview/ExampleFormAdd'
 import { ExampleOverView } from '@/views/features/exampleOverview/ExampleOverview'
 import { StudySet } from '@/views/features/studySet/StudySet'
 import { Widget } from '@/views/features/widget/Widget'
@@ -11,6 +10,7 @@ import registerStyle from '@/views/pages/register/style'
 import loginStyle from '@/views/pages/login/style'
 import { Link } from 'react-router-dom'
 import { SearchItemForm } from '@/views/features'
+import { ExampleForm } from '@/views/features/exampleOverview/ExampleForm'
 
 const Home = () => {
   const { token } = theme.useToken()

@@ -22,9 +22,7 @@ const Home = () => {
   const { isShowSearchFormItem } = useSelector((state) => state.setting)
   const { word, phrase, idiom, slang, collocation, sentence } = useSelector((state) => state.iotd)
 
-  const { isLoading, results } = usePrefetchAllIotd(isAuth)
-
-  console.log(`*** results *** `, results)
+  const { isLoading, isError } = usePrefetchAllIotd(isAuth)
 
   return (
     <>
@@ -51,7 +49,7 @@ const Home = () => {
                   </Widget>
 
                   <Widget title={'Translation Challenge'}>
-                    <ExampleForm showSelectMode mode={ExampleMode.Translation} />
+                    <ExampleForm showSelect mode={ExampleMode.Translation} />
                   </Widget>
 
                   <Widget title={'Review Example'}>
@@ -60,48 +58,53 @@ const Home = () => {
                 </Col>
 
                 <Col xs={24} md={8}>
-                  <>
-                    {isLoading ? (
+                  {isLoading && !isError ? (
+                    <>
                       <Skeleton />
-                    ) : (
-                      <>
-                        {word && word.origin && (
-                          <Widget title='Word of the day'>
-                            <Item reload data={word} />
-                          </Widget>
-                        )}
-                      </>
-                    )}
-                  </>
+                      <Skeleton />
+                      <Skeleton />
+                      <Skeleton />
+                      <Skeleton />
+                      <Skeleton />
+                    </>
+                  ) : (
+                    <>
+                      {word?.item && word.item.origin && (
+                        <Widget title='Word of the day'>
+                          <Item reload data={word.item} />
+                        </Widget>
+                      )}
 
-                  {phrase && phrase.origin && (
-                    <Widget title='Phrase of the day'>
-                      <Item reload data={phrase} />
-                    </Widget>
-                  )}
+                      {phrase?.item && phrase.item.origin && (
+                        <Widget title='Phrase of the day'>
+                          <Item reload data={phrase.item} />
+                        </Widget>
+                      )}
 
-                  {collocation && collocation.origin && (
-                    <Widget title='Collocation of the day'>
-                      <Item reload data={collocation} />
-                    </Widget>
-                  )}
+                      {collocation?.item && collocation.item.origin && (
+                        <Widget title='Collocation of the day'>
+                          <Item reload data={collocation.item} />
+                        </Widget>
+                      )}
 
-                  {sentence && sentence.origin && (
-                    <Widget title='sentence of the day'>
-                      <Item reload data={sentence} />
-                    </Widget>
-                  )}
+                      {sentence?.item && sentence.item.origin && (
+                        <Widget title='sentence of the day'>
+                          <Item reload data={sentence.item} />
+                        </Widget>
+                      )}
 
-                  {idiom && idiom.origin && (
-                    <Widget title='Idiom of the day'>
-                      <Item reload data={idiom} />
-                    </Widget>
-                  )}
+                      {idiom?.item && idiom.item.origin && (
+                        <Widget title='Idiom of the day'>
+                          <Item reload data={idiom.item} />
+                        </Widget>
+                      )}
 
-                  {slang && slang.origin && (
-                    <Widget title='Slang of the day'>
-                      <Item reload data={slang} />
-                    </Widget>
+                      {slang?.item && slang.item.origin && (
+                        <Widget title='Slang of the day'>
+                          <Item reload data={slang.item} />
+                        </Widget>
+                      )}
+                    </>
                   )}
                 </Col>
               </Row>

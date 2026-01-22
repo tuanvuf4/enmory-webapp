@@ -15,7 +15,7 @@ interface IProps {
   data?: IExample
   themeMode?: 'dark' | 'light'
   mode?: ExampleMode
-  showSelectMode?: boolean
+  showSelect?: boolean
   onSuccess?: (data: IExample) => void
 }
 
@@ -23,7 +23,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   themeMode = 'dark',
   mode = ExampleMode.Default,
   data,
-  showSelectMode = false,
+  showSelect = false,
   onSuccess,
 }) => {
   const { token } = theme.useToken()
@@ -114,7 +114,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
         <Row>
           <Col xs={24}>
             <Flex gap={token.size / 2} justify={'flex-end'}>
-              {showSelectMode && (
+              {showSelect && (
                 <Select
                   value={exMode}
                   onChange={setMode}

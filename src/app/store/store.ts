@@ -40,7 +40,7 @@ const persistConfig: PersistConfig<IAppState> = {
   version: 6,
   key: 'root',
   storage: localStorage,
-  blacklist: ['setting', 'iotd'],
+  blacklist: ['setting'],
   stateReconciler: autoMergeLevel2,
   // transforms: [{ in: (es) => es, out: (es) => es }],
   migrate: createMigrate({

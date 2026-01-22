@@ -2,12 +2,12 @@ import { IItem, IIotd, ECategory } from '@/app/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export interface IIotdState {
-  word: IItem | null
-  phrase: IItem | null
-  idiom: IItem | null
-  slang: IItem | null
-  collocation: IItem | null
-  sentence: IItem | null
+  word: IIotd<string[]> | null
+  phrase: IIotd<string[]> | null
+  idiom: IIotd<string[]> | null
+  slang: IIotd<string[]> | null
+  collocation: IIotd<string[]> | null
+  sentence: IIotd<string[]> | null
 }
 
 export const initialState: IIotdState = {
@@ -27,35 +27,35 @@ export const iotdReducer = createSlice({
       for (const key in state) {
         if (Object.prototype.hasOwnProperty.call(state, key)) {
           const iotd = state[key as keyof typeof state]
-          if (iotd?.id === action.payload.id) {
-            state[key as keyof typeof state] = action.payload
+          if (iotd?.item?.id === action.payload.id) {
+            state[key as keyof typeof state] = { ...iotd, item: action.payload } as IIotd<string[]>
           }
         }
       }
     },
     setIotd(state: IIotdState, action: PayloadAction<IIotd<string[]>>) {
-      const { item } = action.payload
-      switch (item.catId) {
+      const iotd = action.payload
+      switch (iotd.item.catId) {
         case ECategory.WORD:
-          state.word = { ...state.word, ...item }
+          state.word = iotd
           break
         case ECategory.PHRASE:
-          state.phrase = { ...state.phrase, ...item }
+          state.phrase = iotd
           break
         case ECategory.IDIOM:
-          state.idiom = { ...state.idiom, ...item }
+          state.idiom = iotd
           break
         case ECategory.SLANG:
-          state.slang = { ...state.slang, ...item }
+          state.slang = iotd
           break
         case ECategory.COLLOCATION:
-          state.collocation = { ...state.collocation, ...item }
+          state.collocation = iotd
           break
         case ECategory.SENTENCE:
-          state.sentence = { ...state.sentence, ...item }
+          state.sentence = iotd
           break
         default:
-          state.word = { ...state.word, ...item }
+          state.word = iotd
           break
       }
     },

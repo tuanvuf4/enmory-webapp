@@ -103,24 +103,17 @@ const userConfig = async (
  * Update user configuration with proper type conversion
  */
 const updateUserConfig = async (
-  config: IUserConfig<number[] | string>,
-): Promise<IHttpResponse<IUserConfig<string>>> => {
+  config: IUserConfig<number[]>,
+): Promise<IHttpResponse<IUserConfig<number[]>>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) {
       throw new Error('User not authenticated')
     }
 
-    // Convert references array to string if needed
-    const configToSave: IUserConfig<string> = {
-      ...config,
-      references:
-        typeof config.references === 'string' ? config.references : config.references.join(','),
-    }
-
     const userDocRef = doc(db, 'users', currentUser.uid)
     const updateData = {
-      configuration: configToSave,
+      configuration: config,
       updatedAt: Timestamp.now().toMillis(),
     }
 
@@ -129,7 +122,7 @@ const updateUserConfig = async (
     return {
       isSuccess: true,
       message: 'User configuration updated successfully',
-      content: configToSave,
+      content: config,
       statusCode: 200,
     }
   } catch (error) {

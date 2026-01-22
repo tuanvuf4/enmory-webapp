@@ -15,6 +15,9 @@ export const useStudySet = (params: GetStudySetByCatId[]) => {
     queryKey: studySetKeys.list(params),
     queryFn: async () => {
       const response = await itemApi.getStudySet(params)
+      if (!response.content || response.content.length === 0) {
+        return []
+      }
       return response.content.map((item) => {
         return {
           ...item,
@@ -32,6 +35,7 @@ export const useStudySet = (params: GetStudySetByCatId[]) => {
         }
       })
     },
-    enabled: params.length > 0,
+    enabled: false,
+    staleTime: 0,
   })
 }

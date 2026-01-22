@@ -185,7 +185,7 @@ export const AppHeader = () => {
             {!isAuth && (
               <div className={classes.userContainer}>
                 <Button type='primary' onClick={() => navigate('/login')} style={{ minWidth: 100 }}>
-                  LOGIN
+                  Login
                 </Button>
 
                 <Button
@@ -193,7 +193,7 @@ export const AppHeader = () => {
                   onClick={() => navigate('/register')}
                   style={{ minWidth: 100 }}
                 >
-                  REGISTER
+                  Register
                 </Button>
               </div>
             )}

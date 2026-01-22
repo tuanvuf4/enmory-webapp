@@ -48,7 +48,7 @@ const Home = () => {
                     <StudySet />
                   </Widget>
 
-                  <Widget title={'Translation Challenge'}>
+                  <Widget title={'Translator!'}>
                     <ExampleForm showSelect mode={ExampleMode.Translation} />
                   </Widget>
 

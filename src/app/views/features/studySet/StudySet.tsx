@@ -14,7 +14,6 @@ import styles from './style'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
-import { useStudySet } from '@/core/hooks/useStudySet'
 
 export const StudySet: React.FC = () => {
   const { token } = theme.useToken()
@@ -57,24 +56,53 @@ export const StudySet: React.FC = () => {
     size: getStudySetSizeByCategory(cat.value),
   })) as GetStudySetByCatId[]
 
-  // Fetch study set using React Query
-  const { data: studySetData, refetch: refetchStudySet } = useStudySet(studySetParams)
+  const createStudySet = async (params: Partial<IStudySetStatus>) => {
+    try {
+      console.log('Creating study set with params:', studySetParams)
+      const response = await itemApi.getStudySet(studySetParams)
 
-  const createStudySet = (params: Partial<IStudySetStatus>) => {
-    refetchStudySet().then((result) => {
-      if (result.data) {
-        // dispatch(studySetAction.setList(result.data))
-        dispatch(studySetAction.updateProgress({ ...params }))
+      console.log('Study set response:', response)
+
+      if (!response.isSuccess) {
+        openNotification({
+          type: 'error',
+          message: response.message || 'Failed to create study set',
+        })
+        return
       }
-    })
-  }
 
-  // Update Redux store when study set data changes
-  useEffect(() => {
-    if (studySetData) {
-      // dispatch(studySetAction.setList(studySetData))
+      if (response.content && response.content.length > 0) {
+        const formattedItems = response.content.map((item) => ({
+          ...item,
+          quiz: {
+            ...item.quiz,
+            answer:
+              typeof item.quiz.answer === 'string'
+                ? item.quiz.answer
+                : (item.quiz.answer as IOption<string, boolean>[]).map((ans) => ({
+                    ...ans,
+                    value: false,
+                  })),
+            result: false,
+          },
+        })) as unknown as IItemQuiz<TQuiz, string[]>[]
+
+        console.log('Formatted study set items:', formattedItems.length)
+        dispatch(studySetAction.setList(formattedItems))
+        dispatch(studySetAction.updateProgress({ ...params }))
+      } else {
+        openNotification({ type: 'warning', message: 'No items found for study set' })
+      }
+    } catch (error) {
+      console.error('Error creating study set:', error)
+      openNotification({
+        type: 'error',
+        message:
+          'Failed to create study set: ' +
+          (error instanceof Error ? error.message : 'Unknown error'),
+      })
     }
-  }, [studySetData, dispatch])
+  }
 
   const onNext = () => {
     const studySet = document.getElementById('studySet')
@@ -247,11 +275,11 @@ export const StudySet: React.FC = () => {
     }
   }
 
-  const getInputPlayholder = (value: string, playholder: string) => {
+  const getInputPlaceholder = (value: string, placeholder: string) => {
     if (!value) {
       return (
         <div className={classes.fibQuestion}>
-          {playholder.split('').map((char, key) => {
+          {placeholder.split('').map((char, key) => {
             return (
               <span key={key} className={classes.fibInput}>
                 {char}
@@ -266,7 +294,7 @@ export const StudySet: React.FC = () => {
 
     return (
       <div className={classes.fibQuestion}>
-        {playholder.split('').map((char, key) => {
+        {placeholder.split('').map((char, key) => {
           if (valueArray[key]) {
             return (
               <span key={key} className={clsx(classes.fibInput, classes.fibInputActive)}>
@@ -356,7 +384,7 @@ export const StudySet: React.FC = () => {
             />
 
             {item?.quiz.type === EQuiz.FILL_IN_BLANK && (
-              <>{getInputPlayholder(respond as string, item?.quiz.question.replaceAll(' ', ''))}</>
+              <>{getInputPlaceholder(respond as string, item?.quiz.question.replaceAll(' ', ''))}</>
             )}
 
             {item?.quiz.type === EQuiz.MULTI_CHOICE && (

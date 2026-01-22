@@ -1,6 +1,6 @@
 import { AppOrderQuery, AppOrderByQuery } from '@/models/app.model'
 import { IHttpResponse } from '@/models/http.model'
-import { IItem, IItemQuiz } from '@/models/item.model'
+import { IItem, IItemQuiz, IAnswer, EQuiz } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
@@ -287,39 +287,148 @@ const getStudySet = async (
   studySets: GetStudySetByCatId[],
 ): Promise<IHttpResponse<IItemQuiz[]>> => {
   try {
-    const allItems: IItemQuiz[] = []
+    const allItems: IItem[] = []
     const currentUser = firebaseAuthService.getCurrentUser()
 
-    for (const studySet of studySets) {
-      const constraints: QueryConstraint[] = [where('catId', '==', studySet.id)]
-
-      if (currentUser) {
-        constraints.push(where('uid', '==', currentUser.uid))
+    if (!currentUser) {
+      return {
+        isSuccess: false,
+        message: 'User not authenticated',
+        content: [],
+        statusCode: 401,
       }
+    }
 
-      constraints.push(where('is_deleted', '==', false))
-      constraints.push(limit(studySet.size || 10))
+    if (!studySets || studySets.length === 0) {
+      return {
+        isSuccess: false,
+        message: 'No study set parameters provided',
+        content: [],
+        statusCode: 400,
+      }
+    }
+
+    // First, fetch all items for all categories
+    for (const studySet of studySets) {
+      const constraints: QueryConstraint[] = [
+        where('catId', '==', studySet.id),
+        where('uid', '==', currentUser.uid),
+        where('is_deleted', '==', false),
+      ]
 
       const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
       const snapshot = await getDocs(itemsQuery)
 
+      console.log(`Fetched ${snapshot.size} items for category ${studySet.id}`)
+
       const items = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as unknown as IItemQuiz[]
+      })) as unknown as IItem[]
 
-      allItems.push(...items)
+      // Filter items that have meanings
+      const itemsWithMeanings = items.filter((item) => item.meanings && item.meanings.length > 0)
+
+      // Randomly select items from this category
+      const shuffledItems = itemsWithMeanings.sort(() => Math.random() - 0.5)
+      const selectedItems = shuffledItems.slice(0, studySet.size || 10)
+
+      allItems.push(...selectedItems)
     }
+
+    // Generate quiz data for each item
+    const itemsWithQuiz: IItemQuiz[] = allItems.map((item) => {
+      // Randomly decide quiz type (50% chance for each type)
+      const useFillInBlank = item.catId !== 6 && Math.random() < 0.5
+
+      // Get random meaning from meanings array
+      const meanings = item.meanings || []
+      const randomMeaningIndex =
+        meanings.length > 0 ? Math.floor(Math.random() * meanings.length) : 0
+      const selectedMeaning = meanings[randomMeaningIndex]
+
+      // Get definition/translation from meaning
+      const definition = selectedMeaning?.definition || selectedMeaning?.translation || ''
+
+      // Get hint from examples
+      const examples = selectedMeaning?.examples || []
+      const hint =
+        Array.isArray(examples) && examples.length > 0
+          ? (examples[0] as IExample)?.origin || ''
+          : ''
+
+      // For fill in the blank
+      if (useFillInBlank) {
+        return {
+          ...item,
+          quiz: {
+            title: 'What does this mean?',
+            question: definition,
+            answer: item.origin,
+            type: EQuiz.FILL_IN_BLANK,
+            hint: hint,
+            result: false,
+          },
+        } as unknown as IItemQuiz
+      }
+
+      // For multiple choice
+      // Generate 3 random wrong answers from other items in the same category
+      const wrongAnswers = allItems
+        .filter((otherItem) => otherItem.id !== item.id && otherItem.catId === item.catId)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3)
+
+      // Create answer options
+      const answers: IAnswer<string, boolean>[] = [
+        {
+          id: item.id as string,
+          label: item.origin,
+          value: false,
+          typeId: selectedMeaning?.typeId || 0,
+          key: 'A',
+        },
+        ...wrongAnswers.map((wrongItem, index) => ({
+          id: wrongItem.id as string,
+          label: wrongItem.origin,
+          value: false,
+          typeId: wrongItem.meanings?.[0]?.typeId || 0,
+          key: String.fromCharCode(66 + index), // B, C, D
+        })),
+      ]
+
+      // Shuffle answers
+      const shuffledAnswers = answers.sort(() => Math.random() - 0.5)
+
+      return {
+        ...item,
+        quiz: {
+          title: item.origin,
+          question: definition,
+          answer: shuffledAnswers,
+          type: EQuiz.MULTI_CHOICE,
+          hint: hint,
+          result: false,
+        },
+      } as unknown as IItemQuiz
+    })
+
+    console.log(`Total study set items: ${itemsWithQuiz.length}`)
 
     return {
       isSuccess: true,
       message: 'Study set fetched successfully',
-      content: allItems,
+      content: itemsWithQuiz,
       statusCode: 200,
     }
   } catch (error) {
     console.error('Error fetching study set:', error)
-    throw error
+    return {
+      isSuccess: false,
+      message: error instanceof Error ? error.message : 'Failed to fetch study set',
+      content: [],
+      statusCode: 500,
+    }
   }
 }
 

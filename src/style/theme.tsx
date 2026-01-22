@@ -37,6 +37,7 @@ export const appTheme: ThemeConfig = {
     Input: {},
     Modal: {
       fontSizeHeading5: 24,
+      // @ts-ignore - contentPadding is valid but not in type definitions
       contentPadding: 12,
       // contentBg: hex2Rgba(styleConfig.itemColorBg, 1),
       headerBg: 'transparent',

@@ -117,19 +117,6 @@ export interface IIotd<M = string[]> {
 export interface IIotdRequest {
   catId: number
   generate?: boolean
-  isMarked?: boolean
-}
-
-export interface MarkIotdRangeDateRequest {
-  itemId: string
-  isMarked: boolean
-  date?: number
-}
-
-export interface GetIIotdRangeDateRequest {
-  from?: number
-  to?: number
-  isMarked: boolean
 }
 
 export interface IOption<L, V> {

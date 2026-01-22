@@ -7,7 +7,7 @@ const fetchCategories = createAsyncThunk('categories/fetchCategories', async () 
   if (cats.isSuccess)
     return {
       ...cats,
-      content: cats.content.map((cat) => ({ ...cat, value: cat.id })),
+      content: cats.content?.map((cat) => ({ ...cat, value: cat.id })),
     }
   return cats
 })
@@ -17,7 +17,7 @@ const fetchTypes = createAsyncThunk('type/fetchTypes', async () => {
   if (types.isSuccess)
     return {
       ...types,
-      content: types.content.map((cat) => {
+      content: types.content?.map((cat) => {
         return {
           ...cat,
           value: cat.id,
@@ -29,13 +29,7 @@ const fetchTypes = createAsyncThunk('type/fetchTypes', async () => {
 
 const fetchIotd = createAsyncThunk('iotd/fetchIotd', async (data: IIotdRequest) => {
   const iotd = await commonApi.getItemOfTheDayByCatId(data)
-  return {
-    ...iotd,
-    content: {
-      ...iotd.content,
-      item: iotd.content.item,
-    },
-  }
+  return iotd
 })
 
 export const actionAsyncApp = {

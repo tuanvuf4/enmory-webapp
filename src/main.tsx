@@ -14,13 +14,13 @@ import { App } from './app/app'
 import { styleConfig } from './style/appStyle'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { appConfig, EAppType } from './app/config/appConfig'
-import { PopupExt } from './extension/popupExt'
 import { BrowserRouter } from 'react-router-dom'
 import React from 'react'
 import { AppContext } from './app/context/app.context'
 import { store } from '@/store/store'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { PopupExtension } from './extension/PopupExtension'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -54,7 +54,7 @@ const AppWrapper: React.FC<IAppTypeProps> = ({ type }) => (
                   <AntdApp>
                     <AppContext>
                       <PersistGate loading={null} persistor={persistStore(store)}>
-                        {type === EAppType.EXTENSION ? <PopupExt /> : <App />}
+                        {type === EAppType.EXTENSION ? <PopupExtension /> : <App />}
                       </PersistGate>
                     </AppContext>
                   </AntdApp>

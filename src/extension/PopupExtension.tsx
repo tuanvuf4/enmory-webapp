@@ -1,12 +1,9 @@
 import { EPageExt } from '@/models/app.model'
-import { IHttpResponse } from '@/models/http.model'
-import { ECategory, EType, IExample, IItem, IOption } from '@/models/item.model'
-import { ILoginResponse } from '@/models/user.model'
-import { commonApi } from '@/services/firebase/api/common.api'
+import { IExample, IItem } from '@/models/item.model'
+import { IUser } from '@/models/user.model'
 import { ExampleForm } from '@/views/features/exampleOverview/ExampleFormAdd'
 import { LoginForm } from '@/views/features/loginForm/LoginForm'
 import { initItem } from '@/views/features/modals/itemModal/data'
-import { ItemFormExt } from '@/views/features/modals/itemModal/ItemFormExt'
 import { RegisterForm } from '@/views/pages/registerForm/RegisterForm'
 import { theme } from 'antd'
 import { useEffect, useState } from 'react'
@@ -15,42 +12,42 @@ import { chromeStorage } from './storageService'
 import styles from './style'
 import { LoadingBar } from '@/views/features/loading/LoadingBar'
 import { HeaderExtension } from '@/views/features'
+import { ItemForm } from '@/views/features/modals/itemModal'
+import { useCategories, useTypes } from '@/core/hooks'
 
-export const PopupExt = () => {
+export const PopupExtension = () => {
   const { token } = theme.useToken()
 
   const classes = styles()
 
   const [isLogin, setIsLogin] = useState<boolean>(true)
-  const [cats, setCats] = useState<IOption<string, ECategory>[]>([])
-  const [types, setTypes] = useState<IOption<string, EType>[]>([])
+
   const [currentPage, setCurrentPage] = useState<EPageExt>(EPageExt.ADD)
+
+  const { data: cats } = useCategories()
+  const { data: types } = useTypes()
 
   const methods = useForm<IItem>({ defaultValues: initItem })
 
   // Removed axios interceptors - not needed since using Firebase SDK directly
 
-  const onLogin = async ({ isSuccess, content }: IHttpResponse<ILoginResponse>) => {
-    if (isSuccess) {
-      // save auth info
-      await chromeStorage.set(content)
-      // set isAuth to storage
-      await chromeStorage.set({ isAuth: true })
-      setIsLogin(true)
-      getStaticData()
-      setCurrentPage(EPageExt.ADD)
-    }
+  const onLogin = async (uid: IUser) => {
+    // save auth info
+    await chromeStorage.set(uid)
+    // set isAuth to storage
+    await chromeStorage.set({ isAuth: true })
+    setIsLogin(true)
+    getStaticData()
+    setCurrentPage(EPageExt.ADD)
   }
 
   const getStaticData = async () => {
-    let cats = (await chromeStorage.get(['cats'])).cats as IOption<string, ECategory>[]
-    let types = (await chromeStorage.get(['types'])).types as IOption<string, EType>[]
-
-    if (!cats) cats = (await commonApi.getCategories()).content
-    if (!types) types = (await commonApi.getTypes()).content
-
-    setCats(cats.map((cat) => ({ ...cat, value: cat.id })))
-    setTypes(types.map((type) => ({ ...type, value: type.id })))
+    // let cats = (await chromeStorage.get(['cats'])).cats as IOption<string, ECategory>[]
+    // let types = (await chromeStorage.get(['types'])).types as IOption<string, EType>[]
+    // if (!cats) cats = (await commonApi.getCategories()).content
+    // if (!types) types = (await commonApi.getTypes()).content
+    // setCats(cats.map((cat) => ({ ...cat, value: cat.id })))
+    // setTypes(types.map((type) => ({ ...type, value: type.id })))
   }
 
   const onPageChange = async (page: EPageExt) => {
@@ -96,7 +93,7 @@ export const PopupExt = () => {
           {currentPage === EPageExt.ADD && (
             <div className={classes.cruForm}>
               <FormProvider {...methods}>
-                <ItemFormExt categories={cats} types={types} />
+                <ItemForm item={initItem} mode={'add'} />
               </FormProvider>
             </div>
           )}

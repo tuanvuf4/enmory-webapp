@@ -5,7 +5,6 @@ import { getType } from '@/helpers/item'
 import { IItemQuiz, TQuiz, ECategory, EQuiz, IOption, IAnswer, IItem } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
 import { itemApi } from '@/services/firebase/api/item.api'
-import { itemAction } from '@/store/reducers/items.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { IStudySetStatus, studySetAction } from '@/store/reducers/studySet.reducer'
 import { theme, InputRef, Button, Input, Flex } from 'antd'
@@ -132,7 +131,6 @@ export const StudySet: React.FC = () => {
     const { quiz, ...rest } = item
     if (level < EItemLevel.ZERO) level = EItemLevel.ZERO
     if (level > EItemLevel.FIVE) level = EItemLevel.FIVE
-    dispatch(itemAction.update({ level: level, practiceCount: (rest.practiceCount as number) + 1 }))
     dispatch(
       studySetAction.update({
         id: item.id,

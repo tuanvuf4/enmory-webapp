@@ -1,18 +1,16 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { commonApi } from '@/services/firebase/api/common.api'
 import { IIotdRequest, ECategory, IIotd } from '@/models/item.model'
-import { useEffect } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useDispatch, useSelector } from './redux'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
-import { getTodayDateString } from '@/helpers/dataTime'
+import { getIotdFromRedux, isIotdFromToday } from '@/helpers/dataTime'
 
 // Query keys
 export const commonKeys = {
   all: ['common'] as const,
   categories: () => [...commonKeys.all, 'categories'] as const,
   types: () => [...commonKeys.all, 'types'] as const,
-  iotd: () => [...commonKeys.all, 'iotd'] as const,
-  iotdByCategory: (catId: number, date?: string) => [...commonKeys.iotd(), catId, date] as const,
 }
 
 // Fetch categories
@@ -45,41 +43,12 @@ export const useTypes = () => {
   })
 }
 
-// Helper to get IOTD from Redux by category
-const getIotdFromRedux = (state: any, catId: number): IIotd<string[]> | null => {
-  switch (catId) {
-    case ECategory.WORD:
-      return state.iotd.word
-    case ECategory.PHRASE:
-      return state.iotd.phrase
-    case ECategory.IDIOM:
-      return state.iotd.idiom
-    case ECategory.SLANG:
-      return state.iotd.slang
-    case ECategory.COLLOCATION:
-      return state.iotd.collocation
-    case ECategory.SENTENCE:
-      return state.iotd.sentence
-    default:
-      return null
-  }
-}
-
-// Check if IOTD is from today
-const isIotdFromToday = (
-  iotd: IIotd<string[]> | null,
-  todayStart: number,
-  todayEnd: number,
-): boolean => {
-  if (!iotd || !iotd.first_of_date) return false
-  return iotd.first_of_date >= todayStart && iotd.first_of_date <= todayEnd
-}
-
 // Fetch item of the day by category
-export const useIotd = (data: IIotdRequest, enabled = true) => {
+export const useIotd = ({ catId, generate = false }: IIotdRequest, enabled = true) => {
   const dispatch = useDispatch()
-  const today = getTodayDateString()
-  const reduxIotd = useSelector((state) => getIotdFromRedux(state, data.catId))
+  const reduxIotd = useSelector((state) => getIotdFromRedux(state, catId))
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
 
   // Get today's date range
   const now = new Date()
@@ -95,42 +64,43 @@ export const useIotd = (data: IIotdRequest, enabled = true) => {
   ).getTime()
 
   // Check if Redux has valid IOTD for today
-  const hasValidReduxIotd = isIotdFromToday(reduxIotd, todayStart, todayEnd)
+  const isValidIotd = isIotdFromToday(reduxIotd, todayStart, todayEnd)
 
-  const query = useQuery({
-    queryKey: commonKeys.iotdByCategory(data.catId, today),
-    queryFn: async () => {
-      // If Redux has valid IOTD, return it immediately
-      if (hasValidReduxIotd && reduxIotd) {
-        console.log(`[IOTD] Using cached IOTD from Redux for category ${data.catId}`)
-        return reduxIotd
-      }
-
-      console.log(`[IOTD] Fetching new IOTD from API for category ${data.catId}`)
-      const { isSuccess, content: iotd } = await commonApi.getItemOfTheDayByCatId(data)
-      if (isSuccess && iotd) {
-        return {
-          ...iotd,
-          item: iotd.item,
-        }
-      }
-      return null
-    },
-    enabled,
-    staleTime: 60 * 60 * 1000, // 1 hour - data is fresh for an hour
-    gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24 hours
-    refetchOnMount: false, // Don't refetch on mount if data is fresh
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-  })
-
-  // Sync with Redux store when data changes
   useEffect(() => {
-    if (query.data && !hasValidReduxIotd) {
-      dispatch(iotdAction.setIotd(query.data as unknown as IIotd<string[]>))
+    // If already have valid data or disabled, skip
+    if (isValidIotd || !enabled) {
+      return
     }
-  }, [query.data, dispatch, hasValidReduxIotd])
 
-  return query
+    // Fetch new IOTD
+    const fetchIotd = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const { isSuccess, content: iotd } = await commonApi.getItemOfTheDayByCatId({
+          catId,
+          generate,
+        })
+        if (isSuccess && iotd) {
+          dispatch(iotdAction.setIotd(iotd as unknown as IIotd<string[]>))
+        }
+      } catch (err) {
+        setError(err as Error)
+        console.error(`[IOTD] Error fetching IOTD for category ${catId}:`, err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchIotd()
+  }, [catId, generate, isValidIotd, enabled, dispatch])
+
+  return {
+    data: reduxIotd,
+    isLoading,
+    error,
+    isError: !!error,
+  }
 }
 
 // Hook to fetch and sync all IOTD categories
@@ -153,10 +123,26 @@ export const usePrefetchAllIotd = (enabled = true) => {
 
 // Refetch IOTD for specific category
 export const useRefetchIotd = () => {
-  const queryClient = useQueryClient()
-  const today = getTodayDateString()
+  const dispatch = useDispatch()
 
-  return (catId: number) => {
-    queryClient.invalidateQueries({ queryKey: commonKeys.iotdByCategory(catId, today) })
-  }
+  return useCallback(
+    async (catId: number) => {
+      // Clear Redux state for this category
+      dispatch(iotdAction.clearIotd(catId))
+
+      // Fetch new IOTD
+      try {
+        const { isSuccess, content: iotd } = await commonApi.getItemOfTheDayByCatId({
+          catId,
+          generate: true,
+        })
+        if (isSuccess && iotd) {
+          dispatch(iotdAction.setIotd(iotd as unknown as IIotd<string[]>))
+        }
+      } catch (err) {
+        console.error(`[IOTD] Error refetching IOTD for category ${catId}:`, err)
+      }
+    },
+    [dispatch],
+  )
 }

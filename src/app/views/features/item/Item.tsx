@@ -1,12 +1,10 @@
 import { setting } from '@/config/appConfig'
 import { useDeleteItem, useDispatch, useSelector } from '@/core/hooks'
-import { useRefetchIotd } from '@/core/hooks/useCommon'
 import { usePrompt } from '@/helpers/hooks'
 import { getCategory, isDefect } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
 import { ECategory, IItem } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
-import { settingAction } from '@/store/reducers/setting.reducer'
 import { Level, Tags } from '@/views/components'
 import { MoreOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Dropdown, Flex, MenuProps, Skeleton, theme } from 'antd'
@@ -20,6 +18,7 @@ import { getActionMenuItems } from './ActionMenuItem'
 import { MeaningItem } from './MeaningItem'
 import styles from './style'
 import { useItemForm } from '@/helpers/hooks/useItemForm'
+import { actionAsyncApp } from '@/store/asyncActions'
 
 interface IProps {
   action?: boolean
@@ -47,6 +46,7 @@ export const Item: React.FC<IProps> = ({
   const classes = styles()
 
   const [, setSize] = useState<number>(8)
+  const [spin, setSpin] = useState(false)
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -56,7 +56,6 @@ export const Item: React.FC<IProps> = ({
   const { mutate: mutateDeleteItem } = useDeleteItem()
 
   const { confirmDeleteModal, openNotification } = usePrompt()
-  const refetchIotd = useRefetchIotd()
 
   const { viewMode } = useSelector((state) => state.config)
 
@@ -97,6 +96,22 @@ export const Item: React.FC<IProps> = ({
     }
   }
 
+  const getActionMenus = (menus = getActionMenuItems(data)) => {
+    return menus
+      .map((menu) => {
+        if (!onViewSuccess && !action && menu?.key === 0) return false
+        if (!onEditSuccess && !action && menu?.key === 1) return false
+        if (!onDeleteSuccess && !action && menu?.key === 4) return false
+        return menu
+      })
+      .filter(Boolean) as ItemType[]
+  }
+
+  const menuProps = {
+    items: getActionMenus(getActionMenuItems(data)),
+    onClick: handleMenuClick,
+  }
+
   const onEdit = async (id: string) => {
     try {
       const { content } = await itemApi.getItemById(id)
@@ -129,22 +144,6 @@ export const Item: React.FC<IProps> = ({
     if (isSuccess && content) {
       openViewItemForm(content)
     }
-  }
-
-  const getActionMenus = (menus = getActionMenuItems(data)) => {
-    return menus
-      .map((menu) => {
-        if (!onViewSuccess && !action && menu?.key === 0) return false
-        if (!onEditSuccess && !action && menu?.key === 1) return false
-        if (!onDeleteSuccess && !action && menu?.key === 4) return false
-        return menu
-      })
-      .filter(Boolean) as ItemType[]
-  }
-
-  const menuProps = {
-    items: getActionMenus(getActionMenuItems(data)),
-    onClick: handleMenuClick,
   }
 
   const onSearch = (keyword: string) => {
@@ -182,6 +181,12 @@ export const Item: React.FC<IProps> = ({
     await itemApi.updateItem(data.id || '', { archive })
   }
 
+  const onRefetchIotd = async (catId: ECategory) => {
+    setSpin(true)
+    await dispatch(actionAsyncApp.fetchIotd({ catId, generate: true }))
+    setSpin(false)
+  }
+
   useEffect(() => {
     viewMode === EViewMode.LIST ? setSize(24) : setSize(8)
   }, [viewMode])
@@ -211,9 +216,9 @@ export const Item: React.FC<IProps> = ({
                     <Button
                       size='small'
                       type={'text'}
-                      icon={<ReloadOutlined style={{ color: token.colorWhite }} />}
+                      icon={<ReloadOutlined style={{ color: token.colorWhite }} spin={spin} />}
                       onClick={() => {
-                        refetchIotd(data.catId as ECategory)
+                        onRefetchIotd(data.catId as ECategory)
                       }}
                     />
                   )}

@@ -11,15 +11,7 @@ import {
   doc,
   limit,
 } from 'firebase/firestore'
-import {
-  ECategory,
-  EType,
-  IOption,
-  IIotd,
-  IIotdRequest,
-  MarkIotdRangeDateRequest,
-  GetIIotdRangeDateRequest,
-} from '@/models/item.model'
+import { ECategory, EType, IOption, IIotd, IIotdRequest } from '@/models/item.model'
 import { categories, types } from '@/constant/item'
 
 const getCategories = async (): Promise<IHttpResponse<IOption<string, ECategory>[]>> => {
@@ -41,13 +33,6 @@ const getTypes = async (): Promise<
     statusCode: 200,
   }
 }
-
-const unsupported = (name: string) => ({
-  isSuccess: false,
-  message: `${name} is not supported in Firebase mode`,
-  content: null as unknown as IIotd<string>,
-  statusCode: 501,
-})
 
 /**
  * Get start and end of today in milliseconds
@@ -78,8 +63,6 @@ const getRandomItemByCategory = async (catId: number): Promise<any | null> => {
       return null
     }
 
-    console.log(`[IOTD] Fetching random item for category ${catId}, user: ${currentUser.uid}`)
-
     // Query items by category and user, excluding deleted and archived items
     const itemsQuery = query(
       collection(db, dbCollections.items),
@@ -90,7 +73,6 @@ const getRandomItemByCategory = async (catId: number): Promise<any | null> => {
     )
 
     const snapshot = await getDocs(itemsQuery)
-    console.log(`[IOTD] Found ${snapshot.size} items for category ${catId}`)
 
     if (snapshot.empty) {
       console.log(`[IOTD] No items found for category ${catId}`)
@@ -110,7 +92,7 @@ const getRandomItemByCategory = async (catId: number): Promise<any | null> => {
 /**
  * Delete IOTDs that are not from today
  */
-const cleanupOldIotds = async (catId: number) => {
+const cleanupOldIotds = async (catId: number, force = false) => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) return
@@ -118,6 +100,12 @@ const cleanupOldIotds = async (catId: number) => {
     const { startOfDay } = getTodayRange()
 
     // Query IOTDs for this category and user that are not from today
+    const forceIotdQuery = query(
+      collection(db, dbCollections.iotd),
+      where('uid', '==', currentUser.uid),
+      where('catId', '==', catId),
+    )
+
     const oldIotdsQuery = query(
       collection(db, dbCollections.iotd),
       where('uid', '==', currentUser.uid),
@@ -125,62 +113,109 @@ const cleanupOldIotds = async (catId: number) => {
       where('last_of_date', '<', startOfDay),
     )
 
-    const snapshot = await getDocs(oldIotdsQuery)
+    const snapshot = await getDocs(force ? forceIotdQuery : oldIotdsQuery)
 
     // Delete old IOTDs
     const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref))
     await Promise.all(deletePromises)
-
-    console.log(`Cleaned up ${snapshot.size} old IOTD(s) for category ${catId}`)
   } catch (error) {
     console.error('Error cleaning up old IOTDs:', error)
   }
 }
 
 /**
+ * Create a new Item of the Day for a specific category
+ * Gets a random item and creates a new IOTD document
+ */
+const createItemOfTheDayByCatId = async ({
+  catId,
+  userId,
+}: {
+  catId: number
+  userId: string
+}): Promise<IHttpResponse<IIotd>> => {
+  try {
+    const { startOfDay, endOfDay } = getTodayRange()
+
+    // Get random item
+    const randomItem = await getRandomItemByCategory(catId)
+
+    if (!randomItem) {
+      return {
+        isSuccess: false,
+        message: `No items available for category ${catId}`,
+        content: null as unknown as IIotd,
+        statusCode: 404,
+      }
+    }
+
+    // Create new IOTD document
+    const newIotd = {
+      itemId: randomItem.id,
+      uid: userId,
+      catId: catId,
+      first_of_date: startOfDay,
+      last_of_date: endOfDay,
+      created_date: Date.now(),
+      item: randomItem,
+    }
+
+    const docRef = await addDoc(collection(db, dbCollections.iotd), newIotd)
+
+    return {
+      isSuccess: true,
+      message: 'IOTD created successfully',
+      content: {
+        id: docRef.id,
+        ...newIotd,
+        item: randomItem,
+      } as IIotd,
+      statusCode: 201,
+    }
+  } catch (error) {
+    console.error('[IOTD] Error creating IOTD:', error)
+    return {
+      isSuccess: false,
+      message: `Error creating IOTD: ${error}`,
+      content: null as unknown as IIotd,
+      statusCode: 500,
+    }
+  }
+}
+
+/**
  * Get or create Item of the Day for a specific category
  */
-const getItemOfTheDayByCatId = async (
-  body: IIotdRequest,
-): Promise<IHttpResponse<IIotd<string>>> => {
+const getItemOfTheDayByCatId = async ({
+  catId,
+  generate = true,
+}: IIotdRequest): Promise<IHttpResponse<IIotd>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) {
       return {
         isSuccess: false,
         message: 'User not authenticated',
-        content: null as unknown as IIotd<string>,
+        content: null as unknown as IIotd,
         statusCode: 401,
       }
     }
 
     const { startOfDay, endOfDay } = getTodayRange()
 
-    console.log(`[IOTD] Fetching/Creating IOTD for category ${body.catId}`)
-    console.log(`[IOTD] Date range: ${new Date(startOfDay)} to ${new Date(endOfDay)}`)
-    console.log(`[IOTD] User: ${currentUser.uid}`)
-
-    // First, cleanup old IOTDs for this category
-    await cleanupOldIotds(body.catId)
-
-    console.log(`*** cleanup *** `)
+    await cleanupOldIotds(catId, generate)
 
     // Query for today's IOTD
     const iotdQuery = query(
       collection(db, dbCollections.iotd),
       where('uid', '==', currentUser.uid),
-      where('catId', '==', body.catId),
+      where('catId', '==', catId),
       where('first_of_date', '>=', startOfDay),
       where('last_of_date', '<=', endOfDay),
       limit(1),
     )
 
-    console.log(`*** iotdQuery *** `, iotdQuery)
-
     const snapshot = await getDocs(iotdQuery)
-    console.log(`[IOTD] Found snapshot ${snapshot.size} existing IOTD(s) for today`)
-
-    console.log(`*** snapshot.empty *** `, snapshot.empty)
 
     // If today's IOTD exists, return it
     if (!snapshot.empty) {
@@ -201,69 +236,35 @@ const getItemOfTheDayByCatId = async (
           id: iotdDoc.id,
           ...iotdData,
           item: item || {},
-        } as IIotd<string>,
+        } as IIotd,
         statusCode: 200,
       }
     }
 
-    // If no IOTD exists for today, create a new one with a random item
-    console.log(`[IOTD] No existing IOTD found, fetching random item...`)
-    const randomItem = await getRandomItemByCategory(body.catId)
-
-    if (!randomItem) {
-      console.log(`[IOTD] No items available for category ${body.catId}`)
-      return {
-        isSuccess: false,
-        message: `No items available for category ${body.catId}`,
-        content: null as unknown as IIotd<string>,
-        statusCode: 404,
-      }
+    // If no IOTD exists for today, create a new one
+    if (generate) {
+      return await createItemOfTheDayByCatId({ catId, userId: currentUser.uid })
     }
 
-    console.log(`[IOTD] Selected random item: ${randomItem.id} - ${randomItem.origin}`)
-
-    // Create new IOTD
-    const newIotd = {
-      itemId: randomItem.id,
-      uid: currentUser.uid,
-      catId: body.catId,
-      first_of_date: startOfDay,
-      last_of_date: endOfDay,
-      created_date: Date.now(),
-    }
-
-    console.log(`[IOTD] Creating new IOTD document:`, newIotd)
-
-    const docRef = await addDoc(collection(db, dbCollections.iotd), newIotd)
-
-    console.log(`[IOTD] Successfully created IOTD with ID: ${docRef.id}`)
-
+    // If generate is false, return not found
     return {
-      isSuccess: true,
-      message: 'IOTD created successfully',
-      content: {
-        id: docRef.id,
-        ...newIotd,
-        item: randomItem,
-      } as IIotd<string>,
-      statusCode: 201,
+      isSuccess: false,
+      message: 'No IOTD found for today',
+      content: null as unknown as IIotd,
+      statusCode: 404,
     }
   } catch (error) {
-    console.error('Error in getItemOfTheDayByCatId:', error)
+    console.error('[IOTD] Error in getItemOfTheDayByCatId:', error)
     return {
       isSuccess: false,
       message: `Error fetching/creating IOTD: ${error}`,
-      content: null as unknown as IIotd<string>,
+      content: null as unknown as IIotd,
       statusCode: 500,
     }
   }
 }
 
-const markIotd = async (_body: MarkIotdRangeDateRequest) => unsupported('IOTD mark')
-
-const getIotdRange = async (_body: GetIIotdRangeDateRequest) => unsupported('IOTD range')
-
-const deleteMarkIotd = async (id: string): Promise<IHttpResponse<null>> => {
+const deleteIotd = async (id: string): Promise<IHttpResponse<null>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) {
@@ -298,7 +299,6 @@ export const commonApi = {
   getCategories,
   getTypes,
   getItemOfTheDayByCatId,
-  markIotd,
-  getIotdRange,
-  deleteMarkIotd,
+  createItemOfTheDayByCatId,
+  deleteIotd,
 }

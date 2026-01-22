@@ -4,11 +4,9 @@ import globalStyle from '@/style/appStyle'
 import { setting, appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { isGroupWord } from '@/helpers/validate'
-import { IOption, ECategory, EType, IItem, IExample, IMeaning } from '@/models/item.model'
+import { ECategory, EType, IItem, IExample, IMeaning } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
-import { itemAction } from '@/store/reducers/items.reducer'
-import { settingAction } from '@/store/reducers/setting.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { InputTag } from '@/views/components'
 import { Level } from '@/views/components'
@@ -27,7 +25,6 @@ import { usePrompt } from '@/helpers/hooks'
 import { exampleApi } from '@/services/firebase'
 import { Timestamp } from 'firebase/firestore'
 import { useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
-import { useItemForm } from '@/helpers/hooks/useItemForm'
 import { useModal } from '@/context/modal.context'
 
 interface ItemFormProps {
@@ -167,7 +164,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
               dispatch(studySetAction.update(itemUpdated))
             }
             if (itemUpdated) {
-              dispatch(itemAction.replace(itemUpdated))
               dispatch(iotdAction.update(itemUpdated))
             }
             reset(initItem)

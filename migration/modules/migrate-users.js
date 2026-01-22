@@ -24,13 +24,13 @@ async function migrateUsers(connection) {
 
     for (const user of users) {
       try {
-        const userId = String(user.id)
-        userMap[user.id] = userId
+        const uid = String(user.id)
+        userMap[user.id] = uid
 
-        const userRef = db.collection('users').doc(userId)
+        const userRef = db.collection('users').doc(uid)
 
         batch.set(userRef, {
-          id: userId,
+          id: uid,
           username: user.username || '',
           email: user.email || '',
           firstName: user.first_name || '',
@@ -51,7 +51,7 @@ async function migrateUsers(connection) {
           console.log(`  ✓ Processed ${count} users`)
         }
       } catch (error) {
-        errors.push({ userId: user.id, error: error.message })
+        errors.push({ uid: user.id, error: error.message })
         console.error(`  ✗ Error migrating user ${user.id}:`, error.message)
       }
     }

@@ -28,7 +28,7 @@ export interface IPronouns {
 
 export interface IExample {
   id?: string
-  uid: string
+  uid?: string
   origin: string
   translation: string
   created_date?: number
@@ -105,10 +105,12 @@ export interface IItem<M = string[]> {
 
 export interface IIotd<M = string[]> {
   id: string
-  itemId: number
-  userId: number
+  itemId: string
+  uid: string
+  catId: number
   first_of_date: number
   last_of_date: number
+  created_date?: number
   item: IItem<M>
 }
 

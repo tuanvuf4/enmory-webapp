@@ -1,17 +1,15 @@
 import globalStyle from '@/style/appStyle'
-import { useSelector } from '@/core/hooks'
+import { usePrefetchAllIotd, useSelector } from '@/core/hooks'
 import { ExampleForm } from '@/views/features/exampleOverview/ExampleFormAdd'
 import { ExampleOverView } from '@/views/features/exampleOverview/ExampleOverview'
 import { StudySet } from '@/views/features/studySet/StudySet'
 import { Widget } from '@/views/features/widget/Widget'
-import { theme, Space, Row, Col } from 'antd'
+import { theme, Space, Row, Col, Skeleton } from 'antd'
 import { Item } from '@/views/features/item/Item'
 import { ExampleMode } from '@/models/example.model'
 import registerStyle from '@/views/pages/register/style'
 import loginStyle from '@/views/pages/login/style'
 import { Link } from 'react-router-dom'
-
-import { useAllIotd } from '@/core/hooks/useCommon'
 import { SearchItemForm } from '@/views/features'
 
 const Home = () => {
@@ -22,11 +20,11 @@ const Home = () => {
 
   const { isAuth } = useSelector((state) => state.auth)
   const { isShowSearchFormItem } = useSelector((state) => state.setting)
-
   const { word, phrase, idiom, slang, collocation, sentence } = useSelector((state) => state.iotd)
 
-  // Fetch all IOTD categories when authenticated
-  useAllIotd(isAuth)
+  const { isLoading, results } = usePrefetchAllIotd(isAuth)
+
+  console.log(`*** results *** `, results)
 
   return (
     <>
@@ -62,11 +60,19 @@ const Home = () => {
                 </Col>
 
                 <Col xs={24} md={8}>
-                  {word && word.origin && (
-                    <Widget title='Word of the day'>
-                      <Item reload data={word} />
-                    </Widget>
-                  )}
+                  <>
+                    {isLoading ? (
+                      <Skeleton />
+                    ) : (
+                      <>
+                        {word && word.origin && (
+                          <Widget title='Word of the day'>
+                            <Item reload data={word} />
+                          </Widget>
+                        )}
+                      </>
+                    )}
+                  </>
 
                   {phrase && phrase.origin && (
                     <Widget title='Phrase of the day'>

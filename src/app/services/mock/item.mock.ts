@@ -31,7 +31,7 @@ export const meaningServer: IMeaning<string> = {
 }
 
 export const itemClient: IItem<string[]> = {
-  id: 0,
+  id: '',
   catId: 1,
   created_date: 1,
   deleted_date: 0,
@@ -40,7 +40,7 @@ export const itemClient: IItem<string[]> = {
   last_update: 0,
   level: 0,
   practiceCount: 0,
-  userId: 1,
+  uid: '',
   origin: '',
   favorite: false,
   forms: [],
@@ -51,7 +51,7 @@ export const itemClient: IItem<string[]> = {
 }
 
 export const itemServer: IItem<string> = {
-  id: 0,
+  id: '',
   catId: 1,
   created_date: 1,
   deleted_date: 0,
@@ -60,7 +60,7 @@ export const itemServer: IItem<string> = {
   last_update: 0,
   level: 0,
   practiceCount: 0,
-  userId: 1,
+  uid: '',
   origin: '',
   favorite: false,
   forms: '',

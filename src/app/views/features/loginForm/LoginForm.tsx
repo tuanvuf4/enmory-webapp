@@ -12,7 +12,7 @@ import logo from '@/assets/img/logo.png'
 import clsx from 'clsx'
 
 interface Login {
-  onLoginSuccess?: (userId: IUser) => void
+  onLoginSuccess?: (uid: IUser) => void
   showBanner?: boolean
 }
 

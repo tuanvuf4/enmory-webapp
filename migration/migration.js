@@ -180,7 +180,7 @@ async function migrateItems(userMap, exampleMap) {
     const items = await query(
       `SELECT i.*, u.username 
        FROM item i 
-       LEFT JOIN user u ON i.userid = u.id`,
+       LEFT JOIN user u ON i.uid = u.id`,
       [],
     )
 
@@ -197,10 +197,7 @@ async function migrateItems(userMap, exampleMap) {
         const docId = createDocId(item.id)
 
         // Get meanings for this item
-        const meanings = await query(
-          'SELECT * FROM meaning WHERE itemid = ?',
-          [item.id],
-        )
+        const meanings = await query('SELECT * FROM meaning WHERE itemid = ?', [item.id])
 
         // Process meanings with their examples
         const processedMeanings = []
@@ -249,7 +246,7 @@ async function migrateItems(userMap, exampleMap) {
         // Construct item document
         const itemData = {
           id: docId,
-          userId: item.userid ? userMap[item.userid] || String(item.userid) : null,
+          uid: item.uid ? userMap[item.uid] || String(item.uid) : null,
           catId: item.catid || 0,
           original: item.original || '',
           favorite: item.favorite ? Boolean(item.favorite) : false,
@@ -311,18 +308,16 @@ async function migrateConfigurations(userMap) {
     }
 
     for (const config of configs) {
-      const userId = config.userid ? userMap[config.userid] : null
+      const uid = config.uid ? userMap[config.uid] : null
 
-      if (!userId) {
-        console.log(
-          `  ⚠️  Skipping config for non-existent user ${config.userid}`,
-        )
+      if (!uid) {
+        console.log(`  ⚠️  Skipping config for non-existent user ${config.uid}`)
         continue
       }
 
       const configData = {
         id: config.id,
-        userId: userId,
+        uid: uid,
         numberOfWordsInStudySet: config.numberOfWordsInStudySet || 20,
         numberOfPhraseInStudySet: config.numberOfPhraseInStudySet || 20,
         numberOfIdiomInStudySet: config.numberOfIdiomInStudySet || 3,
@@ -340,12 +335,12 @@ async function migrateConfigurations(userMap) {
       // Store config as a subcollection under the user
       await firestore
         .collection('users')
-        .doc(userId)
+        .doc(uid)
         .collection('configuration')
         .doc('config')
         .set(configData)
 
-      console.log(`  ✅ Migrated configuration for user: ${userId}`)
+      console.log(`  ✅ Migrated configuration for user: ${uid}`)
     }
 
     console.log(`  ✅ Completed migrating configurations`)

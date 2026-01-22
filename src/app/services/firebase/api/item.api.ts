@@ -43,7 +43,7 @@ const buildQueryConstraints = (params: IItemRequestData): QueryConstraint[] => {
 
   // Filter by current user
   if (currentUser) {
-    constraints.push(where('userId', '==', currentUser.uid))
+    constraints.push(where('uid', '==', currentUser.uid))
   }
 
   // Filter by category
@@ -294,7 +294,7 @@ const getStudySet = async (
       const constraints: QueryConstraint[] = [where('catId', '==', studySet.id)]
 
       if (currentUser) {
-        constraints.push(where('userId', '==', currentUser.uid))
+        constraints.push(where('uid', '==', currentUser.uid))
       }
 
       constraints.push(where('is_deleted', '==', false))
@@ -336,7 +336,7 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
     const now = Timestamp.now().toMillis()
     const newItem = {
       ...item,
-      userId: currentUser.uid,
+      uid: currentUser.uid,
       created_date: now,
       last_update: now,
       is_deleted: false,
@@ -376,7 +376,7 @@ const createItems = async (items: IItem[]): Promise<IHttpResponse<IItem>> => {
     for (const item of items) {
       const newItem = {
         ...item,
-        userId: currentUser.uid,
+        uid: currentUser.uid,
         created_date: now,
         last_update: now,
         is_deleted: false,

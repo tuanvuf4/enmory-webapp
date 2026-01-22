@@ -20,19 +20,22 @@ async function migrateConfigurations(connection, userMap) {
     // Process explicit configurations from database
     for (const config of configurations) {
       try {
-        const userId = userMap[config.userId]
+        const uid = userMap[config.uid]
 
-        if (!userId) {
-          errors.push({ configId: config.id, error: `User ${config.userId} not found - skipping orphaned configuration` })
-          console.warn(`  ⚠️ Configuration ${config.id}: User ${config.userId} not found - skipping`)
+        if (!uid) {
+          errors.push({
+            configId: config.id,
+            error: `User ${config.uid} not found - skipping orphaned configuration`,
+          })
+          console.warn(`  ⚠️ Configuration ${config.id}: User ${config.uid} not found - skipping`)
           continue
         }
 
-        processedUsers.add(userId)
+        processedUsers.add(uid)
 
         const configRef = db
           .collection('users')
-          .doc(userId)
+          .doc(uid)
           .collection('configuration')
           .doc('settings')
 
@@ -63,12 +66,12 @@ async function migrateConfigurations(connection, userMap) {
     }
 
     // Create default configurations for users without existing config
-    for (const [userId] of Object.entries(userMap)) {
-      if (!processedUsers.has(userId)) {
+    for (const [uid] of Object.entries(userMap)) {
+      if (!processedUsers.has(uid)) {
         try {
           const configRef = db
             .collection('users')
-            .doc(userId)
+            .doc(uid)
             .collection('configuration')
             .doc('settings')
 
@@ -89,9 +92,9 @@ async function migrateConfigurations(connection, userMap) {
           })
 
           count++
-          console.log(`  ℹ️ Created default configuration for user ${userId}`)
+          console.log(`  ℹ️ Created default configuration for user ${uid}`)
         } catch (error) {
-          console.error(`  ✗ Error creating default config for user ${userId}:`, error.message)
+          console.error(`  ✗ Error creating default config for user ${uid}:`, error.message)
         }
       }
     }

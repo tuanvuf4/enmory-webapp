@@ -25,7 +25,7 @@ async function migrateItems(connection, userMap, meaningsByItem, exampleMap) {
       try {
         const itemId = String(item.id)
         itemMap[item.id] = itemId
-        const userId = item.user_id ? String(item.user_id) : null
+        const uid = item.user_id ? String(item.user_id) : null
 
         // Get meanings for this item
         const itemMeanings = meaningsByItem[item.id] || []
@@ -68,7 +68,7 @@ async function migrateItems(connection, userMap, meaningsByItem, exampleMap) {
         const itemData = {
           id: itemId,
           original: item.original || '',
-          userId: userId,
+          uid: uid,
           categoryId: item.category_id ? String(item.category_id) : null,
           type: item.type || '',
           level: item.level || 0,

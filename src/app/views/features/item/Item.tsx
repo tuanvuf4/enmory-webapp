@@ -164,7 +164,7 @@ export const Item: React.FC<IProps> = ({
     const now = new Date().getTime()
     const newData = {
       level: 0,
-      practiceCount: 0,
+      count: 0,
       created_date: now,
       last_update: now,
     }

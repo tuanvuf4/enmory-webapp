@@ -95,7 +95,7 @@ export interface IItem<M = string[]> {
     email: string
     phoneNumber: string
   }
-  practiceCount?: number
+  count?: number
   forms: M
   collocations: M
   word_family: M

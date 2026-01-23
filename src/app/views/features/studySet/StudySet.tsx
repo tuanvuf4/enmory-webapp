@@ -162,14 +162,14 @@ export const StudySet: React.FC = () => {
       studySetAction.update({
         id: item.id,
         level: level,
-        practiceCount: (rest.practiceCount as number) + 1,
+        count: (rest.count as number) + 1,
         quiz: { ...item.quiz, result: result },
       }),
     )
     await itemApi.updateItem(item.id ?? '', {
       ...rest,
       level: level,
-      practiceCount: (rest.practiceCount as number) + 1,
+      count: (rest.count as number) + 1,
     })
   }
 

@@ -46,7 +46,7 @@ export const itemDefault: IItem = {
   archive: false,
   is_deleted: false,
   level: 0,
-  practiceCount: 0,
+  count: 0,
   meanings: [],
   forms: [],
   collocations: [],

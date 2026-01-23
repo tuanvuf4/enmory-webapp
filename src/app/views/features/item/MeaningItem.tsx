@@ -1,9 +1,9 @@
-import { AudioOutlined, ColumnHeightOutlined, VerticalAlignMiddleOutlined } from '@ant-design/icons'
+import { AudioOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
 import { getType } from '@/helpers/item'
 import { IMeaning, ECategory, IExample } from '@/models/item.model'
 import { Tags } from '@/views/components'
-import { Row, Col, Button, Flex } from 'antd'
+import { Button, Flex } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
@@ -21,7 +21,7 @@ const Pronunciation = ({ catId, meaning }: { catId: ECategory; meaning: IMeaning
   if (catId === ECategory.WORD && (meaning.pronunciation.us || meaning.pronunciation.uk)) {
     return (
       <div
-        className={`${classes.pronouns} flex justify-end flex-wrap gap-x-4 gap-y-1 items-center`}
+        className={`${classes.pronouns} flex justify-end flex-wrap gap-x-2 gap-y-1 items-center text-xs`}
       >
         {meaning.pronunciation.uk && (
           <div className={classes.audio}>
@@ -91,12 +91,22 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning }) => {
         <Flex justify={'space-between'} align={'center'} className={`w-full`}>
           <div>
             <Button
+              ghost
+              variant='link'
               size={'small'}
-              icon={show ? <VerticalAlignMiddleOutlined /> : <ColumnHeightOutlined />}
+              color={'primary'}
+              className={'text-xs'}
+              icon={
+                show ? (
+                  <CaretUpOutlined style={{ fontSize: '12px' }} />
+                ) : (
+                  <CaretDownOutlined style={{ fontSize: '12px' }} />
+                )
+              }
               onClick={() => setShow((prev) => !prev)}
             />
             {catId === ECategory.WORD && (
-              <span className='ml-2'>{getType(meaning.typeId).origin}</span>
+              <span className='ml-2 text-xs'>{getType(meaning.typeId).origin}</span>
             )}
           </div>
 

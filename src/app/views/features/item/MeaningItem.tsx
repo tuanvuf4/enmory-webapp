@@ -1,9 +1,9 @@
-import { AudioOutlined } from '@ant-design/icons'
+import { AudioOutlined, ColumnHeightOutlined, VerticalAlignMiddleOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
 import { getType } from '@/helpers/item'
 import { IMeaning, ECategory, IExample } from '@/models/item.model'
 import { Tags } from '@/views/components'
-import { Row, Col } from 'antd'
+import { Row, Col, Button, Flex } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
@@ -20,7 +20,9 @@ const Pronunciation = ({ catId, meaning }: { catId: ECategory; meaning: IMeaning
 
   if (catId === ECategory.WORD && (meaning.pronunciation.us || meaning.pronunciation.uk)) {
     return (
-      <div className={`${classes.pronouns} flex flex-wrap gap-x-4 gap-y-1 items-center`}>
+      <div
+        className={`${classes.pronouns} flex justify-end flex-wrap gap-x-4 gap-y-1 items-center`}
+      >
         {meaning.pronunciation.uk && (
           <div className={classes.audio}>
             {/* <span className={classes.accent}>UK</span> */}
@@ -83,33 +85,25 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning }) => {
           classes.meaningItem,
           meaning.enable ? '' : classes.disableMeaning,
           meaning.common ? classes.meaningCommon : '',
-          meaning.translation || meaning.definition ? '' : classes.disableMeaning,
-          'cursor-pointer',
+          'relative',
         )}
-        onDoubleClick={() => setShow((prev) => !prev)}
       >
-        <Row align={'middle'} className={`select-none`}>
+        <Flex justify={'space-between'} align={'center'} className={`w-full`}>
+          <div>
+            <Button
+              size={'small'}
+              icon={show ? <VerticalAlignMiddleOutlined /> : <ColumnHeightOutlined />}
+              onClick={() => setShow((prev) => !prev)}
+            />
+            {catId === ECategory.WORD && (
+              <span className='ml-2'>{getType(meaning.typeId).origin}</span>
+            )}
+          </div>
+
           {(meaning.pronunciation.uk ||
             meaning.pronunciation.us ||
-            meaning.pronunciation.common) && (
-            <Col span={18}>
-              <Pronunciation catId={catId} meaning={meaning} />{' '}
-            </Col>
-          )}
-
-          {catId === ECategory.WORD && (
-            <Col
-              span={6}
-              className={`m-0 p-0 ${
-                meaning.pronunciation.uk || meaning.pronunciation.us || meaning.pronunciation.common
-                  ? 'text-right'
-                  : 'text-left'
-              } `}
-            >
-              {getType(meaning.typeId).origin}
-            </Col>
-          )}
-        </Row>
+            meaning.pronunciation.common) && <Pronunciation catId={catId} meaning={meaning} />}
+        </Flex>
 
         {!show && (
           <>

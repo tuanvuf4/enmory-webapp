@@ -20,6 +20,7 @@ import {
   documentId,
 } from 'firebase/firestore'
 import { IExample } from '@/models/item.model'
+import { toWildString } from '@/helpers/item'
 
 export interface IItemRequestData {
   keyword: string
@@ -363,10 +364,10 @@ const getStudySet = async (
           ...item,
           quiz: {
             title: 'What does this mean?',
-            question: definition,
+            question: toWildString(item.origin),
             answer: item.origin,
             type: EQuiz.FILL_IN_BLANK,
-            hint: hint,
+            hint: definition,
             result: false,
           },
         } as unknown as IItemQuiz

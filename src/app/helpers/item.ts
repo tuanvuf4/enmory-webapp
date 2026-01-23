@@ -91,3 +91,18 @@ export const isDefect = (item: IItem) => {
     return false
   }
 }
+
+export const toWildString = (value: string, wildcard = '_') => {
+  const array = value.trim().split('')
+  const ran = getRandomNumber(array.length - 1, 0)
+  for (let i = 0; i < array.length; i++) {
+    if (i !== ran) {
+      array[i] = wildcard
+    }
+  }
+  return array.join(' ')
+}
+
+export const getRandomNumber = (max: number, min: number) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}

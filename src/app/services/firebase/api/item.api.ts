@@ -164,6 +164,17 @@ const getItems = async (params: IItemRequestData): Promise<IHttpResponse<IItem[]
 
     let items: IItem[] = await Promise.all(itemsPromises)
 
+    // Filter items to only include those with at least one meaning that has definition or translation
+    items = items.filter((item) => {
+      const meanings = item.meanings || []
+      return meanings.some((meaning: any) => {
+        return (
+          (meaning.definition && meaning.definition.trim() !== '') ||
+          (meaning.translation && meaning.translation.trim() !== '')
+        )
+      })
+    })
+
     if (params.keyword && !params.exact) {
       items = items.filter((item) =>
         item.origin.toLowerCase().includes(params.keyword.toLowerCase()),
@@ -327,18 +338,73 @@ const getStudySet = async (
         ...doc.data(),
       })) as unknown as IItem[]
 
-      // Filter items that have meanings
-      const itemsWithMeanings = items.filter((item) => item.meanings && item.meanings.length > 0)
+      // Filter items that have meanings with definition or translation
+      const itemsWithMeanings = items.filter((item) => {
+        const meanings = item.meanings || []
+        return meanings.some((meaning: any) => {
+          return (
+            (meaning.definition && meaning.definition.trim() !== '') ||
+            (meaning.translation && meaning.translation.trim() !== '')
+          )
+        })
+      })
+
+      const requestedSize = studySet.size || 10
+      const availableCount = itemsWithMeanings.length
+
+      if (availableCount < requestedSize) {
+        console.warn(
+          `Category ${studySet.id}: Only ${availableCount} items available, but ${requestedSize} requested`,
+        )
+      }
 
       // Randomly select items from this category
       const shuffledItems = itemsWithMeanings.sort(() => Math.random() - 0.5)
-      const selectedItems = shuffledItems.slice(0, studySet.size || 10)
+      const selectedItems = shuffledItems.slice(0, requestedSize)
+
+      console.log(
+        `Category ${studySet.id}: Selected ${selectedItems.length}/${requestedSize} items`,
+      )
 
       allItems.push(...selectedItems)
     }
 
+    // Fetch examples for all items
+    const itemsWithExamples = await Promise.all(
+      allItems.map(async (item) => {
+        const meanings = item.meanings || []
+
+        // Fetch examples for each meaning
+        const meaningsWithExamples = await Promise.all(
+          meanings.map(async (meaning: any) => {
+            const exampleIds = meaning.examples || []
+
+            // Check if exampleIds is actually an array of strings
+            if (!Array.isArray(exampleIds)) {
+              console.warn('Example IDs is not an array:', exampleIds)
+              return {
+                ...meaning,
+                examples: [],
+              }
+            }
+
+            const examples = await getExamplesByIds(exampleIds)
+            return {
+              ...meaning,
+              examples: examples,
+            }
+          }),
+        )
+
+        return {
+          ...item,
+          meanings: meaningsWithExamples,
+        }
+      }),
+    )
+
     // Generate quiz data for each item
-    const itemsWithQuiz: IItemQuiz[] = allItems.map((item) => {
+    const itemsWithQuiz: IItemQuiz[] = itemsWithExamples.map((item) => {
       // Randomly decide quiz type (50% chance for each type)
       const useFillInBlank = item.catId !== 6 && Math.random() < 0.5
 
@@ -351,23 +417,46 @@ const getStudySet = async (
       // Get definition/translation from meaning
       const definition = selectedMeaning?.definition || selectedMeaning?.translation || ''
 
-      // Get hint from examples
-      const examples = selectedMeaning?.examples || []
-      const hint =
-        Array.isArray(examples) && examples.length > 0
-          ? (examples[0] as IExample)?.origin || ''
-          : ''
+      // Get hint: if word (catId=1) show type, otherwise show category
+      let hint = ''
+      if (item.catId === 1) {
+        // Word category - show type (NOUN, VERB, etc.)
+        const typeLabels = [
+          'ALL',
+          'NOUN',
+          'VERB',
+          'ADJECTIVE',
+          'ADVERB',
+          'PREPOSITION',
+          'CONJUNCTION',
+          'PRONOUN',
+          'ARTICLE',
+          'DETERMINER',
+          'INTERJECTION',
+        ]
+        hint = typeLabels[selectedMeaning?.typeId || 0] || ''
+      } else {
+        // Other categories - show category name
+        const categoryLabels: Record<number, string> = {
+          2: 'PHRASE',
+          3: 'IDIOM',
+          4: 'SLANG',
+          5: 'COLLOCATION',
+          6: 'SENTENCE',
+        }
+        hint = categoryLabels[item.catId || 0] || ''
+      }
 
       // For fill in the blank
       if (useFillInBlank) {
         return {
           ...item,
           quiz: {
-            title: 'What does this mean?',
+            title: definition,
             question: toWildString(item.origin),
             answer: item.origin,
             type: EQuiz.FILL_IN_BLANK,
-            hint: definition,
+            hint: `(${hint.toLowerCase()})`,
             result: false,
           },
         } as unknown as IItemQuiz
@@ -404,11 +493,11 @@ const getStudySet = async (
       return {
         ...item,
         quiz: {
-          title: item.origin,
+          title: '',
           question: definition,
           answer: shuffledAnswers,
           type: EQuiz.MULTI_CHOICE,
-          hint: hint,
+          hint: `(${hint.toLowerCase()})`,
           result: false,
         },
       } as unknown as IItemQuiz
@@ -778,7 +867,6 @@ const getOverviewItems = async (): Promise<
       const itemData = doc.data()
       const catId = itemData.catId
 
-      // Find the category in overviewData and increment count
       const categoryIndex = overviewData.findIndex((cat) => cat.id === catId)
       if (categoryIndex !== -1) {
         overviewData[categoryIndex].total++

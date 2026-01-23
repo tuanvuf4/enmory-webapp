@@ -187,7 +187,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
         {filter && (
           <Dropdown
             trigger={['click']}
-            dropdownRender={() => (
+            popupRender={() => (
               <div className={classes.filterWrapper}>
                 <Controller
                   control={control}

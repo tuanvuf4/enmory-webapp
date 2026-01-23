@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { commonApi } from '@/services/firebase/api/common.api'
 import { IIotdRequest, ECategory, IIotd } from '@/models/item.model'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useDispatch, useSelector } from './redux'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { getIotdFromRedux, isIotdFromToday } from '@/helpers/dataTime'
@@ -50,25 +50,24 @@ export const useIotd = ({ catId, generate = false }: IIotdRequest, enabled = tru
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  // Get today's date range
-  const now = new Date()
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
-  const todayEnd = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    23,
-    59,
-    59,
-    999,
-  ).getTime()
-
   // Check if Redux has valid IOTD for today
-  const isValidIotd = isIotdFromToday(reduxIotd, todayStart, todayEnd)
+  const isValidIotd = useMemo(() => {
+    return isIotdFromToday(reduxIotd)
+  }, [reduxIotd])
 
   useEffect(() => {
-    // If already have valid data or disabled, skip
-    if (isValidIotd || !enabled) {
+    // If disabled, skip
+    if (!enabled) {
+      return
+    }
+
+    // If IOTD is stale (past end of day), clear it
+    if (reduxIotd && !isValidIotd) {
+      dispatch(iotdAction.clearIotd(catId))
+    }
+
+    // If already have valid data, skip
+    if (isValidIotd) {
       return
     }
 
@@ -81,6 +80,8 @@ export const useIotd = ({ catId, generate = false }: IIotdRequest, enabled = tru
           catId,
           generate,
         })
+
+        console.log(`*** iotd *** `, iotd)
         if (isSuccess && iotd) {
           dispatch(iotdAction.setIotd(iotd as unknown as IIotd<string[]>))
         }
@@ -93,7 +94,7 @@ export const useIotd = ({ catId, generate = false }: IIotdRequest, enabled = tru
     }
 
     fetchIotd()
-  }, [catId, generate, isValidIotd, enabled, dispatch])
+  }, [catId, generate, isValidIotd, enabled, dispatch, reduxIotd])
 
   return {
     data: reduxIotd,

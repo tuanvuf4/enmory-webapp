@@ -12,8 +12,11 @@ import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 
 // Initialize Firebase Admin
-const serviceAccount = require('./serviceAccountKey.json')
-const FB_USER_ID = 'zdSNTrF4JFbDzxEyVFK3n5Rv6w62' // Default user ID for migrated data
+// const serviceAccount = require('./serviceAccountKey.json')
+// const FB_USER_ID = 'zdSNTrF4JFbDzxEyVFK3n5Rv6w62' // Default user ID for migrated data
+
+const serviceAccount = require('./serviceAccountKey_12345.json')
+const FB_USER_ID = 'RqIKOUFPZRSTmraIiD7MKmqlzWT2' // Default usezr ID for migrated data Enmory_12345
 
 initializeApp({
   credential: cert(serviceAccount),
@@ -157,29 +160,47 @@ function parseSqlFile(filePath) {
   console.log('  Parsing meanings table...')
   const meanings = parseTableFromSql(sqlContent, 'meaning')
 
+  // Debug: Check sample meanings
+  if (meanings.length > 0) {
+    console.log('  → Sample meaning:', JSON.stringify(meanings[0], null, 2))
+  }
+
   console.log('  Parsing examples table...')
   const examples = parseTableFromSql(sqlContent, 'example')
 
   console.log('  Parsing meaning-example relationships...')
   const meaningExamples = parseTableFromSql(sqlContent, 'meaning_examples_example')
 
-  return { items, meanings, examples, meaningExamples }
+  console.log('  Parsing pronunciations table...')
+  const pronunciations = parseTableFromSql(sqlContent, 'pronunciation')
+
+  return { items, meanings, examples, meaningExamples, pronunciations }
 }
 
 /**
  * Build lookup maps for quick access
  */
-function buildLookupMaps(meanings, examples, meaningExamples) {
+function buildLookupMaps(meanings, examples, meaningExamples, pronunciations) {
   // Map: itemId -> [meaning records]
   const meaningsByItemId = {}
+  let meaningsWithItemId = 0
+  let meaningsWithoutItemId = 0
+
   meanings.forEach((meaning) => {
     if (meaning.itemId) {
       if (!meaningsByItemId[meaning.itemId]) {
         meaningsByItemId[meaning.itemId] = []
       }
       meaningsByItemId[meaning.itemId].push(meaning)
+      meaningsWithItemId++
+    } else {
+      meaningsWithoutItemId++
     }
   })
+
+  console.log(`  → ${meaningsWithItemId} meanings have itemId`)
+  console.log(`  → ${meaningsWithoutItemId} meanings missing itemId`)
+  console.log(`  → ${Object.keys(meaningsByItemId).length} unique items have meanings`)
 
   // Map: exampleId -> example record
   const examplesById = {}
@@ -196,13 +217,24 @@ function buildLookupMaps(meanings, examples, meaningExamples) {
     exampleIdsByMeaningId[rel.meaningId].push(rel.exampleId)
   })
 
-  return { meaningsByItemId, examplesById, exampleIdsByMeaningId }
+  // Map: pronunciationId -> pronunciation record
+  const pronunciationsById = {}
+  pronunciations.forEach((pronunciation) => {
+    pronunciationsById[pronunciation.id] = pronunciation
+  })
+
+  return { meaningsByItemId, examplesById, exampleIdsByMeaningId, pronunciationsById }
 }
 
 /**
  * Map meaning record to IMeaning interface
  */
-function mapToIMeaning(meaningRecord, exampleIdsByMeaningId, sqlToFirebaseExampleIds, userId) {
+function mapToIMeaning(
+  meaningRecord,
+  exampleIdsByMeaningId,
+  sqlToFirebaseExampleIds,
+  pronunciationsById,
+) {
   const now = Date.now()
 
   // Parse array fields
@@ -223,17 +255,23 @@ function mapToIMeaning(meaningRecord, exampleIdsByMeaningId, sqlToFirebaseExampl
     .map((sqlId) => sqlToFirebaseExampleIds[sqlId])
     .filter(Boolean)
 
+  // Get pronunciation data if exists
+  const pronunciationData = meaningRecord.pronunciationId
+    ? pronunciationsById[meaningRecord.pronunciationId]
+    : null
+
+  const pronunciation = {
+    common: pronunciationData?.common || '',
+    us: pronunciationData?.us || '',
+    uk: pronunciationData?.uk || '',
+  }
+
   const meaning = {
-    uid: userId || FB_USER_ID,
+    uid: FB_USER_ID,
     typeId: meaningRecord.typeId || 0,
     common: meaningRecord.common === 1 || meaningRecord.common === true,
     enable: meaningRecord.enable === 1 || meaningRecord.enable === true,
-    pronunciation: {
-      // You may need to join with pronunciation table if needed
-      common: '',
-      us: '',
-      uk: '',
-    },
+    pronunciation: pronunciation,
     note: meaningRecord.note || '',
     definition: meaningRecord.definition || '',
     translation: meaningRecord.translation || '',
@@ -264,7 +302,7 @@ function mapToIItem(
   meaningsByItemId,
   exampleIdsByMeaningId,
   sqlToFirebaseExampleIds,
-  userId,
+  pronunciationsById,
 ) {
   const now = Date.now()
 
@@ -283,12 +321,12 @@ function mapToIItem(
   // Get meanings for this item
   const itemMeanings = meaningsByItemId[itemRecord.id] || []
   const mappedMeanings = itemMeanings.map((meaning) =>
-    mapToIMeaning(meaning, exampleIdsByMeaningId, sqlToFirebaseExampleIds, userId),
+    mapToIMeaning(meaning, exampleIdsByMeaningId, sqlToFirebaseExampleIds, pronunciationsById),
   )
 
   const item = {
     origin: itemRecord.original || '',
-    uid: userId || 'xK0dvMHrcnMIKxIryzTkBjybdgW2',
+    uid: FB_USER_ID,
     catId: itemRecord.catId || 0,
     favorite: itemRecord.favorite === 1 || itemRecord.favorite === true,
     level: itemRecord.level || 0,
@@ -300,11 +338,7 @@ function mapToIItem(
     relation: parseArrayField(itemRecord.relation),
     created_date: itemRecord.created_date || now,
     last_update: itemRecord.last_update || now,
-  }
-
-  // Add meanings if any
-  if (mappedMeanings.length > 0) {
-    item.meanings = mappedMeanings
+    meanings: mappedMeanings, // Always include meanings, even if empty array
   }
 
   // Add deleted_date if item is deleted
@@ -312,14 +346,14 @@ function mapToIItem(
     item.deleted_date = itemRecord.deleted_date
   }
 
-  // Remove null/undefined/empty values
+  // Remove null/undefined/empty values (but keep empty meanings array)
   Object.keys(item).forEach((key) => {
     const value = item[key]
     if (
       value === null ||
       value === undefined ||
       value === '' ||
-      (Array.isArray(value) && value.length === 0)
+      (Array.isArray(value) && value.length === 0 && key !== 'meanings')
     ) {
       delete item[key]
     }
@@ -331,7 +365,7 @@ function mapToIItem(
 /**
  * Insert examples into Firebase and return mapping of SQL IDs to Firebase IDs
  */
-async function insertExamplesToFirebase(examples, userId, batchSize = 500) {
+async function insertExamplesToFirebase(examples, batchSize = 500) {
   console.log(`\nInserting ${examples.length} examples into Firebase...`)
   const sqlToFirebaseIds = {}
   let successCount = 0
@@ -346,7 +380,7 @@ async function insertExamplesToFirebase(examples, userId, batchSize = 500) {
       const docRef = db.collection('examples').doc()
       const exampleData = {
         id: docRef.id,
-        uid: userId || 'xK0dvMHrcnMIKxIryzTkBjybdgW2',
+        uid: FB_USER_ID,
         origin: example.original || '',
         translation: example.translation || '',
         note: example.note || '',
@@ -399,6 +433,11 @@ async function insertItemsToFirebase(items, collectionName = 'items', batchSize 
           ...item,
         }
 
+        // Debug: Check if meanings exist
+        if (itemWithId.meanings && itemWithId.meanings.length > 0) {
+          console.log(`  Item "${itemWithId.origin}" has ${itemWithId.meanings.length} meanings`)
+        }
+
         batch.set(docRef, itemWithId)
         successCount++
       } catch (error) {
@@ -443,8 +482,8 @@ async function insertItemsToFirebase(items, collectionName = 'items', batchSize 
  */
 async function migrateItems() {
   try {
-    const SQL_FILE_PATH = process.argv[2] || './enmory_webapp_11132025.sql'
-    const USER_ID = process.argv[3] || null
+    const SQL_FILE_PATH = process.argv[2] || './enmory_webapp_test.sql'
+    // const SQL_FILE_PATH = process.argv[2] || './enmory_webapp.sql'
     const COLLECTION_NAME = 'items'
 
     console.log('='.repeat(50))
@@ -452,37 +491,61 @@ async function migrateItems() {
     console.log('='.repeat(50))
     console.log(`SQL File: ${SQL_FILE_PATH}`)
     console.log(`Collection: ${COLLECTION_NAME}`)
-    console.log(`User ID: ${USER_ID || FB_USER_ID}`)
+    console.log(`User ID: ${FB_USER_ID}`)
     console.log('='.repeat(50))
 
     // Step 1: Parse SQL file
     console.log('\n[1/5] Parsing SQL file...')
-    const { items, meanings, examples, meaningExamples } = parseSqlFile(SQL_FILE_PATH)
+    const { items, meanings, examples, meaningExamples, pronunciations } =
+      parseSqlFile(SQL_FILE_PATH)
     console.log(`✓ Parsed ${items.length} items`)
     console.log(`✓ Parsed ${meanings.length} meanings`)
     console.log(`✓ Parsed ${examples.length} examples`)
     console.log(`✓ Parsed ${meaningExamples.length} meaning-example relationships`)
+    console.log(`✓ Parsed ${pronunciations.length} pronunciations`)
 
     // Step 2: Insert examples into separate collection
     console.log('\n[2/6] Inserting examples into Firebase...')
-    const sqlToFirebaseExampleIds = await insertExamplesToFirebase(examples, USER_ID)
+    const sqlToFirebaseExampleIds = await insertExamplesToFirebase(examples)
     console.log(`✓ Created ${Object.keys(sqlToFirebaseExampleIds).length} examples`)
 
     // Step 3: Build lookup maps
     console.log('\n[3/6] Building relationship maps...')
-    const { meaningsByItemId, examplesById, exampleIdsByMeaningId } = buildLookupMaps(
-      meanings,
-      examples,
-      meaningExamples,
-    )
+    const { meaningsByItemId, examplesById, exampleIdsByMeaningId, pronunciationsById } =
+      buildLookupMaps(meanings, examples, meaningExamples, pronunciations)
     console.log(`✓ Built lookup maps`)
 
     // Step 4: Map to IItem interface with meanings
     console.log('\n[4/6] Mapping records to IItem interface...')
+
+    // Check for orphaned meanings (meanings referencing non-existent items)
+    const itemIds = new Set(items.map((i) => i.id))
+    const orphanedMeanings = meanings.filter((m) => m.itemId && !itemIds.has(m.itemId))
+
+    if (orphanedMeanings.length > 0) {
+      console.log(
+        `  ⚠ Warning: ${orphanedMeanings.length} meanings reference non-existent items (likely deleted)`,
+      )
+      console.log(`  → These meanings will be skipped`)
+    }
+
     const mappedItems = items.map((record) =>
-      mapToIItem(record, meaningsByItemId, exampleIdsByMeaningId, sqlToFirebaseExampleIds, USER_ID),
+      mapToIItem(
+        record,
+        meaningsByItemId,
+        exampleIdsByMeaningId,
+        sqlToFirebaseExampleIds,
+        pronunciationsById,
+      ),
     )
-    console.log(`✓ Mapped ${mappedItems.length} items with meanings`)
+    console.log(`✓ Mapped ${mappedItems.length} items`)
+
+    // Count items with meanings
+    const itemsWithMeanings = mappedItems.filter(
+      (item) => item.meanings && item.meanings.length > 0,
+    )
+    console.log(`  → ${itemsWithMeanings.length} items have meanings`)
+    console.log(`  → ${mappedItems.length - itemsWithMeanings.length} items have NO meanings`)
 
     // Preview first item
     if (mappedItems.length > 0) {

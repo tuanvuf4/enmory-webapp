@@ -222,6 +222,8 @@ const getItemOfTheDayByCatId = async ({
       const iotdDoc = snapshot.docs[0]
       const iotdData = iotdDoc.data()
 
+      console.log(`*** iotdData *** `, iotdData)
+
       // Fetch the actual item
       const itemDoc = await getDocs(
         query(collection(db, dbCollections.items), where('__name__', '==', iotdData.itemId)),

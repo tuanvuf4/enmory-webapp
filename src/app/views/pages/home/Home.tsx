@@ -22,7 +22,8 @@ const Home = () => {
   const { isShowSearchFormItem } = useSelector((state) => state.setting)
   const { word, phrase, idiom, slang, collocation, sentence } = useSelector((state) => state.iotd)
 
-  const { isLoading, isError } = usePrefetchAllIotd(isAuth)
+  const { isLoading, isError, results } = usePrefetchAllIotd(isAuth)
+  console.log(`*** results *** `, results)
 
   return (
     <>
@@ -88,7 +89,7 @@ const Home = () => {
                       )}
 
                       {sentence?.item && sentence.item.origin && (
-                        <Widget title='sentence of the day'>
+                        <Widget title='Sentence of the day'>
                           <Item reload data={sentence.item} />
                         </Widget>
                       )}

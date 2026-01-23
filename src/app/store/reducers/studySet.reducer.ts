@@ -32,7 +32,7 @@ export const studySetReducer = createSlice({
     setCurrentIndex(state: IStudySet, action: PayloadAction<number>) {
       state.status.currentIndex = action.payload
     },
-    onSubmitAnswer(state: IStudySet, action: PayloadAction<boolean>) {
+    isSubmitAnswer(state: IStudySet, action: PayloadAction<boolean>) {
       state.isSubmit = action.payload
     },
     updateProgress(state: IStudySet, action: PayloadAction<Partial<IStudySetStatus>>) {

@@ -20,6 +20,7 @@ export const StudySet: React.FC = () => {
   const classes = styles()
 
   const [item, setItem] = useState<IItemQuiz<TQuiz, string[]>>()
+  const [loading, setLoading] = useState(false)
   const inputEl = useRef<InputRef | null>(null)
 
   const { openNotification } = usePrompt()
@@ -59,6 +60,9 @@ export const StudySet: React.FC = () => {
   const createStudySet = async (params: Partial<IStudySetStatus>) => {
     try {
       console.log('Creating study set with params:', studySetParams)
+
+      setLoading(true)
+
       const response = await itemApi.getStudySet(studySetParams)
 
       console.log('Study set response:', response)
@@ -101,6 +105,8 @@ export const StudySet: React.FC = () => {
           'Failed to create study set: ' +
           (error instanceof Error ? error.message : 'Unknown error'),
       })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -128,7 +134,7 @@ export const StudySet: React.FC = () => {
   }
 
   const onSubmit = (type: EQuiz) => {
-    dispatch(studySetAction.onSubmitAnswer(true))
+    dispatch(studySetAction.isSubmitAnswer(true))
     if (type === EQuiz.FILL_IN_BLANK) {
       if (
         respond &&
@@ -184,13 +190,13 @@ export const StudySet: React.FC = () => {
   }
 
   const reset = () => {
-    dispatch(studySetAction.onSubmitAnswer(false))
+    dispatch(studySetAction.isSubmitAnswer(false))
     dispatch(studySetAction.updateUserRespond(null))
   }
 
-  const onReload = () => {
+  const onReload = async () => {
     reset()
-    createStudySet({
+    await createStudySet({
       currentIndex: 0,
       isDone: false,
       inProgress: true,
@@ -345,17 +351,18 @@ export const StudySet: React.FC = () => {
         {inProgress && (
           <>
             {!isDone && (
-              <Button icon={<ReloadOutlined />} type='primary' danger onClick={() => onReload()}>
+              <Button
+                icon={<ReloadOutlined spin={loading} />}
+                type='primary'
+                danger
+                onClick={() => onReload()}
+              >
                 Reload
               </Button>
             )}
 
             <div className={classes.progress}>
-              <div className={classes.progressCounter}>
-                {currentIndex + 1}
-                {' / '}
-                {list.length}
-              </div>
+              <div className={classes.progressCounter}>{`${currentIndex + 1}/${list.length}`}</div>
             </div>
           </>
         )}

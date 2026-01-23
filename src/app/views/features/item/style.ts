@@ -146,7 +146,7 @@ const styles = () => {
       alignItems: 'flex-start',
       justifyContent: 'space-between',
       gap: token.size / 4,
-      fontSize: token.fontSizeHeading5,
+      fontSize: token.fontSizeHeading4,
       margin: [0, 0, 0, 0],
       fontFamily: styleConfig.fontFamily.lato,
       cursor: 'pointer',

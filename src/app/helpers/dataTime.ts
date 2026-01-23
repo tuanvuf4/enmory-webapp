@@ -9,13 +9,26 @@ export const getTodayDateString = (): string => {
 }
 
 // Check if IOTD is from today
-export const isIotdFromToday = (
-  iotd: IIotd<string[]> | null,
-  todayStart: number,
-  todayEnd: number,
-): boolean => {
+export const isIotdFromToday = (iotd: IIotd<string[]> | null): boolean => {
   if (!iotd || !iotd.first_of_date) return false
-  return iotd.first_of_date >= todayStart && iotd.first_of_date <= todayEnd
+
+  // Get current time
+  const now = Date.now()
+
+  // Calculate the end of the day when IOTD was created
+  const iotdDate = new Date(iotd.first_of_date)
+  const endOfIotdDay = new Date(
+    iotdDate.getFullYear(),
+    iotdDate.getMonth(),
+    iotdDate.getDate(),
+    23,
+    59,
+    59,
+    999,
+  ).getTime()
+
+  // If current time is less than end of IOTD's day, it's still valid
+  return now <= endOfIotdDay
 }
 
 // Helper to get IOTD from Redux by category

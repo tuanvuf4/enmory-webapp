@@ -44,10 +44,10 @@ function parseValue(value) {
 function parseTableFromSql(sqlContent, tableName) {
   const records = []
 
-  // Match INSERT INTO statements with multiple rows
+  // Match INSERT INTO statements - use lazy matching and handle multiline properly
   const insertPattern = new RegExp(
-    `INSERT INTO\\s+\`${tableName}\`\\s*\\(([^)]+)\\)\\s*VALUES\\s*([^;]+);`,
-    'gis',
+    `INSERT INTO\\s+\`${tableName}\`\\s*\\(([^)]+)\\)\\s*VALUES\\s*([\\s\\S]*?);(?=\\s*(?:INSERT|$))`,
+    'gi',
   )
   const matches = sqlContent.matchAll(insertPattern)
 
@@ -55,25 +55,53 @@ function parseTableFromSql(sqlContent, tableName) {
     const columns = match[1].split(',').map((col) => col.trim().replace(/`/g, ''))
     const valuesSection = match[2]
 
-    // Split into individual row values - handle parentheses
+    // Split into individual row values - handle parentheses and quotes properly
     const rows = []
     let depth = 0
+    let inString = false
     let currentRow = ''
+    let escapeNext = false
 
     for (let i = 0; i < valuesSection.length; i++) {
       const char = valuesSection[i]
 
-      if (char === '(') {
-        depth++
-        if (depth === 1) continue
-      } else if (char === ')') {
-        depth--
-        if (depth === 0) {
-          if (currentRow.trim()) {
-            rows.push(currentRow.trim())
+      if (escapeNext) {
+        currentRow += char
+        escapeNext = false
+        continue
+      }
+
+      if (char === '\\') {
+        escapeNext = true
+        currentRow += char
+        continue
+      }
+
+      if (char === "'" && !inString) {
+        inString = true
+        currentRow += char
+        continue
+      }
+
+      if (char === "'" && inString) {
+        inString = false
+        currentRow += char
+        continue
+      }
+
+      if (!inString) {
+        if (char === '(') {
+          depth++
+          if (depth === 1) continue
+        } else if (char === ')') {
+          depth--
+          if (depth === 0) {
+            if (currentRow.trim()) {
+              rows.push(currentRow.trim())
+            }
+            currentRow = ''
+            continue
           }
-          currentRow = ''
-          continue
         }
       }
 
@@ -108,7 +136,7 @@ function parseTableFromSql(sqlContent, tableName) {
           continue
         }
 
-        if (char === "'" && inString && rowString[i - 1] !== '\\') {
+        if (char === "'" && inString) {
           inString = false
           values.push(current)
           current = ''
@@ -158,7 +186,13 @@ function parseSqlFile(filePath) {
   const items = parseTableFromSql(sqlContent, 'item')
 
   console.log('  Parsing meanings table...')
-  const meanings = parseTableFromSql(sqlContent, 'meaning')
+  const allMeanings = parseTableFromSql(sqlContent, 'meaning')
+
+  // Filter out meanings without itemId
+  const meanings = allMeanings.filter((m) => m.itemId !== null && m.itemId !== undefined)
+  console.log(
+    `  → Filtered: ${meanings.length} meanings with itemId (excluded ${allMeanings.length - meanings.length} without itemId)`,
+  )
 
   // Debug: Check sample meanings
   if (meanings.length > 0) {
@@ -166,10 +200,28 @@ function parseSqlFile(filePath) {
   }
 
   console.log('  Parsing examples table...')
-  const examples = parseTableFromSql(sqlContent, 'example')
+  const allExamples = parseTableFromSql(sqlContent, 'example')
 
   console.log('  Parsing meaning-example relationships...')
-  const meaningExamples = parseTableFromSql(sqlContent, 'meaning_examples_example')
+  const allMeaningExamples = parseTableFromSql(sqlContent, 'meaning_examples_example')
+
+  // Create a set of valid meaning IDs (meanings with itemId)
+  const validMeaningIds = new Set(meanings.map((m) => m.id))
+
+  // Filter meaning-example relationships to only include valid meanings
+  const meaningExamples = allMeaningExamples.filter((rel) => validMeaningIds.has(rel.meaningId))
+  console.log(
+    `  → Filtered: ${meaningExamples.length} meaning-example relationships (excluded ${allMeaningExamples.length - meaningExamples.length} for meanings without itemId)`,
+  )
+
+  // Get example IDs that are referenced by valid meanings
+  const validExampleIds = new Set(meaningExamples.map((rel) => rel.exampleId))
+
+  // Filter examples to only include those referenced by valid meanings
+  const examples = allExamples.filter((example) => validExampleIds.has(example.id))
+  console.log(
+    `  → Filtered: ${examples.length} examples belong to meanings with itemId (excluded ${allExamples.length - examples.length} orphaned examples)`,
+  )
 
   console.log('  Parsing pronunciations table...')
   const pronunciations = parseTableFromSql(sqlContent, 'pronunciation')

@@ -17,5 +17,5 @@ jobs:
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ENMORY_6B68E }}
-          projectId: enmory-6b68e
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ENMORY_12345 }}
+          projectId: enmory-12345

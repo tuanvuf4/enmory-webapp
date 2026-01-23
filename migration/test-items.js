@@ -21,10 +21,10 @@ function parseValue(value) {
 function parseTableFromSql(sqlContent, tableName) {
   const records = []
 
-  // Match INSERT INTO statements with multiple rows
+  // Match INSERT INTO statements - use lazy matching and handle multiline properly
   const insertPattern = new RegExp(
-    `INSERT INTO\\s+\`${tableName}\`\\s*\\(([^)]+)\\)\\s*VALUES\\s*([^;]+);`,
-    'gis',
+    `INSERT INTO\\s+\`${tableName}\`\\s*\\(([^)]+)\\)\\s*VALUES\\s*([\\s\\S]*?);(?=\\s*(?:INSERT|$))`,
+    'gi',
   )
   const matches = sqlContent.matchAll(insertPattern)
 
@@ -32,25 +32,53 @@ function parseTableFromSql(sqlContent, tableName) {
     const columns = match[1].split(',').map((col) => col.trim().replace(/`/g, ''))
     const valuesSection = match[2]
 
-    // Split into individual row values - handle parentheses
+    // Split into individual row values - handle parentheses and quotes properly
     const rows = []
     let depth = 0
+    let inString = false
     let currentRow = ''
+    let escapeNext = false
 
     for (let i = 0; i < valuesSection.length; i++) {
       const char = valuesSection[i]
 
-      if (char === '(') {
-        depth++
-        if (depth === 1) continue
-      } else if (char === ')') {
-        depth--
-        if (depth === 0) {
-          if (currentRow.trim()) {
-            rows.push(currentRow.trim())
+      if (escapeNext) {
+        currentRow += char
+        escapeNext = false
+        continue
+      }
+
+      if (char === '\\') {
+        escapeNext = true
+        currentRow += char
+        continue
+      }
+
+      if (char === "'" && !inString) {
+        inString = true
+        currentRow += char
+        continue
+      }
+
+      if (char === "'" && inString) {
+        inString = false
+        currentRow += char
+        continue
+      }
+
+      if (!inString) {
+        if (char === '(') {
+          depth++
+          if (depth === 1) continue
+        } else if (char === ')') {
+          depth--
+          if (depth === 0) {
+            if (currentRow.trim()) {
+              rows.push(currentRow.trim())
+            }
+            currentRow = ''
+            continue
           }
-          currentRow = ''
-          continue
         }
       }
 
@@ -85,7 +113,7 @@ function parseTableFromSql(sqlContent, tableName) {
           continue
         }
 
-        if (char === "'" && inString && rowString[i - 1] !== '\\') {
+        if (char === "'" && inString) {
           inString = false
           values.push(current)
           current = ''
@@ -126,10 +154,15 @@ function parseTableFromSql(sqlContent, tableName) {
 
 // Test
 console.log('Testing items and meanings relationship...')
-const sqlContent = readFileSync('./enmory_webapp.sql', 'utf-8')
-// const sqlContent = readFileSync('./enmory_webapp_test.sql', 'utf-8')
+// const sqlContent = readFileSync('./enmory_webapp.sql', 'utf-8')
+const sqlContent = readFileSync('./enmory_webapp_test.sql', 'utf-8')
 
-console.log('Parsing items...')
+console.log('SQL file size:', sqlContent.length, 'characters')
+console.log('Searching for INSERT INTO `meaning` statements...')
+const meaningInsertCount = (sqlContent.match(/INSERT INTO\s+`meaning`/gi) || []).length
+console.log('Found', meaningInsertCount, 'INSERT statements for meaning table')
+
+console.log('\nParsing items...')
 const items = parseTableFromSql(sqlContent, 'item')
 
 console.log('Parsing meanings...')
@@ -138,20 +171,24 @@ const meanings = parseTableFromSql(sqlContent, 'meaning')
 console.log(`\nTotal items: ${items.length}`)
 console.log(`Total meanings: ${meanings.length}`)
 
+// Count meanings with itemId (not null/undefined)
+const meaningsWithItemId = meanings.filter((m) => m.itemId !== null && m.itemId !== undefined)
+console.log(`Meanings with itemId: ${meaningsWithItemId.length}`)
+
 // Get unique item IDs from items table
 const itemIds = new Set(items.map((i) => i.id))
-console.log(`Unique item IDs: ${itemIds.size}`)
+console.log(`Unique item IDs in items table: ${itemIds.size}`)
 
 // Get unique item IDs referenced in meanings
-const meaningItemIds = new Set(meanings.filter((m) => m.itemId).map((m) => m.itemId))
-console.log(`Items referenced in meanings: ${meaningItemIds.size}`)
+const meaningItemIds = new Set(meaningsWithItemId.map((m) => m.itemId))
+console.log(`Unique items referenced in meanings: ${meaningItemIds.size}`)
 
 // Find items without meanings
 const itemsWithoutMeanings = items.filter((item) => !meaningItemIds.has(item.id))
 console.log(`\nItems WITHOUT meanings: ${itemsWithoutMeanings.length}`)
 
 // Find item IDs in meanings that don't exist in items
-const orphanedMeanings = meanings.filter((m) => m.itemId && !itemIds.has(m.itemId))
+const orphanedMeanings = meaningsWithItemId.filter((m) => !itemIds.has(m.itemId))
 console.log(`Meanings with non-existent itemId: ${orphanedMeanings.length}`)
 
 console.log(`\n✓ Items WITH meanings: ${items.length - itemsWithoutMeanings.length}`)

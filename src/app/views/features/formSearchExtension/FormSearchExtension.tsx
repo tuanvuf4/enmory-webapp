@@ -134,7 +134,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
         {filter && (
           <Dropdown
             trigger={['click']}
-            popupRender={() => (
+            dropdownRender={() => (
               <div className={classes.filterWrapper}>
                 <p style={{ margin: 0 }}>Order By:</p>
 

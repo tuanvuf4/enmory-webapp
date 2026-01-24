@@ -206,12 +206,14 @@ const getItemOfTheDayByCatId = async ({
     await cleanupOldIotds(catId, generate)
 
     // Query for today's IOTD
+    // Firestore allows range comparisons on a single field per query.
+    // Use only 'first_of_date' for the day's window to avoid invalid multi-field range filters.
     const iotdQuery = query(
       collection(db, dbCollections.iotd),
       where('uid', '==', currentUser.uid),
       where('catId', '==', catId),
       where('first_of_date', '>=', startOfDay),
-      where('last_of_date', '<=', endOfDay),
+      where('first_of_date', '<=', endOfDay),
       limit(1),
     )
 
@@ -243,18 +245,9 @@ const getItemOfTheDayByCatId = async ({
       }
     }
 
-    // If no IOTD exists for today, create a new one
-    if (generate) {
-      return await createItemOfTheDayByCatId({ catId, userId: currentUser.uid })
-    }
-
-    // If generate is false, return not found
-    return {
-      isSuccess: false,
-      message: 'No IOTD found for today',
-      content: null as unknown as IIotd,
-      statusCode: 404,
-    }
+    // If no IOTD exists for today, create a new one regardless of `generate`.
+    // `generate=true` still forces cleanup of all existing IOTDs earlier.
+    return await createItemOfTheDayByCatId({ catId, userId: currentUser.uid })
   } catch (error) {
     console.error('[IOTD] Error in getItemOfTheDayByCatId:', error)
     return {

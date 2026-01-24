@@ -5,7 +5,7 @@ import { useAuthLogout } from '@/core/hooks/useAuthLogout'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
-import { theme, MenuProps, Layout, Row, Col, Button, Dropdown, Space } from 'antd'
+import { theme, MenuProps, Row, Col, Button, Dropdown, Space } from 'antd'
 import { useNavigate, Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
 import { MainMenu } from '../mainMenu/MainMenu'
@@ -22,7 +22,7 @@ export const AppHeader = () => {
 
   const { isAuth, user } = useSelector((state) => state.auth)
   const { drawer } = useSelector((state) => state.setting)
-  const { isShowSearchFormItem, isSidebarOpened } = useSelector((state) => state.setting)
+  const { isShowSearchFormItem } = useSelector((state) => state.setting)
 
   const dispatch = useDispatch()
   const { logout } = useAuthLogout()

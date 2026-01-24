@@ -5,10 +5,9 @@ import logo from '@/assets/img/logo.png'
 import styles from './style'
 import { MainMenu } from '../mainMenu/MainMenu'
 import { useSelector } from '@/core/hooks'
-import { EViewPort } from '@/models/app.model'
 
 export const SideBarMain: React.FC = () => {
-  const { isSidebarOpened, drawer, viewPort } = useSelector((state) => state.setting)
+  const { isSidebarOpened, drawer } = useSelector((state) => state.setting)
   const { token } = theme.useToken()
   const classes = styles(token)
 

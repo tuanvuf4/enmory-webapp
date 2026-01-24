@@ -12,13 +12,13 @@ import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 
 // Initialize Firebase Admin
-// const serviceAccount = require('./serviceAccountKey.json')
-// const SQL_FILE_PATH = process.argv[2] || './enmory_webapp.sql'
-// const FB_USER_ID = 'zdSNTrF4JFbDzxEyVFK3n5Rv6w62' // Default user ID for migrated data
+const serviceAccount = require('./serviceAccountKey.json')
+const SQL_FILE_PATH = process.argv[2] || './enmory_webapp.sql'
+const FB_USER_ID = 'zdSNTrF4JFbDzxEyVFK3n5Rv6w62' // Default user ID for migrated data
 
-const SQL_FILE_PATH = process.argv[2] || './enmory_webapp_test.sql'
-const serviceAccount = require('./serviceAccountKey_12345.json')
-const FB_USER_ID = 'RqIKOUFPZRSTmraIiD7MKmqlzWT2' // Default usezr ID for migrated data Enmory_12345
+// const SQL_FILE_PATH = process.argv[2] || './enmory_webapp_test.sql'
+// const serviceAccount = require('./serviceAccountKey_12345.json')
+// const FB_USER_ID = 'RqIKOUFPZRSTmraIiD7MKmqlzWT2' // Default usezr ID for migrated data Enmory_12345
 
 initializeApp({
   credential: cert(serviceAccount),
@@ -62,6 +62,7 @@ function parseValue(value) {
  */
 function parseTableFromSql(sqlContent, tableName) {
   const records = []
+  let skippedRows = 0
 
   // Match INSERT INTO statements - use lazy matching and handle multiline properly
   const insertPattern = new RegExp(
@@ -180,6 +181,19 @@ function parseTableFromSql(sqlContent, tableName) {
         values.push(parseValue(current.trim()))
       }
 
+      // Skip rows with incorrect number of columns (corrupted data)
+      if (values.length !== columns.length) {
+        skippedRows++
+        if (skippedRows <= 5) {
+          console.warn(
+            `  ⚠ Skipping row with ${values.length} values (expected ${columns.length}):`,
+            values.slice(0, 3),
+            '...',
+          )
+        }
+        continue
+      }
+
       // Create object from columns and values
       const record = {}
       columns.forEach((col, idx) => {
@@ -190,6 +204,10 @@ function parseTableFromSql(sqlContent, tableName) {
 
       records.push(record)
     }
+  }
+
+  if (skippedRows > 0) {
+    console.warn(`  → Skipped ${skippedRows} rows with incorrect column count`)
   }
 
   return records
@@ -204,6 +222,33 @@ function parseSqlFile(filePath) {
 
   console.log('  Parsing items table...')
   const items = parseTableFromSql(sqlContent, 'item')
+  console.log(`  → Parsed ${items.length} items from SQL`)
+
+  // Debug: Check for duplicate IDs or missing origins
+  const itemIds = new Set()
+  const duplicateIds = []
+  let itemsWithoutOrigin = 0
+
+  items.forEach((item, index) => {
+    if (itemIds.has(item.id)) {
+      duplicateIds.push(item.id)
+    }
+    itemIds.add(item.id)
+
+    if (!item.original || (typeof item.original === 'string' && item.original.trim() === '')) {
+      itemsWithoutOrigin++
+      if (itemsWithoutOrigin <= 5) {
+        console.log(`  → Warning: Item at index ${index} has no origin:`, item)
+      }
+    }
+  })
+
+  if (duplicateIds.length > 0) {
+    console.log(`  → Warning: ${duplicateIds.length} duplicate item IDs found`)
+  }
+  if (itemsWithoutOrigin > 0) {
+    console.log(`  → Warning: ${itemsWithoutOrigin} items without origin`)
+  }
 
   console.log('  Parsing meanings table...')
   const allMeanings = parseTableFromSql(sqlContent, 'meaning')
@@ -491,10 +536,25 @@ async function insertItemsToFirebase(items, collectionName = 'items', batchSize 
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = db.batch()
     const batchItems = items.slice(i, i + batchSize)
+    const batchNumber = Math.floor(i / batchSize) + 1
 
     console.log(
-      `\nProcessing batch ${Math.floor(i / batchSize) + 1} (${batchItems.length} items)...`,
+      `\nProcessing batch ${batchNumber} (${batchItems.length} items, indices ${i}-${i + batchItems.length - 1})...`,
     )
+
+    // Debug: Log first and last items in batches 9 and 10
+    if (batchNumber === 9 || batchNumber === 10) {
+      console.log(`  [DEBUG] Batch ${batchNumber} first item:`, {
+        origin: batchItems[0]?.origin,
+        catId: batchItems[0]?.catId,
+        meaningCount: batchItems[0]?.meanings?.length || 0,
+      })
+      console.log(`  [DEBUG] Batch ${batchNumber} last item:`, {
+        origin: batchItems[batchItems.length - 1]?.origin,
+        catId: batchItems[batchItems.length - 1]?.catId,
+        meaningCount: batchItems[batchItems.length - 1]?.meanings?.length || 0,
+      })
+    }
 
     for (const item of batchItems) {
       try {
@@ -505,9 +565,11 @@ async function insertItemsToFirebase(items, collectionName = 'items', batchSize 
           ...item,
         }
 
-        // Debug: Check if meanings exist
-        if (itemWithId.meanings && itemWithId.meanings.length > 0) {
-          console.log(`  Item "${itemWithId.origin}" has ${itemWithId.meanings.length} meanings`)
+        // Debug: Check if meanings exist (only log for batches 9-10)
+        if (batchNumber >= 9 && batchNumber <= 10) {
+          if (itemWithId.meanings && itemWithId.meanings.length > 0) {
+            console.log(`  Item "${itemWithId.origin}" has ${itemWithId.meanings.length} meanings`)
+          }
         }
 
         batch.set(docRef, itemWithId)

@@ -5,7 +5,6 @@ import {
   HomeOutlined,
   LoginOutlined,
   PlusOutlined,
-  ReadOutlined,
   SearchOutlined,
   UserOutlined,
 } from '@ant-design/icons'

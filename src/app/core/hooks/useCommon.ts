@@ -44,6 +44,7 @@ export const useTypes = () => {
 }
 
 // Fetch item of the day by category
+// Keep generate=false by default to avoid forced regeneration; API will auto-create if missing
 export const useIotd = ({ catId, generate = false }: IIotdRequest, enabled = true) => {
   const dispatch = useDispatch()
   const reduxIotd = useSelector((state) => getIotdFromRedux(state, catId))

@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore'
 import { ECategory, EType, IOption, IIotd, IIotdRequest } from '@/models/item.model'
 import { categories, types } from '@/constant/item'
+import { itemApi } from '@/services/firebase/api/item.api'
 
 const getCategories = async (): Promise<IHttpResponse<IOption<string, ECategory>[]>> => {
   return {
@@ -149,15 +150,20 @@ const createItemOfTheDayByCatId = async ({
       }
     }
 
+    // Enrich item with meaning examples
+    const enrichedItemResp = await itemApi.getItemById(randomItem.id)
+    const enrichedItem =
+      enrichedItemResp.isSuccess && enrichedItemResp.content ? enrichedItemResp.content : randomItem
+
     // Create new IOTD document
     const newIotd = {
-      itemId: randomItem.id,
+      itemId: enrichedItem.id || randomItem.id,
       uid: userId,
       catId: catId,
       first_of_date: startOfDay,
       last_of_date: endOfDay,
       created_date: Date.now(),
-      item: randomItem,
+      item: enrichedItem,
     }
 
     const docRef = await addDoc(collection(db, dbCollections.iotd), newIotd)
@@ -168,7 +174,7 @@ const createItemOfTheDayByCatId = async ({
       content: {
         id: docRef.id,
         ...newIotd,
-        item: randomItem,
+        item: enrichedItem,
       } as IIotd,
       statusCode: 201,
     }
@@ -227,11 +233,9 @@ const getItemOfTheDayByCatId = async ({
       console.log(`*** iotdData *** `, iotdData)
 
       // Fetch the actual item
-      const itemDoc = await getDocs(
-        query(collection(db, dbCollections.items), where('__name__', '==', iotdData.itemId)),
-      )
-
-      const item = itemDoc.empty ? null : { id: itemDoc.docs[0].id, ...itemDoc.docs[0].data() }
+      // Enrich item with meaning examples
+      const itemResp = await itemApi.getItemById(iotdData.itemId)
+      const item = itemResp.isSuccess ? itemResp.content : null
 
       return {
         isSuccess: true,

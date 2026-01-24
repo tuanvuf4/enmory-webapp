@@ -478,13 +478,14 @@ const getStudySet = async (
         hint = categoryLabels[item.catId || 0] || ''
       }
 
+      console.log(`*** item.origin *** `, item.origin)
       // For fill in the blank
       if (useFillInBlank) {
         return {
           ...item,
           quiz: {
             title: definition,
-            question: toWildString(item.origin),
+            question: toWildString(item.origin || ''),
             answer: item.origin,
             type: EQuiz.FILL_IN_BLANK,
             hint: `(${hint.toLowerCase()})`,

@@ -23,7 +23,6 @@ const Home = () => {
   const { word, phrase, idiom, slang, collocation, sentence } = useSelector((state) => state.iotd)
 
   const { isLoading, isError, results } = usePrefetchAllIotd(isAuth)
-  console.log(`*** results *** `, results)
 
   return (
     <>

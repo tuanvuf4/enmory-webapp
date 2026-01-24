@@ -29,6 +29,7 @@ const fetchTypes = createAsyncThunk('type/fetchTypes', async () => {
 
 const fetchIotd = createAsyncThunk('iotd/fetchIotd', async (data: IIotdRequest) => {
   const iotd = await commonApi.getItemOfTheDayByCatId(data)
+  console.log(`*** iotd *** `, iotd)
   return iotd
 })
 

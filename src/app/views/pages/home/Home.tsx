@@ -22,7 +22,7 @@ const Home = () => {
   const { isShowSearchFormItem } = useSelector((state) => state.setting)
   const { word, phrase, idiom, slang, collocation, sentence } = useSelector((state) => state.iotd)
 
-  const { isLoading, isError, results } = usePrefetchAllIotd(isAuth)
+  const { isLoading, isError } = usePrefetchAllIotd(isAuth)
 
   return (
     <>

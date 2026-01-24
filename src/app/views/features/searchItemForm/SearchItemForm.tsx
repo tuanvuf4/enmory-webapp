@@ -19,6 +19,7 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
+import { getType } from '@/helpers/index'
 
 interface ISearchFormComp {
   filter?: boolean
@@ -48,13 +49,12 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
     keyword: searchParams.get('keyword') || '',
     cat: searchParams.get('cat') ? Number(searchParams.get('cat')) : ECategory.ALL,
     type: searchParams.get('type') ? Number(searchParams.get('type')) : EType.ALL,
-    defect: searchParams.get('defect') === 'true',
     archive: searchParams.get('archive') === 'true',
     order: (searchParams.get('order') as AppOrderQuery) || 'DESC',
     orderBy: (searchParams.get('orderBy') as AppOrderByQuery) || 'created_date',
   }
 
-  const { control, handleSubmit, reset, setValue, getValues, watch } = useForm<IFormSearchItem>({
+  const { control, handleSubmit, reset, setValue, watch } = useForm<IFormSearchItem>({
     defaultValues: formSearchValue,
   })
 
@@ -62,8 +62,14 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
 
   const { options, isSearching } = useAutoComplete(keyword)
 
-  const updateUrlParams = (data: Partial<IFormSearchItem>) => {
+  const updateUrlParams = (data: Partial<IFormSearchItem>, resetPage: boolean = true) => {
     const params = new URLSearchParams(searchParams)
+
+    // Reset page to 0 when filters change (unless explicitly disabled)
+    if (resetPage) {
+      params.set('page', '0')
+    }
+
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== '' && value !== ECategory.ALL && value !== EType.ALL) {
         params.set(key, String(value))
@@ -81,20 +87,21 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
     updateUrlParams({
       keyword: value,
       archive: false,
-      defect: false,
     })
   }
 
   const onSubmit = (data: IFormSearchItem) => {
-    // Update URL params instead of Redux
-    updateUrlParams(data)
+    // Update URL params instead of Redux (reset page to 0)
+    updateUrlParams(data, true)
 
     if (location.pathname.includes('library')) {
     } else {
+      // Build URL params with page reset to 0
+      const urlData = { ...data, page: '0' }
       navigate(
         '/library?' +
           new URLSearchParams(
-            Object.entries(data).reduce(
+            Object.entries(urlData).reduce(
               (acc, [key, value]) => {
                 if (
                   value !== undefined &&
@@ -208,26 +215,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   )}
                 />
 
-                <Controller
-                  control={control}
-                  name={`defect`}
-                  render={({ field: { onChange, value } }) => (
-                    <Checkbox
-                      className={globalClasses.fulWidth}
-                      checked={value}
-                      onChange={(e) => {
-                        onChange(e.target.checked)
-                        updateUrlParams({
-                          defect: e.target.checked,
-                          type: EType.ALL,
-                        })
-                      }}
-                    >
-                      Missing
-                    </Checkbox>
-                  )}
-                />
-
                 <p style={{ margin: 0 }}>Category:</p>
 
                 <Controller
@@ -251,14 +238,14 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                           })
                         }
                       }}
-                      options={[allSelect, ...categories]}
+                      options={categories}
                       defaultValue={ECategory.ALL}
                       placeholder={'Category'}
                     />
                   )}
                 />
 
-                {showType && !getValues('defect') && (
+                {showType && (
                   <Controller
                     control={control}
                     name={`type`}
@@ -270,7 +257,12 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                           onChange(e)
                           updateUrlParams({ type: e })
                         }}
-                        options={[allSelect, ...types]}
+                        options={types.map((type) => {
+                          return {
+                            ...type,
+                            label: getType(type.value).origin,
+                          }
+                        })}
                         defaultValue={EType.ALL}
                       />
                     )}
@@ -361,7 +353,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                 cat: ECategory.ALL,
                 type: EType.ALL,
                 archive: false,
-                defect: false,
                 order: 'DESC' as AppOrderQuery,
                 orderBy: 'created_date' as AppOrderByQuery,
               }

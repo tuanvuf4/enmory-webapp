@@ -81,9 +81,11 @@ export const useIotd = ({ catId, generate = false }: IIotdRequest, enabled = tru
           generate,
         })
 
-        console.log(`*** iotd *** `, iotd)
+        console.log(`*** iotd (catId: ${catId}) *** `, iotd)
         if (isSuccess && iotd) {
           dispatch(iotdAction.setIotd(iotd as unknown as IIotd<string[]>))
+        } else {
+          console.warn(`[IOTD] Failed to fetch IOTD for category ${catId}`)
         }
       } catch (err) {
         setError(err as Error)
@@ -94,7 +96,8 @@ export const useIotd = ({ catId, generate = false }: IIotdRequest, enabled = tru
     }
 
     fetchIotd()
-  }, [catId, generate, isValidIotd, enabled, dispatch, reduxIotd])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catId, generate, isValidIotd, enabled, dispatch])
 
   return {
     data: reduxIotd,

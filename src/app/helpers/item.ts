@@ -63,7 +63,7 @@ export const getCategory = (type: ECategory) => {
       return 'Sentence'
 
     default:
-      return 'Other'
+      return 'All'
   }
 }
 

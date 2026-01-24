@@ -94,7 +94,7 @@ const styles = () => {
       marginBottom: 0,
 
       '& > ul': {
-        marginLeft: 0,
+        marginLeft: '0 !important',
         padding: 0,
       },
     },

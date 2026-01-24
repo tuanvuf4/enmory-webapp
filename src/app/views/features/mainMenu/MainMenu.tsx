@@ -8,21 +8,16 @@ import classNames from 'clsx'
 import type { MenuProps } from 'antd'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { appConfig, EAppType } from '@/config/appConfig'
-import { EPageExt } from '@/models/app.model'
+import { EPageExt, EViewPort } from '@/models/app.model'
 
 type TDirection = 'horizontal' | 'vertical'
 
 interface IPros {
   direction: TDirection
-  toggleDrawler?: boolean
   onPageChange?: (page: EPageExt) => void
 }
 
-export const MainMenu: React.FC<IPros> = ({
-  direction,
-  toggleDrawler = false,
-  onPageChange,
-}: IPros) => {
+export const MainMenu: React.FC<IPros> = ({ direction, onPageChange }: IPros) => {
   const classes = styles()
 
   const [menu, setMenu] = useState<MenuProps['items']>([])
@@ -33,6 +28,7 @@ export const MainMenu: React.FC<IPros> = ({
   const location = useLocation()
 
   const { isAuth } = useSelector((state) => state.auth)
+  const { drawer, isSidebarOpened, viewPort } = useSelector((state) => state.setting)
 
   const redirect = (key: string, cb: (router: string) => void) => {
     const item = keyPaths.find((item) => item.key === key)
@@ -46,7 +42,12 @@ export const MainMenu: React.FC<IPros> = ({
     } else {
       setCurrent(menu.key)
       redirect(menu.key, navigate)
-      if (toggleDrawler) dispatch(settingAction.toggleSidebar())
+      if (drawer && isSidebarOpened) {
+        dispatch(settingAction.toggleSidebar())
+      }
+      if (!drawer && viewPort === EViewPort.XS && isSidebarOpened) {
+        dispatch(settingAction.toggleSidebar())
+      }
     }
   }
 
@@ -72,7 +73,6 @@ export const MainMenu: React.FC<IPros> = ({
     >
       <Menu
         mode={direction === 'horizontal' ? 'horizontal' : 'inline'}
-        // className={direction === 'horizontal' ? 'horizontal' : ''}
         selectedKeys={[current]}
         defaultSelectedKeys={['1']}
         items={menu}

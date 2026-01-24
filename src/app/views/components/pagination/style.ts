@@ -8,7 +8,7 @@ const styles = (token: AliasToken) => {
       alignItems: 'center',
       justifyContent: 'flex-start',
       height: '100%',
-      gap: token.size / 2,
+      gap: token.size / 4,
     },
     paginationNav: {
       order: 3,
@@ -21,7 +21,7 @@ const styles = (token: AliasToken) => {
       order: 1,
     },
     paginationOverall: {
-      order: 2,
+      order: 0,
 
       '& button': {
         borderRadius: `0 !important`,

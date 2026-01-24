@@ -9,7 +9,7 @@ import { ExampleMode } from '@/models/example.model'
 import registerStyle from '@/views/pages/register/style'
 import loginStyle from '@/views/pages/login/style'
 import { Link } from 'react-router-dom'
-import { SearchItemForm } from '@/views/features'
+import { Toolbar } from '@/views/features'
 import { ExampleForm } from '@/views/features/exampleOverview/ExampleForm'
 
 const Home = () => {
@@ -32,7 +32,7 @@ const Home = () => {
           {isShowSearchFormItem && (
             <div className={globalClasses.stickyBar}>
               <div className={globalClasses.container}>
-                <SearchItemForm filter={false} submit={true} />
+                <Toolbar pagination={undefined} />
               </div>
             </div>
           )}

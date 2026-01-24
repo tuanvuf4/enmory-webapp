@@ -161,21 +161,15 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning }) => {
 
             {meaning.collocations && (
               <>
-                <h5 className={'italic'}>Collocations:</h5>
-                <div
-                  className={classes.definition}
-                  dangerouslySetInnerHTML={{ __html: meaning.collocations }}
-                />
+                <h5 className={'italic font-bold'}>Collocations:</h5>
+                <div dangerouslySetInnerHTML={{ __html: meaning.collocations }} />
               </>
             )}
 
             {meaning.grammar && (
               <>
-                <h5 className={'italic'}>Grammar:</h5>
-                <div
-                  className={classes.translate}
-                  dangerouslySetInnerHTML={{ __html: meaning.grammar }}
-                />
+                <h5 className={'italic font-bold'}>Grammar:</h5>
+                <div dangerouslySetInnerHTML={{ __html: meaning.grammar }} />
               </>
             )}
 
@@ -189,7 +183,7 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning }) => {
 
             {meaning.examples.length > 0 && (
               <div className={classes.examples}>
-                <h5 className={'italic'}>Example:</h5>
+                {/* <h5 className={'italic font-bold'}>Example:</h5> */}
                 <ul>
                   {(meaning.examples as IExample[]).map((example, key) => {
                     return (

@@ -65,7 +65,6 @@ export const initSearchFormItem: IFormSearchItem = {
   cat: ECategory.ALL,
   type: EType.ALL,
   archive: false,
-  defect: false,
   orderBy: 'created_date',
   order: 'DESC',
 }

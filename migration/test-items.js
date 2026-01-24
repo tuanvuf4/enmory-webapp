@@ -173,7 +173,19 @@ console.log(`Total meanings: ${meanings.length}`)
 
 // Count meanings with itemId (not null/undefined)
 const meaningsWithItemId = meanings.filter((m) => m.itemId !== null && m.itemId !== undefined)
+const meaningsWithoutItemId = meanings.filter((m) => m.itemId === null || m.itemId === undefined)
 console.log(`Meanings with itemId: ${meaningsWithItemId.length}`)
+console.log(`Meanings WITHOUT itemId (NULL): ${meaningsWithoutItemId.length}`)
+
+// Show some examples of meanings without itemId
+if (meaningsWithoutItemId.length > 0) {
+  console.log(`\nFirst 3 meanings without itemId:`)
+  meaningsWithoutItemId.slice(0, 3).forEach((m, i) => {
+    console.log(
+      `  ${i + 1}. ID: ${m.id}, itemId: ${m.itemId}, definition: "${m.definition?.substring(0, 30) || ''}..."`,
+    )
+  })
+}
 
 // Get unique item IDs from items table
 const itemIds = new Set(items.map((i) => i.id))

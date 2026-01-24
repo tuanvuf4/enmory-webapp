@@ -9,6 +9,7 @@ const styles = () => {
   return createUseStyles({
     header: {
       height: '60px !important',
+      minWidth: 320,
       lineHeight: '60px !important',
       borderBottom: `1px solid ${hex2Rgba(styleConfig.border.gray[0], 0.2)}`,
       padding: `0px !important`,

@@ -66,7 +66,10 @@ export const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         // Ignore these action types
-        ignoredActions: ['persist/PERSIST'],
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+        // Ignore these field paths in the state
+        ignoredActionPaths: ['payload.err', 'err'],
+        ignoredPaths: ['err'],
       },
     }),
 })

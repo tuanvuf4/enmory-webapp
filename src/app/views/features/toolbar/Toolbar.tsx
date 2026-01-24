@@ -31,7 +31,12 @@ export const Toolbar = ({ formSearch = <SearchItemForm />, pagination }: IProps)
           gutter={[token.size / 2, token.size / 2]}
         >
           {isShowSearchFormItem && (
-            <Col xs={24} sm={12} md={15} lg={14}>
+            <Col
+              xs={24}
+              sm={pagination ? 12 : 24}
+              md={pagination ? 15 : 24}
+              lg={pagination ? 14 : 24}
+            >
               {formSearch}
             </Col>
           )}

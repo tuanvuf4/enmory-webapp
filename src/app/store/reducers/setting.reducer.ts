@@ -14,7 +14,7 @@ export interface ISettingState {
 
 export const initialState: ISettingState = {
   isSidebarOpened: false,
-  isShowSearchFormItem: false,
+  isShowSearchFormItem: true,
   drawer: true,
   viewMode: EViewMode.GRID,
   viewPort: EViewPort.XS,

@@ -12,8 +12,8 @@ import { MainMenu } from '../mainMenu/MainMenu'
 import { menu, addNewType } from './Menu'
 import styles from './style'
 import clsx from 'clsx'
-import { SearchItemForm } from '../searchItemForm'
 import { useItemForm } from '@/helpers/hooks/useItemForm'
+import { Header } from 'antd/es/layout/layout'
 
 export const AppHeader = () => {
   const { token } = theme.useToken()
@@ -22,7 +22,7 @@ export const AppHeader = () => {
 
   const { isAuth, user } = useSelector((state) => state.auth)
   const { drawer } = useSelector((state) => state.setting)
-  const { isShowSearchFormItem } = useSelector((state) => state.setting)
+  const { isShowSearchFormItem, isSidebarOpened } = useSelector((state) => state.setting)
 
   const dispatch = useDispatch()
   const { logout } = useAuthLogout()
@@ -75,7 +75,7 @@ export const AppHeader = () => {
   }
 
   return (
-    <Layout.Header className={classes.header}>
+    <Header className={clsx(classes.header, isShowSearchFormItem ? 'active' : '')}>
       <div className={globalClasses.containerFluid}>
         <Row
           gutter={[token.size, token.size * 2]}
@@ -99,7 +99,7 @@ export const AppHeader = () => {
                 <div className={classes.logo}>
                   <h1 className={classes.brandName}>
                     <Link to={'/'}>
-                      <img src={logo} alt='' />{' '}
+                      <img src={logo} alt='' />
                     </Link>
                   </h1>
                 </div>
@@ -114,9 +114,7 @@ export const AppHeader = () => {
                   }}
                   icon={<SearchOutlined style={{ fontSize: 22, color: token.colorPrimary }} />}
                   onClick={() => dispatch(settingAction.toggleSearchFormItem())}
-                >
-                  {/* <span style={{ fontWeight: '500' }}>Look</span> */}
-                </Button>
+                />
               </div>
             )}
 
@@ -200,14 +198,6 @@ export const AppHeader = () => {
           </Col>
         </Row>
       </div>
-
-      {isShowSearchFormItem && (
-        <div className={globalClasses.stickyBar}>
-          <div className={globalClasses.container}>
-            <SearchItemForm filter={false} submit={true} />
-          </div>
-        </div>
-      )}
-    </Layout.Header>
+    </Header>
   )
 }

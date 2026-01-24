@@ -1,6 +1,7 @@
 import {
   AreaChartOutlined,
   BookOutlined,
+  CustomerServiceOutlined,
   HomeOutlined,
   LoginOutlined,
   PlusOutlined,
@@ -24,21 +25,21 @@ export const authMenus: MenuProps['items'] = [
     icon: <HomeOutlined className='icon' />,
     label: 'home',
   },
-  // {
-  //   key: '4',
-  //   icon: <CustomerServiceOutlined className='icon' />,
-  //   label: 'listening',
-  // },
   {
     key: '5',
     icon: <BookOutlined className='icon' />,
     label: 'library',
   },
   {
-    key: '10',
-    icon: <ReadOutlined className='icon' />,
-    label: 'example',
+    key: '4',
+    icon: <CustomerServiceOutlined className='icon' />,
+    label: 'listening',
   },
+  // {
+  //   key: '10',
+  //   icon: <ReadOutlined className='icon' />,
+  //   label: 'example',
+  // },
   // {
   //   key: '11',
   //   icon: <CalendarOutlined className='icon' />,

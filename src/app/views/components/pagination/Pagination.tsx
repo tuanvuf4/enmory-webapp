@@ -1,5 +1,10 @@
 import { Button, Select, theme } from 'antd'
-import { CaretLeftOutlined, CaretRightOutlined } from '@ant-design/icons'
+import {
+  CaretLeftOutlined,
+  CaretRightOutlined,
+  DoubleLeftOutlined,
+  DoubleRightOutlined,
+} from '@ant-design/icons'
 import styles from './style'
 import { BaseOptionType } from 'antd/es/cascader'
 import { setting } from '@/app/config/appConfig'
@@ -20,7 +25,7 @@ interface IPros {
 
 export const Pagination = ({
   size = setting.pagination.size,
-  page = 1,
+  page = 0,
   total = 0,
   totalPage = 1,
   options = setting.pagination.options,
@@ -50,6 +55,25 @@ export const Pagination = ({
     })
   }
 
+  const onFirst = () => {
+    onPageChange({
+      page: 0,
+      size,
+    })
+  }
+
+  const onLast = () => {
+    onPageChange({
+      page: totalPage - 1,
+      size,
+    })
+  }
+
+  const startItem = total === 0 ? 0 : page * size + 1
+  const endItem = Math.min((page + 1) * size, total)
+  // Check if there's a next page: we have items and haven't reached the last page
+  const hasNextPage = total > 0 && totalPage > 0 && page < totalPage - 1
+
   return (
     <div className={classes.pagination}>
       <div className={classes.paginationSelect}>
@@ -57,18 +81,24 @@ export const Pagination = ({
       </div>
 
       <div className={classes.paginationOverall}>
-        <Button>{`${page * size + 1}-${
-          (page + 1) * size > total ? total : (page + 1) * size
-        }/${total}`}</Button>
+        <Button>{total > 0 ? `${startItem}-${endItem}/${total}` : '0/0'}</Button>
       </div>
 
       <div className={classes.paginationNav}>
+        <Button disabled={page === 0 || total === 0} onClick={onFirst}>
+          <DoubleLeftOutlined />
+        </Button>
+
         <Button disabled={page === 0 || total === 0} onClick={onPrev}>
           <CaretLeftOutlined />
         </Button>
 
-        <Button disabled={totalPage === page + 1 || total === 0} onClick={onNext}>
+        <Button disabled={!hasNextPage} onClick={onNext}>
           <CaretRightOutlined />
+        </Button>
+
+        <Button disabled={!hasNextPage} onClick={onLast}>
+          <DoubleRightOutlined />
         </Button>
       </div>
     </div>

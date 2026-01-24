@@ -21,7 +21,7 @@ export const styleConfig = {
   },
   itemColorBg: '#252734',
   sider: {
-    width: 280,
+    width: 240,
     widthCollapse: 80,
     // background: appTheme.token?.colorBgLayout,
   },

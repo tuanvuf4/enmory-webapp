@@ -4,8 +4,11 @@ import { Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
 import styles from './style'
 import { MainMenu } from '../mainMenu/MainMenu'
+import { useSelector } from '@/core/hooks'
+import { EViewPort } from '@/models/app.model'
 
 export const SideBarMain: React.FC = () => {
+  const { isSidebarOpened, drawer, viewPort } = useSelector((state) => state.setting)
   const { token } = theme.useToken()
   const classes = styles(token)
 
@@ -14,7 +17,9 @@ export const SideBarMain: React.FC = () => {
       <div className={classes.logo}>
         <Link to={'/'}>
           <img src={logo} alt='' />
-          <span className={classes.brandName}>Enmory</span>
+          {drawer && <span className={classes.brandName}>Enmory</span>}
+
+          {isSidebarOpened && !drawer && <span className={classes.brandName}>Enmory</span>}
         </Link>
       </div>
 
@@ -24,7 +29,7 @@ export const SideBarMain: React.FC = () => {
         </h2>
       </div> */}
 
-      <MainMenu direction='vertical' toggleDrawler></MainMenu>
+      <MainMenu direction='vertical' />
     </div>
   )
 }

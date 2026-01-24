@@ -5,7 +5,6 @@ export interface IFormSearchItem {
   keyword: string
   cat: ECategory | ''
   type: EType | ''
-  defect: boolean
   archive: boolean
   orderBy: AppOrderByQuery
   order: AppOrderQuery

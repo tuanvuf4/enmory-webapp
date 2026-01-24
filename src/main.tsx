@@ -12,8 +12,7 @@ import { appTheme } from './style/theme'
 import { JssProvider } from 'react-jss'
 import { App } from './app/app'
 import { styleConfig } from './style/appStyle'
-import { GoogleOAuthProvider } from '@react-oauth/google'
-import { appConfig, EAppType } from './app/config/appConfig'
+import { EAppType } from './app/config/appConfig'
 import { BrowserRouter } from 'react-router-dom'
 import React from 'react'
 import { AppContext } from './app/context/app.context'
@@ -43,24 +42,22 @@ const AppWrapper: React.FC<IAppTypeProps> = ({ type }) => (
       <Provider store={store}>
         <BrowserRouter data-testid='browser-router-element'>
           <QueryClientProvider client={queryClient}>
-            <GoogleOAuthProvider clientId={appConfig.googleAuth.client_id as string}>
-              <ConfigProvider
-                popupMatchSelectWidth={true}
-                componentSize='middle'
-                theme={appTheme}
-                prefixCls={styleConfig.prefixClassCss}
-              >
-                <StyleProvider hashPriority='high'>
-                  <AntdApp>
-                    <AppContext>
-                      <PersistGate loading={null} persistor={persistStore(store)}>
-                        {type === EAppType.EXTENSION ? <PopupExtension /> : <App />}
-                      </PersistGate>
-                    </AppContext>
-                  </AntdApp>
-                </StyleProvider>
-              </ConfigProvider>
-            </GoogleOAuthProvider>
+            <ConfigProvider
+              popupMatchSelectWidth={true}
+              componentSize='middle'
+              theme={appTheme}
+              prefixCls={styleConfig.prefixClassCss}
+            >
+              <StyleProvider hashPriority='high'>
+                <AntdApp>
+                  <AppContext>
+                    <PersistGate loading={null} persistor={persistStore(store)}>
+                      {type === EAppType.EXTENSION ? <PopupExtension /> : <App />}
+                    </PersistGate>
+                  </AppContext>
+                </AntdApp>
+              </StyleProvider>
+            </ConfigProvider>
             <ReactQueryDevtools initialIsOpen={false} />
           </QueryClientProvider>
         </BrowserRouter>

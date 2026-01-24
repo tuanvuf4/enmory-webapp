@@ -250,7 +250,7 @@ export const Item: React.FC<IProps> = ({
                 </Flex>
               </div>
 
-              {data.catId && (
+              {!!data.catId && (
                 <h5 className={classes.kindOfWord}>
                   <div
                     style={{

@@ -9,8 +9,11 @@ import styles from './style'
 import { styleConfig } from '@/style/appStyle'
 import { SideBarMain } from '../sideBar/SideBarMain'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { LoadingBar } from '../loading/LoadingBar'
+import Sider from 'antd/es/layout/Sider'
+import { Content } from 'antd/es/layout/layout'
+import { EViewPort } from '@/models/app.model'
 
 export const AppLayout: React.FC<PropsWithChildren> = (props) => {
   const classes = styles()
@@ -19,55 +22,59 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
   const { isAuth } = useSelector((state) => state.auth)
 
   const dispatch = useDispatch()
-
-  const location = useLocation()
   const navigate = useNavigate()
 
-  // const updateViewMode = (width: number) => {
-  //   if (width < 576) {
-  //     dispatch(configAction.setViewPort(EViewPort.XS))
-  //   }
-  //   if (width >= 576) {
-  //     dispatch(configAction.setViewPort(EViewPort.SM))
-  //   }
-  //   if (width >= 768) {
-  //     dispatch(configAction.setViewPort(EViewPort.MD))
-  //   }
-  //   if (width >= 992) {
-  //     dispatch(configAction.setViewPort(EViewPort.LG))
-  //   }
-  //   if (width >= 1200) {
-  //     dispatch(configAction.setViewPort(EViewPort.XL))
-  //   }
-  // }
+  const updateViewMode = (width: number) => {
+    if (width < 768) {
+      dispatch(settingAction.setViewPort(EViewPort.XS))
+    }
+    // if (width >= 576) {
+    //   dispatch(settingAction.setViewPort(EViewPort.SM))
+    // }
+    if (width >= 768) {
+      dispatch(settingAction.setViewPort(EViewPort.MD))
+    }
+    // if (width >= 992) {
+    //   dispatch(settingAction.setViewPort(EViewPort.LG))
+    // }
+    // if (width >= 1200) {
+    //   dispatch(settingAction.setViewPort(EViewPort.XL))
+    // }
+  }
 
-  // useEffect(() => {
-  //   window.addEventListener('resize', () => updateViewMode(window.innerWidth))
-
-  //   return () => {
-  //     window.removeEventListener('resize', () => updateViewMode(window.innerWidth))
-  //   }
-  // }, [window.innerWidth])
+  const initLayout = () => {
+    updateViewMode(window.innerWidth)
+  }
 
   useEffect(() => {
-    if (location.pathname === '/' && !isAuth) {
-      navigate('/login')
+    window.addEventListener('load', () => updateViewMode(window.innerWidth))
+    window.addEventListener('resize', () => updateViewMode(window.innerWidth))
+
+    return () => {
+      window.removeEventListener('resize', () => updateViewMode(window.innerWidth))
+      window.removeEventListener('load', () => updateViewMode(window.innerWidth))
     }
-  }, [location, isAuth])
+  }, [window.innerWidth])
+
+  useEffect(() => initLayout(), [])
+
+  useEffect(() => {
+    if (!isAuth) navigate('/login')
+  }, [isAuth])
 
   return (
     <>
       <Layout className={classes.wrapper}>
         {!drawer && (
-          <Layout.Sider
+          <Sider
             width={styleConfig.sider.width}
             trigger={null}
             collapsible
-            collapsed={isSidebarOpened}
+            collapsed={!isSidebarOpened}
             className={classes.sider}
           >
             <SideBarMain />
-          </Layout.Sider>
+          </Sider>
         )}
 
         {drawer && (
@@ -83,12 +90,17 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
           </Drawer>
         )}
 
-        <Layout style={{ paddingLeft: drawer ? 0 : styleConfig.sider.width }}>
+        <Layout
+          style={{
+            paddingLeft: drawer ? 0 : isSidebarOpened ? styleConfig.sider.width : 80,
+            overflow: 'hidden',
+          }}
+        >
           <AppHeader />
 
-          <Layout.Content className={classes.contentStyle}>
+          <Content className={classes.contentStyle}>
             <div className={classes.main}>{props.children}</div>
-          </Layout.Content>
+          </Content>
 
           <AppFooter />
         </Layout>

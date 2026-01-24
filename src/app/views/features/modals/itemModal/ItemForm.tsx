@@ -22,8 +22,9 @@ import { CloseCircleOutlined, Loading3QuartersOutlined } from '@ant-design/icons
 import { usePrompt } from '@/helpers/hooks'
 import { exampleApi } from '@/services/firebase'
 import { Timestamp } from 'firebase/firestore'
-import { useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
+import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
 import { useModal } from '@/context/modal.context'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface ItemFormProps {
   mode: 'add' | 'edit'
@@ -49,6 +50,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
   // React Query mutations
   const createMutation = useCreateItem()
   const updateMutation = useUpdateItem()
+
+  const queryClient = useQueryClient()
 
   const {
     control,
@@ -93,13 +96,30 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
               uid: user?.uid || '',
               created_date: Timestamp.now().toMillis(),
               last_update: Timestamp.now().toMillis(),
+              note: meaning.note || '',
+              collocations: meaning.collocations || '',
+              grammar: meaning.grammar || '',
+              definition: meaning.definition || '',
+              translation: meaning.translation || '',
+              pronunciation: meaning.pronunciation || { audio: '', uk: '', us: '' },
+              common: meaning.common || false,
+              enable: meaning.enable || true,
+              antonyms: meaning.antonyms || [],
+              synonyms: meaning.synonyms || [],
               examples:
                 ((await createExample(meaning)).map((example) => example.id) as string[]) ?? [],
             }
           })
           meanings.push(...(await Promise.all(meaningPromises)))
         }
-        const dataSubmit: IItem<string[]> = { ...data, meanings: meanings }
+        const dataSubmit: IItem<string[]> = {
+          ...data,
+          collocations: data.collocations || [],
+          forms: data.forms || [],
+          word_family: data.word_family || [],
+          relation: data.relation || [],
+          meanings: meanings,
+        }
 
         console.log(`*** dataSubmit *** `, dataSubmit)
 
@@ -117,14 +137,16 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
             if (itemUpdated) {
               dispatch(iotdAction.update(itemUpdated))
             }
-            reset(initItem)
+            // reset(initItem)
+            await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
             openNotification({ type: 'success', message: 'Update item successful!' })
+            closeModal()
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
           } finally {
-            reset(initItem)
+            // reset(initItem)
+            await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
             setOrigin(null)
-            closeModal()
           }
         } else {
           try {
@@ -140,6 +162,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
             reset({ ...initItem })
             setOrigin(null)
             closeModal()
+            queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
           }
         }
       })()

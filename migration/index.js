@@ -13,8 +13,10 @@ const require = createRequire(import.meta.url)
 
 // Initialize Firebase Admin
 // const serviceAccount = require('./serviceAccountKey.json')
+// const SQL_FILE_PATH = process.argv[2] || './enmory_webapp.sql'
 // const FB_USER_ID = 'zdSNTrF4JFbDzxEyVFK3n5Rv6w62' // Default user ID for migrated data
 
+const SQL_FILE_PATH = process.argv[2] || './enmory_webapp_test.sql'
 const serviceAccount = require('./serviceAccountKey_12345.json')
 const FB_USER_ID = 'RqIKOUFPZRSTmraIiD7MKmqlzWT2' // Default usezr ID for migrated data Enmory_12345
 
@@ -23,6 +25,23 @@ initializeApp({
 })
 
 const db = getFirestore()
+
+/**
+ * Decode SQL escape sequences to readable characters
+ */
+function decodeSqlString(str) {
+  if (typeof str !== 'string') return str
+
+  return str
+    .replace(/\\'/g, "'") // \' -> '
+    .replace(/\\"/g, '"') // \" -> "
+    .replace(/\\n/g, '\n') // \n -> newline
+    .replace(/\\r/g, '\r') // \r -> carriage return
+    .replace(/\\t/g, '\t') // \t -> tab
+    .replace(/\\b/g, '\b') // \b -> backspace
+    .replace(/\\f/g, '\f') // \f -> form feed
+    .replace(/\\\\/g, '\\') // \\ -> \
+}
 
 /**
  * Parse individual value from SQL
@@ -138,7 +157,8 @@ function parseTableFromSql(sqlContent, tableName) {
 
         if (char === "'" && inString) {
           inString = false
-          values.push(current)
+          // Decode SQL escape sequences before pushing string value
+          values.push(decodeSqlString(current))
           current = ''
           continue
         }
@@ -534,8 +554,6 @@ async function insertItemsToFirebase(items, collectionName = 'items', batchSize 
  */
 async function migrateItems() {
   try {
-    const SQL_FILE_PATH = process.argv[2] || './enmory_webapp_test.sql'
-    // const SQL_FILE_PATH = process.argv[2] || './enmory_webapp.sql'
     const COLLECTION_NAME = 'items'
 
     console.log('='.repeat(50))

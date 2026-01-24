@@ -16,8 +16,7 @@ const styles = () => {
     },
     contentStyle: {
       color: token.colorText,
-      // maxHeight: `calc(100vh - 160px)`,
-      // overflow: 'auto',
+      minWidth: 320,
     },
     wrapper: {
       minHeight: '100vh !important',

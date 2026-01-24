@@ -22,7 +22,7 @@ export const Library: React.FC = () => {
   const classes = styles()
   const globalClasses = globalStyle()
 
-  const { viewMode } = useSelector((state) => state.setting)
+  const { viewMode, isShowSearchFormItem } = useSelector((state) => state.setting)
 
   const { openNotification } = usePrompt()
 
@@ -37,7 +37,6 @@ export const Library: React.FC = () => {
     keyword: searchParams.get('keyword') || '',
     cat: searchParams.get('cat') ? Number(searchParams.get('cat')) : ECategory.ALL,
     type: searchParams.get('type') ? Number(searchParams.get('type')) : EType.ALL,
-    defect: searchParams.get('defect') === 'true',
     archive: searchParams.get('archive') === 'true',
     order: (searchParams.get('order') as 'ASC' | 'DESC') || 'DESC',
     orderBy: (searchParams.get('orderBy') as 'created_date' | 'last_update') || 'created_date',
@@ -62,31 +61,34 @@ export const Library: React.FC = () => {
 
   return (
     <>
-      <div className={globalClasses.stickyBar}>
-        <div className={globalClasses.container}>
-          <Toolbar
-            pagination={
-              <Pagination
-                page={page}
-                size={size}
-                total={pagination?.total}
-                totalPage={pagination?.totalPage}
-                options={setting.pagination.options}
-                onPageChange={(data) => {
-                  const newParams = new URLSearchParams(searchParams)
-                  newParams.set('page', data.page.toString())
-                  newParams.set('size', data.size.toString())
-                  setSearchParams(newParams)
-                  window.scrollTo({ top: 0, behavior: 'smooth' })
-                }}
-              />
-            }
-          />
+      {isShowSearchFormItem && (
+        <div className={globalClasses.stickyBar}>
+          <div className={globalClasses.container}>
+            <Toolbar
+              pagination={
+                <Pagination
+                  page={page}
+                  size={size}
+                  total={pagination?.total}
+                  totalPage={pagination?.totalPage}
+                  options={setting.pagination.options}
+                  onPageChange={(data) => {
+                    const newParams = new URLSearchParams(searchParams)
+                    newParams.set('page', data.page.toString())
+                    newParams.set('size', data.size.toString())
+                    setSearchParams(newParams)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                />
+              }
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className={globalClasses.container}>
         {isLoading && <Loading />}
+
         {!isLoading && viewMode === EViewMode.GRID && listItem.length > 0 && (
           <div className={classes.items}>
             <Row gutter={[token.size, token.size * 2]}>

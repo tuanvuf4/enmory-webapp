@@ -18,6 +18,12 @@ import {
   QueryConstraint,
   orderBy as firestoreOrderBy,
   documentId,
+  startAt,
+  endAt,
+  startAfter,
+  QueryDocumentSnapshot,
+  DocumentData,
+  getCountFromServer,
 } from 'firebase/firestore'
 import { IExample } from '@/models/item.model'
 import { toWildString } from '@/helpers/item'
@@ -28,11 +34,11 @@ export interface IItemRequestData {
   size: number
   cat?: number | ''
   type?: number | ''
-  defect?: boolean | ''
   archive?: boolean | ''
   exact?: boolean
   order?: AppOrderQuery
   orderBy?: AppOrderByQuery
+  lastDocId?: string // For cursor-based pagination
 }
 
 /**
@@ -52,13 +58,14 @@ const buildQueryConstraints = (params: IItemRequestData): QueryConstraint[] => {
     constraints.push(where('catId', '==', params.cat))
   }
 
-  // Filter by keyword (search in original field)
+  // Filter by keyword - server-side prefix search
   if (params.keyword && params.exact) {
     constraints.push(where('origin', '==', params.keyword))
   }
 
   // Filter by archive status
-  if (params.archive !== '' && params.archive !== undefined) {
+  // Only add archive filter if explicitly set to true or false (not empty string or undefined)
+  if (params.archive === true || params.archive === false) {
     constraints.push(where('archive', '==', params.archive))
   }
 
@@ -66,9 +73,22 @@ const buildQueryConstraints = (params: IItemRequestData): QueryConstraint[] => {
   constraints.push(where('is_deleted', '==', false))
 
   // Add ordering
-  if (params.orderBy) {
+  if (params.orderBy && !params.keyword) {
+    // Can only order by one field when using range queries (keyword search)
     constraints.push(firestoreOrderBy(params.orderBy, params.order === 'DESC' ? 'desc' : 'asc'))
+  } else if (params.keyword && !params.exact) {
+    // When using keyword prefix search, must order by 'origin'
+    constraints.push(firestoreOrderBy('origin', params.order === 'DESC' ? 'desc' : 'asc'))
+    // Use startAt/endAt for prefix search instead of where clauses
+    const keyword = params.keyword
+    constraints.push(startAt(keyword))
+    constraints.push(endAt(keyword + '\uf8ff'))
+  } else if (!params.orderBy && !params.keyword) {
+    // Default ordering when no keyword or orderBy specified
+    constraints.push(firestoreOrderBy('created_date', 'desc'))
   }
+
+  console.log(`*** constraints *** `, constraints)
 
   return constraints
 }
@@ -118,18 +138,30 @@ const getExamplesByIds = async (exampleIds: string[]): Promise<IExample[]> => {
 /**
  * Get items with pagination
  */
-const getItems = async (params: IItemRequestData): Promise<IHttpResponse<IItem[]>> => {
+const getItems = async (
+  params: IItemRequestData,
+  lastDoc?: QueryDocumentSnapshot<DocumentData>,
+): Promise<IHttpResponse<IItem[]> & { lastDoc?: QueryDocumentSnapshot<DocumentData> }> => {
   try {
+    console.log(`*** params *** `, params)
     const constraints = buildQueryConstraints(params)
 
-    // Add pagination
-    constraints.push(limit(params.size))
+    // Add cursor pagination with startAfter if lastDoc is provided
+    if (lastDoc) {
+      constraints.push(startAfter(lastDoc))
+    }
+
+    // Use proper page size limit for efficient pagination
+    constraints.push(limit(params.size + 1)) // Fetch one extra to detect if there's a next page
 
     const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
     const snapshot = await getDocs(itemsQuery)
 
-    // Handle keyword search for non-exact matches
-    const itemsPromises = snapshot.docs.map(async (doc) => {
+    // We fetched one extra to optimize pagination, slice to get actual page items
+    const itemDocs = snapshot.docs.slice(0, params.size)
+
+    // Process items and fetch examples
+    const itemsPromises = itemDocs.map(async (doc) => {
       const itemData = doc.data()
       const meanings = itemData.meanings || []
 
@@ -138,7 +170,6 @@ const getItems = async (params: IItemRequestData): Promise<IHttpResponse<IItem[]
         meanings.map(async (meaning: any) => {
           const exampleIds = meaning.examples || []
 
-          // Check if exampleIds is actually an array of strings
           if (!Array.isArray(exampleIds)) {
             console.warn('Example IDs is not an array:', exampleIds)
             return {
@@ -156,40 +187,40 @@ const getItems = async (params: IItemRequestData): Promise<IHttpResponse<IItem[]
       )
 
       return {
-        id: doc.id,
         ...itemData,
+        id: doc.id,
         meanings: meaningsWithExamples,
       } as IItem
     })
 
-    let items: IItem[] = await Promise.all(itemsPromises)
+    const items: IItem[] = await Promise.all(itemsPromises)
 
-    // Filter items to only include those with at least one meaning that has definition or translation
-    items = items.filter((item) => {
-      const meanings = item.meanings || []
-      return meanings.some((meaning: any) => {
-        return (
-          (meaning.definition && meaning.definition.trim() !== '') ||
-          (meaning.translation && meaning.translation.trim() !== '')
-        )
-      })
-    })
+    // Get last document for next page cursor (use the last actual item, not the extra)
+    const newLastDoc = itemDocs[itemDocs.length - 1]
 
-    if (params.keyword && !params.exact) {
-      items = items.filter((item) =>
-        item.origin.toLowerCase().includes(params.keyword.toLowerCase()),
-      )
+    // Get total count using efficient count query (without pagination constraints)
+    let total = 0
+    try {
+      // Build count query without limit and startAfter
+      const countConstraints = buildQueryConstraints(params)
+      const countQuery = query(collection(db, dbCollections.items), ...countConstraints)
+      const countSnapshot = await getCountFromServer(countQuery)
+      total = countSnapshot.data().count
+    } catch (error) {
+      console.warn('Error getting total count:', error)
+      // If count fails, continue without total count
     }
 
     return {
       isSuccess: true,
       message: 'Items fetched successfully',
       content: items,
+      lastDoc: newLastDoc,
       paging: {
         page: params.page,
         size: params.size,
-        total: items.length,
-        totalPage: Math.ceil(items.length / params.size),
+        total: total,
+        totalPage: total > 0 ? Math.ceil(total / params.size) : 0,
       },
       statusCode: 200,
     }

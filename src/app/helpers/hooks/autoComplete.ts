@@ -1,7 +1,7 @@
 import { setting } from '@/config/appConfig'
 import { IHttpResponse } from '@/models/http.model'
 import { IItem, IExample } from '@/models/item.model'
-import { itemApi } from '@/services/firebase/api/item.api'
+import { itemApi, IItemRequestData } from '@/services/firebase/api/item.api'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import _ from 'lodash'
 import { useState, useEffect } from 'react'
@@ -18,24 +18,27 @@ export const useAutoComplete = (
   searchText: string,
   type: searchType = 'item',
   exact = false,
+  filters: Partial<IItemRequestData> = {},
   timeout = setting.debounceTime,
 ) => {
   const [options, setOptions] = useState<Options[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const filterKey = JSON.stringify(filters)
 
   useEffect(() => {
     let handleSession: NodeJS.Timeout
     const query = {
+      ...filters,
       keyword: searchText,
       page: 0,
-      size: setting.numberItemOfAutoComplete * 10,
+      size: setting.numberItemOfAutoComplete * 2,
     }
     if (searchText && searchText.length >= 2) {
       handleSession = setTimeout(() => {
         setIsSearching(true)
         if (type === 'item') {
           itemApi
-            .getItemAutoComplete(exact ? _.merge(query, { exact }) : query)
+            .getItemAutoComplete({ ...query, exact })
             .then((response: IHttpResponse<IItem<string>[]>) => {
               if (!response.content || response.content.length === 0) {
                 setOptions([])
@@ -83,7 +86,7 @@ export const useAutoComplete = (
     return () => {
       clearTimeout(handleSession)
     }
-  }, [searchText])
+  }, [searchText, exact, filterKey, type, timeout])
 
   return { options, isSearching }
 }

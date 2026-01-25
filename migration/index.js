@@ -12,13 +12,13 @@ import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 
 // Initialize Firebase Admin
-const serviceAccount = require('./serviceAccountKey.json')
-const SQL_FILE_PATH = process.argv[2] || './enmory_webapp.sql'
-const FB_USER_ID = 'zdSNTrF4JFbDzxEyVFK3n5Rv6w62' // Default user ID for migrated data
+// const serviceAccount = require('./serviceAccountKey.json')
+// const SQL_FILE_PATH = process.argv[2] || './enmory_webapp.sql'
+// const FB_USER_ID = 'zdSNTrF4JFbDzxEyVFK3n5Rv6w62' // Default user ID for migrated data
 
-// const SQL_FILE_PATH = process.argv[2] || './enmory_webapp_test.sql'
-// const serviceAccount = require('./serviceAccountKey_12345.json')
-// const FB_USER_ID = 'RqIKOUFPZRSTmraIiD7MKmqlzWT2' // Default usezr ID for migrated data Enmory_12345
+const SQL_FILE_PATH = process.argv[2] || './enmory_webapp_test.sql'
+const serviceAccount = require('./serviceAccountKey_12345.json')
+const FB_USER_ID = 'RqIKOUFPZRSTmraIiD7MKmqlzWT2' // Default usezr ID for migrated data Enmory_12345
 
 initializeApp({
   credential: cert(serviceAccount),

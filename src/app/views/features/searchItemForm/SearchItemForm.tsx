@@ -59,8 +59,13 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   })
 
   const keyword = watch('keyword')
+  const cat = watch('cat')
+  const type = watch('type')
 
-  const { options, isSearching } = useAutoComplete(keyword)
+  const { options, isSearching } = useAutoComplete(keyword, 'item', false, {
+    cat: cat !== ECategory.ALL ? cat : undefined,
+    type: type !== EType.ALL ? type : undefined,
+  })
 
   const updateUrlParams = (data: Partial<IFormSearchItem>, resetPage: boolean = true) => {
     const params = new URLSearchParams(searchParams)

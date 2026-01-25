@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "build",
+      "group": "build",
+      "problemMatcher": [],
+      "label": "npm: build",
+      "detail": "tsc -b && vite build"
+    },
+    {
+      "type": "npm",
+      "script": "deploy",
+      "group": "build",
+      "problemMatcher": [],
+      "label": "npm: deploy",
+      "detail": "npm run format && npm run build && firebase deploy"
+    }
+  ]
+}

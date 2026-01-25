@@ -168,14 +168,14 @@ export const StudySet: React.FC = () => {
       studySetAction.update({
         id: item.id,
         level: level,
-        count: (rest.count as number) + 1,
+        count: rest.count && rest.count >= 0 ? rest.count + 1 : 1,
         quiz: { ...item.quiz, result: result },
       }),
     )
     await itemApi.updateItem(item.id ?? '', {
       ...rest,
       level: level,
-      count: (rest.count as number) + 1,
+      count: rest.count && rest.count >= 0 ? rest.count + 1 : 1,
     })
   }
 
@@ -495,6 +495,7 @@ export const StudySet: React.FC = () => {
         {!inProgress && (
           <div className={classes.btnAction}>
             <Button
+              loading={loading}
               onClick={() =>
                 createStudySet({
                   currentIndex: 0,
@@ -512,7 +513,7 @@ export const StudySet: React.FC = () => {
           <div className={classes.btnAction}>
             {!isSubmit && (
               <Button type='primary' onClick={() => onSubmit(item?.quiz.type as EQuiz)}>
-                Confirm
+                Submit
               </Button>
             )}
 

@@ -97,12 +97,12 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
 
   const onSubmit = (data: IFormSearchItem) => {
     // Update URL params instead of Redux (reset page to 0)
-    updateUrlParams(data, true)
 
     if (location.pathname.includes('library')) {
+      updateUrlParams(data, true)
     } else {
       // Build URL params with page reset to 0
-      const urlData = { ...data, page: '0' }
+      const urlData = { ...data, page: 0 }
       navigate(
         '/library?' +
           new URLSearchParams(

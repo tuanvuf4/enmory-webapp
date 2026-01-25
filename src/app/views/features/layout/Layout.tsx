@@ -134,7 +134,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
             }
           /> */}
 
-          <FloatButton
+          {/* <FloatButton
             shape='circle'
             type='primary'
             style={{
@@ -154,7 +154,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
               />
             }
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          />
+          /> */}
         </>
       )}
     </>

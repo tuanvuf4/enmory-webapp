@@ -44,12 +44,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
 
   const { user } = useSelector((state) => state.auth)
   const { categories } = useSelector((state) => state.setting)
-
   const { list } = useSelector((state) => state.studySet)
 
   // React Query mutations
-  const createMutation = useCreateItem()
-  const updateMutation = useUpdateItem()
+  const { isPending: isCreating, mutateAsync: createMutation } = useCreateItem()
+  const { isPending: isUpdating, mutateAsync: updateMutation } = useUpdateItem()
 
   const queryClient = useQueryClient()
 
@@ -125,44 +124,40 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
 
         if (mode === 'edit') {
           try {
-            const response = await updateMutation.mutateAsync({
+            const response = await updateMutation({
               id: String(item?.id),
               data: dataSubmit,
             })
 
             const itemUpdated = response.content
+            // update iotd item in study set
             if (itemUpdated && list.find((item) => item.id === itemUpdated.id)) {
               dispatch(studySetAction.update(itemUpdated))
             }
-            if (itemUpdated) {
-              dispatch(iotdAction.update(itemUpdated))
-            }
-            // reset(initItem)
-            await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
-            openNotification({ type: 'success', message: 'Update item successful!' })
+            // update iotd item
+            if (itemUpdated) dispatch(iotdAction.update(itemUpdated))
             closeModal()
+            openNotification({ type: 'success', message: 'Update item successful!' })
+            await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
           } finally {
-            // reset(initItem)
             await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
             setOrigin(null)
           }
         } else {
           try {
-            const response = await createMutation.mutateAsync(dataSubmit)
-
+            const response = await createMutation(dataSubmit)
+            console.log(`*** response *** `, response)
             if (response.isSuccess) {
-              reset(initItem)
+              closeModal()
               openNotification({ type: 'success', message: 'Create a item successful!' })
+              await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
             }
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
           } finally {
-            reset({ ...initItem })
             setOrigin(null)
-            closeModal()
-            queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
           }
         }
       })()
@@ -170,7 +165,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
   }
 
   const handleCancel = () => {
-    reset(initItem)
     setOrigin(null)
     closeModal()
   }
@@ -465,7 +459,12 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
               Cancel
             </Button>
 
-            <Button htmlType='submit' type={'primary'} disabled={!isValid}>
+            <Button
+              loading={isCreating || isUpdating}
+              htmlType='submit'
+              type={'primary'}
+              disabled={!isValid || isCreating || isUpdating}
+            >
               Save
             </Button>
           </div>

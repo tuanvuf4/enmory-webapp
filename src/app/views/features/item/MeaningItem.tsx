@@ -160,17 +160,17 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning }) => {
             )}
 
             {meaning.collocations && (
-              <>
+              <div className={classes.list}>
                 <h5 className={'italic font-bold'}>Collocations:</h5>
                 <div dangerouslySetInnerHTML={{ __html: meaning.collocations }} />
-              </>
+              </div>
             )}
 
             {meaning.grammar && (
-              <>
+              <div className={classes.list}>
                 <h5 className={'italic font-bold'}>Grammar:</h5>
                 <div dangerouslySetInnerHTML={{ __html: meaning.grammar }} />
-              </>
+              </div>
             )}
 
             {meaning.synonyms.length > 0 && (

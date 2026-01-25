@@ -7,6 +7,15 @@ const styles = () => {
   const { token } = theme.useToken()
 
   return createUseStyles({
+    list: {
+      '& ul': {
+        paddingLeft: token.size,
+
+        '& li': {
+          display: 'list-item',
+        },
+      },
+    },
     disableMeaning: {
       border: `1px solid ${styleConfig.color.red[3]} !important`,
     },

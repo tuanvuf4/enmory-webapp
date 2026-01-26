@@ -1,7 +1,7 @@
 import { setting } from '@/config/appConfig'
 import { IHttpResponse } from '@/models/http.model'
 import { IItem, IExample } from '@/models/item.model'
-import { itemApi, IItemRequestData } from '@/services/firebase/api/item.api'
+import { itemApi, IItemRequestParams } from '@/services/firebase/api/item.api'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import _ from 'lodash'
 import { useState, useEffect } from 'react'
@@ -18,7 +18,7 @@ export const useAutoComplete = (
   keyword: string,
   type: searchType = 'item',
   exact = false,
-  filters: Partial<IItemRequestData> = {},
+  filters: Partial<IItemRequestParams> = {},
   timeout = setting.debounceTime,
 ) => {
   const [options, setOptions] = useState<Options[]>([])

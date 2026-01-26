@@ -1,6 +1,5 @@
 import globalStyle from '@/style/appStyle'
 import { EViewMode } from '@/models/app.model'
-import { ECategory } from '@/models/item.model'
 import { Toolbar } from '@/views/features/toolbar/Toolbar'
 import { theme, Row, Col } from 'antd'
 import { useEffect } from 'react'
@@ -11,7 +10,6 @@ import { Item } from '@/views/features/item/Item'
 import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
 import { useSearchParams } from 'react-router-dom'
-import { IFormSearchItem } from '@/models/formSearch.model'
 import { setting } from '@/config/appConfig'
 import { useItems } from '@/core/hooks/useItems'
 import { Loading } from '@/views/features'
@@ -32,18 +30,17 @@ export const Library: React.FC = () => {
   const page = searchParams.get('page') ? Number(searchParams.get('page')) : 0
   const size = searchParams.get('size') ? Number(searchParams.get('size')) : 20
 
-  // Read form search values from URL params
-  const formSearchValue: IFormSearchItem = {
-    keyword: searchParams.get('keyword') || '',
-    cat: searchParams.get('cat') ? Number(searchParams.get('cat')) : ECategory.ALL,
-    archive: searchParams.get('archive') === 'true',
-    order: (searchParams.get('order') as 'ASC' | 'DESC') || 'DESC',
-    orderBy: (searchParams.get('orderBy') as 'created_date' | 'last_update') || 'created_date',
-  }
-
   // Use React Query hooks
   const { data, isLoading, error } = useItems({
-    ...formSearchValue,
+    keyword: searchParams.get('keyword') || '',
+    cat:
+      searchParams.get('cat') && searchParams.get('cat') !== '0'
+        ? Number(searchParams.get('cat'))
+        : 0,
+    archive: searchParams.get('archive') === 'true',
+    favorite: searchParams.get('favorite') === 'true',
+    order: (searchParams.get('order') as 'ASC' | 'DESC') || 'DESC',
+    orderBy: (searchParams.get('orderBy') as 'created_date' | 'last_update') || 'created_date',
     page,
     size,
   })

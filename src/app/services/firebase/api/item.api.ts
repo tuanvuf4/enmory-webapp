@@ -28,12 +28,13 @@ import {
 import { IExample } from '@/models/item.model'
 import { toWildString } from '@/helpers/item'
 
-export interface IItemRequestData {
+export interface IItemRequestParams {
   keyword: string
   page: number
   size: number
-  cat?: number | ''
-  archive?: boolean | ''
+  cat?: number
+  archive?: boolean
+  favorite?: boolean
   exact?: boolean
   order?: AppOrderQuery
   orderBy?: AppOrderByQuery
@@ -43,7 +44,7 @@ export interface IItemRequestData {
 /**
  * Helper function to build Firestore query constraints
  */
-const buildQueryConstraints = (params: IItemRequestData): QueryConstraint[] => {
+const buildQueryConstraints = (params: IItemRequestParams): QueryConstraint[] => {
   const constraints: QueryConstraint[] = []
   const currentUser = firebaseAuthService.getCurrentUser()
 
@@ -52,41 +53,49 @@ const buildQueryConstraints = (params: IItemRequestData): QueryConstraint[] => {
     constraints.push(where('uid', '==', currentUser.uid))
   }
 
-  // Normalize category/type to numbers to avoid string-vs-number mismatches
-  const catFilter = params.cat !== undefined && params.cat !== '' ? Number(params.cat) : undefined
-
   // Filter by category (0 means ALL, so skip filter)
-  if (catFilter !== undefined && !Number.isNaN(catFilter) && catFilter !== 0) {
-    constraints.push(where('catId', '==', catFilter))
-  }
-
-  // Filter by keyword - server-side prefix search
-  if (params.keyword) {
-    if (params.exact) {
-      constraints.push(where('origin', '==', params.keyword))
-    } else {
-      constraints.push(where('name', '>=', params.keyword), where('name', '<=', params.keyword))
-    }
+  if (params.cat) {
+    constraints.push(where('catId', '==', params.cat))
   }
 
   // Filter by archive status
   // Only add archive filter if explicitly set to true or false (not empty string or undefined)
-  if (params.archive === true || params.archive === false) {
+  if (params.archive) {
     constraints.push(where('archive', '==', params.archive))
+  }
+
+  if (params.favorite === true || params.favorite === false) {
+    constraints.push(where('favorite', '==', params.favorite))
   }
 
   // Filter by deleted status
   constraints.push(where('is_deleted', '==', false))
 
-  // Add ordering - use the specified orderBy field (or default to created_date)
-  const orderByField = params.orderBy || 'created_date'
-  const orderDirection = params.order === 'DESC' ? 'desc' : 'asc'
-  constraints.push(firestoreOrderBy(orderByField, orderDirection))
+  // Server-side keyword filtering using range queries on origin field
+  // When keyword is provided, we must order by origin first for range queries to work
+  if (params.keyword) {
+    const keyword = params.keyword.toLowerCase()
 
-  // Note: We do NOT use startAt/endAt for keyword search here because:
-  // 1. Firestore range queries have strict index requirements
-  // 2. Client-side filtering is simpler and more reliable
-  // 3. This matches the approach used in getItemAutoComplete
+    if (params.exact) {
+      // Exact match on lowercase field
+      constraints.push(where('origin', '==', keyword))
+    } else {
+      // Prefix match using range queries (requires ordering by the same field)
+      constraints.push(firestoreOrderBy('origin', 'asc'))
+      constraints.push(startAt(keyword))
+      constraints.push(endAt(keyword + '\uf8ff'))
+    }
+
+    // Add secondary sort by the requested field for consistent ordering
+    const orderByField = params.orderBy || 'created_date'
+    const orderDirection = params.order === 'DESC' ? 'desc' : 'asc'
+    constraints.push(firestoreOrderBy(orderByField, orderDirection))
+  } else {
+    // No keyword filter - use the requested ordering
+    const orderByField = params.orderBy || 'created_date'
+    const orderDirection = params.order === 'DESC' ? 'desc' : 'asc'
+    constraints.push(firestoreOrderBy(orderByField, orderDirection))
+  }
 
   return constraints
 }
@@ -95,7 +104,7 @@ const buildQueryConstraints = (params: IItemRequestData): QueryConstraint[] => {
  * Helper function to build Firestore query constraints for autocomplete
  * Autocomplete has simpler filtering - no exact keyword match, different ordering
  */
-const buildQueryConstraintsForAutocomplete = (params: IItemRequestData): QueryConstraint[] => {
+const buildQueryConstraintsForAutocomplete = (params: IItemRequestParams): QueryConstraint[] => {
   const constraints: QueryConstraint[] = []
   const currentUser = firebaseAuthService.getCurrentUser()
 
@@ -104,12 +113,9 @@ const buildQueryConstraintsForAutocomplete = (params: IItemRequestData): QueryCo
     constraints.push(where('uid', '==', currentUser.uid))
   }
 
-  // Normalize category/type to numbers to avoid string-vs-number mismatches
-  const catFilter = params.cat !== undefined && params.cat !== '' ? Number(params.cat) : undefined
-
   // Filter by category (0 means ALL, so skip filter)
-  if (catFilter !== undefined && !Number.isNaN(catFilter) && catFilter !== 0) {
-    constraints.push(where('catId', '==', catFilter))
+  if (params.cat) {
+    constraints.push(where('catId', '==', params.cat))
   }
 
   // Filter by archive status - only if explicitly set
@@ -180,29 +186,27 @@ const getExamplesByIds = async (exampleIds: string[]): Promise<IExample[]> => {
  * Get items with pagination
  */
 const getItems = async (
-  params: IItemRequestData,
+  params: IItemRequestParams,
   lastDoc?: QueryDocumentSnapshot<DocumentData>,
 ): Promise<IHttpResponse<IItem[]> & { lastDoc?: QueryDocumentSnapshot<DocumentData> }> => {
   try {
-    console.log(`*** params *** `, params)
+    // Build base constraints (where clauses and orderBy)
     const constraints = buildQueryConstraints(params)
 
-    // Add cursor pagination with startAfter if lastDoc is provided
-    // Note: cursor pagination doesn't work well with client-side filtering, so skip it for keyword searches
-    if (lastDoc && !params.keyword) {
+    // Add cursor pagination AFTER orderBy (Firestore requirement)
+    // Note: Cannot use startAfter when keyword search uses startAt/endAt
+    if (lastDoc && (!params.keyword || params.exact)) {
       constraints.push(startAfter(lastDoc))
     }
 
-    // When using keyword filter (client-side), fetch more items to ensure enough results after filtering
-    // For regular pagination, fetch size + 1 to detect if there's a next page
-    const fetchSize = params.keyword ? params.size * 10 : params.size + 1
-    constraints.push(limit(fetchSize))
+    // Add limit last
+    constraints.push(limit(params.size + 1))
 
     const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
     const snapshot = await getDocs(itemsQuery)
 
     // We fetched one extra to optimize pagination, slice to get actual page items
-    const itemDocs = params.keyword ? snapshot.docs : snapshot.docs.slice(0, params.size)
+    const itemDocs = snapshot.docs.slice(0, params.size)
 
     // Process items and fetch examples
     const itemsPromises = itemDocs.map(async (doc) => {
@@ -239,43 +243,16 @@ const getItems = async (
 
     const items: IItem[] = await Promise.all(itemsPromises)
 
-    // Client-side filtering by keyword (after fetching from Firestore)
-    let filteredItems = items
-    if (params.keyword) {
-      filteredItems = items.filter((item) =>
-        item.origin.toLowerCase().includes(params.keyword.toLowerCase()),
-      )
+    // Get last document for next page cursor
+    const newLastDoc = itemDocs.length > 0 ? itemDocs[itemDocs.length - 1] : undefined
 
-      // For keyword searches, implement manual pagination on filtered results
-      const startIndex = params.page * params.size
-      const endIndex = startIndex + params.size
-      filteredItems = filteredItems.slice(startIndex, endIndex)
-    }
-
-    // Get last document for next page cursor (only used for non-keyword pagination)
-    const newLastDoc =
-      !params.keyword && itemDocs.length > 0 ? itemDocs[itemDocs.length - 1] : undefined
-
-    // Get total count using efficient count query
+    // Get total count using efficient count query (server-side)
     let total = 0
     try {
-      if (params.keyword) {
-        // For keyword searches, we need to count filtered results
-        // Fetch all items and count after filtering (not ideal but necessary for client-side filtering)
-        const countConstraints = buildQueryConstraints({ ...params, keyword: '' })
-        const countQuery = query(collection(db, dbCollections.items), ...countConstraints)
-        const countSnapshot = await getDocs(countQuery)
-        const allItems = countSnapshot.docs.map((doc) => doc.data())
-        total = allItems.filter((item: any) =>
-          item.origin.toLowerCase().includes(params.keyword.toLowerCase()),
-        ).length
-      } else {
-        // For non-keyword searches, use efficient count query
-        const countConstraints = buildQueryConstraints(params)
-        const countQuery = query(collection(db, dbCollections.items), ...countConstraints)
-        const countSnapshot = await getCountFromServer(countQuery)
-        total = countSnapshot.data().count
-      }
+      const countConstraints = buildQueryConstraints(params)
+      const countQuery = query(collection(db, dbCollections.items), ...countConstraints)
+      const countSnapshot = await getCountFromServer(countQuery)
+      total = countSnapshot.data().count
     } catch (error) {
       console.warn('Error getting total count:', error)
       // If count fails, continue without total count
@@ -284,7 +261,7 @@ const getItems = async (
     return {
       isSuccess: true,
       message: 'Items fetched successfully',
-      content: filteredItems,
+      content: items,
       lastDoc: newLastDoc,
       paging: {
         page: params.page,
@@ -304,7 +281,7 @@ const getItems = async (
  * Get items for autocomplete
  */
 const getItemAutoComplete = async (
-  params: IItemRequestData,
+  params: IItemRequestParams,
 ): Promise<IHttpResponse<IItem<string>[]>> => {
   try {
     const constraints = buildQueryConstraintsForAutocomplete(params)

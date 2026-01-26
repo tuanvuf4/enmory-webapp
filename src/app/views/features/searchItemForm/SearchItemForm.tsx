@@ -46,6 +46,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
     keyword: searchParams.get('keyword') || '',
     cat: searchParams.get('cat') ? Number(searchParams.get('cat')) : ECategory.ALL,
     archive: searchParams.get('archive') === 'true',
+    favorite: searchParams.get('favorite') === 'true',
     order: (searchParams.get('order') as AppOrderQuery) || 'DESC',
     orderBy: (searchParams.get('orderBy') as AppOrderByQuery) || 'created_date',
   }
@@ -58,7 +59,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   const cat = watch('cat')
 
   const { options, isSearching } = useAutoComplete(keyword, 'item', false, {
-    cat: cat !== ECategory.ALL ? cat : undefined,
+    cat: cat === ECategory.ALL ? 0 : Number(cat),
   })
 
   const updateUrlParams = (data: Partial<IFormSearchItem>, resetPage: boolean = true) => {
@@ -206,6 +207,25 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                       }}
                     >
                       Archive
+                    </Checkbox>
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name={`favorite`}
+                  render={({ field: { onChange, value } }) => (
+                    <Checkbox
+                      className={globalClasses.fulWidth}
+                      checked={value}
+                      onChange={(e) => {
+                        onChange(e.target.checked)
+                        updateUrlParams({
+                          favorite: e.target.checked,
+                        })
+                      }}
+                    >
+                      Favorite
                     </Checkbox>
                   )}
                 />

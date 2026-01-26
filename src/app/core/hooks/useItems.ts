@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { itemApi, IItemRequestData } from '@/services/firebase/api/item.api'
+import { itemApi, IItemRequestParams } from '@/services/firebase/api/item.api'
 import { IItem } from '@/models/item.model'
 import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore'
 
@@ -7,7 +7,7 @@ import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore'
 export const itemKeys = {
   all: ['items'] as const,
   lists: () => [...itemKeys.all, 'list'] as const,
-  list: (filters: IItemRequestData) => [...itemKeys.lists(), filters] as const,
+  list: (filters: IItemRequestParams) => [...itemKeys.lists(), filters] as const,
   details: () => [...itemKeys.all, 'detail'] as const,
   detail: (id: string) => [...itemKeys.details(), id] as const,
 }
@@ -25,8 +25,10 @@ export const clearLastDocStore = (queryConfigKey?: string) => {
 }
 
 // Fetch items list
-export const useItems = (params: IItemRequestData) => {
+export const useItems = (params: IItemRequestParams) => {
   // Create a unique key for this query configuration (excluding page)
+  console.log(`*** params *** `, params)
+
   const queryConfigKey = JSON.stringify({
     keyword: params.keyword,
     cat: params.cat,

@@ -13,13 +13,12 @@ import { IFormSearchItem } from '@/models/formSearch.model'
 import { EType, ECategory } from '@/models/item.model'
 import { initSearchFormItem } from '@/services/index'
 import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select } from 'antd'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
-import { getType } from '@/helpers/index'
 
 interface ISearchFormComp {
   filter?: boolean
@@ -40,31 +39,26 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const [showType, setShowType] = useState<boolean>(false)
-
-  const { categories, types } = useSelector((state) => state.setting)
+  const { categories } = useSelector((state) => state.setting)
 
   // Read form values from URL params
   const formSearchValue: IFormSearchItem = {
     keyword: searchParams.get('keyword') || '',
     cat: searchParams.get('cat') ? Number(searchParams.get('cat')) : ECategory.ALL,
-    type: searchParams.get('type') ? Number(searchParams.get('type')) : EType.ALL,
     archive: searchParams.get('archive') === 'true',
     order: (searchParams.get('order') as AppOrderQuery) || 'DESC',
     orderBy: (searchParams.get('orderBy') as AppOrderByQuery) || 'created_date',
   }
 
-  const { control, handleSubmit, reset, setValue, watch } = useForm<IFormSearchItem>({
+  const { control, handleSubmit, reset, watch } = useForm<IFormSearchItem>({
     defaultValues: formSearchValue,
   })
 
   const keyword = watch('keyword')
   const cat = watch('cat')
-  const type = watch('type')
 
   const { options, isSearching } = useAutoComplete(keyword, 'item', false, {
     cat: cat !== ECategory.ALL ? cat : undefined,
-    type: type !== EType.ALL ? type : undefined,
   })
 
   const updateUrlParams = (data: Partial<IFormSearchItem>, resetPage: boolean = true) => {
@@ -76,7 +70,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
     }
 
     Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== '' && value !== ECategory.ALL && value !== EType.ALL) {
+      if (value !== undefined && value !== '') {
         params.set(key, String(value))
       } else {
         params.delete(key)
@@ -129,10 +123,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   // Sync form with URL params on mount and when URL changes
   useEffect(() => {
     reset(formSearchValue)
-    // Set showType based on category from URL
-    if (formSearchValue.cat === ECategory.WORD) {
-      setShowType(true)
-    }
   }, [searchParams])
 
   return (
@@ -231,17 +221,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                       value={value}
                       onChange={(e) => {
                         onChange(e)
-                        if (e === ECategory.WORD) {
-                          setValue('type', EType.ALL)
-                          setShowType(true)
-                          updateUrlParams({ cat: e })
-                        } else {
-                          setShowType(false)
-                          updateUrlParams({
-                            cat: e,
-                            type: EType.ALL,
-                          })
-                        }
+                        updateUrlParams({ cat: e })
                       }}
                       options={categories}
                       defaultValue={ECategory.ALL}
@@ -249,30 +229,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                     />
                   )}
                 />
-
-                {showType && (
-                  <Controller
-                    control={control}
-                    name={`type`}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        className={globalClasses.fulWidth}
-                        value={value}
-                        onChange={(e) => {
-                          onChange(e)
-                          updateUrlParams({ type: e })
-                        }}
-                        options={types.map((type) => {
-                          return {
-                            ...type,
-                            label: getType(type.value).origin,
-                          }
-                        })}
-                        defaultValue={EType.ALL}
-                      />
-                    )}
-                  />
-                )}
 
                 <p style={{ margin: 0 }}>Order By:</p>
 

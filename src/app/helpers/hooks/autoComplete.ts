@@ -15,7 +15,7 @@ interface Options {
 }
 
 export const useAutoComplete = (
-  searchText: string,
+  keyword: string,
   type: searchType = 'item',
   exact = false,
   filters: Partial<IItemRequestData> = {},
@@ -29,11 +29,11 @@ export const useAutoComplete = (
     let handleSession: NodeJS.Timeout
     const query = {
       ...filters,
-      keyword: searchText,
+      keyword,
       page: 0,
       size: setting.numberItemOfAutoComplete * 2,
     }
-    if (searchText && searchText.length >= 2) {
+    if (keyword && keyword.length >= 2) {
       handleSession = setTimeout(() => {
         setIsSearching(true)
         if (type === 'item') {
@@ -86,7 +86,7 @@ export const useAutoComplete = (
     return () => {
       clearTimeout(handleSession)
     }
-  }, [searchText, exact, filterKey, type, timeout])
+  }, [keyword, exact, filterKey, type, timeout])
 
   return { options, isSearching }
 }

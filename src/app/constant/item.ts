@@ -75,7 +75,6 @@ export const initSearchFormEx: IFormSearchEx = {
 export const initSearchFormItem: IFormSearchItem = {
   keyword: '',
   cat: ECategory.ALL,
-  type: EType.ALL,
   archive: false,
   orderBy: 'created_date',
   order: 'DESC',

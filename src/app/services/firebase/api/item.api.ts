@@ -33,7 +33,6 @@ export interface IItemRequestData {
   page: number
   size: number
   cat?: number | ''
-  type?: number | ''
   archive?: boolean | ''
   exact?: boolean
   order?: AppOrderQuery
@@ -55,22 +54,19 @@ const buildQueryConstraints = (params: IItemRequestData): QueryConstraint[] => {
 
   // Normalize category/type to numbers to avoid string-vs-number mismatches
   const catFilter = params.cat !== undefined && params.cat !== '' ? Number(params.cat) : undefined
-  const typeFilter =
-    params.type !== undefined && params.type !== '' ? Number(params.type) : undefined
 
   // Filter by category (0 means ALL, so skip filter)
   if (catFilter !== undefined && !Number.isNaN(catFilter) && catFilter !== 0) {
     constraints.push(where('catId', '==', catFilter))
   }
 
-  // Filter by type (0 means ALL, so skip filter)
-  if (typeFilter !== undefined && !Number.isNaN(typeFilter) && typeFilter !== 0) {
-    constraints.push(where('type', '==', typeFilter))
-  }
-
   // Filter by keyword - server-side prefix search
-  if (params.keyword && params.exact) {
-    constraints.push(where('origin', '==', params.keyword))
+  if (params.keyword) {
+    if (params.exact) {
+      constraints.push(where('origin', '==', params.keyword))
+    } else {
+      constraints.push(where('name', '>=', params.keyword), where('name', '<=', params.keyword))
+    }
   }
 
   // Filter by archive status
@@ -110,17 +106,10 @@ const buildQueryConstraintsForAutocomplete = (params: IItemRequestData): QueryCo
 
   // Normalize category/type to numbers to avoid string-vs-number mismatches
   const catFilter = params.cat !== undefined && params.cat !== '' ? Number(params.cat) : undefined
-  const typeFilter =
-    params.type !== undefined && params.type !== '' ? Number(params.type) : undefined
 
   // Filter by category (0 means ALL, so skip filter)
   if (catFilter !== undefined && !Number.isNaN(catFilter) && catFilter !== 0) {
     constraints.push(where('catId', '==', catFilter))
-  }
-
-  // Filter by type (0 means ALL, so skip filter)
-  if (typeFilter !== undefined && !Number.isNaN(typeFilter) && typeFilter !== 0) {
-    constraints.push(where('type', '==', typeFilter))
   }
 
   // Filter by archive status - only if explicitly set
@@ -195,6 +184,7 @@ const getItems = async (
   lastDoc?: QueryDocumentSnapshot<DocumentData>,
 ): Promise<IHttpResponse<IItem[]> & { lastDoc?: QueryDocumentSnapshot<DocumentData> }> => {
   try {
+    console.log(`*** params *** `, params)
     const constraints = buildQueryConstraints(params)
 
     // Add cursor pagination with startAfter if lastDoc is provided

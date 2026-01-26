@@ -1,6 +1,6 @@
 import globalStyle from '@/style/appStyle'
 import { EViewMode } from '@/models/app.model'
-import { ECategory, EType } from '@/models/item.model'
+import { ECategory } from '@/models/item.model'
 import { Toolbar } from '@/views/features/toolbar/Toolbar'
 import { theme, Row, Col } from 'antd'
 import { useEffect } from 'react'
@@ -36,7 +36,6 @@ export const Library: React.FC = () => {
   const formSearchValue: IFormSearchItem = {
     keyword: searchParams.get('keyword') || '',
     cat: searchParams.get('cat') ? Number(searchParams.get('cat')) : ECategory.ALL,
-    type: searchParams.get('type') ? Number(searchParams.get('type')) : EType.ALL,
     archive: searchParams.get('archive') === 'true',
     order: (searchParams.get('order') as 'ASC' | 'DESC') || 'DESC',
     orderBy: (searchParams.get('orderBy') as 'created_date' | 'last_update') || 'created_date',

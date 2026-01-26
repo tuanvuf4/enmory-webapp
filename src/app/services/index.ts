@@ -1,7 +1,7 @@
 import { setting } from '../config/appConfig'
 import { INotification } from '../models/app.model'
 import { IFormSearchEx, IFormSearchItem } from '../models/formSearch.model'
-import { ECategory, EType, IItem, IOption } from '../models/item.model'
+import { ECategory, IItem, IOption } from '../models/item.model'
 import { ILoginResponse, IUser } from '../models/user.model'
 
 export const initAuth: ILoginResponse = {
@@ -63,7 +63,6 @@ export const initSearchFormEx: IFormSearchEx = {
 export const initSearchFormItem: IFormSearchItem = {
   keyword: '',
   cat: ECategory.ALL,
-  type: EType.ALL,
   archive: false,
   orderBy: 'created_date',
   order: 'DESC',

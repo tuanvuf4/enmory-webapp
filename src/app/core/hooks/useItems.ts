@@ -30,7 +30,6 @@ export const useItems = (params: IItemRequestData) => {
   const queryConfigKey = JSON.stringify({
     keyword: params.keyword,
     cat: params.cat,
-    type: params.type,
     archive: params.archive,
     orderBy: params.orderBy,
     order: params.order,

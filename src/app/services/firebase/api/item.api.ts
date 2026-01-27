@@ -600,6 +600,7 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
       created_date: now,
       last_update: now,
       is_deleted: false,
+      randomIndex: Math.random(), // For efficient random queries
     }
 
     const itemsRef = collection(db, dbCollections.items)
@@ -640,6 +641,7 @@ const createItems = async (items: IItem[]): Promise<IHttpResponse<IItem>> => {
         created_date: now,
         last_update: now,
         is_deleted: false,
+        randomIndex: Math.random(), // For efficient random queries
       }
 
       const itemsRef = collection(db, dbCollections.items)

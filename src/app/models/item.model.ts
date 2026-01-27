@@ -87,6 +87,7 @@ export interface IItem<M = string[]> {
   last_update?: number
   created_date?: number
   deleted_date?: number
+  randomIndex?: number
   is_deleted?: boolean
   archive: boolean
   user?: {

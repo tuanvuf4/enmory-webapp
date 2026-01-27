@@ -8,6 +8,30 @@ This script migrates items, meanings, and examples from a SQL file to Firebase F
 2. **Firebase Service Account**: Ensure `serviceAccountKey.json` is in the migration folder
 3. **Node.js**: Version 16.0.0 or higher
 
+## Migration Scripts
+
+### 1. SQL to Firebase Migration (`index.js`)
+
+Migrates data from SQL file to Firebase collections.
+
+### 2. Add Random Index (`add-random-index.js`)
+
+Adds `randomIndex` field to existing documents in items and examples collections for efficient random sampling.
+
+**Usage:**
+
+```bash
+node add-random-index.js
+```
+
+This script will:
+
+- Add a `randomIndex` field (0-1) to all documents in `examples` collection
+- Add a `randomIndex` field (0-1) to all documents in `items` collection
+- Skip documents that already have the field
+- Use batch operations for better performance (500 docs per batch)
+- Provide detailed progress and summary
+
 ## What This Script Does
 
 The migration script creates **three separate Firebase collections**:

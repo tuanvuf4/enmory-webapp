@@ -1,7 +1,7 @@
 import { IHttpResponse } from '@/models/http.model'
 import { IExample } from '@/models/item.model'
 import { IExampleQuery } from '@/models/example.model'
-import { db } from '@/config/firebaseConfig'
+import { db, dbCollections } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import {
   collection,
@@ -16,6 +16,8 @@ import {
   Timestamp,
   limit,
   QueryConstraint,
+  startAt,
+  endAt,
 } from 'firebase/firestore'
 
 /**
@@ -92,13 +94,14 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
       constraints.push(where('uid', '==', currentUser.uid))
     }
 
-    if (querySearch.itemId) {
-      constraints.push(where('itemId', '==', querySearch.itemId))
+    if (querySearch.keyword) {
+      constraints.push(startAt(querySearch.keyword))
+      constraints.push(endAt(querySearch.keyword))
     }
 
     constraints.push(limit(querySearch.size || 10))
 
-    const examplesQuery = query(collection(db, 'examples'), ...constraints)
+    const examplesQuery = query(collection(db, dbCollections.examples), ...constraints)
     const snapshot = await getDocs(examplesQuery)
 
     let examples = snapshot.docs.map((doc) => ({
@@ -147,45 +150,37 @@ const getRandomExamples = async (
       throw new Error('User not authenticated')
     }
 
-    const requestedSize = querySearch.size || 5
-    let examples: IExample[] = []
+    const size = querySearch.size || 10
 
-    // Generate random starting point
-    const randomStart = Math.random()
+    const getRandomSection = async (size: number, uid = currentUser.uid) => {
+      let examples: IExample[] = []
 
-    // First query: get documents >= randomStart
-    const constraints1: QueryConstraint[] = [
-      where('uid', '==', currentUser.uid),
-      where('randomIndex', '>=', randomStart),
-      limit(requestedSize),
-    ]
+      // Generate random starting point
+      const randomStart = Math.random()
 
-    const query1 = query(collection(db, 'examples'), ...constraints1)
-    const snapshot1 = await getDocs(query1)
-
-    examples = snapshot1.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as IExample[]
-
-    // If we don't have enough, wrap around and get from the beginning
-    if (examples.length < requestedSize) {
-      const remaining = requestedSize - examples.length
-      const constraints2: QueryConstraint[] = [
-        where('uid', '==', currentUser.uid),
-        where('randomIndex', '<', randomStart),
-        limit(remaining),
+      // First query: get documents >= randomStart
+      const constraints: QueryConstraint[] = [
+        where('uid', '==', uid),
+        where('randomIndex', '>=', randomStart),
+        limit(size),
       ]
 
-      const query2 = query(collection(db, 'examples'), ...constraints2)
-      const snapshot2 = await getDocs(query2)
+      const queryRandom = query(collection(db, dbCollections.examples), ...constraints)
+      const snapshot = await getDocs(queryRandom)
 
-      const moreExamples = snapshot2.docs.map((doc) => ({
+      examples = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as IExample[]
 
-      examples = [...examples, ...moreExamples]
+      return examples
+    }
+
+    let examples = await getRandomSection(querySearch.size || 10)
+
+    // If we don't have enough, wrap around and get from the beginning
+    if (examples.length < size) {
+      examples = [...examples, ...(await getRandomSection(size - examples.length))]
     }
 
     return {
@@ -209,7 +204,7 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
       throw new Error('Example ID is required')
     }
 
-    const exampleDocRef = doc(db, 'examples', String(body.id))
+    const exampleDocRef = doc(db, dbCollections.examples, String(body.id))
     const updateData = {
       ...body,
       last_update: Timestamp.now().toMillis(),
@@ -240,7 +235,7 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
  */
 const deleteExample = async (id: number): Promise<IHttpResponse<IExample>> => {
   try {
-    const exampleDocRef = doc(db, 'examples', String(id))
+    const exampleDocRef = doc(db, dbCollections.examples, String(id))
     await deleteDoc(exampleDocRef)
 
     return {

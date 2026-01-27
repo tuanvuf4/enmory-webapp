@@ -4,7 +4,6 @@ export interface IExampleQuery {
   keyword: string
   page: number
   size: number
-  itemId?: number
   orderBy?: AppOrderByQuery
   order?: AppOrderQuery
 }

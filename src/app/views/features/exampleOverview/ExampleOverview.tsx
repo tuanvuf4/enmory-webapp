@@ -1,9 +1,15 @@
 import globalStyle from '@/style/appStyle'
-import { SyncOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import {
+  SyncOutlined,
+  CloseCircleOutlined,
+  SearchOutlined,
+  CaretLeftOutlined,
+  CaretRightOutlined,
+} from '@ant-design/icons'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IExample } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
-import { theme, Skeleton, Button, AutoComplete, Input } from 'antd'
+import { theme, Button, AutoComplete, Input, Row } from 'antd'
 import { PropsWithChildren, useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import styles from './style'
@@ -11,6 +17,7 @@ import exStyles from '@/views/features/item/style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
 import { ExampleItem } from '../exampleItem'
+import { Loading } from '../loading'
 
 interface IProps {
   title?: string
@@ -18,7 +25,6 @@ interface IProps {
 
 interface IExampleForm {
   query: string
-  // translation: string
 }
 
 export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
@@ -31,13 +37,12 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
 
   const [keyword, setKeyword] = useState<string>('')
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
-  const [selected, setSelected] = useState<IExample>()
-  const [randomExamples, setRandomExamples] = useState<IExample[]>([])
+  const [examples, setExamples] = useState<IExample[]>([])
   const [currentPage, setCurrentPage] = useState<number>(0)
 
   const { options } = useAutoComplete(keyword, 'example')
 
-  const { control, setValue } = useForm<IExampleForm>({
+  const { control, setValue, handleSubmit } = useForm<IExampleForm>({
     defaultValues: {
       query: '',
     },
@@ -47,26 +52,24 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
     exampleApi.getExampleById(option.id).then(({ content }) => {
       setValue('query', '')
       if (content) {
-        setSelected(content)
       }
     })
   }
 
   const getRandomExamples = async () => {
     setIsLoaded(false)
-    setSelected(undefined)
     const nextPage = currentPage + 1
     try {
       const response = await exampleApi.getRandomExamples({
         page: nextPage,
         size: 10,
       })
-      setRandomExamples(response.content || [])
+      setExamples(response.content || [])
       setCurrentPage(nextPage)
     } catch (error) {
       console.error('Error fetching random examples:', error)
       openNotification({ type: 'error', message: 'Failed to fetch examples' })
-      setRandomExamples([])
+      setExamples([])
     } finally {
       setIsLoaded(true)
     }
@@ -88,6 +91,23 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
     }
   }
 
+  const onSubmit = async (data: IExampleForm) => {
+    console.log(`data: `, data)
+    const { isSuccess, content } = await exampleApi.getExamples({
+      keyword: data.query,
+      page: 0,
+      size: 10,
+    })
+    console.log(`*** content *** `, content)
+    if (isSuccess && content) setExamples(content || [])
+  }
+
+  const onClear = () => {
+    setKeyword('')
+    setExamples([])
+    setValue('query', '')
+  }
+
   useEffect(() => {
     getRandomExamples()
   }, [])
@@ -96,7 +116,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
     <div className={classes.exampleOverview}>
       <form
         className={classes.overviewForm}
-        // onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit)}
         style={{ width: '100%' }}
       >
         <Button
@@ -127,6 +147,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
                 children={
                   <Input
                     className={classes.searchExampleInput}
+                    onClear={() => onClear()}
                     allowClear={{
                       clearIcon: (
                         <CloseCircleOutlined
@@ -153,27 +174,28 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
             )
           }}
         />
+
+        <Row>
+          <Button type={'text'} variant={'outlined'} style={{ color: token.colorWhite }}>
+            <CaretLeftOutlined />
+          </Button>
+
+          <Button type={'text'} variant={'outlined'} style={{ color: token.colorWhite }}>
+            <CaretRightOutlined />
+          </Button>
+        </Row>
+
+        <Button type={'primary'} htmlType='submit' style={{ color: token.colorWhite }}>
+          <SearchOutlined />
+          <span className={globalClasses.fromTablet}>Search</span>
+        </Button>
       </form>
 
-      {selected && selected.origin && (
-        <div className={clsx(exClasses.examples, classes.exampleSelectedEx)}>
-          <ul>
-            <li className={clsx(exClasses.exampleItem)} style={{ paddingLeft: 8 }}>
-              <ExampleItem
-                data={selected}
-                onEdit={() => onEdit(selected.id || -1)}
-                onDelete={() => onDelete(selected.id || -1)}
-              />
-            </li>
-          </ul>
-        </div>
-      )}
-
-      {randomExamples?.length > 0 && (
+      {examples?.length > 0 && (
         <div className={clsx(exClasses.examples)}>
-          {!isLoaded && <Skeleton />}
+          {!isLoaded && <Loading />}
           <ul>
-            {randomExamples.map((example, key) => {
+            {examples.map((example, key) => {
               return (
                 <li key={key} className={clsx(exClasses.exampleItem)} style={{ paddingLeft: 8 }}>
                   <ExampleItem

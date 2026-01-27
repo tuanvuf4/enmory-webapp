@@ -91,7 +91,6 @@ export const StudySet: React.FC = () => {
           },
         })) as unknown as IItemQuiz<TQuiz, string[]>[]
 
-        console.log('Formatted study set items:', formattedItems.length)
         dispatch(studySetAction.setList(formattedItems))
         dispatch(studySetAction.updateProgress({ ...params }))
       } else {

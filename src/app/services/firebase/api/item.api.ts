@@ -389,12 +389,13 @@ const getStudySet = async (
       }
     }
 
-    // First, fetch all items for all categories
-    for (const studySet of studySets) {
+    const getItemsInCategory = async (catId: number, size: number): Promise<IItem[]> => {
       const constraints: QueryConstraint[] = [
-        where('catId', '==', studySet.id),
+        where('catId', '==', catId),
         where('uid', '==', currentUser.uid),
         where('is_deleted', '==', false),
+        where('randomIndex', '>=', Math.random()),
+        limit(size),
       ]
 
       const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
@@ -415,19 +416,29 @@ const getStudySet = async (
           )
         })
       })
+      return await Promise.all(itemsWithMeanings)
+    }
+
+    // First, fetch all items for all categories
+    for (const studySet of studySets) {
+      const itemsWithMeanings = await getItemsInCategory(studySet.id, studySet.size)
 
       const requestedSize = studySet.size || 10
       const availableCount = itemsWithMeanings.length
 
       if (availableCount < requestedSize) {
+        itemsWithMeanings.push(
+          ...(await getItemsInCategory(studySet.id, requestedSize - availableCount)),
+        )
         console.warn(
           `Category ${studySet.id}: Only ${availableCount} items available, but ${requestedSize} requested`,
         )
       }
 
       // Randomly select items from this category
-      const shuffledItems = itemsWithMeanings.sort(() => Math.random() - 0.5)
-      const selectedItems = shuffledItems.slice(0, requestedSize)
+      const selectedItems = itemsWithMeanings
+        .sort(() => Math.random() - 0.5)
+        .slice(0, requestedSize)
 
       allItems.push(...selectedItems)
     }

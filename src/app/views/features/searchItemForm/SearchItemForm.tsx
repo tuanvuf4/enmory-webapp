@@ -342,7 +342,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
             }}
           >
             <SyncOutlined />
-            <span className={globalClasses.fromTablet}>Reset</span>
           </Button>
         )}
 

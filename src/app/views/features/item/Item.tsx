@@ -29,6 +29,7 @@ interface IProps {
   onEditSuccess?: () => void
   onViewSuccess?: () => void
   onArchive?: () => void
+  onFavorite?: () => void
 }
 
 export const Item: React.FC<IProps> = ({
@@ -40,6 +41,7 @@ export const Item: React.FC<IProps> = ({
   onEditSuccess,
   onViewSuccess,
   onArchive,
+  onFavorite,
 }) => {
   const { token } = theme.useToken()
 
@@ -88,6 +90,11 @@ export const Item: React.FC<IProps> = ({
 
       case '6':
         // markItem(data?.id || '')
+        break
+
+      case '7':
+        await favorite(data)
+        onFavorite?.()
         break
 
       default:
@@ -179,6 +186,11 @@ export const Item: React.FC<IProps> = ({
   const archive = async (data: IItem) => {
     const archive = !data.archive
     await itemApi.updateItem(data.id || '', { archive })
+  }
+
+  const favorite = async (data: IItem) => {
+    const favorite = !data.favorite
+    await itemApi.updateItem(data.id || '', { favorite })
   }
 
   const onRefetchIotd = async (catId: ECategory) => {

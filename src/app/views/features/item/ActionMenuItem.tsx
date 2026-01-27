@@ -3,6 +3,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
+  HeartOutlined,
   ReadOutlined,
   StarFilled,
   SyncOutlined,
@@ -50,6 +51,15 @@ export const getActionMenuItems = (data: IItem | undefined): ItemType[] => {
         <ActionItem
           label={`${data?.level === 5 ? '0 star' : '5 stars'}`}
           icon={<StarFilled color={'yellow'} />}
+        />
+      ),
+    },
+    {
+      key: 7,
+      label: (
+        <ActionItem
+          label='Favorite'
+          icon={data?.favorite ? <HeartOutlined /> : <HeartOutlined />}
         />
       ),
     },

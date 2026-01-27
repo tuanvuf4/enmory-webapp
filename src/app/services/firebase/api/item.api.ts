@@ -71,25 +71,22 @@ const buildQueryConstraints = (params: IItemRequestParams): QueryConstraint[] =>
   // Filter by deleted status
   constraints.push(where('is_deleted', '==', false))
 
-  // Add secondary sort by the requested field for consistent ordering
   const orderByField = params.orderBy || 'created_date'
   const orderDirection = params.order === 'DESC' ? 'desc' : 'asc'
-  constraints.push(orderBy(orderByField, orderDirection))
 
-  // Server-side keyword filtering using range queries on origin field
-  // When keyword is provided, we must order by origin first for range queries to work
   if (params.keyword) {
     const keyword = params.keyword.toLowerCase()
 
     if (params.exact) {
-      // Exact match on lowercase field
       constraints.push(where('origin', '==', keyword))
+      constraints.push(orderBy(orderByField, orderDirection))
     } else {
-      // Prefix match using range queries (requires ordering by the same field)
       constraints.push(orderBy('origin', 'asc'))
       constraints.push(startAt(keyword))
       constraints.push(endAt(keyword + '\uf8ff'))
     }
+  } else {
+    constraints.push(orderBy(orderByField, orderDirection))
   }
 
   return constraints
@@ -185,12 +182,8 @@ const getItems = async (
   lastDoc?: QueryDocumentSnapshot<DocumentData>,
 ): Promise<IHttpResponse<IItem[]> & { lastDoc?: QueryDocumentSnapshot<DocumentData> }> => {
   try {
-    // Build base constraints (where clauses and orderBy)
-
     let constraints = buildQueryConstraints(params)
 
-    // Add cursor pagination AFTER orderBy (Firestore requirement)
-    // Note: Cannot use startAfter when keyword search uses startAt/endAt
     if (lastDoc && (!params.keyword || params.exact)) {
       constraints.push(startAfter(lastDoc))
     }

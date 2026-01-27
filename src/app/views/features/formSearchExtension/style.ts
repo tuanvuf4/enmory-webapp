@@ -20,11 +20,10 @@ const styles = () => {
     searchExampleInput: {},
     filterWrapper: {
       display: 'flex',
-      // alignItems: 'center',
       justifyContent: 'center',
       flexFlow: 'column',
       gap: token.size / 2,
-      width: 150,
+      width: 180,
       background: token.colorBgBase,
       padding: [token.size / 2, token.size / 2],
       boxShadow: `0 0 ${token.size}px 0 ${hex2Rgba(token.colorTextBase, 0.3)}`,

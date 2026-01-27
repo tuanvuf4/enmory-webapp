@@ -33,6 +33,7 @@ export const useItems = (params: IItemRequestParams) => {
     keyword: params.keyword,
     cat: params.cat,
     archive: params.archive,
+    favorite: params.favorite,
     orderBy: params.orderBy,
     order: params.order,
   })
@@ -72,6 +73,7 @@ export const useItems = (params: IItemRequestParams) => {
 
       return response
     },
+    refetchOnWindowFocus: false,
   })
 }
 

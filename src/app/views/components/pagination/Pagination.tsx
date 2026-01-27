@@ -1,10 +1,5 @@
 import { Button, Select, theme } from 'antd'
-import {
-  CaretLeftOutlined,
-  CaretRightOutlined,
-  DoubleLeftOutlined,
-  DoubleRightOutlined,
-} from '@ant-design/icons'
+import { CaretLeftOutlined, CaretRightOutlined } from '@ant-design/icons'
 import styles from './style'
 import { BaseOptionType } from 'antd/es/cascader'
 import { setting } from '@/app/config/appConfig'
@@ -55,19 +50,19 @@ export const Pagination = ({
     })
   }
 
-  const onFirst = () => {
-    onPageChange({
-      page: 0,
-      size,
-    })
-  }
+  // const onFirst = () => {
+  //   onPageChange({
+  //     page: 0,
+  //     size,
+  //   })
+  // }
 
-  const onLast = () => {
-    onPageChange({
-      page: totalPage - 1,
-      size,
-    })
-  }
+  // const onLast = () => {
+  //   onPageChange({
+  //     page: totalPage - 1,
+  //     size,
+  //   })
+  // }
 
   const startItem = total === 0 ? 0 : page * size + 1
   const endItem = Math.min((page + 1) * size, total)
@@ -85,9 +80,9 @@ export const Pagination = ({
       </div>
 
       <div className={classes.paginationNav}>
-        <Button disabled={page === 0 || total === 0} onClick={onFirst}>
+        {/* <Button disabled={page === 0 || total === 0} onClick={onFirst}>
           <DoubleLeftOutlined />
-        </Button>
+        </Button> */}
 
         <Button disabled={page === 0 || total === 0} onClick={onPrev}>
           <CaretLeftOutlined />
@@ -97,9 +92,9 @@ export const Pagination = ({
           <CaretRightOutlined />
         </Button>
 
-        <Button disabled={!hasNextPage} onClick={onLast}>
+        {/* <Button disabled={!hasNextPage} onClick={onLast}>
           <DoubleRightOutlined />
-        </Button>
+        </Button> */}
       </div>
     </div>
   )

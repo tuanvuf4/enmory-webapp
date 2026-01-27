@@ -90,11 +90,12 @@ const styles = () => {
     },
     title: {
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'space-between',
       wordBreak: 'break-word',
       minHeight: token.controlHeight,
       gap: token.size / 2,
+      marginBottom: token.size / 2,
     },
     btnDelete: {
       flex: '0 0 38px',
@@ -156,7 +157,8 @@ const styles = () => {
       justifyContent: 'space-between',
       gap: token.size / 4,
       fontSize: token.fontSizeHeading4,
-      margin: [0, 0, 0, 0],
+      margin: 0,
+      padding: [token.size / 4, 0],
       fontFamily: styleConfig.fontFamily.lato,
       cursor: 'pointer',
 

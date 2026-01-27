@@ -2,7 +2,7 @@ import { setting } from '@/config/appConfig'
 import { INotification } from '../models/app.model'
 import { IFormSearchEx, IFormSearchItem } from '../models/formSearch.model'
 import { ECategory, EType, IItem, IOption } from '../models/item.model'
-import { ILoginResponse, IUser } from '../models/user.model'
+import { IUser } from '../models/user.model'
 import { enumValues, getCategory, getType } from '../helpers'
 
 export const categories = enumValues(ECategory).map((value) => ({
@@ -16,13 +16,6 @@ export const types = enumValues(EType).map((value) => ({
   label: getType(value as EType),
   value: value as EType,
 }))
-
-export const initAuth: ILoginResponse = {
-  access_token: '',
-  refresh_token: '',
-  expired_in: -1,
-  token_type: '',
-}
 
 export const initUser: IUser<number[]> = {
   uid: '',
@@ -79,8 +72,10 @@ export const initSearchFormItem: IFormSearchItem = {
   favorite: false,
   orderBy: 'created_date',
   order: 'DESC',
+  page: 0,
+  size: 20,
 }
 
-export const defauValueFormSearchEx = {
+export const initFormSearchExtension = {
   keyword: '',
 }

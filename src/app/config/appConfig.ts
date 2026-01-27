@@ -26,24 +26,13 @@ export const appConfig = {
     redirect_uris: ['http://localhost:3000'],
   },
   firebase: {
-    // enmory-12345
-    // apiKey: 'AIzaSyBPC2ssSPMEqzby9e9vwqaLyojStG1NdeU',
-    // authDomain: 'enmory-12345.firebaseapp.com',
-    // projectId: 'enmory-12345',
-    // storageBucket: 'enmory-12345.firebasestorage.app',
-    // messagingSenderId: '321059719686',
-    // appId: '1:321059719686:web:ea93ca81a3a5774de5d187',
-    // measurementId: 'G-NZX3GVJ6V9',
-
-    // enmory-21593
-    apiKey: 'AIzaSyD1M98BLfltwGQx5vh3uQ8ZVHnBk3oKU7k',
-    authDomain: 'enmory-21593.firebaseapp.com',
-    databaseURL: 'https://enmory-21593.firebaseio.com',
-    projectId: 'enmory-21593',
-    storageBucket: 'enmory-21593.firebasestorage.app',
-    messagingSenderId: '844583371952',
-    appId: '1:844583371952:web:12af7828d62e7ccbed2775',
-    measurementId: 'G-HTV30PVW0P',
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
   },
   references: [
     {

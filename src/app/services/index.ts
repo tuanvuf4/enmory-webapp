@@ -1,15 +1,8 @@
 import { setting } from '../config/appConfig'
 import { INotification } from '../models/app.model'
-import { IFormSearchEx, IFormSearchItem } from '../models/formSearch.model'
+import { IFormSearchEx } from '../models/formSearch.model'
 import { ECategory, IItem, IOption } from '../models/item.model'
-import { ILoginResponse, IUser } from '../models/user.model'
-
-export const initAuth: ILoginResponse = {
-  access_token: '',
-  refresh_token: '',
-  expired_in: -1,
-  token_type: '',
-}
+import { IUser } from '../models/user.model'
 
 export const initUser: IUser<number[]> = {
   displayName: '',
@@ -58,17 +51,4 @@ export const initSearchFormEx: IFormSearchEx = {
   keyword: '',
   orderBy: 'created_date',
   order: 'DESC',
-}
-
-export const initSearchFormItem: IFormSearchItem = {
-  keyword: '',
-  cat: ECategory.ALL,
-  archive: false,
-  favorite: false,
-  orderBy: 'created_date',
-  order: 'DESC',
-}
-
-export const defauValueFormSearchEx = {
-  keyword: '',
 }

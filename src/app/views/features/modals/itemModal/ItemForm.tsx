@@ -148,7 +148,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
         } else {
           try {
             const response = await createMutation(dataSubmit)
-            console.log(`*** response *** `, response)
             if (response.isSuccess) {
               closeModal()
               openNotification({ type: 'success', message: 'Create a item successful!' })
@@ -169,20 +168,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
     closeModal()
   }
 
-  const loadItem = async (value: string) => {
-    console.log(`*** value *** `, value)
-    // const params = {
-    //   keyword: value,
-    //   page: 0,
-    //   size: setting.numberItemOfAutoComplete * 2,
-    //   exact: true,
-    // }
-    // const { isSuccess, content } = await itemApi.getItemAutoComplete(params)
-    // if (isSuccess) {
-    // }
-  }
-
   useEffect(() => {
+    if (mode === 'edit' && item) setOrigin(item as IItem<string[]>)
     trigger()
   }, [])
 
@@ -305,7 +292,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
                           }}
                         />
                       }
-                      onSelect={loadItem}
                       onClear={() => setValue('origin', '')}
                     />
 

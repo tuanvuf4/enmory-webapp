@@ -91,8 +91,8 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning }) => {
         <Flex justify={'space-between'} align={'center'} className={`w-full`}>
           <div>
             <Button
-              ghost
-              variant='link'
+              variant='text'
+              type={'text'}
               size={'small'}
               color={'primary'}
               className={'text-xs'}

@@ -6,19 +6,21 @@ import {
   SearchOutlined,
   Loading3QuartersOutlined,
 } from '@ant-design/icons'
-import { useSelector } from '@/core/hooks'
+import { useItemSearchParams, useSelector } from '@/core/hooks'
 import { useAutoComplete } from '@/helpers/hooks'
 import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { EType, ECategory } from '@/models/item.model'
-import { initSearchFormItem } from '@/services/index'
 import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select } from 'antd'
 import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
+import { initSearchFormItem } from '@/constant/index'
+import { useItemForm } from '@/helpers/hooks/useItemForm'
+import { initItem } from '../modals/itemModal'
 
 interface ISearchFormComp {
   filter?: boolean
@@ -37,22 +39,15 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
 
   const navigate = useNavigate()
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+
+  const { urlParams, setUrlParams } = useItemSearchParams()
+
+  const { openItemForm } = useItemForm()
 
   const { categories } = useSelector((state) => state.setting)
 
-  // Read form values from URL params
-  const formSearchValue: IFormSearchItem = {
-    keyword: searchParams.get('keyword') || '',
-    cat: searchParams.get('cat') ? Number(searchParams.get('cat')) : ECategory.ALL,
-    archive: searchParams.get('archive') === 'true',
-    favorite: searchParams.get('favorite') === 'true',
-    order: (searchParams.get('order') as AppOrderQuery) || 'DESC',
-    orderBy: (searchParams.get('orderBy') as AppOrderByQuery) || 'created_date',
-  }
-
-  const { control, handleSubmit, reset, watch } = useForm<IFormSearchItem>({
-    defaultValues: formSearchValue,
+  const { control, handleSubmit, reset, watch, getValues } = useForm<IFormSearchItem>({
+    defaultValues: urlParams || initSearchFormItem,
   })
 
   const keyword = watch('keyword')
@@ -62,39 +57,18 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
     cat: cat === ECategory.ALL ? 0 : Number(cat),
   })
 
-  const updateUrlParams = (data: Partial<IFormSearchItem>, resetPage: boolean = true) => {
-    const params = new URLSearchParams(searchParams)
-
-    // Reset page to 0 when filters change (unless explicitly disabled)
-    if (resetPage) {
-      params.set('page', '0')
-    }
-
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
-        params.set(key, String(value))
-      } else {
-        params.delete(key)
-      }
-    })
-    setSearchParams(params)
-  }
-
   const onSelect = (value: string) => {
     reset({ ...initSearchFormItem, keyword: value })
 
     // Update URL params
-    updateUrlParams({
-      keyword: value,
-      archive: false,
-    })
+    setUrlParams({ keyword: value, archive: false })
   }
 
   const onSubmit = (data: IFormSearchItem) => {
     // Update URL params instead of Redux (reset page to 0)
 
     if (location.pathname.includes('library')) {
-      updateUrlParams(data, true)
+      setUrlParams(data, true)
     } else {
       // Build URL params with page reset to 0
       const urlData = { ...data, page: 0 }
@@ -122,9 +96,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   }
 
   // Sync form with URL params on mount and when URL changes
-  useEffect(() => {
-    reset(formSearchValue)
-  }, [searchParams])
+  useEffect(() => reset(urlParams), [urlParams])
 
   return (
     <div className={classes.searchForm}>
@@ -140,14 +112,12 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   placeholder='Enter keyword...'
                   notFoundContent={
                     <NoResult
-                    // onAdd={() => {
-                    //   dispatch(
-                    //     settingAction.setCurrentItem({
-                    //       ...initItem,
-                    //       origin: getValues('keyword'),
-                    //     }),
-                    //   )
-                    // }}
+                      onAdd={() => {
+                        openItemForm('add', {
+                          ...initItem,
+                          origin: getValues('keyword'),
+                        })
+                      }}
                     />
                   }
                   children={
@@ -177,8 +147,8 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   options={options}
                   onSelect={onSelect}
                   onClear={() => {
-                    updateUrlParams({ keyword: '' })
                     onChange('')
+                    setUrlParams({ keyword: '' })
                   }}
                   onChange={(text) => onChange(text)}
                 />
@@ -201,7 +171,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                       checked={value}
                       onChange={(e) => {
                         onChange(e.target.checked)
-                        updateUrlParams({
+                        setUrlParams({
                           archive: e.target.checked,
                         })
                       }}
@@ -220,7 +190,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                       checked={value}
                       onChange={(e) => {
                         onChange(e.target.checked)
-                        updateUrlParams({
+                        setUrlParams({
                           favorite: e.target.checked,
                         })
                       }}
@@ -241,7 +211,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                       value={value}
                       onChange={(e) => {
                         onChange(e)
-                        updateUrlParams({ cat: e })
+                        setUrlParams({ cat: e })
                       }}
                       options={categories}
                       defaultValue={ECategory.ALL}
@@ -261,7 +231,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                       value={value}
                       onChange={(e) => {
                         onChange(e)
-                        updateUrlParams({ orderBy: e as AppOrderByQuery })
+                        setUrlParams({ orderBy: e as AppOrderByQuery })
                       }}
                       options={[
                         {
@@ -286,7 +256,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                       value={value}
                       onChange={(e) => {
                         onChange(e)
-                        updateUrlParams({ order: e as AppOrderQuery })
+                        setUrlParams({ order: e as AppOrderQuery })
                       }}
                       options={orderOptions}
                       defaultValue={'DESC'}
@@ -338,7 +308,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                 orderBy: 'created_date' as AppOrderByQuery,
               }
               reset(resetValues)
-              setSearchParams({})
+              setUrlParams(resetValues)
             }}
           >
             <SyncOutlined />

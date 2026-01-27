@@ -3,6 +3,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
+  HeartFilled,
   HeartOutlined,
   ReadOutlined,
   StarFilled,
@@ -57,15 +58,14 @@ export const getActionMenuItems = (data: IItem | undefined): ItemType[] => {
     {
       key: 7,
       label: (
-        <ActionItem
-          label='Favorite'
-          icon={data?.favorite ? <HeartOutlined /> : <HeartOutlined />}
-        />
+        <ActionItem label='Favorite' icon={data?.favorite ? <HeartFilled /> : <HeartOutlined />} />
       ),
     },
     {
       key: 5,
-      label: <ActionItem label='Archive' icon={<ReadOutlined />} />,
+      label: (
+        <ActionItem label={`${data?.archive ? 'Unarchive' : 'Archive'}`} icon={<ReadOutlined />} />
+      ),
     },
     {
       key: 3,

@@ -1,5 +1,5 @@
 import { setting } from '@/config/appConfig'
-import { useDeleteItem, useDispatch, useSelector } from '@/core/hooks'
+import { itemKeys, useDeleteItem, useDispatch, useSelector } from '@/core/hooks'
 import { usePrompt } from '@/helpers/hooks'
 import { getCategory, isDefect } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
@@ -19,6 +19,7 @@ import { MeaningItem } from './MeaningItem'
 import styles from './style'
 import { useItemForm } from '@/helpers/hooks/useItemForm'
 import { actionAsyncApp } from '@/store/asyncActions'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface IProps {
   action?: boolean
@@ -47,14 +48,18 @@ export const Item: React.FC<IProps> = ({
 
   const classes = styles()
 
+  const queryClient = useQueryClient()
+
   const [, setSize] = useState<number>(8)
   const [spin, setSpin] = useState(false)
+  const { openMessage } = usePrompt()
 
-  const navigate = useNavigate()
   const location = useLocation()
+  const navigate = useNavigate()
   const dispatch = useDispatch()
 
   const { openItemForm, openViewItemForm } = useItemForm()
+
   const { mutate: mutateDeleteItem } = useDeleteItem()
 
   const { confirmDeleteModal, openNotification } = usePrompt()
@@ -176,21 +181,41 @@ export const Item: React.FC<IProps> = ({
       last_update: now,
     }
     await itemApi.updateItem(data.id || '', { ...newData })
+    await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+    openMessage({
+      type: 'success',
+      content: `Item has been reset successfully!`,
+    })
   }
 
   const onRedo = async (data: IItem) => {
     const level = data.level === 5 ? 0 : 5
     await itemApi.updateItem(data.id || '', { level })
+    await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+    openMessage({
+      type: 'success',
+      content: `Item has been set to level ${level} successfully!`,
+    })
   }
 
   const archive = async (data: IItem) => {
     const archive = !data.archive
     await itemApi.updateItem(data.id || '', { archive })
+    await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+    openMessage({
+      type: 'success',
+      content: `Item has been ${archive ? 'archived' : 'unarchived'} successfully!`,
+    })
   }
 
   const favorite = async (data: IItem) => {
     const favorite = !data.favorite
     await itemApi.updateItem(data.id || '', { favorite })
+    await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+    openMessage({
+      type: 'success',
+      content: `Item has been ${favorite ? 'favorited' : 'unfavorited'} successfully!`,
+    })
   }
 
   const onRefetchIotd = async (catId: ECategory) => {

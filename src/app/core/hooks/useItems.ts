@@ -27,8 +27,6 @@ export const clearLastDocStore = (queryConfigKey?: string) => {
 // Fetch items list
 export const useItems = (params: IItemRequestParams) => {
   // Create a unique key for this query configuration (excluding page)
-  console.log(`*** params *** `, params)
-
   const queryConfigKey = JSON.stringify({
     keyword: params.keyword,
     cat: params.cat,
@@ -64,7 +62,6 @@ export const useItems = (params: IItemRequestParams) => {
       }
 
       const response = await itemApi.getItems(params, lastDoc)
-      console.log(`*** response *** `, response)
 
       // Store the lastDoc for this page for future navigation
       if (response.lastDoc) {

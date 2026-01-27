@@ -11,7 +11,7 @@ export const exampleKeys = {
   details: () => [...exampleKeys.all, 'detail'] as const,
   detail: (id: string | number) => [...exampleKeys.details(), id] as const,
   random: () => [...exampleKeys.all, 'random'] as const,
-  randomByItem: (itemId: number) => [...exampleKeys.random(), itemId] as const,
+  randomByItem: () => [...exampleKeys.random()] as const,
 }
 
 // Fetch examples with query
@@ -42,7 +42,7 @@ export const useExample = (id: string | number, enabled = true) => {
 // Fetch random examples
 export const useRandomExamples = (params: Omit<IExampleQuery, 'keyword'>, enabled = true) => {
   return useQuery({
-    queryKey: exampleKeys.randomByItem(params.itemId || 0),
+    queryKey: exampleKeys.randomByItem(),
     queryFn: async () => {
       const response = await exampleApi.getRandomExamples(params)
       return response.content

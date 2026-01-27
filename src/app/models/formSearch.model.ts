@@ -8,6 +8,8 @@ export interface IFormSearchItem {
   favorite: boolean
   orderBy: AppOrderByQuery
   order: AppOrderQuery
+  page?: number
+  size?: number
 }
 
 export interface IFormSearchEx {

@@ -33,6 +33,7 @@ const createExample = async (body: IExample): Promise<IHttpResponse<IExample>> =
       uid: currentUser.uid,
       created_date: Timestamp.now().toMillis(),
       last_update: Timestamp.now().toMillis(),
+      randomIndex: Math.random(), // For efficient random queries
     }
 
     const docRef = await addDoc(collection(db, 'examples'), exampleData)
@@ -134,44 +135,63 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
 
 /**
  * Get random examples
+ * Note: This function expects documents to have a 'randomIndex' field (0-1)
+ * for efficient random sampling. Add this field when creating examples.
  */
 const getRandomExamples = async (
   querySearch: Omit<IExampleQuery, 'keyword'>,
 ): Promise<IHttpResponse<IExample[]>> => {
   try {
-    const constraints: QueryConstraint[] = []
     const currentUser = firebaseAuthService.getCurrentUser()
-
-    if (currentUser) {
-      constraints.push(where('uid', '==', currentUser.uid))
+    if (!currentUser) {
+      throw new Error('User not authenticated')
     }
 
-    // if (querySearch.itemId) {
-    //   constraints.push(where('itemId', '==', querySearch.itemId))
-    // }
+    const requestedSize = querySearch.size || 5
+    let examples: IExample[] = []
 
-    // Fetch all examples and randomize on client side
-    const examplesQuery = query(collection(db, 'examples'), ...constraints)
-    const snapshot = await getDocs(examplesQuery)
+    // Generate random starting point
+    const randomStart = Math.random()
 
-    let examples = snapshot.docs.map((doc) => ({
+    // First query: get documents >= randomStart
+    const constraints1: QueryConstraint[] = [
+      where('uid', '==', currentUser.uid),
+      where('randomIndex', '>=', randomStart),
+      limit(requestedSize),
+    ]
+
+    const query1 = query(collection(db, 'examples'), ...constraints1)
+    const snapshot1 = await getDocs(query1)
+
+    examples = snapshot1.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as IExample[]
 
-    // Fisher-Yates shuffle for better randomization
-    for (let i = examples.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[examples[i], examples[j]] = [examples[j], examples[i]]
-    }
+    // If we don't have enough, wrap around and get from the beginning
+    if (examples.length < requestedSize) {
+      const remaining = requestedSize - examples.length
+      const constraints2: QueryConstraint[] = [
+        where('uid', '==', currentUser.uid),
+        where('randomIndex', '<', randomStart),
+        limit(remaining),
+      ]
 
-    // Limit to requested size
-    const randomExamples = examples.slice(0, querySearch.size || 5)
+      const query2 = query(collection(db, 'examples'), ...constraints2)
+      const snapshot2 = await getDocs(query2)
+
+      const moreExamples = snapshot2.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as IExample[]
+
+      examples = [...examples, ...moreExamples]
+    }
 
     return {
       isSuccess: true,
       message: 'Random examples fetched successfully',
-      content: randomExamples,
+      content: examples,
       statusCode: 200,
     }
   } catch (error) {

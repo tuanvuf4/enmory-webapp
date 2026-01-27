@@ -58,53 +58,44 @@ const Home = () => {
                 </Col>
 
                 <Col xs={24} md={8}>
-                  {isLoading && !isError ? (
-                    <>
-                      <Skeleton />
-                      <Skeleton />
-                      <Skeleton />
-                      <Skeleton />
-                      <Skeleton />
-                      <Skeleton />
-                    </>
-                  ) : (
-                    <>
-                      {word?.item && word.item.origin && (
-                        <Widget title='Word of the day'>
-                          <Item reload data={word.item} />
-                        </Widget>
-                      )}
+                  {word?.item && word.item.origin && (
+                    <Widget title='Word of the day'>
+                      {isLoading && !isError ? <Skeleton /> : <Item reload data={word.item} />}
+                    </Widget>
+                  )}
 
-                      {phrase?.item && phrase.item.origin && (
-                        <Widget title='Phrase of the day'>
-                          <Item reload data={phrase.item} />
-                        </Widget>
-                      )}
+                  {phrase?.item && phrase.item.origin && (
+                    <Widget title='Phrase of the day'>
+                      {isLoading && !isError ? <Skeleton /> : <Item reload data={phrase.item} />}
+                    </Widget>
+                  )}
 
-                      {collocation?.item && collocation.item.origin && (
-                        <Widget title='Collocation of the day'>
-                          <Item reload data={collocation.item} />
-                        </Widget>
+                  {collocation?.item && collocation.item.origin && (
+                    <Widget title='Collocation of the day'>
+                      {isLoading && !isError ? (
+                        <Skeleton />
+                      ) : (
+                        <Item reload data={collocation.item} />
                       )}
+                    </Widget>
+                  )}
 
-                      {sentence?.item && sentence.item.origin && (
-                        <Widget title='Sentence of the day'>
-                          <Item reload data={sentence.item} />
-                        </Widget>
-                      )}
+                  {sentence?.item && sentence.item.origin && (
+                    <Widget title='Sentence of the day'>
+                      {isLoading && !isError ? <Skeleton /> : <Item reload data={sentence.item} />}
+                    </Widget>
+                  )}
 
-                      {idiom?.item && idiom.item.origin && (
-                        <Widget title='Idiom of the day'>
-                          <Item reload data={idiom.item} />
-                        </Widget>
-                      )}
+                  {idiom?.item && idiom.item.origin && (
+                    <Widget title='Idiom of the day'>
+                      {isLoading && !isError ? <Skeleton /> : <Item reload data={idiom.item} />}
+                    </Widget>
+                  )}
 
-                      {slang?.item && slang.item.origin && (
-                        <Widget title='Slang of the day'>
-                          <Item reload data={slang.item} />
-                        </Widget>
-                      )}
-                    </>
+                  {slang?.item && slang.item.origin && (
+                    <Widget title='Slang of the day'>
+                      {isLoading && !isError ? <Skeleton /> : <Item reload data={slang.item} />}
+                    </Widget>
                   )}
                 </Col>
               </Row>

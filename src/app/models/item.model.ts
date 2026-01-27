@@ -34,6 +34,7 @@ export interface IExample {
   created_date?: number
   last_update?: number
   note: string
+  randomIndex?: number
 }
 
 export interface IType {

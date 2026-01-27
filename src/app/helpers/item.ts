@@ -78,7 +78,7 @@ export const getArrayUniqueItem = <T>(origin: T[]) => {
 }
 
 export const isDefect = (item: IItem) => {
-  if (
+  const conditions =
     !item.meanings ||
     item.meanings.length === 0 ||
     (item.meanings &&
@@ -86,11 +86,7 @@ export const isDefect = (item: IItem) => {
       item.meanings.filter((item) => !item.translation || item.translation.trim() === '').length >
         0 &&
       item.meanings.filter((item) => !item.definition || item.definition.trim() === '').length > 0)
-  ) {
-    return true
-  } else {
-    return false
-  }
+  return conditions
 }
 
 export const toWildString = (value: string, wildcard = '_') => {

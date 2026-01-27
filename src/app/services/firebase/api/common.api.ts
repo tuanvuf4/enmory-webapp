@@ -86,7 +86,7 @@ const getRandomItemByCategory = async (catId: number): Promise<any | null> => {
     return items[randomIndex]
   } catch (error) {
     console.error('[IOTD] Error fetching random item:', error)
-    return null
+    return error
   }
 }
 
@@ -179,7 +179,6 @@ const createItemOfTheDayByCatId = async ({
       statusCode: 201,
     }
   } catch (error) {
-    console.error('[IOTD] Error creating IOTD:', error)
     return {
       isSuccess: false,
       message: `Error creating IOTD: ${error}`,
@@ -230,12 +229,10 @@ const getItemOfTheDayByCatId = async ({
       const iotdDoc = snapshot.docs[0]
       const iotdData = iotdDoc.data()
 
-      console.log(`*** iotdData *** `, iotdData)
-
       // Fetch the actual item
       // Enrich item with meaning examples
-      const itemResp = await itemApi.getItemById(iotdData.itemId)
-      const item = itemResp.isSuccess ? itemResp.content : null
+      const { isSuccess, content } = await itemApi.getItemById(iotdData.itemId)
+      const item = isSuccess ? content : null
 
       return {
         isSuccess: true,
@@ -253,7 +250,6 @@ const getItemOfTheDayByCatId = async ({
     // `generate=true` still forces cleanup of all existing IOTDs earlier.
     return await createItemOfTheDayByCatId({ catId, userId: currentUser.uid })
   } catch (error) {
-    console.error('[IOTD] Error in getItemOfTheDayByCatId:', error)
     return {
       isSuccess: false,
       message: `Error fetching/creating IOTD: ${error}`,
@@ -265,16 +261,6 @@ const getItemOfTheDayByCatId = async ({
 
 const deleteIotd = async (id: string): Promise<IHttpResponse<null>> => {
   try {
-    const currentUser = firebaseAuthService.getCurrentUser()
-    if (!currentUser) {
-      return {
-        isSuccess: false,
-        message: 'User not authenticated',
-        content: null,
-        statusCode: 401,
-      }
-    }
-
     await deleteDoc(doc(db, dbCollections.iotd, id))
 
     return {
@@ -284,7 +270,6 @@ const deleteIotd = async (id: string): Promise<IHttpResponse<null>> => {
       statusCode: 200,
     }
   } catch (error) {
-    console.error('Error deleting IOTD:', error)
     return {
       isSuccess: false,
       message: `Error deleting IOTD: ${error}`,

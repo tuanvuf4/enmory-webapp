@@ -82,7 +82,6 @@ export const useIotd = ({ catId, generate = false }: IIotdRequest, enabled = tru
           generate,
         })
 
-        console.log(`*** iotd (catId: ${catId}) *** `, iotd)
         if (isSuccess && iotd) {
           dispatch(iotdAction.setIotd(iotd as unknown as IIotd<string[]>))
         } else {

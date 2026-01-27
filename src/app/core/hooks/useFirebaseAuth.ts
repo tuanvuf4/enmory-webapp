@@ -63,7 +63,6 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
         dispatch(authAction.setGoogleAuth(result.payload.uid))
         onLoginSuccess?.(result.payload)
 
-        console.log(`*** result *** `, result)
         // Firebase authentication successful
         if (redirectAfterSuccess) {
           navigate('/')

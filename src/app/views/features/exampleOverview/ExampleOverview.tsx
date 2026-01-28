@@ -82,6 +82,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
       const { isSuccess, content } = await exampleApi.getExampleById(id)
       if (isSuccess && content) {
         openExampleModal('edit', content)
+
         hideLoading()
       }
     } catch (error) {
@@ -96,6 +97,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
         onOk: async () => {
           showLoading()
           await exampleApi.deleteExample(id)
+          openNotification({ type: 'success', message: 'Example deleted successfully' })
           hideLoading()
         },
       })
@@ -125,7 +127,8 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
     if (examples.length === 0) {
       getRandomExamples()
     }
-  }, [examples, getRandomExamples])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className={classes.exampleOverview}>

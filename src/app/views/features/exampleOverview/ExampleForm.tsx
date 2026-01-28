@@ -7,9 +7,11 @@ import { useForm, Controller } from 'react-hook-form'
 import styles from './style'
 import clsx from 'clsx'
 import { ExampleMode } from '@/models/example.model'
-import { usePrompt } from '@/helpers/hooks'
+import { useExampleModal, usePrompt } from '@/helpers/hooks'
 import { useCreateExample, useUpdateExample } from '@/core/hooks/useExamples'
 import { TextEditor } from '@/views/components'
+import { useDispatch } from '@/core/hooks'
+import { exampleAction } from '@/store/reducers/example.reducer'
 
 interface IProps {
   data?: IExample
@@ -33,6 +35,9 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   const classes = styles()
 
   const { openNotification } = usePrompt()
+  const { closeExampleModal } = useExampleModal()
+
+  const dispatch = useDispatch()
 
   const [loading, setLoading] = useState<boolean>(false)
   const [isChecked, setIsChecked] = useState<boolean>(false)
@@ -62,19 +67,26 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   })
 
   const onSubmit = async (formData: IExample) => {
-    console.log(`*** formData *** `, formData)
     setLoading(true)
     try {
       let result: IExample | null
 
       if (data?.id) {
-        // Update existing example
-        result = await updateMutation.mutateAsync({ ...formData, id: data.id })
+        result = await updateMutation.mutateAsync({
+          ...formData,
+          id: data.id,
+          note: formData.note || '',
+        })
+        dispatch(exampleAction.batchUpdate(result ? [result] : []))
         openNotification({ type: 'success', message: 'Update example successful!' })
+        closeExampleModal()
       } else {
-        // Create new example
-        result = await createMutation.mutateAsync(formData)
+        result = await createMutation.mutateAsync({
+          ...formData,
+          note: formData.note || '',
+        })
         openNotification({ type: 'success', message: 'Add example successful!' })
+        closeExampleModal()
       }
 
       setAnswer('')
@@ -246,7 +258,10 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                   style={{
                     minWidth: 120,
                   }}
-                  onClick={() => onCancel()}
+                  onClick={() => {
+                    closeExampleModal()
+                    onCancel?.()
+                  }}
                 >
                   Cancel
                 </Button>

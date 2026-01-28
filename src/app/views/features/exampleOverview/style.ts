@@ -83,7 +83,7 @@ const styles = () => {
       zIndex: 99,
     },
     autoSearchInput: {
-      flex: `1 0 200px`,
+      flex: `1 0 180px`,
       background: 'transparent !important',
 
       '& .emr-select-selector': {

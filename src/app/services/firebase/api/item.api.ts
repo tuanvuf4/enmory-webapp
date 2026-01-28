@@ -78,7 +78,7 @@ const buildQueryConstraints = (params: IItemRequestParams): QueryConstraint[] =>
     const keyword = params.keyword.toLowerCase()
 
     if (params.exact) {
-      constraints.push(where('origin', '==', keyword))
+      constraints.push(where('origin', '==', params.keyword))
       constraints.push(orderBy(orderByField, orderDirection))
     } else {
       constraints.push(orderBy('origin', 'asc'))

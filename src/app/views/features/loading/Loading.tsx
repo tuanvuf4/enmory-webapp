@@ -5,9 +5,10 @@ import classNames from 'clsx'
 import { useSelector } from '@/core/hooks'
 interface ILoadingProps {
   active?: boolean
+  inner?: boolean
 }
 
-export const Loading = ({ active = false }: ILoadingProps) => {
+export const Loading = ({ active = false, inner = false }: ILoadingProps) => {
   const classes = styles()
 
   const { loading } = useSelector((state) => state.setting)
@@ -17,7 +18,13 @@ export const Loading = ({ active = false }: ILoadingProps) => {
   if (!active && !loading) return null
 
   return (
-    <div className={classNames(classes.loading, show ? classes.active : '')}>
+    <div
+      className={classNames(
+        classes.loading,
+        inner ? classes.inner : '',
+        show ? classes.active : '',
+      )}
+    >
       <Spin spinning={show} size={'large'} />
     </div>
   )

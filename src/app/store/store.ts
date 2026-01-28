@@ -14,12 +14,18 @@ import {
   initialState as initialStudySet,
 } from './reducers/studySet.reducer'
 import { iotdReducer, IIotdState, initialState as initialIotdState } from './reducers/iotd.reducer'
+import {
+  IExampleState,
+  exampleReducer,
+  initialState as initialExampleState,
+} from './reducers/example.reducer'
 
 export interface IAppState {
   auth: IAuthState
   setting: ISettingState
   studySet: IStudySet
   iotd: IIotdState
+  example: IExampleState
 }
 
 const initialState: IAppState = {
@@ -27,6 +33,7 @@ const initialState: IAppState = {
   setting: initialSettingState,
   studySet: initialStudySet,
   iotd: initialIotdState,
+  example: initialExampleState,
 }
 
 const persistConfig: PersistConfig<IAppState> = {
@@ -58,6 +65,7 @@ const rootReducers = combineReducers({
   setting: settingReducer.reducer,
   studySet: studySetReducer.reducer,
   iotd: iotdReducer.reducer,
+  example: exampleReducer.reducer,
 })
 
 export const store = configureStore({

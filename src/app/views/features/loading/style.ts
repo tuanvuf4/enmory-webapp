@@ -17,11 +17,15 @@ const styles = () => {
       zIndex: 999999,
       backgroundColor: 'rgba(255, 255, 255, 0.25)',
     },
+    inner: {
+      position: 'relative',
+      height: 400,
+    },
     active: {
       display: 'flex',
     },
     loader: {
-      position: 'fixed',
+      position: 'absolute',
       top: 0,
       left: 0,
       width: '100%',

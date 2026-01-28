@@ -18,6 +18,7 @@ import {
   QueryConstraint,
   startAt,
   endAt,
+  orderBy,
 } from 'firebase/firestore'
 
 /**
@@ -94,9 +95,17 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
       constraints.push(where('uid', '==', currentUser.uid))
     }
 
+    const orderByField = querySearch.orderBy || 'created_date'
+    const orderDirection = querySearch.order === 'DESC' ? 'desc' : 'asc'
+
     if (querySearch.keyword) {
-      constraints.push(startAt(querySearch.keyword))
-      constraints.push(endAt(querySearch.keyword))
+      const keyword = querySearch.keyword.toLowerCase()
+
+      constraints.push(orderBy('origin', 'asc'))
+      constraints.push(startAt(keyword))
+      constraints.push(endAt(keyword + '\uf8ff'))
+    } else {
+      constraints.push(orderBy(orderByField, orderDirection))
     }
 
     constraints.push(limit(querySearch.size || 10))
@@ -108,15 +117,6 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
       id: doc.id,
       ...doc.data(),
     })) as IExample[]
-
-    // Filter by keyword if provided
-    if (querySearch.keyword) {
-      examples = examples.filter(
-        (example) =>
-          example.origin.toLowerCase().includes(querySearch.keyword.toLowerCase()) ||
-          example.translation.toLowerCase().includes(querySearch.keyword.toLowerCase()),
-      )
-    }
 
     return {
       isSuccess: true,
@@ -141,47 +141,34 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
  * Note: This function expects documents to have a 'randomIndex' field (0-1)
  * for efficient random sampling. Add this field when creating examples.
  */
-const getRandomExamples = async (
-  querySearch: Omit<IExampleQuery, 'keyword'>,
-): Promise<IHttpResponse<IExample[]>> => {
+const getRandomExamples = async ({
+  page = 0,
+  size = 10,
+}: Omit<IExampleQuery, 'keyword'>): Promise<IHttpResponse<IExample[]>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) {
       throw new Error('User not authenticated')
     }
 
-    const size = querySearch.size || 10
+    const randomStart = Math.random()
 
-    const getRandomSection = async (size: number, uid = currentUser.uid) => {
-      let examples: IExample[] = []
+    // First query: get documents >= randomStart
+    const constraints: QueryConstraint[] = [
+      where('uid', '==', currentUser.uid),
+      where('randomIndex', '>=', randomStart),
+      limit(size),
+    ]
 
-      // Generate random starting point
-      const randomStart = Math.random()
+    const queryRandom = query(collection(db, dbCollections.examples), ...constraints)
+    const snapshot = await getDocs(queryRandom)
 
-      // First query: get documents >= randomStart
-      const constraints: QueryConstraint[] = [
-        where('uid', '==', uid),
-        where('randomIndex', '>=', randomStart),
-        limit(size),
-      ]
+    const examples = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as IExample[]
 
-      const queryRandom = query(collection(db, dbCollections.examples), ...constraints)
-      const snapshot = await getDocs(queryRandom)
-
-      examples = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as IExample[]
-
-      return examples
-    }
-
-    let examples = await getRandomSection(querySearch.size || 10)
-
-    // If we don't have enough, wrap around and get from the beginning
-    if (examples.length < size) {
-      examples = [...examples, ...(await getRandomSection(size - examples.length))]
-    }
+    console.log(`*** examples *** `, examples)
 
     return {
       isSuccess: true,

@@ -89,12 +89,11 @@ const styles = () => {
     },
     title: {
       display: 'flex',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       justifyContent: 'space-between',
       wordBreak: 'break-word',
       minHeight: token.controlHeight,
       gap: token.size / 2,
-      marginBottom: token.size / 2,
     },
     btnDelete: {
       flex: '0 0 38px',

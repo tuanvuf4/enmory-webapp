@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { RouteObject, useRoutes } from 'react-router-dom'
 import { useSelector } from './core/hooks/redux'
-import { NotFound } from './views/pages/notFound/NotFound'
 
 export function lazyLoadRoutes(componentName: string) {
   // Capitalize first letter for PascalCase file names
@@ -42,7 +41,7 @@ export const RouterElement = () => {
       },
       {
         path: '*',
-        element: <NotFound />,
+        element: lazyLoadRoutes('notFound'),
       },
     ],
     [],

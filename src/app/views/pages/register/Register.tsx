@@ -1,6 +1,6 @@
 import classNames from 'clsx'
 import globalStyle from '@/style/appStyle'
-import { RegisterForm } from '../registerForm/RegisterForm'
+import { RegisterForm } from '@/views/features/registerForm/RegisterForm'
 
 const Register = () => {
   const globalClasses = globalStyle()

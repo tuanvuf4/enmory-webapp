@@ -6,7 +6,7 @@ import { EViewMode } from '@/models/app.model'
 import { ECategory, IItem } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { Level, Tags } from '@/views/components'
-import { MoreOutlined, ReloadOutlined } from '@ant-design/icons'
+import { MoreOutlined, ReloadOutlined, HeartFilled } from '@ant-design/icons'
 import { Button, Dropdown, Flex, MenuProps, Skeleton, theme } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import clsx from 'clsx'
@@ -20,6 +20,7 @@ import styles from './style'
 import { useItemForm } from '@/helpers/hooks/useItemForm'
 import { actionAsyncApp } from '@/store/asyncActions'
 import { useQueryClient } from '@tanstack/react-query'
+import { styleConfig } from '@/style/appStyle'
 
 interface IProps {
   action?: boolean
@@ -58,7 +59,7 @@ export const Item: React.FC<IProps> = ({
   const navigate = useNavigate()
   const dispatch = useDispatch()
 
-  const { openItemForm, openViewItemForm } = useItemForm()
+  const { openItemForm } = useItemForm()
 
   const { mutate: mutateDeleteItem } = useDeleteItem()
 
@@ -154,7 +155,7 @@ export const Item: React.FC<IProps> = ({
   const onView = async (id: string) => {
     const { isSuccess, content } = await itemApi.getItemById(id)
     if (isSuccess && content) {
-      openViewItemForm(content)
+      openItemForm('view', content)
     }
   }
 
@@ -248,7 +249,7 @@ export const Item: React.FC<IProps> = ({
                   {!isDefect(data) && <span>{data.origin}</span>}
                 </h2>
 
-                <Flex align={'center'} gap={token.size / 4}>
+                <Flex align={'center'} gap={token.size / 8}>
                   {reload && (
                     <Button
                       size='small'
@@ -260,8 +261,16 @@ export const Item: React.FC<IProps> = ({
                     />
                   )}
 
+                  {data.favorite && (
+                    <Button
+                      size='small'
+                      type={'text'}
+                      icon={<HeartFilled style={{ color: styleConfig.color.red[4] }} />}
+                    />
+                  )}
+
                   {data.archive && (
-                    <Button className={classes.btnInactive} size='small' type={'text'}>
+                    <Button className={classes.archive} size='small' variant={'text'} type={'text'}>
                       A
                     </Button>
                   )}
@@ -274,7 +283,7 @@ export const Item: React.FC<IProps> = ({
                       trigger={['click']}
                     >
                       <Button
-                        size='middle'
+                        size='small'
                         type='text'
                         icon={<MoreOutlined />}
                         className={clsx({

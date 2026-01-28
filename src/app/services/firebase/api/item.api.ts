@@ -59,12 +59,12 @@ const buildQueryConstraints = (params: IItemRequestParams): QueryConstraint[] =>
   }
 
   // Filter by archive status
-  // Only add archive filter if explicitly set to true or false (not empty string or undefined)
-  if (params.archive === true || params.archive === false) {
+  if (params.archive) {
     constraints.push(where('archive', '==', params.archive))
   }
 
-  if (params.favorite === true || params.favorite === false) {
+  // Filter by favorite status
+  if (params.favorite) {
     constraints.push(where('favorite', '==', params.favorite))
   }
 
@@ -103,16 +103,6 @@ const buildQueryConstraintsForAutocomplete = (params: IItemRequestParams): Query
   // Filter by current user
   if (currentUser) {
     constraints.push(where('uid', '==', currentUser.uid))
-  }
-
-  // Filter by category (0 means ALL, so skip filter)
-  if (params.cat) {
-    constraints.push(where('catId', '==', params.cat))
-  }
-
-  // Filter by archive status - only if explicitly set
-  if (params.archive === true || params.archive === false) {
-    constraints.push(where('archive', '==', params.archive))
   }
 
   // Filter by deleted status

@@ -1,8 +1,10 @@
 import { IFormSearchItem } from '@/models/index'
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 export const useItemSearchParams = () => {
+  const navigate = useNavigate()
+
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [urlParams, setParams] = useState<IFormSearchItem>()
@@ -23,8 +25,8 @@ export const useItemSearchParams = () => {
     })
   }, [searchParams])
 
-  const setUrlParams = (data: Partial<IFormSearchItem>, resetPage: boolean = true) => {
-    const params = new URLSearchParams(searchParams)
+  const setUrlParams = (data: Partial<IFormSearchItem>, resetPage = true) => {
+    const params = new URLSearchParams(data as Record<string, string>)
 
     // Reset page to 0 when filters change (unless explicitly disabled)
     if (resetPage) {
@@ -38,8 +40,26 @@ export const useItemSearchParams = () => {
         params.delete(key)
       }
     })
+
     setSearchParams(params)
   }
 
-  return { urlParams, setUrlParams }
+  const navigateWithParams = (data: Partial<IFormSearchItem>, baseUrl = '/') => {
+    const params = new URLSearchParams()
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.set(key, String(value))
+      } else {
+        params.delete(key)
+      }
+    })
+
+    // Navigate to baseUrl with search params
+    const searchString = params.toString()
+    const fullPath = searchString ? `/${baseUrl}?${searchString}` : baseUrl
+    navigate(fullPath)
+  }
+
+  return { urlParams, setUrlParams, navigateWithParams }
 }

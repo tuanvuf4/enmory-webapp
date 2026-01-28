@@ -2,15 +2,20 @@
 import { Spin } from 'antd'
 import styles from './style'
 import classNames from 'clsx'
-import { useState } from 'react'
+import { useSelector } from '@/core/hooks'
+interface ILoadingProps {
+  active?: boolean
+}
 
-export const Loading = () => {
+export const Loading = ({ active = false }: ILoadingProps) => {
   const classes = styles()
 
-  const [active] = useState(true)
+  const { loading } = useSelector((state) => state.setting)
+
+  if (!active || !loading) return null
 
   return (
-    <div className={classNames(classes.loading, active ? classes.active : '')}>
+    <div className={classNames(classes.loading, active || loading ? classes.active : '')}>
       <Spin spinning={active} size={'large'} />
     </div>
   )

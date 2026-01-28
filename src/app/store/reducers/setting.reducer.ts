@@ -6,6 +6,7 @@ export interface ISettingState {
   isSidebarOpened: boolean
   isShowSearchFormItem: boolean
   drawer: boolean
+  loading: boolean
   viewMode: EViewMode
   viewPort: EViewPort
   categories: IOption<string, ECategory>[]
@@ -16,6 +17,7 @@ export const initialState: ISettingState = {
   isSidebarOpened: false,
   isShowSearchFormItem: true,
   drawer: true,
+  loading: false,
   viewMode: EViewMode.GRID,
   viewPort: EViewPort.XS,
   categories: [],
@@ -26,6 +28,12 @@ export const settingReducer = createSlice({
   name: 'setting',
   initialState,
   reducers: {
+    showLoading(state: ISettingState) {
+      state.loading = true
+    },
+    hideLoading(state: ISettingState) {
+      state.loading = false
+    },
     toggleSidebar(state: ISettingState) {
       state.isSidebarOpened = !state.isSidebarOpened
     },

@@ -83,7 +83,7 @@ export const Library: React.FC = () => {
       )}
 
       <div className={globalClasses.container}>
-        {isLoading && <Loading />}
+        {isLoading && <Loading active={isLoading} />}
 
         {!isLoading && viewMode === EViewMode.GRID && listItem.length > 0 && (
           <div className={classes.items}>

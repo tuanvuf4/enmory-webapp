@@ -28,7 +28,7 @@ export type NotificationType = 'success' | 'info' | 'warning' | 'error'
 
 export type AppOrderQuery = 'ASC' | 'DESC'
 
-export type AppOrderByQuery = 'last_update' | 'created_date'
+export type AppOrderByQuery = 'last_update' | 'created_date' | 'level'
 
 export const orderOptions = [
   {
@@ -42,6 +42,10 @@ export const orderOptions = [
 ]
 
 export const orderByOptions = [
+  {
+    label: 'Level',
+    value: 'level',
+  },
   {
     label: 'Created Date',
     value: 'created_date',

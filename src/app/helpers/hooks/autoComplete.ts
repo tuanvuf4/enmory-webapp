@@ -5,14 +5,9 @@ import { itemApi, IItemRequestParams } from '@/services/firebase/api/item.api'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import _ from 'lodash'
 import { useState, useEffect } from 'react'
+import { BaseOptionType } from 'antd/es/select'
 
 type searchType = 'item' | 'example'
-
-interface Options {
-  id?: string | number
-  label: string
-  value: string
-}
 
 export const useAutoComplete = (
   keyword: string,
@@ -21,7 +16,7 @@ export const useAutoComplete = (
   filters: Partial<IItemRequestParams> = {},
   timeout = setting.debounceTime,
 ) => {
-  const [options, setOptions] = useState<Options[]>([])
+  const [options, setOptions] = useState<BaseOptionType[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const filterKey = JSON.stringify(filters)
 
@@ -47,6 +42,7 @@ export const useAutoComplete = (
               if (response.content && response.content.length > 0) {
                 setOptions(
                   response.content.map((item) => ({
+                    id: item.id,
                     label: item.origin,
                     value: item.origin,
                   })),
@@ -67,11 +63,11 @@ export const useAutoComplete = (
                 return
               }
               setOptions(
-                response.content.map((meaning) => {
+                response.content.map((example) => {
                   return {
-                    id: meaning.id,
-                    value: `${meaning.id}`,
-                    label: meaning.origin,
+                    id: `${example.id}`,
+                    value: `${example.id}`,
+                    label: example.origin,
                   }
                 }),
               )

@@ -19,8 +19,7 @@ const styles = () => {
     disableMeaning: {
       border: `1px solid ${styleConfig.color.red[3]} !important`,
     },
-    btnInactive: {
-      background: 'transparent !important',
+    archive: {
       color: `${token.colorTextSecondary} !important`,
       borderColor: `${token.colorTextSecondary} !important`,
       borderRadius: `${token.size / 4}px !important`,
@@ -160,7 +159,6 @@ const styles = () => {
       margin: 0,
       padding: [token.size / 4, 0],
       fontFamily: styleConfig.fontFamily.lato,
-      cursor: 'pointer',
 
       '& span': {
         display: 'block',

@@ -12,6 +12,7 @@ import { LoadingBar } from '../loading/LoadingBar'
 import Sider from 'antd/es/layout/Sider'
 import { Content } from 'antd/es/layout/layout'
 import { EViewPort } from '@/models/app.model'
+import { Loading } from '../loading'
 
 export const AppLayout: React.FC<PropsWithChildren> = (props) => {
   const classes = styles()
@@ -82,7 +83,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
             onClose={() => dispatch(settingAction.toggleSidebar())}
             open={isSidebarOpened}
             closable={false}
-            destroyOnClose={true}
+            destroyOnHidden={true}
           >
             <SideBarMain />
           </Drawer>
@@ -104,9 +105,9 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
         </Layout>
       </Layout>
 
-      {/* {active && <LoadingBar />} */}
-
       <LoadingBar />
+
+      {<Loading />}
 
       {isAuth && (
         <>

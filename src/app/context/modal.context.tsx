@@ -69,7 +69,7 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
           onCancel={handleCancel}
           confirmLoading={loading}
           closeIcon={<CloseSquareOutlined />}
-          destroyOnClose
+          destroyOnHidden
           getContainer={`.${styleConfig.prefixClassCss}-layout`}
           {...modalConfig}
         >

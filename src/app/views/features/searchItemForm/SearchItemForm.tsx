@@ -8,19 +8,22 @@ import {
 } from '@ant-design/icons'
 import { useItemSearchParams, useSelector } from '@/core/hooks'
 import { useAutoComplete } from '@/helpers/hooks'
-import { AppOrderByQuery, orderByOptions, AppOrderQuery, orderOptions } from '@/models/app.model'
+import { orderByOptions, orderOptions } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
-import { EType, ECategory } from '@/models/item.model'
+import { ECategory } from '@/models/item.model'
 import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select } from 'antd'
 import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
 import { initSearchFormItem } from '@/constant/index'
 import { useItemForm } from '@/helpers/hooks/useItemForm'
 import { initItem } from '../modals/itemModal'
+import { BaseOptionType } from 'antd/es/select'
+import { itemApi } from '@/services/firebase'
+import { settingAction } from '@/store/reducers/setting.reducer'
 
 interface ISearchFormComp {
   filter?: boolean
@@ -37,10 +40,9 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   const classes = styles()
   const globalClasses = globalStyle()
 
-  const navigate = useNavigate()
   const location = useLocation()
 
-  const { urlParams, setUrlParams } = useItemSearchParams()
+  const { urlParams, setUrlParams, navigateWithParams } = useItemSearchParams()
 
   const { openItemForm } = useItemForm()
 
@@ -57,41 +59,30 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
     cat: cat === ECategory.ALL ? 0 : Number(cat),
   })
 
-  const onSelect = (value: string) => {
-    reset({ ...initSearchFormItem, keyword: value })
+  const onSelect = async (value: string, option: BaseOptionType) => {
+    if (location.pathname.includes('library')) {
+      setUrlParams({ ...urlParams, keyword: value }, true)
+    } else {
+      try {
+        settingAction.showLoading()
 
-    // Update URL params
-    setUrlParams({ keyword: value, archive: false })
+        const { isSuccess, content } = await itemApi.getItemById(option.id)
+        if (isSuccess && content) {
+          openItemForm('view', content)
+          return
+        }
+        settingAction.hideLoading()
+      } catch (error) {
+        settingAction.hideLoading()
+      }
+    }
   }
 
   const onSubmit = (data: IFormSearchItem) => {
-    // Update URL params instead of Redux (reset page to 0)
+    location.pathname.includes('library')
+      ? setUrlParams(data, true)
+      : navigateWithParams(data, 'library')
 
-    if (location.pathname.includes('library')) {
-      setUrlParams(data, true)
-    } else {
-      // Build URL params with page reset to 0
-      const urlData = { ...data, page: 0 }
-      navigate(
-        '/library?' +
-          new URLSearchParams(
-            Object.entries(urlData).reduce(
-              (acc, [key, value]) => {
-                if (
-                  value !== undefined &&
-                  value !== '' &&
-                  value !== ECategory.ALL &&
-                  value !== EType.ALL
-                ) {
-                  acc[key] = String(value)
-                }
-                return acc
-              },
-              {} as Record<string, string>,
-            ),
-          ).toString(),
-      )
-    }
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -145,7 +136,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   }
                   className={clsx(classes.autoSearchInput, globalClasses.fulWidth)}
                   options={options}
-                  onSelect={onSelect}
+                  onSelect={async (value, option) => await onSelect(value, option)}
                   onClear={() => {
                     onChange('')
                     setUrlParams({ keyword: '' })
@@ -160,7 +151,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
         {filter && (
           <Dropdown
             trigger={['click']}
-            dropdownRender={() => (
+            popupRender={() => (
               <div className={classes.filterWrapper}>
                 <Controller
                   control={control}
@@ -169,12 +160,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                     <Checkbox
                       className={globalClasses.fulWidth}
                       checked={value}
-                      onChange={(e) => {
-                        onChange(e.target.checked)
-                        setUrlParams({
-                          archive: e.target.checked,
-                        })
-                      }}
+                      onChange={(e) => onChange(e.target.checked)}
                     >
                       Archive
                     </Checkbox>
@@ -188,12 +174,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                     <Checkbox
                       className={globalClasses.fulWidth}
                       checked={value}
-                      onChange={(e) => {
-                        onChange(e.target.checked)
-                        setUrlParams({
-                          favorite: e.target.checked,
-                        })
-                      }}
+                      onChange={(e) => onChange(e.target.checked)}
                     >
                       Favorite
                     </Checkbox>
@@ -209,10 +190,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                     <Select
                       className={globalClasses.fulWidth}
                       value={value}
-                      onChange={(e) => {
-                        onChange(e)
-                        setUrlParams({ cat: e })
-                      }}
+                      onChange={(e) => onChange(e)}
                       options={categories}
                       defaultValue={ECategory.ALL}
                       placeholder={'Category'}
@@ -229,17 +207,8 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                     <Select
                       className={globalClasses.fulWidth}
                       value={value}
-                      onChange={(e) => {
-                        onChange(e)
-                        setUrlParams({ orderBy: e as AppOrderByQuery })
-                      }}
-                      options={[
-                        {
-                          label: 'Level',
-                          value: 'level',
-                        },
-                        ...orderByOptions,
-                      ]}
+                      onChange={(e) => onChange(e)}
+                      options={orderByOptions}
                       defaultValue={'created_date'}
                     />
                   )}
@@ -254,10 +223,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                     <Select
                       className={globalClasses.fulWidth}
                       value={value}
-                      onChange={(e) => {
-                        onChange(e)
-                        setUrlParams({ order: e as AppOrderQuery })
-                      }}
+                      onChange={(e) => onChange(e)}
                       options={orderOptions}
                       defaultValue={'DESC'}
                     />
@@ -298,18 +264,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            onClick={() => {
-              const resetValues = {
-                keyword: '',
-                cat: ECategory.ALL,
-                type: EType.ALL,
-                archive: false,
-                order: 'DESC' as AppOrderQuery,
-                orderBy: 'created_date' as AppOrderByQuery,
-              }
-              reset(resetValues)
-              setUrlParams(resetValues)
-            }}
+            onClick={() => setUrlParams(initSearchFormItem)}
           >
             <SyncOutlined />
           </Button>

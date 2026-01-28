@@ -17,17 +17,17 @@ export const useItemForm = () => {
     )
   }
 
-  const openViewItemForm = (data: IItem) => {
-    openModal({
-      title: null,
-      width: 800,
-      footer: null,
-      closable: false,
-      content: <Item data={data} active={false} />,
-    })
-  }
+  const openItemForm = (mode: 'view' | 'edit' | 'add' = 'add', data: IItem = initItem) => {
+    if (mode === 'view') {
+      openModal({
+        title: null,
+        width: 800,
+        footer: null,
+        closable: false,
+        content: <Item data={data} active={false} />,
+      })
+    }
 
-  const openItemForm = (mode: 'edit' | 'add' = 'add', data: IItem = initItem) => {
     if (mode === 'add') {
       openModal({
         title: 'Add Item',
@@ -49,5 +49,5 @@ export const useItemForm = () => {
     }
   }
 
-  return { openItemForm, openViewItemForm }
+  return { openItemForm }
 }

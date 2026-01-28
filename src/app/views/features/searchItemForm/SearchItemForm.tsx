@@ -6,8 +6,8 @@ import {
   SearchOutlined,
   Loading3QuartersOutlined,
 } from '@ant-design/icons'
-import { useItemSearchParams, useSelector } from '@/core/hooks'
-import { useAutoComplete } from '@/helpers/hooks'
+import { useDispatch, useItemSearchParams, useSelector } from '@/core/hooks'
+import { useAutoComplete, useItemModal } from '@/helpers/hooks'
 import { orderByOptions, orderOptions } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { ECategory } from '@/models/item.model'
@@ -19,7 +19,6 @@ import styles from './style'
 import clsx from 'clsx'
 import { NoResult } from '@/views/components'
 import { initSearchFormItem } from '@/constant/index'
-import { useItemForm } from '@/helpers/hooks/useItemForm'
 import { initItem } from '../modals/itemModal'
 import { BaseOptionType } from 'antd/es/select'
 import { itemApi } from '@/services/firebase'
@@ -44,9 +43,11 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
 
   const { urlParams, setUrlParams, navigateWithParams } = useItemSearchParams()
 
-  const { openItemForm } = useItemForm()
+  const { openItemModal } = useItemModal()
 
   const { categories } = useSelector((state) => state.setting)
+
+  const dispatch = useDispatch()
 
   const { control, handleSubmit, reset, watch, getValues } = useForm<IFormSearchItem>({
     defaultValues: urlParams || initSearchFormItem,
@@ -64,16 +65,16 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
       setUrlParams({ ...urlParams, keyword: value }, true)
     } else {
       try {
-        settingAction.showLoading()
+        dispatch(settingAction.showLoading())
 
         const { isSuccess, content } = await itemApi.getItemById(option.id)
         if (isSuccess && content) {
-          openItemForm('view', content)
+          openItemModal('view', content)
           return
         }
-        settingAction.hideLoading()
+        dispatch(settingAction.hideLoading())
       } catch (error) {
-        settingAction.hideLoading()
+        dispatch(settingAction.hideLoading())
       }
     }
   }
@@ -104,7 +105,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   notFoundContent={
                     <NoResult
                       onAdd={() => {
-                        openItemForm('add', {
+                        openItemModal('add', {
                           ...initItem,
                           origin: getValues('keyword'),
                         })

@@ -4,8 +4,8 @@ import { Item } from '@/views/features'
 import { initItem, ItemForm } from '@/views/features/modals/itemModal'
 import { FormProvider, useForm } from 'react-hook-form'
 
-export const useItemForm = () => {
-  const { openModal } = useModal()
+export const useItemModal = () => {
+  const { openModal, closeModal } = useModal()
 
   const ItemFormContext = ({ data, mode }: { data: IItem; mode: 'edit' | 'add' }) => {
     const methods = useForm<IItem>({ defaultValues: data })
@@ -17,7 +17,7 @@ export const useItemForm = () => {
     )
   }
 
-  const openItemForm = (mode: 'view' | 'edit' | 'add' = 'add', data: IItem = initItem) => {
+  const openItemModal = (mode: 'view' | 'edit' | 'add', data: IItem = initItem) => {
     if (mode === 'view') {
       openModal({
         title: null,
@@ -49,5 +49,5 @@ export const useItemForm = () => {
     }
   }
 
-  return { openItemForm }
+  return { openItemModal, closeItemModal: closeModal }
 }

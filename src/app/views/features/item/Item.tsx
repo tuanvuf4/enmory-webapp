@@ -1,6 +1,6 @@
 import { setting } from '@/config/appConfig'
 import { itemKeys, useDeleteItem, useDispatch, useSelector } from '@/core/hooks'
-import { usePrompt } from '@/helpers/hooks'
+import { useItemModal, usePrompt } from '@/helpers/hooks'
 import { getCategory, isDefect } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
 import { ECategory, IItem } from '@/models/item.model'
@@ -17,7 +17,6 @@ import { Reference } from '../references/References'
 import { getActionMenuItems } from './ActionMenuItem'
 import { MeaningItem } from './MeaningItem'
 import styles from './style'
-import { useItemForm } from '@/helpers/hooks/useItemForm'
 import { actionAsyncApp } from '@/store/asyncActions'
 import { useQueryClient } from '@tanstack/react-query'
 import { styleConfig } from '@/style/appStyle'
@@ -59,7 +58,7 @@ export const Item: React.FC<IProps> = ({
   const navigate = useNavigate()
   const dispatch = useDispatch()
 
-  const { openItemForm } = useItemForm()
+  const { openItemModal } = useItemModal()
 
   const { mutate: mutateDeleteItem } = useDeleteItem()
 
@@ -128,7 +127,7 @@ export const Item: React.FC<IProps> = ({
   const onEdit = async (id: string) => {
     try {
       const { content } = await itemApi.getItemById(id)
-      openItemForm('edit', content as IItem)
+      openItemModal('edit', content as IItem)
       onEditSuccess?.()
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
@@ -155,7 +154,7 @@ export const Item: React.FC<IProps> = ({
   const onView = async (id: string) => {
     const { isSuccess, content } = await itemApi.getItemById(id)
     if (isSuccess && content) {
-      openItemForm('view', content)
+      openItemModal('view', content)
     }
   }
 

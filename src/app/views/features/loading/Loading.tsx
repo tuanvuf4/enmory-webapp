@@ -12,11 +12,13 @@ export const Loading = ({ active = false }: ILoadingProps) => {
 
   const { loading } = useSelector((state) => state.setting)
 
-  if (!active || !loading) return null
+  const show = active || loading
+
+  if (!active && !loading) return null
 
   return (
-    <div className={classNames(classes.loading, active || loading ? classes.active : '')}>
-      <Spin spinning={active} size={'large'} />
+    <div className={classNames(classes.loading, show ? classes.active : '')}>
+      <Spin spinning={show} size={'large'} />
     </div>
   )
 }

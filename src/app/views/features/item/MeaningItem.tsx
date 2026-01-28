@@ -15,7 +15,7 @@ interface IMeaningProps {
   active?: boolean
 }
 
-const Pronunciation = ({ catId, meaning }: { catId: ECategory; meaning: IMeaning<string[]> }) => {
+const Pronunciation = ({ catId, meaning }: IMeaningProps) => {
   const classes = styles()
 
   if (catId === ECategory.WORD && (meaning.pronunciation.us || meaning.pronunciation.uk)) {
@@ -56,7 +56,7 @@ const Pronunciation = ({ catId, meaning }: { catId: ECategory; meaning: IMeaning
   return null
 }
 
-export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning }) => {
+export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning }) => {
   const classes = styles()
 
   const navigate = useNavigate()
@@ -174,11 +174,21 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning }) => {
             )}
 
             {meaning.synonyms.length > 0 && (
-              <Tags active label={'Synonyms'} tags={meaning.synonyms} onSearch={onSearch} />
+              <Tags
+                active={active}
+                label={'Synonyms'}
+                tags={meaning.synonyms}
+                onSearch={onSearch}
+              />
             )}
 
             {meaning.antonyms.length > 0 && (
-              <Tags active label={'Antonyms'} tags={meaning.antonyms} onSearch={onSearch} />
+              <Tags
+                active={active}
+                label={'Antonyms'}
+                tags={meaning.antonyms}
+                onSearch={onSearch}
+              />
             )}
 
             {meaning.examples.length > 0 && (

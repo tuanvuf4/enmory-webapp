@@ -25,7 +25,11 @@ export const Toolbar = ({ formSearch = <SearchItemForm />, pagination }: IProps)
         size={[token.size, token.size]}
         className={globalClasses.fulWidth}
       >
-        <Row justify={isShowSearchFormItem ? 'space-between' : 'end'} align={'top'}>
+        <Row
+          justify={isShowSearchFormItem ? 'space-between' : 'end'}
+          align={'top'}
+          gutter={[0, token.size / 2]}
+        >
           {isShowSearchFormItem && (
             <Col
               xs={24}

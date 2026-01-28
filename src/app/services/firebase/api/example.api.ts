@@ -99,7 +99,7 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
     const orderDirection = querySearch.order === 'DESC' ? 'desc' : 'asc'
 
     if (querySearch.keyword) {
-      const keyword = querySearch.keyword.toLowerCase()
+      const keyword = querySearch.keyword.trim()
 
       constraints.push(orderBy('origin', 'asc'))
       constraints.push(startAt(keyword))
@@ -122,12 +122,12 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
       isSuccess: true,
       message: 'Examples fetched successfully',
       content: examples,
-      paging: {
-        page: querySearch.page || 1,
-        size: querySearch.size || 10,
-        total: examples.length,
-        totalPage: Math.ceil(examples.length / (querySearch.size || 10)),
-      },
+      // paging: {
+      //   page: querySearch.page || 1,
+      //   size: querySearch.size || 10,
+      //   total: examples.length,
+      //   totalPage: Math.ceil(examples.length / (querySearch.size || 10)),
+      // },
       statusCode: 200,
     }
   } catch (error) {
@@ -141,10 +141,7 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
  * Note: This function expects documents to have a 'randomIndex' field (0-1)
  * for efficient random sampling. Add this field when creating examples.
  */
-const getRandomExamples = async ({
-  page = 0,
-  size = 10,
-}: Omit<IExampleQuery, 'keyword'>): Promise<IHttpResponse<IExample[]>> => {
+const getRandomExamples = async (size: number): Promise<IHttpResponse<IExample[]>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) {

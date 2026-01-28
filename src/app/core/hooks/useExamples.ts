@@ -44,7 +44,7 @@ export const useRandomExamples = (params: Omit<IExampleQuery, 'keyword'>, enable
   return useQuery({
     queryKey: exampleKeys.randomByItem(),
     queryFn: async () => {
-      const response = await exampleApi.getRandomExamples(params)
+      const response = await exampleApi.getRandomExamples(params.page)
       return response.content
     },
     enabled,

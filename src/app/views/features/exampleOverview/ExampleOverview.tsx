@@ -13,6 +13,7 @@ import { ExampleItem } from '../exampleItem'
 import { Loading } from '../loading'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { exampleAction } from '@/store/reducers/example.reducer'
+import { IExample } from '@/models/item.model'
 
 interface IProps {
   title?: string
@@ -28,13 +29,14 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
   const exClasses = exStyles()
   const globalClasses = globalStyle()
 
+  const [selected, setSelected] = useState<IExample>()
+  const [loading, setLoading] = useState<boolean>(false)
+
   const dispatch = useDispatch()
 
   const { list: examples } = useSelector((state) => state.example)
 
   const { openNotification } = usePrompt()
-
-  const [loading, setLoading] = useState<boolean>(false)
 
   const { control, setValue, handleSubmit, watch } = useForm<IExampleForm>({
     defaultValues: {
@@ -46,13 +48,11 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
 
   const { options } = useAutoComplete(keyword, 'example')
 
-  console.log(`*** options *** `, options)
-
   const onSelect = (option: any) => {
-    exampleApi.getExampleById(option.id).then(({ content }) => {
-      setValue('query', '')
-      if (content) {
-        dispatch(exampleAction.update([content]))
+    exampleApi.getExampleById(option.id).then(({ isSuccess, content }) => {
+      if (isSuccess && content) {
+        setValue('query', '')
+        setSelected(content)
       }
     })
   }
@@ -60,10 +60,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
   const getRandomExamples = useCallback(async () => {
     try {
       setLoading(true)
-      const { isSuccess, content } = await exampleApi.getRandomExamples({
-        page: 0,
-        size: 10,
-      })
+      const { isSuccess, content } = await exampleApi.getRandomExamples(10)
       if (isSuccess) {
         dispatch(exampleAction.update(content || []))
       }
@@ -173,6 +170,20 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
       </form>
 
       {loading && <Loading active={loading} inner={true} />}
+
+      {selected && selected.origin && (
+        <div className={clsx(exClasses.examples, classes.exampleSelectedEx)}>
+          <ul>
+            <li className={clsx(exClasses.exampleItem)} style={{ paddingLeft: 8 }}>
+              <ExampleItem
+                data={selected}
+                onEdit={() => onEdit(selected.id || -1)}
+                onDelete={() => onDelete(selected.id || -1)}
+              />
+            </li>
+          </ul>
+        </div>
+      )}
 
       {!loading && examples?.length > 0 && (
         <div className={clsx(exClasses.examples)}>

@@ -99,10 +99,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   const getRandomExamples = useCallback(async () => {
     setLoading(true)
 
-    const { content } = await exampleApi.getRandomExamples({
-      page: 0,
-      size: 1,
-    })
+    const { content } = await exampleApi.getRandomExamples(10)
     reset(content ? { ...content[0] } : { ...initValues })
     setLoading(false)
   }, [])
@@ -222,27 +219,6 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                       onChange(content)
                     }}
                   />
-
-                  // <TextArea
-                  //   value={value}
-                  //   autoSize
-                  //   placeholder='Translation'
-                  //   className={classes.autoSearchInput}
-                  //   onChange={(text) => onChange(text.target.value)}
-                  //   allowClear={{
-                  //     clearIcon: (
-                  //       <CloseOutlined
-                  //         style={{
-                  //           background: token.colorWhite,
-                  //           padding: token.size / 8,
-                  //           borderRadius: '50%',
-                  //           color: token.colorBgLayout,
-                  //           fontSize: 10,
-                  //         }}
-                  //       />
-                  //     ),
-                  //   }}
-                  // />
                 )
               }}
             />
@@ -266,26 +242,6 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                         onChange(content)
                       }}
                     />
-                    // <TextArea
-                    //   value={value}
-                    //   autoSize
-                    //   placeholder='Note'
-                    //   className={classes.autoSearchInput}
-                    //   onChange={(text) => onChange(text.target.value)}
-                    //   allowClear={{
-                    //     clearIcon: (
-                    //       <CloseOutlined
-                    //         style={{
-                    //           background: token.colorWhite,
-                    //           padding: token.size / 8,
-                    //           borderRadius: '50%',
-                    //           color: token.colorBgLayout,
-                    //           fontSize: 10,
-                    //         }}
-                    //       />
-                    //     ),
-                    //   }}
-                    // />
                   )
                 }}
               />
@@ -298,34 +254,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
             <Col xs={24}>Your Translation:</Col>
 
             <Col xs={24}>
-              <TextEditor
-                content={answer}
-                onChange={(content: any) => {
-                  // setValue('translation', content ?? '')
-                  setAnswer(content)
-                }}
-              />
-
-              {/* <TextArea
-                value={answer}
-                autoSize
-                placeholder='Text here...'
-                className={classes.autoSearchInput}
-                onChange={(text) => setAnswer(text.target.value)}
-                allowClear={{
-                  clearIcon: (
-                    <CloseOutlined
-                      style={{
-                        background: token.colorWhite,
-                        padding: token.size / 8,
-                        borderRadius: '50%',
-                        color: token.colorBgLayout,
-                        fontSize: 10,
-                      }}
-                    />
-                  ),
-                }}
-              /> */}
+              <TextEditor content={answer} onChange={(content: any) => setAnswer(content)} />
             </Col>
           </Row>
         )}

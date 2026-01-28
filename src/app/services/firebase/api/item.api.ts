@@ -78,10 +78,10 @@ const buildQueryConstraints = (params: IItemRequestParams): QueryConstraint[] =>
     const keyword = params.keyword.toLowerCase()
 
     if (params.exact) {
-      constraints.push(where('origin', '==', params.keyword))
+      constraints.push(where('origin_lowercase', '==', params.keyword.toLowerCase()))
       constraints.push(orderBy(orderByField, orderDirection))
     } else {
-      constraints.push(orderBy('origin', 'asc'))
+      constraints.push(orderBy('origin_lowercase', 'asc'))
       constraints.push(startAt(keyword))
       constraints.push(endAt(keyword + '\uf8ff'))
     }
@@ -108,11 +108,11 @@ const buildQueryConstraintsForAutocomplete = (params: IItemRequestParams): Query
   // Filter by deleted status
   constraints.push(where('is_deleted', '==', false))
 
-  // For autocomplete, always order by 'origin' for better search results
-  constraints.push(orderBy('origin', 'asc'))
+  // For autocomplete, always order by 'origin_lowercase' for better search results
+  constraints.push(orderBy('origin_lowercase', 'asc'))
 
-  // Use startAt/endAt for keyword prefix search on 'origin' field
-  // This works because we're ordering by 'origin' and can use range queries
+  // Use startAt/endAt for keyword prefix search on 'origin_lowercase' field
+  // This works because we're ordering by 'origin_lowercase' and can use range queries
   if (params.keyword) {
     const keyword = params.keyword.toLowerCase()
     constraints.push(startAt(keyword))
@@ -595,6 +595,7 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
       last_update: now,
       is_deleted: false,
       randomIndex: Math.random(), // For efficient random queries
+      origin_lowercase: item.origin?.toLowerCase() || '', // For case-insensitive search
     }
 
     const itemsRef = collection(db, dbCollections.items)
@@ -636,6 +637,7 @@ const createItems = async (items: IItem[]): Promise<IHttpResponse<IItem>> => {
         last_update: now,
         is_deleted: false,
         randomIndex: Math.random(), // For efficient random queries
+        origin_lowercase: item.origin?.toLowerCase() || '', // For case-insensitive search
       }
 
       const itemsRef = collection(db, dbCollections.items)
@@ -672,6 +674,7 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
     const itemDocRef = doc(db, dbCollections.items, id)
     const updateData = {
       ...item,
+      origin_lowercase: item.origin?.toLowerCase() || '',
       last_update: Timestamp.now().toMillis(),
     }
 

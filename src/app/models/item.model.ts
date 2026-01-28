@@ -35,6 +35,7 @@ export interface IExample {
   last_update?: number
   note: string
   randomIndex?: number
+  origin_lowercase?: string
 }
 
 export interface IType {
@@ -82,6 +83,7 @@ export interface IItem<M = string[]> {
   uid?: string
   catId?: ECategory
   origin: string
+  origin_lowercase?: string
   favorite?: boolean
   level: number
   last_update?: number

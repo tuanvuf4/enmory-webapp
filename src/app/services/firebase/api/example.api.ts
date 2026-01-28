@@ -37,9 +37,10 @@ const createExample = async (body: IExample): Promise<IHttpResponse<IExample>> =
       created_date: Timestamp.now().toMillis(),
       last_update: Timestamp.now().toMillis(),
       randomIndex: Math.random(), // For efficient random queries
+      origin_lowercase: body.origin?.toLowerCase() || '', // For case-insensitive search
     }
 
-    const docRef = await addDoc(collection(db, 'examples'), exampleData)
+    const docRef = await addDoc(collection(db, dbCollections.examples), exampleData)
     const newExample = { ...exampleData, id: docRef.id }
 
     return {
@@ -59,7 +60,7 @@ const createExample = async (body: IExample): Promise<IHttpResponse<IExample>> =
  */
 const getExampleById = async (id: number | string): Promise<IHttpResponse<IExample>> => {
   try {
-    const exampleDocRef = doc(db, 'examples', String(id))
+    const exampleDocRef = doc(db, dbCollections.examples, String(id))
     const exampleDoc = await getDoc(exampleDocRef)
 
     if (!exampleDoc.exists()) {
@@ -99,9 +100,9 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
     const orderDirection = querySearch.order === 'DESC' ? 'desc' : 'asc'
 
     if (querySearch.keyword) {
-      const keyword = querySearch.keyword.trim()
+      const keyword = querySearch.keyword.trim().toLowerCase()
 
-      constraints.push(orderBy('origin', 'asc'))
+      constraints.push(orderBy('origin_lowercase', 'asc'))
       constraints.push(startAt(keyword))
       constraints.push(endAt(keyword + '\uf8ff'))
     } else {
@@ -191,6 +192,7 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
     const exampleDocRef = doc(db, dbCollections.examples, String(body.id))
     const updateData = {
       ...body,
+      origin_lowercase: body.origin?.toLowerCase() || '',
       last_update: Timestamp.now().toMillis(),
     }
 

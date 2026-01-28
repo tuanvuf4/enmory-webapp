@@ -70,9 +70,9 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
         const { isSuccess, content } = await itemApi.getItemById(option.id)
         if (isSuccess && content) {
           openItemModal('view', content)
+          dispatch(settingAction.hideLoading())
           return
         }
-        dispatch(settingAction.hideLoading())
       } catch (error) {
         dispatch(settingAction.hideLoading())
       }

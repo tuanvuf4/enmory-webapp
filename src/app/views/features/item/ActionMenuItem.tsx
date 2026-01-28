@@ -36,7 +36,7 @@ export const ActionItem: React.FC<IActionItem> = (props) => {
   )
 }
 
-export const getActionMenuItems = (data: IItem | undefined): ItemType[] => {
+export const getActionMenuItem = (data: IItem | undefined): ItemType[] => {
   return [
     {
       key: 0,

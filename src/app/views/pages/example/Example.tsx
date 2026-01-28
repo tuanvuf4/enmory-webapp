@@ -45,7 +45,7 @@ export const Example: React.FC = () => {
   const examples = data?.content || []
   const pagination = data?.paging || setting.pagination
 
-  const onEdit = async (id: number | string) => {
+  const onEdit = async (id: string) => {
     try {
       // Set the selected example for editing
       const example = examples.find((ex) => ex.id === id)
@@ -57,7 +57,7 @@ export const Example: React.FC = () => {
     }
   }
 
-  const onDelete = async (id: number | string) => {
+  const onDelete = async (id: string) => {
     try {
       await deleteMutation.mutateAsync(id)
       openNotification({ type: 'success', message: 'Example deleted successfully' })
@@ -104,8 +104,8 @@ export const Example: React.FC = () => {
                   <Col xs={24} sm={12} md={8} lg={8} key={idx}>
                     <ExampleItem
                       data={item}
-                      onEdit={() => onEdit(item.id || -1)}
-                      onDelete={() => onDelete(item.id || -1)}
+                      onEdit={() => onEdit(item.id || '')}
+                      onDelete={() => onDelete(item.id || '')}
                     />
                   </Col>
                 )

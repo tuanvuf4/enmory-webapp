@@ -58,7 +58,7 @@ const createExample = async (body: IExample): Promise<IHttpResponse<IExample>> =
 /**
  * Get example by ID
  */
-const getExampleById = async (id: number | string): Promise<IHttpResponse<IExample>> => {
+const getExampleById = async (id: string | number): Promise<IHttpResponse<IExample>> => {
   try {
     const exampleDocRef = doc(db, dbCollections.examples, String(id))
     const exampleDoc = await getDoc(exampleDocRef)
@@ -219,7 +219,7 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
 /**
  * Delete example
  */
-const deleteExample = async (id: number): Promise<IHttpResponse<IExample>> => {
+const deleteExample = async (id: string): Promise<IHttpResponse<IExample>> => {
   try {
     const exampleDocRef = doc(db, dbCollections.examples, String(id))
     await deleteDoc(exampleDocRef)

@@ -27,17 +27,19 @@ import './style.scss'
 import 'ckeditor5/ckeditor5.css'
 
 interface TextEditor {
+  disabled?: boolean
   content?: string | null
   onChange?: (content: unknown) => void
 }
 
-export const TextEditor = ({ content, onChange }: TextEditor) => {
+export const TextEditor = ({ content, disabled = false, onChange }: TextEditor) => {
   const editorRef = useRef<ClassicEditor>()
 
   return (
     <div className={'text-editor'}>
       <CKEditor
         editor={ClassicEditor}
+        disabled={disabled}
         config={{
           plugins: [
             Essentials,

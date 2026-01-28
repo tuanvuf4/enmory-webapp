@@ -206,3 +206,7 @@ input[type='range']:active::-moz-range-thumb {
     width: 0%;
   }
 }
+
+.ck .ck-content[contenteditable='false'] {
+  background-color: #333 !important;
+}

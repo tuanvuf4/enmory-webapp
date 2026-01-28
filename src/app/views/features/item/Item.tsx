@@ -14,7 +14,7 @@ import moment from 'moment'
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Reference } from '../references/References'
-import { getActionMenuItems } from './ActionMenuItem'
+import { getActionMenuItem } from './ActionMenuItem'
 import { MeaningItem } from './MeaningItem'
 import styles from './style'
 import { actionAsyncApp } from '@/store/asyncActions'
@@ -108,7 +108,7 @@ export const Item: React.FC<IProps> = ({
     }
   }
 
-  const getActionMenus = (menus = getActionMenuItems(data)) => {
+  const getActionMenus = (menus = getActionMenuItem(data)) => {
     return menus
       .map((menu) => {
         if (!onViewSuccess && !action && menu?.key === 0) return false
@@ -120,7 +120,7 @@ export const Item: React.FC<IProps> = ({
   }
 
   const menuProps = {
-    items: getActionMenus(getActionMenuItems(data)),
+    items: getActionMenus(getActionMenuItem(data)),
     onClick: handleMenuClick,
   }
 

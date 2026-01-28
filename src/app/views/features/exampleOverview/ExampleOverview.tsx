@@ -1,6 +1,6 @@
 import globalStyle from '@/style/appStyle'
 import { SyncOutlined, CloseCircleOutlined, SearchOutlined } from '@ant-design/icons'
-import { useAutoComplete, usePrompt } from '@/helpers/hooks'
+import { useAutoComplete, useExampleModal, useLoading, usePrompt } from '@/helpers/hooks'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import { theme, Button, AutoComplete, Input } from 'antd'
 import { PropsWithChildren, useState, useEffect, useCallback } from 'react'
@@ -34,9 +34,12 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
 
   const dispatch = useDispatch()
 
+  const { showLoading, hideLoading } = useLoading()
+
   const { list: examples } = useSelector((state) => state.example)
 
-  const { openNotification } = usePrompt()
+  const { openNotification, confirmDeleteModal } = usePrompt()
+  const { openExampleModal } = useExampleModal()
 
   const { control, setValue, handleSubmit, watch } = useForm<IExampleForm>({
     defaultValues: {
@@ -72,19 +75,33 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
     }
   }, [dispatch, openNotification])
 
-  const onEdit = async (id: number | string) => {
+  const onEdit = async (id: string) => {
+    openExampleModal
     try {
-      await exampleApi.getExampleById(id)
+      showLoading()
+      const { isSuccess, content } = await exampleApi.getExampleById(id)
+      if (isSuccess && content) {
+        openExampleModal('edit', content)
+        hideLoading()
+      }
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
+      hideLoading()
     }
   }
 
-  const onDelete = async (id: number | string) => {
+  const onDelete = async (id: string) => {
     try {
-      await exampleApi.getExampleById(id)
+      confirmDeleteModal({
+        onOk: async () => {
+          showLoading()
+          await exampleApi.deleteExample(id)
+          hideLoading()
+        },
+      })
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
+      hideLoading()
     }
   }
 
@@ -108,7 +125,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
     if (examples.length === 0) {
       getRandomExamples()
     }
-  }, [examples])
+  }, [examples, getRandomExamples])
 
   return (
     <div className={classes.exampleOverview}>
@@ -177,8 +194,8 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
             <li className={clsx(exClasses.exampleItem)} style={{ paddingLeft: 8 }}>
               <ExampleItem
                 data={selected}
-                onEdit={() => onEdit(selected.id || -1)}
-                onDelete={() => onDelete(selected.id || -1)}
+                onEdit={() => onEdit(selected.id || '')}
+                onDelete={() => onDelete(selected.id || '')}
               />
             </li>
           </ul>
@@ -193,8 +210,8 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
                 <li key={key} className={clsx(exClasses.exampleItem)} style={{ paddingLeft: 8 }}>
                   <ExampleItem
                     data={example}
-                    onEdit={() => onEdit(example.id || -1)}
-                    onDelete={() => onDelete(example.id || -1)}
+                    onEdit={() => onEdit(example.id || '')}
+                    onDelete={() => onDelete(example.id || '')}
                   />
                 </li>
               )

@@ -24,13 +24,11 @@ const styles = () => {
       },
     },
     exampleFormAdd: {
-      marginBottom: `${token.size}px`,
-      background: hex2Rgba(styleConfig.itemColorBg, 0.9),
+      background: '#ffffff',
       borderRadius: 4,
-      // border: `1px solid ${hex2Rgba(styleConfig.itemColorBg, 0.4)}`,
+      color: `${token.colorTextBase}`,
       boxShadow: `0px 0px 30px 0px ${hex2Rgba('#ffffff', 0.2)}`,
-      color: token.colorWhite,
-      padding: [token.size, token.size],
+      padding: [token.size / 2, token.size, token.size * 2, token.size],
 
       display: 'flex',
       alignItems: 'center',
@@ -38,9 +36,8 @@ const styles = () => {
       gap: token.size / 2,
 
       '&.active': {
-        background: 'transparent !important',
-        color: `${token.colorTextBase} !important`,
-        padding: 0,
+        background: hex2Rgba(styleConfig.itemColorBg, 0.9),
+        color: token.colorWhite,
 
         '& textarea': {
           color: `${token.colorTextBase} !important`,

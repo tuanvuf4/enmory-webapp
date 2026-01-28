@@ -1,5 +1,5 @@
 import { theme } from 'antd'
-import { DeleteOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { ItemType } from 'antd/es/menu/interface'
 
 interface IActionItem {
@@ -26,22 +26,7 @@ export const ActionItemExtension: React.FC<IActionItem> = (props) => {
   )
 }
 
-export const actionMenuItems: ItemType[] = [
-  {
-    key: 0,
-    label: <ActionItemExtension label='View' icon={<EyeOutlined />} />,
-  },
-  {
-    key: 1,
-    label: <ActionItemExtension label='Edit' icon={<EditOutlined />} />,
-  },
-  {
-    key: 2,
-    label: <ActionItemExtension label='Delete' icon={<DeleteOutlined />} />,
-  },
-]
-
-export const actionMenuEx: ItemType[] = [
+export const actionMenuExample: ItemType[] = [
   {
     key: 1,
     label: <ActionItemExtension label='Edit' icon={<EditOutlined />} />,

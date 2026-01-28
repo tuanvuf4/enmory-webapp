@@ -94,8 +94,8 @@ export const useDeleteExample = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: number | string) => {
-      await exampleApi.deleteExample(Number(id))
+    mutationFn: async (id: string) => {
+      await exampleApi.deleteExample(id)
       return id
     },
     onSuccess: (deletedId) => {

@@ -26,12 +26,12 @@ export const menu: MenuProps['items'] = [
 
 export const addNewType: MenuProps['items'] = [
   {
-    key: 'addItem',
+    key: 'ADD_ITEM',
     label: 'Item',
     icon: <PlusOutlined />,
   },
   {
-    key: 'addEx',
+    key: 'ADD_EXAMPLE',
     label: 'Example',
     icon: <PlusOutlined />,
   },

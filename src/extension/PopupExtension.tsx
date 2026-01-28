@@ -97,7 +97,7 @@ export const PopupExtension = () => {
           {currentPage === EPageExt.ADD_EX && (
             <div style={{ padding: (token.size / 4) * 3 }}>
               <h2 style={{ fontWeight: 'normal' }}>Add a Example</h2>
-              <ExampleForm themeMode={'light'} onSuccess={onSuccess} />
+              <ExampleForm theme={'light'} onSuccess={onSuccess} />
             </div>
           )}
 

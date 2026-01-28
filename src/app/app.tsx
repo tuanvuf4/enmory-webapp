@@ -7,11 +7,13 @@ import moment from 'moment'
 import { Loading } from './views/features/loading/Loading'
 import { useCategories, useTypes } from '@/core/hooks/useCommon'
 import { settingAction } from '@/store/reducers/setting.reducer'
+import { useLoading } from './helpers'
 
 export const App = () => {
   const [isInitializing, setIsInitializing] = useState(true)
 
   const dispatch = useDispatch()
+  const { hideLoading } = useLoading()
 
   useAuthInit()
 
@@ -23,6 +25,7 @@ export const App = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitializing(false)
+      hideLoading()
     }, 500)
 
     return () => clearTimeout(timer)
@@ -44,7 +47,7 @@ export const App = () => {
   }, [types, dispatch])
 
   if (isInitializing) {
-    return <Loading />
+    return <Loading active={isInitializing} />
   }
 
   return (

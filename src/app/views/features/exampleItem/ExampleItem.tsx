@@ -5,7 +5,7 @@ import { IExample } from '@/models/item.model'
 import { MenuProps, Skeleton, Dropdown, Button } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import moment from 'moment'
-import { actionMenuItems, actionMenuEx } from './ActionMenuItem'
+import { actionMenuExample } from './ActionMenuItem'
 import styles from './style'
 import clsx from 'clsx'
 
@@ -31,7 +31,7 @@ export const ExampleItem: React.FC<IProps> = ({
     if (e.key == '2') onDelete?.()
   }
 
-  const getActionMenus = (menus = actionMenuItems) => {
+  const getActionMenus = (menus = actionMenuExample) => {
     if (!onEdit && !onDelete) return []
     return menus
       .map((menu) => {
@@ -43,7 +43,7 @@ export const ExampleItem: React.FC<IProps> = ({
   }
 
   const menuProps = {
-    items: getActionMenus(actionMenuEx),
+    items: getActionMenus(actionMenuExample),
     onClick: handleMenuClick,
   }
 

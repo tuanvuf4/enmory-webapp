@@ -1,3 +1,5 @@
 export * from './autoComplete'
+export * from './useExampleModal'
 export * from './useItemModal'
+export * from './useLoading'
 export * from './usePrompt'

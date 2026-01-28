@@ -12,7 +12,7 @@ import { MainMenu } from '../mainMenu/MainMenu'
 import { menu, addNewType } from './Menu'
 import styles from './style'
 import clsx from 'clsx'
-import { useItemModal } from '@/helpers/hooks'
+import { useExampleModal, useItemModal } from '@/helpers/hooks'
 import { Header } from 'antd/es/layout/layout'
 
 export const AppHeader = () => {
@@ -30,6 +30,7 @@ export const AppHeader = () => {
   const navigate = useNavigate()
 
   const { openItemModal } = useItemModal()
+  const { openExampleModal } = useExampleModal()
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
@@ -60,12 +61,12 @@ export const AppHeader = () => {
   }
 
   const handleAddMenuClick: MenuProps['onClick'] = (e) => {
-    if (e.key === 'addItem') {
+    if (e.key === 'ADD_ITEM') {
       openItemModal('add')
     }
 
-    if (e.key === 'addEx') {
-      // dispatch(settingAction.toggleExModal())
+    if (e.key === 'ADD_EXAMPLE') {
+      openExampleModal('add')
     }
   }
 

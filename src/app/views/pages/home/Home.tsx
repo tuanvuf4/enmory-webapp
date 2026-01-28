@@ -49,7 +49,11 @@ const Home = () => {
                   </Widget>
 
                   <Widget title={'Translator!'}>
-                    <ExampleForm showSelect mode={ExampleMode.Translation} />
+                    <ExampleForm
+                      showSelectMode={true}
+                      theme={'dark'}
+                      mode={ExampleMode.Translation}
+                    />
                   </Widget>
 
                   <Widget title={'Review Example'}>

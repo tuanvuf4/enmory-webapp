@@ -1,4 +1,3 @@
-export * from './alertDefectItem'
 export * from './chart'
 export * from './dictation'
 export * from './exampleItem'

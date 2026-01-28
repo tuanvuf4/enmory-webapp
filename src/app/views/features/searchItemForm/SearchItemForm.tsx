@@ -6,8 +6,8 @@ import {
   SearchOutlined,
   Loading3QuartersOutlined,
 } from '@ant-design/icons'
-import { useDispatch, useItemSearchParams, useSelector } from '@/core/hooks'
-import { useAutoComplete, useItemModal } from '@/helpers/hooks'
+import { useItemSearchParams, useSelector } from '@/core/hooks'
+import { useAutoComplete, useItemModal, useLoading } from '@/helpers/hooks'
 import { orderByOptions, orderOptions } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { ECategory } from '@/models/item.model'
@@ -22,7 +22,6 @@ import { initSearchFormItem } from '@/constant/index'
 import { initItem } from '../modals/itemModal'
 import { BaseOptionType } from 'antd/es/select'
 import { itemApi } from '@/services/firebase'
-import { settingAction } from '@/store/reducers/setting.reducer'
 
 interface ISearchFormComp {
   filter?: boolean
@@ -40,14 +39,13 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   const globalClasses = globalStyle()
 
   const location = useLocation()
+  const { showLoading, hideLoading } = useLoading()
 
   const { urlParams, setUrlParams, navigateWithParams } = useItemSearchParams()
 
   const { openItemModal } = useItemModal()
 
   const { categories } = useSelector((state) => state.setting)
-
-  const dispatch = useDispatch()
 
   const { control, handleSubmit, reset, watch, getValues } = useForm<IFormSearchItem>({
     defaultValues: urlParams || initSearchFormItem,
@@ -65,16 +63,16 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
       setUrlParams({ ...urlParams, keyword: value }, true)
     } else {
       try {
-        dispatch(settingAction.showLoading())
+        showLoading()
 
         const { isSuccess, content } = await itemApi.getItemById(option.id)
         if (isSuccess && content) {
           openItemModal('view', content)
-          dispatch(settingAction.hideLoading())
+          hideLoading()
           return
         }
       } catch (error) {
-        dispatch(settingAction.hideLoading())
+        hideLoading()
       }
     }
   }

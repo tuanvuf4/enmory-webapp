@@ -13,7 +13,7 @@ import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 
 // Initialize Firebase Admin
-const serviceAccount = require('./serviceAccountKey_12345.json')
+const serviceAccount = require('./serviceAccountKey_21593.json')
 
 initializeApp({
   credential: cert(serviceAccount),

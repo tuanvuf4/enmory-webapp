@@ -1,8 +1,7 @@
-import { CloseOutlined, SyncOutlined } from '@ant-design/icons'
+import { SyncOutlined } from '@ant-design/icons'
 import { IExample } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import { theme, Space, Row, Col, Button, Select, Flex } from 'antd'
-import TextArea from 'antd/es/input/TextArea'
 import { PropsWithChildren, useCallback, useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import styles from './style'
@@ -14,18 +13,20 @@ import { TextEditor } from '@/views/components'
 
 interface IProps {
   data?: IExample
-  themeMode?: 'dark' | 'light'
+  theme?: 'dark' | 'light'
   mode?: ExampleMode
-  showSelect?: boolean
+  showSelectMode?: boolean
   onSuccess?: (data: IExample) => void
+  onCancel?: () => void
 }
 
 export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
-  themeMode = 'dark',
+  theme: themeMode = 'light',
   mode = ExampleMode.Default,
   data,
-  showSelect = false,
+  showSelectMode = false,
   onSuccess,
+  onCancel,
 }) => {
   const { token } = theme.useToken()
 
@@ -110,15 +111,15 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 
   return (
     <form
-      className={clsx(classes.exampleFormAdd, themeMode === 'light' ? 'active' : '')}
+      className={clsx(classes.exampleFormAdd, themeMode === 'dark' ? 'active' : '')}
       onSubmit={handleSubmit(onSubmit)}
-      style={{ padding: token.size, width: '100%' }}
+      style={{ width: '100%' }}
     >
       <Space direction='vertical' style={{ display: 'flex', width: '100%' }} size={token.size}>
         <Row>
           <Col xs={24}>
             <Flex gap={token.size / 2} justify={'flex-end'}>
-              {showSelect && (
+              {showSelectMode && (
                 <Select
                   value={exMode}
                   onChange={setMode}
@@ -158,39 +159,14 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
               }}
               render={({ field: { onChange, value } }) => {
                 return (
-                  <>
-                    {showTranslation && exMode === ExampleMode.Translation ? (
-                      <TextEditor
-                        content={value}
-                        onChange={(content: any) => {
-                          setValue('origin', content ?? '')
-                          onChange(content)
-                        }}
-                      />
-                    ) : (
-                      <TextArea
-                        disabled={!showTranslation && exMode === ExampleMode.Translation}
-                        autoSize
-                        value={value}
-                        placeholder='Origin'
-                        className={classes.autoSearchInput}
-                        onChange={(text) => onChange(text.target.value)}
-                        allowClear={{
-                          clearIcon: (
-                            <CloseOutlined
-                              style={{
-                                background: token.colorWhite,
-                                padding: token.size / 8,
-                                borderRadius: '50%',
-                                color: token.colorBgLayout,
-                                fontSize: 10,
-                              }}
-                            />
-                          ),
-                        }}
-                      />
-                    )}
-                  </>
+                  <TextEditor
+                    content={value}
+                    disabled={!showTranslation && exMode === ExampleMode.Translation}
+                    onChange={(content: any) => {
+                      setValue('origin', content ?? '')
+                      onChange(content)
+                    }}
+                  />
                 )
               }}
             />
@@ -225,29 +201,27 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
           </Col>
         </Row>
 
-        {exMode === ExampleMode.Default && (
-          <Row align={'middle'} gutter={[token.size, token.size / 2]}>
-            <Col xs={24}>Note:</Col>
+        <Row align={'middle'} gutter={[token.size, token.size / 2]}>
+          <Col xs={24}>Note:</Col>
 
-            <Col xs={24}>
-              <Controller
-                control={control}
-                name={`note`}
-                render={({ field: { onChange, value } }) => {
-                  return (
-                    <TextEditor
-                      content={value}
-                      onChange={(content: any) => {
-                        setValue('note', content ?? '')
-                        onChange(content)
-                      }}
-                    />
-                  )
-                }}
-              />
-            </Col>
-          </Row>
-        )}
+          <Col xs={24}>
+            <Controller
+              control={control}
+              name={`note`}
+              render={({ field: { onChange, value } }) => {
+                return (
+                  <TextEditor
+                    content={value}
+                    onChange={(content: any) => {
+                      setValue('note', content ?? '')
+                      onChange(content)
+                    }}
+                  />
+                )
+              }}
+            />
+          </Col>
+        </Row>
 
         {exMode === ExampleMode.Translation && (
           <Row align={'middle'} gutter={[token.size, token.size / 2]} justify={'end'}>
@@ -262,9 +236,22 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
         <Row align={'middle'} gutter={[token.size, token.size / 2]}>
           <Col xs={24}>
             <Flex
-              justify={exMode === ExampleMode.Translation ? 'space-between' : 'flex-start'}
+              justify={exMode === ExampleMode.Translation ? 'space-between' : 'flex-end'}
+              gap={token.size}
               className={'pt-4'}
             >
+              {onCancel && (
+                <Button
+                  type='default'
+                  style={{
+                    minWidth: 120,
+                  }}
+                  onClick={() => onCancel()}
+                >
+                  Cancel
+                </Button>
+              )}
+
               {exMode === ExampleMode.Translation && (
                 <Button
                   variant='outlined'

@@ -113,7 +113,6 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
       page: 1,
       size: 10,
     })
-    console.log(`*** content *** `, content)
     if (isSuccess && content) {
       dispatch(exampleAction.update(content || []))
     }
@@ -189,7 +188,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
         </Button>
       </form>
 
-      {loading && <Loading active={loading} inner={true} />}
+      {loading && <Loading show={loading} inner={true} />}
 
       {selected && selected.origin && (
         <div className={clsx(exClasses.examples, classes.exampleSelectedEx)}>

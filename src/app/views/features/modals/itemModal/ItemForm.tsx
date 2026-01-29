@@ -242,7 +242,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
 
           <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
             <Col md={4} xs={24}>
-              <label htmlFor=''>Original:</label>
+              <label htmlFor=''>Origin:</label>
             </Col>
 
             <Col md={20} xs={24}>

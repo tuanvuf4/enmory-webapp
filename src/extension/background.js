@@ -7,27 +7,25 @@ chrome.contextMenus.create({
 
 chrome.contextMenus.onClicked.addListener(async (item, tab) => {
   if (item.menuItemId === 'enmory-quick-add') {
-    await chrome.storage.sync.set({ original: item.selectionText })
+    await chrome.storage.sync.set({ origin: item.selectionText })
     chrome.windows.create(
       {
-        url: "index.html",
-        type: "popup",
+        url: 'index.html',
+        type: 'popup',
         focused: true,
         width: 530,
         height: 750,
         top: 0,
       },
       (window) => {
-        console.log("Extension popup opened!");
-      }
-    );
+        console.log('Extension popup opened!')
+      },
+    )
   }
 })
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-  if (request.addOriginal === 'addOriginal') {
-    await chrome.storage.sync.set({ original: request.value })
+  if (request.addOrigin === 'addOrigin') {
+    await chrome.storage.sync.set({ origin: request.value })
   }
 })
-
-

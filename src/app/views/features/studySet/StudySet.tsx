@@ -52,20 +52,18 @@ export const StudySet: React.FC = () => {
   }
 
   // Prepare study set params
-  const studySetParams = categories.map((cat) => ({
-    id: cat.id,
-    size: getStudySetSizeByCategory(cat.value),
-  })) as GetStudySetByCatId[]
+  const studySetParams = categories
+    .filter((cat) => cat.id !== 0)
+    .map((cat) => ({
+      id: cat.id,
+      size: getStudySetSizeByCategory(cat.value),
+    })) as GetStudySetByCatId[]
 
   const createStudySet = async (params: Partial<IStudySetStatus>) => {
     try {
-      console.log('Creating study set with params:', studySetParams)
-
       setLoading(true)
 
       const response = await itemApi.getStudySet(studySetParams)
-
-      console.log('Study set response:', response)
 
       if (!response.isSuccess) {
         openNotification({

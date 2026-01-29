@@ -4,11 +4,11 @@ import styles from './style'
 import classNames from 'clsx'
 import { useSelector } from '@/core/hooks'
 interface ILoadingProps {
-  active?: boolean
+  show?: boolean
   inner?: boolean
 }
 
-export const Loading = ({ active = false, inner = false }: ILoadingProps) => {
+export const Loading = ({ show: active = false, inner = false }: ILoadingProps) => {
   const classes = styles()
 
   const { loading } = useSelector((state) => state.setting)

@@ -27,6 +27,8 @@ import {
 } from 'firebase/firestore'
 import { IExample } from '@/models/item.model'
 import { toWildString } from '@/helpers/item'
+import { commonApi } from './common.api'
+import { categories, types } from '@/constant/index'
 
 export interface IItemRequestParams {
   keyword: string
@@ -344,6 +346,40 @@ const getItemById = async (itemId: string): Promise<IHttpResponse<IItem>> => {
   }
 }
 
+const getItemsInCategory = async (catId: number, size: number): Promise<IItem[]> => {
+  commonApi.checkAuth()
+
+  const currentUser = commonApi.getCurrentUser()
+
+  const constraints: QueryConstraint[] = [
+    where('catId', '==', catId),
+    where('uid', '==', currentUser?.uid),
+    where('is_deleted', '==', false),
+    where('randomIndex', '>=', Math.random()),
+    limit(size),
+  ]
+
+  const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
+  const snapshot = await getDocs(itemsQuery)
+
+  const items = snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as unknown as IItem[]
+
+  // Filter items that have meanings with definition or translation
+  const itemsWithMeanings = items.filter((item) => {
+    const meanings = item.meanings || []
+    return meanings.some((meaning: any) => {
+      return (
+        (meaning.definition && meaning.definition.trim() !== '') ||
+        (meaning.translation && meaning.translation.trim() !== '')
+      )
+    })
+  })
+  return await Promise.all(itemsWithMeanings)
+}
+
 /**
  * Get study set items
  */
@@ -351,17 +387,7 @@ const getStudySet = async (
   studySets: GetStudySetByCatId[],
 ): Promise<IHttpResponse<IItemQuiz[]>> => {
   try {
-    const allItems: IItem[] = []
-    const currentUser = firebaseAuthService.getCurrentUser()
-
-    if (!currentUser) {
-      return {
-        isSuccess: false,
-        message: 'User not authenticated',
-        content: [],
-        statusCode: 401,
-      }
-    }
+    commonApi.checkAuth()
 
     if (!studySets || studySets.length === 0) {
       return {
@@ -372,35 +398,7 @@ const getStudySet = async (
       }
     }
 
-    const getItemsInCategory = async (catId: number, size: number): Promise<IItem[]> => {
-      const constraints: QueryConstraint[] = [
-        where('catId', '==', catId),
-        where('uid', '==', currentUser.uid),
-        where('is_deleted', '==', false),
-        where('randomIndex', '>=', Math.random()),
-        limit(size),
-      ]
-
-      const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
-      const snapshot = await getDocs(itemsQuery)
-
-      const items = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as unknown as IItem[]
-
-      // Filter items that have meanings with definition or translation
-      const itemsWithMeanings = items.filter((item) => {
-        const meanings = item.meanings || []
-        return meanings.some((meaning: any) => {
-          return (
-            (meaning.definition && meaning.definition.trim() !== '') ||
-            (meaning.translation && meaning.translation.trim() !== '')
-          )
-        })
-      })
-      return await Promise.all(itemsWithMeanings)
-    }
+    const allItems: IItem[] = []
 
     // First, fetch all items for all categories
     for (const studySet of studySets) {
@@ -463,7 +461,7 @@ const getStudySet = async (
     // Generate quiz data for each item
     const itemsWithQuiz: IItemQuiz[] = itemsWithExamples.map((item) => {
       // Randomly decide quiz type (50% chance for each type)
-      const useFillInBlank = item.catId !== 6 && Math.random() < 0.5
+      const useFillInBlank = item.catId === 1 && Math.random() < 0.5
 
       // Get random meaning from meanings array
       const meanings = item.meanings || []
@@ -478,30 +476,14 @@ const getStudySet = async (
       let hint = ''
       if (item.catId === 1) {
         // Word category - show type (NOUN, VERB, etc.)
-        const typeLabels = [
-          'ALL',
-          'NOUN',
-          'VERB',
-          'ADJECTIVE',
-          'ADVERB',
-          'PREPOSITION',
-          'CONJUNCTION',
-          'PRONOUN',
-          'ARTICLE',
-          'DETERMINER',
-          'INTERJECTION',
-        ]
+        const typeLabels = types.filter((type) => type.id !== 0).map((type) => type.label.origin)
         hint = typeLabels[selectedMeaning?.typeId || 0] || ''
       } else {
         // Other categories - show category name
-        const categoryLabels: Record<number, string> = {
-          2: 'PHRASE',
-          3: 'IDIOM',
-          4: 'SLANG',
-          5: 'COLLOCATION',
-          6: 'SENTENCE',
-        }
-        hint = categoryLabels[item.catId || 0] || ''
+        const restCategoryLabels = categories
+          .filter((cat) => cat.id !== 0 && cat.id !== 1)
+          .map((cat) => cat.label)
+        hint = restCategoryLabels[item.catId || 0] || ''
       }
 
       // For fill in the blank
@@ -533,15 +515,23 @@ const getStudySet = async (
           label: item.origin,
           value: false,
           typeId: selectedMeaning?.typeId || 0,
-          key: 'A',
+          key: selectedMeaning.translation,
         },
-        ...wrongAnswers.map((wrongItem, index) => ({
-          id: wrongItem.id as string,
-          label: wrongItem.origin,
-          value: false,
-          typeId: wrongItem.meanings?.[0]?.typeId || 0,
-          key: String.fromCharCode(66 + index), // B, C, D
-        })),
+        ...wrongAnswers.map((wrongItem) => {
+          const randomMeaningIndex =
+            wrongItem.meanings && wrongItem.meanings?.length > 0
+              ? Math.floor(Math.random() * wrongItem.meanings.length)
+              : 0
+          const selected = wrongItem?.meanings?.[randomMeaningIndex]
+
+          return {
+            id: wrongItem.id as string,
+            label: wrongItem.origin,
+            value: false,
+            typeId: selected?.typeId || 0,
+            key: selected?.translation,
+          }
+        }),
       ]
 
       // Shuffle answers
@@ -550,8 +540,8 @@ const getStudySet = async (
       return {
         ...item,
         quiz: {
-          title: '',
-          question: definition,
+          title: definition,
+          question: '',
           answer: shuffledAnswers,
           type: EQuiz.MULTI_CHOICE,
           hint: `(${hint.toLowerCase()})`,

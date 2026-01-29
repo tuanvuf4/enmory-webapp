@@ -1,7 +1,7 @@
 document.addEventListener('mouseup', async (event) => {
   if (document.getSelection().toString().length) {
     let exactText = document.getSelection().toString()
-    chrome.runtime.sendMessage({ addOriginal: 'addOriginal', value: exactText })
+    chrome.runtime.sendMessage({ addOrigin: 'addOrigin', value: exactText })
   }
 })
 

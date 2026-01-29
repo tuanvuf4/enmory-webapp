@@ -47,7 +47,7 @@ export const App = () => {
   }, [types, dispatch])
 
   if (isInitializing) {
-    return <Loading active={isInitializing} />
+    return <Loading show={isInitializing} />
   }
 
   return (

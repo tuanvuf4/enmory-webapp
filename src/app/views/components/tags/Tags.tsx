@@ -31,7 +31,7 @@ export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
         size: 1,
         exact,
       })
-      console.log(`*** content *** `, content)
+
       if (isSuccess && content) {
         content.length > 0
           ? openItemModal('view', content[0])

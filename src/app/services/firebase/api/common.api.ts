@@ -279,10 +279,29 @@ const deleteIotd = async (id: string): Promise<IHttpResponse<null>> => {
   }
 }
 
+const checkAuth = () => {
+  const isAuth = firebaseAuthService.isAuthenticated()
+
+  if (!isAuth) {
+    return {
+      isSuccess: false,
+      message: 'User not authenticated',
+      content: [],
+      statusCode: 401,
+    }
+  }
+}
+
+const getCurrentUser = () => {
+  return firebaseAuthService.getCurrentUser()
+}
+
 export const commonApi = {
   getCategories,
   getTypes,
   getItemOfTheDayByCatId,
   createItemOfTheDayByCatId,
   deleteIotd,
+  checkAuth,
+  getCurrentUser,
 }

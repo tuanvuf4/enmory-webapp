@@ -312,10 +312,24 @@ const getItemById = async (itemId: string): Promise<IHttpResponse<IItem>> => {
     }
 
     const itemData = itemDoc.data()
+    const meanings = itemData.meanings || []
+
+    // Fetch examples for each meaning
+    const meaningsWithExamples = await Promise.all(
+      meanings.map(async (meaning: any) => {
+        const exampleIds = meaning.examples || []
+        const examples = await getExamplesByIds(exampleIds)
+        return {
+          ...meaning,
+          examples: examples,
+        }
+      }),
+    )
 
     const item = {
       id: itemDoc.id,
       ...itemData,
+      meanings: meaningsWithExamples,
     } as unknown as IItem
 
     return {

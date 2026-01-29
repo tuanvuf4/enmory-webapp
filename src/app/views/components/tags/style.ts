@@ -18,7 +18,7 @@ const styles = (token: AliasToken) => {
       '& span': {
         flex: 1,
         display: 'block',
-        padding: [1, token.size / 2],
+        padding: [2, token.size / 2],
         color: 'inherit',
 
         '&:hover': {

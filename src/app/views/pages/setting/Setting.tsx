@@ -27,7 +27,6 @@ const Setting = () => {
 
   const onSubmit = async (data: IUserConfig) => {
     setIsLoading(true)
-    console.log(`*** data *** `, data)
     try {
       const result = await apiUser.updateUserConfig(data)
 

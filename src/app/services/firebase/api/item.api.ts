@@ -314,30 +314,16 @@ const getItemById = async (itemId: string): Promise<IHttpResponse<IItem>> => {
     }
 
     const itemData = itemDoc.data()
-    const meanings = itemData.meanings || []
-
-    // Fetch examples for each meaning
-    const meaningsWithExamples = await Promise.all(
-      meanings.map(async (meaning: any) => {
-        const exampleIds = meaning.examples || []
-        const examples = await getExamplesByIds(exampleIds)
-        return {
-          ...meaning,
-          examples: examples,
-        }
-      }),
-    )
 
     const item = {
       id: itemDoc.id,
       ...itemData,
-      meanings: meaningsWithExamples,
     } as unknown as IItem
 
     return {
       isSuccess: true,
       message: 'Item fetched successfully',
-      content: item,
+      content: { ...item },
       statusCode: 200,
     }
   } catch (error) {
@@ -476,14 +462,17 @@ const getStudySet = async (
       let hint = ''
       if (item.catId === 1) {
         // Word category - show type (NOUN, VERB, etc.)
-        const typeLabels = types.filter((type) => type.id !== 0).map((type) => type.label.origin)
-        hint = typeLabels[selectedMeaning?.typeId || 0] || ''
+        const typeLabels = types.filter(
+          (type) => type.id !== 0 && type.id == selectedMeaning?.typeId,
+        )
+        hint = typeLabels[0].label.origin || ''
       } else {
         // Other categories - show category name
-        const restCategoryLabels = categories
-          .filter((cat) => cat.id !== 0 && cat.id !== 1)
-          .map((cat) => cat.label)
-        hint = restCategoryLabels[item.catId || 0] || ''
+        const restCategoryLabels = categories.filter(
+          (cat) => cat.id !== 0 && cat.id !== 1 && cat.id === item.catId,
+        )
+
+        hint = restCategoryLabels[0].label
       }
 
       // For fill in the blank
@@ -952,4 +941,5 @@ export const itemApi = {
   getNewAddedItemByPeriod,
   getItemsByLevel,
   getOverviewItems,
+  getExamplesByIds,
 }

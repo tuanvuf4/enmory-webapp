@@ -25,6 +25,7 @@ import { Timestamp } from 'firebase/firestore'
 import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
 import { useModal } from '@/context/modal.context'
 import { useQueryClient } from '@tanstack/react-query'
+import { getMeaningsWithExamples } from '@/helpers/item'
 
 interface ItemFormProps {
   mode: 'add' | 'edit'
@@ -83,7 +84,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
     return await Promise.all(examplePromises)
   }
 
-  const handleOk = async () => {
+  const onSubmit = async () => {
     if (isValid) {
       handleSubmit(async (data: IItem) => {
         const meanings = []
@@ -120,38 +121,47 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
           meanings: meanings,
         }
 
-        console.log(`*** dataSubmit *** `, dataSubmit)
-
         if (mode === 'edit') {
           try {
-            const response = await updateMutation({
+            const { isSuccess, content } = await updateMutation({
               id: String(item?.id),
               data: dataSubmit,
             })
 
-            const itemUpdated = response.content
-            // update iotd item in study set
-            if (itemUpdated && list.find((item) => item.id === itemUpdated.id)) {
-              dispatch(studySetAction.update(itemUpdated))
+            if (isSuccess && content) {
+              const meaningsWithExamples = await getMeaningsWithExamples(content.meanings || [])
+
+              const itemUpdated = {
+                ...content,
+                meanings: meaningsWithExamples,
+              }
+              // update item in study set
+              if (itemUpdated && list.find((item) => item.id === itemUpdated.id)) {
+                dispatch(studySetAction.update(itemUpdated))
+              }
+              // update iotd item
+              dispatch(iotdAction.update(itemUpdated))
+
+              // refresh list in library
+              await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+
+              closeModal()
+              openNotification({ type: 'success', message: 'Update item successful!' })
             }
-            // update iotd item
-            if (itemUpdated) dispatch(iotdAction.update(itemUpdated))
-            closeModal()
-            openNotification({ type: 'success', message: 'Update item successful!' })
-            await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
           } finally {
-            await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
             setOrigin(null)
           }
         } else {
           try {
-            const response = await createMutation(dataSubmit)
-            if (response.isSuccess) {
+            const { isSuccess } = await createMutation(dataSubmit)
+            if (isSuccess) {
+              // refresh list in library
+              await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+
               closeModal()
               openNotification({ type: 'success', message: 'Create a item successful!' })
-              await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
             }
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
@@ -210,7 +220,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
   }, [mode, item])
 
   return (
-    <form onSubmit={handleSubmit(handleOk)} style={{ padding: token.size }}>
+    <form onSubmit={handleSubmit(onSubmit)} style={{ padding: token.size }}>
       <Row>
         <Space
           direction='vertical'
@@ -433,7 +443,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
           </Row>
 
           <Suspense fallback={<div>Loading...</div>}>
-            <MeaningItemForm origin={original} catType={catType as ECategory} onSubmit={handleOk} />
+            <MeaningItemForm origin={original} catType={catType as ECategory} onSubmit={onSubmit} />
           </Suspense>
         </Space>
       </Row>

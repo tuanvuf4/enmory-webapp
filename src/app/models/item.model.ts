@@ -58,7 +58,7 @@ export enum EType {
   INTERJECTION,
 }
 
-export interface IMeaning<S = string[]> {
+export interface IMeaning {
   id?: string
   uid?: string
   itemId?: string
@@ -71,11 +71,11 @@ export interface IMeaning<S = string[]> {
   translation: string
   grammar: string
   collocations: string
-  synonyms: S
-  antonyms: S
+  synonyms: string[]
+  antonyms: string[]
   created_date?: number
   last_update?: number
-  examples: IExample[] | S
+  examples: IExample[] | string[]
 }
 
 export interface IItem<M = string[]> {
@@ -104,7 +104,7 @@ export interface IItem<M = string[]> {
   collocations: M
   word_family: M
   relation: M
-  meanings?: IMeaning<M>[]
+  meanings?: IMeaning[]
 }
 
 export interface IIotd<M = string[]> {

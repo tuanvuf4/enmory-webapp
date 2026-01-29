@@ -126,7 +126,6 @@ export const authReducer = createSlice({
       state.isLoading = false
     },
     updateUserConfig: (state, action) => {
-      console.log(`*** action *** `, action)
       if (state.user) {
         state.user.configuration = action.payload
       }

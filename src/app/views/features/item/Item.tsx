@@ -12,7 +12,6 @@ import { ItemType } from 'antd/es/menu/interface'
 import clsx from 'clsx'
 import moment from 'moment'
 import React, { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
 import { Reference } from '../references/References'
 import { getActionMenuItem } from './ActionMenuItem'
 import { MeaningItem } from './MeaningItem'
@@ -20,6 +19,9 @@ import styles from './style'
 import { actionAsyncApp } from '@/store/asyncActions'
 import { useQueryClient } from '@tanstack/react-query'
 import { styleConfig } from '@/style/appStyle'
+import { studySetAction } from '@/store/reducers/studySet.reducer'
+import { iotdAction } from '@/store/reducers/iotd.reducer'
+import { IHttpResponse } from '@/models/http.model'
 
 interface IProps {
   action?: boolean
@@ -50,12 +52,12 @@ export const Item: React.FC<IProps> = ({
 
   const queryClient = useQueryClient()
 
+  const { list } = useSelector((state) => state.studySet)
+
   const [, setSize] = useState<number>(8)
   const [spin, setSpin] = useState(false)
   const { openMessage } = usePrompt()
 
-  const location = useLocation()
-  const navigate = useNavigate()
   const dispatch = useDispatch()
 
   const { openItemModal } = useItemModal()
@@ -124,6 +126,19 @@ export const Item: React.FC<IProps> = ({
     onClick: handleMenuClick,
   }
 
+  const onUpdateItemSuccess = async ({ isSuccess, content }: IHttpResponse<IItem>) => {
+    if (isSuccess && content) {
+      // update item in study set
+      if (content && list.find((item) => item.id === content.id)) {
+        dispatch(studySetAction.update(content))
+      }
+      // update iotd item
+      dispatch(iotdAction.update(content))
+      // update item in library
+      await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+    }
+  }
+
   const onEdit = async (id: string) => {
     try {
       const { content } = await itemApi.getItemById(id)
@@ -158,20 +173,6 @@ export const Item: React.FC<IProps> = ({
     }
   }
 
-  const onSearch = (keyword: string) => {
-    // Navigate to library with search params
-    const params = new URLSearchParams()
-    params.set('keyword', keyword)
-    params.set('page', '0')
-    params.set('size', setting.pagination.size.toString())
-
-    if (location.pathname.includes('library')) {
-      navigate(`/library?${params.toString()}`)
-    } else {
-      navigate(`/library?${params.toString()}`)
-    }
-  }
-
   const onReset = async (data: IItem) => {
     const now = new Date().getTime()
     const newData = {
@@ -180,8 +181,8 @@ export const Item: React.FC<IProps> = ({
       created_date: now,
       last_update: now,
     }
-    await itemApi.updateItem(data.id || '', { ...newData })
-    await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+    const response = await itemApi.updateItem(data.id || '', { ...newData })
+    await onUpdateItemSuccess(response)
     openMessage({
       type: 'success',
       content: `Item has been reset successfully!`,
@@ -190,8 +191,8 @@ export const Item: React.FC<IProps> = ({
 
   const onRedo = async (data: IItem) => {
     const level = data.level === 5 ? 0 : 5
-    await itemApi.updateItem(data.id || '', { level })
-    await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+    const response = await itemApi.updateItem(data.id || '', { level })
+    await onUpdateItemSuccess(response)
     openMessage({
       type: 'success',
       content: `Item has been set to level ${level} successfully!`,
@@ -200,8 +201,8 @@ export const Item: React.FC<IProps> = ({
 
   const archive = async (data: IItem) => {
     const archive = !data.archive
-    await itemApi.updateItem(data.id || '', { archive })
-    await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+    const response = await itemApi.updateItem(data.id || '', { archive })
+    await onUpdateItemSuccess(response)
     openMessage({
       type: 'success',
       content: `Item has been ${archive ? 'archived' : 'unarchived'} successfully!`,
@@ -210,8 +211,8 @@ export const Item: React.FC<IProps> = ({
 
   const favorite = async (data: IItem) => {
     const favorite = !data.favorite
-    await itemApi.updateItem(data.id || '', { favorite })
-    await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+    const response = await itemApi.updateItem(data.id || '', { favorite })
+    await onUpdateItemSuccess(response)
     openMessage({
       type: 'success',
       content: `Item has been ${favorite ? 'favorited' : 'unfavorited'} successfully!`,
@@ -346,12 +347,7 @@ export const Item: React.FC<IProps> = ({
                     data.forms.filter((word) => word).length > 0 &&
                     data.forms.length > 0 && (
                       <div className={classes.word_family}>
-                        <Tags
-                          label={'Form'}
-                          tags={data.forms}
-                          onSearch={onSearch}
-                          active={active}
-                        />
+                        <Tags label={'Form'} tags={data.forms} active={active} />
                       </div>
                     )}
 
@@ -359,12 +355,7 @@ export const Item: React.FC<IProps> = ({
                     data.word_family.filter((word) => word).length > 0 &&
                     data.word_family.length > 0 && (
                       <div className={classes.word_family}>
-                        <Tags
-                          label={'Family'}
-                          tags={data.word_family}
-                          onSearch={onSearch}
-                          active={active}
-                        />
+                        <Tags label={'Family'} tags={data.word_family} active={active} />
                       </div>
                     )}
                 </>
@@ -374,12 +365,7 @@ export const Item: React.FC<IProps> = ({
                 data.relation.filter((word) => word).length > 0 &&
                 data.relation.length > 0 && (
                   <div className={classes.word_family}>
-                    <Tags
-                      label={'Relation'}
-                      tags={data.relation}
-                      onSearch={onSearch}
-                      active={active}
-                    />
+                    <Tags label={'Relation'} tags={data.relation} active={active} />
                   </div>
                 )}
             </div>

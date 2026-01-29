@@ -5,6 +5,8 @@ import { itemApi } from '@/services/firebase/api/item.api'
 import clsx from 'clsx'
 import { useItemModal, useLoading } from '@/helpers/hooks'
 import { usePrompt } from '@/helpers/hooks'
+import { setting } from '@/config/appConfig'
+import { useNavigate } from 'react-router-dom'
 
 interface IPros {
   label?: string
@@ -21,6 +23,8 @@ export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
 
   const { openItemModal } = useItemModal()
   const { openMessage } = usePrompt()
+
+  const navigate = useNavigate()
 
   const getItem = async (origin: string, exact = true) => {
     try {
@@ -46,6 +50,19 @@ export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
     }
   }
 
+  const onNavigate = (keyword: string) => {
+    // Navigate to library with search params
+    const params = new URLSearchParams()
+
+    params.set('keyword', keyword)
+    params.set('page', setting.pagination.page.toString())
+    params.set('size', setting.pagination.size.toString())
+
+    onSearch?.(keyword)
+
+    navigate(`/library?${params.toString()}`)
+  }
+
   return (
     <div className={classes.tagList}>
       <span className={classes.tagLabel}>{label}:</span>
@@ -65,7 +82,7 @@ export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (onSearch) onSearch(tag)
+                  onNavigate(tag)
                 }}
               >
                 <SearchOutlined />

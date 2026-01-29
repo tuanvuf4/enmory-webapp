@@ -10,7 +10,7 @@ import clsx from 'clsx'
 import { useState } from 'react'
 
 interface IMeaningProps {
-  meaning: IMeaning<string[]>
+  meaning: IMeaning
   catId: ECategory
   active?: boolean
 }

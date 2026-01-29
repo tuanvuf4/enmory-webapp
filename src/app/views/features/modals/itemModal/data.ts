@@ -10,7 +10,7 @@ export const exampleItem: IExample = {
   last_update: Timestamp.now().toMillis(),
 }
 
-export const meaningItem: IMeaning<string[]> = {
+export const meaningItem: IMeaning = {
   typeId: EType.NOUN,
   common: true,
   enable: true,

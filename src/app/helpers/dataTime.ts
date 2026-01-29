@@ -9,7 +9,7 @@ export const getTodayDateString = (): string => {
 }
 
 // Check if IOTD is from today
-export const isIotdFromToday = (iotd: IIotd<string[]> | null): boolean => {
+export const isIotdFromToday = (iotd: IIotd | null): boolean => {
   if (!iotd || !iotd.first_of_date) return false
 
   // Get current time
@@ -32,7 +32,7 @@ export const isIotdFromToday = (iotd: IIotd<string[]> | null): boolean => {
 }
 
 // Helper to get IOTD from Redux by category
-export const getIotdFromRedux = (state: any, catId: number): IIotd<string[]> | null => {
+export const getIotdFromRedux = (state: any, catId: number): IIotd | null => {
   switch (catId) {
     case ECategory.WORD:
       return state.iotd.word

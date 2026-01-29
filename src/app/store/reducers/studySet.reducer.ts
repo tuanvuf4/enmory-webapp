@@ -1,4 +1,4 @@
-import { IItemQuiz, TQuiz, IQuiz, IOption } from '@/app/models/item.model'
+import { IItemQuiz, IQuiz, IOption } from '@/app/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export interface IStudySetStatus {
@@ -9,7 +9,7 @@ export interface IStudySetStatus {
 
 export interface IStudySet {
   status: IStudySetStatus
-  list: IItemQuiz<TQuiz, string[]>[]
+  list: IItemQuiz[]
   isSubmit: boolean
   respond: string | number | null
 }
@@ -41,7 +41,7 @@ export const studySetReducer = createSlice({
         ...action.payload,
       }
     },
-    update(state: IStudySet, action: PayloadAction<Partial<IItemQuiz<TQuiz, string[]>>>) {
+    update(state: IStudySet, action: PayloadAction<Partial<IItemQuiz>>) {
       state.list = state.list.map((item) =>
         item.id === action.payload.id ? { ...item, ...action.payload } : { ...item },
       )
@@ -104,7 +104,7 @@ export const studySetReducer = createSlice({
     updateUserRespond(state: IStudySet, action: PayloadAction<string | number | null>) {
       state.respond = action.payload
     },
-    setList(state: IStudySet, action: PayloadAction<IItemQuiz<TQuiz, string[]>[]>) {
+    setList(state: IStudySet, action: PayloadAction<IItemQuiz[]>) {
       state.list = action.payload
     },
     resetStudySet() {

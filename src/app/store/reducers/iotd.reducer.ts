@@ -29,7 +29,7 @@ export const iotdReducer = createSlice({
         if (Object.prototype.hasOwnProperty.call(state, key)) {
           const iotd = state[key as keyof typeof state]
           if (iotd?.item?.id === action.payload.id) {
-            state[key as keyof typeof state] = { ...iotd, item: action.payload } as IIotd<string[]>
+            state[key as keyof typeof state] = { ...iotd, item: action.payload } as IIotd
           }
         }
       }

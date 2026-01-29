@@ -83,7 +83,7 @@ export const useIotd = ({ catId, generate = false }: IIotdRequest, enabled = tru
         })
 
         if (isSuccess && iotd) {
-          dispatch(iotdAction.setIotd(iotd as unknown as IIotd<string[]>))
+          dispatch(iotdAction.setIotd(iotd as unknown as IIotd))
         } else {
           console.warn(`[IOTD] Failed to fetch IOTD for category ${catId}`)
         }
@@ -141,7 +141,7 @@ export const useRefetchIotd = () => {
           generate: true,
         })
         if (isSuccess && iotd) {
-          dispatch(iotdAction.setIotd(iotd as unknown as IIotd<string[]>))
+          dispatch(iotdAction.setIotd(iotd as unknown as IIotd))
         }
       } catch (err) {
         console.error(`[IOTD] Error refetching IOTD for category ${catId}:`, err)

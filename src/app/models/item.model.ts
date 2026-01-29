@@ -78,7 +78,7 @@ export interface IMeaning {
   examples: IExample[] | string[]
 }
 
-export interface IItem<M = string[]> {
+export interface IItem {
   id?: string
   uid?: string
   catId?: ECategory
@@ -100,14 +100,14 @@ export interface IItem<M = string[]> {
     phoneNumber: string
   }
   count?: number
-  forms: M
-  collocations: M
-  word_family: M
-  relation: M
+  forms: string[]
+  collocations: string[]
+  word_family: string[]
+  relation: string[]
   meanings?: IMeaning[]
 }
 
-export interface IIotd<M = string[]> {
+export interface IIotd {
   id: string
   itemId: string
   uid: string
@@ -115,7 +115,7 @@ export interface IIotd<M = string[]> {
   first_of_date: number
   last_of_date: number
   created_date?: number
-  item: IItem<M>
+  item: IItem
 }
 
 export interface IIotdRequest {
@@ -155,7 +155,7 @@ export interface IQuiz<A> {
 
 export type TQuiz = string | Partial<IOption<string, boolean>>[]
 
-export interface IItemQuiz<A = TQuiz, S = string> extends IItem<S> {
+export interface IItemQuiz<A = TQuiz> extends IItem {
   quiz: IQuiz<A>
 }
 

@@ -34,7 +34,7 @@ export const useAutoComplete = (
         if (type === 'item') {
           itemApi
             .getItemAutoComplete({ ...query, exact })
-            .then((response: IHttpResponse<IItem<string>[]>) => {
+            .then((response: IHttpResponse<IItem[]>) => {
               if (!response.content || response.content.length === 0) {
                 setOptions([])
               }

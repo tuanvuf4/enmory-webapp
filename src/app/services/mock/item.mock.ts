@@ -1,6 +1,6 @@
 import { IItem, IMeaning } from 'src/app/models/item.model'
 
-export const meaningClient: IMeaning<string[]> = {
+export const meaningClient: IMeaning = {
   typeId: 0,
   enable: true,
   common: false,
@@ -15,7 +15,7 @@ export const meaningClient: IMeaning<string[]> = {
   pronunciation: { uk: '', us: '', common: '' },
 }
 
-export const meaningServer: IMeaning<string> = {
+export const meaningServer: IMeaning = {
   typeId: 0,
   enable: true,
   common: false,
@@ -24,13 +24,13 @@ export const meaningServer: IMeaning<string> = {
   definition: '',
   grammar: '',
   collocations: '',
-  synonyms: '',
-  antonyms: '',
+  synonyms: [],
+  antonyms: [],
   pronunciation: { uk: '', us: '', common: '' },
   examples: [{ origin: '', translation: '', note: '' }],
 }
 
-export const itemClient: IItem<string[]> = {
+export const itemClient: IItem = {
   id: '',
   catId: 1,
   created_date: 1,
@@ -50,7 +50,7 @@ export const itemClient: IItem<string[]> = {
   meanings: [meaningClient],
 }
 
-export const itemServer: IItem<string> = {
+export const itemServer: IItem = {
   id: '',
   catId: 1,
   created_date: 1,
@@ -63,9 +63,9 @@ export const itemServer: IItem<string> = {
   uid: '',
   origin: '',
   favorite: false,
-  forms: '',
-  collocations: '',
-  word_family: '',
-  relation: '',
+  forms: [],
+  collocations: [],
+  word_family: [],
+  relation: [],
   meanings: [meaningServer],
 }

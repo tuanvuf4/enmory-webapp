@@ -260,9 +260,7 @@ const getItems = async (
 /**
  * Get items for autocomplete
  */
-const getItemAutoComplete = async (
-  params: IItemRequestParams,
-): Promise<IHttpResponse<IItem<string>[]>> => {
+const getItemAutoComplete = async (params: IItemRequestParams): Promise<IHttpResponse<IItem[]>> => {
   try {
     const constraints = buildQueryConstraintsForAutocomplete(params)
     constraints.push(limit(params.size)) // Limit for autocomplete
@@ -273,7 +271,7 @@ const getItemAutoComplete = async (
     let items = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    })) as unknown as IItem<string>[]
+    })) as unknown as IItem[]
 
     // Note: Keyword filtering is now done server-side via startAt/endAt
     // No need for additional client-side filtering

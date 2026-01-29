@@ -112,7 +112,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
           })
           meanings.push(...(await Promise.all(meaningPromises)))
         }
-        const dataSubmit: IItem<string[]> = {
+        const dataSubmit: IItem = {
           ...data,
           collocations: data.collocations || [],
           forms: data.forms || [],
@@ -179,7 +179,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
   }
 
   useEffect(() => {
-    if (mode === 'edit' && item) setOrigin(item as IItem<string[]>)
+    if (mode === 'edit' && item) setOrigin(item as IItem)
     trigger()
   }, [])
 
@@ -198,7 +198,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
 
   useEffect(() => {
     if (item) {
-      setOrigin(item as IItem<string[]>)
+      setOrigin(item as IItem)
       reset(item)
     } else {
       if (appConfig.appType === EAppType.EXTENSION)

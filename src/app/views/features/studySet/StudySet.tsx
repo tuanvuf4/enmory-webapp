@@ -2,7 +2,7 @@ import { ReloadOutlined } from '@ant-design/icons'
 import { setting } from '@/config/appConfig'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { getType } from '@/helpers/item'
-import { IItemQuiz, TQuiz, ECategory, EQuiz, IOption, IAnswer, IItem } from '@/models/item.model'
+import { IItemQuiz, ECategory, EQuiz, IOption, IAnswer, IItem } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { IStudySetStatus, studySetAction } from '@/store/reducers/studySet.reducer'
@@ -19,7 +19,7 @@ export const StudySet: React.FC = () => {
   const { token } = theme.useToken()
   const classes = styles()
 
-  const [item, setItem] = useState<IItemQuiz<TQuiz, string[]>>()
+  const [item, setItem] = useState<IItemQuiz>()
   const [loading, setLoading] = useState(false)
   const inputEl = useRef<InputRef | null>(null)
 
@@ -87,7 +87,7 @@ export const StudySet: React.FC = () => {
                   })),
             result: false,
           },
-        })) as unknown as IItemQuiz<TQuiz, string[]>[]
+        })) as unknown as IItemQuiz[]
 
         dispatch(studySetAction.setList(formattedItems))
         dispatch(studySetAction.updateProgress({ ...params }))
@@ -138,26 +138,22 @@ export const StudySet: React.FC = () => {
         (item?.quiz.answer as string).trim().toLowerCase() ===
           (respond as string).trim().toLowerCase()
       ) {
-        updateItemStatus(item as IItemQuiz<TQuiz, string[]>, (item?.level as number) + 1, true)
+        updateItemStatus(item as IItemQuiz, (item?.level as number) + 1, true)
       } else {
-        updateItemStatus(item as IItemQuiz<TQuiz, string[]>, EItemLevel.ZERO, false)
+        updateItemStatus(item as IItemQuiz, EItemLevel.ZERO, false)
       }
     }
 
     if (type === EQuiz.MULTI_CHOICE) {
       if (item?.id === respond) {
-        updateItemStatus(item as IItemQuiz<TQuiz, string[]>, (item?.level as number) + 1, true)
+        updateItemStatus(item as IItemQuiz, (item?.level as number) + 1, true)
       } else {
-        updateItemStatus(item as IItemQuiz<TQuiz, string[]>, (item?.level as number) - 1, false)
+        updateItemStatus(item as IItemQuiz, (item?.level as number) - 1, false)
       }
     }
   }
 
-  const updateItemStatus = async (
-    item: IItemQuiz<TQuiz, string[]>,
-    level: number,
-    result: boolean,
-  ) => {
+  const updateItemStatus = async (item: IItemQuiz, level: number, result: boolean) => {
     const { quiz, ...rest } = item
     if (level < EItemLevel.ZERO) level = EItemLevel.ZERO
     if (level > EItemLevel.FIVE) level = EItemLevel.FIVE
@@ -208,15 +204,16 @@ export const StudySet: React.FC = () => {
     }
   }
 
-  const getClassValidate = (
-    ans: IOption<string, boolean>,
-    item: IItemQuiz<IOption<string, boolean>[], string[]>,
-    isSubmit: boolean,
-  ) => {
+  const getClassValidate = (ans: IOption<string, boolean>, item: IItemQuiz, isSubmit: boolean) => {
     if (isSubmit && ans.value && ans.id === item.id) return 'correct'
     if (isSubmit && ans.value && ans.id !== item.id) return 'active incorrect'
     if (isSubmit && ans.value) return 'active correct'
-    if (isSubmit && ans.id === item.id && item?.quiz.answer.findIndex((item) => item.value) === -1)
+    if (
+      isSubmit &&
+      ans.id === item.id &&
+      Array.isArray(item?.quiz.answer) &&
+      item.quiz.answer.findIndex((ans) => ans.value) === -1
+    )
       return 'incorrect'
     if (isSubmit && !ans.value && ans.id === item.id) return 'correct'
     if (ans.value) return 'active'
@@ -416,7 +413,7 @@ export const StudySet: React.FC = () => {
                     className={clsx(
                       getClassValidate(
                         ans as IOption<string, boolean>,
-                        item as IItemQuiz<IOption<string, boolean>[], string[]>,
+                        item as IItemQuiz,
                         isSubmit,
                       ),
                     )}

@@ -3,6 +3,7 @@ import {
   BookOutlined,
   CustomerServiceOutlined,
   HomeOutlined,
+  InfoCircleOutlined,
   LoginOutlined,
   PlusOutlined,
   SearchOutlined,
@@ -77,6 +78,11 @@ export const menus: MenuProps['items'] = [
   //   icon: <InfoCircleOutlined className='icon' />,
   //   label: 'schedule',
   // },
+  {
+    key: '11',
+    icon: <InfoCircleOutlined className='icon' />,
+    label: 'about',
+  },
 ]
 
 export const menusExt: MenuProps['items'] = [
@@ -137,5 +143,9 @@ export const keyPaths = [
   {
     key: '10',
     path: '/example',
+  },
+  {
+    key: '11',
+    path: '/about',
   },
 ]

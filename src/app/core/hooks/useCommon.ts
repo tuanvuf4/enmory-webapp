@@ -77,7 +77,7 @@ export const useIotd = ({ catId, generate = false }: IIotdRequest, enabled = tru
       setIsLoading(true)
       setError(null)
       try {
-        const { isSuccess, content: iotd } = await commonApi.getItemOfTheDayByCatId({
+        const { isSuccess, content: iotd } = await commonApi.getIotdByCatId({
           catId,
           generate,
         })
@@ -136,7 +136,7 @@ export const useRefetchIotd = () => {
 
       // Fetch new IOTD
       try {
-        const { isSuccess, content: iotd } = await commonApi.getItemOfTheDayByCatId({
+        const { isSuccess, content: iotd } = await commonApi.getIotdByCatId({
           catId,
           generate: true,
         })

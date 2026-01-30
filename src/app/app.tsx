@@ -35,15 +35,11 @@ export const App = () => {
 
   // Update Redux store when categories and types are fetched
   useEffect(() => {
-    if (categories) {
-      dispatch(settingAction.setCategories(categories))
-    }
+    if (categories) dispatch(settingAction.setCategories(categories))
   }, [categories, dispatch])
 
   useEffect(() => {
-    if (types) {
-      dispatch(settingAction.setTypes(types))
-    }
+    if (types) dispatch(settingAction.setTypes(types))
   }, [types, dispatch])
 
   if (isInitializing) {
@@ -51,10 +47,8 @@ export const App = () => {
   }
 
   return (
-    <>
-      <AppLayout>
-        <RouterElement />
-      </AppLayout>
-    </>
+    <AppLayout>
+      <RouterElement />
+    </AppLayout>
   )
 }

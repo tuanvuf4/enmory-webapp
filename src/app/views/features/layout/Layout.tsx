@@ -53,7 +53,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
       window.removeEventListener('resize', () => updateViewMode(window.innerWidth))
       window.removeEventListener('load', () => updateViewMode(window.innerWidth))
     }
-  }, [window.innerWidth])
+  }, [])
 
   useEffect(() => initLayout(), [])
 

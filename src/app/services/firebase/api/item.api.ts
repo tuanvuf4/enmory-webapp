@@ -400,26 +400,12 @@ const getStudySet = async (
 
     // First, fetch all items for all categories
     for (const studySet of studySets) {
+      if (studySet.size === 0 || !studySet.size) {
+        continue
+      }
       const itemsWithMeanings = await getItemsInCategory(studySet.id, studySet.size)
 
-      const requestedSize = studySet.size || 10
-      const availableCount = itemsWithMeanings.length
-
-      if (availableCount < requestedSize) {
-        itemsWithMeanings.push(
-          ...(await getItemsInCategory(studySet.id, requestedSize - availableCount)),
-        )
-        console.warn(
-          `Category ${studySet.id}: Only ${availableCount} items available, but ${requestedSize} requested`,
-        )
-      }
-
-      // Randomly select items from this category
-      const selectedItems = itemsWithMeanings
-        .sort(() => Math.random() - 0.5)
-        .slice(0, requestedSize)
-
-      allItems.push(...selectedItems)
+      allItems.push(...itemsWithMeanings)
     }
 
     // Fetch examples for all items

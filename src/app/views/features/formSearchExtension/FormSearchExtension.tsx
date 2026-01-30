@@ -17,7 +17,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
-import { NoResult } from '@/views/components'
+import { NotFound } from '@/views/components'
 
 interface IProps {
   filter?: boolean
@@ -93,7 +93,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                 <AutoComplete
                   value={value}
                   placeholder='Enter keyword...'
-                  notFoundContent={<NoResult showAddBtn={false} />}
+                  notFoundContent={<NotFound showButton={false} />}
                   children={
                     <Input
                       className={classes.searchExampleInput}

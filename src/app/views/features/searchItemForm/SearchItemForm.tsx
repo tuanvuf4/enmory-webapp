@@ -17,7 +17,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { useLocation } from 'react-router-dom'
 import styles from './style'
 import clsx from 'clsx'
-import { NoResult } from '@/views/components'
+import { NotFound } from '@/views/components'
 import { initSearchFormItem } from '@/constant/index'
 import { initItem } from '../modals/itemModal'
 import { BaseOptionType } from 'antd/es/select'
@@ -103,13 +103,15 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   value={value}
                   placeholder='Enter keyword...'
                   notFoundContent={
-                    <NoResult
-                      onAdd={() => {
+                    <NotFound
+                      onClickBtn={() => {
                         openItemModal('add', {
                           ...initItem,
                           origin: getValues('keyword'),
                         })
                       }}
+                      showButton={true}
+                      buttonLabel='Add'
                     />
                   }
                   children={

@@ -128,7 +128,7 @@ const cleanupOldIotds = async (catId: number, force = false) => {
  * Create a new Item of the Day for a specific category
  * Gets a random item and creates a new IOTD document
  */
-const createItemOfTheDayByCatId = async ({
+const createIotdByCatId = async ({
   catId,
   userId,
 }: {
@@ -191,7 +191,7 @@ const createItemOfTheDayByCatId = async ({
 /**
  * Get or create Item of the Day for a specific category
  */
-const getItemOfTheDayByCatId = async ({
+const getIotdByCatId = async ({
   catId,
   generate = true,
 }: IIotdRequest): Promise<IHttpResponse<IIotd>> => {
@@ -248,7 +248,7 @@ const getItemOfTheDayByCatId = async ({
 
     // If no IOTD exists for today, create a new one regardless of `generate`.
     // `generate=true` still forces cleanup of all existing IOTDs earlier.
-    return await createItemOfTheDayByCatId({ catId, userId: currentUser.uid })
+    return await createIotdByCatId({ catId, userId: currentUser.uid })
   } catch (error) {
     return {
       isSuccess: false,
@@ -299,8 +299,8 @@ const getCurrentUser = () => {
 export const commonApi = {
   getCategories,
   getTypes,
-  getItemOfTheDayByCatId,
-  createItemOfTheDayByCatId,
+  getIotdByCatId,
+  createIotdByCatId,
   deleteIotd,
   checkAuth,
   getCurrentUser,

@@ -87,7 +87,7 @@ const globalStyle = () => {
       margin: `${token.size * 2}px 0`,
     },
     contentPage: {
-      padding: [token.size, token.size, token.size * 3],
+      padding: [token.size * 2, token.size, token.size * 3],
       background: token.colorBgBase,
     },
     dark: {

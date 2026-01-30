@@ -8,7 +8,7 @@ import { useForm, Controller } from 'react-hook-form'
 import styles from './style'
 import exStyles from '@/views/features/item/style'
 import clsx from 'clsx'
-import { NoResult } from '@/views/components'
+import { NotFound } from '@/views/components'
 import { ExampleItem } from '../exampleItem'
 import { Loading } from '../loading'
 import { useDispatch, useSelector } from '@/core/hooks'
@@ -145,7 +145,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
                 value={value}
                 placeholder='Keyword'
                 className={classes.autoSearchInput}
-                notFoundContent={<NoResult showAddBtn={false} />}
+                notFoundContent={<NotFound showButton={false} />}
                 children={
                   <Input
                     className={classes.searchExampleInput}

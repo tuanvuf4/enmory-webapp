@@ -1,17 +1,18 @@
 import clsx from 'clsx'
 import globalStyle from '@/style/appStyle'
 import { Alert } from 'antd'
+import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 
 interface IPageNotFoundProps {
   text?: string
 }
 
-export const About = ({ text = 'About page' }: IPageNotFoundProps) => {
+export const About = ({ text = 'About' }: IPageNotFoundProps) => {
   const globalClasses = globalStyle()
 
   return (
     <div className={globalClasses.container}>
-      <h2 className={clsx([globalClasses.pageTitle])}>{text}</h2>
+      <PageTitle content={text} />
 
       <div className={clsx(globalClasses.contentPage, globalClasses.dark)}>
         <Alert

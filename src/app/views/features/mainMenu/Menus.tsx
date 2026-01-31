@@ -19,7 +19,7 @@ export interface IMenus {
   path: string
 }
 
-export const authMenus: MenuProps['items'] = [
+export const menus: MenuProps['items'] = [
   {
     key: '1',
     icon: <HomeOutlined className='icon' />,
@@ -40,24 +40,24 @@ export const authMenus: MenuProps['items'] = [
   //   icon: <ReadOutlined className='icon' />,
   //   label: 'example',
   // },
-  // {
-  //   key: '11',
-  //   icon: <CalendarOutlined className='icon' />,
-  //   label: 'Marker',
-  // },
-  // {
-  //   key: '7',
-  //   icon: <InfoCircleOutlined className='icon' />,
-  //   label: 'schedule',
-  // },
   {
     key: '6',
     icon: <AreaChartOutlined className='icon' />,
     label: 'statistic',
   },
+  {
+    key: '11',
+    icon: <InfoCircleOutlined className='icon' />,
+    label: 'About',
+  },
+  // {
+  //   key: '7',
+  //   icon: <InfoCircleOutlined className='icon' />,
+  //   label: 'schedule',
+  // },
 ]
 
-export const menus: MenuProps['items'] = [
+export const authMenus: MenuProps['items'] = [
   // {
   //   key: '1',
   //   icon: <HomeOutlined className='icon' />,

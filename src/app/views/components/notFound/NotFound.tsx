@@ -1,3 +1,4 @@
+import globalStyle from '@/style/appStyle'
 import { PlusOutlined } from '@ant-design/icons'
 import { Button, theme } from 'antd'
 import clsx from 'clsx'
@@ -7,14 +8,20 @@ interface NotFoundProps {
   showButton?: boolean
   buttonLabel?: string
   onClickBtn?: () => void
-  label?: string
+  label?: JSX.Element | string
+}
+
+const PageTitle = ({ content }: { content: JSX.Element | string }) => {
+  const globalClasses = globalStyle()
+
+  return <h2 className={clsx(globalClasses.pageTitle)}>{content}</h2>
 }
 
 export const NotFound = ({
   onClickBtn,
   showButton = false,
   buttonLabel = 'Homepage',
-  label = 'Not Found!',
+  label = <PageTitle content={'404 - Not Found'} />,
 }: NotFoundProps) => {
   const { token } = theme.useToken()
 
@@ -28,14 +35,10 @@ export const NotFound = ({
 
   return (
     <div
-      className={`flex items-center ${label && buttonLabel ? 'justify-between' : 'justify-center'}`}
+      className={`flex items-center ${showButton && label && buttonLabel ? 'justify-between' : 'justify-center'}`}
       onClick={(e) => e.stopPropagation()}
     >
-      {label && (
-        <h4 className={'m-0'} style={{ color: token.colorText }}>
-          {label}
-        </h4>
-      )}
+      {label}
 
       {showButton && (
         <Button

@@ -4,6 +4,7 @@ import globalStyle from '@/style/appStyle'
 import { AddedItemChart } from '@/views/features/chart/addedItemChart/AddedItemChart'
 import { OverviewChart } from '@/views/features/chart/overviewChart/OverviewChart'
 import { ProgressChart } from '@/views/features/chart/progressChart/ProgressChart'
+import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 
 const Statistic = () => {
   const { token } = theme.useToken()
@@ -11,7 +12,7 @@ const Statistic = () => {
 
   return (
     <div className={globalClasses.container}>
-      <h2 className={classNames(globalClasses.pageTitle)}>Statistic</h2>
+      <PageTitle content={'Statistic'} />
 
       <div className={classNames(globalClasses.contentPage)}>
         <Space

@@ -22,6 +22,7 @@ import { styleConfig } from '@/style/appStyle'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { IHttpResponse } from '@/models/http.model'
+import { initItem } from '../modals'
 
 interface IProps {
   action?: boolean
@@ -174,12 +175,11 @@ export const Item: React.FC<IProps> = ({
   }
 
   const onReset = async (data: IItem) => {
-    const now = new Date().getTime()
-    const newData = {
-      level: 0,
-      count: 0,
-      created_date: now,
-      last_update: now,
+    const newData: IItem = {
+      ...data,
+      ...initItem,
+      origin: data.origin,
+      origin_lowercase: data.origin.toLowerCase(),
     }
     const response = await itemApi.updateItem(data.id || '', { ...newData })
     await onUpdateItemSuccess(response)
@@ -333,7 +333,7 @@ export const Item: React.FC<IProps> = ({
                         marginLeft: token.size / 2,
                       }}
                     >
-                      {data.user.username}
+                      {data.user.firstName} {data.user.lastName}
                     </span>
                   )}
                 </h5>

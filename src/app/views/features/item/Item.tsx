@@ -332,7 +332,7 @@ export const Item: React.FC<IProps> = ({
                         marginLeft: token.size / 2,
                       }}
                     >
-                      {data.user.username}
+                      {data.user.firstName} {data.user.lastName}
                     </span>
                   )}
                 </h5>

@@ -93,11 +93,9 @@ export interface IItem {
   is_deleted?: boolean
   archive: boolean
   user?: {
-    username: string
     firstName: string
     lastName: string
     email: string
-    phoneNumber: string
   }
   count?: number
   forms: string[]

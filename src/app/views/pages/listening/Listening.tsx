@@ -1,4 +1,5 @@
 import globalStyle from '@/style/appStyle'
+import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 import { Alert } from 'antd'
 import clsx from 'clsx'
 
@@ -7,7 +8,7 @@ export const Listening = () => {
 
   return (
     <div className={globalClasses.container}>
-      <h2 className={clsx(globalClasses.pageTitle)}>Practice listening skill</h2>
+      <PageTitle content={'Practice listening skill'} />
 
       <div className={clsx(globalClasses.contentPage, globalClasses.dark)}>
         <Alert

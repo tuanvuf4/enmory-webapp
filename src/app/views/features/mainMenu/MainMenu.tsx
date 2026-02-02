@@ -55,7 +55,7 @@ export const MainMenu: React.FC<IPros> = ({ direction, onPageChange }: IPros) =>
     if (appConfig.appType === EAppType.EXTENSION) {
       setMenu(menusExt)
     } else {
-      isAuth ? setMenu(authMenus) : setMenu(menus)
+      isAuth ? setMenu(menus) : setMenu(authMenus)
     }
   }, [isAuth])
 

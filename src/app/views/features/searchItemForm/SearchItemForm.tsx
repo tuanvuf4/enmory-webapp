@@ -104,6 +104,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   placeholder='Enter keyword...'
                   notFoundContent={
                     <NotFound
+                      label={<span style={{ color: token.colorText }}>Not found</span>}
                       onClickBtn={() => {
                         openItemModal('add', {
                           ...initItem,

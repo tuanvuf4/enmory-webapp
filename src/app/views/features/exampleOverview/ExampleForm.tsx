@@ -2,7 +2,7 @@ import { SyncOutlined } from '@ant-design/icons'
 import { IExample } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import { theme, Space, Row, Col, Button, Select, Flex } from 'antd'
-import { PropsWithChildren, useCallback, useEffect, useState } from 'react'
+import { PropsWithChildren, useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import styles from './style'
 import clsx from 'clsx'
@@ -17,6 +17,7 @@ interface IProps {
   data?: IExample
   theme?: 'dark' | 'light'
   mode?: ExampleMode
+  resetAfterSave?: boolean
   showSelectMode?: boolean
   onSuccess?: (data: IExample) => void
   onCancel?: () => void
@@ -27,6 +28,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   mode = ExampleMode.Default,
   data,
   showSelectMode = false,
+  resetAfterSave = true,
   onSuccess,
   onCancel,
 }) => {
@@ -71,27 +73,25 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
     try {
       let result: IExample | null
 
-      if (data?.id) {
-        result = await updateMutation.mutateAsync({
-          ...formData,
-          id: data.id,
-          note: formData.note || '',
-        })
-        dispatch(exampleAction.batchUpdate(result ? [result] : []))
-        openNotification({ type: 'success', message: 'Update example successful!' })
-        closeExampleModal()
-      } else {
-        result = await createMutation.mutateAsync({
-          ...formData,
-          note: formData.note || '',
-        })
-        openNotification({ type: 'success', message: 'Add example successful!' })
-        closeExampleModal()
+      const updatedData = {
+        ...formData,
+        id: data?.id ?? '',
+        origin_lowercase: formData.origin.toLowerCase(),
+        note: formData.note || '',
       }
 
+      if (data?.id) {
+        result = await updateMutation.mutateAsync({ ...updatedData })
+        dispatch(exampleAction.batchUpdate(result ? [result] : []))
+        openNotification({ type: 'success', message: 'Update example successful!' })
+      } else {
+        result = await createMutation.mutateAsync({ ...updatedData })
+        openNotification({ type: 'success', message: 'Add example successful!' })
+      }
+
+      closeExampleModal()
       setAnswer('')
-      setIsChecked(false)
-      reset(initValues)
+      if (resetAfterSave) reset(initValues)
       if (result) {
         onSuccess?.(result)
       }
@@ -109,16 +109,25 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
     setIsChecked(false)
   }
 
-  const getRandomExamples = useCallback(async () => {
+  const getRandomExamples = async () => {
     setLoading(true)
 
-    const { content } = await exampleApi.getRandomExamples(10)
-    reset(content ? { ...content[0] } : { ...initValues })
-    setLoading(false)
-  }, [])
+    try {
+      const { isSuccess, content } = await exampleApi.getRandomExamples(1)
+      if (isSuccess && content) {
+        reset(content ? { ...content[0] } : { ...initValues })
+      }
+    } catch (error) {
+      console.error('Failed to load random examples:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    if (exMode === ExampleMode.Translation) getRandomExamples()
+    if (exMode === ExampleMode.Translation) {
+      getRandomExamples()
+    }
   }, [])
 
   return (

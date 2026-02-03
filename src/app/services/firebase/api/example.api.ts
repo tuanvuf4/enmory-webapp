@@ -146,7 +146,12 @@ const getRandomExamples = async (size: number): Promise<IHttpResponse<IExample[]
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) {
-      throw new Error('User not authenticated')
+      return {
+        isSuccess: false,
+        message: 'User not authenticated',
+        content: [],
+        statusCode: 401,
+      }
     }
 
     const randomStart = Math.random()
@@ -176,7 +181,12 @@ const getRandomExamples = async (size: number): Promise<IHttpResponse<IExample[]
     }
   } catch (error) {
     console.error('Error fetching random examples:', error)
-    throw error
+    return {
+      isSuccess: false,
+      message: error instanceof Error ? error.message : 'Failed to fetch random examples',
+      content: [],
+      statusCode: 500,
+    }
   }
 }
 

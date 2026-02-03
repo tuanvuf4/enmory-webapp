@@ -50,6 +50,7 @@ const Home = () => {
 
                   <Widget title={'Translator!'}>
                     <ExampleForm
+                      resetAfterSave={false}
                       showSelectMode={true}
                       theme={'dark'}
                       mode={ExampleMode.Translation}

@@ -145,7 +145,12 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
                 value={value}
                 placeholder='Keyword'
                 className={classes.autoSearchInput}
-                notFoundContent={<NotFound showButton={false} />}
+                notFoundContent={
+                  <NotFound
+                    classNames={{ container: 'justify-between' }}
+                    label={<span style={{ color: token.colorText }}>Not found</span>}
+                  />
+                }
                 children={
                   <Input
                     className={classes.searchExampleInput}

@@ -65,9 +65,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
       try {
         showLoading()
 
-        console.log(`*** option *** `, option)
         const { isSuccess, content } = await itemApi.getItemById(option.id)
-        console.log(`*** content *** `, content)
         if (isSuccess && content) {
           openItemModal('view', content)
           hideLoading()
@@ -111,8 +109,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                           origin: getValues('keyword'),
                         })
                       }}
-                      showButton={true}
-                      buttonLabel='Add'
                     />
                   }
                   children={

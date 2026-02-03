@@ -38,7 +38,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
 
   const { confirmDeleteModal } = usePrompt()
 
-  const { control, getValues, trigger, setValue } = useFormContext<IItem>()
+  const { control, getValues, trigger, watch } = useFormContext<IItem>()
 
   const { fields, remove, prepend } = useFieldArray({ control, name: 'meanings' })
 
@@ -80,12 +80,16 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
       </Row>
 
       {fields.map((field, index) => {
+        const enable = watch(`meanings.${index}.enable`)
+        const definition = watch(`meanings.${index}.definition`)
+        const translation = watch(`meanings.${index}.translation`)
+
         return (
           <div
             className={clsx(
               classes.contentStyle,
-              getValues(`meanings.${index}.enable`) ? '' : classes.disableMeaning,
-              getValues(`meanings.${index}.translation`) ? '' : classes.disableMeaning,
+              !enable && classes.disableMeaning,
+              !definition && !translation && classes.disableMeaning,
             )}
             key={field.id || index}
           >
@@ -375,23 +379,12 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                         <Controller
                           control={control}
                           name={`meanings.${index}.note`}
-                          render={({ field: { onChange, value } }) => {
-                            return (
-                              // <TextArea
-                              //   autoSize={{ minRows: 2, maxRows: 4 }}
-                              //   value={value}
-                              //   placeholder='Note'
-                              //   onChange={onChange}
-                              // />
-                              <TextEditor
-                                content={value}
-                                onChange={(content: any) => {
-                                  setValue(`meanings.${index}.note`, content ?? '')
-                                  onChange(content)
-                                }}
-                              />
-                            )
-                          }}
+                          render={({ field: { onChange, value } }) => (
+                            <TextEditor
+                              content={value}
+                              onChange={(content: any) => onChange(content ?? '')}
+                            />
+                          )}
                         />
                       </Col>
                     </Row>
@@ -410,17 +403,8 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                           render={({ field: { onChange, value } }) => (
                             <TextEditor
                               content={value}
-                              onChange={(content: any) => {
-                                setValue(`meanings.${index}.definition`, content ?? '')
-                                onChange(content)
-                              }}
+                              onChange={(content: any) => onChange(content ?? '')}
                             />
-                            // <TextArea
-                            //   autoSize={{ minRows: 2, maxRows: 4 }}
-                            //   placeholder='Definition'
-                            //   onChange={onChange}
-                            //   value={value}
-                            // />
                           )}
                         />
                       </Col>
@@ -438,17 +422,9 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                           control={control}
                           name={`meanings.${index}.translation`}
                           render={({ field: { onChange, value } }) => (
-                            // <TextArea
-                            //   {...field}
-                            //   autoSize={{ minRows: 2, maxRows: 4 }}
-                            //   placeholder='Translation'
-                            // />
                             <TextEditor
                               content={value}
-                              onChange={(content: any) => {
-                                setValue(`meanings.${index}.translation`, content ?? '')
-                                onChange(content)
-                              }}
+                              onChange={(content: any) => onChange(content ?? '')}
                             />
                           )}
                         />
@@ -469,17 +445,8 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                           render={({ field: { onChange, value } }) => (
                             <TextEditor
                               content={value}
-                              onChange={(content: any) => {
-                                setValue(`meanings.${index}.collocations`, content ?? '')
-                                onChange(content)
-                              }}
+                              onChange={(content: any) => onChange(content ?? '')}
                             />
-                            // <TextArea
-                            //   autoSize={{ minRows: 1, maxRows: 4 }}
-                            //   value={value}
-                            //   placeholder=''
-                            //   onChange={onChange}
-                            // />
                           )}
                         />
                       </Col>
@@ -499,17 +466,8 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                           render={({ field: { onChange, value } }) => (
                             <TextEditor
                               content={value}
-                              onChange={(content: any) => {
-                                setValue(`meanings.${index}.grammar`, content ?? '')
-                                onChange(content)
-                              }}
+                              onChange={(content: any) => onChange(content ?? '')}
                             />
-                            // <TextArea
-                            //   autoSize={{ minRows: 1, maxRows: 4 }}
-                            //   value={value}
-                            //   placeholder=''
-                            //   onChange={onChange}
-                            // />
                           )}
                         />
                       </Col>

@@ -100,7 +100,9 @@ export const Library: React.FC = () => {
           </div>
         )}
 
-        {!isLoading && listItem.length === 0 && <NotFound />}
+        {!isLoading && listItem.length === 0 && (
+          <NotFound classNames={{ container: 'justify-center' }} showButton={false} />
+        )}
       </div>
     </>
   )

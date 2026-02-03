@@ -267,7 +267,6 @@ export class FirebaseAuthService {
       const userDocRef = doc(this.db, 'users', uid)
       const userDoc = await getDoc(userDocRef)
 
-      console.log(`*** exist *** `, userDoc.exists())
       if (userDoc.exists()) {
         return userDoc.data() as IUserProfile
       }

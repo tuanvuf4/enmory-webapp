@@ -3,7 +3,7 @@
   "tasks": [
     {
       "type": "npm",
-      "script": "build",
+      "script": "npm: build",
       "group": "build",
       "problemMatcher": [],
       "label": "npm: build",
@@ -11,11 +11,19 @@
     },
     {
       "type": "npm",
-      "script": "deploy",
+      "script": "build:web",
       "group": "build",
       "problemMatcher": [],
-      "label": "npm: deploy",
-      "detail": "npm run format && npm run build && firebase deploy"
+      "label": "build:web",
+      "detail": "tsc -b && env-cmd -f .env.web vite build"
+    },
+    {
+      "type": "npm",
+      "script": "deploy:web",
+      "group": "build",
+      "problemMatcher": [],
+      "label": "deploy:web",
+      "detail": "npm run format && npm run build:web && firebase deploy"
     }
   ]
 }

@@ -130,25 +130,26 @@ export const StudySet: React.FC = () => {
     }
   }
 
-  const onSubmit = (type: EQuiz) => {
+  const onSubmit = async (type: EQuiz) => {
     dispatch(studySetAction.isSubmitAnswer(true))
+
     if (type === EQuiz.FILL_IN_BLANK) {
       if (
         respond &&
         (item?.quiz.answer as string).trim().toLowerCase() ===
           (respond as string).trim().toLowerCase()
       ) {
-        updateItemStatus(item as IItemQuiz, (item?.level as number) + 1, true)
+        await updateItemStatus(item as IItemQuiz, (item?.level as number) + 1, true)
       } else {
-        updateItemStatus(item as IItemQuiz, EItemLevel.ZERO, false)
+        await updateItemStatus(item as IItemQuiz, EItemLevel.ZERO, false)
       }
     }
 
     if (type === EQuiz.MULTI_CHOICE) {
       if (item?.id === respond) {
-        updateItemStatus(item as IItemQuiz, (item?.level as number) + 1, true)
+        await updateItemStatus(item as IItemQuiz, (item?.level as number) + 1, true)
       } else {
-        updateItemStatus(item as IItemQuiz, (item?.level as number) - 1, false)
+        await updateItemStatus(item as IItemQuiz, (item?.level as number) - 1, false)
       }
     }
   }
@@ -157,6 +158,7 @@ export const StudySet: React.FC = () => {
     const { quiz, ...rest } = item
     if (level < EItemLevel.ZERO) level = EItemLevel.ZERO
     if (level > EItemLevel.FIVE) level = EItemLevel.FIVE
+
     dispatch(
       studySetAction.update({
         id: item.id,
@@ -165,10 +167,18 @@ export const StudySet: React.FC = () => {
         quiz: { ...item.quiz, result: result },
       }),
     )
+
     await itemApi.updateItem(item.id ?? '', {
       ...rest,
+      ...item,
       level: level,
       count: rest.count && rest.count >= 0 ? rest.count + 1 : 1,
+      meanings: item?.meanings?.map((meaning) => ({
+        ...meaning,
+        examples: meaning.examples.map((example) =>
+          typeof example === 'string' ? example : example.id || '',
+        ),
+      })),
     })
   }
 

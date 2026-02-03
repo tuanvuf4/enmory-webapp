@@ -297,9 +297,9 @@ const getItemAutoComplete = async (params: IItemRequestParams): Promise<IHttpRes
 /**
  * Get single item by ID
  */
-const getItemById = async (itemId: string): Promise<IHttpResponse<IItem>> => {
+const getItemById = async (id: string): Promise<IHttpResponse<IItem>> => {
   try {
-    const itemDocRef = doc(db, dbCollections.items, itemId)
+    const itemDocRef = doc(db, dbCollections.items, id)
     const itemDoc = await getDoc(itemDocRef)
 
     if (!itemDoc.exists()) {

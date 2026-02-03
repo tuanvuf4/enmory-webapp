@@ -72,11 +72,13 @@ export const Item: React.FC<IProps> = ({
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
       case '0':
-        onView(data.id || '')
+        await onView(data.id || '')
+        onViewSuccess?.()
         break
 
       case '1':
-        onEdit(data.id || '')
+        await onEdit(data.id || '')
+        onEditSuccess?.()
         break
 
       case '2':
@@ -89,6 +91,7 @@ export const Item: React.FC<IProps> = ({
 
       case '4':
         onDelete(data.id || '')
+        onDeleteSuccess?.()
         break
 
       case '5':
@@ -142,9 +145,11 @@ export const Item: React.FC<IProps> = ({
 
   const onEdit = async (id: string) => {
     try {
-      const { content } = await itemApi.getItemById(id)
-      openItemModal('edit', content as IItem)
-      onEditSuccess?.()
+      const { isSuccess, content } = await itemApi.getItemById(id)
+      if (isSuccess && content) {
+        openItemModal('edit', content as IItem)
+        onEditSuccess?.()
+      }
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }

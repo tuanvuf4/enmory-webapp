@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { exampleItem } from './data'
 import styles from './style'
-import { TextEditor } from '@/views/components'
+import TextArea from 'antd/es/input/TextArea'
 
 interface IProps {
   nestIndex: number
@@ -20,20 +20,22 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
   const globalClasses = globalStyle()
 
   const [currentSearch, setCurrentSearch] = useState<string>('')
+  const [activeFieldIndex, setActiveFieldIndex] = useState<number | null>(null)
 
   const { confirmDeleteModal } = usePrompt()
 
   const { options } = useAutoComplete(currentSearch, 'example')
 
-  const { control, setValue } = useFormContext<IItem>()
+  const { control, setValue, watch } = useFormContext<IItem>()
 
   const { fields, remove, prepend } = useFieldArray({
     control,
     name: `meanings.${nestIndex}.examples`,
   })
 
-  const onSearch = (searchText: string) => {
+  const onSearch = (searchText: string, fieldIndex: number) => {
     setCurrentSearch(searchText)
+    setActiveFieldIndex(fieldIndex)
   }
 
   const addExample = (): void => {
@@ -43,10 +45,11 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
   const onSelect = (idxNested: number, idxExp: number, value: string) => {
     exampleApi.getExampleById(value).then(({ isSuccess, content }) => {
       if (isSuccess && content) {
-        setCurrentSearch(content.origin)
         setValue(`meanings.${idxNested}.examples.${idxExp}.origin`, content.origin)
         setValue(`meanings.${idxNested}.examples.${idxExp}.translation`, content.translation)
         setValue(`meanings.${idxNested}.examples.${idxExp}.id`, content.id)
+        setCurrentSearch('')
+        setActiveFieldIndex(null)
       }
     })
   }
@@ -88,17 +91,24 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           className={'w-full'}
                           gap={token.size}
                         >
-                          <AutoComplete
-                            value={currentSearch}
-                            autoFocus={true}
-                            allowClear={{
-                              clearIcon: <CloseCircleOutlined style={{ fontSize: 14 }} />,
-                            }}
-                            options={options}
-                            onSearch={onSearch}
-                            onSelect={(value) => onSelect(nestIndex, key, value)}
-                            placeholder='Search an example...'
-                            className={'w-full'}
+                          <Controller
+                            control={control}
+                            name={`meanings.${nestIndex}.examples.${key}.origin`}
+                            render={({ field }) => (
+                              <AutoComplete
+                                {...field}
+                                value={activeFieldIndex === key ? currentSearch : field.value}
+                                autoFocus={true}
+                                allowClear={{
+                                  clearIcon: <CloseCircleOutlined style={{ fontSize: 14 }} />,
+                                }}
+                                options={activeFieldIndex === key ? options : []}
+                                onSearch={(text) => onSearch(text, key)}
+                                onSelect={(value) => onSelect(nestIndex, key, value)}
+                                placeholder='Search an example...'
+                                className={'w-full'}
+                              />
+                            )}
                           />
 
                           <Button
@@ -119,21 +129,11 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
 
                       <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
                         <Col md={24} xs={24}>
-                          <Controller
-                            control={control}
-                            name={`meanings.${nestIndex}.examples.${key}.origin`}
-                            render={({ field: { onChange, value } }) => (
-                              <TextEditor
-                                content={value}
-                                onChange={(content: any) => {
-                                  setValue(
-                                    `meanings.${nestIndex}.examples.${key}.origin`,
-                                    content ?? '',
-                                  )
-                                  onChange(content)
-                                }}
-                              />
-                            )}
+                          <TextArea
+                            value={watch(`meanings.${nestIndex}.examples.${key}.origin`)}
+                            autoSize={{ minRows: 1, maxRows: 4 }}
+                            placeholder='Original:'
+                            disabled
                           />
                         </Col>
                       </Row>
@@ -143,16 +143,11 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           <Controller
                             control={control}
                             name={`meanings.${nestIndex}.examples.${key}.translation`}
-                            render={({ field: { onChange, value } }) => (
-                              <TextEditor
-                                content={value}
-                                onChange={(content: any) => {
-                                  setValue(
-                                    `meanings.${nestIndex}.examples.${key}.translation`,
-                                    content ?? '',
-                                  )
-                                  onChange(content)
-                                }}
+                            render={({ field }) => (
+                              <TextArea
+                                autoSize={{ minRows: 1, maxRows: 4 }}
+                                placeholder='Translation:'
+                                {...field}
                               />
                             )}
                           />

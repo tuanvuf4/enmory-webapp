@@ -14,6 +14,7 @@ import styles from './style'
 import clsx from 'clsx'
 import { useExampleModal, useItemModal } from '@/helpers/hooks'
 import { Header } from 'antd/es/layout/layout'
+import { exampleAction } from '@/store/reducers/example.reducer'
 
 export const AppHeader = () => {
   const { token } = theme.useToken()
@@ -43,11 +44,12 @@ export const AppHeader = () => {
         break
 
       case 'logout':
-        // Clear Redux state before logout
-        dispatch(studySetAction.resetStudySet())
-        dispatch(iotdAction.resetIotd())
         // Call complete logout (Firebase + auth state + redirect)
         await logout()
+        // Clear Redux state
+        dispatch(studySetAction.resetStudySet())
+        dispatch(iotdAction.resetIotd())
+        dispatch(exampleAction.reset())
         break
 
       default:

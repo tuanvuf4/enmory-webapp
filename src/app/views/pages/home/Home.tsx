@@ -49,34 +49,29 @@ const Home = () => {
                   </Widget>
 
                   <Widget title={'Translator!'}>
-                    <ExampleForm
-                      resetAfterSave={false}
-                      showSelectMode={true}
-                      theme={'dark'}
-                      mode={ExampleMode.Translation}
-                    />
+                    <ExampleForm resetAfterSave={false} mode={ExampleMode.Translation} />
                   </Widget>
 
-                  <Widget title={'Review Example'}>
+                  <Widget title={'Examples!'}>
                     <ExampleOverView />
                   </Widget>
                 </Col>
 
                 <Col xs={24} md={8}>
                   {word?.item && word.item.origin && (
-                    <Widget title='Word of the day'>
+                    <Widget title='Word'>
                       {isLoading && !isError ? <Skeleton /> : <Item reload data={word.item} />}
                     </Widget>
                   )}
 
                   {phrase?.item && phrase.item.origin && (
-                    <Widget title='Phrase of the day'>
+                    <Widget title='Phrase'>
                       {isLoading && !isError ? <Skeleton /> : <Item reload data={phrase.item} />}
                     </Widget>
                   )}
 
                   {collocation?.item && collocation.item.origin && (
-                    <Widget title='Collocation of the day'>
+                    <Widget title='Collocation'>
                       {isLoading && !isError ? (
                         <Skeleton />
                       ) : (
@@ -86,19 +81,19 @@ const Home = () => {
                   )}
 
                   {sentence?.item && sentence.item.origin && (
-                    <Widget title='Sentence of the day'>
+                    <Widget title='Sentence'>
                       {isLoading && !isError ? <Skeleton /> : <Item reload data={sentence.item} />}
                     </Widget>
                   )}
 
                   {idiom?.item && idiom.item.origin && (
-                    <Widget title='Idiom of the day'>
+                    <Widget title='Idiom'>
                       {isLoading && !isError ? <Skeleton /> : <Item reload data={idiom.item} />}
                     </Widget>
                   )}
 
                   {slang?.item && slang.item.origin && (
-                    <Widget title='Slang of the day'>
+                    <Widget title='Slang'>
                       {isLoading && !isError ? <Skeleton /> : <Item reload data={slang.item} />}
                     </Widget>
                   )}

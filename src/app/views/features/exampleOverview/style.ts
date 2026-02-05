@@ -23,36 +23,21 @@ const styles = () => {
         gap: token.size / 2,
       },
     },
-    exampleFormAdd: {
+    exampleForm: {
       background: '#ffffff',
       borderRadius: 4,
       color: `${token.colorTextBase}`,
       boxShadow: `0px 0px 30px 0px ${hex2Rgba('#ffffff', 0.2)}`,
-      padding: [token.size / 2, token.size, token.size * 2, token.size],
+      padding: [token.size * 2, token.size * 2],
 
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: token.size / 2,
 
-      '&.active': {
-        background: hex2Rgba(styleConfig.itemColorBg, 0.9),
-        color: token.colorWhite,
-
-        '& textarea': {
-          color: `${token.colorTextBase} !important`,
-          background: 'transparent !important',
-
-          '&:disabled': {
-            color: 'transparent !important',
-            background: 'transparent !important',
-          },
-        },
-      },
-
       '& textarea': {
         resize: 'none !important',
-        color: `${token.colorWhite} !important`,
+        color: `${token.colorTextBase} !important`,
         background: 'transparent !important',
 
         '&:disabled': {

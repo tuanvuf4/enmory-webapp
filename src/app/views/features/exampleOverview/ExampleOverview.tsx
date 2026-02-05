@@ -29,6 +29,8 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
   const exClasses = exStyles()
   const globalClasses = globalStyle()
 
+  const { user } = useSelector((state) => state.auth)
+
   const [selected, setSelected] = useState<IExample>()
   const [loading, setLoading] = useState<boolean>(false)
 
@@ -40,6 +42,8 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
 
   const { openNotification, confirmDeleteModal } = usePrompt()
   const { openExampleModal } = useExampleModal()
+
+  const size = user?.configuration?.numberOfExampleReview ?? 10
 
   const { control, setValue, handleSubmit, watch } = useForm<IExampleForm>({
     defaultValues: {
@@ -60,20 +64,26 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
     })
   }
 
-  const getRandomExamples = useCallback(async () => {
-    try {
-      setLoading(true)
-      const { isSuccess, content } = await exampleApi.getRandomExamples(10)
-      if (isSuccess) {
-        dispatch(exampleAction.update(content || []))
+  const getRandomExamples = useCallback(
+    async (number = size, force = false) => {
+      // Check if examples already existed in Redux
+      if (!force) return
+
+      try {
+        setLoading(true)
+        const { isSuccess, content } = await exampleApi.getRandomExamples(number)
+        if (isSuccess) {
+          dispatch(exampleAction.update(content || []))
+        }
+      } catch (error) {
+        console.error('Error fetching random examples:', error)
+        openNotification({ type: 'error', message: 'Failed to fetch examples' })
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error('Error fetching random examples:', error)
-      openNotification({ type: 'error', message: 'Failed to fetch examples' })
-    } finally {
-      setLoading(false)
-    }
-  }, [dispatch, openNotification])
+    },
+    [dispatch, openNotification, examples.length],
+  )
 
   const onEdit = async (id: string) => {
     openExampleModal
@@ -97,6 +107,10 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
         onOk: async () => {
           showLoading()
           await exampleApi.deleteExample(id)
+          dispatch(exampleAction.remove(id))
+          if (selected?.id === id) {
+            setSelected(undefined)
+          }
           openNotification({ type: 'success', message: 'Example deleted successfully' })
           hideLoading()
         },
@@ -111,7 +125,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
     const { isSuccess, content } = await exampleApi.getExamples({
       keyword: data.query,
       page: 1,
-      size: 10,
+      size: size,
     })
     if (isSuccess && content) {
       dispatch(exampleAction.update(content || []))
@@ -123,10 +137,7 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
   }
 
   useEffect(() => {
-    if (examples.length === 0) {
-      getRandomExamples()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    getRandomExamples()
   }, [])
 
   return (
@@ -182,9 +193,9 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
           type='text'
           variant={'text'}
           style={{ color: token.colorWhite }}
-          onClick={getRandomExamples}
+          onClick={() => getRandomExamples(size, true)}
         >
-          <SyncOutlined />
+          <SyncOutlined spin={loading} />
         </Button>
 
         <Button type={'primary'} htmlType='submit' style={{ color: token.colorWhite }}>
@@ -207,6 +218,13 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
             </li>
           </ul>
         </div>
+      )}
+
+      {!loading && examples?.length == 0 && (
+        <NotFound
+          showButton={false}
+          label={'No example! Clicking on reload button will display examples!'}
+        />
       )}
 
       {!loading && examples?.length > 0 && (

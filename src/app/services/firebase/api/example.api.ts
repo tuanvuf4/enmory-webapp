@@ -171,8 +171,6 @@ const getRandomExamples = async (size: number): Promise<IHttpResponse<IExample[]
       ...doc.data(),
     })) as IExample[]
 
-    console.log(`*** examples *** `, examples)
-
     return {
       isSuccess: true,
       message: 'Random examples fetched successfully',

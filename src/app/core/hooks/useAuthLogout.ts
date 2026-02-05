@@ -23,10 +23,6 @@ export const useAuthLogout = () => {
       // Clear app state
       dispatch(authAction.logOut())
 
-      // Clear any stored auth data
-      localStorage.removeItem('auth')
-      localStorage.removeItem('user')
-
       // Redirect to login
       navigate('/login')
     } catch (error) {

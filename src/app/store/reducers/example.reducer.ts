@@ -3,10 +3,12 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export interface IExampleState {
   list: IExample[]
+  translate: IExample | null
 }
 
 export const initialState: IExampleState = {
   list: [],
+  translate: null,
 }
 
 export const exampleReducer = createSlice({
@@ -28,8 +30,19 @@ export const exampleReducer = createSlice({
       // Convert back to array, preserving examples not in the payload
       state.list = Array.from(existingMap.values())
     },
+    remove(state: IExampleState, action: PayloadAction<string>) {
+      state.list = state.list.filter((ex) => ex.id !== action.payload)
+    },
+    setTranslate(state: IExampleState, action: PayloadAction<IExample | null>) {
+      state.translate = action.payload
+    },
     clear(state: IExampleState) {
       state.list = []
+      state.translate = null
+    },
+    reset(state: IExampleState) {
+      state.list = []
+      state.translate = null
     },
   },
 })

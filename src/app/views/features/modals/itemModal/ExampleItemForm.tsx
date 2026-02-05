@@ -24,7 +24,12 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
 
   const { confirmDeleteModal } = usePrompt()
 
-  const { options } = useAutoComplete(currentSearch, 'example')
+  const { options } = useAutoComplete(
+    {
+      keyword: currentSearch || '',
+    },
+    'example',
+  )
 
   const { control, setValue } = useFormContext<IItem>()
 

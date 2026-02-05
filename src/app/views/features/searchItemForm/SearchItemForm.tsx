@@ -54,9 +54,14 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   const keyword = watch('keyword')
   const cat = watch('cat')
 
-  const { options, isSearching } = useAutoComplete(keyword, 'item', false, {
-    cat: cat === ECategory.ALL ? 0 : Number(cat),
-  })
+  const { options, isSearching } = useAutoComplete(
+    {
+      keyword: keyword || '',
+      cat: cat === ECategory.ALL ? 0 : Number(cat),
+    },
+    'item',
+    false,
+  )
 
   const onSelect = async (value: string, option: BaseOptionType) => {
     if (location.pathname.includes('library')) {

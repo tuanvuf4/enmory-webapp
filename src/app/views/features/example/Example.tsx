@@ -23,7 +23,7 @@ interface IExampleForm {
   query: string
 }
 
-export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
+export const Example: React.FC<PropsWithChildren & IProps> = () => {
   const { token } = theme.useToken()
   const classes = styles()
   const exClasses = exStyles()
@@ -53,7 +53,12 @@ export const ExampleOverView: React.FC<PropsWithChildren & IProps> = () => {
 
   const keyword = watch('query')
 
-  const { options } = useAutoComplete(keyword, 'example')
+  const { options } = useAutoComplete(
+    {
+      keyword: keyword || '',
+    },
+    'example',
+  )
 
   const onSelect = (option: any) => {
     exampleApi.getExampleById(option.id).then(({ isSuccess, content }) => {

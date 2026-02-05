@@ -1,3 +1,3 @@
 export * from './ExampleForm'
-export * from './ExampleOverview'
+export * from './Example'
 export * from './style'

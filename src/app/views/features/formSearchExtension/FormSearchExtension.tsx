@@ -55,7 +55,12 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
 
   const keyword = watch('keyword')
 
-  const { options, isSearching } = useAutoComplete(keyword, 'example')
+  const { options, isSearching } = useAutoComplete(
+    {
+      keyword: keyword || '',
+    },
+    'example',
+  )
 
   const onSelect = (value: string) => {
     exampleApi.getExampleById(value).then(() => {

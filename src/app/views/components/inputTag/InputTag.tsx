@@ -22,7 +22,7 @@ export const InputTag: React.FC<IPros> = ({ tags, allowSpace = true, onChange })
   const [editInputValue, setEditInputValue] = useState('')
   const [currentSearch, setCurrentSearch] = useState<string>('')
 
-  const { options } = useAutoComplete(currentSearch)
+  const { options } = useAutoComplete({ keyword: currentSearch })
 
   const onSearch = (searchText: string) => {
     setCurrentSearch(searchText)

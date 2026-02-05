@@ -10,21 +10,22 @@ import { BaseOptionType } from 'antd/es/select'
 type searchType = 'item' | 'example'
 
 export const useAutoComplete = (
-  keyword: string,
+  filters: Partial<IItemRequestParams> = {},
   type: searchType = 'item',
   exact = false,
-  filters: Partial<IItemRequestParams> = {},
   timeout = setting.debounceTime,
 ) => {
   const [options, setOptions] = useState<BaseOptionType[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const filterKey = JSON.stringify(filters)
 
+  const { keyword } = filters
+
   useEffect(() => {
     let handleSession: NodeJS.Timeout
     const query = {
       ...filters,
-      keyword,
+      keyword: keyword || '',
       page: 0,
       size: setting.numberItemOfAutoComplete * 2,
     }
@@ -84,5 +85,9 @@ export const useAutoComplete = (
     }
   }, [keyword, exact, filterKey, type, timeout])
 
-  return { options, isSearching }
+  return {
+    options,
+    isSearching,
+    isExisted: options.length > 0 && options.findIndex((item) => item.value === keyword) > -1,
+  }
 }

@@ -56,11 +56,9 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
     control,
     handleSubmit,
     reset,
-    trigger,
     setValue,
     getValues,
-    setError,
-    clearErrors,
+    trigger,
     formState: { isValid, errors },
   } = useFormContext<IItem>()
 
@@ -70,9 +68,15 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
     defaultValue: ECategory.WORD,
   })
 
-  const original = useWatch({ control, name: 'origin' })
+  const watchedOrigin = useWatch({ control, name: 'origin' })
 
-  const { options, isSearching } = useAutoComplete(original, 'item', false)
+  const { options, isSearching } = useAutoComplete(
+    {
+      keyword: watchedOrigin || '',
+    },
+    'item',
+    false,
+  )
 
   const { closeModal } = useModal()
 
@@ -83,92 +87,86 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
     return await Promise.all(examplePromises)
   }
 
-  const onSubmit = async () => {
-    if (isValid) {
-      handleSubmit(async (data: IItem) => {
-        const meanings = []
-        if (data.meanings && data.meanings.length > 0) {
-          const meaningPromises: Promise<IMeaning>[] = data.meanings.map(async (meaning) => {
-            return {
-              ...meaning,
-              itemId: data.id || '',
-              uid: user?.uid || '',
-              created_date: Timestamp.now().toMillis(),
-              last_update: Timestamp.now().toMillis(),
-              note: meaning.note || '',
-              collocations: meaning.collocations || '',
-              grammar: meaning.grammar || '',
-              definition: meaning.definition || '',
-              translation: meaning.translation || '',
-              pronunciation: meaning.pronunciation || { audio: '', uk: '', us: '' },
-              common: meaning.common || false,
-              enable: meaning.enable || true,
-              antonyms: meaning.antonyms || [],
-              synonyms: meaning.synonyms || [],
-              examples:
-                ((await createExample(meaning)).map((example) => example.id) as string[]) ?? [],
-            }
-          })
-          meanings.push(...(await Promise.all(meaningPromises)))
+  const onSubmit = async (data: IItem) => {
+    const meanings = []
+    if (data.meanings && data.meanings.length > 0) {
+      const meaningPromises: Promise<IMeaning>[] = data.meanings.map(async (meaning) => {
+        return {
+          ...meaning,
+          itemId: data.id || '',
+          uid: user?.uid || '',
+          created_date: Timestamp.now().toMillis(),
+          last_update: Timestamp.now().toMillis(),
+          note: meaning.note || '',
+          collocations: meaning.collocations || '',
+          grammar: meaning.grammar || '',
+          definition: meaning.definition || '',
+          translation: meaning.translation || '',
+          pronunciation: meaning.pronunciation || { audio: '', uk: '', us: '' },
+          common: meaning.common || false,
+          enable: meaning.enable || true,
+          antonyms: meaning.antonyms || [],
+          synonyms: meaning.synonyms || [],
+          examples: ((await createExample(meaning)).map((example) => example.id) as string[]) ?? [],
         }
-        const dataSubmit: IItem = {
-          ...data,
-          collocations: data.collocations || [],
-          forms: data.forms || [],
-          word_family: data.word_family || [],
-          relation: data.relation || [],
-          meanings: meanings,
-        }
+      })
+      meanings.push(...(await Promise.all(meaningPromises)))
+    }
+    const dataSubmit: IItem = {
+      ...data,
+      collocations: data.collocations || [],
+      forms: data.forms || [],
+      word_family: data.word_family || [],
+      relation: data.relation || [],
+      meanings: meanings,
+    }
 
-        if (item) {
-          try {
-            const { isSuccess, content } = await updateMutation({
-              id: String(item?.id),
-              data: dataSubmit,
-            })
+    if (item) {
+      try {
+        const { isSuccess, content } = await updateMutation({
+          id: String(item?.id),
+          data: dataSubmit,
+        })
 
-            if (isSuccess && content) {
-              const meaningsWithExamples = await getMeaningsWithExamples(content.meanings || [])
+        if (isSuccess && content) {
+          const meaningsWithExamples = await getMeaningsWithExamples(content.meanings || [])
 
-              const itemUpdated = {
-                ...content,
-                meanings: meaningsWithExamples,
-              }
-              // update item in study set
-              if (itemUpdated && list.find((item) => item.id === itemUpdated.id)) {
-                dispatch(studySetAction.update(itemUpdated))
-              }
-              // update iotd item
-              dispatch(iotdAction.update(itemUpdated))
-
-              // refresh list in library
-              await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
-
-              closeModal()
-              openNotification({ type: 'success', message: 'Update item successful!' })
-            }
-          } catch (error) {
-            openNotification({ type: 'error', message: JSON.stringify(error) })
-          } finally {
-            setOrigin('')
+          const itemUpdated = {
+            ...content,
+            meanings: meaningsWithExamples,
           }
-        } else {
-          try {
-            const { isSuccess } = await createMutation(dataSubmit)
-            if (isSuccess) {
-              // refresh list in library
-              await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
-
-              closeModal()
-              openNotification({ type: 'success', message: 'Create a item successful!' })
-            }
-          } catch (error) {
-            openNotification({ type: 'error', message: JSON.stringify(error) })
-          } finally {
-            setOrigin('')
+          // update item in study set
+          if (itemUpdated && list.find((item) => item.id === itemUpdated.id)) {
+            dispatch(studySetAction.update(itemUpdated))
           }
+          // update iotd item
+          dispatch(iotdAction.update(itemUpdated))
+
+          closeModal()
+          openNotification({ type: 'success', message: 'Update item successful!' })
+          // refresh list in library
+          await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
         }
-      })()
+      } catch (error) {
+        openNotification({ type: 'error', message: JSON.stringify(error) })
+      } finally {
+        setOrigin('')
+      }
+    } else {
+      try {
+        const { isSuccess } = await createMutation(dataSubmit)
+        if (isSuccess) {
+          // refresh list in library
+          await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+
+          closeModal()
+          openNotification({ type: 'success', message: 'Create a item successful!' })
+        }
+      } catch (error) {
+        openNotification({ type: 'error', message: JSON.stringify(error) })
+      } finally {
+        setOrigin('')
+      }
     }
   }
 
@@ -178,42 +176,16 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
   }
 
   useEffect(() => {
-    if (item) setOrigin(item.origin || '')
+    if (item) {
+      reset(item)
+    }
   }, [])
 
   useEffect(() => {
-    if (!original) {
-      setError('origin', { type: 'required', message: msgErrors.required })
-    } else if (
-      item &&
-      options.length > 0 &&
-      original !== origin &&
-      options.findIndex((option) => option.value === original) > -1
-    ) {
-      setError('origin', { type: 'existed', message: msgErrors.existed })
-    } else clearErrors('origin')
-  }, [options, original])
-
-  useEffect(() => {
-    if (item) {
-      setOrigin(item.origin || '')
-      reset(item)
-    } else {
-      if (appConfig.appType === EAppType.EXTENSION)
-        chromeStorage.get(['origin']).then((resp) => {
-          reset({ ...initItem, origin: resp.origin || '' })
-        })
-    }
-  }, [item, origin])
-
-  useEffect(() => {
-    if (!original && !item) {
-      reset({ ...initItem })
-      setError('origin', { type: 'required', message: msgErrors.required })
-    }
-
-    return () => {
-      reset({ ...initItem })
+    if (!item && appConfig.appType === EAppType.EXTENSION) {
+      chromeStorage.get(['origin']).then((resp) => {
+        reset({ ...initItem, origin: resp.origin || '' })
+      })
     }
   }, [item])
 
@@ -262,6 +234,18 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
                     value: true,
                     message: msgErrors.required,
                   },
+                  validate: {
+                    existed: (value) => {
+                      if (!value) return true
+                      const existsInOptions =
+                        options.length > 0 && options.findIndex((opt) => opt.value === value) > -1
+
+                      if (!existsInOptions) return true
+                      if (item && value === origin) return true
+
+                      return msgErrors.existed
+                    },
+                  },
                 }}
                 render={({ field: { onChange, value }, fieldState: { invalid } }) => (
                   <>
@@ -297,7 +281,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
                               setValue('catId', ECategory.PHRASE)
 
                             if (!isGroupWord(e.target.value)) setValue('catId', ECategory.WORD)
+
+                            trigger('origin')
                           }}
+                          onBlur={() => trigger('origin')}
                         />
                       }
                       onClear={() => setValue('origin', '')}
@@ -318,7 +305,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
                 )}
               />
 
-              {original && <Reference origin={original} />}
+              {watchedOrigin && <Reference origin={watchedOrigin} />}
             </Col>
           </Row>
 
@@ -441,7 +428,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
           </Row>
 
           <Suspense fallback={<div>Loading...</div>}>
-            <MeaningItemForm origin={original} catType={catType as ECategory} onSubmit={onSubmit} />
+            <MeaningItemForm
+              origin={watchedOrigin}
+              catType={catType as ECategory}
+              onSubmit={() => handleSubmit(onSubmit)()}
+            />
           </Suspense>
         </Space>
       </Row>
@@ -455,9 +446,9 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
 
             <Button
               loading={isCreating || isUpdating}
-              htmlType='submit'
+              disabled={!isValid || isCreating || isUpdating || isSearching}
               type={'primary'}
-              disabled={!isValid || isCreating || isUpdating}
+              onClick={() => handleSubmit(onSubmit)()}
             >
               Save
             </Button>

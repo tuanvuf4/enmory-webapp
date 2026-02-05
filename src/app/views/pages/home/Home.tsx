@@ -1,6 +1,6 @@
 import globalStyle from '@/style/appStyle'
 import { usePrefetchAllIotd, useSelector } from '@/core/hooks'
-import { ExampleOverView } from '@/views/features/exampleOverview/ExampleOverview'
+import { Example } from '@/views/features/example/Example'
 import { StudySet } from '@/views/features/studySet/StudySet'
 import { Widget } from '@/views/features/widget/Widget'
 import { theme, Space, Row, Col, Skeleton } from 'antd'
@@ -10,7 +10,7 @@ import registerStyle from '@/views/pages/register/style'
 import loginStyle from '@/views/pages/login/style'
 import { Link } from 'react-router-dom'
 import { Toolbar } from '@/views/features'
-import { ExampleForm } from '@/views/features/exampleOverview/ExampleForm'
+import { ExampleForm } from '@/views/features/example/ExampleForm'
 
 const Home = () => {
   const { token } = theme.useToken()
@@ -53,7 +53,7 @@ const Home = () => {
                   </Widget>
 
                   <Widget title={'Examples!'}>
-                    <ExampleOverView />
+                    <Example />
                   </Widget>
                 </Col>
 

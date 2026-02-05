@@ -28,11 +28,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { getMeaningsWithExamples } from '@/helpers/item'
 
 interface ItemFormProps {
-  mode: 'add' | 'edit'
   item: IItem
 }
 
-export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
+export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
   const { token } = theme.useToken()
   const classes = styles()
   const globalClasses = globalStyle()
@@ -41,7 +40,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
 
   const dispatch = useDispatch()
 
-  const [origin, setOrigin] = useState<IItem | null>(null)
+  const [origin, setOrigin] = useState('')
 
   const { user } = useSelector((state) => state.auth)
   const { categories } = useSelector((state) => state.setting)
@@ -121,7 +120,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
           meanings: meanings,
         }
 
-        if (mode === 'edit') {
+        if (item) {
           try {
             const { isSuccess, content } = await updateMutation({
               id: String(item?.id),
@@ -151,7 +150,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
           } finally {
-            setOrigin(null)
+            setOrigin('')
           }
         } else {
           try {
@@ -166,7 +165,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
           } catch (error) {
             openNotification({ type: 'error', message: JSON.stringify(error) })
           } finally {
-            setOrigin(null)
+            setOrigin('')
           }
         }
       })()
@@ -174,22 +173,21 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
   }
 
   const handleCancel = () => {
-    setOrigin(null)
+    setOrigin('')
     closeModal()
   }
 
   useEffect(() => {
-    if (mode === 'edit' && item) setOrigin(item as IItem)
-    trigger()
+    if (item) setOrigin(item.origin || '')
   }, [])
 
   useEffect(() => {
     if (!original) {
       setError('origin', { type: 'required', message: msgErrors.required })
     } else if (
-      mode === 'edit' &&
+      item &&
       options.length > 0 &&
-      original !== origin?.origin &&
+      original !== origin &&
       options.findIndex((option) => option.value === original) > -1
     ) {
       setError('origin', { type: 'existed', message: msgErrors.existed })
@@ -198,7 +196,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
 
   useEffect(() => {
     if (item) {
-      setOrigin(item as IItem)
+      setOrigin(item.origin || '')
       reset(item)
     } else {
       if (appConfig.appType === EAppType.EXTENSION)
@@ -209,7 +207,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
   }, [item, origin])
 
   useEffect(() => {
-    if (!original && mode !== 'edit') {
+    if (!original && !item) {
       reset({ ...initItem })
       setError('origin', { type: 'required', message: msgErrors.required })
     }
@@ -217,7 +215,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ mode, item }) => {
     return () => {
       reset({ ...initItem })
     }
-  }, [mode, item])
+  }, [item])
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} style={{ padding: token.size }}>

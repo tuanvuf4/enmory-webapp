@@ -7,12 +7,12 @@ import { FormProvider, useForm } from 'react-hook-form'
 export const useItemModal = () => {
   const { openModal, closeModal } = useModal()
 
-  const ItemFormContext = ({ data, mode }: { data: IItem; mode: 'edit' | 'add' }) => {
+  const ItemFormContext = ({ data }: { data: IItem }) => {
     const methods = useForm<IItem>({ defaultValues: data })
 
     return (
       <FormProvider {...methods}>
-        <ItemForm mode={mode} item={data} />
+        <ItemForm item={data} />
       </FormProvider>
     )
   }
@@ -34,7 +34,7 @@ export const useItemModal = () => {
         width: 800,
         footer: null,
         maskClosable: false,
-        content: <ItemFormContext data={data} mode={mode} />,
+        content: <ItemFormContext data={data} />,
       })
     }
 
@@ -44,7 +44,7 @@ export const useItemModal = () => {
         width: 800,
         footer: null,
         maskClosable: false,
-        content: <ItemFormContext data={data} mode={mode} />,
+        content: <ItemFormContext data={data} />,
       })
     }
   }

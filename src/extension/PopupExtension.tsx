@@ -89,7 +89,7 @@ export const PopupExtension = () => {
           {currentPage === EPageExt.ADD && (
             <div className={classes.cruForm}>
               <FormProvider {...methods}>
-                <ItemForm item={initItem} mode={'add'} />
+                <ItemForm item={initItem} />
               </FormProvider>
             </div>
           )}
@@ -97,7 +97,7 @@ export const PopupExtension = () => {
           {currentPage === EPageExt.ADD_EX && (
             <div style={{ padding: (token.size / 4) * 3 }}>
               <h2 style={{ fontWeight: 'normal' }}>Add a Example</h2>
-              <ExampleForm theme={'light'} onSuccess={onSuccess} />
+              <ExampleForm onSuccess={onSuccess} />
             </div>
           )}
 

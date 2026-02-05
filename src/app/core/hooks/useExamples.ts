@@ -66,6 +66,9 @@ export const useCreateExample = () => {
       queryClient.invalidateQueries({ queryKey: exampleKeys.lists() })
       queryClient.invalidateQueries({ queryKey: exampleKeys.random() })
     },
+    onError: (error) => {
+      throw error.message
+    },
   })
 }
 

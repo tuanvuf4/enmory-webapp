@@ -91,8 +91,8 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
       if (result) {
         onSuccess?.(result)
       }
-    } catch (error) {
-      openNotification({ type: 'error', message: JSON.stringify(error) })
+    } catch (error: Error | any) {
+      openNotification({ type: 'error', message: JSON.stringify(error.message) })
     } finally {
       setLoading(false)
     }

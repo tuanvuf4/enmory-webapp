@@ -26,7 +26,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
 
   const { options } = useAutoComplete(currentSearch, 'example')
 
-  const { control, setValue, watch } = useFormContext<IItem>()
+  const { control, setValue } = useFormContext<IItem>()
 
   const { fields, remove, prepend } = useFieldArray({
     control,
@@ -91,24 +91,17 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           className={'w-full'}
                           gap={token.size}
                         >
-                          <Controller
-                            control={control}
-                            name={`meanings.${nestIndex}.examples.${key}.origin`}
-                            render={({ field }) => (
-                              <AutoComplete
-                                {...field}
-                                value={activeFieldIndex === key ? currentSearch : field.value}
-                                autoFocus={true}
-                                allowClear={{
-                                  clearIcon: <CloseCircleOutlined style={{ fontSize: 14 }} />,
-                                }}
-                                options={activeFieldIndex === key ? options : []}
-                                onSearch={(text) => onSearch(text, key)}
-                                onSelect={(value) => onSelect(nestIndex, key, value)}
-                                placeholder='Search an example...'
-                                className={'w-full'}
-                              />
-                            )}
+                          <AutoComplete
+                            value={activeFieldIndex === key ? currentSearch : ''}
+                            autoFocus={true}
+                            allowClear={{
+                              clearIcon: <CloseCircleOutlined style={{ fontSize: 14 }} />,
+                            }}
+                            options={activeFieldIndex === key ? options : []}
+                            onSearch={(text) => onSearch(text, key)}
+                            onSelect={(value) => onSelect(nestIndex, key, value)}
+                            placeholder='Search an example...'
+                            className={'w-full'}
                           />
 
                           <Button
@@ -129,11 +122,16 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
 
                       <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
                         <Col md={24} xs={24}>
-                          <TextArea
-                            value={watch(`meanings.${nestIndex}.examples.${key}.origin`)}
-                            autoSize={{ minRows: 1, maxRows: 4 }}
-                            placeholder='Original:'
-                            disabled
+                          <Controller
+                            control={control}
+                            name={`meanings.${nestIndex}.examples.${key}.origin`}
+                            render={({ field }) => (
+                              <TextArea
+                                autoSize={{ minRows: 1, maxRows: 4 }}
+                                placeholder='Original:'
+                                {...field}
+                              />
+                            )}
                           />
                         </Col>
                       </Row>

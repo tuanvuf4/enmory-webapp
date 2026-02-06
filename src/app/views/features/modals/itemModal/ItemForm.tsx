@@ -12,7 +12,7 @@ import { Level } from '@/views/components'
 import { Reference } from '@/views/features/references/References'
 import { theme, Row, Space, Col, Select, AutoComplete, Input, Checkbox, Button } from 'antd'
 import clsx from 'clsx'
-import { useState, useEffect, Suspense } from 'react'
+import { useEffect, Suspense } from 'react'
 import { useFormContext, useWatch, Controller } from 'react-hook-form'
 import { initItem } from './data'
 import { MeaningItemForm } from './MeaningItemForm'
@@ -31,7 +31,7 @@ interface ItemFormProps {
   item: IItem
 }
 
-export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
+export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const { token } = theme.useToken()
   const classes = styles()
   const globalClasses = globalStyle()
@@ -39,8 +39,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
   const { openNotification } = usePrompt()
 
   const dispatch = useDispatch()
-
-  const [origin, setOrigin] = useState('')
 
   const { user } = useSelector((state) => state.auth)
   const { categories } = useSelector((state) => state.setting)
@@ -68,11 +66,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
     defaultValue: ECategory.WORD,
   })
 
-  const watchedOrigin = useWatch({ control, name: 'origin' })
+  const origin = getValues('origin')
 
   const { options, isSearching } = useAutoComplete(
     {
-      keyword: watchedOrigin || '',
+      keyword: origin || '',
     },
     'item',
     false,
@@ -88,40 +86,39 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
   }
 
   const onSubmit = async (data: IItem) => {
-    const meanings = []
-    if (data.meanings && data.meanings.length > 0) {
-      const meaningPromises: Promise<IMeaning>[] = data.meanings.map(async (meaning) => {
-        return {
-          ...meaning,
-          itemId: data.id || '',
-          uid: user?.uid || '',
-          created_date: Timestamp.now().toMillis(),
-          last_update: Timestamp.now().toMillis(),
-          note: meaning.note || '',
-          collocations: meaning.collocations || '',
-          grammar: meaning.grammar || '',
-          definition: meaning.definition || '',
-          translation: meaning.translation || '',
-          pronunciation: meaning.pronunciation || { audio: '', uk: '', us: '' },
-          common: meaning.common || false,
-          enable: meaning.enable || true,
-          antonyms: meaning.antonyms || [],
-          synonyms: meaning.synonyms || [],
-          examples: ((await createExample(meaning)).map((example) => example.id) as string[]) ?? [],
-        }
-      })
-      meanings.push(...(await Promise.all(meaningPromises)))
-    }
+    const meanings: Promise<IMeaning>[] =
+      data.meanings && data.meanings.length > 0
+        ? data.meanings.map(async (meaning) => ({
+            ...meaning,
+            itemId: data.id || '',
+            uid: user?.uid || '',
+            created_date: Timestamp.now().toMillis(),
+            last_update: Timestamp.now().toMillis(),
+            note: meaning.note || '',
+            collocations: meaning.collocations || '',
+            grammar: meaning.grammar || '',
+            definition: meaning.definition || '',
+            translation: meaning.translation || '',
+            pronunciation: meaning.pronunciation || { audio: '', uk: '', us: '' },
+            common: meaning.common || false,
+            enable: meaning.enable || true,
+            antonyms: meaning.antonyms || [],
+            synonyms: meaning.synonyms || [],
+            examples:
+              ((await createExample(meaning)).map((example) => example.id) as string[]) ?? [],
+          }))
+        : []
+
     const dataSubmit: IItem = {
       ...data,
       collocations: data.collocations || [],
       forms: data.forms || [],
       word_family: data.word_family || [],
       relation: data.relation || [],
-      meanings: meanings,
+      meanings: [...(await Promise.all(meanings))],
     }
 
-    if (item) {
+    if (item?.id) {
       try {
         const { isSuccess, content } = await updateMutation({
           id: String(item?.id),
@@ -149,8 +146,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
         }
       } catch (error) {
         openNotification({ type: 'error', message: JSON.stringify(error) })
-      } finally {
-        setOrigin('')
       }
     } else {
       try {
@@ -164,23 +159,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
         }
       } catch (error) {
         openNotification({ type: 'error', message: JSON.stringify(error) })
-      } finally {
-        setOrigin('')
       }
     }
   }
 
-  const handleCancel = () => {
-    setOrigin('')
-    closeModal()
-  }
-
-  useEffect(() => {
-    if (item) {
-      reset(item)
-    }
-  }, [])
-
+  const handleCancel = () => closeModal()
   useEffect(() => {
     if (!item && appConfig.appType === EAppType.EXTENSION) {
       chromeStorage.get(['origin']).then((resp) => {
@@ -237,11 +220,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
                   validate: {
                     existed: (value) => {
                       if (!value) return true
+                      if (value.trim() === item.origin.trim()) return true
+
                       const existsInOptions =
-                        options.length > 0 && options.findIndex((opt) => opt.value === value) > -1
+                        options.findIndex((opt) => opt.value === value) > -1 &&
+                        item.origin !== value
 
                       if (!existsInOptions) return true
-                      if (item && value === origin) return true
 
                       return msgErrors.existed
                     },
@@ -305,7 +290,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
                 )}
               />
 
-              {watchedOrigin && <Reference origin={watchedOrigin} />}
+              {origin && <Reference origin={origin} />}
             </Col>
           </Row>
 
@@ -429,7 +414,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item }) => {
 
           <Suspense fallback={<div>Loading...</div>}>
             <MeaningItemForm
-              origin={watchedOrigin}
+              origin={origin}
               catType={catType as ECategory}
               onSubmit={() => handleSubmit(onSubmit)()}
             />

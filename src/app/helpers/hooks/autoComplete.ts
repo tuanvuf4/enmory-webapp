@@ -23,23 +23,22 @@ export const useAutoComplete = (
 
   useEffect(() => {
     let handleSession: NodeJS.Timeout
-    const query = {
+    const payload = {
       ...filters,
       keyword: keyword || '',
       page: 0,
       size: setting.numberItemOfAutoComplete * 2,
     }
+
+    if (!keyword) return setOptions([])
+
     if (keyword && keyword.length >= 2) {
       handleSession = setTimeout(() => {
         setIsSearching(true)
         if (type === 'item') {
           itemApi
-            .getItemAutoComplete({ ...query, exact })
+            .getItemAutoComplete({ ...payload, exact })
             .then((response: IHttpResponse<IItem[]>) => {
-              if (!response.content || response.content.length === 0) {
-                setOptions([])
-              }
-
               if (response.content && response.content.length > 0) {
                 setOptions(
                   response.content.map((item) => ({
@@ -48,7 +47,7 @@ export const useAutoComplete = (
                     value: item.origin,
                   })),
                 )
-              }
+              } else setOptions([])
             })
             .finally(() => {
               setIsSearching(false)
@@ -57,21 +56,19 @@ export const useAutoComplete = (
 
         if (type === 'example') {
           exampleApi
-            .getExamples(query)
+            .getExamples(payload)
             .then((response: IHttpResponse<IExample[]>) => {
-              if (!response.content || response.content.length === 0) {
-                setOptions([])
-                return
-              }
-              setOptions(
-                response.content.map((example) => {
-                  return {
-                    id: `${example.id}`,
-                    value: `${example.id}`,
-                    label: example.origin,
-                  }
-                }),
-              )
+              if (response.content && response.content.length > 0) {
+                setOptions(
+                  response.content.map((example) => {
+                    return {
+                      id: `${example.id}`,
+                      value: `${example.id}`,
+                      label: example.origin,
+                    }
+                  }),
+                )
+              } else setOptions([])
             })
             .finally(() => {
               setIsSearching(false)

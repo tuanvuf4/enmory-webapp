@@ -22,7 +22,7 @@ export const useAutoComplete = (
   const { keyword } = filters
 
   useEffect(() => {
-    let handleSession: NodeJS.Timeout
+    let handleSession: ReturnType<typeof setTimeout>
     const payload = {
       ...filters,
       keyword: keyword || '',

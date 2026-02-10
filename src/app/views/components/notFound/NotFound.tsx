@@ -6,9 +6,9 @@ import { createUseStyles } from 'react-jss'
 import { cloneElement, isValidElement, ReactElement } from 'react'
 
 interface NotFoundProps {
-  button?: JSX.Element
+  button?: React.JSX.Element
   showButton?: boolean
-  label?: JSX.Element | string
+  label?: React.JSX.Element | string
   classNames?: {
     container?: string
     label?: string
@@ -23,16 +23,16 @@ interface ActionButtonProps {
 }
 
 interface PageTitleProps {
-  content: JSX.Element | string
+  content: React.JSX.Element | string
   classNames?: string
 }
 
 interface LabelWrapperProps {
-  label?: JSX.Element | string
+  label?: React.JSX.Element | string
   className?: string
 }
 interface ButtonWrapperProps {
-  button?: JSX.Element
+  button?: React.JSX.Element
   className?: string
   onClickBtn?: () => void
 }

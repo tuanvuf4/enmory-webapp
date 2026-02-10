@@ -3,8 +3,8 @@ import styles from './style'
 import classNames from 'clsx'
 
 interface IProps {
-  progressBarRef: RefObject<HTMLInputElement>
-  audioRef: RefObject<HTMLAudioElement>
+  progressBarRef: RefObject<HTMLInputElement | null>
+  audioRef: RefObject<HTMLAudioElement | null>
   timeProgress: number
   duration: number
 }

@@ -13,8 +13,8 @@ import { RefObject, useState, useRef, useCallback, useEffect } from 'react'
 import styles from './style'
 
 interface IProps {
-  audioRef: RefObject<HTMLAudioElement>
-  progressBarRef: RefObject<HTMLInputElement>
+  audioRef: RefObject<HTMLAudioElement | null>
+  progressBarRef: RefObject<HTMLInputElement | null>
   duration: number
   tracks: ITracks[]
   current: number
@@ -48,7 +48,7 @@ export const Controls: React.FC<IProps> = ({
     setIsPlaying(isPlaying ? false : true)
   }
 
-  const playAnimationRef = useRef<unknown>()
+  const playAnimationRef = useRef<number | null>(null)
 
   const repeat = useCallback(() => {
     const currentTime = audioRef.current?.currentTime

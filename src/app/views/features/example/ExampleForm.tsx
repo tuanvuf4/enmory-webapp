@@ -12,6 +12,7 @@ import clsx from 'clsx'
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import styles from './style.module.scss'
+import { initExampleData } from '@/constant/example'
 
 interface IProps {
   data?: IExample
@@ -30,8 +31,6 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 }) => {
   const { token } = theme.useToken()
 
-  
-
   const { openNotification } = usePrompt()
   const { closeExampleModal } = useExampleModal()
 
@@ -49,19 +48,13 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   const showTranslation =
     mode === ExampleMode.Default || (isChecked && mode === ExampleMode.Translation)
 
-  const initValues: IExample = {
-    origin: '',
-    translation: '',
-    note: '',
-  }
-
   const {
     control,
     handleSubmit,
     reset,
     formState: { isValid },
   } = useForm<IExample>({
-    defaultValues: data || initValues,
+    defaultValues: data || translate || initExampleData,
   })
 
   const onSubmit = async (formData: IExample) => {
@@ -87,7 +80,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 
       closeExampleModal()
       setAnswer('')
-      if (resetAfterSave) reset(initValues)
+      if (resetAfterSave) reset(initExampleData)
       if (result) {
         onSuccess?.(result)
       }
@@ -100,19 +93,13 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 
   const onReload = async () => {
     setAnswer('')
-    reset({ origin: '', translation: '' })
+    reset({ ...initExampleData })
     dispatch(exampleAction.setTranslate(null))
-    await getRandomExamples()
     setIsChecked(false)
+    await getRandomExamples()
   }
 
   const getRandomExamples = async () => {
-    // Check if translate example already exists in Redux
-    if (translate) {
-      reset({ ...translate })
-      return
-    }
-
     try {
       setLoading(true)
       const { isSuccess, content } = await exampleApi.getRandomExamples(1)
@@ -129,6 +116,11 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   }
 
   useEffect(() => {
+    // Check if translate example already exists in Redux
+    if (translate) {
+      reset({ ...translate })
+      return
+    }
     if (mode === ExampleMode.Translation) {
       getRandomExamples()
     }

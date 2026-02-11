@@ -32,13 +32,14 @@ interface TextEditor {
   onChange?: (content: unknown) => void
 }
 
-export const TextEditor = ({ content, onChange }: TextEditor) => {
-  const editorRef = useRef<ClassicEditor | null>(null)
+export const TextEditor = ({ content, disabled = false, onChange }: TextEditor) => {
+  const editorRef = useRef<ClassicEditor>()
 
   return (
     <div className={'text-editor'}>
       <CKEditor
         editor={ClassicEditor}
+        disabled={disabled}
         config={{
           plugins: [
             Essentials,
@@ -81,11 +82,9 @@ export const TextEditor = ({ content, onChange }: TextEditor) => {
         onChange={() => {
           onChange?.(editorRef.current?.getData())
         }}
+        data={content}
         onReady={(editor) => {
           editorRef.current = editor
-          if (content) {
-            editor.setData(content)
-          }
         }}
       />
     </div>

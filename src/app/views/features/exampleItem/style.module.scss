@@ -6,7 +6,7 @@
   background: transparent !important;
   color: var(--ant-color-text-secondary) !important;
   border-color: var(--ant-color-text-secondary) !important;
-  border-radius: calc(var(--ant-size) * 0.25px) !important;
+  border-radius: calc(var(--ant-size) * 0.25) !important;
 }
 
 .item {
@@ -37,9 +37,9 @@
 
 .meaningItem {
   border: 1px solid #fafafa;
-  padding: calc(var(--ant-size) * 0.25px) calc(var(--ant-size) * 0.75px);
-  margin: calc(var(--ant-size) * 0.25px) 0;
-  border-radius: calc(var(--ant-size) * 0.25px);
+  padding: calc(var(--ant-size) * 0.25) calc(var(--ant-size) * 0.75);
+  margin: calc(var(--ant-size) * 0.25) 0;
+  border-radius: calc(var(--ant-size) * 0.25);
 
   & > * {
     margin: calc(var(--ant-size) * 0.5px) 0;
@@ -50,8 +50,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: calc(var(--ant-size) * 0.25px);
-  margin: calc(var(--ant-margin) * 0.25px) 0;
+  gap: calc(var(--ant-size) * 0.25);
+  margin: calc(var(--ant-margin) * 0.25) 0;
   font-size: 12px;
   font-weight: normal;
   font-style: italic;
@@ -71,7 +71,7 @@
   align-items: center;
   justify-content: space-between;
   word-break: break-word;
-  margin-bottom: calc(var(--ant-margin) * 0.25px);
+  margin-bottom: calc(var(--ant-margin) * 0.25);
   min-height: var(--ant-control-height);
 }
 
@@ -89,8 +89,8 @@
 
 .exampleItem {
   display: block;
-  padding: calc(var(--ant-padding) * 0.5px) calc(var(--ant-padding) * 0.5px)
-    calc(var(--ant-padding) * 0.5px) calc(var(--ant-padding) * 2px);
+  padding: calc(var(--ant-padding) * 0.5) calc(var(--ant-padding) * 0.5)
+    calc(var(--ant-padding) * 0.5) calc(var(--ant-padding) * 2);
   border-top: 1px solid #ffa39e; // styleConfig.border.red[2]
 
   &:first-child {
@@ -125,7 +125,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: calc(var(--ant-size) * 0.25px);
+  gap: calc(var(--ant-size) * 0.25);
   font-size: var(--ant-font-size-heading-5);
   margin: 0 0 0 0;
   font-family: Lato, sans-serif; // styleConfig.fontFamily.lato
@@ -155,8 +155,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: calc(var(--ant-size) * 0.5px);
-  margin-bottom: calc(var(--ant-margin) * 0.25px);
+  gap: calc(var(--ant-size) * 0.5);
+  margin-bottom: calc(var(--ant-margin) * 0.25);
   font-weight: normal;
   font-style: italic;
 }
@@ -167,9 +167,9 @@
   justify-content: flex-start;
   font-weight: normal;
   line-height: 1em;
-  min-height: calc(var(--ant-size) * 2px);
+  min-height: calc(var(--ant-size) * 2);
   margin: 0 0 0 0;
-  gap: calc(var(--ant-size) * 0.5px);
+  gap: calc(var(--ant-size) * 0.5);
 }
 
 .pronouns {
@@ -186,43 +186,28 @@
   font-size: var(--ant-font-size);
 }
 
-.word_family {
-}
-
 .audio {
   display: flex;
-  gap: calc(var(--ant-size) * 0.25px);
-}
-
-.audioIcon {
+  gap: calc(var(--ant-size) * 0.25);
 }
 
 .note {
   font-weight: normal;
   font-style: italic;
   display: flex;
-  gap: calc(var(--ant-size) * 0.25px);
+  gap: calc(var(--ant-size) * 0.25);
   flex-wrap: wrap;
   row-gap: 0;
   font-size: 13px;
 }
 
-.grammar {
-}
-
-.collocations {
-}
-
 .listItem {
-  padding-left: calc(var(--ant-size) * 1px);
+  padding-left: calc(var(--ant-size) * 1);
   font-size: 13px;
 
   & li {
     display: list-item;
   }
-}
-
-.accent {
 }
 
 .btnActions {

@@ -45,11 +45,11 @@ const Home = () => {
                     <StudySet />
                   </Widget>
 
-                  <Widget title={'Translator!'}>
+                  <Widget title={'Translator'}>
                     <ExampleForm resetAfterSave={false} mode={ExampleMode.Translation} />
                   </Widget>
 
-                  <Widget title={'Examples!'}>
+                  <Widget title={'Examples'}>
                     <Example />
                   </Widget>
                 </Col>

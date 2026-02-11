@@ -12,7 +12,7 @@ import { Item } from '../item/Item'
 import { EItemLevel } from '../modals/itemModal/data'
 import styles from './style.module.scss'
 import clsx from 'clsx'
-import { usePrompt } from '@/helpers/hooks'
+import { useItemModal, usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
 
 export const StudySet: React.FC = () => {
@@ -23,6 +23,8 @@ export const StudySet: React.FC = () => {
   const inputEl = useRef<InputRef | null>(null)
 
   const { openNotification } = usePrompt()
+
+  const { openItemModal } = useItemModal()
 
   const dispatch = useDispatch()
 
@@ -207,7 +209,10 @@ export const StudySet: React.FC = () => {
 
   const onSearch = async (id: string) => {
     try {
-      await itemApi.getItemById(id)
+      const { isSuccess, content } = await itemApi.getItemById(id)
+      if (isSuccess && content) {
+        openItemModal('view', content)
+      }
     } catch (error) {
       openNotification({ type: 'error', message: JSON.stringify(error) })
     }
@@ -442,23 +447,11 @@ export const StudySet: React.FC = () => {
                         />
                       </div>
 
-                      {isSubmit && ans.typeId && (
-                        <i>{`(${getType(ans.typeId).origin.toLowerCase()})`}</i>
+                      {isSubmit && item.catId === ECategory.WORD && ans.typeId && (
+                        <i className={'text-sm'}>
+                          {`(${getType(ans.typeId).origin.toLowerCase()})`}
+                        </i>
                       )}
-                      {/* {isSubmit && ans.id !== item.id && (
-                        <Button
-                          type={'link'}
-                          size={'small'}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onEdit(ans.id as number)
-                          }}
-                        >
-                          <EditOutlined
-                            style={{ color: styleConfig.color.yellow[6], fontSize: 18 }}
-                          />
-                        </Button>
-                      )} */}
                     </Flex>
                   </li>
                 )

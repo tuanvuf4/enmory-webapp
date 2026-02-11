@@ -35,10 +35,6 @@
     background: rgba(37, 39, 52, 0.95);
     border: 1px solid rgba(37, 39, 52, 0.4);
     color: var(--ant-color-white);
-
-    & .translate {
-      color: var(#4096ff);
-    }
   }
 
   & ul,
@@ -246,7 +242,7 @@
   font-style: italic;
   font-size: 14px;
   font-family: 'Lora', sans-serif;
-  color: #fadb14;
+  color: #f7812b;
 
   & ul {
     padding-left: calc(var(--ant-size) * 1);
@@ -276,24 +272,6 @@
   & span {
     font-size: var(--ant-font-size-heading-4) !important;
   }
-}
-
-.contentHead {
-}
-
-.word_family {
-}
-
-.audioIcon {
-}
-
-.grammar {
-}
-
-.collocations {
-}
-
-.accent {
 }
 
 .btnAction {

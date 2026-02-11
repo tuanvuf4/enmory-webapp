@@ -1,4 +1,4 @@
-import globalStyles from "@/style/appStyle.module.scss"
+import globalStyles from '@/style/appStyle.module.scss'
 import {
   PlusOutlined,
   SaveOutlined,
@@ -13,7 +13,7 @@ import { theme, Space, Col, Row, Button, Select, Checkbox, Input, Flex } from 'a
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { meaningItem } from './data'
 import { ExampleItem } from './ExampleItemForm'
-import styles from "./style.module.scss"
+import styles from './style.module.scss'
 import clsx from 'clsx'
 import { TextEditor } from '@/views/components'
 import { usePrompt } from '@/helpers/hooks'
@@ -23,14 +23,14 @@ import { useSelector } from '@/core/hooks'
 
 interface IProps {
   origin?: string
+  loading?: boolean
   catType: ECategory
   onSubmit?: () => void
 }
 
-export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
+export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, onSubmit }) => {
+  console.log(`*** catType *** `, catType)
   const { token } = theme.useToken()
-  
-  
 
   const [show, setShow] = useState<boolean[]>([])
 
@@ -134,12 +134,10 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                           {...field}
                           options={types
                             .filter((item) => item.value !== EType.ALL)
-                            .map((item) => {
-                              return {
-                                ...item,
-                                label: getType(item.value).origin,
-                              }
-                            })}
+                            .map((item) => ({
+                              ...item,
+                              label: getType(item.value).origin,
+                            }))}
                           defaultValue={EType.NOUN}
                         />
                       )}
@@ -181,6 +179,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                     <Button
                       type={'text'}
                       onClick={onSubmit}
+                      disabled={loading}
                       icon={<SaveOutlined />}
                       style={{ color: token.colorPrimary }}
                     />

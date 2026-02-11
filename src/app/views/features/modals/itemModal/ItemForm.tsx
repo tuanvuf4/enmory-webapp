@@ -412,6 +412,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
           <Suspense fallback={<div>Loading...</div>}>
             <MeaningItemForm
+              loading={!isValid || isCreating || isUpdating}
               origin={origin}
               catType={catType as ECategory}
               onSubmit={() => handleSubmit(onSubmit)()}

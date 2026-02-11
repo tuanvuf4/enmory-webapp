@@ -29,6 +29,7 @@ import { IExample } from '@/models/item.model'
 import { toWildString } from '@/helpers/item'
 import { commonApi } from './common.api'
 import { categories, types } from '@/constant/index'
+import { shuffleArray } from '@/helpers/mics'
 
 export interface IItemRequestParams {
   keyword: string
@@ -540,7 +541,7 @@ const getStudySet = async (
     return {
       isSuccess: true,
       message: 'Study set fetched successfully',
-      content: itemsWithQuiz,
+      content: shuffleArray(itemsWithQuiz),
       statusCode: 200,
     }
   } catch (error) {

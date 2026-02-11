@@ -1,12 +1,12 @@
-import globalStyle from '@/style/appStyle'
+import globalStyles from '@/style/appStyle.module.scss'
 import { SyncOutlined, CloseCircleOutlined, SearchOutlined } from '@ant-design/icons'
 import { useAutoComplete, useExampleModal, useLoading, usePrompt } from '@/helpers/hooks'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import { theme, Button, AutoComplete, Input } from 'antd'
 import { PropsWithChildren, useState, useEffect, useCallback } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import styles from './style'
-import exStyles from '@/views/features/item/style'
+import styles from './style.module.scss'
+import exStyles from '@/views/features/item/style.module.scss'
 import clsx from 'clsx'
 import { NotFound } from '@/views/components'
 import { ExampleItem } from '../exampleItem'
@@ -25,9 +25,6 @@ interface IExampleForm {
 
 export const Example: React.FC<PropsWithChildren & IProps> = () => {
   const { token } = theme.useToken()
-  const classes = styles()
-  const exClasses = exStyles()
-  const globalClasses = globalStyle()
 
   const { user } = useSelector((state) => state.auth)
 
@@ -100,8 +97,8 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
 
         hideLoading()
       }
-    } catch (error) {
-      openNotification({ type: 'error', message: JSON.stringify(error) })
+    } catch (error: any) {
+      openNotification({ type: 'error', message: error.message })
       hideLoading()
     }
   }
@@ -146,9 +143,9 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
   }, [])
 
   return (
-    <div className={classes.exampleOverview}>
+    <div className={styles.exampleOverview}>
       <form
-        className={classes.overviewForm}
+        className={styles.overviewForm}
         onSubmit={handleSubmit(onSubmit)}
         style={{ width: '100%' }}
       >
@@ -160,7 +157,7 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
               <AutoComplete
                 value={value}
                 placeholder='Keyword'
-                className={classes.autoSearchInput}
+                className={styles.autoSearchInput}
                 notFoundContent={
                   <NotFound
                     classNames={{ container: 'justify-between' }}
@@ -169,7 +166,7 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
                 }
                 children={
                   <Input
-                    className={classes.searchExampleInput}
+                    className={styles.searchExampleInput}
                     onClear={() => onClear()}
                     allowClear={{
                       clearIcon: (
@@ -205,16 +202,16 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
 
         <Button type={'primary'} htmlType='submit' style={{ color: token.colorWhite }}>
           <SearchOutlined />
-          <span className={globalClasses.fromTablet}>Search</span>
+          <span className={globalStyles.fromTablet}>Search</span>
         </Button>
       </form>
 
       {loading && <Loading show={loading} inner={true} />}
 
       {selected && selected.origin && (
-        <div className={clsx(exClasses.examples, classes.exampleSelectedEx)}>
+        <div className={clsx(exStyles.examples, styles.exampleSelectedEx)}>
           <ul>
-            <li className={clsx(exClasses.exampleItem)} style={{ paddingLeft: 8 }}>
+            <li className={clsx(exStyles.exampleItem)} style={{ paddingLeft: 8 }}>
               <ExampleItem
                 data={selected}
                 onEdit={() => onEdit(selected.id || '')}
@@ -233,11 +230,11 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
       )}
 
       {!loading && examples?.length > 0 && (
-        <div className={clsx(exClasses.examples)}>
+        <div className={clsx(exStyles.examples)}>
           <ul>
             {examples.map((example, key) => {
               return (
-                <li key={key} className={clsx(exClasses.exampleItem)} style={{ paddingLeft: 8 }}>
+                <li key={key} className={clsx(exStyles.exampleItem)} style={{ paddingLeft: 8 }}>
                   <ExampleItem
                     data={example}
                     onEdit={() => onEdit(example.id || '')}

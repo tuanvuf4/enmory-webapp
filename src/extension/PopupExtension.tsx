@@ -6,15 +6,13 @@ import { theme } from 'antd'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { chromeStorage } from './storageService'
-import styles from './style'
+import styles from './style.module.scss'
 import { ExampleForm, HeaderExtension, LoginForm, RegisterForm, LoadingBar } from '@/views/features'
 import { ItemForm } from '@/views/features/modals/itemModal'
 import { useCategories, useTypes } from '@/core/hooks'
 
 export const PopupExtension = () => {
   const { token } = theme.useToken()
-
-  const classes = styles()
 
   const [isLogin, setIsLogin] = useState<boolean>(true)
 
@@ -69,13 +67,13 @@ export const PopupExtension = () => {
   }, [])
 
   return (
-    <div className={classes.ext}>
+    <div className={styles.ext}>
       <HeaderExtension isAuth={isLogin} onPageChange={onPageChange} />
 
       {!isLogin && (
         <>
           {currentPage === EPageExt.LOGIN && (
-            <div className={classes.loginForm}>
+            <div className={styles.loginForm}>
               <LoginForm onLoginSuccess={onLogin} showBanner={false} />
             </div>
           )}
@@ -87,7 +85,7 @@ export const PopupExtension = () => {
       {isLogin && (
         <>
           {currentPage === EPageExt.ADD && (
-            <div className={classes.cruForm}>
+            <div className={styles.cruForm}>
               <FormProvider {...methods}>
                 <ItemForm item={initItem} />
               </FormProvider>

@@ -1,6 +1,6 @@
 import { msgErrors } from '@/constant/validation'
 import { chromeStorage } from '@/extension/storageService'
-import globalStyle from '@/style/appStyle'
+import globalStyles from '@/style/appStyle.module.scss'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { isGroupWord } from '@/helpers/validate'
@@ -16,7 +16,7 @@ import { useEffect, Suspense } from 'react'
 import { useFormContext, useWatch, Controller } from 'react-hook-form'
 import { initItem } from './data'
 import { MeaningItemForm } from './MeaningItemForm'
-import styles from './style'
+import styles from './style.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { CloseCircleOutlined, Loading3QuartersOutlined } from '@ant-design/icons'
 import { usePrompt } from '@/helpers/hooks'
@@ -33,8 +33,6 @@ interface ItemFormProps {
 
 export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const { token } = theme.useToken()
-  const classes = styles()
-  const globalClasses = globalStyle()
 
   const { openNotification } = usePrompt()
 
@@ -173,12 +171,12 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   }, [item])
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} style={{ padding: token.size }}>
+    <form onSubmit={handleSubmit(onSubmit)}>
       <Row>
         <Space
           direction='vertical'
           size={[token.size / 2, token.size / 2]}
-          className={globalClasses.fulWidth}
+          className={globalStyles.fulWidth}
         >
           <Row align={'middle'}>
             <Col md={4} xs={12}>
@@ -192,7 +190,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                 render={({ field: { onChange, value, ref } }) => (
                   <Select
                     ref={ref}
-                    className={globalClasses.fulWidth}
+                    className={globalStyles.fulWidth}
                     onChange={onChange}
                     options={categories}
                     value={value}
@@ -236,7 +234,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                   <>
                     <AutoComplete
                       value={value}
-                      className={clsx(globalClasses.fulWidth)}
+                      className={clsx(globalStyles.fulWidth)}
                       options={options}
                       children={
                         <Input
@@ -276,13 +274,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                     />
 
                     {invalid && errors.origin?.type === 'required' && (
-                      <p className={clsx(globalClasses.errorMsg, globalClasses.textLeft)}>
+                      <p className={clsx(globalStyles.errorMsg, globalStyles.textLeft)}>
                         {errors.origin?.message as string}
                       </p>
                     )}
 
                     {invalid && errors.origin?.type === 'existed' && (
-                      <p className={clsx(globalClasses.errorMsg, globalClasses.textLeft)}>
+                      <p className={clsx(globalStyles.errorMsg, globalStyles.textLeft)}>
                         {errors.origin?.message as string}
                       </p>
                     )}
@@ -424,7 +422,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
       <Row gutter={[token.size / 2, token.size / 2]}>
         <Col xs={24}>
-          <div className={classes.action}>
+          <div className={styles.action}>
             <Button htmlType='button' onClick={handleCancel}>
               Cancel
             </Button>

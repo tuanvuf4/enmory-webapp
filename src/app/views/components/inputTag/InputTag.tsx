@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { AutoComplete, Space, Tag, theme } from 'antd'
+import { AutoComplete, Space, Tag } from 'antd'
 import { CloseCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import styles from './style'
+import styles from './style.module.scss'
 import clsx from 'clsx'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { getArrayUniqueItem } from '@/helpers/item'
@@ -14,8 +14,6 @@ interface IPros {
 }
 
 export const InputTag: React.FC<IPros> = ({ tags, allowSpace = true, onChange }) => {
-  const classes = styles(theme.useToken().token)
-
   const [inputVisible, setInputVisible] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [editInputIndex, setEditInputIndex] = useState(-1)
@@ -109,7 +107,7 @@ export const InputTag: React.FC<IPros> = ({ tags, allowSpace = true, onChange })
                   autoFocus={true}
                   key={tag + index}
                   value={editInputValue}
-                  className={clsx([classes.tag, classes.inputAutoComplete])}
+                  className={clsx([styles.tag, styles.inputAutoComplete])}
                   allowClear={{ clearIcon: <CloseCircleOutlined style={{ fontSize: 14 }} /> }}
                   options={options}
                   onSearch={onSearch}
@@ -125,7 +123,7 @@ export const InputTag: React.FC<IPros> = ({ tags, allowSpace = true, onChange })
               <Tag
                 key={tag + index}
                 closable={true}
-                className={clsx([classes.tag])}
+                className={clsx([styles.tag])}
                 onClose={() => handleClose(tag)}
               >
                 <span
@@ -147,7 +145,7 @@ export const InputTag: React.FC<IPros> = ({ tags, allowSpace = true, onChange })
         <AutoComplete
           value={inputValue}
           autoFocus={true}
-          className={clsx([classes.tag, classes.inputAutoComplete])}
+          className={clsx([styles.tag, styles.inputAutoComplete])}
           options={options}
           onSearch={onSearch}
           onSelect={onSelect}
@@ -157,7 +155,7 @@ export const InputTag: React.FC<IPros> = ({ tags, allowSpace = true, onChange })
           allowClear={{ clearIcon: <CloseCircleOutlined style={{ fontSize: 14 }} /> }}
         />
       ) : (
-        <Tag className={clsx([classes.tag, classes.tagPlus])} onClick={() => setInputVisible(true)}>
+        <Tag className={clsx([styles.tag, styles.tagPlus])} onClick={() => setInputVisible(true)}>
           Add <PlusOutlined />
         </Tag>
       )}

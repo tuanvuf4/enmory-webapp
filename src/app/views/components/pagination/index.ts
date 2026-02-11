@@ -1,2 +1,2 @@
 export * from './Pagination'
-export * from './style'
+// export * from './style' // Removed: migrated to SCSS modules

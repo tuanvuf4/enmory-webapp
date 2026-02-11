@@ -1,0 +1,24 @@
+.registerForm {
+  width: 600px;
+  max-width: 100%;
+  margin: calc(var(--ant-size) * 2) auto;
+  background: #ffffff; // styleConfig.color.white[0]
+}
+
+.label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: calc(var(--ant-size) * 0.25);
+  color: #595959; // styleConfig.color.neutral[6]
+  font-style: italic;
+  font-size: 13px;
+}
+
+.register {
+  text-align: center;
+  color: #8c8c8c; // styleConfig.color.neutral[4]
+
+  & p {
+    margin: 0;
+  }
+}

@@ -1,16 +1,16 @@
-import styles from './style'
+import styles from './style.module.scss'
 
 export const NoResultInList = () => {
-  const classes = styles()
+  
 
   return [
     {
       value: 'noresult',
       label: (
-        <div className={classes.optionItem} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.optionItem} onClick={(e) => e.stopPropagation()}>
           <span>No result!</span>
           {/* <Button
-            className={classNames(classes.btnAddNew)}
+            className={classNames(styles.btnAddNew)}
             icon={
               <PlusOutlined
                 style={{

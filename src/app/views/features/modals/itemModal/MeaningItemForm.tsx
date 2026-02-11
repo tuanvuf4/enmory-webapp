@@ -1,4 +1,4 @@
-import globalStyle from '@/style/appStyle'
+import globalStyles from "@/style/appStyle.module.scss"
 import {
   PlusOutlined,
   SaveOutlined,
@@ -13,7 +13,7 @@ import { theme, Space, Col, Row, Button, Select, Checkbox, Input, Flex } from 'a
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { meaningItem } from './data'
 import { ExampleItem } from './ExampleItemForm'
-import styles from './style'
+import styles from "./style.module.scss"
 import clsx from 'clsx'
 import { TextEditor } from '@/views/components'
 import { usePrompt } from '@/helpers/hooks'
@@ -29,8 +29,8 @@ interface IProps {
 
 export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
   const { token } = theme.useToken()
-  const classes = styles()
-  const globalClasses = globalStyle()
+  
+  
 
   const [show, setShow] = useState<boolean[]>([])
 
@@ -50,7 +50,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
     <Space
       direction='vertical'
       size={[token.size / 2, token.size / 2]}
-      className={globalClasses.fulWidth}
+      className={globalStyles.fulWidth}
       style={{ marginBottom: `${token.size}px` }}
     >
       <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
@@ -87,16 +87,16 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
         return (
           <div
             className={clsx(
-              classes.contentStyle,
-              !enable && classes.disableMeaning,
-              !definition && !translation && classes.disableMeaning,
+              styles.contentStyle,
+              !enable && styles.disableMeaning,
+              !definition && !translation && styles.disableMeaning,
             )}
             key={field.id || index}
           >
             <Space
               direction='vertical'
               size={[token.size / 2, token.size]}
-              className={globalClasses.fulWidth}
+              className={globalStyles.fulWidth}
             >
               <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
                 <Col
@@ -129,7 +129,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                       name={`meanings.${index}.typeId`}
                       render={({ field }) => (
                         <Select
-                          className={globalClasses.fulWidth}
+                          className={globalStyles.fulWidth}
                           rootClassName={'text-center'}
                           {...field}
                           options={types
@@ -160,7 +160,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                       )}
 
                       <div
-                        className={clsx('text-sm self-center flex-1', classes.showMeaningOption)}
+                        className={clsx('text-sm self-center flex-1', styles.showMeaningOption)}
                         dangerouslySetInnerHTML={{
                           __html: getValues(`meanings.${index}.translation`),
                         }}
@@ -206,7 +206,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                 <Space
                   direction='vertical'
                   size={[token.size / 2, token.size / 2]}
-                  className={clsx(globalClasses.fulWidth)}
+                  className={clsx(globalStyles.fulWidth)}
                 >
                   <Row gutter={[token.size / 2, token.size]} align={'middle'}>
                     <Col
@@ -268,7 +268,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                               Pronunciation:
                               {/* {!getValues(`meanings.${index}.pronunciation.common`) && (
                               <Popover title={msgWarning.empty}>
-                                <WarningOutlined className={classes.alertIcon} />
+                                <WarningOutlined className={styles.alertIcon} />
                               </Popover>
                             )} */}
                             </label>
@@ -307,7 +307,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                               UK
                               {!getValues(`meanings.${index}.pronunciation.uk`) && (
                                 <Popover title={msgWarning.empty}>
-                                  <WarningOutlined className={classes.alertIcon} />
+                                  <WarningOutlined className={styles.alertIcon} />
                                 </Popover>
                               )}
                             </Col> */}
@@ -339,7 +339,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, onSubmit }) => {
                               US
                               {!getValues(`meanings.${index}.pronunciation.us`) && (
                                 <Popover title='This field is missing!'>
-                                  <WarningOutlined className={classes.alertIcon} />
+                                  <WarningOutlined className={styles.alertIcon} />
                                 </Popover>
                               )}
                             </Col> */}

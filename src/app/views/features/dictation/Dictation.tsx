@@ -1,5 +1,5 @@
 import { Button, Col, Row, Space, theme } from 'antd'
-import styles from './style'
+import styles from './style.module.scss'
 import TextArea from 'antd/es/input/TextArea'
 import { useEffect, useState } from 'react'
 import { setting } from '@/config/appConfig'
@@ -19,7 +19,7 @@ export const Dictation: React.FC<IProps> = ({
   translation,
 }) => {
   const { token } = theme.useToken()
-  const classes = styles()
+  
 
   const [isFinish, setIsFinish] = useState<boolean>(false)
   const [isStart, setIsStart] = useState<boolean>(false)
@@ -95,31 +95,31 @@ export const Dictation: React.FC<IProps> = ({
     <Space direction='vertical' style={{ display: 'flex' }} size={[token.size, token.size]}>
       <Row gutter={[token.size, token.size]}>
         <Col xs={24}>
-          {/* <div className={classNames(classes.textarea)}>
-            <div className={classes.textareaItem}>
-              <h3 className={classes.title}>
+          {/* <div className={classNames(styles.textarea)}>
+            <div className={styles.textareaItem}>
+              <h3 className={styles.title}>
                 {transciptLabel} {getTooltip()}
               </h3>
             </div>
-            <div className={classes.textareaItem}>
-              <h3 className={classes.title}>{translationLabel}</h3>
+            <div className={styles.textareaItem}>
+              <h3 className={styles.title}>{translationLabel}</h3>
             </div>
           </div> */}
 
           {!isFinish && (
-            <div className={classNames(classes.textarea)}>
+            <div className={classNames(styles.textarea)}>
               {!isStart && (
                 <>
-                  <div className={classes.textareaItem}>
+                  <div className={styles.textareaItem}>
                     <div
-                      className={classNames(classes.innerTextarea, classes.textareaDisable)}
+                      className={classNames(styles.innerTextarea, styles.textareaDisable)}
                       dangerouslySetInnerHTML={{ __html: source.replaceAll(/\n/g, '<br />') }}
                     />
                   </div>
 
-                  <div className={classes.textareaItem}>
+                  <div className={styles.textareaItem}>
                     <div
-                      className={classNames(classes.innerTextarea, classes.textareaDisable)}
+                      className={classNames(styles.innerTextarea, styles.textareaDisable)}
                       dangerouslySetInnerHTML={{ __html: srcTran.replaceAll(/\n/g, '<br />') }}
                     />
                   </div>
@@ -127,9 +127,9 @@ export const Dictation: React.FC<IProps> = ({
               )}
 
               {isStart && (
-                <div className={classes.textareaItem}>
+                <div className={styles.textareaItem}>
                   <TextArea
-                    className={classes.innerTextarea}
+                    className={styles.innerTextarea}
                     allowClear={!player}
                     rows={10}
                     value={target}
@@ -142,17 +142,17 @@ export const Dictation: React.FC<IProps> = ({
           )}
 
           {isFinish && (
-            <div className={classNames(classes.textarea)}>
-              <div className={classes.textareaItem}>
+            <div className={classNames(styles.textarea)}>
+              <div className={styles.textareaItem}>
                 <div
-                  className={classNames(classes.innerTextarea, isFinish ? 'show' : '')}
+                  className={classNames(styles.innerTextarea, isFinish ? 'show' : '')}
                   dangerouslySetInnerHTML={{ __html: fmSource }}
                 />
               </div>
 
-              <div className={classNames(classes.textareaItem)}>
+              <div className={classNames(styles.textareaItem)}>
                 <div
-                  className={classNames(classes.innerTextarea, isFinish ? 'show' : '')}
+                  className={classNames(styles.innerTextarea, isFinish ? 'show' : '')}
                   dangerouslySetInnerHTML={{ __html: fmTarget }}
                 />
               </div>

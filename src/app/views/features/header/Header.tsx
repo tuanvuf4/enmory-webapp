@@ -1,4 +1,4 @@
-import globalStyle from '@/style/appStyle'
+import globalStyles from '@/style/appStyle.module.scss'
 import { MenuOutlined, SearchOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { useAuthLogout } from '@/core/hooks/useAuthLogout'
@@ -10,7 +10,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
 import { MainMenu } from '../mainMenu/MainMenu'
 import { menu, addNewType } from './Menu'
-import styles from './style'
+import styles from './style.module.scss'
 import clsx from 'clsx'
 import { useExampleModal, useItemModal } from '@/helpers/hooks'
 import { Header } from 'antd/es/layout/layout'
@@ -18,8 +18,6 @@ import { exampleAction } from '@/store/reducers/example.reducer'
 
 export const AppHeader = () => {
   const { token } = theme.useToken()
-  const classes = styles()
-  const globalClasses = globalStyle()
 
   const { isAuth, user } = useSelector((state) => state.auth)
   const { drawer } = useSelector((state) => state.setting)
@@ -78,29 +76,29 @@ export const AppHeader = () => {
   }
 
   return (
-    <Header className={clsx(classes.header, isShowSearchFormItem ? 'active' : '')}>
-      <div className={globalClasses.containerFluid}>
+    <Header className={clsx(styles.header, isShowSearchFormItem ? 'active' : '')}>
+      <div className={globalStyles.containerFluid}>
         <Row
           gutter={[token.size, token.size * 2]}
           justify={'space-between'}
-          className={classes.rowHeader}
+          className={styles.rowHeader}
           style={{ height: 60 }}
         >
           <Col xs={10} md={4}>
             {drawer && (
-              <div className={classes.toggleSidebarBtn}>
+              <div className={styles.toggleSidebarBtn}>
                 <Button
                   type='text'
                   shape='default'
-                  className={classes.btnToggle}
+                  className={styles.btnToggle}
                   icon={<MenuOutlined style={{ color: token.colorTextBase }} />}
                   onClick={() => {
                     dispatch(settingAction.toggleSidebar())
                   }}
                 />
 
-                <div className={classes.logo}>
-                  <h1 className={classes.brandName}>
+                <div className={styles.logo}>
+                  <h1 className={styles.brandName}>
                     <Link to={'/'}>
                       <img src={logo} alt='' />
                     </Link>
@@ -122,11 +120,11 @@ export const AppHeader = () => {
             )}
 
             {!drawer && (
-              <div className={classes.toggleSidebarBtn}>
+              <div className={styles.toggleSidebarBtn}>
                 <Button
                   type='text'
                   shape='default'
-                  className={classes.btnToggle}
+                  className={styles.btnToggle}
                   icon={<MenuOutlined style={{ color: token.colorTextBase }} />}
                   onClick={() => {
                     dispatch(settingAction.toggleSidebar())
@@ -137,17 +135,17 @@ export const AppHeader = () => {
           </Col>
 
           {isAuth && (
-            <Col xs={12} md={16} className={globalClasses.fromTablet}>
+            <Col xs={12} md={16} className={globalStyles.fromTablet}>
               <MainMenu direction='horizontal' />
             </Col>
           )}
 
           <Col xs={14} md={isAuth ? 4 : 18}>
             {isAuth && (
-              <div className={clsx(classes.userContainer)}>
+              <div className={clsx(styles.userContainer)}>
                 <Dropdown trigger={['click']} menu={menuAddProps} placement='bottomLeft' arrow>
                   <Button
-                    className={clsx(classes.btnAddNew)}
+                    className={clsx(styles.btnAddNew)}
                     icon={
                       <PlusOutlined
                         style={{
@@ -163,13 +161,17 @@ export const AppHeader = () => {
                 </Dropdown>
 
                 <Dropdown trigger={['click']} menu={menuProps} placement='bottomLeft' arrow>
-                  <Button type='text' onClick={(e) => e.preventDefault()}>
+                  <Button
+                    type='text'
+                    style={{ minWidth: 54, padding: 0 }}
+                    onClick={(e) => e.preventDefault()}
+                  >
                     <Space>
                       {user?.photoURL ? (
                         <img
                           src={user.photoURL}
                           alt='avatar'
-                          className={classes.avatar}
+                          className={styles.avatar}
                           width={32}
                           height={32}
                         />
@@ -184,7 +186,7 @@ export const AppHeader = () => {
             )}
 
             {!isAuth && (
-              <div className={classes.userContainer}>
+              <div className={styles.userContainer}>
                 <Button type='primary' onClick={() => navigate('/login')} style={{ minWidth: 100 }}>
                   Login
                 </Button>

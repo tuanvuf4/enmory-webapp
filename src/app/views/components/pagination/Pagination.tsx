@@ -1,6 +1,6 @@
-import { Button, Select, theme } from 'antd'
+import { Button, Select } from 'antd'
 import { CaretLeftOutlined, CaretRightOutlined } from '@ant-design/icons'
-import styles from './style'
+import styles from './style.module.scss'
 import { BaseOptionType } from 'antd/es/cascader'
 import { setting } from '@/app/config/appConfig'
 
@@ -26,9 +26,6 @@ export const Pagination = ({
   options = setting.pagination.options,
   onPageChange,
 }: IPros) => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
-
   const onSelectChange = (value: number) => {
     onPageChange({
       page: 0,
@@ -70,16 +67,16 @@ export const Pagination = ({
   const hasNextPage = total > 0 && totalPage > 0 && page < totalPage - 1
 
   return (
-    <div className={classes.pagination}>
-      <div className={classes.paginationSelect}>
+    <div className={styles.pagination}>
+      <div className={styles.paginationSelect}>
         <Select value={size} defaultValue={size} onChange={onSelectChange} options={options} />
       </div>
 
-      <div className={classes.paginationOverall}>
+      <div className={styles.paginationOverall}>
         <Button>{total > 0 ? `${startItem}-${endItem}/${total}` : '0/0'}</Button>
       </div>
 
-      <div className={classes.paginationNav}>
+      <div className={styles.paginationNav}>
         {/* <Button disabled={page === 0 || total === 0} onClick={onFirst}>
           <DoubleLeftOutlined />
         </Button> */}

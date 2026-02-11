@@ -1,5 +1,5 @@
 import { RefObject } from 'react'
-import styles from './style'
+import styles from "./style.module.scss"
 import classNames from 'clsx'
 
 interface IProps {
@@ -15,7 +15,7 @@ export const ProgressBar: React.FC<IProps> = ({
   timeProgress,
   duration,
 }) => {
-  const classes = styles()
+  
 
   const handleProgressChange = () => {
     if (progressBarRef.current && audioRef.current)
@@ -34,12 +34,12 @@ export const ProgressBar: React.FC<IProps> = ({
   }
 
   return (
-    <div className={classes.progress}>
-      <span className={classNames(classes.time, 'current')}>{formatTime(timeProgress)}</span>
+    <div className={styles.progress}>
+      <span className={classNames(styles.time, 'current')}>{formatTime(timeProgress)}</span>
 
       <input type='range' ref={progressBarRef} defaultValue='0' onChange={handleProgressChange} />
 
-      <span className={classNames(classes.time)}>{formatTime(duration)}</span>
+      <span className={classNames(styles.time)}>{formatTime(duration)}</span>
     </div>
   )
 }

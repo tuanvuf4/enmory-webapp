@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Skeleton, theme } from 'antd'
-import styles from '../style'
+import { Skeleton } from 'antd'
+import styles from '../style.module.scss'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Pie } from 'react-chartjs-2'
 import { ECategory } from '@/models/item.model'
@@ -14,9 +14,6 @@ interface IProps {
 }
 
 export const OverviewChart: React.FC<IProps> = ({ title = 'Overview' }) => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>()
   const [total, setTotal] = useState<number>(0)
@@ -66,9 +63,9 @@ export const OverviewChart: React.FC<IProps> = ({ title = 'Overview' }) => {
   }, [settingUI])
 
   return (
-    <div className={classes.chartItem}>
+    <div className={styles.chartItem}>
       {isLoaded && (
-        <h3 className={classes.chartTitle}>
+        <h3 className={styles.chartTitle}>
           {title} : {total} items
         </h3>
       )}

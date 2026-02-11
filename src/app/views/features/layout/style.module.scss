@@ -1,0 +1,30 @@
+.wrapper {
+  min-height: 100vh !important;
+}
+
+.sider {
+  overflow: auto;
+  height: 100vh;
+  position: fixed !important;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.contentStyle {
+  color: var(--ant-color-text);
+  min-width: 320px;
+}
+
+.main {
+  padding: 0 0 calc(var(--ant-size) * 2) 0;
+}
+
+.siteLayout {
+  margin-left: 240px; // styleConfig.sider.width
+}
+
+.show {
+  margin-left: 80px; // styleConfig.sider.widthCollapse
+  transition: all 0.2s;
+}

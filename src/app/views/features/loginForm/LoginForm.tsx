@@ -1,4 +1,4 @@
-import globalStyle from '@/style/appStyle'
+import globalStyles from '@/style/appStyle.module.scss'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { useFirebaseAuth } from '@/core/hooks'
@@ -6,7 +6,7 @@ import { ILogin, IUser } from '@/models/user.model'
 import { theme, Space, Row, Col, Input, Button } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { Link } from 'react-router-dom'
-import styles from './style'
+import styles from './style.module.scss'
 
 import logo from '@/assets/img/logo.png'
 import clsx from 'clsx'
@@ -18,8 +18,6 @@ interface Login {
 
 export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }) => {
   const { token } = theme.useToken()
-  const classes = styles()
-  const globalClasses = globalStyle()
 
   const { loginWithEmail, loginWithGoogle, isLoading, authError, errorMsg } = useFirebaseAuth({
     onLoginSuccess: onLoginSuccess,
@@ -41,20 +39,20 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
   }
 
   return (
-    <div className={classes.loginForm}>
+    <div className={styles.loginForm}>
       {showBanner && (
-        <div className={classes.loginFormHeader}>
+        <div className={styles.loginFormHeader}>
           <img src={logo} alt='' />
-          <h2 className={classes.loginFormTitle}>Welcome to Enmory!</h2>
+          <h2 className={styles.loginFormTitle}>Welcome to Enmory!</h2>
         </div>
       )}
 
-      <div className={classes.loginFormContent}>
+      <div className={styles.loginFormContent}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <Space
             direction='vertical'
             size={[token.size, token.size]}
-            className={globalClasses.fulWidth}
+            className={globalStyles.fulWidth}
           >
             <Row align={'middle'}>
               <Col span={24}>
@@ -93,18 +91,18 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
             </Row>
 
             {errorMsg && (
-              <p className={clsx(globalClasses.errorMsg, globalClasses.textLeft)}>{errorMsg}</p>
+              <p className={clsx(globalStyles.errorMsg, globalStyles.textLeft)}>{errorMsg}</p>
             )}
 
             {authError && !errorMsg && (
-              <p className={clsx(globalClasses.errorMsg, globalClasses.textCenter)}>{authError}</p>
+              <p className={clsx(globalStyles.errorMsg, globalStyles.textCenter)}>{authError}</p>
             )}
 
             <Row justify={'center'}>
               <Col span={24}>
-                <div className={clsx(classes.btnSubmit)}>
+                <div className={clsx(styles.btnSubmit)}>
                   <Button
-                    className={globalClasses.fulWidth}
+                    className={globalStyles.fulWidth}
                     type='primary'
                     htmlType='submit'
                     loading={isLoading}
@@ -118,7 +116,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
             {appConfig.appType !== EAppType.EXTENSION && (
               <Row justify={'center'}>
                 <Col span={24}>
-                  <div className={classes.register}>
+                  <div className={styles.register}>
                     <p>
                       Don't have a account? <Link to={'/register'}></Link>
                     </p>
@@ -130,7 +128,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
             {/* Google Login Section */}
             <Row justify={'center'}>
               <Col span={24}>
-                <div className={classes.otherLoginMethod}>
+                <div className={styles.otherLoginMethod}>
                   <h3>Or continue with</h3>
                 </div>
               </Col>
@@ -138,7 +136,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
 
             <Row justify={'center'}>
               <Col span={24}>
-                <Button className={globalClasses.fulWidth} onClick={handleGoogleLogin}>
+                <Button className={globalStyles.fulWidth} onClick={handleGoogleLogin}>
                   Google
                 </Button>
               </Col>

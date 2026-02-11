@@ -1,8 +1,8 @@
 import React from 'react'
 import { useSelector } from '@/core/hooks/redux'
 import { Col, Row, Space, theme } from 'antd'
-import styles from './style'
-import globalStyle from '@/style/appStyle'
+import styles from "./style.module.scss"
+import globalStyles from "@/style/appStyle.module.scss"
 import { SearchItemForm } from '../searchItemForm'
 
 interface IProps {
@@ -13,17 +13,17 @@ interface IProps {
 export const Toolbar = ({ formSearch = <SearchItemForm />, pagination }: IProps) => {
   const { token } = theme.useToken()
 
-  const classes = styles()
-  const globalClasses = globalStyle()
+  
+  
 
   const { isShowSearchFormItem } = useSelector((state) => state.setting)
 
   return (
-    <div className={classes.toolbar}>
+    <div className={styles.toolbar}>
       <Space
         direction='vertical'
         size={[token.size, token.size]}
-        className={globalClasses.fulWidth}
+        className={globalStyles.fulWidth}
       >
         <Row
           justify={isShowSearchFormItem ? 'space-between' : 'end'}

@@ -1,2 +1,2 @@
 export * from './References'
-export * from './style'
+// export * from './style' // Removed: migrated to SCSS modules

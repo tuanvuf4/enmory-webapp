@@ -1,9 +1,9 @@
-import globalStyle from '@/style/appStyle'
+import globalStyles from '@/style/appStyle.module.scss'
 import { EViewMode } from '@/models/app.model'
 import { Toolbar } from '@/views/features/toolbar/Toolbar'
 import { theme, Row, Col } from 'antd'
 import { useEffect } from 'react'
-import styles from './style'
+import styles from './style.module.scss'
 import { useSelector } from '@/core/hooks'
 import { Pagination } from '@/views/components'
 import { Item } from '@/views/features/item/Item'
@@ -16,9 +16,6 @@ import { Loading } from '@/views/features'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
-
-  const classes = styles()
-  const globalClasses = globalStyle()
 
   const { viewMode, isShowSearchFormItem } = useSelector((state) => state.setting)
 
@@ -58,8 +55,8 @@ export const Library: React.FC = () => {
   return (
     <>
       {isShowSearchFormItem && (
-        <div className={globalClasses.stickyBar}>
-          <div className={globalClasses.container}>
+        <div className={globalStyles.stickyBar}>
+          <div className={globalStyles.container}>
             <Toolbar
               pagination={
                 <Pagination
@@ -82,11 +79,11 @@ export const Library: React.FC = () => {
         </div>
       )}
 
-      <div className={globalClasses.container}>
+      <div className={globalStyles.container}>
         {isLoading && <Loading show={isLoading} />}
 
         {!isLoading && viewMode === EViewMode.GRID && listItem.length > 0 && (
-          <div className={classes.items}>
+          <div className={styles.items}>
             <Row gutter={[token.size, token.size * 2]}>
               {listItem.length > 0 &&
                 listItem.map((item, idx) => {

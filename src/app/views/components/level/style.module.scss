@@ -1,0 +1,17 @@
+.rate {
+  font-size: initial !important;
+
+  & > * {
+    margin-inline-end: calc(var(--ant-size) * 0.25) !important;
+  }
+}
+
+.rateItemDefault {
+  color: #c3c2c2;
+  font-size: 14px;
+}
+
+.rateItemActive {
+  color: #faad14;
+  font-size: 16px;
+}

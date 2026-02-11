@@ -1,6 +1,6 @@
 import { CustomerServiceOutlined } from '@ant-design/icons'
 import { RefObject } from 'react'
-import styles from './style'
+import styles from "./style.module.scss"
 import { ITrack } from './data'
 
 interface IProps {
@@ -18,7 +18,7 @@ export const Track: React.FC<IProps> = ({
   progressBarRef,
   handleNext,
 }) => {
-  const classes = styles()
+  
 
   const onLoadedMetadata = () => {
     const seconds = audioRef.current?.duration
@@ -35,19 +35,19 @@ export const Track: React.FC<IProps> = ({
         onEnded={handleNext}
       />
 
-      <div className={classes.audioInfo}>
-        <div className={classes.audioImage}>
-          <div className={classes.iconWrapper}>
-            <span className={classes.audioIcon}>
+      <div className={styles.audioInfo}>
+        <div className={styles.audioImage}>
+          <div className={styles.iconWrapper}>
+            <span className={styles.audioIcon}>
               <CustomerServiceOutlined />
             </span>
           </div>
         </div>
 
-        <div className={classes.audioDetail}>
-          <p className={classes.title}>{currentTrack.title}</p>
-          <p className={classes.author}>{currentTrack.author}</p>
-          <p className={classes.description}>{currentTrack.author}</p>
+        <div className={styles.audioDetail}>
+          <p className={styles.title}>{currentTrack.title}</p>
+          <p className={styles.author}>{currentTrack.author}</p>
+          <p className={styles.description}>{currentTrack.author}</p>
         </div>
       </div>
     </div>

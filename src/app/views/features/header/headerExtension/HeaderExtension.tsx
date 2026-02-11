@@ -2,8 +2,8 @@ import { DownOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Col, Dropdown, Layout, MenuProps, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
 import { menuExtension } from './Menu'
-import styles from './style'
-import globalStyle from '@/style/appStyle'
+import styles from './style.module.scss'
+import globalStyles from '@/style/appStyle.module.scss'
 import { useEffect, useState } from 'react'
 import { IUser } from '@/models/user.model'
 import { EPageExt } from '@/models/app.model'
@@ -19,8 +19,8 @@ interface IHeaderExt {
 export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) => {
   const { token } = theme.useToken()
 
-  const classes = styles()
-  const globalClasses = globalStyle()
+  
+  
 
   // Get user info from Redux state (Firebase auth)
   const authUser = useSelector((state) => state.auth.user)
@@ -59,16 +59,16 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
   }
 
   return (
-    <Layout.Header className={classes.header}>
-      <div className={globalClasses.containerFluid}>
+    <Layout.Header className={styles.header}>
+      <div className={globalStyles.containerFluid}>
         <Row
           gutter={[token.size, token.size * 2]}
           justify={'space-between'}
-          className={classes.rowHeader}
+          className={styles.rowHeader}
         >
           <Col xs={12}>
-            <div className={classes.logo}>
-              <h1 className={classes.brandName}>
+            <div className={styles.logo}>
+              <h1 className={styles.brandName}>
                 <Link to={'/'}>
                   <img src={logo} alt='' />
                 </Link>
@@ -84,10 +84,10 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
 
           {isAuth && (
             <Col xs={12}>
-              <div className={classNames(classes.userContainer)}>
+              <div className={classNames(styles.userContainer)}>
                 <Dropdown trigger={['click']} menu={menuAddProps} placement='bottomLeft' arrow>
                   <Button
-                    className={classNames(classes.btnAddNew)}
+                    className={classNames(styles.btnAddNew)}
                     icon={
                       <PlusOutlined
                         style={{
@@ -116,7 +116,7 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
 
           {!isAuth && (
             <Col xs={12}>
-              <div className={classes.userContainer}>
+              <div className={styles.userContainer}>
                 <Button type='primary' onClick={() => onPageChange(EPageExt.LOGIN)}>
                   Login
                 </Button>

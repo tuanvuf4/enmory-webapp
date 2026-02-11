@@ -1,0 +1,146 @@
+.header {
+  height: 60px !important;
+  min-width: 320px;
+  line-height: 60px !important;
+  border-bottom: 1px solid rgba(217, 217, 217, 0.2);
+  padding: 0px !important;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+
+  & a {
+    color: var(--ant-color-text-base);
+
+    &:hover {
+      color: var(--ant-color-link-hover);
+    }
+  }
+}
+
+.rowHeader {
+  margin: 0px calc(var(--ant-size) * -1) !important;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.logo {
+  text-transform: capitalize;
+  font-style: italic;
+
+  & h1 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ant-color-text-secondary);
+    font-size: var(--ant-font-size-heading-2);
+
+    & a {
+      color: var(--ant-color-text-secondary);
+
+      &:hover {
+        color: var(--ant-color-primary);
+      }
+    }
+  }
+
+  & img {
+    width: 70px;
+  }
+}
+
+.brandName {
+  margin: 0;
+  font-family: 'Oswald', sans-serif;
+  font-style: normal;
+
+  & img {
+    display: block;
+    width: 40px;
+  }
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.toggleSidebarBtn {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: calc(var(--ant-size) * 0.5px);
+}
+
+.btnToggle {
+  min-width: 38px;
+  padding-inline-start: calc(var(--ant-size) * 0.5) !important;
+  padding-inline-end: calc(var(--ant-size) * 0.5) !important;
+}
+
+.btnAddNew {
+  display: flex !important;
+  align-items: center;
+  text-transform: uppercase;
+  font-weight: bold !important;
+
+  &:hover span {
+    color: var(--ant-color-primary);
+  }
+}
+
+.userContainer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: calc(var(--ant-size));
+}
+
+.mainNav {
+  & ul {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    & li {
+      padding: 0 calc(var(--ant-size) * 3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: var(--ant-font-size-heading-5);
+    }
+  }
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+
+  & button,
+  & button:hover {
+    color: var(--ant-color-text-base);
+  }
+}
+
+.stayUp {
+  & button {
+    margin-left: calc(var(--ant-size) * 0.5);
+    font-weight: bold;
+    min-width: 90px;
+    border-radius: 0px !important;
+
+    & a {
+      &:hover {
+        color: inherit;
+      }
+    }
+  }
+}

@@ -1,0 +1,81 @@
+.loginForm {
+  width: 400px;
+  max-width: 100%;
+  margin: calc(var(--ant-size) * 4) auto;
+  background: #ffffff; // styleConfig.color.white[0]
+}
+
+.loginFormHeader {
+  text-align: center;
+  padding: calc(var(--ant-size) * 3);
+  background: #000000; // styleConfig.bg.black[0]
+  color: var(--ant-color-white);
+
+  & img {
+    width: 120px;
+  }
+}
+
+.loginFormTitle {
+  font-size: var(--ant-font-size-heading-2);
+  font-weight: bold;
+  text-align: center;
+  margin: calc(var(--ant-size) * 1) 0 calc(var(--ant-size) * 1) 0;
+}
+
+.loginFormContent {
+  padding: calc(var(--ant-size) * 2) calc(var(--ant-size) * 2) calc(var(--ant-size) * 4);
+}
+
+.btnSubmit {
+  text-align: center;
+  margin: calc(var(--ant-size) * 1) 0;
+
+  & button {
+    border-radius: 0 !important;
+    letter-spacing: 1px;
+    font-weight: bold !important;
+    text-transform: uppercase;
+  }
+}
+
+.register {
+  text-align: center;
+  color: #8c8c8c; // styleConfig.color.neutral[4]
+
+  & a {
+    margin-left: calc(var(--ant-size) * 0.25);
+  }
+
+  & p {
+    margin: 0;
+  }
+}
+
+.otherLoginMethod {
+  position: relative;
+  text-align: center;
+  color: #8c8c8c; // styleConfig.color.neutral[4]
+  margin: calc(var(--ant-size) * 1) 0;
+
+  &:before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    top: 50%;
+    left: 0;
+    display: block;
+    background: var(--ant-color-primary);
+    z-index: 998;
+  }
+
+  & h3 {
+    position: relative;
+    display: inline-block;
+    padding: 0 calc(var(--ant-size) * 2);
+    background: #ffffff; // styleConfig.color.white[0]
+    margin: 0;
+    z-index: 999;
+  }
+}

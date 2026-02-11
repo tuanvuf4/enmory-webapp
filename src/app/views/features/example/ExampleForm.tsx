@@ -11,7 +11,7 @@ import TextArea from 'antd/es/input/TextArea'
 import clsx from 'clsx'
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import styles from './style'
+import styles from './style.module.scss'
 
 interface IProps {
   data?: IExample
@@ -30,7 +30,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 }) => {
   const { token } = theme.useToken()
 
-  const classes = styles()
+  
 
   const { openNotification } = usePrompt()
   const { closeExampleModal } = useExampleModal()
@@ -136,7 +136,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 
   return (
     <form
-      className={clsx(classes.exampleForm)}
+      className={clsx(styles.exampleForm)}
       onSubmit={handleSubmit(onSubmit)}
       style={{ width: '100%' }}
     >
@@ -161,7 +161,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                     autoSize={{ minRows: 2 }}
                     value={value}
                     placeholder='Origin'
-                    className={classes.autoSearchInput}
+                    className={styles.autoSearchInput}
                     onChange={(text) => onChange(text.target.value)}
                     allowClear={{
                       clearIcon: (
@@ -202,7 +202,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                     value={value}
                     autoSize={{ minRows: 2 }}
                     placeholder='Translation'
-                    className={classes.autoSearchInput}
+                    className={styles.autoSearchInput}
                     onChange={(text) => onChange(text.target.value)}
                     allowClear={{
                       clearIcon: (
@@ -237,7 +237,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                     value={value}
                     autoSize={{ minRows: 2 }}
                     placeholder='Note'
-                    className={classes.autoSearchInput}
+                    className={styles.autoSearchInput}
                     onChange={(text) => onChange(text.target.value)}
                     allowClear={{
                       clearIcon: (

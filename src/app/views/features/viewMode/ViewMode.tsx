@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button, theme, Tooltip } from 'antd'
-import styles from './style'
+import styles from "./style.module.scss"
 import { AppstoreOutlined, MenuOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { styleConfig } from '@/style/appStyle'
@@ -10,14 +10,14 @@ import { EViewMode } from '@/models/app.model'
 export const ViewMode: React.FC = () => {
   const { token } = theme.useToken()
 
-  const classes = styles()
+  
 
   const { viewMode } = useSelector((state) => state.setting)
 
   const dispatch = useDispatch()
 
   return (
-    <div className={classes.viewOptions}>
+    <div className={styles.viewOptions}>
       <Tooltip title='List'>
         <Button
           type={viewMode === EViewMode.LIST ? 'primary' : 'text'}

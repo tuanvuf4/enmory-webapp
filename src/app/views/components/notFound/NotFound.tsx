@@ -1,8 +1,7 @@
-import globalStyle from '@/style/appStyle'
+import globalStyles from '@/style/appStyle.module.scss'
 import { PlusOutlined } from '@ant-design/icons'
 import { Button, theme } from 'antd'
 import clsx from 'clsx'
-import { createUseStyles } from 'react-jss'
 import { cloneElement, isValidElement, ReactElement } from 'react'
 
 interface NotFoundProps {
@@ -38,25 +37,18 @@ interface ButtonWrapperProps {
 }
 
 const PageTitle = ({ content, classNames }: PageTitleProps) => {
-  const globalClasses = globalStyle()
-
-  return <h2 className={clsx(globalClasses.pageTitle, classNames)}>{content}</h2>
+  return <h2 className={clsx(globalStyles.pageTitle, classNames)}>{content}</h2>
 }
 
 const ActionButton = ({ onClickBtn, classNames }: ActionButtonProps) => {
   const { token } = theme.useToken()
 
-  const classes = createUseStyles({
-    btnAddNew: {
-      '&:hover span': {
-        color: token.colorPrimary,
-      },
-    },
-  })()
-
   return (
     <Button
-      className={clsx(classes.btnAddNew, 'uppercase !font-bold', classNames)}
+      className={clsx(
+        'uppercase !font-bold hover:[&_span]:text-[var(--ant-color-primary)]',
+        classNames,
+      )}
       icon={
         <PlusOutlined style={{ fontSize: token.fontSizeHeading4 }} color={token.colorPrimary} />
       }

@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Controls } from './Controls'
 import { ProgressBar } from './ProgressBar'
 import { Button, Dropdown, MenuProps, theme } from 'antd'
-import styles from './style'
+import styles from "./style.module.scss"
 import { styleConfig } from '@/style/appStyle'
 import {
   CaretDownOutlined,
@@ -46,7 +46,7 @@ export const AudioPlayer: React.FC<IProps> = ({
   onCurrentUpdating,
 }) => {
   const { token } = theme.useToken()
-  const classes = styles()
+  
 
   const [currentTrack, setCurrentTrack] = useState<ITracks | null>(null)
   const [timeProgress, setTimeProgress] = useState(0)
@@ -118,27 +118,27 @@ export const AudioPlayer: React.FC<IProps> = ({
   }, [])
 
   return (
-    <div className={classes.audioPlayer} id={'audioPlayer'}>
-      <div className={classes.player}>
+    <div className={styles.audioPlayer} id={'audioPlayer'}>
+      <div className={styles.player}>
         {mediaSrc === EMediaSrc.INTERNAL && currentTrack && (
           <>
-            <div className={classes.audioInfo}>
+            <div className={styles.audioInfo}>
               {current > -1 && tracks.length > 0 && (
                 <>
-                  <p className={classes.title}>{currentTrack.title}</p>
-                  {/* <p className={classes.author}>
+                  <p className={styles.title}>{currentTrack.title}</p>
+                  {/* <p className={styles.author}>
                     {currentTrack.user.firstName +
                       ' ' +
                       currentTrack.user.lastName}
                   </p>
-                  <p className={classes.description}>
+                  <p className={styles.description}>
                     {currentTrack.description}
                   </p> */}
                 </>
               )}
             </div>
 
-            <div className={classes.audioImage}>
+            <div className={styles.audioImage}>
               {current > -1 && tracks.length > 0 && (
                 <audio
                   src={currentTrack.internalUrl}
@@ -148,14 +148,14 @@ export const AudioPlayer: React.FC<IProps> = ({
                 />
               )}
 
-              <div className={classes.iconWrapper}>
-                <span className={classes.audioIcon}>
+              <div className={styles.iconWrapper}>
+                <span className={styles.audioIcon}>
                   <CustomerServiceOutlined />
                 </span>
               </div>
             </div>
 
-            <div className={classNames(classes.controlAction, sticky ? classes.sticky : '')}>
+            <div className={classNames(styles.controlAction, sticky ? styles.sticky : '')}>
               {tracks.length > 0 && current > -1 && (
                 <>
                   <Controls
@@ -185,12 +185,12 @@ export const AudioPlayer: React.FC<IProps> = ({
           <>
             {currentTrack.externalSource === TExternalSource.IFRAME && (
               <div
-                className={classes.iframeExtSrc}
+                className={styles.iframeExtSrc}
                 dangerouslySetInnerHTML={{ __html: currentTrack?.externalUrl }}
               />
             )}
             {currentTrack.externalSource === TExternalSource.EMBED && (
-              <div className={classes.iframeExtSrc}>
+              <div className={styles.iframeExtSrc}>
                 <iframe src={currentTrack?.externalUrl} frameBorder='0'></iframe>
               </div>
             )}
@@ -198,8 +198,8 @@ export const AudioPlayer: React.FC<IProps> = ({
         )}
       </div>
 
-      <div className={classes.tracks}>
-        <div className={classes.tracksTitle}>
+      <div className={styles.tracks}>
+        <div className={styles.tracksTitle}>
           <h2>
             <Dropdown menu={{ items }} trigger={['click']} placement='bottomLeft' arrow>
               <Button
@@ -214,12 +214,12 @@ export const AudioPlayer: React.FC<IProps> = ({
               >
                 <CaretDownOutlined /> {mediaSrc}
                 {mediaSrc === EMediaSrc.INTERNAL && (
-                  <span className={classes.quantity}>
+                  <span className={styles.quantity}>
                     ({tracks.filter((track) => track.internalUrl).length})
                   </span>
                 )}
                 {mediaSrc === EMediaSrc.EXTERNAL && (
-                  <span className={classes.quantity}>
+                  <span className={styles.quantity}>
                     ({tracks.filter((track) => track.externalUrl).length})
                   </span>
                 )}
@@ -253,10 +253,10 @@ export const AudioPlayer: React.FC<IProps> = ({
             )}
         </div>
 
-        <div className={classes.tracksContent}>
+        <div className={styles.tracksContent}>
           <ul>
             {tracks.map((track, key) => (
-              <li className={key === current ? classes.active : ''} key={key}>
+              <li className={key === current ? styles.active : ''} key={key}>
                 {mediaSrc === EMediaSrc.INTERNAL && (
                   <div>
                     <Button
@@ -296,7 +296,7 @@ export const AudioPlayer: React.FC<IProps> = ({
 
                 <div style={{ flex: '1 0', userSelect: 'none' }}>
                   <h4
-                    className={classes.trackTitle}
+                    className={styles.trackTitle}
                     onClick={() => {
                       setTrackIndex(key)
                       if (mediaSrc === EMediaSrc.INTERNAL)
@@ -305,12 +305,12 @@ export const AudioPlayer: React.FC<IProps> = ({
                   >
                     {track.title}
                   </h4>
-                  {/* <span className={classes.trackAuthor}>
+                  {/* <span className={styles.trackAuthor}>
                     {track.user.firstName + ' ' + track.user.lastName}
                   </span> */}
                 </div>
 
-                <div className={classes.actionGroup}>
+                <div className={styles.actionGroup}>
                   <Button
                     size='small'
                     type='text'

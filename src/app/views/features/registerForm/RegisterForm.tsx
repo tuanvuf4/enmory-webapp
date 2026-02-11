@@ -3,21 +3,21 @@ import classNames from 'clsx'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons'
-import globalStyle from '@/style/appStyle'
+import globalStyles from "@/style/appStyle.module.scss"
 import { appConfig, EAppType } from '@/config/appConfig'
 import { IUser } from '@/models/user.model'
 import { initRegisterForm } from '@/services/registerForm'
 import { useFirebaseAuth } from '@/core/hooks'
 
 import logo from '@/assets/img/logo.png'
-import styles from './style'
-import loginStyle from '../loginForm/style'
+import styles from "./style.module.scss"
+import loginStyles from "../loginForm/style.module.scss"
 
 export const RegisterForm = ({ showBanner = true }) => {
   const { token } = theme.useToken()
-  const classesLogin = loginStyle()
-  const classes = styles()
-  const globalClasses = globalStyle()
+  // Removed hook
+  // Removed hook
+  // Removed hook
 
   const {
     register: registerUser,
@@ -46,25 +46,25 @@ export const RegisterForm = ({ showBanner = true }) => {
   }
 
   return (
-    <div className={classNames([classes.registerForm])}>
+    <div className={classNames([styles.registerForm])}>
       {showBanner && (
-        <div className={classesLogin.loginFormHeader}>
+        <div className={loginStyles.loginFormHeader}>
           <img src={logo} alt='' />
-          <h2 className={classesLogin.loginFormTitle}>Welcome to Enmory!</h2>
+          <h2 className={loginStyles.loginFormTitle}>Welcome to Enmory!</h2>
         </div>
       )}
 
-      <div className={classesLogin.loginFormContent}>
+      <div className={loginStyles.loginFormContent}>
         {!isRegistered && (
           <form onSubmit={handleSubmit(handleOk)}>
             <Space
               direction='vertical'
               size={[token.size, token.size]}
-              className={globalClasses.fulWidth}
+              className={globalStyles.fulWidth}
             >
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={24}>
-                  <label className={classes.label} htmlFor=''>
+                  <label className={styles.label} htmlFor=''>
                     Email:
                   </label>
                   <Controller
@@ -92,7 +92,7 @@ export const RegisterForm = ({ showBanner = true }) => {
 
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={12}>
-                  <label className={classes.label} htmlFor=''>
+                  <label className={styles.label} htmlFor=''>
                     Password:
                   </label>
                   <Controller
@@ -120,7 +120,7 @@ export const RegisterForm = ({ showBanner = true }) => {
                   />
                 </Col>
                 <Col xs={24} md={12}>
-                  <label className={classes.label} htmlFor=''>
+                  <label className={styles.label} htmlFor=''>
                     Confirm password:
                   </label>
                   <Controller
@@ -152,7 +152,7 @@ export const RegisterForm = ({ showBanner = true }) => {
 
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={12}>
-                  <label className={classes.label} htmlFor=''>
+                  <label className={styles.label} htmlFor=''>
                     First name:
                   </label>
                   <Controller
@@ -177,7 +177,7 @@ export const RegisterForm = ({ showBanner = true }) => {
                   />
                 </Col>
                 <Col xs={24} md={12}>
-                  <label className={classes.label} htmlFor=''>
+                  <label className={styles.label} htmlFor=''>
                     Last name:
                   </label>
                   <Controller
@@ -205,7 +205,7 @@ export const RegisterForm = ({ showBanner = true }) => {
 
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col span={24} md={24}>
-                  <label className={classes.label} htmlFor=''>
+                  <label className={styles.label} htmlFor=''>
                     Photo URL:
                   </label>
                   <Controller
@@ -222,13 +222,13 @@ export const RegisterForm = ({ showBanner = true }) => {
                 <Row align={'middle'}>
                   <Col span={24}>
                     {errorMsg && (
-                      <p className={classNames(globalClasses.errorMsg, globalClasses.textLeft)}>
+                      <p className={classNames(globalStyles.errorMsg, globalStyles.textLeft)}>
                         {authError}
                       </p>
                     )}
 
                     {!errorMsg && authError && (
-                      <p className={classNames(globalClasses.errorMsg, globalClasses.textLeft)}>
+                      <p className={classNames(globalStyles.errorMsg, globalStyles.textLeft)}>
                         {authError}
                       </p>
                     )}
@@ -238,9 +238,9 @@ export const RegisterForm = ({ showBanner = true }) => {
 
               <Row justify={'center'} gutter={[token.size, token.size]}>
                 <Col span={24}>
-                  <div className={classNames([classesLogin.btnSubmit])}>
+                  <div className={classNames([loginStyles.btnSubmit])}>
                     <Button
-                      className={globalClasses.fulWidth}
+                      className={globalStyles.fulWidth}
                       type='primary'
                       htmlType='submit'
                       loading={firebaseLoading}
@@ -254,7 +254,7 @@ export const RegisterForm = ({ showBanner = true }) => {
               {appConfig.appType !== EAppType.EXTENSION && (
                 <Row justify={'center'}>
                   <Col span={24}>
-                    <div className={classesLogin.register}>
+                    <div className={loginStyles.register}>
                       <p>
                         Already have an account? <Link to={'/login'}>Log in</Link>
                       </p>
@@ -265,7 +265,7 @@ export const RegisterForm = ({ showBanner = true }) => {
 
               <Row justify={'center'} gutter={[token.size, token.size]}>
                 <Col span={24}>
-                  <div className={classesLogin.otherLoginMethod}>
+                  <div className={loginStyles.otherLoginMethod}>
                     <h3>Register with</h3>
                   </div>
                 </Col>
@@ -274,7 +274,7 @@ export const RegisterForm = ({ showBanner = true }) => {
               <Row gutter={[token.size, token.size]}>
                 <Col span={24}>
                   <Button
-                    className={globalClasses.fulWidth}
+                    className={globalStyles.fulWidth}
                     onClick={handleGoogleLogin}
                     loading={firebaseLoading}
                   >
@@ -289,7 +289,7 @@ export const RegisterForm = ({ showBanner = true }) => {
         {isRegistered && registerSuccess && (
           <Row justify={'center'}>
             <Col span={24}>
-              <div className={classesLogin.register}>
+              <div className={loginStyles.register}>
                 <p>
                   {registerMsg} <Link to={'/login'}>Log in</Link>
                 </p>
@@ -301,7 +301,7 @@ export const RegisterForm = ({ showBanner = true }) => {
         {isRegistered && !registerSuccess && (
           <Row justify={'center'}>
             <Col span={24}>
-              <div className={classesLogin.register}>
+              <div className={loginStyles.register}>
                 <p>
                   {registerMsg}
                   <Link to={'/register'} onClick={() => setIsRegistered(false)}>

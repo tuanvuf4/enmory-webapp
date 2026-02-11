@@ -1,7 +1,8 @@
-import { Rate, theme } from 'antd'
+import { Rate } from 'antd'
 import { StarFilled } from '@ant-design/icons'
-import styles from './style'
+import styles from './style.module.scss'
 import { EItemLevel } from '../../features/modals/itemModal/data'
+import clsx from 'clsx'
 
 interface IPros {
   level: number
@@ -18,20 +19,14 @@ export const Level: React.FC<IPros> = ({
   size = 14,
   onChange,
 }) => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
-
   return (
     <Rate
-      className={classes.rate}
+      className={styles.rate}
       character={(item) => {
         return (item.index as number) < level ? (
-          <StarFilled
-            style={{ fontSize: size }}
-            className={classes.rateItemActive + ' ' + classes.rateItemDefault}
-          />
+          <StarFilled style={{ fontSize: size }} className={clsx(styles.rateItemActive)} />
         ) : (
-          <StarFilled style={{ fontSize: size }} className={classes.rateItemDefault} />
+          <StarFilled style={{ fontSize: size }} className={clsx(styles.rateItemDefault)} />
         )
       }}
       disabled={disabled}

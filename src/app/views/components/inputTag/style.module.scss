@@ -1,0 +1,30 @@
+.inputAutoComplete {
+  min-width: 100px;
+  margin-right: calc(var(--ant-margin) * 0.5) !important;
+}
+
+.tagPlus {
+  background: var(--ant-color-bg-container);
+  border-style: dashed !important;
+  min-width: 80px;
+}
+
+.tag {
+  min-height: 38px;
+  min-width: 110px;
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  margin-right: calc(var(--ant-size) / 2);
+  font-size: var(--ant-font-size) !important;
+
+  & span {
+    flex: 1 0;
+    line-height: 36px;
+  }
+
+  & span:global(.anticon) {
+    flex: 0 0;
+  }
+}

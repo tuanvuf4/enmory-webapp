@@ -15,7 +15,7 @@ import React, { useEffect, useState } from 'react'
 import { Reference } from '../references/References'
 import { getActionMenuItem } from './ActionMenuItem'
 import { MeaningItem } from './MeaningItem'
-import styles from './style'
+import styles from './style.module.scss'
 import { actionAsyncApp } from '@/store/asyncActions'
 import { useQueryClient } from '@tanstack/react-query'
 import { styleConfig } from '@/style/appStyle'
@@ -48,8 +48,6 @@ export const Item: React.FC<IProps> = ({
   onFavorite,
 }) => {
   const { token } = theme.useToken()
-
-  const classes = styles()
 
   const queryClient = useQueryClient()
 
@@ -219,7 +217,7 @@ export const Item: React.FC<IProps> = ({
     await onUpdateItemSuccess(response)
     openMessage({
       type: 'success',
-      content: `Item has been ${favorite ? 'favorited' : 'unfavorited'} successfully!`,
+      content: `Item has been ${favorite ? 'added to' : 'removed from'} favorites successfully!`,
     })
   }
 
@@ -236,19 +234,19 @@ export const Item: React.FC<IProps> = ({
   return (
     <div
       className={clsx({
-        [classes.item]: true,
-        active: active,
+        [styles.item]: true,
+        [styles.active]: active,
       })}
     >
       {!data && <Skeleton />}
 
       {data && (
         <>
-          <div className={classes.contentItem}>
-            <div className={classes.contentHead}>
-              <div className={classes.title}>
-                <h2 className={classes.origin}>
-                  {isDefect(data) && <span className={classes.warnTitle}>{data.origin}</span>}
+          <div className={styles.contentItem}>
+            <div className={styles.contentHead}>
+              <div className={styles.title}>
+                <h2 className={styles.origin}>
+                  {isDefect(data) && <span className={styles.warnTitle}>{data.origin}</span>}
 
                   {!isDefect(data) && <span>{data.origin}</span>}
                 </h2>
@@ -274,7 +272,7 @@ export const Item: React.FC<IProps> = ({
                   )}
 
                   {data.archive && (
-                    <Button className={classes.archive} size='small' variant={'text'} type={'text'}>
+                    <Button className={styles.archive} size='small' variant={'text'} type={'text'}>
                       A
                     </Button>
                   )}
@@ -291,8 +289,8 @@ export const Item: React.FC<IProps> = ({
                         type='text'
                         icon={<MoreOutlined />}
                         className={clsx({
-                          [classes.btnActions]: true,
-                          active: active,
+                          [styles.btnActions]: true,
+                          [styles.active]: active,
                         })}
                       />
                     </Dropdown>
@@ -301,7 +299,7 @@ export const Item: React.FC<IProps> = ({
               </div>
 
               {!!data.catId && (
-                <h5 className={classes.kindOfWord}>
+                <h5 className={styles.kindOfWord}>
                   <div
                     style={{
                       display: 'flex',
@@ -310,21 +308,11 @@ export const Item: React.FC<IProps> = ({
                       gap: token.size / 2,
                     }}
                   >
-                    {/* {type === 'brief' && (
-                      <Button
-                        className={classes.quickView}
-                        type='text'
-                        size='small'
-                        icon={<EyeOutlined />}
-                        onClick={onView}
-                      />
-                    )} */}
-
                     <span>{getCategory(data.catId)}</span>
                   </div>
 
                   {data.catId && (
-                    <div className={classes.level}>
+                    <div className={styles.level}>
                       <Level level={data.level as number} />
                     </div>
                   )}
@@ -350,7 +338,7 @@ export const Item: React.FC<IProps> = ({
                   {data.forms &&
                     data.forms.filter((word) => word).length > 0 &&
                     data.forms.length > 0 && (
-                      <div className={classes.word_family}>
+                      <div className={styles.word_family}>
                         <Tags label={'Form'} tags={data.forms} active={active} />
                       </div>
                     )}
@@ -358,7 +346,7 @@ export const Item: React.FC<IProps> = ({
                   {data.word_family &&
                     data.word_family.filter((word) => word).length > 0 &&
                     data.word_family.length > 0 && (
-                      <div className={classes.word_family}>
+                      <div className={styles.word_family}>
                         <Tags label={'Family'} tags={data.word_family} active={active} />
                       </div>
                     )}
@@ -368,7 +356,7 @@ export const Item: React.FC<IProps> = ({
               {data.relation &&
                 data.relation.filter((word) => word).length > 0 &&
                 data.relation.length > 0 && (
-                  <div className={classes.word_family}>
+                  <div className={styles.word_family}>
                     <Tags label={'Relation'} tags={data.relation} active={active} />
                   </div>
                 )}
@@ -386,7 +374,7 @@ export const Item: React.FC<IProps> = ({
               ))}
           </div>
 
-          <div className={classes.date}>
+          <div className={styles.date}>
             <span>{moment(data.created_date).format(setting.dateTimeFormat)}</span>
             <span>{moment(data.last_update).format(setting.dateTimeFormat)}</span>
           </div>

@@ -1,4 +1,4 @@
-import globalStyle from '@/style/appStyle'
+import globalStyles from '@/style/appStyle.module.scss'
 import { usePrefetchAllIotd, useSelector } from '@/core/hooks'
 import { Example } from '@/views/features/example/Example'
 import { StudySet } from '@/views/features/studySet/StudySet'
@@ -6,17 +6,14 @@ import { Widget } from '@/views/features/widget/Widget'
 import { theme, Space, Row, Col, Skeleton } from 'antd'
 import { Item } from '@/views/features/item/Item'
 import { ExampleMode } from '@/models/example.model'
-import registerStyle from '@/views/pages/register/style'
-import loginStyle from '@/views/pages/login/style'
+import registerStyles from '@/views/pages/register/style.module.scss'
+import loginStyles from '@/views/pages/login/style.module.scss'
 import { Link } from 'react-router-dom'
 import { Toolbar } from '@/views/features'
 import { ExampleForm } from '@/views/features/example/ExampleForm'
 
 const Home = () => {
   const { token } = theme.useToken()
-  const globalClasses = globalStyle()
-  const classesRegister = registerStyle()
-  const classesLogin = loginStyle()
 
   const { isAuth } = useSelector((state) => state.auth)
   const { isShowSearchFormItem } = useSelector((state) => state.setting)
@@ -29,18 +26,18 @@ const Home = () => {
       {isAuth && (
         <>
           {isShowSearchFormItem && (
-            <div className={globalClasses.stickyBar}>
-              <div className={globalClasses.container}>
+            <div className={globalStyles.stickyBar}>
+              <div className={globalStyles.container}>
                 <Toolbar pagination={undefined} />
               </div>
             </div>
           )}
 
-          <div className={globalClasses.container}>
+          <div className={globalStyles.container}>
             <Space
               direction='vertical'
               size={[token.size, token.size]}
-              className={globalClasses.fulWidth}
+              className={globalStyles.fulWidth}
             >
               <Row justify={'start'} align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={16}>
@@ -108,11 +105,11 @@ const Home = () => {
         <Space
           direction='vertical'
           size={[token.size, token.size]}
-          className={globalClasses.fulWidth}
+          className={globalStyles.fulWidth}
         >
           <Row justify={'center'}>
             <Col span={24}>
-              <div className={classesRegister.register}>
+              <div className={registerStyles.register}>
                 <p>
                   Don't have a account? <Link to={'/register'}>Register now!</Link>
                 </p>
@@ -122,7 +119,7 @@ const Home = () => {
 
           <Row justify={'center'}>
             <Col span={24}>
-              <div className={classesLogin.register}>
+              <div className={loginStyles.register}>
                 <p>
                   Already have an account? <Link to={'/login'}>Log in</Link>
                 </p>

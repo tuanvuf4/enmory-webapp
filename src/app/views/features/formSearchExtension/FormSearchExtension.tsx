@@ -1,4 +1,4 @@
-import globalStyle from '@/style/appStyle'
+import globalStyles from '@/style/appStyle.module.scss'
 import {
   CloseCircleOutlined,
   FilterOutlined,
@@ -15,7 +15,7 @@ import { theme, AutoComplete, Input, Dropdown, Select, Button } from 'antd'
 import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
-import styles from './style'
+import styles from './style.module.scss'
 import clsx from 'clsx'
 import { NotFound } from '@/views/components'
 
@@ -25,8 +25,8 @@ interface IProps {
 
 export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const { token } = theme.useToken()
-  const classes = styles()
-  const globalClasses = globalStyle()
+  
+  
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -87,21 +87,21 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   }, [searchParams])
 
   return (
-    <div className={classes.searchForm}>
+    <div className={styles.searchForm}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
         <Controller
           control={control}
           name={`keyword`}
           render={({ field: { onChange, value } }) => {
             return (
-              <div className={classes.autoSearchInputGroup}>
+              <div className={styles.autoSearchInputGroup}>
                 <AutoComplete
                   value={value}
                   placeholder='Enter keyword...'
                   notFoundContent={<NotFound showButton={false} />}
                   children={
                     <Input
-                      className={classes.searchExampleInput}
+                      className={styles.searchExampleInput}
                       suffix={isSearching ? <Loading3QuartersOutlined spin /> : undefined}
                       allowClear={
                         isSearching
@@ -122,7 +122,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                       }
                     />
                   }
-                  className={clsx(classes.autoSearchInput, globalClasses.fulWidth)}
+                  className={clsx(styles.autoSearchInput, globalStyles.fulWidth)}
                   options={options}
                   onSelect={onSelect}
                   onClear={() => {
@@ -140,7 +140,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
           <Dropdown
             trigger={['click']}
             popupRender={() => (
-              <div className={classes.filterWrapper}>
+              <div className={styles.filterWrapper}>
                 <p style={{ margin: 0 }}>Order By:</p>
 
                 <Controller
@@ -148,7 +148,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                   name={`orderBy`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={globalClasses.fulWidth}
+                      className={globalStyles.fulWidth}
                       value={value}
                       onChange={(e) => {
                         onChange(e)
@@ -167,7 +167,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                   name={`order`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={globalClasses.fulWidth}
+                      className={globalStyles.fulWidth}
                       value={value}
                       onChange={(e) => {
                         onChange(e)
@@ -183,7 +183,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
 
                 <Button
                   htmlType='submit'
-                  className={globalClasses.fulWidth}
+                  className={globalStyles.fulWidth}
                   onClick={() => handleSubmit(onSubmit)()}
                 >
                   Apply
@@ -222,7 +222,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
           }}
         >
           <SyncOutlined />
-          <span className={globalClasses.fromTablet}>Reset</span>
+          <span className={globalStyles.fromTablet}>Reset</span>
         </Button>
 
         <Button
@@ -236,7 +236,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
           }}
         >
           <SearchOutlined />
-          <span className={globalClasses.fromTablet}>Search</span>
+          <span className={globalStyles.fromTablet}>Search</span>
         </Button>
       </form>
     </div>

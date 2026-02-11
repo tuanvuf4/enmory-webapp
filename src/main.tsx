@@ -2,6 +2,7 @@ import ReactDOM from 'react-dom/client'
 import { StyleProvider } from '@ant-design/cssinjs'
 import 'antd/dist/reset.css'
 import './style/index.css'
+import './style/appStyle.module.scss'
 
 import { Provider } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
@@ -9,9 +10,7 @@ import persistStore from 'redux-persist/es/persistStore'
 import { ConfigProvider } from 'antd'
 import { App as AntdApp } from 'antd'
 import { appTheme } from './style/theme'
-import { JssProvider } from 'react-jss'
 import { App } from './app/app'
-import { styleConfig } from './style/appStyle'
 import { EAppType } from './app/config/appConfig'
 import { BrowserRouter } from 'react-router-dom'
 import React from 'react'
@@ -38,31 +37,24 @@ interface IAppTypeProps {
 
 const AppWrapper: React.FC<IAppTypeProps> = ({ type }) => (
   <React.StrictMode>
-    <JssProvider classNamePrefix={`${styleConfig.prefixClassCss}-`}>
-      <Provider store={store}>
-        <BrowserRouter data-testid='browser-router-element'>
-          <QueryClientProvider client={queryClient}>
-            <ConfigProvider
-              popupMatchSelectWidth={true}
-              componentSize='middle'
-              theme={appTheme}
-              prefixCls={styleConfig.prefixClassCss}
-            >
-              <StyleProvider hashPriority='high'>
-                <AntdApp>
-                  <AppContext>
-                    <PersistGate loading={null} persistor={persistStore(store)}>
-                      {type === EAppType.EXTENSION ? <PopupExtension /> : <App />}
-                    </PersistGate>
-                  </AppContext>
-                </AntdApp>
-              </StyleProvider>
-            </ConfigProvider>
-            <ReactQueryDevtools initialIsOpen={false} />
-          </QueryClientProvider>
-        </BrowserRouter>
-      </Provider>
-    </JssProvider>
+    <Provider store={store}>
+      <BrowserRouter data-testid='browser-router-element'>
+        <QueryClientProvider client={queryClient}>
+          <ConfigProvider popupMatchSelectWidth={true} componentSize='middle' theme={appTheme}>
+            <StyleProvider hashPriority='high'>
+              <AntdApp>
+                <AppContext>
+                  <PersistGate loading={null} persistor={persistStore(store)}>
+                    {type === EAppType.EXTENSION ? <PopupExtension /> : <App />}
+                  </PersistGate>
+                </AppContext>
+              </AntdApp>
+            </StyleProvider>
+          </ConfigProvider>
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </BrowserRouter>
+    </Provider>
   </React.StrictMode>
 )
 

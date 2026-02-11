@@ -1,8 +1,8 @@
-import globalStyle from '@/style/appStyle'
+import globalStyles from '@/style/appStyle.module.scss'
 import clsx from 'clsx'
 
 export const PageTitle = ({ content }: { content: JSX.Element | string }) => {
-  const globalClasses = globalStyle()
+  
 
-  return <h2 className={clsx(globalClasses.pageTitle)}>{content}</h2>
+  return <h2 className={clsx(globalStyles.pageTitle)}>{content}</h2>
 }

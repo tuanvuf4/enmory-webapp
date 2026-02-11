@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons'
 import { ITracks } from '@/models/media.model'
 import { RefObject, useState, useRef, useCallback, useEffect } from 'react'
-import styles from './style'
+import styles from "./style.module.scss"
 
 interface IProps {
   audioRef: RefObject<HTMLAudioElement>
@@ -39,7 +39,7 @@ export const Controls: React.FC<IProps> = ({
   setCurrentTrack,
   handleNext,
 }) => {
-  const classes = styles()
+  
 
   const [volume] = useState(100)
   const [muteVolume, setMuteVolume] = useState(false)
@@ -102,10 +102,10 @@ export const Controls: React.FC<IProps> = ({
   }, [volume, audioRef, muteVolume])
 
   return (
-    <div className={classes.controlsWrapper}>
-      <div className={classes.controlOptions}></div>
+    <div className={styles.controlsWrapper}>
+      <div className={styles.controlOptions}></div>
 
-      <div className={classes.controls}>
+      <div className={styles.controls}>
         <button onClick={handlePrevious}>
           <StepBackwardOutlined style={{ fontSize: 24 }} />
         </button>
@@ -131,7 +131,7 @@ export const Controls: React.FC<IProps> = ({
         </button>
       </div>
 
-      <div className={classes.volume}>
+      <div className={styles.volume}>
         <button onClick={() => setMuteVolume((prev) => !prev)}>
           {muteVolume || volume < 5 ? (
             <NotificationOutlined style={{ fontSize: 24 }} />

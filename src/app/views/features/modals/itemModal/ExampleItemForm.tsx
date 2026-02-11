@@ -1,4 +1,4 @@
-import globalStyle from '@/style/appStyle'
+import globalStyles from "@/style/appStyle.module.scss"
 import { PlusOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IItem } from '@/models/item.model'
@@ -7,7 +7,7 @@ import { theme, Space, Col, Row, Button, AutoComplete, Flex } from 'antd'
 import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { exampleItem } from './data'
-import styles from './style'
+import styles from "./style.module.scss"
 import TextArea from 'antd/es/input/TextArea'
 
 interface IProps {
@@ -16,8 +16,8 @@ interface IProps {
 
 export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
   const { token } = theme.useToken()
-  const classes = styles()
-  const globalClasses = globalStyle()
+  
+  
 
   const [currentSearch, setCurrentSearch] = useState<string>('')
   const [activeFieldIndex, setActiveFieldIndex] = useState<number | null>(null)
@@ -64,7 +64,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
       <Space
         direction='vertical'
         size={[token.size / 2, token.size / 2]}
-        className={globalClasses.fulWidth}
+        className={globalStyles.fulWidth}
       >
         <Col xs={24}>
           <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
@@ -83,11 +83,11 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
             <Col md={24} key={example.id || key}>
               <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
                 <Col md={{ span: 20, offset: 4 }} xs={{ span: 24, offset: 0 }}>
-                  <div className={classes.contentStyle}>
+                  <div className={styles.contentStyle}>
                     <Space
                       size={[token.size / 2, token.size / 2]}
                       direction='vertical'
-                      className={globalClasses.fulWidth}
+                      className={globalStyles.fulWidth}
                     >
                       <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
                         <Flex

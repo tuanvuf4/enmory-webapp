@@ -1,0 +1,189 @@
+@use 'sass:color';
+
+// Define Ant Design CSS variables for fallback
+:root {
+  --emr-prefix: 'emr';
+  --ant-size: 16px;
+  --ant-size-xs: 8px;
+  --ant-size-sm: 12px;
+  --ant-size-md: 16px;
+  --ant-size-lg: 24px;
+  --ant-size-xl: 32px;
+  --ant-size-xxl: 48px;
+  --ant-color-primary: #1890ff;
+  --ant-color-success: #52c41a;
+  --ant-color-warning: #faad14;
+  --ant-color-error: #ff4d4f;
+  --ant-color-info: #1890ff;
+  --ant-color-text: rgba(0, 0, 0, 0.85);
+  --ant-color-text-secondary: rgba(0, 0, 0, 0.45);
+  --ant-color-border: #d9d9d9;
+  --ant-color-bg-container: #ffffff;
+  --ant-color-white: #ffffff;
+  --ant-color-black: #000000;
+}
+
+// Style configuration variables
+$prefix-class-css: 'emr';
+$font-family-default: 'Lora, Lato, Oswald, sans-serif';
+$font-family-lora: 'Lora, arial, sans-serif';
+$font-family-oswald: 'Oswald, sans-serif';
+$font-family-lato: 'Lato, sans-serif';
+$modal-small: 500px;
+$modal-medium: 750px;
+$modal-large: 1000px;
+$logo-font-size: 28px;
+$item-color-bg: #252734;
+$sider-width: 240px;
+$sider-width-collapse: 80px;
+$footer-background: #fff;
+
+// Helper function to convert hex to rgba
+@function hex-to-rgba($hex, $alpha) {
+  @return rgba($hex, $alpha);
+}
+
+.container {
+  width: 1800px;
+  margin: auto;
+  padding: 0 calc(var(--ant-size) * 1);
+  max-width: 100%;
+}
+
+.containerFluid {
+  width: 100%;
+  margin: auto;
+  padding: 0 calc(var(--ant-size) * 1);
+  max-width: 100%;
+}
+
+.innerContainer {
+  background: rgba(37, 39, 52, 0.9);
+  color: var(--ant-color-white);
+  padding: calc(var(--ant-size) * 1);
+  width: 800px;
+  max-width: 100%;
+  margin: 0 auto;
+  box-shadow: 0 0 calc(var(--ant-size) * 1) 0 rgba(0, 0, 0, 0.3);
+}
+
+.stickyBar {
+  position: sticky;
+  z-index: 999;
+  padding: calc(var(--ant-size) / 2) 0;
+  background: #fff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.bodyContent {
+  margin: calc(var(--ant-size) * 2) 0;
+}
+
+.contentPage {
+  padding: calc(var(--ant-size) * 2) calc(var(--ant-size) * 1) calc(var(--ant-size) * 3);
+  background: var(--ant-color-bg-base);
+}
+
+.dark {
+  color: var(--ant-color-white);
+  background: rgba(37, 39, 52, 0.9);
+}
+
+.fulHeight {
+  height: 100%;
+}
+
+.fulWidth {
+  width: 100%;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.textCenter {
+  text-align: center;
+}
+
+.textLeft {
+  text-align: left;
+}
+
+.pageTitle {
+  color: var(--ant-color-text-secondary);
+  margin: calc(var(--ant-size) / 2 * 3) 0;
+  letter-spacing: 1px;
+  font-family: $font-family-oswald;
+  text-align: center;
+  font-size: var(--ant-font-size-heading-2);
+}
+
+.dkOnly {
+  display: none !important;
+}
+
+.fromTablet {
+  display: none !important;
+}
+
+.xsOnly {
+  display: none !important;
+}
+
+.toXs {
+  display: none !important;
+}
+
+.toSm {
+  display: none !important;
+}
+
+.errorMsg {
+  margin: calc(var(--ant-size) / 2) 0;
+  color: var(--ant-color-text-secondary);
+  font-weight: bold;
+}
+
+.referenceBtn {
+  height: auto !important;
+  font-size: 12px;
+  color: var(--ant-color-white) !important;
+  background: rgba(0, 135, 167, 0.9) !important;
+}
+
+// Media queries
+@media screen and (min-width: 768px) {
+  .fromTablet {
+    display: block !important;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .xsOnly {
+    display: block !important;
+  }
+}
+
+@media screen and (max-width: 991px) {
+  .toSm {
+    display: block !important;
+  }
+}
+
+@media screen and (max-width: 575px) {
+  .toXs {
+    display: block !important;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .xsOnly {
+    display: block !important;
+  }
+}
+
+@media screen and (min-width: 1025px) {
+  .dkOnly {
+    display: block !important;
+  }
+}

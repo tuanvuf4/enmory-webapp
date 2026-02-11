@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Skeleton, theme } from 'antd'
-import styles from '../style'
+import { Skeleton } from 'antd'
+import styles from '../style.module.scss'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -21,9 +21,6 @@ interface IProps {
 }
 
 export const ProgressChart: React.FC<IProps> = ({ title = 'Progress' }) => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
-
   const [data, setData] = useState<any>()
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
 
@@ -63,8 +60,8 @@ export const ProgressChart: React.FC<IProps> = ({ title = 'Progress' }) => {
   }, [])
 
   return (
-    <div className={classes.chartItem}>
-      {isLoaded && <h3 className={classes.chartTitle}>{title}</h3>}
+    <div className={styles.chartItem}>
+      {isLoaded && <h3 className={styles.chartTitle}>{title}</h3>}
 
       {!isLoaded && <Skeleton />}
 

@@ -1,5 +1,5 @@
 import { Menu } from 'antd'
-import styles from './style'
+import styles from "./style.module.scss"
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
@@ -18,7 +18,7 @@ interface IPros {
 }
 
 export const MainMenu: React.FC<IPros> = ({ direction, onPageChange }: IPros) => {
-  const classes = styles()
+  
 
   const [menu, setMenu] = useState<MenuProps['items']>([])
   const [current, setCurrent] = useState('1')
@@ -67,8 +67,8 @@ export const MainMenu: React.FC<IPros> = ({ direction, onPageChange }: IPros) =>
   return (
     <div
       className={classNames(
-        classes.mainNavMenu,
-        direction === 'horizontal' ? `${classes.horizontalMenu} horizontal` : '',
+        styles.mainNavMenu,
+        direction === 'horizontal' ? `${styles.horizontalMenu} horizontal` : '',
       )}
     >
       <Menu

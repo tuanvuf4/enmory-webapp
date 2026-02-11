@@ -1,0 +1,27 @@
+.firstName {
+  font-size: var(--ant-font-size-heading-2);
+}
+
+.lastName {
+  margin-left: calc(var(--ant-size) * 0.125);
+  font-size: var(--ant-font-size-heading-2);
+}
+
+.avatar {
+  margin: calc(var(--ant-size) * 0.25px) 0;
+}
+
+.username {
+  font-size: var(--ant-font-size-heading-5);
+}
+
+.email {
+  font-size: var(--ant-font-size-heading-5);
+  font-style: italic;
+}
+
+.inner {
+}
+
+.formSetting {
+}

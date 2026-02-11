@@ -1,6 +1,5 @@
 import { SearchOutlined } from '@ant-design/icons'
-import { theme } from 'antd'
-import styles from './style'
+import styles from './style.module.scss'
 import { itemApi } from '@/services/firebase/api/item.api'
 import clsx from 'clsx'
 import { useItemModal, useLoading } from '@/helpers/hooks'
@@ -16,9 +15,6 @@ interface IPros {
 }
 
 export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
-  const { token } = theme.useToken()
-  const classes = styles(token)
-
   const { showLoading, hideLoading } = useLoading()
 
   const { openItemModal } = useItemModal()
@@ -64,20 +60,20 @@ export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
   }
 
   return (
-    <div className={classes.tagList}>
-      <span className={classes.tagLabel}>{label}:</span>
+    <div className={styles.tagList}>
+      <span className={styles.tagLabel}>{label}:</span>
 
       {tags.map((tag, key) => {
         return (
           <div
             key={key}
             className={clsx({
-              [classes.tagItem]: true,
+              [styles.tagItem]: true,
               active,
             })}
             onClick={() => getItem(tag)}
           >
-            <div className={classes.tagItemContainer}>
+            <div className={styles.tagItemContainer}>
               <span className={'select-none'}>{tag}</span>
               <button
                 onClick={(e) => {

@@ -1,8 +1,8 @@
 import { appConfig } from '@/app/config/appConfig'
 import { Button } from 'antd'
-import styles from './style'
+import styles from './style.module.scss'
 import React from 'react'
-import globalStyle from '@/style/appStyle'
+import globalStyles from '@/style/appStyle.module.scss'
 import { useSelector } from '@/core/hooks'
 
 interface IPros {
@@ -10,13 +10,10 @@ interface IPros {
 }
 
 export const Reference: React.FC<IPros> = ({ origin }) => {
-  const classes = styles()
-  const globalClasses = globalStyle()
-
   const { user } = useSelector((state) => state.auth)
 
   return (
-    <div className={classes.references}>
+    <div className={styles.references}>
       {appConfig.references.map((reference, key) => {
         if (
           user?.configuration &&
@@ -25,7 +22,7 @@ export const Reference: React.FC<IPros> = ({ origin }) => {
           return (
             <Button
               key={key}
-              className={globalClasses.referenceBtn}
+              className={globalStyles.referenceBtn}
               type='text'
               size='small'
               onClick={() => {

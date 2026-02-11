@@ -1,0 +1,39 @@
+.formAction {
+  margin: calc(var(--ant-size) * 2) 0 calc(var(--ant-size) * 0.5) 0;
+  text-align: center;
+
+  & button {
+    min-width: 250px;
+  }
+}
+
+.checkboxGroup {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: calc(var(--ant-size) * 0.5);
+
+  & label {
+    color: var(--ant-color-white) !important;
+  }
+}
+
+.checkbox {
+  & span {
+    color: var(--ant-color-white) !important;
+  }
+}
+
+.title {
+  font-weight: 500;
+  font-size: var(--ant-font-size);
+  font-style: italic;
+  margin: 0;
+}
+
+.grTitle {
+  font-size: var(--ant-font-size-heading-5);
+  color: var(--ant-color-primary);
+  font-style: italic;
+  margin: 0;
+}

@@ -1,0 +1,9 @@
+.dictation {
+  padding: calc(var(--ant-size) * 1);
+  color: var(--ant-color-white);
+  background: rgba(37, 39, 52, 0.9); // hex2Rgba(styleConfig.itemColorBg, 0.9)
+}
+
+.dictationTypes {
+  margin-bottom: calc(var(--ant-size) * 1);
+}

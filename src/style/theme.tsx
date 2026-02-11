@@ -3,6 +3,7 @@ import { gray } from '@ant-design/colors'
 import { styleConfig } from './appStyle'
 
 export const appTheme: ThemeConfig = {
+  cssVar: true,
   token: {
     colorWhite: '#f4f4f4',
     colorPrimary: '#72a526',
@@ -41,7 +42,6 @@ export const appTheme: ThemeConfig = {
       contentPadding: 12,
       // contentBg: hex2Rgba(styleConfig.itemColorBg, 1),
       headerBg: 'transparent',
-      headerPadding: 16,
       // colorText: '#f4f4f4',
     },
     Checkbox: {

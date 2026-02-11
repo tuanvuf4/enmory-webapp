@@ -1,0 +1,21 @@
+.registerForm {
+  width: 600px;
+}
+
+.label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: calc(var(--ant-size) * 0.25);
+  color: #d9d9d9; // styleConfig.color.neutral[6]
+  font-style: italic;
+  font-size: 13px;
+}
+
+.register {
+  text-align: center;
+  color: #8c8c8c; // styleConfig.color.neutral[4]
+
+  & p {
+    margin: 0;
+  }
+}

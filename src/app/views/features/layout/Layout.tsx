@@ -3,7 +3,7 @@ import { AppFooter } from '../footer/Footer'
 import { AppHeader } from '../header/Header'
 import { Drawer, Layout } from 'antd'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
-import styles from './style'
+import styles from './style.module.scss'
 import { styleConfig } from '@/style/appStyle'
 import { SideBarMain } from '../sideBar/SideBarMain'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -15,8 +15,6 @@ import { EViewPort } from '@/models/app.model'
 import { Loading } from '../loading'
 
 export const AppLayout: React.FC<PropsWithChildren> = (props) => {
-  const classes = styles()
-
   const { isSidebarOpened, drawer } = useSelector((state) => state.setting)
   const { isAuth } = useSelector((state) => state.auth)
 
@@ -63,14 +61,14 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
 
   return (
     <>
-      <Layout className={classes.wrapper}>
+      <Layout className={styles.wrapper}>
         {!drawer && (
           <Sider
             width={styleConfig.sider.width}
             trigger={null}
             collapsible
             collapsed={!isSidebarOpened}
-            className={classes.sider}
+            className={styles.sider}
           >
             <SideBarMain />
           </Sider>
@@ -84,6 +82,11 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
             open={isSidebarOpened}
             closable={false}
             destroyOnHidden={true}
+            styles={{
+              body: {
+                padding: 0,
+              },
+            }}
           >
             <SideBarMain />
           </Drawer>
@@ -97,8 +100,8 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
         >
           <AppHeader />
 
-          <Content className={classes.contentStyle}>
-            <div className={classes.main}>{props.children}</div>
+          <Content className={styles.contentStyle}>
+            <div className={styles.main}>{props.children}</div>
           </Content>
 
           <AppFooter />
@@ -120,7 +123,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
               width: 50,
               height: 50,
             }}
-            className={globalClasses.toSm}
+            className={globalStyles.toSm}
             icon={
               <PlusOutlined
                 style={{

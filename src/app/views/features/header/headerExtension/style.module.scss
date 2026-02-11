@@ -1,0 +1,142 @@
+.header {
+  height: 60px !important;
+  line-height: 60px !important;
+  border-bottom: 1px solid rgba(217, 217, 217, 0.2);
+  padding: 0px !important;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+
+  & a {
+    color: var(--ant-color-text-base);
+
+    &:hover {
+      color: var(--ant-color-link-hover);
+    }
+  }
+}
+
+.rowHeader {
+  margin: 0px calc(var(--ant-size) * -1px) !important;
+  height: 60px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-transform: capitalize;
+  font-style: italic;
+  height: 100%;
+
+  & h1 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ant-color-text-secondary);
+    font-size: var(--ant-font-size-heading-2);
+
+    & a {
+      color: var(--ant-color-text-secondary);
+
+      &:hover {
+        color: var(--ant-color-primary);
+      }
+    }
+  }
+}
+
+.brandName {
+  margin: 0;
+  font-family: 'Oswald', sans-serif;
+  font-style: normal;
+  font-size: var(--ant-font-size-heading-4);
+
+  & img {
+    display: block;
+    width: 40px;
+  }
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.toogleSidebarBtn {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.btnToggle {
+  min-width: 38px;
+  margin-right: calc(var(--ant-size) * 0.5px);
+  padding-inline-start: calc(var(--ant-size) * 0.5px) !important;
+  padding-inline-end: calc(var(--ant-size) * 0.5px) !important;
+}
+
+.btnAddNew {
+  display: flex !important;
+  align-items: center;
+  text-transform: uppercase;
+  font-weight: bold !important;
+
+  &:hover span {
+    color: var(--ant-color-primary);
+  }
+}
+
+.userContainer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: calc(var(--ant-size) * 0.5px);
+}
+
+.mainNav {
+  & ul {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    & li {
+      padding: 0 calc(var(--ant-size) * 3px);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: var(--ant-font-size-heading-5);
+    }
+  }
+}
+
+.user {
+  margin-left: calc(var(--ant-size) * 0.5px);
+
+  & button,
+  & button:hover {
+    color: var(--ant-color-text-base);
+  }
+}
+
+.stayUp {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+
+  & button {
+    margin-left: calc(var(--ant-size) * 0.5px);
+    font-weight: bold;
+    min-width: 90px;
+    border-radius: 0px !important;
+
+    & a {
+      &:hover {
+        color: inherit;
+      }
+    }
+  }
+}

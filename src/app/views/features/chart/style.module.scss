@@ -1,0 +1,14 @@
+.chartItem {
+}
+
+.chartTitle {
+  text-align: center;
+  margin-bottom: 0;
+  text-transform: capitalize;
+  padding: calc(var(--ant-size) * 0.75) calc(var(--ant-size) * 1);
+  font-size: var(--ant-font-size-heading-4);
+  font-family: 'Oswald', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--ant-color-text-secondary);
+}

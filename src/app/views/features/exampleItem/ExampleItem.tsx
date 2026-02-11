@@ -6,7 +6,7 @@ import { MenuProps, Skeleton, Dropdown, Button } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import moment from 'moment'
 import { actionMenuExample } from './ActionMenuItem'
-import styles from './style'
+import styles from './style.module.scss'
 import clsx from 'clsx'
 
 interface IProps {
@@ -24,8 +24,6 @@ export const ExampleItem: React.FC<IProps> = ({
   onDelete,
   onEdit,
 }) => {
-  const classes = styles()
-
   const handleMenuClick: MenuProps['onClick'] = (e) => {
     if (e.key == '1') onEdit?.()
     if (e.key == '2') onDelete?.()
@@ -50,18 +48,18 @@ export const ExampleItem: React.FC<IProps> = ({
   return (
     <div
       className={clsx({
-        [classes.item]: true,
-        active: active,
+        [styles.item]: true,
+        [styles.active]: active,
       })}
     >
       {!data && <Skeleton />}
 
       {data && (
         <>
-          <div className={classes.contentItem}>
-            <div className={classes.contentHead}>
-              <div className={classes.title}>
-                <h2 className={classes.origin} dangerouslySetInnerHTML={{ __html: data.origin }} />
+          <div className={styles.contentItem}>
+            <div className={styles.contentHead}>
+              <div className={styles.title}>
+                <h2 className={styles.origin} dangerouslySetInnerHTML={{ __html: data.origin }} />
 
                 {groupAction && (onEdit || onDelete) && (
                   <Dropdown
@@ -74,13 +72,13 @@ export const ExampleItem: React.FC<IProps> = ({
                       size='middle'
                       type='text'
                       icon={<MoreOutlined />}
-                      className={classes.btnActions}
+                      className={styles.btnActions}
                     />
                   </Dropdown>
                 )}
               </div>
 
-              <div className={classes.contentMain}>
+              <div className={styles.contentMain}>
                 <p
                   style={{ color: styleConfig.border.blue[2] }}
                   dangerouslySetInnerHTML={{ __html: data.translation }}
@@ -91,7 +89,7 @@ export const ExampleItem: React.FC<IProps> = ({
             </div>
           </div>
 
-          <div className={classes.date}>
+          <div className={styles.date}>
             <span>{moment(data.created_date).format(setting.dateTimeFormat)}</span>
             <span>{moment(data.last_update).format(setting.dateTimeFormat)}</span>
           </div>

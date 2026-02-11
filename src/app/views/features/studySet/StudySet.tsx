@@ -10,14 +10,13 @@ import { theme, InputRef, Button, Input, Flex } from 'antd'
 import { useState, useRef, useEffect } from 'react'
 import { Item } from '../item/Item'
 import { EItemLevel } from '../modals/itemModal/data'
-import styles from './style'
+import styles from './style.module.scss'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
 
 export const StudySet: React.FC = () => {
   const { token } = theme.useToken()
-  const classes = styles()
 
   const [item, setItem] = useState<IItemQuiz>()
   const [loading, setLoading] = useState(false)
@@ -215,18 +214,18 @@ export const StudySet: React.FC = () => {
   }
 
   const getClassValidate = (ans: IOption<string, boolean>, item: IItemQuiz, isSubmit: boolean) => {
-    if (isSubmit && ans.value && ans.id === item.id) return 'correct'
-    if (isSubmit && ans.value && ans.id !== item.id) return 'active incorrect'
-    if (isSubmit && ans.value) return 'active correct'
+    if (isSubmit && ans.value && ans.id === item.id) return styles.correct
+    if (isSubmit && ans.value && ans.id !== item.id) return clsx(styles.active, styles.incorrect)
+    if (isSubmit && ans.value) return clsx(styles.active, styles.correct)
     if (
       isSubmit &&
       ans.id === item.id &&
       Array.isArray(item?.quiz.answer) &&
       item.quiz.answer.findIndex((ans) => ans.value) === -1
     )
-      return 'incorrect'
-    if (isSubmit && !ans.value && ans.id === item.id) return 'correct'
-    if (ans.value) return 'active'
+      return styles.incorrect
+    if (isSubmit && !ans.value && ans.id === item.id) return styles.correct
+    if (ans.value) return styles.active
   }
 
   const onKeyBoardPress = (e: KeyboardEvent) => {
@@ -288,10 +287,10 @@ export const StudySet: React.FC = () => {
   const getInputPlaceholder = (value: string, placeholder: string) => {
     if (!value) {
       return (
-        <div className={classes.fibQuestion}>
+        <div className={styles.fibQuestion}>
           {placeholder.split('').map((char, key) => {
             return (
-              <span key={key} className={classes.fibInput}>
+              <span key={key} className={styles.fibInput}>
                 {char}
               </span>
             )
@@ -303,17 +302,17 @@ export const StudySet: React.FC = () => {
     const valueArray = value.split('')
 
     return (
-      <div className={classes.fibQuestion}>
+      <div className={styles.fibQuestion}>
         {placeholder.split('').map((char, key) => {
           if (valueArray[key]) {
             return (
-              <span key={key} className={clsx(classes.fibInput, classes.fibInputActive)}>
+              <span key={key} className={clsx(styles.fibInput, styles.fibInputActive)}>
                 {valueArray[key]}
               </span>
             )
           } else {
             return (
-              <span key={key} className={classes.fibInput}>
+              <span key={key} className={styles.fibInput}>
                 {char}
               </span>
             )
@@ -350,8 +349,8 @@ export const StudySet: React.FC = () => {
   useEffect(() => setItem(list[currentIndex]), [list, currentIndex])
 
   return (
-    <div className={classes.studySet} id='studySet' tabIndex={0}>
-      <div className={classes.studySeHeader}>
+    <div className={styles.studySet} id='studySet' tabIndex={0}>
+      <div className={styles.studySeHeader}>
         {inProgress && (
           <>
             {!isDone && (
@@ -365,18 +364,18 @@ export const StudySet: React.FC = () => {
               </Button>
             )}
 
-            <div className={classes.progress}>
-              <div className={classes.progressCounter}>{`${currentIndex + 1}/${list.length}`}</div>
+            <div className={styles.progress}>
+              <div className={styles.progressCounter}>{`${currentIndex + 1}/${list.length}`}</div>
             </div>
           </>
         )}
       </div>
 
-      <div className={classes.studySetBody}>
+      <div className={styles.studySetBody}>
         {!isDone && !inProgress && <h2>LET'S PRACTICE!</h2>}
 
         {isDone && !inProgress && (
-          <div className={classes.result}>
+          <div className={styles.result}>
             <h2>Result</h2>
             <h3>
               {list.filter((item) => item.quiz.result).length}/{list.length}
@@ -415,7 +414,7 @@ export const StudySet: React.FC = () => {
         )}
 
         {!isDone && item?.quiz.type === EQuiz.MULTI_CHOICE && (
-          <div className={classes.mtc}>
+          <div className={styles.mtc}>
             <ul>
               {(item?.quiz.answer as IAnswer<string, boolean>[]).map((ans, key) => {
                 return (
@@ -469,13 +468,13 @@ export const StudySet: React.FC = () => {
         )}
 
         {!isDone && item?.quiz.type === EQuiz.FILL_IN_BLANK && (
-          <div className={classes.fib}>
-            <div className={classes.fibWrapper}>
+          <div className={styles.fib}>
+            <div className={styles.fibWrapper}>
               <Input
                 value={respond as string}
                 className={clsx(
-                  item?.quiz.answer === respond && isSubmit ? 'correct' : '',
-                  item?.quiz.answer !== respond && isSubmit ? 'incorrect' : '',
+                  item?.quiz.answer === respond && isSubmit ? styles.correct : '',
+                  item?.quiz.answer !== respond && isSubmit ? styles.incorrect : '',
                 )}
                 onInput={(e) => {
                   const input = e.target as HTMLInputElement
@@ -495,9 +494,9 @@ export const StudySet: React.FC = () => {
         )}
       </div>
 
-      <div className={classes.studySetFooter}>
+      <div className={styles.studySetFooter}>
         {!inProgress && (
-          <div className={classes.btnAction}>
+          <div className={styles.btnAction}>
             <Button
               loading={loading}
               onClick={() =>
@@ -514,7 +513,7 @@ export const StudySet: React.FC = () => {
         )}
 
         {inProgress && list.length > 0 && (
-          <div className={classes.btnAction}>
+          <div className={styles.btnAction}>
             {!isSubmit && (
               <Button type='primary' onClick={() => onSubmit(item?.quiz.type as EQuiz)}>
                 Submit
@@ -530,13 +529,13 @@ export const StudySet: React.FC = () => {
         )}
 
         {isSubmit && (
-          <div className={classes.resultReference}>
+          <div className={styles.resultReference}>
             <Item data={item as IItem} />
           </div>
         )}
 
         {isSubmit && !isDone && isSubmit && currentIndex + 1 <= list.length && (
-          <div className={classes.btnAction}>
+          <div className={styles.btnAction}>
             <Button type='default' onClick={() => onNext()}>
               {isDone ? 'Finish' : 'Next'}
             </Button>

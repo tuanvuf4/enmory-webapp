@@ -4,8 +4,8 @@ import { getType } from '@/helpers/item'
 import { IMeaning, ECategory, IExample } from '@/models/item.model'
 import { Tags } from '@/views/components'
 import { Button, Flex } from 'antd'
-import { useNavigate, useLocation } from 'react-router-dom'
-import styles from './style'
+import { useNavigate } from 'react-router-dom'
+import styles from './style.module.scss'
 import clsx from 'clsx'
 import { useState } from 'react'
 
@@ -16,25 +16,21 @@ interface IMeaningProps {
 }
 
 const Pronunciation = ({ catId, meaning }: IMeaningProps) => {
-  const classes = styles()
-
   if (catId === ECategory.WORD && (meaning.pronunciation.us || meaning.pronunciation.uk)) {
     return (
-      <div
-        className={`${classes.pronouns} flex justify-end flex-wrap gap-x-2 gap-y-1 items-center text-xs`}
-      >
+      <div className={`${styles.pronouns} flex justify-end flex-wrap gap-x-2 gap-y-1 items-center`}>
         {meaning.pronunciation.uk && (
-          <div className={classes.audio}>
-            {/* <span className={classes.accent}>UK</span> */}
-            <AudioOutlined className={classes.audioIcon} />
+          <div className={styles.audio}>
+            {/* <span className={styles.accent}>UK</span> */}
+            <AudioOutlined className={styles.audioIcon} />
             {meaning.pronunciation?.uk || ''}
           </div>
         )}
 
         {meaning.pronunciation.us && (
-          <div className={classes.audio}>
-            {/* <span className={classes.accent}>US</span> */}
-            <AudioOutlined className={classes.audioIcon} />
+          <div className={styles.audio}>
+            {/* <span className={styles.accent}>US</span> */}
+            <AudioOutlined className={styles.audioIcon} />
             {meaning.pronunciation?.us || ''}
           </div>
         )}
@@ -44,9 +40,9 @@ const Pronunciation = ({ catId, meaning }: IMeaningProps) => {
 
   if (catId !== ECategory.WORD && meaning.pronunciation.common) {
     return (
-      <div className={classes.pronouns}>
-        <div className={classes.audio}>
-          <AudioOutlined className={classes.audioIcon} />
+      <div className={styles.pronouns}>
+        <div className={styles.audio}>
+          <AudioOutlined className={styles.audioIcon} />
           {meaning.pronunciation?.common || ''}
         </div>
       </div>
@@ -57,10 +53,7 @@ const Pronunciation = ({ catId, meaning }: IMeaningProps) => {
 }
 
 export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning }) => {
-  const classes = styles()
-
   const navigate = useNavigate()
-  const location = useLocation()
 
   const [show, setShow] = useState<boolean>(false)
 
@@ -71,20 +64,16 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning })
     params.set('page', '0')
     params.set('size', setting.pagination.size.toString())
 
-    if (location.pathname.includes('library')) {
-      navigate(`/library?${params.toString()}`)
-    } else {
-      navigate(`/library?${params.toString()}`)
-    }
+    navigate(`/library?${params.toString()}`)
   }
 
   return (
     <div className={'relative my-4'}>
       <div
         className={clsx(
-          classes.meaningItem,
-          meaning.enable ? '' : classes.disableMeaning,
-          meaning.common ? classes.meaningCommon : '',
+          styles.meaningItem,
+          meaning.enable ? '' : styles.disableMeaning,
+          meaning.common ? styles.meaningCommon : '',
           'relative',
         )}
       >
@@ -106,7 +95,7 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning })
               onClick={() => setShow((prev) => !prev)}
             />
             {catId === ECategory.WORD && (
-              <span className='ml-2 text-xs'>{getType(meaning.typeId).origin}</span>
+              <span className='ml-2'>{getType(meaning.typeId).origin}</span>
             )}
           </div>
 
@@ -119,14 +108,14 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning })
           <>
             {meaning.definition && (
               <h3
-                className={classes.definition}
+                className={styles.definition}
                 dangerouslySetInnerHTML={{ __html: meaning.definition }}
               />
             )}
 
             {meaning.translation && (
               <h3
-                className={classes.translate}
+                className={styles.translate}
                 dangerouslySetInnerHTML={{ __html: meaning.translation }}
               />
             )}
@@ -136,14 +125,14 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning })
         {show && (
           <>
             {meaning.note && (
-              <div className={classes.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
+              <div className={styles.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
             )}
 
             {meaning.definition && (
               <>
                 {/* <h5 className={'italic'}>Definition:</h5> */}
                 <h3
-                  className={classes.definition}
+                  className={styles.definition}
                   dangerouslySetInnerHTML={{ __html: meaning.definition }}
                 />
               </>
@@ -153,21 +142,21 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning })
               <>
                 {/* <h5 className={'italic'}>Translation:</h5> */}
                 <h3
-                  className={classes.translate}
+                  className={styles.translate}
                   dangerouslySetInnerHTML={{ __html: meaning.translation }}
                 />
               </>
             )}
 
             {meaning.collocations && (
-              <div className={classes.list}>
+              <div className={styles.list}>
                 <h5 className={'italic font-bold'}>Collocations:</h5>
                 <div dangerouslySetInnerHTML={{ __html: meaning.collocations }} />
               </div>
             )}
 
             {meaning.grammar && (
-              <div className={classes.list}>
+              <div className={styles.list}>
                 <h5 className={'italic font-bold'}>Grammar:</h5>
                 <div dangerouslySetInnerHTML={{ __html: meaning.grammar }} />
               </div>
@@ -192,19 +181,19 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning })
             )}
 
             {meaning.examples.length > 0 && (
-              <div className={classes.examples}>
+              <div className={styles.examples}>
                 {/* <h5 className={'italic font-bold'}>Example:</h5> */}
                 <ul>
                   {(meaning.examples as IExample[]).map((example, key) => {
                     return (
-                      <li key={key} className={classes.exampleItem}>
+                      <li key={key} className={styles.exampleItem}>
                         <ul>
                           <li
-                            className={classes.nestedExampleItem}
+                            className={styles.nestedExampleItem}
                             dangerouslySetInnerHTML={{ __html: example.origin }}
                           />
                           <li
-                            className={classes.nestedExampleItem}
+                            className={styles.nestedExampleItem}
                             dangerouslySetInnerHTML={{ __html: example.translation }}
                           />
                         </ul>

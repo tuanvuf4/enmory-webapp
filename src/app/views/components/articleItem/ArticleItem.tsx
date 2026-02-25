@@ -13,9 +13,10 @@ export const ArticleItem = ({ id, title, description, created_date }: IArticleIt
   const { openArticleModal } = useArticleModal()
 
   return (
-    <div className={styles.articleItem}>
+    <div className={clsx(styles.articleItem, styles.content)}>
       <Flex justify={'space-between'} gap={8}>
         <h2 className={clsx(styles.title)}>{title}</h2>
+
         <Button
           variant={'text'}
           type={'text'}

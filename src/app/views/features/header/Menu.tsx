@@ -35,4 +35,9 @@ export const addNewType: MenuProps['items'] = [
     label: 'Example',
     icon: <PlusOutlined />,
   },
+  {
+    key: 'ADD_POST',
+    label: 'Post',
+    icon: <PlusOutlined />,
+  },
 ]

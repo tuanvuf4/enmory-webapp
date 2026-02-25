@@ -4,7 +4,7 @@ import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 import { Col, Row, theme, Button, Spin, Pagination, Flex } from 'antd'
 import { ArticleItem } from '@/views/components/articleItem/ArticleItem'
 import { IArticleItem } from '@/models/article.model'
-import { useArticles } from '@/core/hooks'
+import { useArticles, useArticlesCount } from '@/core/hooks'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
 import { PlusOutlined } from '@ant-design/icons'
 import { NotFound } from '@/views/components'
@@ -28,7 +28,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
     order: 'DESC',
   })
 
-  console.log(`*** articles *** `, articles)
+  const { data: totalCount = 0 } = useArticlesCount()
 
   return (
     <div className={globalStyles.containerMd}>
@@ -48,6 +48,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
           <Pagination
             current={page + 1}
             pageSize={PAGE_SIZE}
+            total={totalCount}
             onChange={(newPage) => setPage(newPage - 1)}
           />
         </Flex>
@@ -55,34 +56,33 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
 
       <Spin spinning={isLoadingArticles}>
         {articles.length > 0 ? (
-          <>
-            <Row gutter={[token.size, token.size]} className={'my-4'}>
-              {articles.map((article) => (
-                <Col xs={24} sm={12} md={12} lg={12} xl={12} key={article.id || Math.random()}>
-                  <ArticleItem
-                    id={article.id}
-                    title={article.title}
-                    description={article.description}
-                    created_date={article.created_date}
-                  />
-                </Col>
-              ))}
-            </Row>
-
-            <Flex justify='flex-end' gap={token.size / 2}>
-              <Pagination
-                current={page + 1}
-                pageSize={PAGE_SIZE}
-                onChange={(newPage) => setPage(newPage - 1)}
-              />
-            </Flex>
-          </>
+          <Row gutter={[token.size, token.size]} className={'my-4'}>
+            {articles.map((article) => (
+              <Col xs={24} sm={12} md={12} lg={12} xl={12} key={article.id || Math.random()}>
+                <ArticleItem
+                  id={article.id}
+                  title={article.title}
+                  description={article.description}
+                  created_date={article.created_date}
+                />
+              </Col>
+            ))}
+          </Row>
         ) : (
           <div style={{ textAlign: 'center', padding: token.size * 2 }}>
             <NotFound
-              classNames={{ container: 'justify-center' }}
-              label={<h2>No articles found.</h2>}
-              showButton={false}
+              classNames={{ container: 'justify-center gap-4' }}
+              label={<h2 className={'m-0'}>No articles found.</h2>}
+              button={
+                <Button
+                  variant={'solid'}
+                  type={'primary'}
+                  icon={<PlusOutlined />}
+                  onClick={() => openArticleModal('add')}
+                >
+                  Add Post
+                </Button>
+              }
             />
           </div>
         )}

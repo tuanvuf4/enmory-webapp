@@ -5,7 +5,7 @@ import { ArticleForm } from '@/views/features/modals'
 export const useArticleModal = () => {
   const { openModal, closeModal } = useModal()
 
-  const openArticleModal = (mode: 'edit' | 'add', data: IArticleItem | null) => {
+  const openArticleModal = (mode: 'edit' | 'add', data?: IArticleItem) => {
     if (mode === 'add') {
       openModal({
         title: 'Add Article',

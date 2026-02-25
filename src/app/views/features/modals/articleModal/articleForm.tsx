@@ -8,7 +8,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import './style.module.scss'
 
 interface ArticleFormProps {
-  data: IArticleItem | null
+  data?: IArticleItem
   onCancel?: () => void
   onClose?: () => void
   onSuccess?: () => void

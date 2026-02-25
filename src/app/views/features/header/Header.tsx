@@ -15,6 +15,7 @@ import clsx from 'clsx'
 import { useExampleModal, useItemModal } from '@/helpers/hooks'
 import { Header } from 'antd/es/layout/layout'
 import { exampleAction } from '@/store/reducers/example.reducer'
+import { useArticleModal } from '@/helpers/hooks/useArticleModal'
 
 export const AppHeader = () => {
   const { token } = theme.useToken()
@@ -30,6 +31,7 @@ export const AppHeader = () => {
 
   const { openItemModal } = useItemModal()
   const { openExampleModal } = useExampleModal()
+  const { openArticleModal } = useArticleModal()
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
@@ -67,6 +69,10 @@ export const AppHeader = () => {
 
     if (e.key === 'ADD_EXAMPLE') {
       openExampleModal('add')
+    }
+
+    if (e.key === 'ADD_POST') {
+      openArticleModal('add')
     }
   }
 

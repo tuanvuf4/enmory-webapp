@@ -10,6 +10,7 @@ export const articleKeys = {
   list: (filters: IArticleRequestParams) => [...articleKeys.lists(), filters] as const,
   details: () => [...articleKeys.all, 'detail'] as const,
   detail: (id: string) => [...articleKeys.details(), id] as const,
+  counts: () => [...articleKeys.all, 'count'] as const,
 }
 
 // Store for lastDoc cursors (page -> lastDoc mapping)
@@ -132,5 +133,19 @@ export const useUpdateArticle = () => {
         })
       }
     },
+  })
+}
+
+/**
+ * Fetch total count of articles
+ */
+export const useArticlesCount = () => {
+  return useQuery({
+    queryKey: articleKeys.counts(),
+    queryFn: async () => {
+      const count = await articleApi.getArticlesCount()
+      return count
+    },
+    refetchOnWindowFocus: false,
   })
 }

@@ -17,7 +17,7 @@ export const articleKeys = {
 const lastDocStore = new Map<string, Map<number, QueryDocumentSnapshot<DocumentData>>>()
 
 // Function to clear lastDoc store for a specific query config
-export const clearLastDocStore = (queryConfigKey?: string) => {
+export const clearLastArticleDocStore = (queryConfigKey?: string) => {
   if (queryConfigKey) {
     lastDocStore.delete(queryConfigKey)
   } else {
@@ -99,7 +99,7 @@ export const useCreateArticle = () => {
     },
     onSuccess: () => {
       // Clear all lastDoc cursors since data has changed
-      clearLastDocStore()
+      clearLastArticleDocStore()
       // Invalidate all article lists to refetch
       queryClient.invalidateQueries({
         queryKey: articleKeys.lists(),
@@ -121,7 +121,7 @@ export const useUpdateArticle = () => {
     },
     onSuccess: (updatedArticle) => {
       // Clear all lastDoc cursors since data has changed
-      clearLastDocStore()
+      clearLastArticleDocStore()
       // Invalidate article lists to refetch
       queryClient.invalidateQueries({
         queryKey: articleKeys.lists(),

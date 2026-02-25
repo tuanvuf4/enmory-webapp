@@ -10,11 +10,11 @@ import {
 } from '@ant-design/icons'
 import { ITracks } from '@/models/media.model'
 import { RefObject, useState, useRef, useCallback, useEffect } from 'react'
-import styles from "./style.module.scss"
+import styles from './style.module.scss'
 
 interface IProps {
-  audioRef: RefObject<HTMLAudioElement>
-  progressBarRef: RefObject<HTMLInputElement>
+  audioRef: RefObject<HTMLAudioElement | null>
+  progressBarRef: RefObject<HTMLInputElement | null>
   duration: number
   tracks: ITracks[]
   current: number
@@ -39,8 +39,6 @@ export const Controls: React.FC<IProps> = ({
   setCurrentTrack,
   handleNext,
 }) => {
-  
-
   const [volume] = useState(100)
   const [muteVolume, setMuteVolume] = useState(false)
 
@@ -48,7 +46,7 @@ export const Controls: React.FC<IProps> = ({
     setIsPlaying(isPlaying ? false : true)
   }
 
-  const playAnimationRef = useRef<unknown>()
+  const playAnimationRef = useRef<unknown>(null)
 
   const repeat = useCallback(() => {
     const currentTime = audioRef.current?.currentTime

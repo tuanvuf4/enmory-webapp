@@ -1,10 +1,10 @@
 import { RefObject } from 'react'
-import styles from "./style.module.scss"
+import styles from './style.module.scss'
 import classNames from 'clsx'
 
 interface IProps {
-  progressBarRef: RefObject<HTMLInputElement>
-  audioRef: RefObject<HTMLAudioElement>
+  progressBarRef: RefObject<HTMLInputElement | null>
+  audioRef: RefObject<HTMLAudioElement | null>
   timeProgress: number
   duration: number
 }
@@ -15,8 +15,6 @@ export const ProgressBar: React.FC<IProps> = ({
   timeProgress,
   duration,
 }) => {
-  
-
   const handleProgressChange = () => {
     if (progressBarRef.current && audioRef.current)
       audioRef.current.currentTime = parseInt(progressBarRef.current.value)

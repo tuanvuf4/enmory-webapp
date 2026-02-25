@@ -1,5 +1,5 @@
 import { Menu } from 'antd'
-import styles from "./style.module.scss"
+import styles from './style.module.scss'
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
@@ -18,8 +18,6 @@ interface IPros {
 }
 
 export const MainMenu: React.FC<IPros> = ({ direction, onPageChange }: IPros) => {
-  
-
   const [menu, setMenu] = useState<MenuProps['items']>([])
   const [current, setCurrent] = useState('1')
 
@@ -30,7 +28,7 @@ export const MainMenu: React.FC<IPros> = ({ direction, onPageChange }: IPros) =>
   const { isAuth } = useSelector((state) => state.auth)
   const { drawer, isSidebarOpened, viewPort } = useSelector((state) => state.setting)
 
-  const redirect = (key: string, cb: (router: string) => void) => {
+  const redirect = (key: string, cb: (path: string) => void) => {
     const item = keyPaths.find((item) => item.key === key)
     if (item) cb(item.path)
   }

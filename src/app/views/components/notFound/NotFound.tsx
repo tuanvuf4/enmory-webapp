@@ -2,7 +2,7 @@ import globalStyles from '@/style/appStyle.module.scss'
 import { PlusOutlined } from '@ant-design/icons'
 import { Button, theme } from 'antd'
 import clsx from 'clsx'
-import { cloneElement, isValidElement, ReactElement } from 'react'
+import { cloneElement, isValidElement, JSX, ReactElement } from 'react'
 
 interface NotFoundProps {
   button?: JSX.Element

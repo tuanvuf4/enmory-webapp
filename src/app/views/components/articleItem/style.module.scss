@@ -1,0 +1,17 @@
+.articleItem {
+  padding: calc(var(--ant-size) / 2 * 3) calc(var(--ant-size) * 2);
+  border-radius: calc(var(--ant-size) / 2);
+  border: 1px solid var(--ant-color-border);
+  background-color: var(--ant-color-white);
+  height: 100%;
+  word-break: break-all;
+}
+
+.title {
+  color: var(--ant-color-primary);
+}
+
+.readMore {
+  color: var(--ant-color-primary);
+  font-weight: 600;
+}

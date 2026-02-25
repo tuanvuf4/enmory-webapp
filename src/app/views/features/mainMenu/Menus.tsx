@@ -6,6 +6,7 @@ import {
   InfoCircleOutlined,
   LoginOutlined,
   PlusOutlined,
+  ReadOutlined,
   SearchOutlined,
   UserOutlined,
 } from '@ant-design/icons'
@@ -40,6 +41,11 @@ export const menus: MenuProps['items'] = [
   //   icon: <ReadOutlined className='icon' />,
   //   label: 'example',
   // },
+  {
+    key: '12',
+    icon: <ReadOutlined className='icon' />,
+    label: 'article',
+  },
   {
     key: '6',
     icon: <AreaChartOutlined className='icon' />,
@@ -147,5 +153,9 @@ export const keyPaths = [
   {
     key: '11',
     path: '/about',
+  },
+  {
+    key: '12',
+    path: '/article',
   },
 ]

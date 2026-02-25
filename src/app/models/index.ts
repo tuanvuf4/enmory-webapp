@@ -1,4 +1,5 @@
 export * from './app.model'
+export * from './article.model'
 export * from './breadcrumb.model'
 export * from './dictation.model'
 export * from './example.model'

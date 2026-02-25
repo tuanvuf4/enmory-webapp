@@ -50,6 +50,13 @@ $footer-background: #fff;
   max-width: 100%;
 }
 
+.containerMd {
+  width: 1200px;
+  margin: auto;
+  padding: 0 calc(var(--ant-size) * 1);
+  max-width: 100%;
+}
+
 .containerFluid {
   width: 100%;
   margin: auto;
@@ -116,6 +123,7 @@ $footer-background: #fff;
   font-family: $font-family-oswald;
   text-align: center;
   font-size: var(--ant-font-size-heading-2);
+  font-weight: bold;
 }
 
 .dkOnly {

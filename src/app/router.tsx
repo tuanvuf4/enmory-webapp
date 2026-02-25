@@ -32,6 +32,8 @@ export const routerPath: RouteObject[] = [
   { path: '/library', element: lazyLoadRoutes('library') },
   // { path: '/example', element: lazyLoadRoutes('example') },
   { path: '/listening', element: lazyLoadRoutes('listening') },
+  { path: '/article', element: lazyLoadRoutes('article') },
+  { path: '/article/:id', element: lazyLoadRoutes('articleDetail') },
   { path: '/statistic', element: lazyLoadRoutes('statistic') },
   // { path: '/marker', element: lazyLoadRoutes('marker') },
   // { path: '/schedule', element: lazyLoadRoutes('schedule') },

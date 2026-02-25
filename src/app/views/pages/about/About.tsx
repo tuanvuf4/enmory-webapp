@@ -3,11 +3,11 @@ import globalStyles from '@/style/appStyle.module.scss'
 import { Alert } from 'antd'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 
-interface IPageNotFoundProps {
+interface IAboutProps {
   text?: string
 }
 
-export const About = ({ text = 'About' }: IPageNotFoundProps) => {
+export const About = ({ text = 'About' }: IAboutProps) => {
   return (
     <div className={globalStyles.container}>
       <PageTitle content={text} />

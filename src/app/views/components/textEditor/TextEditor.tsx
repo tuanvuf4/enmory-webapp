@@ -33,7 +33,7 @@ interface TextEditor {
 }
 
 export const TextEditor = ({ content, disabled = false, onChange }: TextEditor) => {
-  const editorRef = useRef<ClassicEditor>()
+  const editorRef = useRef<ClassicEditor>(null)
 
   return (
     <div className={'text-editor'}>

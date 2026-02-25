@@ -12,6 +12,7 @@ export const dbCollections = {
   items: 'items',
   examples: 'examples',
   iotd: 'iotd',
+  articles: 'articles',
 }
 
 // Get Firebase services

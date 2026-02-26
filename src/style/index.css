@@ -38,7 +38,7 @@ img {
 blockquote {
   border-left: 2px solid #72a526 !important;
   padding: 6px 4px 6px 12px;
-  margin: 4px 0;
+  margin: 4px 0 16px 0;
 
   p {
     margin: 0 !important;

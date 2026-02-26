@@ -1,4 +1,4 @@
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { MenuOutlined, SearchOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { useAuthLogout } from '@/core/hooks/useAuthLogout'
@@ -83,7 +83,7 @@ export const AppHeader = () => {
 
   return (
     <Header className={clsx(styles.header, isShowSearchFormItem ? 'active' : '')}>
-      <div className={globalStyles.containerFluid}>
+      <div className={appStyle.containerFluid}>
         <Row
           gutter={[token.size, token.size * 2]}
           justify={'space-between'}
@@ -141,7 +141,7 @@ export const AppHeader = () => {
           </Col>
 
           {isAuth && (
-            <Col xs={12} md={16} className={globalStyles.fromTablet}>
+            <Col xs={12} md={16} className={appStyle.fromTablet}>
               <MainMenu direction='horizontal' />
             </Col>
           )}

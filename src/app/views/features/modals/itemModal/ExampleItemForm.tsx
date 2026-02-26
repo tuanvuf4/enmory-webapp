@@ -1,4 +1,4 @@
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { PlusOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IItem } from '@/models/item.model'
@@ -62,7 +62,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
       <Space
         direction='vertical'
         size={[token.size / 2, token.size / 2]}
-        className={globalStyles.fulWidth}
+        className={appStyle.fulWidth}
       >
         <Col xs={24}>
           <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
@@ -85,7 +85,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                     <Space
                       size={[token.size / 2, token.size / 2]}
                       direction='vertical'
-                      className={globalStyles.fulWidth}
+                      className={appStyle.fulWidth}
                     >
                       <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
                         <Flex

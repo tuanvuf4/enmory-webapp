@@ -1,4 +1,4 @@
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { SyncOutlined, CloseCircleOutlined, SearchOutlined } from '@ant-design/icons'
 import { useAutoComplete, useExampleModal, useLoading, usePrompt } from '@/helpers/hooks'
 import { exampleApi } from '@/services/firebase/api/example.api'
@@ -202,7 +202,7 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
 
         <Button type={'primary'} htmlType='submit' style={{ color: token.colorWhite }}>
           <SearchOutlined />
-          <span className={globalStyles.fromTablet}>Search</span>
+          <span className={appStyle.fromTablet}>Search</span>
         </Button>
       </form>
 

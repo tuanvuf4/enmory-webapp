@@ -3,7 +3,7 @@ import { Button, Col, Dropdown, Layout, MenuProps, Row, Space, theme } from 'ant
 import classNames from 'clsx'
 import { menuExtension } from './Menu'
 import styles from './style.module.scss'
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { useEffect, useState } from 'react'
 import { IUser } from '@/models/user.model'
 import { EPageExt } from '@/models/app.model'
@@ -57,7 +57,7 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
 
   return (
     <Layout.Header className={styles.header}>
-      <div className={globalStyles.containerFluid}>
+      <div className={appStyle.containerFluid}>
         <Row
           gutter={[token.size, token.size * 2]}
           justify={'space-between'}

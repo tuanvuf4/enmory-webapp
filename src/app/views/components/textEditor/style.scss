@@ -1,6 +1,5 @@
 .text-editor {
   .ck-content {
-    min-height: 6em;
     padding: 8px 12px !important;
     color: #333333 !important;
   }
@@ -15,6 +14,12 @@
 
   /* List styles */
   ul {
+    margin-bottom: 1em;
+
+    &:last-child {
+      margin: 0;
+    }
+
     li {
       display: list-item;
     }

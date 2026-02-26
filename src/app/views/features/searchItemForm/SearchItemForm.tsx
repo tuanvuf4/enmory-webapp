@@ -1,4 +1,4 @@
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import {
   CloseCircleOutlined,
   FilterOutlined,
@@ -137,7 +137,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                       }
                     />
                   }
-                  className={clsx(styles.autoSearchInput, globalStyles.fulWidth)}
+                  className={clsx(styles.autoSearchInput, appStyle.fulWidth)}
                   options={options}
                   onSelect={async (value, option) => await onSelect(value, option)}
                   onClear={() => {
@@ -161,7 +161,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   name={`archive`}
                   render={({ field: { onChange, value } }) => (
                     <Checkbox
-                      className={globalStyles.fulWidth}
+                      className={appStyle.fulWidth}
                       checked={value}
                       onChange={(e) => onChange(e.target.checked)}
                     >
@@ -175,7 +175,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   name={`favorite`}
                   render={({ field: { onChange, value } }) => (
                     <Checkbox
-                      className={globalStyles.fulWidth}
+                      className={appStyle.fulWidth}
                       checked={value}
                       onChange={(e) => onChange(e.target.checked)}
                     >
@@ -191,7 +191,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   name={`cat`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={globalStyles.fulWidth}
+                      className={appStyle.fulWidth}
                       value={value}
                       onChange={(e) => onChange(e)}
                       options={categories}
@@ -208,7 +208,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   name={`orderBy`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={globalStyles.fulWidth}
+                      className={appStyle.fulWidth}
                       value={value}
                       onChange={(e) => onChange(e)}
                       options={orderByOptions}
@@ -224,7 +224,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   name={`order`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={globalStyles.fulWidth}
+                      className={appStyle.fulWidth}
                       value={value}
                       onChange={(e) => onChange(e)}
                       options={orderOptions}
@@ -238,7 +238,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                 <Button
                   type={'primary'}
                   htmlType='submit'
-                  className={globalStyles.fulWidth}
+                  className={appStyle.fulWidth}
                   onClick={() => handleSubmit(onSubmit)()}
                 >
                   Apply
@@ -285,7 +285,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
             }}
           >
             <SearchOutlined />
-            <span className={globalStyles.fromTablet}>Search</span>
+            <span className={appStyle.fromTablet}>Search</span>
           </Button>
         )}
       </form>

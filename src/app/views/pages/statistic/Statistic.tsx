@@ -1,6 +1,6 @@
 import { Col, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { AddedItemChart } from '@/views/features/chart/addedItemChart/AddedItemChart'
 import { OverviewChart } from '@/views/features/chart/overviewChart/OverviewChart'
 import { ProgressChart } from '@/views/features/chart/progressChart/ProgressChart'
@@ -10,15 +10,11 @@ const Statistic = () => {
   const { token } = theme.useToken()
 
   return (
-    <div className={globalStyles.container}>
+    <div className={appStyle.container}>
       <PageTitle content={'Statistic'} />
 
-      <div className={classNames(globalStyles.contentPage)}>
-        <Space
-          direction='vertical'
-          size={[token.size, token.size]}
-          className={globalStyles.fulWidth}
-        >
+      <div className={classNames(appStyle.contentPage)}>
+        <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
           <Row justify={'start'} align={'top'} gutter={[token.size * 2, token.size * 2]}>
             <Col xs={24} md={15}>
               <AddedItemChart />

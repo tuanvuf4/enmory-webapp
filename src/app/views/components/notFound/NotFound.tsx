@@ -1,4 +1,4 @@
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { PlusOutlined } from '@ant-design/icons'
 import { Button, theme } from 'antd'
 import clsx from 'clsx'
@@ -37,7 +37,7 @@ interface ButtonWrapperProps {
 }
 
 const PageTitle = ({ content, classNames }: PageTitleProps) => {
-  return <h2 className={clsx(globalStyles.pageTitle, classNames)}>{content}</h2>
+  return <h2 className={clsx(appStyle.pageTitle, classNames)}>{content}</h2>
 }
 
 const ActionButton = ({ onClickBtn, classNames }: ActionButtonProps) => {

@@ -1,6 +1,6 @@
 import { Col, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import styles from './style.module.scss'
 import { useSelector } from '@/core/hooks/redux'
 import { AddedItemChart } from '@/views/features/chart/addedItemChart/AddedItemChart'
@@ -14,11 +14,11 @@ const Profile = () => {
   const { user } = useSelector((state) => state.auth)
 
   return (
-    <div className={globalStyles.container}>
-      <h2 className={classNames(globalStyles.pageTitle)}>Profile</h2>
+    <div className={appStyle.container}>
+      <h2 className={classNames(appStyle.pageTitle)}>Profile</h2>
 
-      <div className={classNames(globalStyles.bodyContent)}>
-        <Row className={globalStyles.innerContainer}>
+      <div className={classNames(appStyle.bodyContent)}>
+        <Row className={appStyle.innerContainer}>
           <Col xs={24} md={24}>
             <div className={styles.inner}>
               <div>
@@ -34,12 +34,8 @@ const Profile = () => {
           </Col>
         </Row>
 
-        <div className={classNames(globalStyles.contentPage, 'mt-8')}>
-          <Space
-            direction='vertical'
-            size={[token.size, token.size]}
-            className={globalStyles.fulWidth}
-          >
+        <div className={classNames(appStyle.contentPage, 'mt-8')}>
+          <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
             <Row justify={'start'} align={'top'} gutter={[token.size * 2, token.size * 2]}>
               <Col xs={24} md={15}>
                 <AddedItemChart />

@@ -1,4 +1,4 @@
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { useFirebaseAuth } from '@/core/hooks'
@@ -49,11 +49,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
 
       <div className={styles.loginFormContent}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Space
-            direction='vertical'
-            size={[token.size, token.size]}
-            className={globalStyles.fulWidth}
-          >
+          <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
             <Row align={'middle'}>
               <Col span={24}>
                 <label htmlFor=''></label>
@@ -90,19 +86,17 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
               </Col>
             </Row>
 
-            {errorMsg && (
-              <p className={clsx(globalStyles.errorMsg, globalStyles.textLeft)}>{errorMsg}</p>
-            )}
+            {errorMsg && <p className={clsx(appStyle.errorMsg, appStyle.textLeft)}>{errorMsg}</p>}
 
             {authError && !errorMsg && (
-              <p className={clsx(globalStyles.errorMsg, globalStyles.textCenter)}>{authError}</p>
+              <p className={clsx(appStyle.errorMsg, appStyle.textCenter)}>{authError}</p>
             )}
 
             <Row justify={'center'}>
               <Col span={24}>
                 <div className={clsx(styles.btnSubmit)}>
                   <Button
-                    className={globalStyles.fulWidth}
+                    className={appStyle.fulWidth}
                     type='primary'
                     htmlType='submit'
                     loading={isLoading}
@@ -136,7 +130,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
 
             <Row justify={'center'}>
               <Col span={24}>
-                <Button className={globalStyles.fulWidth} onClick={handleGoogleLogin}>
+                <Button className={appStyle.fulWidth} onClick={handleGoogleLogin}>
                   Google
                 </Button>
               </Col>

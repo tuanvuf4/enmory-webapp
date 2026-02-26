@@ -1,4 +1,4 @@
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import {
   CloseCircleOutlined,
   FilterOutlined,
@@ -120,7 +120,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                       }
                     />
                   }
-                  className={clsx(styles.autoSearchInput, globalStyles.fulWidth)}
+                  className={clsx(styles.autoSearchInput, appStyle.fulWidth)}
                   options={options}
                   onSelect={onSelect}
                   onClear={() => {
@@ -146,7 +146,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                   name={`orderBy`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={globalStyles.fulWidth}
+                      className={appStyle.fulWidth}
                       value={value}
                       onChange={(e) => {
                         onChange(e)
@@ -165,7 +165,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                   name={`order`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={globalStyles.fulWidth}
+                      className={appStyle.fulWidth}
                       value={value}
                       onChange={(e) => {
                         onChange(e)
@@ -181,7 +181,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
 
                 <Button
                   htmlType='submit'
-                  className={globalStyles.fulWidth}
+                  className={appStyle.fulWidth}
                   onClick={() => handleSubmit(onSubmit)()}
                 >
                   Apply
@@ -220,7 +220,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
           }}
         >
           <SyncOutlined />
-          <span className={globalStyles.fromTablet}>Reset</span>
+          <span className={appStyle.fromTablet}>Reset</span>
         </Button>
 
         <Button
@@ -234,7 +234,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
           }}
         >
           <SearchOutlined />
-          <span className={globalStyles.fromTablet}>Search</span>
+          <span className={appStyle.fromTablet}>Search</span>
         </Button>
       </form>
     </div>

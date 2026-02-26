@@ -1,4 +1,4 @@
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { usePrefetchAllIotd, useSelector } from '@/core/hooks'
 import { Example } from '@/views/features/example/Example'
 import { StudySet } from '@/views/features/studySet/StudySet'
@@ -26,18 +26,18 @@ const Home = () => {
       {isAuth && (
         <>
           {isShowSearchFormItem && (
-            <div className={globalStyles.stickyBar}>
-              <div className={globalStyles.container}>
+            <div className={appStyle.stickyBar}>
+              <div className={appStyle.container}>
                 <Toolbar pagination={undefined} />
               </div>
             </div>
           )}
 
-          <div className={globalStyles.container}>
+          <div className={appStyle.container}>
             <Space
               direction='vertical'
               size={[token.size, token.size]}
-              className={globalStyles.fulWidth}
+              className={appStyle.fulWidth}
             >
               <Row justify={'start'} align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={16}>
@@ -102,11 +102,7 @@ const Home = () => {
       )}
 
       {!isAuth && (
-        <Space
-          direction='vertical'
-          size={[token.size, token.size]}
-          className={globalStyles.fulWidth}
-        >
+        <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
           <Row justify={'center'}>
             <Col span={24}>
               <div className={registerStyles.register}>

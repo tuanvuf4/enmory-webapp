@@ -15,7 +15,12 @@ export const ArticleItem = ({ id, title, description, created_date }: IArticleIt
   return (
     <div className={clsx(styles.articleItem, styles.content)}>
       <Flex justify={'space-between'} gap={8}>
-        <h2 className={clsx(styles.title)}>{title}</h2>
+        <h2
+          className={clsx(styles.title, 'font-bold cursor-pointer')}
+          onClick={() => navigate(`/article/${id}`)}
+        >
+          {title}
+        </h2>
 
         <Button
           variant={'text'}
@@ -40,7 +45,7 @@ export const ArticleItem = ({ id, title, description, created_date }: IArticleIt
       />
 
       <div className={clsx(styles.readMore, 'cursor-pointer')}>
-        <Button color={'primary'} type={'default'} onClick={() => navigate(`/article/${id}`)}>
+        <Button variant={'outlined'} type={'default'} onClick={() => navigate(`/article/${id}`)}>
           Read more
         </Button>
       </div>

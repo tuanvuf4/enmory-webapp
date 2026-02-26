@@ -1,4 +1,4 @@
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { appConfig, setting } from '@/config/appConfig'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { IUserConfig } from '@/models/user.model'
@@ -52,11 +52,11 @@ const Setting = () => {
   })
 
   return (
-    <div className={globalStyles.container}>
-      <h2 className={globalStyles.pageTitle}>Settings</h2>
+    <div className={appStyle.container}>
+      <h2 className={appStyle.pageTitle}>Settings</h2>
 
-      <div className={clsx(globalStyles.bodyContent)}>
-        <Row className={globalStyles.innerContainer}>
+      <div className={clsx(appStyle.bodyContent)}>
+        <Row className={appStyle.innerContainer}>
           <Col xs={24}>
             <form onSubmit={handleSubmit(onSubmit)}>
               <Space direction='vertical' style={{ display: 'flex' }}>

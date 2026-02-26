@@ -1,6 +1,6 @@
 import { msgErrors } from '@/constant/validation'
 import { chromeStorage } from '@/extension/storageService'
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { isGroupWord } from '@/helpers/validate'
@@ -176,7 +176,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         <Space
           direction='vertical'
           size={[token.size / 2, token.size / 2]}
-          className={globalStyles.fulWidth}
+          className={appStyle.fulWidth}
         >
           <Row align={'middle'}>
             <Col md={4} xs={12}>
@@ -190,7 +190,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                 render={({ field: { onChange, value, ref } }) => (
                   <Select
                     ref={ref}
-                    className={globalStyles.fulWidth}
+                    className={appStyle.fulWidth}
                     onChange={onChange}
                     options={categories}
                     value={value}
@@ -234,7 +234,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                   <>
                     <AutoComplete
                       value={value}
-                      className={clsx(globalStyles.fulWidth)}
+                      className={clsx(appStyle.fulWidth)}
                       options={options}
                       children={
                         <Input
@@ -274,13 +274,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                     />
 
                     {invalid && errors.origin?.type === 'required' && (
-                      <p className={clsx(globalStyles.errorMsg, globalStyles.textLeft)}>
+                      <p className={clsx(appStyle.errorMsg, appStyle.textLeft)}>
                         {errors.origin?.message as string}
                       </p>
                     )}
 
                     {invalid && errors.origin?.type === 'existed' && (
-                      <p className={clsx(globalStyles.errorMsg, globalStyles.textLeft)}>
+                      <p className={clsx(appStyle.errorMsg, appStyle.textLeft)}>
                         {errors.origin?.message as string}
                       </p>
                     )}

@@ -19,9 +19,18 @@
 .content {
   ul {
     padding-left: calc(var(--ant-size));
+    margin-bottom: 1em;
+
+    &:last-child {
+      margin: 0;
+    }
 
     li {
       display: list-item;
+
+      p {
+        margin: 0;
+      }
     }
   }
 

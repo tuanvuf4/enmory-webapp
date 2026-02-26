@@ -3,7 +3,7 @@ import classNames from 'clsx'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons'
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { IUser } from '@/models/user.model'
 import { initRegisterForm } from '@/services/registerForm'
@@ -60,7 +60,7 @@ export const RegisterForm = ({ showBanner = true }) => {
             <Space
               direction='vertical'
               size={[token.size, token.size]}
-              className={globalStyles.fulWidth}
+              className={appStyle.fulWidth}
             >
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={24}>
@@ -222,13 +222,13 @@ export const RegisterForm = ({ showBanner = true }) => {
                 <Row align={'middle'}>
                   <Col span={24}>
                     {errorMsg && (
-                      <p className={classNames(globalStyles.errorMsg, globalStyles.textLeft)}>
+                      <p className={classNames(appStyle.errorMsg, appStyle.textLeft)}>
                         {authError}
                       </p>
                     )}
 
                     {!errorMsg && authError && (
-                      <p className={classNames(globalStyles.errorMsg, globalStyles.textLeft)}>
+                      <p className={classNames(appStyle.errorMsg, appStyle.textLeft)}>
                         {authError}
                       </p>
                     )}
@@ -240,7 +240,7 @@ export const RegisterForm = ({ showBanner = true }) => {
                 <Col span={24}>
                   <div className={classNames([loginStyles.btnSubmit])}>
                     <Button
-                      className={globalStyles.fulWidth}
+                      className={appStyle.fulWidth}
                       type='primary'
                       htmlType='submit'
                       loading={firebaseLoading}
@@ -274,7 +274,7 @@ export const RegisterForm = ({ showBanner = true }) => {
               <Row gutter={[token.size, token.size]}>
                 <Col span={24}>
                   <Button
-                    className={globalStyles.fulWidth}
+                    className={appStyle.fulWidth}
                     onClick={handleGoogleLogin}
                     loading={firebaseLoading}
                   >

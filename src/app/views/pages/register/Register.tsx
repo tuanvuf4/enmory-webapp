@@ -1,11 +1,11 @@
 import classNames from 'clsx'
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { RegisterForm } from '@/views/features/registerForm/RegisterForm'
 
 const Register = () => {
   return (
-    <div className={globalStyles.container}>
-      <div className={classNames(globalStyles.bodyContent)}>
+    <div className={appStyle.container}>
+      <div className={classNames(appStyle.bodyContent)}>
         <RegisterForm />
       </div>
     </div>

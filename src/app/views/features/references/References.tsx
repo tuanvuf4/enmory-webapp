@@ -2,7 +2,7 @@ import { appConfig } from '@/app/config/appConfig'
 import { Button } from 'antd'
 import styles from './style.module.scss'
 import React from 'react'
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { useSelector } from '@/core/hooks'
 
 interface IPros {
@@ -22,7 +22,7 @@ export const Reference: React.FC<IPros> = ({ origin }) => {
           return (
             <Button
               key={key}
-              className={globalStyles.referenceBtn}
+              className={appStyle.referenceBtn}
               type='text'
               size='small'
               onClick={() => {

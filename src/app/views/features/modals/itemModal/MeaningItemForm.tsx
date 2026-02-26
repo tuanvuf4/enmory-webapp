@@ -1,4 +1,4 @@
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import {
   PlusOutlined,
   SaveOutlined,
@@ -49,7 +49,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
     <Space
       direction='vertical'
       size={[token.size / 2, token.size / 2]}
-      className={globalStyles.fulWidth}
+      className={appStyle.fulWidth}
       style={{ marginBottom: `${token.size}px` }}
     >
       <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
@@ -95,7 +95,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
             <Space
               direction='vertical'
               size={[token.size / 2, token.size]}
-              className={globalStyles.fulWidth}
+              className={appStyle.fulWidth}
             >
               <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
                 <Col
@@ -128,7 +128,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                       name={`meanings.${index}.typeId`}
                       render={({ field }) => (
                         <Select
-                          className={globalStyles.fulWidth}
+                          className={appStyle.fulWidth}
                           rootClassName={'text-center'}
                           {...field}
                           options={types
@@ -204,7 +204,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                 <Space
                   direction='vertical'
                   size={[token.size / 2, token.size / 2]}
-                  className={clsx(globalStyles.fulWidth)}
+                  className={clsx(appStyle.fulWidth)}
                 >
                   <Row gutter={[token.size / 2, token.size]} align={'middle'}>
                     <Col

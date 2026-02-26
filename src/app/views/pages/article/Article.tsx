@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 import { Col, Row, theme, Button, Spin, Pagination, Flex } from 'antd'
 import { ArticleItem } from '@/views/components/articleItem/ArticleItem'
@@ -31,7 +31,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
   const { data: totalCount = 0 } = useArticlesCount()
 
   return (
-    <div className={globalStyles.containerMd}>
+    <div className={appStyle.containerMd}>
       <PageTitle content={pageTitle} />
 
       {articles.length > 0 && (

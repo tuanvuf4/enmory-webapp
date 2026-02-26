@@ -1,4 +1,4 @@
-import globalStyles from '@/style/appStyle.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import { EViewMode } from '@/models/app.model'
 import { Toolbar } from '@/views/features/toolbar/Toolbar'
 import { theme, Row, Col } from 'antd'
@@ -55,8 +55,8 @@ export const Library: React.FC = () => {
   return (
     <>
       {isShowSearchFormItem && (
-        <div className={globalStyles.stickyBar}>
-          <div className={globalStyles.container}>
+        <div className={appStyle.stickyBar}>
+          <div className={appStyle.container}>
             <Toolbar
               pagination={
                 <Pagination
@@ -79,7 +79,7 @@ export const Library: React.FC = () => {
         </div>
       )}
 
-      <div className={globalStyles.container}>
+      <div className={appStyle.container}>
         {isLoading && <Loading show={isLoading} />}
 
         {!isLoading && viewMode === EViewMode.GRID && listItem.length > 0 && (

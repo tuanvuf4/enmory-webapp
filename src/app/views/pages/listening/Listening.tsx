@@ -1,11 +1,9 @@
-import globalStyles from "@/style/appStyle.module.scss"
+import globalStyles from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 import { Alert } from 'antd'
 import clsx from 'clsx'
 
 export const Listening = () => {
-  
-
   return (
     <div className={globalStyles.container}>
       <PageTitle content={'Practice listening skill'} />

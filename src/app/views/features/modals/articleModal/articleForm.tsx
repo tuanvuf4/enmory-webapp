@@ -112,7 +112,7 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
           rules={{ required: 'Please enter article description' }}
           render={({ field: { onChange, value } }) => (
             <>
-              <TextEditor content={value} onChange={(content: any) => onChange(content ?? '')} />
+              <TextEditor content={value} onChange={onChange} />
               {/* <TextArea
                 {...field}
                 placeholder='Article description'

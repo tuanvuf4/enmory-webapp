@@ -25,8 +25,6 @@ interface IProps {
 
 export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
   const { token } = theme.useToken()
-  
-  
 
   const [searchParams, setSearchParams] = useSearchParams()
 

@@ -1,4 +1,4 @@
-import globalStyles from "@/style/appStyle.module.scss"
+import globalStyles from '@/style/appStyle.module.scss'
 import { PlusOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IItem } from '@/models/item.model'
@@ -7,7 +7,7 @@ import { theme, Space, Col, Row, Button, AutoComplete, Flex } from 'antd'
 import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { exampleItem } from './data'
-import styles from "./style.module.scss"
+import styles from './style.module.scss'
 import TextArea from 'antd/es/input/TextArea'
 
 interface IProps {
@@ -16,8 +16,6 @@ interface IProps {
 
 export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
   const { token } = theme.useToken()
-  
-  
 
   const [currentSearch, setCurrentSearch] = useState<string>('')
   const [activeFieldIndex, setActiveFieldIndex] = useState<number | null>(null)

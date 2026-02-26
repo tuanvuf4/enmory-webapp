@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Controls } from './Controls'
 import { ProgressBar } from './ProgressBar'
 import { Button, Dropdown, MenuProps, theme } from 'antd'
-import styles from "./style.module.scss"
+import styles from './style.module.scss'
 import { styleConfig } from '@/style/appStyle'
 import {
   CaretDownOutlined,
@@ -46,7 +46,6 @@ export const AudioPlayer: React.FC<IProps> = ({
   onCurrentUpdating,
 }) => {
   const { token } = theme.useToken()
-  
 
   const [currentTrack, setCurrentTrack] = useState<ITracks | null>(null)
   const [timeProgress, setTimeProgress] = useState(0)

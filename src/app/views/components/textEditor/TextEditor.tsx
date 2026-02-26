@@ -26,14 +26,21 @@ import { CKEditor } from '@ckeditor/ckeditor5-react'
 import './style.scss'
 import 'ckeditor5/ckeditor5.css'
 
-interface TextEditor {
+// props for text editor component
+export interface TextEditorProps {
   disabled?: boolean
   content?: string | null
-  onChange?: (content: unknown) => void
+  /**
+   * always emits a string (empty when editor is cleared)
+   */
+  onChange?: (content: string) => void
 }
 
-export const TextEditor = ({ content, onChange }: Omit<TextEditor, 'disabled'>) => {
-  const editorRef = useRef<ClassicEditor>(null)
+export const TextEditor = ({ content, onChange }: Omit<TextEditorProps, 'disabled'>) => {
+  // use a mutable ref so we can assign editor instance in onReady
+  const editorRef = useRef<ClassicEditor | null>(
+    null,
+  ) as React.MutableRefObject<ClassicEditor | null>
 
   return (
     <div className={'text-editor'}>
@@ -93,8 +100,10 @@ export const TextEditor = ({ content, onChange }: Omit<TextEditor, 'disabled'>) 
             'bulletedList',
           ],
         }}
+        // CKEditor passes (event, editor) but we only care about data
         onChange={() => {
-          onChange?.(editorRef.current?.getData())
+          const data = editorRef.current?.getData() ?? ''
+          onChange?.(data)
         }}
         onReady={(editor) => {
           editorRef.current = editor

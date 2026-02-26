@@ -19,9 +19,6 @@ interface IHeaderExt {
 export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) => {
   const { token } = theme.useToken()
 
-  
-  
-
   // Get user info from Redux state (Firebase auth)
   const authUser = useSelector((state) => state.auth.user)
   const [userInfo, setUserInfo] = useState<IUser>()

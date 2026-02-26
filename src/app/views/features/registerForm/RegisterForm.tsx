@@ -3,15 +3,15 @@ import classNames from 'clsx'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons'
-import globalStyles from "@/style/appStyle.module.scss"
+import globalStyles from '@/style/appStyle.module.scss'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { IUser } from '@/models/user.model'
 import { initRegisterForm } from '@/services/registerForm'
 import { useFirebaseAuth } from '@/core/hooks'
 
 import logo from '@/assets/img/logo.png'
-import styles from "./style.module.scss"
-import loginStyles from "../loginForm/style.module.scss"
+import styles from './style.module.scss'
+import loginStyles from '../loginForm/style.module.scss'
 
 export const RegisterForm = ({ showBanner = true }) => {
   const { token } = theme.useToken()

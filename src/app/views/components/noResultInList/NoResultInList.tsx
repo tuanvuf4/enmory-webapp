@@ -1,8 +1,6 @@
 import styles from './style.module.scss'
 
 export const NoResultInList = () => {
-  
-
   return [
     {
       value: 'noresult',

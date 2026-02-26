@@ -378,10 +378,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                           control={control}
                           name={`meanings.${index}.note`}
                           render={({ field: { onChange, value } }) => (
-                            <TextEditor
-                              content={value}
-                              onChange={(content: any) => onChange(content ?? '')}
-                            />
+                            <TextEditor content={value} onChange={onChange} />
                           )}
                         />
                       </Col>
@@ -399,10 +396,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                           control={control}
                           name={`meanings.${index}.definition`}
                           render={({ field: { onChange, value } }) => (
-                            <TextEditor
-                              content={value}
-                              onChange={(content: any) => onChange(content ?? '')}
-                            />
+                            <TextEditor content={value} onChange={onChange} />
                           )}
                         />
                       </Col>
@@ -420,10 +414,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                           control={control}
                           name={`meanings.${index}.translation`}
                           render={({ field: { onChange, value } }) => (
-                            <TextEditor
-                              content={value}
-                              onChange={(content: any) => onChange(content ?? '')}
-                            />
+                            <TextEditor content={value} onChange={onChange} />
                           )}
                         />
                       </Col>
@@ -441,10 +432,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                           control={control}
                           name={`meanings.${index}.collocations`}
                           render={({ field: { onChange, value } }) => (
-                            <TextEditor
-                              content={value}
-                              onChange={(content: any) => onChange(content ?? '')}
-                            />
+                            <TextEditor content={value} onChange={onChange} />
                           )}
                         />
                       </Col>
@@ -462,10 +450,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                           control={control}
                           name={`meanings.${index}.grammar`}
                           render={({ field: { onChange, value } }) => (
-                            <TextEditor
-                              content={value}
-                              onChange={(content: any) => onChange(content ?? '')}
-                            />
+                            <TextEditor content={value} onChange={onChange} />
                           )}
                         />
                       </Col>

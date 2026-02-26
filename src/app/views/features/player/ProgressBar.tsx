@@ -1,10 +1,10 @@
-import { RefObject } from 'react'
 import styles from './style.module.scss'
 import classNames from 'clsx'
 
 interface IProps {
-  progressBarRef: RefObject<HTMLInputElement | null>
-  audioRef: RefObject<HTMLAudioElement | null>
+  // callers should pass refs created by useRef, which are mutable but compatible with RefObject
+  progressBarRef: React.RefObject<HTMLInputElement>
+  audioRef: React.RefObject<HTMLAudioElement>
   timeProgress: number
   duration: number
 }

@@ -1,6 +1,6 @@
 // import loading from 'src/assets/img/loading.gif'
 import { Spin } from 'antd'
-import styles from "./style.module.scss"
+import styles from './style.module.scss'
 import classNames from 'clsx'
 import { useSelector } from '@/core/hooks'
 interface ILoadingProps {
@@ -9,8 +9,6 @@ interface ILoadingProps {
 }
 
 export const Loading = ({ show: active = false, inner = false }: ILoadingProps) => {
-  
-
   const { loading } = useSelector((state) => state.setting)
 
   const show = active || loading
@@ -19,11 +17,7 @@ export const Loading = ({ show: active = false, inner = false }: ILoadingProps) 
 
   return (
     <div
-      className={classNames(
-        styles.loading,
-        inner ? styles.inner : '',
-        show ? styles.active : '',
-      )}
+      className={classNames(styles.loading, inner ? styles.inner : '', show ? styles.active : '')}
     >
       <Spin spinning={show} size={'large'} />
     </div>

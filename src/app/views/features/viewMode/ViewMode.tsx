@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button, theme, Tooltip } from 'antd'
-import styles from "./style.module.scss"
+import styles from './style.module.scss'
 import { AppstoreOutlined, MenuOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { styleConfig } from '@/style/appStyle'
@@ -9,8 +9,6 @@ import { EViewMode } from '@/models/app.model'
 
 export const ViewMode: React.FC = () => {
   const { token } = theme.useToken()
-
-  
 
   const { viewMode } = useSelector((state) => state.setting)
 

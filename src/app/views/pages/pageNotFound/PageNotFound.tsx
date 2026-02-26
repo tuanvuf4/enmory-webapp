@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import globalStyles from "@/style/appStyle.module.scss"
+import globalStyles from '@/style/appStyle.module.scss'
 import { Button, Row } from 'antd'
 import { HomeOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -9,8 +9,6 @@ interface IPageNotFoundProps {
 }
 
 export const PageNotFound = ({ text = 'Page not found' }: IPageNotFoundProps) => {
-  
-
   const navigate = useNavigate()
 
   return (

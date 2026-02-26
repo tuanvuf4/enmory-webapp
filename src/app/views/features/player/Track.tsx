@@ -1,6 +1,6 @@
 import { CustomerServiceOutlined } from '@ant-design/icons'
 import { RefObject } from 'react'
-import styles from "./style.module.scss"
+import styles from './style.module.scss'
 import { ITrack } from './data'
 
 interface IProps {
@@ -18,8 +18,6 @@ export const Track: React.FC<IProps> = ({
   progressBarRef,
   handleNext,
 }) => {
-  
-
   const onLoadedMetadata = () => {
     const seconds = audioRef.current?.duration
     setDuration(seconds as number)

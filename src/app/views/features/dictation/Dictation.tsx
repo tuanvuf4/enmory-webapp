@@ -19,7 +19,6 @@ export const Dictation: React.FC<IProps> = ({
   translation,
 }) => {
   const { token } = theme.useToken()
-  
 
   const [isFinish, setIsFinish] = useState<boolean>(false)
   const [isStart, setIsStart] = useState<boolean>(false)

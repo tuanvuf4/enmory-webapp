@@ -100,7 +100,6 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
         />
       </div>
 
-      {/* Description Field */}
       <div style={{ marginBottom: token.size }}>
         <label style={{ display: 'block', marginBottom: token.size / 2 }}>
           Description <span style={{ color: token.colorError }}>*</span>
@@ -113,12 +112,6 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
           render={({ field: { onChange, value } }) => (
             <>
               <TextEditor content={value} onChange={onChange} />
-              {/* <TextArea
-                {...field}
-                placeholder='Article description'
-                rows={4}
-                status={errors.description ? 'error' : ''}
-              /> */}
               {errors.description && (
                 <div style={{ color: token.colorError, fontSize: 12, marginTop: 4 }}>
                   {errors.description.message}
@@ -133,7 +126,7 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
         <Button onClick={() => onCancel?.()}>Cancel</Button>
 
         <Button type='primary' variant={'solid'} htmlType='submit' loading={isPending}>
-          {isEditing ? 'Save' : 'Create'}
+          {isEditing ? 'Update' : 'Create'}
         </Button>
       </Flex>
     </form>

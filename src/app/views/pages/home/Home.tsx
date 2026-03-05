@@ -16,7 +16,6 @@ const Home = () => {
   const { token } = theme.useToken()
 
   const { isAuth } = useSelector((state) => state.auth)
-  const { isShowSearchFormItem } = useSelector((state) => state.setting)
   const { word, phrase, idiom, slang, collocation, sentence } = useSelector((state) => state.iotd)
 
   const { isLoading, isError } = usePrefetchAllIotd(isAuth)
@@ -25,13 +24,7 @@ const Home = () => {
     <>
       {isAuth && (
         <>
-          {isShowSearchFormItem && (
-            <div className={appStyle.stickyBar}>
-              <div className={appStyle.container}>
-                <Toolbar pagination={undefined} />
-              </div>
-            </div>
-          )}
+          <Toolbar pagination={undefined} />
 
           <div className={appStyle.container}>
             <Space

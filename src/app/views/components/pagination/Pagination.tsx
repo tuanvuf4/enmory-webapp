@@ -68,12 +68,12 @@ export const Pagination = ({
 
   return (
     <div className={styles.pagination}>
-      <div className={styles.paginationSelect}>
-        <Select value={size} defaultValue={size} onChange={onSelectChange} options={options} />
+      <div className={styles.paginationOverall}>
+        <Button type={'text'}>{total > 0 ? `${startItem}-${endItem}/${total}` : '0/0'}</Button>
       </div>
 
-      <div className={styles.paginationOverall}>
-        <Button>{total > 0 ? `${startItem}-${endItem}/${total}` : '0/0'}</Button>
+      <div className={styles.paginationSelect}>
+        <Select value={size} defaultValue={size} onChange={onSelectChange} options={options} />
       </div>
 
       <div className={styles.paginationNav}>

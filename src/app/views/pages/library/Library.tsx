@@ -17,7 +17,7 @@ import { Loading } from '@/views/features'
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
 
-  const { viewMode, isShowSearchFormItem } = useSelector((state) => state.setting)
+  const { viewMode } = useSelector((state) => state.setting)
 
   const { openNotification } = usePrompt()
 
@@ -54,30 +54,24 @@ export const Library: React.FC = () => {
 
   return (
     <>
-      {isShowSearchFormItem && (
-        <div className={appStyle.stickyBar}>
-          <div className={appStyle.container}>
-            <Toolbar
-              pagination={
-                <Pagination
-                  page={page}
-                  size={size}
-                  total={pagination?.total}
-                  totalPage={pagination?.totalPage}
-                  options={setting.pagination.options}
-                  onPageChange={(data) => {
-                    const newParams = new URLSearchParams(searchParams)
-                    newParams.set('page', data.page.toString())
-                    newParams.set('size', data.size.toString())
-                    setSearchParams(newParams)
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                  }}
-                />
-              }
-            />
-          </div>
-        </div>
-      )}
+      <Toolbar
+        pagination={
+          <Pagination
+            page={page}
+            size={size}
+            total={pagination?.total}
+            totalPage={pagination?.totalPage}
+            options={setting.pagination.options}
+            onPageChange={(data) => {
+              const newParams = new URLSearchParams(searchParams)
+              newParams.set('page', data.page.toString())
+              newParams.set('size', data.size.toString())
+              setSearchParams(newParams)
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+          />
+        }
+      />
 
       <div className={appStyle.container}>
         {isLoading && <Loading show={isLoading} />}

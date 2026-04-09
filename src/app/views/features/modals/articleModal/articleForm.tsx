@@ -1,8 +1,8 @@
-import { useCreateArticle, useUpdateArticle } from '@/core/hooks'
+import { useCreateArticle, useUpdateArticle, useArticleCategories } from '@/core/hooks'
 import { articleKeys } from '@/core/hooks/useArticles'
 import { IArticleItem } from '@/models/article.model'
 import { TextEditor } from '@/views/components'
-import { theme, message, Input, Button, Flex } from 'antd'
+import { theme, message, Input, Button, Flex, Select } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import './style.module.scss'
@@ -21,6 +21,11 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
   const { mutate: createArticle, isPending: isCreating } = useCreateArticle()
   const { mutate: updateArticle, isPending: isUpdating } = useUpdateArticle()
 
+  const { data: categories = [] } = useArticleCategories({
+    orderBy: 'order',
+    order: 'ASC',
+  })
+
   const isEditing = !!data?.id
   const isPending = isCreating || isUpdating
 
@@ -33,6 +38,7 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
     defaultValues: {
       title: data?.title || '',
       description: data?.description || '',
+      category_id: data?.category_id || categories[0]?.id || '',
     },
   })
 
@@ -79,26 +85,52 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       {/* Title Field */}
-      <div style={{ marginBottom: token.size }}>
-        <label style={{ display: 'block', marginBottom: token.size / 2 }}>
-          Title <span style={{ color: token.colorError }}>*</span>
-        </label>
-        <Controller
-          control={control}
-          name='title'
-          rules={{ required: 'Please enter article title' }}
-          render={({ field }) => (
-            <>
-              <Input {...field} placeholder='Article title' status={errors.title ? 'error' : ''} />
-              {errors.title && (
-                <div style={{ color: token.colorError, fontSize: 12, marginTop: 4 }}>
-                  {errors.title.message}
-                </div>
-              )}
-            </>
-          )}
-        />
-      </div>
+      <Flex style={{ width: '100%' }} gap={token.size}>
+        <div style={{ marginBottom: token.size, flex: 1 }}>
+          <label style={{ display: 'block', marginBottom: token.size / 2 }}>
+            Title <span style={{ color: token.colorError }}>*</span>
+          </label>
+          <Controller
+            control={control}
+            name='title'
+            rules={{ required: 'Please enter article title' }}
+            render={({ field }) => (
+              <>
+                <Input
+                  {...field}
+                  placeholder='Article title'
+                  status={errors.title ? 'error' : ''}
+                />
+                {errors.title && (
+                  <div style={{ color: token.colorError, fontSize: 12, marginTop: 4 }}>
+                    {errors.title.message}
+                  </div>
+                )}
+              </>
+            )}
+          />
+        </div>
+
+        <div style={{ marginBottom: token.size, flex: '0 0 150px' }}>
+          <label style={{ display: 'block', marginBottom: token.size / 2 }}>Category</label>
+          <Controller
+            control={control}
+            name='category_id'
+            render={({ field }) => (
+              <Select
+                {...field}
+                style={{ width: '100%' }}
+                placeholder='Select a category (optional)'
+                allowClear
+                options={categories.map((cat) => ({
+                  label: cat.name,
+                  value: cat.id,
+                }))}
+              />
+            )}
+          />
+        </div>
+      </Flex>
 
       <div style={{ marginBottom: token.size }}>
         <label style={{ display: 'block', marginBottom: token.size / 2 }}>

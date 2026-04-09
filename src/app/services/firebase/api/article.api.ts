@@ -30,6 +30,7 @@ interface IArticleResponse<T> {
 
 export interface IArticleRequestParams {
   keyword?: string
+  categoryId?: string
   page: number
   size: number
   orderBy?: 'created_date' | 'title'
@@ -46,6 +47,11 @@ const buildQueryConstraints = (params: IArticleRequestParams): QueryConstraint[]
   // Filter by current user
   if (currentUser) {
     constraints.push(where('uid', '==', currentUser.uid))
+  }
+
+  // Filter by category if provided
+  if (params.categoryId) {
+    constraints.push(where('category_id', '==', params.categoryId))
   }
 
   // Order by
@@ -115,6 +121,7 @@ export const articleApi = {
             uid: data.uid,
             title: data.title,
             description: data.description,
+            category_id: data.category_id,
             created_date: data.created_date,
             last_update: data.last_update,
           } as IArticleItem
@@ -190,7 +197,7 @@ export const articleApi = {
   /**
    * Get total count of articles for current user
    */
-  async getArticlesCount(): Promise<number> {
+  async getArticlesCount(categoryId?: string): Promise<number> {
     try {
       const currentUser = firebaseAuthService.getCurrentUser()
 
@@ -198,7 +205,13 @@ export const articleApi = {
         return 0
       }
 
-      const q = query(collection(db, dbCollections.articles), where('uid', '==', currentUser.uid))
+      const constraints: QueryConstraint[] = [where('uid', '==', currentUser.uid)]
+
+      if (categoryId) {
+        constraints.push(where('category_id', '==', categoryId))
+      }
+
+      const q = query(collection(db, dbCollections.articles), ...constraints)
 
       const countSnapshot = await getCountFromServer(q)
       return countSnapshot.data().count
@@ -242,6 +255,7 @@ export const articleApi = {
         uid: (data as any).uid,
         title: (data as any).title,
         description: (data as any).description,
+        category_id: (data as any).category_id,
         created_date: (data as any).created_date,
         last_update: (data as any).last_update,
       }

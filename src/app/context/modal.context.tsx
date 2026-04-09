@@ -70,6 +70,7 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
           confirmLoading={loading}
           closeIcon={<CloseSquareOutlined />}
           destroyOnHidden
+          keyboard={false}
           getContainer={`.${styleConfig.prefixClassCss}-layout`}
           {...modalConfig}
         >

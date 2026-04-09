@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { Col, Row, theme, Button, Spin, Pagination, Flex } from 'antd'
+import { Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Select } from 'antd'
 import { ArticleItem } from '@/views/components/articleItem/ArticleItem'
 import { IArticleItem } from '@/models/article.model'
-import { useArticles, useArticlesCount } from '@/core/hooks'
+import { useArticles, useArticlesCount, useArticleCategories } from '@/core/hooks'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
+import { useArticleCategoryModal } from '@/helpers/hooks/useArticleCategoryModal'
 import { PlusOutlined } from '@ant-design/icons'
-import { NotFound } from '@/views/components'
+import { NotFound, ArticleCategoryList } from '@/views/components'
 import { Toolbar } from '@/views/features'
+import { IArticleCategory } from '@/services/firebase/api/articleCategories.api'
+import { Option } from 'antd/es/mentions'
 
 interface IArticleProps {
   pageTitle: string
@@ -19,17 +22,42 @@ const PAGE_SIZE = 10
 export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
   const { token } = theme.useToken()
   const [page, setPage] = useState(0)
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>()
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
 
   const { openArticleModal } = useArticleModal()
+  const { openArticleCategoryModal } = useArticleCategoryModal()
 
   const { data: articles = [], isLoading: isLoadingArticles } = useArticles({
     page,
     size: PAGE_SIZE,
+    categoryId: selectedCategory,
     orderBy: 'created_date',
     order: 'DESC',
   })
 
-  const { data: totalCount = 0 } = useArticlesCount()
+  const { data: totalCount = 0 } = useArticlesCount(selectedCategory)
+
+  const { data: categories = [], isLoading: isLoadingCategories } = useArticleCategories({
+    orderBy: 'order',
+    order: 'ASC',
+  })
+
+  const handleOpenCategoryModal = () => {
+    setShowCategoryModal(true)
+  }
+
+  const handleAddCategory = () => {
+    openArticleCategoryModal('add', {} as IArticleCategory)
+  }
+
+  const handleEditCategory = (category: IArticleCategory) => {
+    openArticleCategoryModal('edit', category)
+  }
+
+  const handleCloseCategoryModal = () => {
+    setShowCategoryModal(false)
+  }
 
   return (
     <>
@@ -38,7 +66,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
       <div className={appStyle.containerMd}>
         <PageTitle content={pageTitle} />
 
-        {articles.length > 0 && (
+        <Flex justify='space-between' align={'center'} gap={token.size}>
           <Flex justify='space-between' align={'center'} gap={token.size}>
             <Button
               variant={'solid'}
@@ -46,17 +74,44 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
               icon={<PlusOutlined />}
               onClick={() => openArticleModal('add', {} as IArticleItem)}
             >
-              Add Post
+              Post
             </Button>
+            <Button
+              variant={'solid'}
+              type={'default'}
+              icon={<PlusOutlined />}
+              onClick={handleOpenCategoryModal}
+            >
+              Category
+            </Button>
+          </Flex>
 
+          <Flex justify='space-between' align={'center'} gap={token.size}>
             <Pagination
               current={page + 1}
               pageSize={PAGE_SIZE}
               total={totalCount}
               onChange={(newPage) => setPage(newPage - 1)}
             />
+
+            <Select
+              placeholder='Filter by category'
+              style={{ minWidth: 150 }}
+              value={selectedCategory || 'all'}
+              onChange={(value) => {
+                setSelectedCategory(value === 'all' ? undefined : value)
+                setPage(0)
+              }}
+            >
+              <Select.Option value='all'>All Categories</Select.Option>
+              {categories.map((cat) => (
+                <Select.Option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Flex>
-        )}
+        </Flex>
 
         <Spin spinning={isLoadingArticles}>
           {articles.length > 0 ? (
@@ -92,6 +147,40 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
           )}
         </Spin>
       </div>
+
+      {/* Article Category Modal */}
+      <Modal
+        title={
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-start',
+              alignItems: 'center',
+              gap: token.size,
+            }}
+          >
+            <span>Categories</span>
+            <Button
+              type='primary'
+              icon={<PlusOutlined />}
+              onClick={handleAddCategory}
+              size='small'
+            />
+          </div>
+        }
+        open={showCategoryModal}
+        onCancel={handleCloseCategoryModal}
+        footer={null}
+        keyboard={false}
+        width={900}
+        maskClosable={false}
+      >
+        <ArticleCategoryList
+          categories={categories}
+          isLoading={isLoadingCategories}
+          onEdit={handleEditCategory}
+        />
+      </Modal>
     </>
   )
 }

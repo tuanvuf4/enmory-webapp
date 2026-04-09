@@ -32,6 +32,7 @@ export const useArticles = (params: IArticleRequestParams) => {
   // Create a unique key for this query configuration (excluding page)
   const queryConfigKey = JSON.stringify({
     keyword: params.keyword,
+    categoryId: params.categoryId,
     orderBy: params.orderBy,
     order: params.order,
   })
@@ -139,11 +140,11 @@ export const useUpdateArticle = () => {
 /**
  * Fetch total count of articles
  */
-export const useArticlesCount = () => {
+export const useArticlesCount = (categoryId?: string) => {
   return useQuery({
-    queryKey: articleKeys.counts(),
+    queryKey: [...articleKeys.counts(), categoryId],
     queryFn: async () => {
-      const count = await articleApi.getArticlesCount()
+      const count = await articleApi.getArticlesCount(categoryId)
       return count
     },
     refetchOnWindowFocus: false,

@@ -1,4 +1,4 @@
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 import { INotification } from '../models/app.model'
 import { IFormSearchEx, IFormSearchItem } from '../models/formSearch.model'
 import { ECategory, EType, IItem, IOption } from '../models/item.model'
@@ -28,7 +28,7 @@ export const initUser: IUser<number[]> = {
   photoURL: '',
   provider: '',
   configuration: {
-    ...setting.meta,
+    ...appSetting.meta,
   },
 }
 

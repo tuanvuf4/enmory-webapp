@@ -10,7 +10,7 @@ import { Item } from '@/views/features/item/Item'
 import { usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
 import { useSearchParams } from 'react-router-dom'
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 import { useItems } from '@/core/hooks/useItems'
 import { Loading } from '@/views/features'
 
@@ -43,7 +43,7 @@ export const Library: React.FC = () => {
   })
 
   const listItem = data?.content || []
-  const pagination = data?.paging || setting.pagination
+  const pagination = data?.paging || appSetting.pagination
 
   // Handle errors
   useEffect(() => {
@@ -61,7 +61,7 @@ export const Library: React.FC = () => {
             size={size}
             total={pagination?.total}
             totalPage={pagination?.totalPage}
-            options={setting.pagination.options}
+            options={appSetting.pagination.options}
             onPageChange={(data) => {
               const newParams = new URLSearchParams(searchParams)
               newParams.set('page', data.page.toString())

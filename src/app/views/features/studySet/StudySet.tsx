@@ -1,5 +1,5 @@
 import { ReloadOutlined } from '@ant-design/icons'
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { getType } from '@/helpers/item'
 import { IItemQuiz, ECategory, EQuiz, IOption, IAnswer, IItem } from '@/models/item.model'
@@ -49,7 +49,7 @@ export const StudySet: React.FC = () => {
 
     if (category === ECategory.SENTENCE) return configuration?.numberOfSentencesInStudySet
 
-    return setting.meta.numberOfWordsInStudySet
+    return appSetting.meta.numberOfWordsInStudySet
   }
 
   // Prepare study set params

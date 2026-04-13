@@ -4,7 +4,7 @@ import { itemApi } from '@/services/firebase/api/item.api'
 import clsx from 'clsx'
 import { useItemModal, useLoading } from '@/helpers/hooks'
 import { usePrompt } from '@/helpers/hooks'
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 import { useNavigate } from 'react-router-dom'
 
 interface IPros {
@@ -51,8 +51,8 @@ export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
     const params = new URLSearchParams()
 
     params.set('keyword', keyword)
-    params.set('page', setting.pagination.page.toString())
-    params.set('size', setting.pagination.size.toString())
+    params.set('page', appSetting.pagination.page.toString())
+    params.set('size', appSetting.pagination.size.toString())
 
     onSearch?.(keyword)
 

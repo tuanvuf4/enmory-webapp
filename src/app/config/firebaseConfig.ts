@@ -14,6 +14,7 @@ export const dbCollections = {
   iotd: 'iotd',
   articles: 'articles',
   article_categories: 'article_categories',
+  tracks: 'tracks',
 }
 
 // Get Firebase services

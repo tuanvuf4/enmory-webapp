@@ -1,17 +1,8 @@
-export enum TExternalSource {
+import { IMediaForm } from '../models'
+
+export enum TSourceTypes {
   IFRAME,
   EMBED,
-}
-
-export type IMediaForm = {
-  id?: number
-  title: string
-  description?: string
-  transcript?: string
-  translation?: string
-  externalUrl?: string
-  externalSource?: TExternalSource
-  file?: File | string
 }
 
 export const initMediaForm: IMediaForm = {
@@ -19,7 +10,6 @@ export const initMediaForm: IMediaForm = {
   description: '',
   transcript: '',
   translation: '',
-  externalUrl: '',
-  externalSource: TExternalSource.IFRAME,
-  file: '',
+  srcUrl: '',
+  srcType: TSourceTypes.IFRAME,
 }

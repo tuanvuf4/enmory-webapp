@@ -1,5 +1,3 @@
-import { EListeningTypes } from './dictation.model'
-
 export interface ILoginResponse {
   access_token: string
   expired_in: number
@@ -17,7 +15,6 @@ export interface IUserConfig<R = number[]> {
   numberOfExampleReview: number
   references: R
   community: boolean
-  listeningType: EListeningTypes
 }
 
 export interface IUser<R = number[]> {

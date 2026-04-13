@@ -1,6 +1,6 @@
 import { IArticleItem } from '@/models/article.model'
 import styles from './style.module.scss'
-import { setting } from '@/config/index'
+import { appSetting } from '@/config/index'
 import moment from 'moment'
 import { useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
@@ -33,7 +33,7 @@ export const ArticleItem = ({ id, title, description, created_date }: IArticleIt
       </Flex>
       <div>
         <span className={'italic'}>
-          Posted on: {moment(created_date).format(setting.dateTimeFormat)}
+          Posted on: {moment(created_date).format(appSetting.dateTimeFormat)}
         </span>
       </div>
 

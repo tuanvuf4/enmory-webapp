@@ -1,5 +1,3 @@
-import { EListeningTypes } from '../models/dictation.model'
-
 export enum EVN {
   PRODUCTION = 'production',
   DEVELOPMENT = 'development',
@@ -116,7 +114,7 @@ export const appConfig = {
   ],
 }
 
-export const setting = {
+export const appSetting = {
   debounceTime: 1200,
   numberItemOfAutoComplete: 10,
   dateFormat: 'MM-DD-YYYY',
@@ -147,7 +145,6 @@ export const setting = {
     numberOfExampleReview: 10,
     community: true,
     references: [],
-    listeningType: EListeningTypes.Exercise,
   },
   options: [
     { value: 0, label: 0 },
@@ -186,7 +183,6 @@ export const setting = {
     threshold: 50,
     maxLengthShortInput: 250,
     maxLengthInput: 500,
-    maxMediaSize: 75, // MB
     maxLengthTranscript: 50000,
     exerciseItemOptions: {
       default: 20,
@@ -200,25 +196,10 @@ export const setting = {
         { value: 70, label: 70 },
       ],
     },
-    player: {
-      default: true,
-      options: [
-        { value: false, label: 'No' },
-        { value: true, label: 'Yes' },
-      ],
-    },
-    type: {
-      default: EListeningTypes.Exercise,
-      options: [
-        {
-          value: EListeningTypes.Exercise,
-          label: 'Exercise',
-        },
-        {
-          value: EListeningTypes.Dictation,
-          label: 'Dictation',
-        },
-      ],
-    },
+    default: true,
+    options: [
+      { value: false, label: 'No' },
+      { value: true, label: 'Yes' },
+    ],
   },
 }

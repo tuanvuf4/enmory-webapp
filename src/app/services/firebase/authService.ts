@@ -19,7 +19,7 @@ import {
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore'
 import { dbCollections, app as firebaseApp } from '@/config/firebaseConfig'
 import { IUserConfig } from '@/models/user.model'
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 
 export interface IAuthUser {
   uid: string
@@ -93,7 +93,7 @@ export class FirebaseAuthService {
         updatedAt: Date.now(),
         provider: 'email',
         configuration: {
-          ...setting.meta,
+          ...appSetting.meta,
         },
       }
 
@@ -144,7 +144,7 @@ export class FirebaseAuthService {
           updatedAt: Date.now(),
           provider: 'email',
           configuration: {
-            ...setting.meta,
+            ...appSetting.meta,
           },
         }
 
@@ -197,7 +197,7 @@ export class FirebaseAuthService {
           updatedAt: Date.now(),
           provider: 'google',
           configuration: {
-            ...setting.meta,
+            ...appSetting.meta,
           },
         }
 

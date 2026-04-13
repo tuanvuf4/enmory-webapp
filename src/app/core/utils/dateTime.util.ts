@@ -1,4 +1,4 @@
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 import moment from 'moment'
 
 function isValidDate(dateString: string) {
@@ -30,7 +30,7 @@ const getRangeDate = (from: number, to: number) => {
   while (from < to) {
     const today = date.getDay() === 0 ? 6 : date.getDay() - 1
     range.push({
-      title: `${setting.shortDays[today]} (${moment(date).format('MMM DD')})`,
+      title: `${appSetting.shortDays[today]} (${moment(date).format('MMM DD')})`,
       from: moment(date).startOf('day').toDate().getTime(),
       to: moment(date).endOf('day').toDate().getTime(),
     })

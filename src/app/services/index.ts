@@ -1,4 +1,4 @@
-import { setting } from '../config/appConfig'
+import { appSetting } from '../config/appConfig'
 import { INotification } from '../models/app.model'
 import { IFormSearchEx } from '../models/formSearch.model'
 import { ECategory, IItem, IOption } from '../models/item.model'
@@ -16,7 +16,7 @@ export const initUser: IUser<number[]> = {
   firstName: '',
   lastName: '',
   configuration: {
-    ...setting.meta,
+    ...appSetting.meta,
   },
 }
 

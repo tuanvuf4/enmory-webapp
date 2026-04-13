@@ -1,6 +1,6 @@
 import { styleConfig } from '@/style/appStyle'
 import { MoreOutlined } from '@ant-design/icons'
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 import { IExample } from '@/models/item.model'
 import { MenuProps, Skeleton, Dropdown, Button } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
@@ -90,8 +90,8 @@ export const ExampleItem: React.FC<IProps> = ({
           </div>
 
           <div className={styles.date}>
-            <span>{moment(data.created_date).format(setting.dateTimeFormat)}</span>
-            <span>{moment(data.last_update).format(setting.dateTimeFormat)}</span>
+            <span>{moment(data.created_date).format(appSetting.dateTimeFormat)}</span>
+            <span>{moment(data.last_update).format(appSetting.dateTimeFormat)}</span>
           </div>
         </>
       )}

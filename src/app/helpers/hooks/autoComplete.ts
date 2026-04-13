@@ -1,4 +1,4 @@
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 import { IHttpResponse } from '@/models/http.model'
 import { IItem, IExample } from '@/models/item.model'
 import { itemApi, IItemRequestParams } from '@/services/firebase/api/item.api'
@@ -13,7 +13,7 @@ export const useAutoComplete = (
   filters: Partial<IItemRequestParams> = {},
   type: searchType = 'item',
   exact = false,
-  timeout = setting.debounceTime,
+  timeout = appSetting.debounceTime,
 ) => {
   const [options, setOptions] = useState<BaseOptionType[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -27,7 +27,7 @@ export const useAutoComplete = (
       ...filters,
       keyword: keyword || '',
       page: 0,
-      size: setting.numberItemOfAutoComplete * 2,
+      size: appSetting.numberItemOfAutoComplete * 2,
     }
 
     if (!keyword) return setOptions([])

@@ -5,7 +5,7 @@ import appStyle from '@/style/appStyle.module.scss'
 import style from './style.module.scss'
 import { useArticle } from '@/core/hooks'
 import { Button, Flex, Spin, theme } from 'antd'
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 import moment from 'moment'
 import { NotFound } from '@/views/components'
 import { EditOutlined } from '@ant-design/icons'
@@ -35,7 +35,7 @@ const ArticleDetail: React.FC = () => {
               <i className={'text-xs'}>
                 {`Posted on: `}
                 {article?.created_date
-                  ? moment(article.created_date).format(setting.dateTimeFormat)
+                  ? moment(article.created_date).format(appSetting.dateTimeFormat)
                   : ''}
               </i>
 

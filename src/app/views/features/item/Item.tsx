@@ -1,4 +1,4 @@
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 import { itemKeys, useDeleteItem, useDispatch, useSelector } from '@/core/hooks'
 import { useItemModal, usePrompt } from '@/helpers/hooks'
 import { getCategory, isDefect } from '@/helpers/item'
@@ -375,8 +375,8 @@ export const Item: React.FC<IProps> = ({
           </div>
 
           <div className={styles.date}>
-            <span>{moment(data.created_date).format(setting.dateTimeFormat)}</span>
-            <span>{moment(data.last_update).format(setting.dateTimeFormat)}</span>
+            <span>{moment(data.created_date).format(appSetting.dateTimeFormat)}</span>
+            <span>{moment(data.last_update).format(appSetting.dateTimeFormat)}</span>
           </div>
         </>
       )}

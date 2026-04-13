@@ -1,5 +1,5 @@
 import appStyle from '@/style/appStyle.module.scss'
-import { appConfig, setting } from '@/config/appConfig'
+import { appConfig, appSetting } from '@/config/appConfig'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { IUserConfig } from '@/models/user.model'
 import { apiUser } from '@/services/firebase/api/user.api'
@@ -20,7 +20,7 @@ const Setting = () => {
   const [isLoading, setIsLoading] = useState(false)
 
   const { control, handleSubmit } = useForm<IUserConfig>({
-    defaultValues: user?.configuration || setting.meta,
+    defaultValues: user?.configuration || appSetting.meta,
   })
 
   const onSubmit = async (data: IUserConfig) => {
@@ -84,9 +84,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.meta.numberOfWordsInStudySet}
+                                defaultValue={appSetting.meta.numberOfWordsInStudySet}
                                 onChange={onChange}
-                                options={setting.options}
+                                options={appSetting.options}
                               />
                             )
                           }}
@@ -106,9 +106,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.meta.numberOfPhraseInStudySet}
+                                defaultValue={appSetting.meta.numberOfPhraseInStudySet}
                                 onChange={onChange}
-                                options={setting.rdOptions}
+                                options={appSetting.rdOptions}
                               />
                             )
                           }}
@@ -128,9 +128,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.meta.numberOfIdiomInStudySet}
+                                defaultValue={appSetting.meta.numberOfIdiomInStudySet}
                                 onChange={onChange}
-                                options={setting.rdOptions}
+                                options={appSetting.rdOptions}
                               />
                             )
                           }}
@@ -150,9 +150,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.meta.numberOfSlangInStudySet}
+                                defaultValue={appSetting.meta.numberOfSlangInStudySet}
                                 onChange={onChange}
-                                options={setting.rdOptions}
+                                options={appSetting.rdOptions}
                               />
                             )
                           }}
@@ -172,9 +172,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.meta.numberOfCollocationsInStudySet}
+                                defaultValue={appSetting.meta.numberOfCollocationsInStudySet}
                                 onChange={onChange}
-                                options={setting.rdOptions}
+                                options={appSetting.rdOptions}
                               />
                             )
                           }}
@@ -194,9 +194,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.meta.numberOfSentencesInStudySet}
+                                defaultValue={appSetting.meta.numberOfSentencesInStudySet}
                                 onChange={onChange}
-                                options={setting.rdOptions}
+                                options={appSetting.rdOptions}
                               />
                             )
                           }}
@@ -216,9 +216,9 @@ const Setting = () => {
                               <Select
                                 style={{ minWidth: 60 }}
                                 value={value}
-                                defaultValue={setting.meta.numberOfExampleReview}
+                                defaultValue={appSetting.meta.numberOfExampleReview}
                                 onChange={onChange}
-                                options={setting.rdOptions}
+                                options={appSetting.rdOptions}
                               />
                             )
                           }}

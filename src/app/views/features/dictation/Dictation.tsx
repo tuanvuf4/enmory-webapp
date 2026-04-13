@@ -2,7 +2,7 @@ import { Button, Col, Row, Space, theme } from 'antd'
 import styles from './style.module.scss'
 import TextArea from 'antd/es/input/TextArea'
 import { useEffect, useState } from 'react'
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 import classNames from 'clsx'
 
 interface IProps {
@@ -14,7 +14,7 @@ interface IProps {
 
 export const Dictation: React.FC<IProps> = ({
   player = true,
-  maxLengthTranscript = setting.listening.maxLengthTranscript,
+  maxLengthTranscript = appSetting.listening.maxLengthTranscript,
   transcript,
   translation,
 }) => {

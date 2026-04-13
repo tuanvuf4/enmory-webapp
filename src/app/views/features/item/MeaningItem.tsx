@@ -1,5 +1,5 @@
 import { AudioOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons'
-import { setting } from '@/config/appConfig'
+import { appSetting } from '@/config/appConfig'
 import { getType } from '@/helpers/item'
 import { IMeaning, ECategory, IExample } from '@/models/item.model'
 import { Tags } from '@/views/components'
@@ -62,7 +62,7 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning })
     const params = new URLSearchParams()
     params.set('keyword', keyword)
     params.set('page', '0')
-    params.set('size', setting.pagination.size.toString())
+    params.set('size', appSetting.pagination.size.toString())
 
     navigate(`/library?${params.toString()}`)
   }

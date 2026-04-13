@@ -33,7 +33,7 @@ const ArticleDetail: React.FC = () => {
           {article && (
             <Flex justify={'space-between'} align={'center'} gap={token.size} className={'!mb-4'}>
               <i className={'text-xs'}>
-                Posted on:
+                {`Posted on: `}
                 {article?.created_date
                   ? moment(article.created_date).format(setting.dateTimeFormat)
                   : ''}

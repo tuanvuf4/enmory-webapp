@@ -11,7 +11,6 @@ import { PlusOutlined } from '@ant-design/icons'
 import { NotFound, ArticleCategoryList } from '@/views/components'
 import { Toolbar } from '@/views/features'
 import { IArticleCategory } from '@/services/firebase/api/articleCategories.api'
-import { Option } from 'antd/es/mentions'
 
 interface IArticleProps {
   pageTitle: string
@@ -76,13 +75,8 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
             >
               Post
             </Button>
-            <Button
-              variant={'solid'}
-              type={'default'}
-              icon={<PlusOutlined />}
-              onClick={handleOpenCategoryModal}
-            >
-              Category
+            <Button variant={'solid'} type={'default'} onClick={handleOpenCategoryModal}>
+              Categories
             </Button>
           </Flex>
 

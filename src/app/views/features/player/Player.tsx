@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button, theme } from 'antd'
 import styles from './style.module.scss'
 import { styleConfig } from '@/style/appStyle'
-import { DeleteOutlined, EditOutlined, MenuOutlined, PlusOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { ITracks } from '@/models/media.model'
 import { appSetting } from '@/config/appConfig'
 import { TSourceTypes } from '@/constant/media'
@@ -14,6 +14,7 @@ interface IProps {
   setTrackIndex: (index: number) => void
   onDelete: (id: number) => void
   onCurrentUpdating: (id: number) => void
+  onSelectTrack: (index: number) => void
 }
 
 export const Player: React.FC<IProps> = ({
@@ -22,6 +23,7 @@ export const Player: React.FC<IProps> = ({
   onAdd,
   onDelete,
   onCurrentUpdating,
+  onSelectTrack,
 }) => {
   const { token } = theme.useToken()
 
@@ -56,33 +58,6 @@ export const Player: React.FC<IProps> = ({
 
       <div className={styles.tracks}>
         <div className={styles.tracksTitle}>
-          {/* <h2>
-            <Dropdown menu={{ items }} trigger={['click']} placement='bottomLeft' arrow>
-              <Button
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: token.colorWhite,
-                  padding: `${token.size / 2}px 0`,
-                  fontWeight: 500,
-                  textTransform: 'capitalize',
-                }}
-              >
-                <CaretDownOutlined /> {mediaSrc}
-                {mediaSrc === EMediaSrc.INTERNAL && (
-                  <span className={styles.quantity}>
-                    ({tracks.filter((track) => track.internalUrl).length})
-                  </span>
-                )}
-                {mediaSrc === EMediaSrc.EXTERNAL && (
-                  <span className={styles.quantity}>
-                    ({tracks.filter((track) => track.externalUrl).length})
-                  </span>
-                )}
-              </Button>
-            </Dropdown>
-          </h2> */}
-
           {tracks.length <= appSetting.listening.maxMediaItem * 4 && (
             <Button
               style={{
@@ -99,24 +74,13 @@ export const Player: React.FC<IProps> = ({
         <div className={styles.tracksContent}>
           <ul>
             {tracks.map((track, key) => (
-              <li className={key === current ? styles.active : ''} key={key}>
+              <li
+                className={key === current ? styles.active : ''}
+                key={key}
+                onClick={() => onSelectTrack(key)}
+                style={{ cursor: 'pointer' }}
+              >
                 <div>{track.title}</div>
-
-                <div style={{ flex: '1 0', userSelect: 'none' }}>
-                  {/* <h4
-                    className={styles.trackTitle}
-                    onClick={() => {
-                      setTrackIndex(key)
-                      if (mediaSrc === EMediaSrc.INTERNAL)
-                        setIsPlaying(isPlaying && key === current ? false : true)
-                    }}
-                  >
-                    {track.title}
-                  </h4> */}
-                  {/* <span className={styles.trackAuthor}>
-                    {track.user.firstName + ' ' + track.user.lastName}
-                  </span> */}
-                </div>
 
                 <div className={styles.actionGroup}>
                   <Button

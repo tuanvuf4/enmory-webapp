@@ -81,7 +81,6 @@ export const MediaUploadModal: React.FC<IProps> = ({
   useEffect(() => {
     if (open) {
       if (trackData?.id) {
-        // Edit mode - reset with track data
         reset({
           title: trackData.title,
           description: trackData.description,
@@ -90,11 +89,8 @@ export const MediaUploadModal: React.FC<IProps> = ({
           srcUrl: trackData.srcUrl,
           srcType: trackData.srcType,
         })
-        console.log('[MediaUploadModal] Form loaded with track data:', trackData)
       } else {
-        // Add mode - reset to empty form
         reset(initMediaForm)
-        console.log('[MediaUploadModal] Form reset to empty')
       }
     }
   }, [open, trackData, reset])
@@ -115,13 +111,10 @@ export const MediaUploadModal: React.FC<IProps> = ({
   const onSubmit = async (data: IMediaForm) => {
     try {
       setLoading(true)
-      console.log('[MediaUploadModal] Form submitted with data:', data)
 
       let result: any
 
       if (trackData?.id) {
-        // Update existing track
-        console.log('[MediaUploadModal] Updating track with ID:', trackData.id)
         result = await tracksApi.updateTrack(String(trackData.id), {
           title: data.title,
           description: data.description,
@@ -131,8 +124,6 @@ export const MediaUploadModal: React.FC<IProps> = ({
           srcType: data.srcType,
         })
       } else {
-        // Add new track
-        console.log('[MediaUploadModal] Adding new track')
         result = await tracksApi.addTrack({
           title: data.title,
           description: data.description,
@@ -143,8 +134,6 @@ export const MediaUploadModal: React.FC<IProps> = ({
         })
       }
 
-      console.log('[MediaUploadModal] API Result:', result)
-
       if (result.isSuccess && result.content) {
         message.success(result.message)
         reset()
@@ -153,7 +142,6 @@ export const MediaUploadModal: React.FC<IProps> = ({
         message.error(result.message || 'Failed to save track')
       }
     } catch (error: any) {
-      console.error('[MediaUploadModal] Error saving track:', error)
       message.error(error.message || 'Error saving track')
     } finally {
       setLoading(false)
@@ -277,6 +265,7 @@ export const MediaUploadModal: React.FC<IProps> = ({
                       <>
                         <TextArea
                           rows={1}
+                          autoSize={true}
                           maxLength={
                             appSetting.listening.maxLengthTranscript +
                             appSetting.listening.threshold

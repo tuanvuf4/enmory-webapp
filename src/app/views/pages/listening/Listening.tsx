@@ -10,7 +10,7 @@ import { message } from 'antd'
 
 export const Listening = () => {
   const [tracks, setTracks] = useState<ITracks[]>([])
-  const [current] = useState(0)
+  const [current, setCurrent] = useState(0)
   const [open, setOpen] = useState(false)
   const [, setIsFetching] = useState(false)
   const [selectedTrack, setSelectedTrack] = useState<ITracks | undefined>(undefined)
@@ -89,7 +89,10 @@ export const Listening = () => {
     }
   }
 
-  const setTrackIndex = () => {}
+  const setTrackIndex = (index: number) => {
+    setCurrent(index)
+    console.log('[Listening] Playing track at index:', index)
+  }
 
   return (
     <>
@@ -106,6 +109,7 @@ export const Listening = () => {
             setTrackIndex={setTrackIndex}
             onDelete={onDelete}
             onCurrentUpdating={onCurrentUpdating}
+            onSelectTrack={setTrackIndex}
           />
         </div>
       </div>

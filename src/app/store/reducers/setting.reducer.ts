@@ -9,6 +9,7 @@ export interface ISettingState {
   loading: boolean
   viewMode: EViewMode
   viewPort: EViewPort
+  trackIndex: number
   categories: IOption<string, ECategory>[]
   types: IOption<{ origin: string; abbr: string }, EType>[]
 }
@@ -20,6 +21,7 @@ export const initialState: ISettingState = {
   loading: false,
   viewMode: EViewMode.GRID,
   viewPort: EViewPort.XS,
+  trackIndex: 0,
   categories: [],
   types: [],
 }
@@ -57,6 +59,9 @@ export const settingReducer = createSlice({
       action: PayloadAction<IOption<{ origin: string; abbr: string }, EType>[]>,
     ) {
       state.types = action.payload
+    },
+    setTrackIndex(state: ISettingState, action: PayloadAction<number>) {
+      state.trackIndex = action.payload
     },
     reset() {
       return initialState

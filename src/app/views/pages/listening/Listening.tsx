@@ -7,17 +7,28 @@ import { tracksApi } from '@/services/firebase'
 import clsx from 'clsx'
 import { useState, useEffect } from 'react'
 import { message } from 'antd'
+import { onAuthStateChanged } from 'firebase/auth'
+import { getAuth } from 'firebase/auth'
+import { useDispatch, useSelector } from 'react-redux'
+import { settingAction } from '@/store/reducers/setting.reducer'
 
 export const Listening = () => {
+  const dispatch = useDispatch()
+  const current = useSelector((state: any) => state.setting.trackIndex)
+
   const [tracks, setTracks] = useState<ITracks[]>([])
-  const [current, setCurrent] = useState(0)
   const [open, setOpen] = useState(false)
   const [, setIsFetching] = useState(false)
   const [selectedTrack, setSelectedTrack] = useState<ITracks | undefined>(undefined)
 
-  // Fetch tracks on component mount
+  // Fetch tracks when user is authenticated
   useEffect(() => {
-    fetchTracks()
+    const auth = getAuth()
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      user ? fetchTracks() : setTracks([])
+    })
+
+    return () => unsubscribe()
   }, [])
 
   const fetchTracks = async () => {
@@ -32,12 +43,10 @@ export const Listening = () => {
 
       if (response.isSuccess && response.content) {
         setTracks(response.content)
-        console.log('[Listening] Tracks fetched:', response.content)
       } else {
         message.error(response.message || 'Failed to fetch tracks')
       }
     } catch (error: any) {
-      console.error('[Listening] Error fetching tracks:', error)
       message.error(error.message || 'Error fetching tracks')
     } finally {
       setIsFetching(false)
@@ -55,8 +64,10 @@ export const Listening = () => {
       setTracks(tracks.map((t) => (t.id === selectedTrack.id ? track : t)))
       message.success('Track updated successfully')
     } else {
-      // Add new track
-      setTracks([...tracks, track])
+      // Add new track to the beginning (latest first)
+      setTracks([track, ...tracks])
+      // Increment current index since new track is added at the beginning
+      dispatch(settingAction.setTrackIndex(current + 1))
       message.success('Track added successfully')
     }
     setOpen(false)
@@ -68,14 +79,32 @@ export const Listening = () => {
       const response = await tracksApi.removeTrack(String(trackId))
 
       if (response.isSuccess) {
-        setTracks(tracks.filter((t) => t.id !== trackId))
+        const deletedIndex = tracks.findIndex((t) => t.id === trackId)
+        const filteredTracks = tracks.filter((t) => t.id !== trackId)
+
+        setTracks(filteredTracks)
+
+        // Adjust current index if needed
+        let newIndex = current
+        if (deletedIndex === current && filteredTracks.length > 0) {
+          // If we deleted the current track, move to the previous one or first one
+          newIndex = deletedIndex > 0 ? deletedIndex - 1 : 0
+          dispatch(settingAction.setTrackIndex(newIndex))
+        } else if (deletedIndex < current) {
+          // If we deleted a track before the current one, shift index down by 1
+          newIndex = current - 1
+          dispatch(settingAction.setTrackIndex(newIndex))
+        } else if (filteredTracks.length === 0) {
+          // If no tracks left, reset to 0
+          newIndex = 0
+          dispatch(settingAction.setTrackIndex(0))
+        }
+
         message.success(response.message || 'Track deleted successfully')
-        console.log('[Listening] Track deleted:', trackId)
       } else {
         message.error(response.message || 'Failed to delete track')
       }
     } catch (error: any) {
-      console.error('[Listening] Error deleting track:', error)
       message.error(error.message || 'Error deleting track')
     }
   }
@@ -85,13 +114,11 @@ export const Listening = () => {
     if (track) {
       setSelectedTrack(track)
       setOpen(true)
-      console.log('[Listening] Opening edit modal for track:', track)
     }
   }
 
   const setTrackIndex = (index: number) => {
-    setCurrent(index)
-    console.log('[Listening] Playing track at index:', index)
+    dispatch(settingAction.setTrackIndex(index))
   }
 
   return (

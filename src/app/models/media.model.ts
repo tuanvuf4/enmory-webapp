@@ -13,6 +13,6 @@ export interface IMediaForm {
 export interface ITracks extends IMediaForm {
   created_date?: number
   last_update?: number
-  is_deleted?: number
   uid?: string
+  is_deleted?: never
 }

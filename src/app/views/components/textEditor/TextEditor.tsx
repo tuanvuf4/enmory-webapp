@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 
 import {
   ClassicEditor,
@@ -41,6 +41,20 @@ export const TextEditor = ({ content, onChange }: Omit<TextEditorProps, 'disable
   const editorRef = useRef<ClassicEditor | null>(
     null,
   ) as React.MutableRefObject<ClassicEditor | null>
+
+  const contentRef = useRef<string | null | undefined>(content)
+
+  // Update editor content only when it changes from outside (not from user typing)
+  useEffect(() => {
+    if (editorRef.current && content !== contentRef.current && content !== undefined) {
+      const currentData = editorRef.current.getData()
+      // Only update if the new content is different from what's currently in the editor
+      if (currentData !== content) {
+        editorRef.current.setData(content || '')
+      }
+      contentRef.current = content
+    }
+  }, [content])
 
   return (
     <div className={'text-editor'}>
@@ -95,6 +109,9 @@ export const TextEditor = ({ content, onChange }: Omit<TextEditorProps, 'disable
             'imageInsertViaUrl',
             'insertImage',
             'uploadImage',
+            '|',
+            'indent',
+            'outdent',
             '|',
             'numberedList',
             'bulletedList',

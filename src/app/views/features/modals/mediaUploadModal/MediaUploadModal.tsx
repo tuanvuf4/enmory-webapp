@@ -8,6 +8,7 @@ import { appSetting } from '@/config/appConfig'
 import { IMediaForm, ITracks } from '@/models/media.model'
 import { tracksApi } from '@/services/firebase'
 import { useState, useEffect } from 'react'
+import { TextEditor } from '@/views/components'
 
 interface IProps {
   onConfirm?: (track: ITracks) => void
@@ -239,7 +240,7 @@ export const MediaUploadModal: React.FC<IProps> = ({
                           options={srcOptions}
                           placeholder='Source'
                           optionLabelProp='label'
-                          style={{ width: '100%' }}
+                          style={{ width: '100%', height: '100%' }}
                         />
 
                         {errors.srcType && (
@@ -264,8 +265,8 @@ export const MediaUploadModal: React.FC<IProps> = ({
                     render={({ field }) => (
                       <>
                         <TextArea
-                          rows={1}
-                          autoSize={true}
+                          rows={2}
+                          autoSize={false}
                           maxLength={
                             appSetting.listening.maxLengthTranscript +
                             appSetting.listening.threshold
@@ -289,87 +290,44 @@ export const MediaUploadModal: React.FC<IProps> = ({
 
           <Row gutter={[token.size / 2, token.size / 2]}>
             <Col xs={24}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <p>Transcript:</p>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p>Translation:</p>
-                </div>
-              </div>
+              <Controller
+                control={control}
+                name={`transcript`}
+                render={({ field }) => (
+                  <>
+                    <p>Transcript:</p>
 
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'top',
-                  justifyContent: 'center',
-                  maxHeight: 450,
-                  minHeight: 450,
-                  overflow: 'auto',
-                  border: `1px solid ${token.colorBorder}`,
-                }}
-              >
-                <div style={{ flex: 1, padding: '8px' }}>
-                  <Controller
-                    control={control}
-                    name={`transcript`}
-                    render={({ field }) => (
-                      <>
-                        <TextArea
-                          autoSize={true}
-                          rows={4}
-                          maxLength={
-                            appSetting.listening.maxLengthTranscript +
-                            appSetting.listening.threshold
-                          }
-                          placeholder='Transcript'
-                          {...field}
-                        />
+                    <TextEditor content={field.value} onChange={field.onChange} />
 
-                        {errors.transcript && (
-                          <div style={{ color: 'red', fontSize: '12px' }}>
-                            {errors.transcript.message}
-                          </div>
-                        )}
-                      </>
+                    {errors.transcript && (
+                      <div style={{ color: 'red', fontSize: '12px' }}>
+                        {errors.transcript.message}
+                      </div>
                     )}
-                  />
-                </div>
-
-                <div style={{ flex: 1, padding: '8px' }}>
-                  <Controller
-                    control={control}
-                    name={`translation`}
-                    render={({ field }) => (
-                      <>
-                        <TextArea
-                          autoSize={true}
-                          rows={4}
-                          maxLength={
-                            appSetting.listening.maxLengthTranscript +
-                            appSetting.listening.threshold
-                          }
-                          placeholder='Translation'
-                          {...field}
-                        />
-
-                        {errors.translation && (
-                          <div style={{ color: 'red', fontSize: '12px' }}>
-                            {errors.translation.message}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  />
-                </div>
-              </div>
+                  </>
+                )}
+              />
             </Col>
+
+            {/* <Col xs={24} className={'mt-4'}>
+              <Controller
+                control={control}
+                name={`translation`}
+                render={({ field }) => (
+                  <>
+                    <p>Translation:</p>
+
+                    <TextEditor content={field.value} onChange={field.onChange} />
+
+                    {errors.translation && (
+                      <div style={{ color: 'red', fontSize: '12px' }}>
+                        {errors.translation.message}
+                      </div>
+                    )}
+                  </>
+                )}
+              />
+            </Col> */}
           </Row>
 
           <Row gutter={[token.size / 2, token.size / 2]}>

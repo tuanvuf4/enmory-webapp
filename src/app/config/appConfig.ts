@@ -179,7 +179,6 @@ export const appSetting = {
     { value: 25, label: 25 },
   ],
   listening: {
-    maxMediaItem: 5,
     threshold: 50,
     maxLengthShortInput: 250,
     maxLengthInput: 500,

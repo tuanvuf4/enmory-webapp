@@ -177,7 +177,6 @@ const addTrack = async (
       uid: currentUser.uid,
       created_date: Timestamp.now().toMillis(),
       last_update: Timestamp.now().toMillis(),
-      is_deleted: 0,
       title_lowercase: (trackData.title || '').toLowerCase(), // For case-insensitive search
     }
 
@@ -189,7 +188,6 @@ const addTrack = async (
       id: docRef.id as unknown as number,
       created_date: newTrack.created_date,
       last_update: newTrack.last_update,
-      is_deleted: newTrack.is_deleted,
     }
 
     return {
@@ -287,11 +285,8 @@ const removeTrack = async (trackId: string): Promise<ITracksResponse<null>> => {
       throw new Error('Unauthorized access to track')
     }
 
-    // Soft delete
-    await updateDoc(trackRef, {
-      is_deleted: 1,
-      last_update: Timestamp.now().toMillis(),
-    })
+    // Hard delete - permanently remove the document
+    await deleteDoc(trackRef)
 
     return {
       isSuccess: true,

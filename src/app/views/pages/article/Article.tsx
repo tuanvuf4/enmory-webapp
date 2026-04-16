@@ -117,6 +117,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
                     title={article.title}
                     description={article.description}
                     created_date={article.created_date}
+                    category_id={article.category_id}
                   />
                 </Col>
               ))}

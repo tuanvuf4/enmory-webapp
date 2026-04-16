@@ -92,9 +92,13 @@ export const articleApi = {
 
       let constraints: QueryConstraint[] = buildQueryConstraints(params)
 
-      // Handle pagination
+      // Handle pagination - startAfter must come after orderBy but before limit
       if (lastDoc) {
-        constraints.push(startAfter(lastDoc))
+        // Insert startAfter before the limit constraint
+        // buildQueryConstraints returns: [where, where, orderBy, limit]
+        // We need: [where, where, orderBy, startAfter, limit]
+        const limitIndex = constraints.length - 1 // limit is always last
+        constraints.splice(limitIndex, 0, startAfter(lastDoc))
       }
 
       const q = query(collection(db, dbCollections.articles), ...constraints)
@@ -108,13 +112,15 @@ export const articleApi = {
         // If we fetched size + 1 docs, it means there are more pages
         if (querySnapshot.docs.length > params.size) {
           hasMore = true
-          // Remove the extra document (we only need to show size documents)
-          querySnapshot.docs.pop()
         }
 
-        newLastDoc = querySnapshot.docs[querySnapshot.docs.length - 1]
+        // Get the last document of the valid items (before the extra one)
+        newLastDoc = querySnapshot.docs[Math.min(params.size - 1, querySnapshot.docs.length - 1)]
 
-        articles = querySnapshot.docs.map((doc) => {
+        // Slice to get only the requested number of documents
+        const docsToProcess = querySnapshot.docs.slice(0, params.size)
+
+        articles = docsToProcess.map((doc) => {
           const data = doc.data()
           return {
             id: doc.id,
@@ -296,6 +302,7 @@ export const articleApi = {
       const articleData = {
         title: data.title,
         description: data.description,
+        category_id: data.category_id || null,
         last_update: Timestamp.now().toMillis(),
       }
 

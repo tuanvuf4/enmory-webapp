@@ -121,11 +121,13 @@ export const useUpdateArticle = () => {
       return response.content
     },
     onSuccess: (updatedArticle) => {
-      // Clear all lastDoc cursors since data has changed
-      clearLastArticleDocStore()
-      // Invalidate article lists to refetch
+      // Invalidate article lists to refetch (don't clear cursors to preserve pagination)
       queryClient.invalidateQueries({
         queryKey: articleKeys.lists(),
+      })
+      // Invalidate article counts (in case category changed)
+      queryClient.invalidateQueries({
+        queryKey: articleKeys.counts(),
       })
       // Invalidate specific article detail cache
       if (updatedArticle?.id) {

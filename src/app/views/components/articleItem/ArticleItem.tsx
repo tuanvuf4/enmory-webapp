@@ -8,7 +8,13 @@ import { Button, Flex } from 'antd'
 import { EditOutlined } from '@ant-design/icons'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
 
-export const ArticleItem = ({ id, title, description, created_date }: IArticleItem) => {
+export const ArticleItem = ({
+  id,
+  title,
+  description,
+  created_date,
+  category_id,
+}: IArticleItem) => {
   const navigate = useNavigate()
   const { openArticleModal } = useArticleModal()
 
@@ -27,7 +33,7 @@ export const ArticleItem = ({ id, title, description, created_date }: IArticleIt
           type={'text'}
           icon={<EditOutlined />}
           onClick={() => {
-            openArticleModal('edit', { id, title, description, created_date })
+            openArticleModal('edit', { id, title, description, created_date, category_id })
           }}
         />
       </Flex>

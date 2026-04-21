@@ -13,3 +13,18 @@ export function shuffleArray<T>(array: T[]): T[] {
 
   return array
 }
+
+/*
+ * lang: 'en-GB' | 'en-US' | 'fr-FR' | ...
+ */
+export const speakWord = (origin: string, lang = 'en-GB', rate = 1) => {
+  if ('speechSynthesis' in window && origin) {
+    window.speechSynthesis.cancel() // Cancel any ongoing speech
+
+    const utterance = new SpeechSynthesisUtterance(origin)
+    utterance.pitch = 1.8
+    utterance.lang = lang
+    utterance.rate = rate
+    window.speechSynthesis.speak(utterance)
+  }
+}

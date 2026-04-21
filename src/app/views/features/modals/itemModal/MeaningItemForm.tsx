@@ -29,6 +29,7 @@ interface IProps {
 }
 
 export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, onSubmit }) => {
+  console.log(`*** catType *** `, catType)
   const { token } = theme.useToken()
 
   const [show, setShow] = useState<boolean[]>([])
@@ -151,9 +152,9 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                       className={'max-w-full'}
                     >
                       {catType === ECategory.WORD && (
-                        <div
-                          className={'text-xs self-center'}
-                        >{`(${getType(getValues(`meanings.${index}.typeId`)).abbr})`}</div>
+                        <div className={'text-xs self-center'}>
+                          {`(${getType(getValues(`meanings.${index}.typeId`)).abbr})`}
+                        </div>
                       )}
 
                       <div
@@ -259,56 +260,35 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
 
                   <Col span={24}>
                     <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                      {catType !== ECategory.WORD && (
-                        <>
-                          <Col md={4} xs={24}>
-                            <label htmlFor=''>
-                              Pronunciation:
-                              {/* {!getValues(`meanings.${index}.pronunciation.common`) && (
-                              <Popover title={msgWarning.empty}>
-                                <WarningOutlined className={styles.alertIcon} />
-                              </Popover>
-                            )} */}
-                            </label>
-                          </Col>
+                      <Col md={4} xs={24}>
+                        <label htmlFor=''>Pronunciation:</label>
+                      </Col>
 
-                          <Col md={20} xs={24}>
-                            <Controller
-                              control={control}
-                              name={`meanings.${index}.pronunciation.common`}
-                              render={({ field }) => (
-                                <Input
-                                  {...field}
-                                  onBlur={() => trigger()}
-                                  onInput={(e) => {
-                                    const input = e.target as HTMLInputElement
-                                    input.value = input.value
-                                      .toLowerCase()
-                                      .replace(patternValidation.specialCharacterPronouns, '')
-                                  }}
-                                />
-                              )}
-                            />
-                          </Col>
-                        </>
+                      {catType !== ECategory.WORD && (
+                        <Col md={20} xs={24}>
+                          <Controller
+                            control={control}
+                            name={`meanings.${index}.pronunciation.common`}
+                            render={({ field }) => (
+                              <Input
+                                {...field}
+                                onBlur={() => trigger()}
+                                onInput={(e) => {
+                                  const input = e.target as HTMLInputElement
+                                  input.value = input.value
+                                    .toLowerCase()
+                                    .replace(patternValidation.specialCharacterPronouns, '')
+                                }}
+                              />
+                            )}
+                          />
+                        </Col>
                       )}
 
                       {catType === ECategory.WORD && (
                         <>
-                          <Col md={4} xs={24}>
-                            <label htmlFor=''>Pronunciation:</label>
-                          </Col>
-
                           <Col md={10} xs={12}>
                             <Row gutter={[token.size / 4, token.size / 4]}>
-                              {/* <Col xs={24}>
-                              UK
-                              {!getValues(`meanings.${index}.pronunciation.uk`) && (
-                                <Popover title={msgWarning.empty}>
-                                  <WarningOutlined className={styles.alertIcon} />
-                                </Popover>
-                              )}
-                            </Col> */}
                               <Col xs={24}>
                                 <Controller
                                   control={control}
@@ -316,7 +296,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                                   render={({ field }) => (
                                     <Input
                                       {...field}
-                                      // placeholder='UK'
+                                      placeholder='UK'
                                       onBlur={() => trigger()}
                                       onInput={(e) => {
                                         const input = e.target as HTMLInputElement
@@ -333,14 +313,6 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
 
                           <Col md={10} xs={12}>
                             <Row gutter={[token.size / 4, token.size / 4]}>
-                              {/* <Col xs={24}>
-                              US
-                              {!getValues(`meanings.${index}.pronunciation.us`) && (
-                                <Popover title='This field is missing!'>
-                                  <WarningOutlined className={styles.alertIcon} />
-                                </Popover>
-                              )}
-                            </Col> */}
                               <Col xs={24}>
                                 <Controller
                                   control={control}
@@ -348,7 +320,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                                   render={({ field }) => (
                                     <Input
                                       {...field}
-                                      // placeholder='US'
+                                      placeholder='US'
                                       onBlur={() => trigger()}
                                       onInput={(e) => {
                                         const input = e.target as HTMLInputElement

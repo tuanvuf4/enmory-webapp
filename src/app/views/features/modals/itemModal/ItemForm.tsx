@@ -13,7 +13,7 @@ import { Reference } from '@/views/features/references/References'
 import { theme, Row, Space, Col, Select, AutoComplete, Input, Checkbox, Button } from 'antd'
 import clsx from 'clsx'
 import { useEffect, Suspense } from 'react'
-import { useFormContext, useWatch, Controller } from 'react-hook-form'
+import { useFormContext, Controller } from 'react-hook-form'
 import { initItem } from './data'
 import { MeaningItemForm } from './MeaningItemForm'
 import styles from './style.module.scss'
@@ -55,14 +55,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
     setValue,
     getValues,
     trigger,
+    watch,
     formState: { isValid, errors },
   } = useFormContext<IItem>()
 
-  const catType = useWatch({
-    control,
-    name: 'catId',
-    defaultValue: ECategory.WORD,
-  })
+  const catType = watch('catId')
+
+  console.log(`*** catType *** `, catType)
 
   const origin = getValues('origin')
 
@@ -97,7 +96,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             grammar: meaning.grammar || '',
             definition: meaning.definition || '',
             translation: meaning.translation || '',
-            pronunciation: meaning.pronunciation || { audio: '', uk: '', us: '' },
+            pronunciation: meaning.pronunciation || { common: '', uk: '', us: '' },
             common: meaning.common || false,
             enable: meaning.enable || true,
             antonyms: meaning.antonyms || [],

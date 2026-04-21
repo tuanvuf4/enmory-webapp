@@ -8,30 +8,54 @@ import { useNavigate } from 'react-router-dom'
 import styles from './style.module.scss'
 import clsx from 'clsx'
 import { useState } from 'react'
+import { speakWord } from '@/helpers/mics'
 
 interface IMeaningProps {
+  origin: string
   meaning: IMeaning
   catId: ECategory
   active?: boolean
 }
 
-const Pronunciation = ({ catId, meaning }: IMeaningProps) => {
+const Pronunciation = ({ catId, active, origin, meaning }: IMeaningProps) => {
   if (catId === ECategory.WORD && (meaning.pronunciation.us || meaning.pronunciation.uk)) {
     return (
       <div className={`${styles.pronouns} flex justify-end flex-wrap gap-x-2 gap-y-1 items-center`}>
         {meaning.pronunciation.uk && (
           <div className={styles.audio}>
             {/* <span className={styles.accent}>UK</span> */}
-            <AudioOutlined className={styles.audioIcon} />
-            {meaning.pronunciation?.uk || ''}
+            <Button
+              variant={'text'}
+              type={'text'}
+              size={'small'}
+              className={clsx({
+                [styles.btnAudio]: true,
+                [styles.active]: active,
+              })}
+              icon={<AudioOutlined />}
+              onClick={() => speakWord(origin)}
+            >
+              {meaning.pronunciation?.uk || ''}
+            </Button>
           </div>
         )}
 
         {meaning.pronunciation.us && (
           <div className={styles.audio}>
             {/* <span className={styles.accent}>US</span> */}
-            <AudioOutlined className={styles.audioIcon} />
-            {meaning.pronunciation?.us || ''}
+            <Button
+              variant={'text'}
+              type={'text'}
+              size={'small'}
+              className={clsx({
+                [styles.btnAudio]: true,
+                [styles.active]: active,
+              })}
+              icon={<AudioOutlined />}
+              onClick={() => speakWord(origin, 'en-US')}
+            >
+              {meaning.pronunciation?.us || ''}
+            </Button>
           </div>
         )}
       </div>
@@ -42,8 +66,19 @@ const Pronunciation = ({ catId, meaning }: IMeaningProps) => {
     return (
       <div className={styles.pronouns}>
         <div className={styles.audio}>
-          <AudioOutlined className={styles.audioIcon} />
-          {meaning.pronunciation?.common || ''}
+          <Button
+            variant={'text'}
+            type={'text'}
+            size={'small'}
+            className={clsx({
+              [styles.btnAudio]: true,
+              [styles.active]: active,
+            })}
+            icon={<AudioOutlined />}
+            onClick={() => speakWord(origin, 'en-US')}
+          >
+            {meaning.pronunciation?.common || ''}
+          </Button>
         </div>
       </div>
     )
@@ -52,7 +87,7 @@ const Pronunciation = ({ catId, meaning }: IMeaningProps) => {
   return null
 }
 
-export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning }) => {
+export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning, origin }) => {
   const navigate = useNavigate()
 
   const [show, setShow] = useState<boolean>(false)
@@ -101,7 +136,9 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning })
 
           {(meaning.pronunciation.uk ||
             meaning.pronunciation.us ||
-            meaning.pronunciation.common) && <Pronunciation catId={catId} meaning={meaning} />}
+            meaning.pronunciation.common) && (
+            <Pronunciation origin={origin} catId={catId} meaning={meaning} active={active} />
+          )}
         </Flex>
 
         {!show && (

@@ -6,7 +6,7 @@ import { EViewMode } from '@/models/app.model'
 import { ECategory, IItem } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { Level, Tags } from '@/views/components'
-import { MoreOutlined, ReloadOutlined, HeartFilled } from '@ant-design/icons'
+import { MoreOutlined, ReloadOutlined, HeartFilled, AudioOutlined } from '@ant-design/icons'
 import { Button, Dropdown, Flex, MenuProps, Skeleton, theme } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import clsx from 'clsx'
@@ -23,6 +23,7 @@ import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { IHttpResponse } from '@/models/http.model'
 import { initItem } from '../modals'
+import { speakWord } from '@/helpers/mics'
 
 interface IProps {
   action?: boolean
@@ -245,12 +246,19 @@ export const Item: React.FC<IProps> = ({
           <div className={styles.contentItem}>
             <div className={styles.contentHead}>
               <div className={styles.title}>
+                <Button
+                  type='text'
+                  icon={<AudioOutlined />}
+                  onClick={() => speakWord(data.origin, 'en-US', 1.2)}
+                  className={clsx({
+                    [styles.btnActions]: true,
+                    [styles.active]: active,
+                  })}
+                />
                 <h2 className={styles.origin}>
                   {isDefect(data) && <span className={styles.warnTitle}>{data.origin}</span>}
-
                   {!isDefect(data) && <span>{data.origin}</span>}
                 </h2>
-
                 <Flex align={'center'} gap={token.size / 8}>
                   {reload && (
                     <Button
@@ -370,6 +378,7 @@ export const Item: React.FC<IProps> = ({
                   key={key}
                   meaning={meaning}
                   catId={data.catId as ECategory}
+                  origin={data.origin}
                 />
               ))}
           </div>

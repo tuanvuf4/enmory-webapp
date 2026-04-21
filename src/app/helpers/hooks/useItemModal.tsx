@@ -8,7 +8,12 @@ export const useItemModal = () => {
   const { openModal, closeModal } = useModal()
 
   const ItemFormContext = ({ data }: { data: IItem }) => {
-    const methods = useForm<IItem>({ defaultValues: data })
+    const methods = useForm<IItem>({
+      defaultValues: {
+        ...data,
+        catId: data?.catId || initItem.catId,
+      },
+    })
 
     return (
       <FormProvider {...methods}>

@@ -235,6 +235,20 @@
 .audio {
   display: flex;
   gap: calc(var(--ant-size) * 0.25);
+  align-items: center;
+  color: var(--ant-color-white);
+}
+
+.btnAudio {
+  color: var(--ant-color-text-base) !important;
+
+  &.active {
+    color: var(--ant-color-white) !important;
+  }
+}
+
+.audioIcon {
+  color: var(--ant-color-white) !important;
 }
 
 .note {

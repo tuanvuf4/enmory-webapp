@@ -94,11 +94,28 @@ export const useCreateItem = () => {
     mutationFn: async (data: IItem) => {
       return await itemApi.createItem(data)
     },
-    onSuccess: () => {
-      // Clear all lastDoc cursors since data has changed
+    onMutate: async (newItem) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: itemKeys.lists() })
+
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData(itemKeys.lists())
+
+      // Do not optimistically update the full list since we don't know page position
+      // Instead, just clear cursors to refetch on success
       clearLastDocStore()
-      // Invalidate all item lists to refetch
+
+      return { previousData }
+    },
+    onSuccess: () => {
+      // Invalidate all item lists to refetch with new item
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+    },
+    onError: (_err, _variables, context: any) => {
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(itemKeys.lists(), context.previousData)
+      }
     },
   })
 }
@@ -111,13 +128,35 @@ export const useUpdateItem = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<IItem> }) => {
       return await itemApi.updateItem(id, data)
     },
-    onSuccess: (_response, variables) => {
-      // Clear all lastDoc cursors since data has changed
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: itemKeys.detail(variables.id) })
+      await queryClient.cancelQueries({ queryKey: itemKeys.lists() })
+
+      // Snapshot previous data
+      const previousDetail = queryClient.getQueryData(itemKeys.detail(variables.id))
+
+      // Optimistically update the detail view with new data
+      queryClient.setQueryData(itemKeys.detail(variables.id), (old: IItem | undefined) => ({
+        ...old,
+        ...variables.data,
+        id: variables.id,
+      }))
+
       clearLastDocStore()
-      // Invalidate all item lists
+
+      return { previousDetail }
+    },
+    onSuccess: (_response, variables) => {
+      // Invalidate lists and detail to refetch
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
-      // Invalidate the specific item detail
       queryClient.invalidateQueries({ queryKey: itemKeys.detail(variables.id) })
+    },
+    onError: (_err, variables, context: any) => {
+      // Rollback on error
+      if (context?.previousDetail) {
+        queryClient.setQueryData(itemKeys.detail(variables.id), context.previousDetail)
+      }
     },
   })
 }

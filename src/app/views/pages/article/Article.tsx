@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Select } from 'antd'
+import { Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Radio } from 'antd'
 import { ArticleItem } from '@/views/components/articleItem/ArticleItem'
-import { IArticleItem } from '@/models/article.model'
 import { useArticles, useArticlesCount, useArticleCategories } from '@/core/hooks'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
 import { useArticleCategoryModal } from '@/helpers/hooks/useArticleCategoryModal'
@@ -58,6 +57,10 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
     setShowCategoryModal(false)
   }
 
+  const onChangeRadio = (e: any) => {
+    setSelectedCategory(e.target.value === 'all' ? undefined : e.target.value)
+  }
+
   return (
     <>
       <Toolbar pagination={undefined} />
@@ -65,45 +68,42 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
       <div className={appStyle.containerMd}>
         <PageTitle content={pageTitle} />
 
-        <Flex justify='space-between' align={'center'} gap={token.size}>
-          <Flex justify='space-between' align={'center'} gap={token.size}>
-            <Button
-              variant={'solid'}
-              type={'primary'}
-              icon={<PlusOutlined />}
-              onClick={() => openArticleModal('add', {} as IArticleItem)}
-            >
-              Post
-            </Button>
-            <Button variant={'solid'} type={'default'} onClick={handleOpenCategoryModal}>
-              Categories
-            </Button>
-          </Flex>
+        <Flex justify='flex-start' align={'flex-start'} gap={token.size}>
+          <Button
+            variant={'solid'}
+            type={'primary'}
+            icon={<PlusOutlined />}
+            onClick={() =>
+              openArticleModal('add', {
+                description: '',
+                title: '',
+                category_id: selectedCategory,
+              })
+            }
+          >
+            Post
+          </Button>
 
-          <Flex justify='space-between' align={'center'} gap={token.size}>
-            <Pagination
-              current={page + 1}
-              pageSize={PAGE_SIZE}
-              total={totalCount}
-              onChange={(newPage) => setPage(newPage - 1)}
-            />
+          <Button
+            variant={'solid'}
+            type={'primary'}
+            icon={<PlusOutlined />}
+            onClick={handleOpenCategoryModal}
+          >
+            Categories
+          </Button>
 
-            <Select
-              placeholder='Filter by category'
-              style={{ minWidth: 150 }}
+          <Flex className='flex-1' justify='flex-end' align={'flex-start'} gap={token.size}>
+            <Radio.Group
+              options={[
+                { label: 'All', value: 'all' },
+                ...categories.map((cat) => ({ label: cat.name, value: cat.id })),
+              ]}
+              onChange={onChangeRadio}
               value={selectedCategory || 'all'}
-              onChange={(value) => {
-                setSelectedCategory(value === 'all' ? undefined : value)
-                setPage(0)
-              }}
-            >
-              <Select.Option value='all'>All Categories</Select.Option>
-              {categories.map((cat) => (
-                <Select.Option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </Select.Option>
-              ))}
-            </Select>
+              optionType='button'
+              buttonStyle='solid'
+            />
           </Flex>
         </Flex>
 
@@ -123,7 +123,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
               ))}
             </Row>
           ) : (
-            <div style={{ textAlign: 'center', padding: token.size * 2 }}>
+            <div className={'flex items-center justify-center p-4'} style={{ minHeight: 400 }}>
               <NotFound
                 classNames={{ container: 'justify-center gap-4' }}
                 label={<h2 className={'m-0'}>No articles found.</h2>}
@@ -132,7 +132,13 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
                     variant={'solid'}
                     type={'primary'}
                     icon={<PlusOutlined />}
-                    onClick={() => openArticleModal('add')}
+                    onClick={() =>
+                      openArticleModal('add', {
+                        description: '',
+                        title: '',
+                        category_id: selectedCategory,
+                      })
+                    }
                   >
                     Add Post
                   </Button>
@@ -141,6 +147,15 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
             </div>
           )}
         </Spin>
+
+        <Flex justify='flex-end' align={'flex-end'} style={{ margin: token.size }} gap={token.size}>
+          <Pagination
+            current={page + 1}
+            pageSize={PAGE_SIZE}
+            total={totalCount}
+            onChange={(newPage) => setPage(newPage - 1)}
+          />
+        </Flex>
       </div>
 
       {/* Article Category Modal */}

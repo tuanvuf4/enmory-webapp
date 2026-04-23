@@ -94,7 +94,7 @@ export const useCreateItem = () => {
     mutationFn: async (data: IItem) => {
       return await itemApi.createItem(data)
     },
-    onMutate: async (newItem) => {
+    onMutate: async () => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: itemKeys.lists() })
 

@@ -249,7 +249,7 @@ export const Item: React.FC<IProps> = ({
                 <Button
                   type='text'
                   icon={<AudioOutlined />}
-                  onClick={() => speakWord(data.origin, 'en-US', 1.2)}
+                  onClick={() => speakWord(data.origin, 'en-US')}
                   className={clsx({
                     [styles.btnActions]: true,
                     [styles.active]: active,

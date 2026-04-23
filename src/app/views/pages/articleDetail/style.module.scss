@@ -1,4 +1,9 @@
 .content {
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
   ul {
     padding-left: calc(var(--ant-size));
     margin-bottom: 1em;

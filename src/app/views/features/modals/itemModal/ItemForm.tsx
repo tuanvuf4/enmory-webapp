@@ -114,7 +114,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
       relation: data.relation || [],
       meanings: [...(await Promise.all(meanings))],
     }
-
     if (item?.id) {
       try {
         const { isSuccess, content } = await updateMutation({

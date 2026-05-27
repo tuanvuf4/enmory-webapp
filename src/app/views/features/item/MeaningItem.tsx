@@ -107,8 +107,9 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning, o
       <div
         className={clsx(
           styles.meaningItem,
-          meaning.enable ? '' : styles.disableMeaning,
-          meaning.common ? styles.meaningCommon : '',
+          styles.meaningCommon,
+          // meaning.enable ? '' : styles.disableMeaning,
+          // meaning.common ? styles.meaningCommon : '',
           'relative',
         )}
       >

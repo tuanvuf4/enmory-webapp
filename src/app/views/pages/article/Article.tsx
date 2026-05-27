@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Radio } from 'antd'
+import { Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Radio, message } from 'antd'
 import { ArticleItem } from '@/views/components/articleItem/ArticleItem'
 import { useArticles, useArticlesCount, useArticleCategories } from '@/core/hooks'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
@@ -26,7 +26,11 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
   const { openArticleModal } = useArticleModal()
   const { openArticleCategoryModal } = useArticleCategoryModal()
 
-  const { data: articles = [], isLoading: isLoadingArticles } = useArticles({
+  const {
+    data: articles = [],
+    isLoading: isLoadingArticles,
+    error: articlesError,
+  } = useArticles({
     page,
     size: PAGE_SIZE,
     categoryId: selectedCategory,
@@ -40,6 +44,12 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
     orderBy: 'order',
     order: 'ASC',
   })
+
+  useEffect(() => {
+    if (articlesError) {
+      message.error((articlesError as Error)?.message || 'Failed to load articles')
+    }
+  }, [articlesError])
 
   const handleOpenCategoryModal = () => {
     setShowCategoryModal(true)
@@ -108,7 +118,28 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
         </Flex>
 
         <Spin spinning={isLoadingArticles}>
-          {articles.length > 0 ? (
+          {articlesError && (
+            <div className={'flex items-center justify-center p-4'} style={{ minHeight: 400 }}>
+              <NotFound
+                classNames={{ container: 'justify-center gap-4' }}
+                label={
+                  <h2 className={'m-0'}>
+                    Error loading articles: {(articlesError as Error)?.message || 'Unknown error'}
+                  </h2>
+                }
+                button={
+                  <Button
+                    variant={'solid'}
+                    type={'primary'}
+                    onClick={() => window.location.reload()}
+                  >
+                    Retry
+                  </Button>
+                }
+              />
+            </div>
+          )}
+          {!articlesError && articles.length > 0 ? (
             <Row gutter={[token.size, token.size]} className={'my-4'}>
               {articles.map((article) => (
                 <Col xs={24} sm={12} md={12} lg={12} xl={12} key={article.id || Math.random()}>
@@ -122,7 +153,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
                 </Col>
               ))}
             </Row>
-          ) : (
+          ) : !articlesError ? (
             <div className={'flex items-center justify-center p-4'} style={{ minHeight: 400 }}>
               <NotFound
                 classNames={{ container: 'justify-center gap-4' }}
@@ -145,7 +176,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
                 }
               />
             </div>
-          )}
+          ) : null}
         </Spin>
 
         <Flex justify='flex-end' align={'flex-end'} style={{ margin: token.size }} gap={token.size}>

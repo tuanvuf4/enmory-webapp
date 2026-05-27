@@ -59,10 +59,17 @@ export const useArticles = (params: IArticleRequestParams) => {
           console.warn(`Missing cursor for page ${params.page - 1}, pagination may be inconsistent`)
           // Clear the store for this query to force refetch from beginning
           pageMap.clear()
+          // Return empty for this page, user should navigate back to page 0
+          return []
         }
       }
 
       const response = await articleApi.getArticles(params, lastDoc)
+
+      // Check if API call was successful
+      if (!response.isSuccess) {
+        throw new Error(response.message || 'Failed to fetch articles')
+      }
 
       // Store the lastDoc for this page for future navigation
       if (response.lastDoc) {
@@ -72,6 +79,8 @@ export const useArticles = (params: IArticleRequestParams) => {
       return response.content || []
     },
     refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
 }
 

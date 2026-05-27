@@ -16,7 +16,15 @@ const Home = () => {
   const { token } = theme.useToken()
 
   const { isAuth } = useSelector((state) => state.auth)
-  const { word, phrase, idiom, slang, collocation, sentence } = useSelector((state) => state.iotd)
+  const iotdState = useSelector((state) => state.iotd) || {}
+  const {
+    word = {} as any,
+    phrase = {} as any,
+    idiom = {} as any,
+    slang = {} as any,
+    collocation = {} as any,
+    sentence = {} as any,
+  } = iotdState
 
   const { isLoading, isError } = usePrefetchAllIotd(isAuth)
 

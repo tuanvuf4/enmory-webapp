@@ -29,7 +29,6 @@ interface IProps {
 }
 
 export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, onSubmit }) => {
-  console.log(`*** catType *** `, catType)
   const { token } = theme.useToken()
 
   const [show, setShow] = useState<boolean[]>([])

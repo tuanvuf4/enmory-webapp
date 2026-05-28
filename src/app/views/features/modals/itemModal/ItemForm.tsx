@@ -61,8 +61,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
   const catType = watch('catId')
 
-  console.log(`*** catType *** `, catType)
-
   const origin = getValues('origin')
 
   const { options, isSearching } = useAutoComplete(
@@ -98,7 +96,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             translation: meaning.translation || '',
             pronunciation: meaning.pronunciation || { common: '', uk: '', us: '' },
             common: meaning.common || false,
-            enable: meaning.enable || true,
+            enable: meaning.enable || false,
             antonyms: meaning.antonyms || [],
             synonyms: meaning.synonyms || [],
             examples:

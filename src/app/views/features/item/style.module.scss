@@ -52,11 +52,14 @@
 }
 
 .meaningItem {
-  border: 1px solid #ffffff;
+  border: 1px solid color-mix(in srgb, var(--ant-color-white), transparent 50%);
   padding: calc(var(--ant-size) * 0.25) calc(var(--ant-size) * 0.5);
   margin: calc(var(--ant-size) * 0.25) 0;
-  border-radius: 0 calc(var(--ant-size) * 0.25) calc(var(--ant-size) * 0.25)
-    calc(var(--ant-size) * 0.25);
+  border-radius: calc(var(--ant-size) * 0.25);
+
+  &.active {
+    border: 1px solid color-mix(in srgb, var(--ant-color-text-base), transparent 80%);
+  }
 
   & > * {
     margin: calc(var(--ant-size) * 0.25) 0;
@@ -70,6 +73,10 @@
 
 .meaningCommon {
   border: 1px solid #91caff;
+
+  &.active {
+    border: 1px solid #91caff;
+  }
 }
 
 .contentItem {

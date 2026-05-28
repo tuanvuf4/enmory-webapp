@@ -107,10 +107,10 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning, o
       <div
         className={clsx(
           styles.meaningItem,
-          styles.meaningCommon,
-          // meaning.enable ? '' : styles.disableMeaning,
-          // meaning.common ? styles.meaningCommon : '',
+          meaning.enable ? '' : styles.disableMeaning,
+          meaning.common ? styles.meaningCommon : '',
           'relative',
+          active ? '' : styles.active,
         )}
       >
         <Flex justify={'space-between'} align={'center'} className={`w-full`}>

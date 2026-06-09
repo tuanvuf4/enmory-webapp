@@ -22,7 +22,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "paths": {
-      "@/config/*": ["./src/app/config/*"],
+      "@/config/*": ["src/config/*"],
       "@/constant/*": ["./src/app/constant/*"],
       "@/context/*": ["./src/app/context/*"],
       "@/core/*": ["./src/app/core/*"],
@@ -31,7 +31,7 @@
       "@/services/*": ["./src/app/services/*"],
       "@/store/*": ["./src/app/store/*"],
       "@/views/*": ["./src/app/views/*"],
-      "@/*": ["./src/*"],
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"]

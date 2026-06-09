@@ -1,80 +1,74 @@
 import { EPageExt } from '@/models/app.model'
 import { IExample, IItem } from '@/models/item.model'
-import { IUser } from '@/models/user.model'
 import { initItem } from '@/views/features/modals/itemModal/data'
 import { theme } from 'antd'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { chromeStorage } from './storageService'
 import styles from './style.module.scss'
 import { ExampleForm, HeaderExtension, LoginForm, RegisterForm, LoadingBar } from '@/views/features'
 import { ItemForm } from '@/views/features/modals/itemModal'
-import { useCategories, useTypes } from '@/core/hooks'
+import { useAuthInit, useCategories, useDispatch, useSelector, useTypes } from '@/core/hooks'
+import { settingAction } from '@/store/reducers/setting.reducer'
 
 export const PopupExtension = () => {
   const { token } = theme.useToken()
 
-  const [isLogin, setIsLogin] = useState<boolean>(true)
+  const dispatch = useDispatch()
 
-  const [currentPage, setCurrentPage] = useState<EPageExt>(EPageExt.ADD)
+  // Auth state now comes from Redux. Firebase persists the session itself
+  // (browserLocalPersistence) and redux-persist rehydrates the slice across popup reopens.
+  const isAuth = useSelector((state) => state.auth.isAuth)
 
-  useCategories()
-  useTypes()
+  // Bootstrap Firebase auth state on popup mount (mirrors the web App)
+  useAuthInit()
+
+  const [currentPage, setCurrentPage] = useState<EPageExt>(() =>
+    isAuth ? EPageExt.ADD : EPageExt.LOGIN,
+  )
+
+  // Fetch categories/types via React Query and propagate to Redux so shared
+  // forms (ItemForm, MeaningItemForm) can read them from state.setting.
+  const { data: categories } = useCategories()
+  const { data: types } = useTypes()
+
+  useEffect(() => {
+    if (categories) dispatch(settingAction.setCategories(categories))
+  }, [categories, dispatch])
+
+  useEffect(() => {
+    if (types) dispatch(settingAction.setTypes(types))
+  }, [types, dispatch])
+
+  // React to login/logout: the page switches automatically based on auth state
+  useEffect(() => {
+    setCurrentPage((page) => {
+      if (isAuth) {
+        // After login, land on the quick-add page unless the user is already
+        // on a different authenticated page.
+        return page === EPageExt.LOGIN || page === EPageExt.REGISTER ? EPageExt.ADD : page
+      }
+      // After logout, fall back to the login screen.
+      return EPageExt.LOGIN
+    })
+  }, [isAuth])
 
   const methods = useForm<IItem>({ defaultValues: initItem })
 
-  // Removed axios interceptors - not needed since using Firebase SDK directly
-
-  const onLogin = async (uid: IUser) => {
-    // save auth info
-    await chromeStorage.set(uid)
-    // set isAuth to storage
-    await chromeStorage.set({ isAuth: true })
-    setIsLogin(true)
-    getStaticData()
-    setCurrentPage(EPageExt.ADD)
-  }
-
-  const getStaticData = async () => {
-    // let cats = (await chromeStorage.get(['cats'])).cats as IOption<string, ECategory>[]
-    // let types = (await chromeStorage.get(['types'])).types as IOption<string, EType>[]
-    // if (!cats) cats = (await commonApi.getCategories()).content
-    // if (!types) types = (await commonApi.getTypes()).content
-    // setCats(cats.map((cat) => ({ ...cat, value: cat.id })))
-    // setTypes(types.map((type) => ({ ...type, value: type.id })))
-  }
-
-  const onPageChange = async (page: EPageExt) => {
-    setCurrentPage(+page)
-    if (page === EPageExt.LOGIN || page === EPageExt.REGISTER) {
-      await chromeStorage.set({ isAuth: false })
-      setIsLogin(false)
-    }
-  }
+  const onPageChange = (page: EPageExt) => setCurrentPage(+page)
 
   const onSuccess = (data: IExample) => {
     console.log(`data: `, data)
   }
 
-  useEffect(() => {
-    const checkLogin = async () => {
-      const loggedIn = (await chromeStorage.get(['isAuth'])).isAuth
-      setIsLogin(loggedIn)
-      await getStaticData()
-    }
-
-    checkLogin()
-  }, [])
-
   return (
     <div className={styles.ext}>
-      <HeaderExtension isAuth={isLogin} onPageChange={onPageChange} />
+      <HeaderExtension isAuth={isAuth} onPageChange={onPageChange} />
 
-      {!isLogin && (
+      {!isAuth && (
         <>
           {currentPage === EPageExt.LOGIN && (
             <div className={styles.loginForm}>
-              <LoginForm onLoginSuccess={onLogin} showBanner={false} />
+              <LoginForm showBanner={false} />
             </div>
           )}
 
@@ -82,7 +76,7 @@ export const PopupExtension = () => {
         </>
       )}
 
-      {isLogin && (
+      {isAuth && (
         <>
           {currentPage === EPageExt.ADD && (
             <div className={styles.cruForm}>

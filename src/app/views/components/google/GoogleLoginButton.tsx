@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google'
 import { signInWithGoogle, checkAuthState } from '../../../store/reducers/auth.reducer'
-import { appConfig } from '../../../config'
+import { appConfig } from '../../../../config'
 import { IAppState } from '../../../store'
 
 interface GoogleLoginButtonProps {

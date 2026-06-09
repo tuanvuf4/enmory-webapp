@@ -3,7 +3,15 @@
   "version": "1.0",
   "description": "Learn English the way you like!",
   "manifest_version": 3,
-  "permissions": ["tabs", "activeTab", "storage", "declarativeContent", "contextMenus"],
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage",
+    "declarativeContent",
+    "contextMenus",
+    "identity",
+    "identity.email"
+  ],
   "background": {
     "service_worker": "background.js"
   },

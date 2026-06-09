@@ -1,16 +1,19 @@
 import { DownOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Col, Dropdown, Layout, MenuProps, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
-import { menuExtension } from './Menu'
+import { addNewTypeExtension, menuExtension } from './Menu'
 import styles from './style.module.scss'
 import appStyle from '@/style/appStyle.module.scss'
-import { useEffect, useState } from 'react'
-import { IUser } from '@/models/user.model'
 import { EPageExt } from '@/models/app.model'
 import logo from '@/assets/img/logo.png'
 import { Link } from 'react-router-dom'
-import { addNewType } from '../Menu'
-import { useSelector } from '@/core/hooks'
+import { useDispatch, useSelector } from '@/core/hooks'
+import { firebaseAuthService } from '@/services/firebase'
+import { authAction } from '@/store/reducers/auth.reducer'
+import { studySetAction } from '@/store/reducers/studySet.reducer'
+import { iotdAction } from '@/store/reducers/iotd.reducer'
+import { exampleAction } from '@/store/reducers/example.reducer'
+
 interface IHeaderExt {
   isAuth: boolean
   onPageChange: (page: EPageExt) => void
@@ -19,19 +22,30 @@ interface IHeaderExt {
 export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) => {
   const { token } = theme.useToken()
 
-  // Get user info from Redux state (Firebase auth)
-  const authUser = useSelector((state) => state.auth.user)
-  const [userInfo, setUserInfo] = useState<IUser>()
+  const dispatch = useDispatch()
 
-  useEffect(() => {
-    if (authUser) {
-      setUserInfo(authUser as IUser)
+  // Get user info directly from Redux (Firebase auth state)
+  const user = useSelector((state) => state.auth.user)
+
+  const handleLogout = async () => {
+    try {
+      if (firebaseAuthService.isAuthenticated()) {
+        await firebaseAuthService.signOut()
+      }
+    } catch (error) {
+      console.error('[HeaderExtension] Logout error:', error)
+    } finally {
+      // Clear Redux state so the popup falls back to the login screen
+      dispatch(authAction.logOut())
+      dispatch(studySetAction.resetStudySet())
+      dispatch(iotdAction.resetIotd())
+      dispatch(exampleAction.reset())
     }
-  }, [authUser])
+  }
 
-  const handleMenuClick: MenuProps['onClick'] = (e) => {
+  const handleMenuClick: MenuProps['onClick'] = async (e) => {
     if (e.key === 'logout') {
-      onPageChange(EPageExt.LOGIN)
+      await handleLogout()
     }
   }
 
@@ -41,22 +55,22 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
   }
 
   const handleAddMenuClick: MenuProps['onClick'] = (e) => {
-    if (e.key === 'addItem') {
+    if (e.key === 'ADD_ITEM') {
       onPageChange(EPageExt.ADD)
     }
 
-    if (e.key === 'addEx') {
+    if (e.key === 'ADD_EXAMPLE') {
       onPageChange(EPageExt.ADD_EX)
     }
   }
 
   const menuAddProps = {
-    items: addNewType,
+    items: addNewTypeExtension,
     onClick: handleAddMenuClick,
   }
 
   return (
-    <Layout.Header className={styles.header}>
+    <Layout.Header className={styles.header} style={{ backgroundColor: token.colorBgContainer }}>
       <div className={appStyle.containerFluid}>
         <Row
           gutter={[token.size, token.size * 2]}
@@ -102,7 +116,7 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
                 <Dropdown trigger={['click']} menu={menuProps} placement='bottomLeft' arrow>
                   <Button type='text' onClick={(e) => e.preventDefault()}>
                     <Space>
-                      {`Hi ${userInfo?.firstName || ''}!`}
+                      {`Hi ${user?.firstName || user?.displayName || ''}!`}
                       <DownOutlined />
                     </Space>
                   </Button>

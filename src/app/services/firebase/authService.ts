@@ -6,6 +6,7 @@
 import {
   getAuth,
   signInWithPopup,
+  signInWithCredential,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -170,19 +171,36 @@ export class FirebaseAuthService {
 
   /**
    * Sign in with Google
+   *
+   * In a normal web app we use Firebase's signInWithPopup. In a Chrome MV3
+   * extension popup that flow breaks (the popup closes when the OAuth window
+   * opens and Firebase's auth iframe is also blocked by the MV3 CSP), so we
+   * instead obtain a Google access token via chrome.identity.getAuthToken and
+   * exchange it for a Firebase credential with signInWithCredential.
+   *
+   * Requires the manifest to declare the "identity" permission and an
+   * "oauth2" block with the OAuth client_id of type "Chrome Extension".
+   *
    * @returns Promise with user credentials
    */
   async signInWithGoogle(): Promise<UserCredential> {
     try {
-      const result = await signInWithPopup(this.auth, this.googleProvider)
+      // Branch on the runtime context, not on appConfig.appType. The latter
+      // is driven by an env var which is easy to set wrong (e.g. a typo that
+      // doesn't match the EAppType enum). chrome.runtime?.id is defined if
+      // and only if the page is loaded from a chrome-extension:// origin
+      // with a valid manifest, so this check is impossible to misconfigure.
+      const isExtensionRuntime =
+        typeof chrome !== 'undefined' && !!chrome.runtime?.id && !!chrome.identity
+
+      const result = isExtensionRuntime
+        ? await this.signInWithGoogleExtension()
+        : await signInWithPopup(this.auth, this.googleProvider)
       const user = result.user
 
       // Check if this is a new user
       const userDocRef = doc(this.db, dbCollections.users, user.uid)
       const userDoc = await getDoc(userDocRef)
-
-      // const configDocRef = doc(this.db, dbCollections.configuration, user.uid)
-      // const configDoc = await getDoc(configDocRef)
 
       // If new user, create user profile in Firestore
       if (!userDoc.exists()) {
@@ -204,16 +222,122 @@ export class FirebaseAuthService {
         await setDoc(userDocRef, userProfile)
       }
 
-      // if (!configDoc.exists()) {
-      //   const response = await commonApi.createUserConfig(user.uid)
-      //   console.log(`*** response *** `, response)
-      // }
-
       return result
     } catch (error) {
       console.error('Error signing in with Google:', error)
       throw error
     }
+  }
+
+  /**
+   * Chrome-extension-only Google sign-in flow.
+   *
+   * Why this is different from the web flow:
+   *   - signInWithPopup is blocked by the MV3 CSP (apis.google.com iframe).
+   *   - chrome.identity.getAuthToken returns an *access token* tied to the
+   *     Chrome Extension OAuth client. Firebase only trusts id_tokens minted
+   *     for the project's Web OAuth client, so it rejects those access tokens
+   *     with `auth/invalid-credential` ("Invalid Value").
+   *
+   * The Firebase-recommended pattern is therefore:
+   *   1. Run the OAuth 2.0 implicit flow ourselves via launchWebAuthFlow,
+   *      asking Google for an id_token signed by the Firebase Web client.
+   *   2. Hand the id_token to Firebase via signInWithCredential.
+   *
+   * Required Google Cloud config on the Web OAuth client whose id is in
+   * VITE_GOOGLE_WEB_CLIENT_ID:
+   *   - Authorized redirect URIs must include:
+   *       https://<extension-id>.chromiumapp.org/
+   *     (chrome.identity.getRedirectURL() returns exactly that URL.)
+   */
+  private async signInWithGoogleExtension(): Promise<UserCredential> {
+    // Visible marker so we can tell from the popup devtools whether the
+    // currently-loaded extension build is the new launchWebAuthFlow flow.
+    // If you do NOT see this log, the extension was not reloaded after
+    // rebuilding. Go to chrome://extensions and click the reload icon.
+    console.info('[auth] signInWithGoogleExtension: launchWebAuthFlow build v2')
+
+    if (typeof chrome === 'undefined' || !chrome.identity?.launchWebAuthFlow) {
+      throw new Error(
+        'chrome.identity.launchWebAuthFlow is not available. Make sure the extension manifest declares the "identity" permission.',
+      )
+    }
+
+    const webClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+    if (!webClientId || webClientId.startsWith('REPLACE_')) {
+      throw new Error(
+        "VITE_GOOGLE_CLIENT_ID is not configured. Set it to the Firebase project's Web OAuth client id.",
+      )
+    }
+
+    const redirectUri = chrome.identity.getRedirectURL()
+    const nonce = crypto.randomUUID().replace(/-/g, '')
+
+    const authUrl =
+      'https://accounts.google.com/o/oauth2/v2/auth?' +
+      new URLSearchParams({
+        client_id: webClientId,
+        response_type: 'id_token',
+        redirect_uri: redirectUri,
+        scope: 'openid email profile',
+        nonce,
+        prompt: 'select_account',
+      }).toString()
+
+    console.info('[auth] launching webAuthFlow', {
+      redirectUri,
+      clientIdSuffix: webClientId.slice(-12),
+    })
+
+    let responseUrl: string | undefined
+    try {
+      responseUrl = await chrome.identity.launchWebAuthFlow({
+        url: authUrl,
+        interactive: true,
+      })
+    } catch (err) {
+      const message =
+        chrome.runtime?.lastError?.message ||
+        (err instanceof Error ? err.message : 'Google sign-in was cancelled')
+      throw new Error(message)
+    }
+
+    if (!responseUrl) {
+      throw new Error('Google sign-in was cancelled')
+    }
+
+    // The id_token is returned in the URL fragment (implicit flow).
+    const fragment = new URL(responseUrl).hash.replace(/^#/, '')
+    const params = new URLSearchParams(fragment)
+    const idToken = params.get('id_token')
+    const oauthError = params.get('error')
+
+    if (oauthError) {
+      throw new Error(`Google OAuth error: ${oauthError}`)
+    }
+    if (!idToken) {
+      throw new Error('No id_token returned from Google')
+    }
+
+    // Decode (don't verify) the id_token so we can log the audience and issuer.
+    // Helps diagnose auth/invalid-credential: Firebase only trusts id_tokens
+    // whose `aud` is an OAuth client in the same Cloud project as the Firebase
+    // project. If `aud` here is the Chrome Extension client id instead of the
+    // Firebase Web client id, Firebase will reject with "Invalid Value".
+    try {
+      const payload = JSON.parse(atob(idToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+      console.info('[auth] id_token payload', {
+        aud: payload.aud,
+        iss: payload.iss,
+        email: payload.email,
+        exp: payload.exp,
+      })
+    } catch (e) {
+      console.warn('[auth] failed to decode id_token for diagnostics', e)
+    }
+
+    const credential = GoogleAuthProvider.credential(idToken)
+    return await signInWithCredential(this.auth, credential)
   }
 
   /**

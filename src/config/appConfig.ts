@@ -15,7 +15,7 @@ export const appConfig = {
   env: import.meta.env.MODE, // development | production
   localKeyEncode: import.meta.env.LOCAL_KEY_TRANSFORM,
   googleAuth: {
-    client_id: import.meta.env.GOOGLE_CLIENT_ID,
+    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
     project_id: 'enmory',
     auth_uri: 'https://accounts.google.com/o/oauth2/auth',
     token_uri: 'https://oauth2.googleapis.com/token',

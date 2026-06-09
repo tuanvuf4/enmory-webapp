@@ -161,7 +161,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   useEffect(() => {
     if (!item && appConfig.appType === EAppType.EXTENSION) {
       chromeStorage.get(['origin']).then((resp) => {
-        reset({ ...initItem, origin: resp.origin || '' })
+        const origin = typeof resp.origin === 'string' ? resp.origin : ''
+        reset({ ...initItem, origin })
       })
     }
   }, [item])

@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@/config': path.resolve(__dirname, './src/app/config'),
+        '@/config': path.resolve(__dirname, './src/config'),
         '@/constant': path.resolve(__dirname, './src/app/constant'),
         '@/context': path.resolve(__dirname, './src/app/context'),
         '@/core': path.resolve(__dirname, './src/app/core'),

@@ -1,4 +1,4 @@
-import { appSetting } from '../config/appConfig'
+import { appSetting } from '../../config/appConfig'
 import { INotification } from '../models/app.model'
 import { IFormSearchEx } from '../models/formSearch.model'
 import { ECategory, IItem, IOption } from '../models/item.model'

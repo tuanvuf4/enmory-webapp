@@ -1,4 +1,4 @@
-import { appConfig } from '@/app/config/appConfig'
+import { appConfig } from '@/config/appConfig'
 import { Button } from 'antd'
 import styles from './style.module.scss'
 import React from 'react'

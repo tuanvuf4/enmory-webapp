@@ -158,14 +158,23 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   }
 
   const handleCancel = () => closeModal()
+
+  const getDefaultCategoryFromOrigin = (value: string) =>
+    isGroupWord(value) ? ECategory.PHRASE : ECategory.WORD
+
   useEffect(() => {
-    if (!item && appConfig.appType === EAppType.EXTENSION) {
-      chromeStorage.get(['origin']).then((resp) => {
-        const origin = typeof resp.origin === 'string' ? resp.origin : ''
-        reset({ ...initItem, origin })
+    if (!item?.id && appConfig.appType === EAppType.EXTENSION) {
+      chromeStorage.get(['origin', 'catId']).then((resp) => {
+        const origin = typeof resp.origin === 'string' ? resp.origin.trim() : ''
+        const catId =
+          typeof resp.catId === 'number'
+            ? (resp.catId as ECategory)
+            : getDefaultCategoryFromOrigin(origin)
+
+        reset({ ...initItem, origin, catId })
       })
     }
-  }, [item])
+  }, [item?.id, reset])
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

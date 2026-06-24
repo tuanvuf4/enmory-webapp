@@ -1,7 +1,22 @@
-document.addEventListener('mouseup', async (event) => {
-  if (document.getSelection().toString().length) {
-    let exactText = document.getSelection().toString()
-    chrome.runtime.sendMessage({ addOrigin: 'addOrigin', value: exactText })
+const WORD_CATEGORY_ID = 1
+const PHRASE_CATEGORY_ID = 2
+
+const normalizeSelection = (value = '') => value.replace(/\s+/g, ' ').trim()
+
+const getCategoryIdFromSelection = (value = '') =>
+  normalizeSelection(value).split(' ').filter(Boolean).length > 1
+    ? PHRASE_CATEGORY_ID
+    : WORD_CATEGORY_ID
+
+document.addEventListener('mouseup', async () => {
+  const selectedText = normalizeSelection(document.getSelection()?.toString() || '')
+
+  if (selectedText.length) {
+    chrome.runtime.sendMessage({
+      addOrigin: 'addOrigin',
+      value: selectedText,
+      catId: getCategoryIdFromSelection(selectedText),
+    })
   }
 })
 

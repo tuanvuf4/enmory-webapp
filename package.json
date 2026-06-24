@@ -7,7 +7,7 @@
     "dev": "vite --port=9999 --host --mode web",
     "build": "tsc -b && vite build",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
-    "deploy:web": "npm run format && n`pm run build:web && firebase deploy",
+    "deploy:web": "npm run format && npm run build:web && firebase deploy",
     "build:web": "tsc -b && env-cmd -f .env.web vite build --mode web",
     "build:ext": "tsc -b && env-cmd -f .env.ext vite build --mode ext",
     "lint": "eslint .",

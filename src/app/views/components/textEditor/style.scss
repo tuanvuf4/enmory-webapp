@@ -1,4 +1,6 @@
 .text-editor {
+  position: relative;
+
   .ck-content {
     padding: 8px 12px !important;
     color: #333333 !important;
@@ -42,5 +44,106 @@
       margin-top: 0;
       margin-bottom: 0;
     }
+  }
+
+  &__review-badge {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    z-index: 10;
+    width: 22px;
+    height: 22px;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+    &--idle {
+      background: #1677ff;
+    }
+
+    &--loading {
+      background: #1677ff;
+    }
+
+    &--ready {
+      background: #fa8c16;
+    }
+
+    &--clean {
+      background: #52c41a;
+    }
+
+    &--error {
+      background: #ff4d4f;
+    }
+  }
+
+  &__review-panel {
+    position: absolute;
+    right: 8px;
+    bottom: 36px;
+    z-index: 11;
+    width: 320px;
+    max-width: calc(100% - 16px);
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  &__review-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  &__review-empty {
+    padding: 12px;
+    font-size: 12px;
+    color: #666;
+  }
+
+  &__review-list {
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  &__review-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    border: 0;
+    border-bottom: 1px solid #f5f5f5;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  &__review-issue {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 2px;
+    text-transform: capitalize;
+  }
+
+  &__review-current {
+    font-size: 13px;
+    color: #ff4d4f;
+  }
+
+  &__review-next {
+    font-size: 13px;
+    color: #52c41a;
+  }
+
+  &__review-note {
+    margin-top: 2px;
+    font-size: 12px;
+    color: #666;
   }
 }

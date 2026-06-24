@@ -1,6 +1,7 @@
 import { EPageExt } from '@/models/app.model'
 import { IExample, IItem } from '@/models/item.model'
 import { initItem } from '@/views/features/modals/itemModal/data'
+import { chromeStorage } from '@/extension/storageService'
 import { theme } from 'antd'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
@@ -38,6 +39,13 @@ export const PopupExtension = () => {
   useEffect(() => {
     if (types) dispatch(settingAction.setTypes(types))
   }, [types, dispatch])
+
+  useEffect(() => {
+    const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY
+    if (openaiApiKey) {
+      chromeStorage.set({ openaiApiKey })
+    }
+  }, [])
 
   // React to login/logout: the page switches automatically based on auth state
   useEffect(() => {

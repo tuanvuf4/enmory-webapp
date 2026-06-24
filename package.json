@@ -4,12 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port=9999 --host",
+    "dev": "vite --port=9999 --host --mode web",
     "build": "tsc -b && vite build",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
-    "deploy:web": "npm run format && npm run build:web && firebase deploy",
-    "build:web": "tsc -b && env-cmd -f .env.web vite build",
-    "build:ext": "tsc -b && env-cmd -f .env.ext vite build",
+    "deploy:web": "npm run format && n`pm run build:web && firebase deploy",
+    "build:web": "tsc -b && env-cmd -f .env.web vite build --mode web",
+    "build:ext": "tsc -b && env-cmd -f .env.ext vite build --mode ext",
     "lint": "eslint .",
     "preview": "vite preview"
   },

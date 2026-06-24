@@ -4,7 +4,13 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd())
+  const baseEnv = loadEnv(mode, process.cwd(), '')
+  const extensionEnv = loadEnv('ext', process.cwd(), '')
+  const env = {
+    ...baseEnv,
+    ...extensionEnv,
+    ...process.env,
+  }
 
   return {
     base: './',

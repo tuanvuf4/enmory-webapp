@@ -271,21 +271,6 @@ const reviewActiveTextarea = () => {
     }
 
     if (!response?.ok) {
-      if (String(response?.error || '').includes('OpenAI API key is not configured')) {
-        const inputKey = window.prompt('Enter OpenAI API key to enable review:')
-        if (inputKey && inputKey.trim()) {
-          chrome.runtime.sendMessage(
-            { action: 'setOpenaiApiKey', value: inputKey.trim() },
-            (setKeyResponse) => {
-              if (setKeyResponse?.ok) {
-                reviewActiveTextarea()
-              }
-            },
-          )
-          return
-        }
-      }
-
       setBadgeState('error')
       if (suggestionPanelOpen) {
         suggestionPanel.innerHTML = `<div style="padding:12px;font-size:12px;color:#ff4d4f;">${response?.error || 'Review failed'}</div>`

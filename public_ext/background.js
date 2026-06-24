@@ -3,6 +3,7 @@ const WORD_CATEGORY_ID = 1
 const PHRASE_CATEGORY_ID = 2
 const OPENAI_MODEL = 'gpt-4o-mini'
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
+const BUILD_TIME_OPENAI_API_KEY = ''
 
 const normalizeSelection = (value = '') => value.replace(/\s+/g, ' ').trim()
 
@@ -56,8 +57,13 @@ const reviewSentence = async (text) => {
   }
 
   const { openaiApiKey } = await chrome.storage.sync.get(['openaiApiKey'])
-  if (!openaiApiKey || typeof openaiApiKey !== 'string') {
-    throw new Error('OpenAI API key is not configured in extension storage')
+  const resolvedApiKey =
+    typeof openaiApiKey === 'string' && openaiApiKey.trim()
+      ? openaiApiKey.trim()
+      : BUILD_TIME_OPENAI_API_KEY.trim()
+
+  if (!resolvedApiKey) {
+    throw new Error('OpenAI API key is not configured')
   }
 
   const prompt = `You are an English writing assistant. Review this text and return ONLY JSON.\n\nRules:\n- Find ALL issues you can detect (grammar, spelling, word choice, punctuation, style).\n- Return granular issues, not only one global correction.\n- Include multiple issues when they are independent, even in the same sentence.\n- Return up to 10 issues, sorted by appearance order.\n- If no issue exists, return an empty issues array.\n\nJSON schema:\n{\n  "summary": "short assessment",\n  "correctedText": "best corrected sentence",\n  "issues": [\n    {\n      "issue": "grammar|spelling|word-choice|punctuation|style",\n      "current": "original fragment",\n      "suggestion": "replacement fragment",\n      "explanation": "short explanation"\n    }\n  ]\n}\n\nText: "${normalizedText}"`
@@ -69,7 +75,7 @@ const reviewSentence = async (text) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${openaiApiKey}`,
+      Authorization: `Bearer ${resolvedApiKey}`,
     },
     signal: controller.signal,
     body: JSON.stringify({

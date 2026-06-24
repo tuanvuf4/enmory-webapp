@@ -23,17 +23,57 @@ const getCategoryIdFromSelection = (value = '') =>
     ? PHRASE_CATEGORY_ID
     : WORD_CATEGORY_ID
 
-const hasTextareaContent = (textarea) => Boolean(normalizeReviewText(textarea?.value || ''))
+const resolveReviewTarget = (element) => {
+  if (!element || element.nodeType !== Node.ELEMENT_NODE) return null
 
-const isTextareaElement = (element) => element instanceof HTMLTextAreaElement
+  if (element instanceof HTMLTextAreaElement) return element
+  if (element instanceof HTMLInputElement) return null
+
+  if (element.isContentEditable) return element
+
+  const role = element.getAttribute?.('role')
+  const ariaMultiline = element.getAttribute?.('aria-multiline')
+  const tagName = element.tagName?.toLowerCase()
+
+  if (tagName === 'textarea') return element
+  if ((role === 'textbox' || ariaMultiline === 'true') && !element.hasAttribute('disabled')) {
+    return element
+  }
+
+  const closestTarget = element.closest?.(
+    'textarea, [contenteditable="true"], [contenteditable="plaintext-only"], [role="textbox"], [aria-multiline="true"], [data-review-enabled="true"]',
+  )
+
+  return closestTarget || null
+}
+
+const getEditableText = (element) => {
+  const target = resolveReviewTarget(element)
+  if (!target) return ''
+
+  if (target instanceof HTMLTextAreaElement || target instanceof HTMLInputElement) {
+    return target.value || ''
+  }
+
+  if (target.isContentEditable) {
+    return normalizeReviewText(target.innerText || target.textContent || '')
+  }
+
+  return normalizeReviewText(target.value || '')
+}
+
+const hasTextareaContent = (textarea) => Boolean(normalizeReviewText(getEditableText(textarea)))
+
 const isReviewDisabled = (element) => element?.dataset?.reviewDisabled === 'true'
-const isReviewableTextarea = (element) =>
-  isTextareaElement(element) && !element.disabled && !element.readOnly && !isReviewDisabled(element)
+const isReviewableTextarea = (element) => {
+  const target = resolveReviewTarget(element)
+  return Boolean(target && !target.disabled && !target.readOnly && !isReviewDisabled(target))
+}
 
-const syncReviewUIState = () => {
+const syncReviewUIState = (sourceElement = document.activeElement) => {
   if (!reviewBadge) return
 
-  const focused = document.activeElement
+  const focused = resolveReviewTarget(sourceElement)
   const candidateTextarea = isReviewableTextarea(focused) ? focused : activeTextarea
 
   if (!isReviewableTextarea(candidateTextarea) || !candidateTextarea?.isConnected) {
@@ -122,15 +162,27 @@ const positionReviewUI = () => {
 }
 
 const setTextareaValue = (textarea, value) => {
-  textarea.value = value
-  textarea.dispatchEvent(new Event('input', { bubbles: true }))
-  textarea.dispatchEvent(new Event('change', { bubbles: true }))
+  const target = resolveReviewTarget(textarea)
+  if (!target) return
+
+  if (target instanceof HTMLTextAreaElement || target instanceof HTMLInputElement) {
+    target.value = value
+    target.dispatchEvent(new Event('input', { bubbles: true }))
+    target.dispatchEvent(new Event('change', { bubbles: true }))
+    return
+  }
+
+  if (target.isContentEditable) {
+    target.textContent = value
+    target.dispatchEvent(new Event('input', { bubbles: true }))
+    target.dispatchEvent(new Event('change', { bubbles: true }))
+  }
 }
 
 const applySuggestion = (issue) => {
   if (!activeTextarea || !issue) return
 
-  const currentValue = activeTextarea.value || ''
+  const currentValue = getEditableText(activeTextarea)
   const current = typeof issue.current === 'string' ? issue.current : ''
   const suggestion = typeof issue.suggestion === 'string' ? issue.suggestion : ''
 
@@ -230,7 +282,7 @@ const reviewActiveTextarea = () => {
 
   if (!activeTextarea || isReviewing) return
 
-  const text = normalizeReviewText(activeTextarea.value)
+  const text = normalizeReviewText(getEditableText(activeTextarea))
   if (!text) {
     reviewBadge.style.display = 'none'
     if (suggestionPanel) {
@@ -271,21 +323,6 @@ const reviewActiveTextarea = () => {
     }
 
     if (!response?.ok) {
-      if (String(response?.error || '').includes('OpenAI API key is not configured')) {
-        const inputKey = window.prompt('Enter OpenAI API key to enable review:')
-        if (inputKey && inputKey.trim()) {
-          chrome.runtime.sendMessage(
-            { action: 'setOpenaiApiKey', value: inputKey.trim() },
-            (setKeyResponse) => {
-              if (setKeyResponse?.ok) {
-                reviewActiveTextarea()
-              }
-            },
-          )
-          return
-        }
-      }
-
       setBadgeState('error')
       if (suggestionPanelOpen) {
         suggestionPanel.innerHTML = `<div style="padding:12px;font-size:12px;color:#ff4d4f;">${response?.error || 'Review failed'}</div>`
@@ -388,15 +425,16 @@ const ensureReviewUI = () => {
   }
 }
 
-document.addEventListener('focusin', (event) => {
-  if (!isReviewableTextarea(event.target)) {
-    syncReviewUIState()
-    return
+const activateReviewTarget = (sourceElement) => {
+  const target = resolveReviewTarget(sourceElement)
+  if (!isReviewableTextarea(target)) {
+    syncReviewUIState(sourceElement)
+    return false
   }
 
-  activeTextarea = event.target
+  activeTextarea = target
   ensureReviewUI()
-  syncReviewUIState()
+  syncReviewUIState(target)
 
   const cached = reviewCache.get(activeTextarea)
   if (cached) {
@@ -407,7 +445,61 @@ document.addEventListener('focusin', (event) => {
   }
 
   positionReviewUI()
+  return true
+}
+
+document.addEventListener('focusin', (event) => {
+  activateReviewTarget(event.target)
 })
+
+document.addEventListener('mousedown', (event) => {
+  const target = resolveReviewTarget(event.target)
+  if (target && target !== activeTextarea) {
+    activateReviewTarget(target)
+  }
+})
+
+document.addEventListener('click', (event) => {
+  if (
+    event.target &&
+    event.target.closest?.(
+      'textarea, [contenteditable="true"], [contenteditable="plaintext-only"], [role="textbox"], [aria-multiline="true"], [data-review-enabled="true"]',
+    )
+  ) {
+    activateReviewTarget(event.target)
+    return
+  }
+
+  syncReviewUIState(document.activeElement)
+})
+
+const handleReviewableInput = (event) => {
+  const target = resolveReviewTarget(event.target)
+  if (!target) return
+
+  if (!activeTextarea || target !== activeTextarea) {
+    activeTextarea = target
+  }
+
+  syncReviewUIState(target)
+
+  setBadgeState('idle')
+  reviewCache.delete(activeTextarea)
+}
+
+document.addEventListener('input', (event) => {
+  handleReviewableInput(event)
+})
+
+document.addEventListener('keyup', (event) => {
+  handleReviewableInput(event)
+})
+
+document.addEventListener('paste', (event) => {
+  handleReviewableInput(event)
+})
+
+// Legacy listeners moved below; keep the previous focusout and mousedown behavior for panel dismissal.
 
 document.addEventListener('focusout', (event) => {
   if (event.target !== activeTextarea) return
@@ -415,35 +507,24 @@ document.addEventListener('focusout', (event) => {
   setTimeout(() => {
     if (suggestionPanelOpen) return
 
-    syncReviewUIState()
+    syncReviewUIState(event.relatedTarget || document.activeElement)
   }, 100)
 })
 
+/* earlier panel-dismiss handler becomes a close-on-outside-click handler */
 document.addEventListener('mousedown', (event) => {
   if (!suggestionPanelOpen) return
 
   const target = event.target
   const isOnBadge = reviewBadge && reviewBadge.contains(target)
   const isOnPanel = suggestionPanel && suggestionPanel.contains(target)
-  const isOnTextarea = activeTextarea && target === activeTextarea
+  const isOnTextarea =
+    activeTextarea && (target === activeTextarea || activeTextarea.contains(target))
 
   if (!isOnBadge && !isOnPanel && !isOnTextarea) {
     suggestionPanel.style.display = 'none'
     suggestionPanelOpen = false
   }
-})
-
-document.addEventListener('input', (event) => {
-  if (!activeTextarea || event.target !== activeTextarea) return
-
-  syncReviewUIState()
-
-  setBadgeState('idle')
-  reviewCache.delete(activeTextarea)
-})
-
-document.addEventListener('click', () => {
-  syncReviewUIState()
 })
 
 window.addEventListener('scroll', positionReviewUI, true)

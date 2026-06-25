@@ -263,6 +263,7 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
     header.style.borderBottom = '1px solid #f0f0f0'
     header.style.fontSize = '12px'
     header.style.fontWeight = '600'
+    header.style.setProperty('color', 'rgba(51, 51, 51, 0.7)', 'important')
     header.textContent = data?.summary || 'Suggestions'
     suggestionPanel.appendChild(header)
 

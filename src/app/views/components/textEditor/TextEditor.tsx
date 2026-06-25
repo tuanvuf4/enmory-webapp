@@ -29,6 +29,7 @@ import {
 } from '@/services/openai/reviewSentence.service'
 
 import './style.scss'
+import '../reviewableTextArea/style.scss'
 import 'ckeditor5/ckeditor5.css'
 
 // props for text editor component
@@ -287,36 +288,35 @@ export const TextEditor = ({ content, onChange }: Omit<TextEditorProps, 'disable
       )}
 
       {reviewOpen && (
-        <div className='text-editor__review-panel'>
-          {reviewState === 'loading' && (
-            <div className='text-editor__review-empty'>Reviewing...</div>
-          )}
+        <div
+          className='review-panel'
+          style={{ position: 'absolute', right: '8px', bottom: '36px' }}
+        >
+          {reviewState === 'loading' && <div className='review-panel__empty'>Reviewing...</div>}
 
           {reviewState === 'error' && (
-            <div className='text-editor__review-empty'>Review failed. Please try again.</div>
+            <div className='review-panel__empty'>Review failed. Please try again.</div>
           )}
 
           {reviewState !== 'loading' && reviewState !== 'error' && reviewResult && (
             <>
-              <div className='text-editor__review-header'>
-                {reviewResult.summary || 'Suggestions'}
-              </div>
+              <div className='review-panel__header'>{reviewResult.summary || 'Suggestions'}</div>
 
               {reviewResult.suggestions.length === 0 ? (
-                <div className='text-editor__review-empty'>No suggestions.</div>
+                <div className='review-panel__empty'>No suggestions.</div>
               ) : (
-                <div className='text-editor__review-list'>
+                <div className='review-panel__list'>
                   {reviewResult.suggestions.map((suggestion, index) => (
                     <button
                       key={`${suggestion.issue}-${index}`}
                       type='button'
-                      className='text-editor__review-item'
+                      className='review-panel__item'
                       onClick={() => applySuggestion(suggestion)}
                     >
-                      <div className='text-editor__review-issue'>{suggestion.issue}</div>
-                      <div className='text-editor__review-current'>{suggestion.current}</div>
-                      <div className='text-editor__review-next'>→ {suggestion.suggestion}</div>
-                      <div className='text-editor__review-note'>{suggestion.explanation}</div>
+                      <div className='review-panel__issue'>{suggestion.issue}</div>
+                      <div className='review-panel__current'>{suggestion.current}</div>
+                      <div className='review-panel__next'>→ {suggestion.suggestion}</div>
+                      <div className='review-panel__note'>{suggestion.explanation}</div>
                     </button>
                   ))}
                 </div>

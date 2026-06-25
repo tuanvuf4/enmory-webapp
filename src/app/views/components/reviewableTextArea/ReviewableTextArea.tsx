@@ -120,7 +120,20 @@ export const ReviewableTextArea: React.FC<ReviewableTextAreaProps> = ({
   }
 
   const applySuggestion = (suggestion: IReviewSuggestion) => {
-    onChange?.(suggestion.suggestion)
+    // Only replace the specific current text, not the whole value
+    const currentValue = value || ''
+    const current = suggestion.current || ''
+    const suggestionText = suggestion.suggestion || ''
+
+    if (current && suggestionText && currentValue.includes(current)) {
+      // Find the first occurrence and replace it
+      const index = currentValue.indexOf(current)
+      if (index !== -1) {
+        const before = currentValue.substring(0, index)
+        const after = currentValue.substring(index + current.length)
+        onChange?.(before + suggestionText + after)
+      }
+    }
 
     // Remove the applied suggestion from the list
     if (reviewResult) {

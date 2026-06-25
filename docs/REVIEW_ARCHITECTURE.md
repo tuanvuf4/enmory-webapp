@@ -119,11 +119,82 @@ This ensures a consistent user experience across all review interfaces in the ap
 
 **Location:** `src/extension/content.js` / `public_ext/content.js`
 
-Injects review UI into external website textareas:
+Injects review UI into external website textareas with the exact same design as the web app.
 
-- Wraps around content detection: `if (appType === 'WEB_APP') return` to disable on web app
-- Uses `chrome.runtime.sendMessage` to communicate with background service worker
-- Manages badge and suggestion panel for external sites only
+#### Features:
+
+- ✅ **Auto-Detection**: Automatically detects textareas, contenteditable elements, and ARIA textboxes
+- ✅ **Smart Activation**: Only shows review badge when textarea has content
+- ✅ **Web App Detection**: Disables extension review on Enmory web app (`appType === 'WEB_APP'`)
+- ✅ **Unified UI**: Badge and panel design matches web app exactly
+- ✅ **Badge States**: R (idle), ... (loading), ✓ (clean), ! (error), or count
+- ✅ **Suggestion Panel**: Same design as web app with header, list, and hover effects
+- ✅ **Apply & Remove**: Clicking suggestion applies it and removes from list
+- ✅ **Loading State**: Shows "Reviewing..." while waiting for API response
+- ✅ **Error Handling**: Displays "Review failed. Please try again." on errors
+- ✅ **Retry Logic**: Automatically retries once on timeout (30s limit)
+- ✅ **Review Cache**: Caches results per textarea to avoid redundant API calls
+- ✅ **Outside Click**: Panel closes when clicking outside
+- ✅ **Positioning**: Dynamically positions badge and panel based on textarea location
+
+#### UI Specifications:
+
+**Badge:**
+
+- Size: 22x22px circle
+- Position: Absolute, top-right of textarea
+- Z-index: 10
+- Colors:
+  - Idle: #1677ff (blue)
+  - Loading: #1677ff (blue)
+  - Ready: #fa8c16 (orange)
+  - Clean: #52c41a (green)
+  - Error: #ff4d4f (red)
+
+**Panel:**
+
+- Width: 320px (max-width: calc(100% - 16px))
+- Z-index: 11
+- Border: 1px solid #e8e8e8
+- Border-radius: 8px
+- Box-shadow: 0 8px 24px rgba(0,0,0,.15)
+- Max-height for list: 220px (scrollable)
+
+**Suggestion Items:**
+
+- Hover background: #f5f5f5
+- Issue type: #999, capitalized
+- Current text: #ff4d4f (red)
+- Suggested text: #52c41a (green) with → arrow
+- Explanation: #666
+
+#### Conflict Prevention:
+
+```javascript
+if (document.documentElement.dataset.appType === 'WEB_APP') {
+  console.info('[Enmory] Extension review disabled on web app')
+} else {
+  // All extension review logic here
+}
+```
+
+This ensures the extension never interferes with the web app's built-in review functionality.
+
+#### Supported Elements:
+
+- `<textarea>` elements
+- `[contenteditable="true"]` elements
+- `[contenteditable="plaintext-only"]` elements
+- `[role="textbox"]` elements
+- `[aria-multiline="true"]` elements
+- `[data-review-enabled="true"]` custom elements
+
+Elements are excluded if:
+
+- They have `disabled` attribute
+- They have `readonly` attribute
+- They have `data-review-disabled="true"` attribute
+- They are `<input>` elements (only textareas supported)
 
 ### Background Service Worker
 

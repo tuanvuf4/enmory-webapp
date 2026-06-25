@@ -155,8 +155,38 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
     reviewBadge.style.left = `${window.scrollX + rect.right - 30}px`
 
     if (suggestionPanel && suggestionPanel.style.display === 'block') {
-      const panelWidth = 300
-      const top = window.scrollY + rect.bottom + 6
+      const panelWidth = 320
+      const viewportHeight = window.innerHeight
+      const spaceBelow = viewportHeight - rect.bottom
+      const spaceAbove = rect.top
+
+      // Get actual panel height (or use estimated max if not rendered yet)
+      const panelHeight = suggestionPanel.offsetHeight || 280
+      const panelWithMargin = panelHeight + 12 // Add margin for spacing
+
+      // Determine if panel should be positioned above or below
+      const shouldPositionAbove = spaceBelow < panelWithMargin && spaceAbove > spaceBelow
+
+      let top
+      if (shouldPositionAbove) {
+        // Position above the textarea
+        top = window.scrollY + rect.top - panelHeight - 12
+        // Ensure it doesn't go above viewport
+        const minTop = window.scrollY + 8
+        if (top < minTop) {
+          top = minTop
+        }
+      } else {
+        // Position below the textarea (default)
+        top = window.scrollY + rect.bottom + 12
+        // Ensure it doesn't go below viewport
+        const maxTop = window.scrollY + viewportHeight - panelHeight - 8
+        if (top > maxTop && maxTop > window.scrollY) {
+          top = maxTop
+        }
+      }
+
+      // Horizontal positioning
       const maxLeft = window.scrollX + window.innerWidth - panelWidth - 8
       const preferredLeft = window.scrollX + rect.right - panelWidth
       const left = Math.max(window.scrollX + 8, Math.min(preferredLeft, maxLeft))
@@ -193,7 +223,13 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
     const cached = reviewCache.get(activeTextarea)
 
     if (current && suggestion && currentValue.includes(current)) {
-      setTextareaValue(activeTextarea, currentValue.replace(current, suggestion))
+      // Only replace the first occurrence of the exact current text
+      const index = currentValue.indexOf(current)
+      if (index !== -1) {
+        const before = currentValue.substring(0, index)
+        const after = currentValue.substring(index + current.length)
+        setTextareaValue(activeTextarea, before + suggestion + after)
+      }
     }
 
     if (!cached) {
@@ -231,7 +267,7 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
     suggestionPanel.appendChild(header)
 
     const body = document.createElement('div')
-    body.style.maxHeight = '180px'
+    body.style.maxHeight = '220px'
     body.style.overflowY = 'auto'
 
     const issues = Array.isArray(data?.issues) ? data.issues : []
@@ -255,12 +291,21 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
         item.style.borderBottom = '1px solid #f5f5f5'
         item.style.background = '#fff'
         item.style.cursor = 'pointer'
+        item.style.transition = 'background 0.2s'
+
+        item.addEventListener('mouseenter', () => {
+          item.style.background = '#f5f5f5'
+        })
+        item.addEventListener('mouseleave', () => {
+          item.style.background = '#fff'
+        })
 
         const current = typeof issue.current === 'string' ? issue.current : ''
         const suggestion = typeof issue.suggestion === 'string' ? issue.suggestion : ''
         const explanation = typeof issue.explanation === 'string' ? issue.explanation : ''
+        const issueType = issue.issue || 'issue'
 
-        item.innerHTML = `<div style="font-size:12px;color:#999;margin-bottom:2px;">${issue.issue || 'issue'}</div>
+        item.innerHTML = `<div style="font-size:12px;color:#999;margin-bottom:2px;text-transform:capitalize;">${issueType}</div>
         <div style="font-size:13px;color:#ff4d4f;">${current || '(text)'}</div>
         <div style="font-size:13px;color:#52c41a;">→ ${suggestion || '(suggestion)'}</div>
         <div style="font-size:12px;color:#666;margin-top:2px;">${explanation}</div>`
@@ -330,7 +375,7 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
         setBadgeState('error')
         if (suggestionPanelOpen && suggestionPanel) {
           suggestionPanel.innerHTML =
-            '<div style="padding:12px;font-size:12px;color:#ff4d4f;">Review timeout. Please try again.</div>'
+            '<div style="padding:12px;font-size:12px;color:#666;">Review failed. Please try again.</div>'
         }
       }, 30000)
 
@@ -342,16 +387,18 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
 
         if (chrome.runtime.lastError) {
           setBadgeState('error')
-          if (suggestionPanelOpen) {
-            suggestionPanel.innerHTML = `<div style="padding:12px;font-size:12px;color:#ff4d4f;">${chrome.runtime.lastError.message}</div>`
+          if (suggestionPanelOpen && suggestionPanel) {
+            suggestionPanel.innerHTML =
+              '<div style="padding:12px;font-size:12px;color:#666;">Review failed. Please try again.</div>'
           }
           return
         }
 
         if (!response?.ok) {
           setBadgeState('error')
-          if (suggestionPanelOpen) {
-            suggestionPanel.innerHTML = `<div style="padding:12px;font-size:12px;color:#ff4d4f;">${response?.error || 'Review failed'}</div>`
+          if (suggestionPanelOpen && suggestionPanel) {
+            suggestionPanel.innerHTML =
+              '<div style="padding:12px;font-size:12px;color:#666;">Review failed. Please try again.</div>'
           }
           return
         }
@@ -412,7 +459,7 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
       reviewBadge = document.createElement('button')
       reviewBadge.type = 'button'
       reviewBadge.style.position = 'absolute'
-      reviewBadge.style.zIndex = '999'
+      reviewBadge.style.zIndex = '10'
       reviewBadge.style.width = '22px'
       reviewBadge.style.height = '22px'
       reviewBadge.style.border = '0'
@@ -437,8 +484,9 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
     if (!suggestionPanel) {
       suggestionPanel = document.createElement('div')
       suggestionPanel.style.position = 'absolute'
-      suggestionPanel.style.zIndex = '1101'
-      suggestionPanel.style.width = '300px'
+      suggestionPanel.style.zIndex = '11'
+      suggestionPanel.style.width = '320px'
+      suggestionPanel.style.maxWidth = 'calc(100% - 16px)'
       suggestionPanel.style.background = '#fff'
       suggestionPanel.style.border = '1px solid #e8e8e8'
       suggestionPanel.style.borderRadius = '8px'

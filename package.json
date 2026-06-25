@@ -10,7 +10,7 @@
     "deploy:web": "npm run format && npm run build:web && firebase deploy",
     "build:web": "tsc -b && env-cmd -f .env.web vite build --mode web",
     "build:ext": "env-cmd -f .env.ext npm run sync:ext && tsc -b && env-cmd -f .env.ext vite build --mode ext",
-    "sync:ext": "node -e \"const fs=require('fs');const key=String(process.env.VITE_OPENAI_API_KEY||'').trim();fs.writeFileSync('public_ext/extension-config.js', 'self.__ENMORY_EXTENSION_CONFIG__ = '+JSON.stringify({openaiApiKey:key})+';\\n');['background.js','content.js','manifest.json'].forEach(f=>{const s='src/extension/'+f,d='public_ext/'+f;if(fs.existsSync(s)){fs.copyFileSync(s,d);console.log('synced '+f);}})\"",
+    "sync:ext": "node scripts/sync-ext.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

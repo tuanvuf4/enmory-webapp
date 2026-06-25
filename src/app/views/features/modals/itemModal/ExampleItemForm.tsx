@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { exampleItem } from './data'
 import styles from './style.module.scss'
+import { ReviewableTextArea } from '@/views/components'
 import TextArea from 'antd/es/input/TextArea'
 
 interface IProps {
@@ -128,11 +129,14 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           <Controller
                             control={control}
                             name={`meanings.${nestIndex}.examples.${key}.origin`}
-                            render={({ field }) => (
-                              <TextArea
+                            render={({ field: { onChange, value } }) => (
+                              <ReviewableTextArea
                                 autoSize={{ minRows: 1, maxRows: 4 }}
                                 placeholder='Original:'
-                                {...field}
+                                value={value}
+                                onChange={onChange}
+                                language='en'
+                                enableReview={true}
                               />
                             )}
                           />

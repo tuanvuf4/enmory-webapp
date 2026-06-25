@@ -7,12 +7,11 @@ import { isGroupWord } from '@/helpers/validate'
 import { ECategory, IItem, IExample, IMeaning } from '@/models/item.model'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
-import { InputTag } from '@/views/components'
-import { Level } from '@/views/components'
+import { InputTag, Level, ReviewableTextArea } from '@/views/components'
 import { Reference } from '@/views/features/references/References'
-import { theme, Row, Space, Col, Select, AutoComplete, Checkbox, Button } from 'antd'
+import { theme, Row, Space, Col, Select, Checkbox, Button } from 'antd'
 import clsx from 'clsx'
-import { useEffect, Suspense, useRef, useState, useMemo } from 'react'
+import { useEffect, Suspense } from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
 import { initItem } from './data'
 import { MeaningItemForm } from './MeaningItemForm'
@@ -25,11 +24,6 @@ import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
 import { useModal } from '@/context/modal.context'
 import { useQueryClient } from '@tanstack/react-query'
 import { getMeaningsWithExamples } from '@/helpers/item'
-import TextArea from 'antd/es/input/TextArea'
-import {
-  IReviewSentenceResponse,
-  reviewSentenceService,
-} from '@/services/openai/reviewSentence.service'
 
 interface ItemFormProps {
   item: IItem
@@ -51,14 +45,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const { isPending: isUpdating, mutateAsync: updateMutation } = useUpdateItem()
 
   const queryClient = useQueryClient()
-
-  // Origin field review states
-  const originContainerRef = useRef<HTMLDivElement | null>(null)
-  const [originReviewOpen, setOriginReviewOpen] = useState(false)
-  const [originReviewState, setOriginReviewState] = useState<
-    'idle' | 'loading' | 'ready' | 'clean' | 'error'
-  >('idle')
-  const [originReviewResult, setOriginReviewResult] = useState<IReviewSentenceResponse | null>(null)
 
   const {
     control,
@@ -249,198 +235,27 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                   },
                 }}
                 render={({ field: { onChange, value }, fieldState: { invalid } }) => {
-                  const originReviewBadgeLabel = useMemo(() => {
-                    if (originReviewState === 'loading') return '...'
-                    if (originReviewState === 'clean') return '✓'
-                    if (originReviewState === 'error') return '!'
-                    if (originReviewState === 'ready') {
-                      const count = originReviewResult?.suggestions?.length || 0
-                      return String(count > 99 ? '99+' : count)
-                    }
-                    return 'R'
-                  }, [originReviewResult?.suggestions?.length, originReviewState])
-
-                  const handleOriginReview = async () => {
-                    const text = (value || '').trim()
-                    if (!text) {
-                      setOriginReviewState('idle')
-                      setOriginReviewResult(null)
-                      setOriginReviewOpen(false)
-                      return
-                    }
-
-                    setOriginReviewState('loading')
-                    setOriginReviewOpen(true)
-
-                    try {
-                      const response = await reviewSentenceService.reviewText({
-                        text,
-                        language: 'en',
-                      })
-                      if (response.isSuccess && response.content) {
-                        setOriginReviewResult(response.content)
-                        setOriginReviewState(
-                          response.content.suggestions.length > 0 ? 'ready' : 'clean',
-                        )
-                      } else {
-                        setOriginReviewState('error')
-                      }
-                    } catch (_error) {
-                      setOriginReviewState('error')
-                    }
-                  }
-
                   return (
-                    <div ref={originContainerRef} style={{ position: 'relative' }}>
-                      <AutoComplete
-                        value={value}
+                    <>
+                      <ReviewableTextArea
                         className={clsx(appStyle.fulWidth)}
-                        options={options}
-                      >
-                        <TextArea
-                          data-review-disabled='true'
-                          value={value}
-                          placeholder='Original'
-                          autoSize={{ minRows: 1, maxRows: 3 }}
-                          onChange={(e) => {
-                            const nextValue = e.target.value
-                            onChange(nextValue)
+                        value={value}
+                        placeholder='Original'
+                        autoSize={{ minRows: 1, maxRows: 3 }}
+                        onChange={(nextValue) => {
+                          onChange(nextValue)
 
-                            if (isGroupWord(nextValue) && catType === ECategory.WORD)
-                              setValue('catId', ECategory.PHRASE)
+                          if (isGroupWord(nextValue) && catType === ECategory.WORD)
+                            setValue('catId', ECategory.PHRASE)
 
-                            if (!isGroupWord(nextValue)) setValue('catId', ECategory.WORD)
+                          if (!isGroupWord(nextValue)) setValue('catId', ECategory.WORD)
 
-                            trigger('origin')
-
-                            if (originReviewState !== 'idle') {
-                              setOriginReviewState('idle')
-                              setOriginReviewResult(null)
-                              setOriginReviewOpen(false)
-                            }
-                          }}
-                          onBlur={() => trigger('origin')}
-                        />
-                      </AutoComplete>
-
-                      {value && (
-                        <button
-                          type='button'
-                          onClick={() => {
-                            if (originReviewOpen) {
-                              setOriginReviewOpen(false)
-                              return
-                            }
-
-                            if (originReviewResult && originReviewState !== 'loading') {
-                              setOriginReviewOpen(true)
-                              return
-                            }
-
-                            handleOriginReview()
-                          }}
-                          style={{
-                            position: 'absolute',
-                            right: 8,
-                            top: 8,
-                            width: 22,
-                            height: 22,
-                            border: 0,
-                            borderRadius: '50%',
-                            color: '#fff',
-                            fontSize: 11,
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            background:
-                              originReviewState === 'loading'
-                                ? '#1677ff'
-                                : originReviewState === 'ready'
-                                  ? '#fa8c16'
-                                  : originReviewState === 'clean'
-                                    ? '#52c41a'
-                                    : originReviewState === 'error'
-                                      ? '#ff4d4f'
-                                      : '#1677ff',
-                            boxShadow: '0 2px 8px rgba(0,0,0,.2)',
-                          }}
-                          title='Review origin'
-                        >
-                          {originReviewBadgeLabel}
-                        </button>
-                      )}
-
-                      {originReviewOpen && originReviewResult && (
-                        <div
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onTouchStart={(e) => e.stopPropagation()}
-                          style={{
-                            position: 'absolute',
-                            top: '100%',
-                            right: 0,
-                            marginTop: 8,
-                            width: 300,
-                            maxHeight: 300,
-                            overflowY: 'auto',
-                            background: '#fff',
-                            border: '1px solid #e8e8e8',
-                            borderRadius: 8,
-                            boxShadow: '0 8px 24px rgba(0,0,0,.15)',
-                            zIndex: 10,
-                          }}
-                        >
-                          <div
-                            style={{
-                              padding: '10px 12px',
-                              borderBottom: '1px solid #f0f0f0',
-                              fontSize: 12,
-                              fontWeight: 600,
-                            }}
-                          >
-                            {originReviewResult.summary || 'Suggestions'}
-                          </div>
-                          {originReviewResult.suggestions.length === 0 ? (
-                            <div style={{ padding: 12, fontSize: 12, color: '#666' }}>
-                              No suggestions.
-                            </div>
-                          ) : (
-                            originReviewResult.suggestions.map((suggestion, idx) => (
-                              <button
-                                key={idx}
-                                type='button'
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  onChange(suggestion.suggestion)
-                                  trigger('origin')
-                                  setOriginReviewOpen(false)
-                                }}
-                                style={{
-                                  display: 'block',
-                                  width: '100%',
-                                  textAlign: 'left',
-                                  padding: '8px 10px',
-                                  border: 0,
-                                  borderBottom: '1px solid #f5f5f5',
-                                  background: '#fff',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                <div style={{ fontSize: 12, color: '#999', marginBottom: 2 }}>
-                                  {suggestion.issue}
-                                </div>
-                                <div style={{ fontSize: 13, color: '#ff4d4f' }}>
-                                  {suggestion.current}
-                                </div>
-                                <div style={{ fontSize: 13, color: '#52c41a' }}>
-                                  → {suggestion.suggestion}
-                                </div>
-                                <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
-                                  {suggestion.explanation}
-                                </div>
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      )}
+                          trigger('origin')
+                        }}
+                        onBlur={() => trigger('origin')}
+                        language='en'
+                        enableReview={true}
+                      />
 
                       {invalid && errors.origin?.type === 'required' && (
                         <p className={clsx(appStyle.errorMsg, appStyle.textLeft)}>
@@ -453,7 +268,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                           {errors.origin?.message as string}
                         </p>
                       )}
-                    </div>
+                    </>
                   )
                 }}
               />

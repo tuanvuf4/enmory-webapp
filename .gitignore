@@ -26,6 +26,7 @@ bootstrap.sh
 **.tsbuildinfo
 dist
 dist_ext
+public_ext/extension-config.js
 
 # Editor directories and files
 .firebase/

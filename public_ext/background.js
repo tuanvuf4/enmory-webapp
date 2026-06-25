@@ -3,7 +3,12 @@ const WORD_CATEGORY_ID = 1
 const PHRASE_CATEGORY_ID = 2
 const OPENAI_MODEL = 'gpt-4o-mini'
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
-const BUILD_TIME_OPENAI_API_KEY = ''
+
+if (typeof importScripts === 'function') {
+  importScripts('extension-config.js')
+}
+
+const BUILD_TIME_OPENAI_API_KEY = self.__ENMORY_EXTENSION_CONFIG__?.openaiApiKey || ''
 
 const normalizeSelection = (value = '') => value.replace(/\s+/g, ' ').trim()
 
@@ -23,7 +28,20 @@ const parseReviewResult = (content, originalText) => {
         ? parsed.correctedText
         : originalText
 
-    let issues = Array.isArray(parsed.issues) ? parsed.issues : []
+    const rawIssues = Array.isArray(parsed.issues)
+      ? parsed.issues
+      : Array.isArray(parsed.suggestions)
+        ? parsed.suggestions
+        : []
+
+    let issues = rawIssues
+      .map((item) => ({
+        issue: typeof item?.issue === 'string' ? item.issue : 'style',
+        current: typeof item?.current === 'string' ? item.current : '',
+        suggestion: typeof item?.suggestion === 'string' ? item.suggestion : '',
+        explanation: typeof item?.explanation === 'string' ? item.explanation : '',
+      }))
+      .filter((item) => item.current || item.suggestion)
 
     if (!issues.length && correctedText !== originalText) {
       issues = [
@@ -69,7 +87,7 @@ const reviewSentence = async (text) => {
   const prompt = `You are an English writing assistant. Review this text and return ONLY JSON.\n\nRules:\n- Find ALL issues you can detect (grammar, spelling, word choice, punctuation, style).\n- Return granular issues, not only one global correction.\n- Include multiple issues when they are independent, even in the same sentence.\n- Return up to 10 issues, sorted by appearance order.\n- If no issue exists, return an empty issues array.\n\nJSON schema:\n{\n  "summary": "short assessment",\n  "correctedText": "best corrected sentence",\n  "issues": [\n    {\n      "issue": "grammar|spelling|word-choice|punctuation|style",\n      "current": "original fragment",\n      "suggestion": "replacement fragment",\n      "explanation": "short explanation"\n    }\n  ]\n}\n\nText: "${normalizedText}"`
 
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 18000)
+  const timeoutId = setTimeout(() => controller.abort(), 25000)
 
   const response = await fetch(OPENAI_API_URL, {
     method: 'POST',
@@ -82,7 +100,7 @@ const reviewSentence = async (text) => {
       model: OPENAI_MODEL,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
-      max_tokens: 1000,
+      max_tokens: 600,
     }),
   })
 

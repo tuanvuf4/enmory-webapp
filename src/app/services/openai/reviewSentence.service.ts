@@ -23,6 +23,11 @@ export interface IReviewSentenceRequest {
   language?: 'en' | 'vi'
 }
 
+const resolveApiKey = () => {
+  const envKey = String(import.meta.env.VITE_OPENAI_API_KEY || '').trim()
+  return envKey
+}
+
 const parseReviewResponse = (content: string): IReviewSentenceResponse => {
   try {
     const jsonMatch = content.match(/\{[\s\S]*\}/)
@@ -68,12 +73,12 @@ export const reviewSentenceService = {
     params: IReviewSentenceRequest,
   ): Promise<IHttpResponse<IReviewSentenceResponse>> => {
     try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY
+      const apiKey = resolveApiKey()
       if (!apiKey) {
         return {
           isSuccess: false,
           content: null as any,
-          message: 'OpenAI API key not configured',
+          message: 'OpenAI API key not configured.',
           statusCode: 400,
         }
       }

@@ -13,6 +13,7 @@ import { PropsWithChildren, useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import styles from './style.module.scss'
 import { initExampleData } from '@/constant/example'
+import { ReviewableTextArea } from '@/views/components'
 
 interface IProps {
   data?: IExample
@@ -148,13 +149,15 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
               }}
               render={({ field: { onChange, value } }) => {
                 return (
-                  <TextArea
+                  <ReviewableTextArea
                     disabled={!showTranslation && mode === ExampleMode.Translation}
                     autoSize={{ minRows: 2 }}
                     value={value}
                     placeholder='Origin'
                     className={styles.autoSearchInput}
-                    onChange={(text) => onChange(text.target.value)}
+                    onChange={onChange}
+                    language='en'
+                    enableReview={true}
                     allowClear={{
                       clearIcon: (
                         <CloseOutlined

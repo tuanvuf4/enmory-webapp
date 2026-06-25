@@ -110,7 +110,6 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
     if (!reviewBadge) return
 
     if (state === 'loading') {
-      reviewBadge.textContent = '...'
       reviewBadge.style.background = '#1677ff'
       reviewBadge.title = 'Reviewing...'
       return

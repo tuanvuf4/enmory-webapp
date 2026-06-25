@@ -54,7 +54,6 @@ export const ReviewableTextArea: React.FC<ReviewableTextAreaProps> = ({
   const [reviewResult, setReviewResult] = useState<IReviewSentenceResponse | null>(null)
 
   const reviewBadgeLabel = useMemo(() => {
-    if (reviewState === 'loading') return '...'
     if (reviewState === 'clean') return '✓'
     if (reviewState === 'error') return '!'
     if (reviewState === 'ready') {
@@ -176,30 +175,24 @@ export const ReviewableTextArea: React.FC<ReviewableTextAreaProps> = ({
   }
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
+    <div ref={containerRef} className='reviewable-textarea' style={{ position: 'relative' }}>
       <TextArea
         {...textAreaProps}
         value={value}
         onChange={handleChange}
         data-review-disabled='true'
+        style={{
+          ...(textAreaProps.style || {}),
+          paddingRight: 46,
+        }}
       />
 
       {value && (
         <button
           type='button'
+          className='reviewable-textarea__badge'
           onClick={handleBadgeClick}
           style={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            width: 22,
-            height: 22,
-            border: 0,
-            borderRadius: '50%',
-            color: '#fff',
-            fontSize: 11,
-            fontWeight: 700,
-            cursor: 'pointer',
             background:
               reviewState === 'loading'
                 ? '#1677ff'
@@ -210,10 +203,9 @@ export const ReviewableTextArea: React.FC<ReviewableTextAreaProps> = ({
                     : reviewState === 'error'
                       ? '#ff4d4f'
                       : '#1677ff',
-            boxShadow: '0 2px 8px rgba(0,0,0,.2)',
-            zIndex: 10,
           }}
           title='Review text'
+          aria-label='Review text'
         >
           {reviewBadgeLabel}
         </button>

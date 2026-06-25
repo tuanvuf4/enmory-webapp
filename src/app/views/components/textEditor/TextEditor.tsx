@@ -73,7 +73,6 @@ export const TextEditor = ({ content, onChange }: Omit<TextEditorProps, 'disable
   }, [content])
 
   const badgeLabel = useMemo(() => {
-    if (reviewState === 'loading') return '...'
     if (reviewState === 'clean') return '✓'
     if (reviewState === 'error') return '!'
     if (reviewState === 'ready') {

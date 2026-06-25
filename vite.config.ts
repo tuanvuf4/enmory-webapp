@@ -11,14 +11,15 @@ export default defineConfig(({ mode }) => {
     ...extensionEnv,
     ...process.env,
   }
+  const isExtensionBuild = mode === 'ext' || env.VITE_APP_TYPE === 'EXTENSION'
 
   return {
     base: './',
     plugins: [react()],
     build: {
-      outDir: env.VITE_APP_TYPE === 'WEB_APP' ? 'dist' : 'dist_ext',
+      outDir: isExtensionBuild ? 'dist_ext' : 'dist',
     },
-    publicDir: env.VITE_APP_TYPE === 'WEB_APP' ? 'public' : 'public_ext',
+    publicDir: isExtensionBuild ? 'public_ext' : 'public',
     css: {
       preprocessorOptions: {
         scss: {

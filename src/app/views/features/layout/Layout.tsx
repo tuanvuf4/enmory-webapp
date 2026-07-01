@@ -15,7 +15,7 @@ import { EViewPort } from '@/models/app.model'
 import { Loading } from '../loading'
 
 export const AppLayout: React.FC<PropsWithChildren> = (props) => {
-  const { isSidebarOpened, drawer, dockVisible } = useSelector((state) => state.setting)
+  const { isSidebarOpened, drawer } = useSelector((state) => state.setting)
   const { isAuth } = useSelector((state) => state.auth)
 
   const dispatch = useDispatch()
@@ -101,12 +101,10 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
           <AppHeader />
 
           <Content className={styles.contentStyle}>
-            <div className={styles.main} style={{ paddingBottom: dockVisible ? 100 : 0 }}>
-              {props.children}
-            </div>
+            <div className={styles.main}>{props.children}</div>
           </Content>
 
-          <AppFooter />
+          {isAuth && <AppFooter />}
         </Layout>
       </Layout>
 

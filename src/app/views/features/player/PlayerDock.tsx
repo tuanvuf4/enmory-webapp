@@ -10,12 +10,13 @@ import {
   StepForwardOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-import { Button } from 'antd'
+import { Button, message } from 'antd'
 import ReactPlayer from 'react-player'
 import styles from './style.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
+import { tracksApi } from '@/services/firebase'
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -25,13 +26,35 @@ export const PlayerDock = () => {
   const [trackListOpen, setTrackListOpen] = useState(false)
 
   const { currentTrack, tracks, player } = useSelector((state) => state.listening)
-  const { dockVisible } = useSelector((state) => state.setting)
   const dispatch = useDispatch()
 
   const trackIndex = tracks.findIndex((t) => t.id === currentTrack?.id)
 
   // Playback state (single object, setState(prev => ...) pattern)
   // const [state, setState] = useState<PlayerState>(initialState)
+
+  useEffect(() => {
+    fetchTracks()
+  }, [])
+
+  const fetchTracks = async () => {
+    try {
+      const response = await tracksApi.getTracks({
+        page: 1,
+        size: 100,
+        orderBy: 'created_date',
+        order: 'DESC',
+      })
+
+      if (response.isSuccess && response.content) {
+        dispatch(listeningAction.setTracks(response.content))
+      } else {
+        message.error(response.message || 'Failed to fetch tracks')
+      }
+    } catch (error: any) {
+      message.error(error.message || 'Error fetching tracks')
+    }
+  }
 
   const {
     src,
@@ -201,9 +224,9 @@ export const PlayerDock = () => {
   return (
     <>
       {/* Fixed footer dock */}
-      <div className={`${styles.playerDock} ${!dockVisible ? styles.playerDockHidden : ''}`}>
+      <div className={styles.playerDock}>
         {/* Track list panel (appears inside dock, above controls) */}
-        {trackListOpen && dockVisible && (
+        {trackListOpen && (
           <div className={styles.dockTrackList}>
             <div className={styles.dockTrackListHeader}>
               <span>Track list</span>
@@ -239,12 +262,15 @@ export const PlayerDock = () => {
 
         {/* Controls & seek bar */}
         <div className={styles.controls}>
+          <div className={styles.dockTitle}>{currentTrack?.title}</div>
+
           <div className={styles.dockControls}>
             <Button
               type={loop ? 'primary' : 'text'}
               size={'large'}
               title={'Repeat'}
               icon={<ReloadOutlined />}
+              style={{ background: 'transparent', boxShadow: 'none' }}
               onClick={() => handleToggleLoop()}
             />
 
@@ -289,6 +315,8 @@ export const PlayerDock = () => {
 
             <Button
               type={trackListOpen ? 'primary' : 'text'}
+              variant={'text'}
+              style={{ background: 'transparent', boxShadow: 'none' }}
               icon={<UnorderedListOutlined />}
               onClick={() => setTrackListOpen((v) => !v)}
             />
@@ -312,7 +340,6 @@ export const PlayerDock = () => {
 
         {/* Track info + seek bar */}
         <div className={styles.dockMeta}>
-          <div className={styles.dockTitle}>{currentTrack?.title}</div>
           {activeSegmentText && <div className={styles.liveTranscript}>{activeSegmentText}</div>}
         </div>
 

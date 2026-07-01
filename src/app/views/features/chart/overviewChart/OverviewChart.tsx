@@ -13,7 +13,7 @@ interface IProps {
   title?: string
 }
 
-export const OverviewChart: React.FC<IProps> = ({ title = 'Overview' }) => {
+export const OverviewChart: React.FC<IProps> = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>()
   const [total, setTotal] = useState<number>(0)
@@ -64,11 +64,7 @@ export const OverviewChart: React.FC<IProps> = ({ title = 'Overview' }) => {
 
   return (
     <div className={styles.chartItem}>
-      {isLoaded && (
-        <h3 className={styles.chartTitle}>
-          {title} : {total} items
-        </h3>
-      )}
+      {isLoaded && <h3 className={styles.chartTitle}>{total} items</h3>}
 
       {!isLoaded && <Skeleton />}
 

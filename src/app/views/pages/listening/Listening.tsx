@@ -15,7 +15,6 @@ import { useDispatch, useSelector } from '@/core/hooks'
 
 export const Listening = () => {
   const [open, setOpen] = useState(false)
-  const [, setIsFetching] = useState(false)
   const [selectedTrack, setSelectedTrack] = useState<ITracks | undefined>(undefined)
 
   const { tracks, currentTrack } = useSelector((state) => state.listening)
@@ -35,7 +34,6 @@ export const Listening = () => {
 
   const fetchTracks = async () => {
     try {
-      setIsFetching(true)
       const response = await tracksApi.getTracks({
         page: 1,
         size: 100,
@@ -50,8 +48,6 @@ export const Listening = () => {
       }
     } catch (error: any) {
       message.error(error.message || 'Error fetching tracks')
-    } finally {
-      setIsFetching(false)
     }
   }
 
@@ -64,7 +60,6 @@ export const Listening = () => {
     if (selectedTrack?.id) {
       // Update existing track
       dispatch(listeningAction.updateTrack(track))
-      message.success('Track updated successfully')
     } else {
       // Add new track to the beginning (latest first)
       dispatch(listeningAction.addTrack(track))

@@ -74,7 +74,7 @@ export const LiveTranscript: React.FC<IProps> = ({ transcript, playedSeconds, on
       <div ref={containerRef} className={styles.liveTranscriptFull} onScroll={handleScroll}>
         {segments.map((seg, i) => (
           <div
-            key={seg.timeSeconds}
+            key={i}
             ref={i === activeIndex ? activeRef : null}
             className={`${styles.transcriptSegment} ${
               i === activeIndex ? styles.transcriptActive : ''

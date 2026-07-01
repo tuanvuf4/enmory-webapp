@@ -18,6 +18,13 @@
 
 .main {
   padding: 0 0 calc(var(--ant-size) * 2) 0;
+  padding-bottom: 100px;
+}
+
+@media screen and (max-width: 640px) {
+  .main {
+    padding-bottom: 180px;
+  }
 }
 
 .siteLayout {

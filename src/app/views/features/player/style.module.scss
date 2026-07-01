@@ -150,13 +150,14 @@
   bottom: 0;
   z-index: 999;
   display: flex;
-  height: 80px;
+  height: 100px;
   align-items: center;
   gap: calc(var(--ant-size) * 0.75);
   padding: calc(var(--ant-size) * 0.5);
-  background: color-mix(in srgb, var(--ant-color-primary) 85%, transparent);
+  background: color-mix(in srgb, var(--ant-color-primary) 95%, transparent);
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
+  transition: transform 0.3s ease;
 }
 
 .dockMeta {
@@ -171,13 +172,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-weight: 600;
   font-size: 14px;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .liveTranscript {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
   text-overflow: ellipsis;
 }
 
@@ -202,20 +202,11 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
-.playerDockHidden {
-  transform: translateY(calc(100% + 4px));
-  pointer-events: none;
-}
-
-.playerDock {
-  transition: transform 0.3s ease;
-}
-
 /* Track list panel above the dock */
 .dockTrackList {
   position: fixed;
   left: 0;
-  bottom: 80px;
+  bottom: 100px;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   max-height: 40vh;
   overflow-y: auto;
@@ -378,9 +369,5 @@
     gap: calc(var(--ant-size) * 0.5);
     padding-bottom: calc(var(--ant-size) * 0.75 + env(safe-area-inset-bottom));
     height: auto;
-  }
-
-  .playerDockHidden {
-    transform: translateY(calc(100% + 4px));
   }
 }

@@ -77,8 +77,13 @@ export const listeningReducer = createSlice({
     updatePlayer(state: IListeningState, action: PayloadAction<Partial<PlayerState>>) {
       state.player = { ...state.player, ...action.payload }
     },
-    resetPlayer(state: IListeningState) {
-      state.player = { ...initialState.player }
+    resetPlayer: {
+      reducer(state: IListeningState, action: PayloadAction<Partial<PlayerState> | undefined>) {
+        state.player = { ...initialState.player, ...(action.payload || {}) }
+      },
+      prepare(payload?: Partial<PlayerState>) {
+        return { payload }
+      },
     },
   },
 })

@@ -18,20 +18,16 @@ import { listeningAction } from '@/store/reducers/listening.reducer'
 import { getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import { tracksApi } from '@/services/firebase'
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const PlayerDock = () => {
   const playerRef = useRef<HTMLVideoElement | null>(null)
 
   const [trackListOpen, setTrackListOpen] = useState(false)
+  const [playerKey, setPlayerKey] = useState(0)
 
   const { currentTrack, tracks, player } = useSelector((state) => state.listening)
   const dispatch = useDispatch()
 
   const trackIndex = tracks.findIndex((t) => t.id === currentTrack?.id)
-
-  // Playback state (single object, setState(prev => ...) pattern)
-  // const [state, setState] = useState<PlayerState>(initialState)
 
   useEffect(() => {
     fetchTracks()
@@ -76,7 +72,6 @@ export const PlayerDock = () => {
     playerRef.current = player
   }, [])
 
-  // ── Live transcript ───────────────────────────────────────────────────────
   const transcriptSegments = useMemo(
     () => parseTranscript(currentTrack?.transcript || ''),
     [currentTrack?.transcript],
@@ -86,7 +81,6 @@ export const PlayerDock = () => {
     return idx >= 0 ? transcriptSegments[idx].text : ''
   }, [transcriptSegments, playedSeconds])
 
-  // ── Seek-to from transcript click (dispatched by LiveTranscript in Player) ─
   useEffect(() => {
     if (seekTo === null || seekTo === undefined) return
     if (!playerRef.current) return
@@ -165,10 +159,14 @@ export const PlayerDock = () => {
   }
 
   const handleEnded = () => {
-    loop ? dispatch(listeningAction.updatePlayer({ playing: true })) : onNext()
+    console.log(`*** handleEnded *** `)
+    if (loop) {
+      setPlayerKey((prevKey) => prevKey + 1)
+    } else {
+      onNext()
+    }
   }
 
-  // ── Seek handlers (from official example) ─────────────────────────────────
   const handleSeekMouseDown = () => {
     dispatch(listeningAction.updatePlayer({ seeking: true }))
   }
@@ -191,15 +189,20 @@ export const PlayerDock = () => {
     }
   }
 
-  // ── Navigation ────────────────────────────────────────────────────────────
   const onPrev = () => {
-    // if (!syncState.tracks.length) return
-    // const nextIndex = (trackIndex - 1 + syncState.tracks.length) % syncState.tracks.length
+    dispatch(listeningAction.resetPlayer({ loop }))
+    const index = trackIndex - 1 < 0 ? tracks.length - 1 : trackIndex - 1
+    const item = tracks[index]
+    dispatch(listeningAction.setCurrentTrack(item))
+    setTimeout(() => handlePlay(), 1000)
   }
 
   const onNext = () => {
-    // if (!syncState.tracks.length) return
-    // const nextIndex = (syncState.currentIndex + 1) % syncState.tracks.length
+    dispatch(listeningAction.resetPlayer({ loop }))
+    const index = trackIndex + 1 === tracks.length ? 0 : trackIndex + 1
+    const item = tracks[index]
+    dispatch(listeningAction.setCurrentTrack(item))
+    setTimeout(() => handlePlay(), 1000)
   }
 
   const onSeekBy = (offset: number) => {
@@ -222,181 +225,172 @@ export const PlayerDock = () => {
   }
 
   return (
-    <>
-      {/* Fixed footer dock */}
-      <div className={styles.playerDock}>
-        {/* Track list panel (appears inside dock, above controls) */}
-        {trackListOpen && (
-          <div className={styles.dockTrackList}>
-            <div className={styles.dockTrackListHeader}>
-              <span>Track list</span>
-              <button className={styles.dockTrackListClose} onClick={() => setTrackListOpen(false)}>
-                <CloseOutlined />
-              </button>
-            </div>
-            <ul>
-              {tracks.map((track, index) => (
-                <li
-                  key={`dock-track-${track.id ?? index}`}
-                  className={index === trackIndex ? styles.active : ''}
-                  onClick={() => {
-                    setTrackListOpen(false)
-                    dispatch(listeningAction.resetPlayer())
-                    dispatch(listeningAction.setCurrentTrack(track))
-                  }}
-                >
-                  {`${index + 1}. ${track.title}`}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* <div>
-          {dockVisible && (
-            <Button type='text' onClick={() => dispatch(settingAction.toggleDock())}>
+    <div className={styles.playerDock}>
+      {/* Track list panel (appears inside dock, above controls) */}
+      {trackListOpen && (
+        <div className={styles.dockTrackList}>
+          <div className={styles.dockTrackListHeader}>
+            <span>Track list</span>
+            <button className={styles.dockTrackListClose} onClick={() => setTrackListOpen(false)}>
               <CloseOutlined />
-            </Button>
-          )}
-        </div> */}
-
-        {/* Controls & seek bar */}
-        <div className={styles.controls}>
-          <div className={styles.dockTitle}>{currentTrack?.title}</div>
-
-          <div className={styles.dockControls}>
-            <Button
-              type={loop ? 'primary' : 'text'}
-              size={'large'}
-              title={'Repeat'}
-              icon={<ReloadOutlined />}
-              style={{ background: 'transparent', boxShadow: 'none' }}
-              onClick={() => handleToggleLoop()}
-            />
-
-            <Button
-              type='text'
-              size={'large'}
-              title={'Previous'}
-              icon={<StepBackwardOutlined />}
-              onClick={onPrev}
-            />
-
-            <Button
-              type='text'
-              size={'large'}
-              title={'-10s'}
-              icon={<FastBackwardOutlined />}
-              onClick={() => onSeekBy(-10)}
-            />
-
-            <Button
-              type='text'
-              size={'large'}
-              icon={playing ? <PauseCircleFilled /> : <PlayCircleFilled />}
-              onClick={playing ? handlePause : handlePlay}
-            />
-
-            <Button
-              type='text'
-              size={'large'}
-              title={'+10s'}
-              icon={<FastForwardOutlined />}
-              onClick={() => onSeekBy(10)}
-            />
-
-            <Button
-              type='text'
-              size={'large'}
-              title={'Next'}
-              icon={<StepForwardOutlined />}
-              onClick={onNext}
-            />
-
-            <Button
-              type={trackListOpen ? 'primary' : 'text'}
-              variant={'text'}
-              style={{ background: 'transparent', boxShadow: 'none' }}
-              icon={<UnorderedListOutlined />}
-              onClick={() => setTrackListOpen((v) => !v)}
-            />
+            </button>
           </div>
 
-          <div className={styles.seekBar}>
-            <span>{formatTime(duration * played)}</span>
-            <input
-              type='range'
-              min={0}
-              max={0.999999}
-              step='any'
-              value={played}
-              onMouseDown={handleSeekMouseDown}
-              onChange={handleSeekChange}
-              onMouseUp={handleSeekMouseUp}
-            />
-            <span>{formatTime(duration)}</span>
-          </div>
+          <ul>
+            {tracks.map((track, index) => (
+              <li
+                key={`dock-track-${track.id ?? index}`}
+                className={index === trackIndex ? styles.active : ''}
+                onClick={() => {
+                  setTrackListOpen(false)
+                  dispatch(listeningAction.resetPlayer({ loop }))
+                  dispatch(listeningAction.setCurrentTrack(track))
+                }}
+              >
+                {`${index + 1}. ${track.title}`}
+              </li>
+            ))}
+          </ul>
         </div>
+      )}
 
-        {/* Track info + seek bar */}
-        <div className={styles.dockMeta}>
-          {activeSegmentText && <div className={styles.liveTranscript}>{activeSegmentText}</div>}
-        </div>
+      {/* Controls & seek bar */}
+      <div className={styles.controls}>
+        <div className={styles.dockTitle}>{currentTrack?.title}</div>
 
-        {/* Hidden ReactPlayer engine */}
-        <div style={{ display: 'none' }}>
-          <ReactPlayer
-            ref={setPlayerRef}
-            className='react-player'
-            style={{ width: '100%', height: 'auto', aspectRatio: '16/9' }}
-            src={src}
-            pip={pip}
-            playing={playing}
-            controls={controls}
-            light={light}
-            loop={loop}
-            playbackRate={playbackRate}
-            volume={volume}
-            muted={muted}
-            config={{
-              youtube: {
-                color: 'white',
-              },
-              vimeo: {
-                color: 'ffffff',
-              },
-              spotify: {
-                preferVideo: true,
-              },
-              tiktok: {
-                fullscreen_button: true,
-                progress_bar: true,
-                play_button: true,
-                volume_control: true,
-                timestamp: false,
-                music_info: false,
-                description: false,
-                rel: false,
-                native_context_menu: true,
-                closed_caption: false,
-              },
-            }}
-            onLoadStart={() => console.log('onLoadStart')}
-            onReady={() => console.log('onReady')}
-            onStart={(e) => console.log('onStart', e)}
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onRateChange={handleRateChange}
-            onSeeking={(e) => console.log('onSeeking', e)}
-            onSeeked={(e) => console.log('onSeeked', e)}
-            onEnded={handleEnded}
-            onError={(e) => console.log('onError', e)}
-            onTimeUpdate={handleTimeUpdate}
-            onProgress={handleProgress}
-            onDurationChange={handleDurationChange}
+        <div className={styles.dockControls}>
+          <Button
+            type={loop ? 'primary' : 'text'}
+            size={'large'}
+            title={'Repeat'}
+            icon={<ReloadOutlined />}
+            style={{ background: 'transparent', boxShadow: 'none' }}
+            onClick={() => handleToggleLoop()}
+          />
+
+          <Button
+            type='text'
+            size={'large'}
+            title={'Previous'}
+            icon={<StepBackwardOutlined />}
+            onClick={onPrev}
+          />
+
+          <Button
+            type='text'
+            size={'large'}
+            title={'-10s'}
+            icon={<FastBackwardOutlined />}
+            onClick={() => onSeekBy(-10)}
+          />
+
+          <Button
+            type='text'
+            size={'large'}
+            icon={playing ? <PauseCircleFilled /> : <PlayCircleFilled />}
+            onClick={playing ? handlePause : handlePlay}
+          />
+
+          <Button
+            type='text'
+            size={'large'}
+            title={'+10s'}
+            icon={<FastForwardOutlined />}
+            onClick={() => onSeekBy(10)}
+          />
+
+          <Button
+            type='text'
+            size={'large'}
+            title={'Next'}
+            icon={<StepForwardOutlined />}
+            onClick={onNext}
+          />
+
+          <Button
+            type={trackListOpen ? 'primary' : 'text'}
+            variant={'text'}
+            style={{ background: 'transparent', boxShadow: 'none' }}
+            icon={<UnorderedListOutlined />}
+            onClick={() => setTrackListOpen((v) => !v)}
           />
         </div>
+
+        <div className={styles.seekBar}>
+          <span>{formatTime(duration * played)}</span>
+          <input
+            type='range'
+            min={0}
+            max={0.999999}
+            step='any'
+            value={played}
+            onMouseDown={handleSeekMouseDown}
+            onChange={handleSeekChange}
+            onMouseUp={handleSeekMouseUp}
+          />
+          <span>{formatTime(duration)}</span>
+        </div>
       </div>
-    </>
+
+      {/* Track info + seek bar */}
+      <div className={styles.dockMeta}>
+        {activeSegmentText && <div className={styles.liveTranscript}>{activeSegmentText}</div>}
+      </div>
+
+      {/* Hidden ReactPlayer engine */}
+      <div style={{ display: 'none' }}>
+        <ReactPlayer
+          key={playerKey}
+          ref={setPlayerRef}
+          className='react-player'
+          style={{ width: '100%', height: 'auto', aspectRatio: '16/9' }}
+          src={src}
+          pip={pip}
+          playing={playing}
+          controls={controls}
+          light={light}
+          loop={loop}
+          playbackRate={playbackRate}
+          volume={volume}
+          muted={muted}
+          config={{
+            youtube: {
+              color: 'white',
+            },
+            vimeo: {
+              color: 'ffffff',
+            },
+            spotify: {
+              preferVideo: true,
+            },
+            tiktok: {
+              fullscreen_button: true,
+              progress_bar: true,
+              play_button: true,
+              volume_control: true,
+              timestamp: false,
+              music_info: false,
+              description: false,
+              rel: false,
+              native_context_menu: true,
+              closed_caption: false,
+            },
+          }}
+          onLoadStart={() => console.log('onLoadStart')}
+          onReady={() => console.log('onReady')}
+          onStart={(e) => console.log('onStart', e)}
+          onPlay={handlePlay}
+          onPause={handlePause}
+          onRateChange={handleRateChange}
+          onSeeking={(e) => console.log('onSeeking', e)}
+          onSeeked={(e) => console.log('onSeeked', e)}
+          onEnded={handleEnded}
+          onError={(e) => console.log('onError', e)}
+          onTimeUpdate={handleTimeUpdate}
+          onProgress={handleProgress}
+          onDurationChange={handleDurationChange}
+        />
+      </div>
+    </div>
   )
 }

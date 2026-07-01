@@ -74,7 +74,11 @@ export const Player: React.FC<IProps> = ({ onAdd, onDelete, onCurrentUpdating })
                   className={key === trackIndex ? styles.active : ''}
                   key={`track-${track.id}`}
                   onClick={() => {
-                    dispatch(listeningAction.resetPlayer())
+                    dispatch(
+                      listeningAction.resetPlayer({
+                        loop: player.loop,
+                      }),
+                    )
                     dispatch(listeningAction.setCurrentTrack(track))
                   }}
                   style={{ cursor: 'pointer' }}

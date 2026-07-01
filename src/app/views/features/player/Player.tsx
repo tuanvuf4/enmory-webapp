@@ -1,16 +1,12 @@
 import { Button } from 'antd'
 import styles from './style.module.scss'
 import { styleConfig } from '@/style/appStyle'
-import {
-  DeleteOutlined,
-  EditOutlined,
-  PlusOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
+import { LiveTranscript } from './LiveTranscript'
 
 interface IProps {
   onAdd: () => void
@@ -21,7 +17,7 @@ interface IProps {
 export const Player: React.FC<IProps> = ({ onAdd, onDelete, onCurrentUpdating }) => {
   const { confirmDeleteModal } = usePrompt()
 
-  const { currentTrack, tracks } = useSelector((state) => state.listening)
+  const { currentTrack, tracks, player } = useSelector((state) => state.listening)
   const dispatch = useDispatch()
 
   const handleDelete = (trackId: number, trackTitle: string) => {
@@ -49,7 +45,12 @@ export const Player: React.FC<IProps> = ({ onAdd, onDelete, onCurrentUpdating })
                 ? tracks.find((t) => t.id === currentTrack?.id)?.title
                 : 'No track selected'}
             </div>
-            <div className={styles.trackSubTitle}>Spotify-like player with persistent footer</div>
+            <div
+              className={styles.trackDescription}
+              dangerouslySetInnerHTML={{
+                __html: currentTrack?.description || 'No description available',
+              }}
+            />
           </div>
         </div>
 
@@ -118,11 +119,12 @@ export const Player: React.FC<IProps> = ({ onAdd, onDelete, onCurrentUpdating })
 
       {currentTrack?.transcript && (
         <div className={clsx(styles.audioPlayer, styles.transcriptCard)}>
-          <h3>Transcript:</h3>
-
-          <div
-            className={styles.transcript}
-            dangerouslySetInnerHTML={{ __html: currentTrack?.transcript || '' }}
+          <LiveTranscript
+            transcript={currentTrack.transcript}
+            playedSeconds={player.playedSeconds}
+            onSeekTo={(seconds) =>
+              dispatch(listeningAction.updatePlayer({ seekTo: seconds, playing: true }))
+            }
           />
         </div>
       )}

@@ -207,14 +207,16 @@ export const MediaUploadModal: React.FC<IProps> = ({
                 name={`description`}
                 render={({ field }) => (
                   <>
-                    <TextArea
+                    {/* <TextArea
                       rows={2}
                       maxLength={
                         appSetting.listening.maxLengthTranscript + appSetting.listening.threshold
                       }
                       placeholder='Description'
                       {...field}
-                    />
+                    /> */}
+
+                    <TextEditor content={field.value} onChange={field.onChange} />
 
                     {errors.description && (
                       <div style={{ color: 'red', fontSize: '12px' }}>
@@ -302,7 +304,11 @@ export const MediaUploadModal: React.FC<IProps> = ({
                   <>
                     <p>Transcript:</p>
 
-                    <TextEditor content={field.value} onChange={field.onChange} />
+                    <TextArea
+                      autoSize={{ minRows: 4, maxRows: 12 }}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
 
                     {errors.transcript && (
                       <div style={{ color: 'red', fontSize: '12px' }}>

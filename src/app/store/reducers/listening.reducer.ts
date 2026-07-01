@@ -17,6 +17,7 @@ export interface PlayerState {
   seeking: boolean
   loadedSeconds: number
   playedSeconds: number
+  seekTo: number | null
 }
 
 export interface IListeningState {
@@ -44,6 +45,7 @@ export const initialState: IListeningState = {
     seeking: false,
     loadedSeconds: 0,
     playedSeconds: 0,
+    seekTo: null,
   },
 }
 

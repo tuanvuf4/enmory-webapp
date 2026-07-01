@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   CloseOutlined,
   FastBackwardOutlined,
@@ -10,36 +10,12 @@ import {
   StepForwardOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-import { Button, Flex } from 'antd'
+import { Button } from 'antd'
 import ReactPlayer from 'react-player'
 import styles from './style.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks'
-import { settingAction } from '@/store/reducers/setting.reducer'
 import { listeningAction } from '@/store/reducers/listening.reducer'
-
-// ─── Player local state (mirrors official react-player example) ──────────────
-
-const initialState = {
-  src: undefined,
-  pip: false,
-  playing: false,
-  controls: true,
-  light: false,
-  volume: 1,
-  muted: false,
-  played: 0,
-  loaded: 0,
-  duration: 0,
-  playbackRate: 1.0,
-  loop: false,
-  seeking: false,
-  loadedSeconds: 0,
-  playedSeconds: 0,
-}
-
-type PlayerState = Omit<typeof initialState, 'src'> & {
-  src?: string
-}
+import { getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -66,19 +42,34 @@ export const PlayerDock = () => {
     muted,
     loop,
     played,
-    loaded,
     duration,
     playbackRate,
     pip,
+    seekTo,
+    playedSeconds,
   } = player
 
   const setPlayerRef = useCallback((player: HTMLVideoElement) => {
     playerRef.current = player
   }, [])
 
+  // ── Live transcript ───────────────────────────────────────────────────────
+  const transcriptSegments = useMemo(
+    () => parseTranscript(currentTrack?.transcript || ''),
+    [currentTrack?.transcript],
+  )
+  const activeSegmentText = useMemo(() => {
+    const idx = getActiveSegmentIndex(transcriptSegments, playedSeconds)
+    return idx >= 0 ? transcriptSegments[idx].text : ''
+  }, [transcriptSegments, playedSeconds])
+
+  // ── Seek-to from transcript click (dispatched by LiveTranscript in Player) ─
   useEffect(() => {
-    if (currentTrack) load(currentTrack.srcUrl)
-  }, [currentTrack])
+    if (seekTo === null || seekTo === undefined) return
+    if (!playerRef.current) return
+    playerRef.current.currentTime = seekTo
+    dispatch(listeningAction.updatePlayer({ seekTo: null, playing: true }))
+  }, [seekTo])
 
   const handlePlay = () => dispatch(listeningAction.updatePlayer({ playing: true }))
   const handlePause = () => dispatch(listeningAction.updatePlayer({ playing: false }))
@@ -94,6 +85,10 @@ export const PlayerDock = () => {
       }),
     )
   }
+
+  useEffect(() => {
+    if (currentTrack) load(currentTrack.srcUrl)
+  }, [currentTrack])
 
   const handleDurationChange = () => {
     const player = playerRef.current
@@ -122,14 +117,6 @@ export const PlayerDock = () => {
     dispatch(listeningAction.updatePlayer({ loop: !player.loop }))
   }
 
-  const handleSetPlaybackRate = (event: React.SyntheticEvent<HTMLButtonElement>) => {
-    const buttonTarget = event.target as HTMLButtonElement
-    dispatch(
-      listeningAction.updatePlayer({
-        playbackRate: Number.parseFloat(`${buttonTarget.dataset.value}`),
-      }),
-    )
-  }
   const handleRateChange = () => {
     const player = playerRef.current
     if (!player) return
@@ -326,7 +313,7 @@ export const PlayerDock = () => {
         {/* Track info + seek bar */}
         <div className={styles.dockMeta}>
           <div className={styles.dockTitle}>{currentTrack?.title}</div>
-          <div className={styles.liveTranscript}>asdfasdfasdfasdf asdfasdfa sdfas</div>
+          {activeSegmentText && <div className={styles.liveTranscript}>{activeSegmentText}</div>}
         </div>
 
         {/* Hidden ReactPlayer engine */}

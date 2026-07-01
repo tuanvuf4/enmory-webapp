@@ -51,7 +51,7 @@ const AppWrapper: React.FC<IAppTypeProps> = ({ type }) => (
               </AntdApp>
             </StyleProvider>
           </ConfigProvider>
-          {/* <ReactQueryDevtools initialIsOpen={false} /> */}
+          <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
       </BrowserRouter>
     </Provider>

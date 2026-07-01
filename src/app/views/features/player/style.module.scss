@@ -17,17 +17,52 @@
   box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
 }
 
-.player {
+.playerCard {
   flex: 1 0 auto;
-  justify-content: space-between;
   margin: 0 auto;
-  gap: calc(var(--ant-size) * 1px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--ant-size) * 1);
+  min-height: 220px;
   padding: calc(var(--ant-size));
-  min-height: 370px;
 }
 
 .tracks {
   flex: 0 0 350px;
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ant-size) * 0.25);
+}
+
+.nowPlaying {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ant-size) * 0.25);
+}
+
+.trackTitle {
+  font-size: var(--ant-font-size-heading-4);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.trackSubTitle {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+// .controls {
+//   display: flex;
+//   flex-wrap: wrap;
+//   align-items: center;
+//   gap: calc(var(--ant-size) * 0.5);
+// }
+
+.primaryAction {
+  font-size: 30px !important;
 }
 
 .transcript {
@@ -39,7 +74,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(var(--ant-size) * 0.5px);
+  padding: calc(var(--ant-size) * 0.5);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 
   & h2 {
@@ -50,7 +85,7 @@
 }
 
 .tracksContent {
-  padding: 0 0 calc(var(--ant-size) * 0.5px) 0;
+  padding: 0 0 calc(var(--ant-size) * 0.5) 0;
 
   & ul {
     max-height: 316px;
@@ -60,10 +95,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: calc(var(--ant-size) * 0.5px) calc(var(--ant-size) * 0.5px)
-        calc(var(--ant-size) * 0.5px) calc(var(--ant-size) * 0.5px);
+      padding: calc(var(--ant-size) * 0.5);
       cursor: pointer;
-      gap: calc(var(--ant-size) * 0.5px);
+      gap: calc(var(--ant-size) * 0.5);
+      transition: 0.2s;
 
       &:hover {
         background: rgba(82, 82, 82, 0.8);
@@ -76,15 +111,164 @@
   background: rgba(82, 82, 82, 0.8);
 }
 
-.iFrameSrc {
-  & iframe {
-    display: block;
-    min-height: 352px;
-    width: 100%;
+.seekBar {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ant-size) * 0.5);
+
+  & input {
+    flex: 1;
+    accent-color: var(--ant-color-primary);
+  }
+
+  & span {
+    min-width: 42px;
+    font-size: 12px;
+  }
+}
+
+.transcriptCard {
+  display: block;
+  margin: 0 auto;
+  padding: calc(var(--ant-size));
+}
+
+.playerDock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  display: flex;
+  height: 80px;
+  align-items: center;
+  gap: calc(var(--ant-size) * 0.75);
+  padding: calc(var(--ant-size) * 0.5);
+  background: color-mix(in srgb, var(--ant-color-primary) 85%, transparent);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.dockMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ant-size) * 0.25);
+}
+
+.dockTitle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.liveTranscript {
+  font-size: 20px;
+  color: var(--ant-color-white);
+}
+
+.dockControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--ant-size) * 0.25);
+}
+
+.dockFallbackFrame {
+  width: 1px;
+  height: 1px;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dockHint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.playerDockHidden {
+  transform: translateY(calc(100% + 4px));
+  pointer-events: none;
+}
+
+.playerDock {
+  transition: transform 0.3s ease;
+}
+
+/* Track list panel above the dock */
+.dockTrackList {
+  position: fixed;
+  left: 0;
+  bottom: 80px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  max-height: 40vh;
+  overflow-y: auto;
+  width: 300px;
+  backdrop-filter: blur(8px);
+  background: rgba(10, 16, 28, 0.97);
+  z-index: 998;
+
+  & ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    & li {
+      padding: 12px 16px;
+      cursor: pointer;
+      color: var(--ant-color-white);
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      transition: background 0.15s;
+      text-align: left;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+    }
+  }
+}
+
+.dockTrackListHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dockTrackListClose {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  line-height: 1;
+
+  &:hover {
+    color: var(--ant-color-white);
   }
 }
 
 @media screen and (max-width: 640px) {
+  .controls {
+    order: 1;
+  }
+  .dockTrackList {
+    width: 100%;
+    bottom: 0;
+  }
+
   .transcript {
     max-height: 400px;
   }
@@ -100,25 +284,35 @@
 
   .audioPlayer {
     display: block;
-    margin: 0;
-    border: none;
+    margin: 0 auto;
   }
 
-  .player {
-    position: sticky;
-    top: 0;
-    z-index: 10;
+  .playerCard {
     min-height: auto;
-    overflow-y: auto;
   }
 
   .tracks {
     flex: 1 0 100%;
   }
 
-  .iFrameSrc {
-    & iframe {
-      min-height: auto;
+  .seekBar {
+    width: 100%;
+
+    & span {
+      min-width: 36px;
+      font-size: 11px;
     }
+  }
+
+  .playerDock {
+    flex-direction: column;
+    align-items: stretch;
+    gap: calc(var(--ant-size) * 0.5);
+    padding-bottom: calc(var(--ant-size) * 0.75 + env(safe-area-inset-bottom));
+    height: auto;
+  }
+
+  .playerDockHidden {
+    transform: translateY(calc(100% + 4px));
   }
 }

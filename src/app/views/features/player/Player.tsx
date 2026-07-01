@@ -1,43 +1,28 @@
-import { useEffect, useState } from 'react'
-import { Button, theme } from 'antd'
+import { Button } from 'antd'
 import styles from './style.module.scss'
 import { styleConfig } from '@/style/appStyle'
-import { CaretRightFilled, DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { ITracks } from '@/models/media.model'
-import { TSourceTypes } from '@/constant/media'
+import {
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
+import { useDispatch, useSelector } from '@/core/hooks'
+import { listeningAction } from '@/store/reducers/listening.reducer'
 
 interface IProps {
-  tracks: ITracks[]
-  current: number
   onAdd: () => void
-  setTrackIndex: (index: number) => void
   onDelete: (id: number) => void
   onCurrentUpdating: (id: number) => void
-  onSelectTrack: (index: number) => void
 }
 
-export const Player: React.FC<IProps> = ({
-  tracks,
-  current,
-  onAdd,
-  onDelete,
-  onCurrentUpdating,
-  onSelectTrack,
-}) => {
-  const { token } = theme.useToken()
+export const Player: React.FC<IProps> = ({ onAdd, onDelete, onCurrentUpdating }) => {
   const { confirmDeleteModal } = usePrompt()
 
-  const [currentTrack, setCurrentTrack] = useState<ITracks | null>(null)
-
-  const [show, setShow] = useState(true)
-
-  useEffect(() => {
-    if (tracks.length > 0 && current >= 0) {
-      setCurrentTrack(tracks[current])
-    }
-  }, [tracks, current])
+  const { currentTrack, tracks } = useSelector((state) => state.listening)
+  const dispatch = useDispatch()
 
   const handleDelete = (trackId: number, trackTitle: string) => {
     confirmDeleteModal({
@@ -52,111 +37,87 @@ export const Player: React.FC<IProps> = ({
     })
   }
 
+  const trackIndex = tracks.findIndex((t) => t.id === currentTrack?.id)
+
   return (
     <div className={styles.playerWrapper}>
       <div className={styles.audioPlayer}>
-        <div className={styles.player}>
-          {currentTrack?.srcUrl && (
-            <>
-              {currentTrack.srcType === TSourceTypes.IFRAME && (
-                <div
-                  className={styles.iFrameSrc}
-                  dangerouslySetInnerHTML={{ __html: currentTrack?.srcUrl || '' }}
-                />
-              )}
-
-              {currentTrack.srcType === TSourceTypes.EMBED && (
-                <div className={styles.iFrameSrc}>
-                  <iframe src={currentTrack?.srcUrl || ''} frameBorder='0'></iframe>
-                </div>
-              )}
-            </>
-          )}
+        <div className={styles.playerCard}>
+          <div className={styles.nowPlaying}>
+            <div className={styles.trackTitle}>
+              {tracks.findIndex((t) => t.id === currentTrack?.id) !== -1
+                ? tracks.find((t) => t.id === currentTrack?.id)?.title
+                : 'No track selected'}
+            </div>
+            <div className={styles.trackSubTitle}>Spotify-like player with persistent footer</div>
+          </div>
         </div>
 
         <div className={styles.tracks}>
           <div className={styles.tracksTitle}>
-            <Button
-              style={{
-                background: 'transparent',
-                color: token.colorWhite,
-                border: 'none',
-              }}
-              icon={
-                show ? (
-                  <CaretRightFilled style={{ transform: 'rotate(90deg)' }} />
-                ) : (
-                  <CaretRightFilled />
-                )
-              }
-              onClick={() => setShow(!show)}
-            />
+            <span>Track list</span>
 
             <Button
-              style={{
-                background: 'transparent',
-                color: token.colorWhite,
-                border: 'none',
-              }}
+              type={'text'}
+              variant={'text'}
+              style={{ color: 'var(--ant-color-white)' }}
               icon={<PlusOutlined />}
               onClick={onAdd}
             />
           </div>
 
-          {show && (
-            <div className={styles.tracksContent}>
-              <ul>
-                {tracks.map((track, key) => (
-                  <li
-                    className={key === current ? styles.active : ''}
-                    key={`track-${track.id}`}
-                    onClick={() => onSelectTrack(key)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div>{`${key + 1}. ${track.title}`}</div>
+          <div className={styles.tracksContent}>
+            <ul>
+              {tracks.map((track, key) => (
+                <li
+                  className={key === trackIndex ? styles.active : ''}
+                  key={`track-${track.id}`}
+                  onClick={() => {
+                    dispatch(listeningAction.resetPlayer())
+                    dispatch(listeningAction.setCurrentTrack(track))
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div>{`${key + 1}. ${track.title}`}</div>
 
-                    <div className={styles.actionGroup}>
-                      <Button
-                        size='small'
-                        type='text'
-                        style={{
-                          background: 'transparent',
-                          color: styleConfig.color.yellow[4],
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onCurrentUpdating(track.id as number)
-                        }}
-                      >
-                        <EditOutlined />
-                      </Button>
+                  <div className={styles.actionGroup}>
+                    <Button
+                      size='small'
+                      type='text'
+                      style={{
+                        background: 'transparent',
+                        color: styleConfig.color.yellow[4],
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onCurrentUpdating(track.id as number)
+                      }}
+                    >
+                      <EditOutlined />
+                    </Button>
 
-                      <Button
-                        size='small'
-                        type='text'
-                        danger
-                        style={{ background: 'transparent' }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDelete(track.id as number, track.title)
-                        }}
-                      >
-                        <DeleteOutlined />
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                    <Button
+                      size='small'
+                      type='text'
+                      danger
+                      style={{ background: 'transparent' }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(track.id as number, track.title)
+                      }}
+                    >
+                      <DeleteOutlined />
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
       {currentTrack?.transcript && (
-        <div
-          className={clsx(styles.audioPlayer, 'p-4')}
-          style={{ margin: '0 auto', display: 'block' }}
-        >
+        <div className={clsx(styles.audioPlayer, styles.transcriptCard)}>
           <h3>Transcript:</h3>
 
           <div

@@ -3,6 +3,7 @@ import { IMediaForm } from '../models'
 export enum TSourceTypes {
   IFRAME,
   EMBED,
+  LINK,
 }
 
 export const initMediaForm: IMediaForm = {
@@ -11,5 +12,5 @@ export const initMediaForm: IMediaForm = {
   transcript: '',
   translation: '',
   srcUrl: '',
-  srcType: TSourceTypes.IFRAME,
+  srcType: TSourceTypes.LINK,
 }

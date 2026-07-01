@@ -19,6 +19,11 @@ import {
   exampleReducer,
   initialState as initialExampleState,
 } from './reducers/example.reducer'
+import {
+  IListeningState,
+  listeningReducer,
+  initialState as initialListeningState,
+} from './reducers/listening.reducer'
 
 export interface IAppState {
   auth: IAuthState
@@ -26,6 +31,7 @@ export interface IAppState {
   studySet: IStudySet
   iotd: IIotdState
   example: IExampleState
+  listening: IListeningState
 }
 
 const initialState: IAppState = {
@@ -34,6 +40,7 @@ const initialState: IAppState = {
   studySet: initialStudySet,
   iotd: initialIotdState,
   example: initialExampleState,
+  listening: initialListeningState,
 }
 
 const persistConfig: PersistConfig<IAppState> = {
@@ -66,6 +73,7 @@ const rootReducers = combineReducers({
   studySet: studySetReducer.reducer,
   iotd: iotdReducer.reducer,
   example: exampleReducer.reducer,
+  listening: listeningReducer.reducer,
 })
 
 export const store = configureStore({

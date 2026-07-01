@@ -9,23 +9,25 @@ import { useState, useEffect } from 'react'
 import { message } from 'antd'
 import { onAuthStateChanged } from 'firebase/auth'
 import { getAuth } from 'firebase/auth'
-import { useDispatch, useSelector } from 'react-redux'
 import { settingAction } from '@/store/reducers/setting.reducer'
+import { listeningAction } from '@/store/reducers/listening.reducer'
+import { useDispatch, useSelector } from '@/core/hooks'
 
 export const Listening = () => {
-  const dispatch = useDispatch()
-  const current = useSelector((state: any) => state.setting.trackIndex)
-
-  const [tracks, setTracks] = useState<ITracks[]>([])
   const [open, setOpen] = useState(false)
   const [, setIsFetching] = useState(false)
   const [selectedTrack, setSelectedTrack] = useState<ITracks | undefined>(undefined)
+
+  const { tracks, currentTrack } = useSelector((state) => state.listening)
+  const dispatch = useDispatch()
+
+  const trackIndex = tracks.findIndex((t) => t.id === currentTrack?.id)
 
   // Fetch tracks when user is authenticated
   useEffect(() => {
     const auth = getAuth()
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      user ? fetchTracks() : setTracks([])
+      user ? fetchTracks() : dispatch(listeningAction.setTracks([]))
     })
 
     return () => unsubscribe()
@@ -42,7 +44,7 @@ export const Listening = () => {
       })
 
       if (response.isSuccess && response.content) {
-        setTracks(response.content)
+        dispatch(listeningAction.setTracks(response.content))
       } else {
         message.error(response.message || 'Failed to fetch tracks')
       }
@@ -61,13 +63,13 @@ export const Listening = () => {
   const onConfirmTrack = (track: ITracks) => {
     if (selectedTrack?.id) {
       // Update existing track
-      setTracks(tracks.map((t) => (t.id === selectedTrack.id ? track : t)))
+      dispatch(listeningAction.updateTrack(track))
       message.success('Track updated successfully')
     } else {
       // Add new track to the beginning (latest first)
-      setTracks([track, ...tracks])
-      // Increment current index since new track is added at the beginning
-      dispatch(settingAction.setTrackIndex(current + 1))
+      dispatch(listeningAction.addTrack(track))
+      // Increment trackIndex index since new track is added at the beginning
+      dispatch(settingAction.setTrackIndex(trackIndex + 1))
       message.success('Track added successfully')
     }
     setOpen(false)
@@ -82,17 +84,17 @@ export const Listening = () => {
         const deletedIndex = tracks.findIndex((t) => t.id === trackId)
         const filteredTracks = tracks.filter((t) => t.id !== trackId)
 
-        setTracks(filteredTracks)
+        dispatch(listeningAction.removeTrack(trackId))
 
-        // Adjust current index if needed
-        let newIndex = current
-        if (deletedIndex === current && filteredTracks.length > 0) {
-          // If we deleted the current track, move to the previous one or first one
+        // Adjust trackIndex index if needed
+        let newIndex = trackIndex
+        if (deletedIndex === trackIndex && filteredTracks.length > 0) {
+          // If we deleted the trackIndex track, move to the previous one or first one
           newIndex = deletedIndex > 0 ? deletedIndex - 1 : 0
           dispatch(settingAction.setTrackIndex(newIndex))
-        } else if (deletedIndex < current) {
-          // If we deleted a track before the current one, shift index down by 1
-          newIndex = current - 1
+        } else if (deletedIndex < trackIndex) {
+          // If we deleted a track before the trackIndex one, shift index down by 1
+          newIndex = trackIndex - 1
           dispatch(settingAction.setTrackIndex(newIndex))
         } else if (filteredTracks.length === 0) {
           // If no tracks left, reset to 0
@@ -117,10 +119,6 @@ export const Listening = () => {
     }
   }
 
-  const setTrackIndex = (index: number) => {
-    dispatch(settingAction.setTrackIndex(index))
-  }
-
   return (
     <>
       <Toolbar pagination={undefined} />
@@ -129,15 +127,7 @@ export const Listening = () => {
         <PageTitle content={'Listening'} />
 
         <div className={clsx(appStyle.contentPage, appStyle.dark)}>
-          <Player
-            onAdd={onAdd}
-            tracks={tracks}
-            current={current}
-            setTrackIndex={setTrackIndex}
-            onDelete={onDelete}
-            onCurrentUpdating={onCurrentUpdating}
-            onSelectTrack={setTrackIndex}
-          />
+          <Player onAdd={onAdd} onDelete={onDelete} onCurrentUpdating={onCurrentUpdating} />
         </div>
       </div>
 

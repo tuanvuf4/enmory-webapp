@@ -107,6 +107,11 @@ export const MediaUploadModal: React.FC<IProps> = ({
       value: TSourceTypes.EMBED,
       label: 'Embed',
     },
+    {
+      id: 3,
+      value: TSourceTypes.LINK,
+      label: 'Link',
+    },
   ]
 
   const onSubmit = async (data: IMediaForm) => {
@@ -225,7 +230,7 @@ export const MediaUploadModal: React.FC<IProps> = ({
           <Row gutter={[token.size / 2, token.size / 2]}>
             <Col xs={4}>
               <Row gutter={[token.size / 2, token.size / 2]}>
-                <Col xs={24}>Source:</Col>
+                <Col xs={24}>Type:</Col>
 
                 <Col xs={24}>
                   <Controller
@@ -256,7 +261,13 @@ export const MediaUploadModal: React.FC<IProps> = ({
             </Col>
             <Col xs={20}>
               <Row gutter={[token.size / 2, token.size / 2]}>
-                <Col xs={24}>Source URL:</Col>
+                <Col xs={24}>
+                  <span>Source URL:</span>
+
+                  {errors.srcUrl && (
+                    <span style={{ color: 'red', fontSize: '12px' }}>{errors.srcUrl.message}</span>
+                  )}
+                </Col>
 
                 <Col xs={24}>
                   <Controller
@@ -265,7 +276,7 @@ export const MediaUploadModal: React.FC<IProps> = ({
                     render={({ field }) => (
                       <>
                         <TextArea
-                          rows={2}
+                          rows={1}
                           autoSize={false}
                           maxLength={
                             appSetting.listening.maxLengthTranscript +
@@ -274,12 +285,6 @@ export const MediaUploadModal: React.FC<IProps> = ({
                           placeholder='Source URL'
                           {...field}
                         />
-
-                        {errors.srcUrl && (
-                          <div style={{ color: 'red', fontSize: '12px' }}>
-                            {errors.srcUrl.message}
-                          </div>
-                        )}
                       </>
                     )}
                   />

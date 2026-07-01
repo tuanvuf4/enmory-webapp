@@ -7,6 +7,7 @@ export interface ISettingState {
   isShowSearchFormItem: boolean
   drawer: boolean
   loading: boolean
+  dockVisible: boolean
   viewMode: EViewMode
   viewPort: EViewPort
   trackIndex: number
@@ -19,6 +20,7 @@ export const initialState: ISettingState = {
   isShowSearchFormItem: true,
   drawer: true,
   loading: false,
+  dockVisible: false,
   viewMode: EViewMode.GRID,
   viewPort: EViewPort.XS,
   trackIndex: 0,
@@ -38,6 +40,9 @@ export const settingReducer = createSlice({
     },
     toggleSidebar(state: ISettingState) {
       state.isSidebarOpened = !state.isSidebarOpened
+    },
+    toggleDock(state: ISettingState) {
+      state.dockVisible = !state.dockVisible
     },
     toggleDrawer(state: ISettingState) {
       state.drawer = !state.drawer

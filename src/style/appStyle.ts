@@ -33,15 +33,4 @@ export const styleConfig = {
   },
 }
 
-console.log(`*** gray *** `, gray)
-console.log(`*** blue *** `, blue)
-console.log(`*** red *** `, red)
-console.log(`*** volcano *** `, volcano)
-console.log(`*** cyan *** `, cyan)
-console.log(`*** green *** `, green)
-console.log(`*** lime *** `, lime)
-console.log(`*** gold *** `, gold)
-console.log(`*** yellow *** `, yellow)
-
-// Re-export for backward compatibility
 export default styleConfig

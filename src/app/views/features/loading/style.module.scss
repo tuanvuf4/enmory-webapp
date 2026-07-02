@@ -1,3 +1,5 @@
+@use '@style/vars' as *;
+
 .loading {
   display: none;
   justify-content: center;
@@ -25,7 +27,7 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: calc(var(--ant-size) * 0.25px);
+  height: $size * 0.25;
   z-index: 999999;
 }
 
@@ -40,7 +42,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    padding: calc(var(--ant-size) * 0.125px);
+    padding: $size / 8;
     background: #72a526;
     animation: borealisBar 2s linear infinite;
   }

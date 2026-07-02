@@ -1,4 +1,5 @@
-@use 'sass:color';
+// @use 'sass:color';
+@use '@style/vars' as *;
 
 // Define Ant Design CSS variables for fallback
 :root {
@@ -18,9 +19,9 @@
   --ant-color-text: rgba(0, 0, 0, 0.85);
   --ant-color-text-secondary: rgba(0, 0, 0, 0.45);
   --ant-color-border: #d9d9d9;
-  --ant-color-bg-container: #ffffff;
-  --ant-color-white: #ffffff;
-  --ant-color-black: #000000;
+  --ant-color-bg-container: #fff;
+  --ant-color-white: #fff;
+  --ant-color-black: #000;
 }
 
 // Style configuration variables
@@ -46,54 +47,54 @@ $footer-background: #fff;
 .container {
   width: 1800px;
   margin: auto;
-  padding: 0 calc(var(--ant-size) * 1);
+  padding: 0 $size * 1;
   max-width: 100%;
 }
 
 .containerMd {
   width: 1200px;
   margin: auto;
-  padding: 0 calc(var(--ant-size) * 1);
+  padding: 0 $size * 1;
   max-width: 100%;
 }
 
 .containerFluid {
   width: 100%;
   margin: auto;
-  padding: 0 calc(var(--ant-size) * 1);
+  padding: 0 $size * 1;
   max-width: 100%;
 }
 
 .innerContainer {
-  background: rgba(37, 39, 52, 0.9);
-  color: var(--ant-color-white);
-  padding: calc(var(--ant-size) * 1);
+  background: rgba($item-color-bg, 0.9);
+  color: $color-white;
+  padding: $size * 1;
   width: 800px;
   max-width: 100%;
   margin: 0 auto;
-  box-shadow: 0 0 calc(var(--ant-size) * 1) 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 $size 0 rgba($black, 0.3);
 }
 
 .stickyBar {
   position: sticky;
   z-index: 999;
-  padding: calc(var(--ant-size) / 2) 0;
-  background: #fff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: $size * 0.5 0;
+  background: $color-white;
+  border-bottom: 1px solid rgba($black, 0.06);
 }
 
 .bodyContent {
-  margin: calc(var(--ant-size) * 2) 0;
+  margin: $size * 2 0;
 }
 
 .contentPage {
-  padding: calc(var(--ant-size) * 2) calc(var(--ant-size) * 1) calc(var(--ant-size) * 3);
-  background: var(--ant-color-bg-base);
+  padding: $size * 2 $size $size * 3;
+  background: $color-bg-base;
 }
 
 .dark {
-  color: var(--ant-color-white);
-  background: rgba(37, 39, 52, 0.9);
+  color: $color-white;
+  background: rgba($color-bg-item, 0.9);
 }
 
 .fulHeight {
@@ -117,12 +118,12 @@ $footer-background: #fff;
 }
 
 .pageTitle {
-  color: var(--ant-color-text-secondary);
-  margin: calc(var(--ant-size) / 2 * 3) 0;
+  color: $color-text-secondary;
+  margin: $size * 1.5 0;
   letter-spacing: 1px;
   font-family: $font-family-oswald;
   text-align: center;
-  font-size: var(--ant-font-size-heading-2);
+  font-size: $font-size-heading-2;
   font-weight: bold;
 }
 
@@ -147,16 +148,16 @@ $footer-background: #fff;
 }
 
 .errorMsg {
-  margin: calc(var(--ant-size) / 2) 0;
-  color: var(--ant-color-text-secondary);
+  margin: $size * 0.5 0;
+  color: $color-text-secondary;
   font-weight: bold;
 }
 
 .referenceBtn {
   height: auto !important;
   font-size: 12px;
-  color: var(--ant-color-white) !important;
-  background: rgba(0, 135, 167, 0.9) !important;
+  color: $color-white !important;
+  background: $color-cyan-8 !important;
 }
 
 // Media queries

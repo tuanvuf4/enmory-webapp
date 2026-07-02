@@ -1,9 +1,11 @@
+@use '@style/vars' as *;
+
 .dictation {
-  padding: calc(var(--ant-size) * 1);
-  color: var(--ant-color-white);
-  background: rgba(37, 39, 52, 0.9); // hex2Rgba(styleConfig.itemColorBg, 0.9)
+  padding: $size * 1;
+  color: $color-white;
+  background: $color-bg-item;
 }
 
 .dictationTypes {
-  margin-bottom: calc(var(--ant-size) * 1);
+  margin-bottom: $size * 1;
 }

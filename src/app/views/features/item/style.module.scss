@@ -1,6 +1,8 @@
+@use '@style/vars' as *;
+
 .list {
   & ul {
-    padding-left: calc(var(--ant-size) * 1);
+    padding-left: $size * 1;
 
     & li {
       display: list-item;
@@ -13,9 +15,9 @@
 }
 
 .archive {
-  color: var(--ant-color-text-secondary) !important;
-  border-color: var(--ant-color-text-secondary) !important;
-  border-radius: calc(var(--ant-size) * 0.25) !important;
+  color: $color-text-secondary !important;
+  border-color: $color-text-secondary !important;
+  border-radius: $size * 0.25 !important;
 }
 
 .item {
@@ -24,45 +26,44 @@
   justify-content: space-between;
   flex-direction: column;
   height: 100%;
-  padding: calc(var(--ant-padding) * 0.5) calc(var(--ant-padding) * 0.75)
-    calc(var(--ant-padding) * 0.5) calc(var(--ant-padding) * 0.75);
+  padding: $padding * 0.5 $padding * 0.75 $padding * 0.5 $padding * 0.75;
   border-radius: 4px;
   border: none;
   box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
-  color: var(--ant-color-text-base);
+  color: $color-text-base;
 
   &.active {
     background: rgba(37, 39, 52, 0.95);
     border: 1px solid rgba(37, 39, 52, 0.4);
-    color: var(--ant-color-white);
+    color: $color-white;
   }
 
   & ul,
   & ol {
-    padding-left: calc(var(--ant-size) * 1);
+    padding-left: $size * 1;
 
     & p {
-      margin-bottom: calc(var(--ant-size) * 0.25);
+      margin-bottom: $size * 0.25;
     }
   }
 
   & p {
-    margin-bottom: calc(var(--ant-size) * 0.25);
+    margin-bottom: $size * 0.25;
   }
 }
 
 .meaningItem {
-  border: 1px solid color-mix(in srgb, var(--ant-color-white), transparent 50%);
-  padding: calc(var(--ant-size) * 0.25) calc(var(--ant-size) * 0.5);
-  margin: calc(var(--ant-size) * 0.25) 0;
-  border-radius: calc(var(--ant-size) * 0.25);
+  border: 1px solid color-mix(in srgb, $color-white, transparent 50%);
+  padding: $size * 0.25 $size * 0.5;
+  margin: $size * 0.25 0;
+  border-radius: $size * 0.25;
 
   &.active {
-    border: 1px solid color-mix(in srgb, var(--ant-color-text-base), transparent 80%);
+    border: 1px solid color-mix(in srgb, $color-text-base, transparent 80%);
   }
 
   & > * {
-    margin: calc(var(--ant-size) * 0.25) 0;
+    margin: $size * 0.25 0;
   }
 
   & img {
@@ -88,8 +89,8 @@
   align-items: center;
   justify-content: space-between;
   word-break: break-word;
-  min-height: var(--ant-control-height);
-  gap: calc(var(--ant-size) * 0.5);
+  min-height: $control-height;
+  gap: $size * 0.5;
 }
 
 .btnDelete {
@@ -107,8 +108,7 @@
 
 .exampleItem {
   display: block;
-  padding: calc(var(--ant-padding) * 0.5) calc(var(--ant-padding) * 0.5)
-    calc(var(--ant-padding) * 0.5) 0;
+  padding: $padding * 0.5 $padding * 0.5 $padding * 0.5 0;
   border-top: 1px solid #ffbb96;
 
   &:first-child {
@@ -136,16 +136,16 @@
 
   & textarea {
     resize: none !important;
-    color: var(--ant-color-white) !important;
+    color: $color-white !important;
     background: transparent !important;
 
     &:focus {
-      color: var(--ant-color-white) !important;
+      color: $color-white !important;
       background: transparent !important;
     }
 
     &:focus-within {
-      color: var(--ant-color-white) !important;
+      color: $color-white !important;
       background: transparent !important;
     }
   }
@@ -156,10 +156,10 @@
   flex: 1;
   align-items: flex-start;
   justify-content: space-between;
-  gap: calc(var(--ant-size) * 0.25);
-  font-size: var(--ant-font-size-heading-4);
+  gap: $size * 0.25;
+  font-size: $font-size-heading-4;
   margin: 0;
-  padding: calc(var(--ant-size) * 0.25) 0;
+  padding: $size * 0.25 0;
   font-family: 'Lato', sans-serif;
 
   & span {
@@ -171,21 +171,21 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  color: var(--ant-color-white) !important;
+  color: $color-white !important;
 }
 
 .warnTitle {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  color: var(--ant-color-text-secondary);
+  color: $color-text-secondary;
 }
 
 .kindOfWord {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: calc(var(--ant-size) * 0.5);
+  gap: $size * 0.5;
   margin-bottom: 0;
   font-weight: normal;
   font-style: italic;
@@ -195,8 +195,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: calc(var(--ant-size) * 0.25);
-  margin: calc(var(--ant-margin) * 0.25) 0;
+  gap: $size * 0.25;
+  margin: $margin * 0.25 0;
   font-size: 11px;
   font-weight: normal;
   font-style: italic;
@@ -209,9 +209,9 @@
   justify-content: flex-start;
   font-weight: normal;
   line-height: 1em;
-  min-height: calc(var(--ant-size) * 2);
+  min-height: $size * 2;
   margin: 0 0 0 0;
-  gap: calc(var(--ant-size) * 0.5);
+  gap: $size * 0.5;
 }
 
 .pronouns {
@@ -219,8 +219,8 @@
 }
 
 .definition {
-  color: var(--ant-color-primary);
-  font-size: var(--ant-font-size);
+  color: $color-primary;
+  font-size: $font-size;
   font-family: 'Lora', sans-serif;
 
   & li {
@@ -230,7 +230,7 @@
 
 .translate {
   color: #4096ff;
-  font-size: var(--ant-font-size);
+  font-size: $font-size;
   font-family: 'Lora', sans-serif;
 
   & li {
@@ -241,21 +241,21 @@
 
 .audio {
   display: flex;
-  gap: calc(var(--ant-size) * 0.25);
+  gap: $size * 0.25;
   align-items: center;
-  color: var(--ant-color-white);
+  color: $color-white;
 }
 
 .btnAudio {
-  color: var(--ant-color-text-base) !important;
+  color: $color-text-base !important;
 
   &.active {
-    color: var(--ant-color-white) !important;
+    color: $color-white !important;
   }
 }
 
 .audioIcon {
-  color: var(--ant-color-white) !important;
+  color: $color-white !important;
 }
 
 .note {
@@ -266,7 +266,7 @@
   color: #f7812b;
 
   & ul {
-    padding-left: calc(var(--ant-size) * 1);
+    padding-left: $size * 1;
   }
 
   & li {
@@ -275,7 +275,7 @@
 }
 
 .listItem {
-  padding-left: calc(var(--ant-size) * 1);
+  padding-left: $size * 1;
   font-size: 13px;
 
   & li {
@@ -284,14 +284,14 @@
 }
 
 .btnActions {
-  color: var(--ant-color-text) !important;
+  color: $color-text !important;
 
   &.active {
-    color: var(--ant-color-white) !important;
+    color: $color-white !important;
   }
 
   & span {
-    font-size: var(--ant-font-size-heading-4) !important;
+    font-size: $font-size-heading-4 !important;
   }
 }
 

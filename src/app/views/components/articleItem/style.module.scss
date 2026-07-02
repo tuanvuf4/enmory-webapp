@@ -1,24 +1,25 @@
+@use '@style/vars' as *;
 .articleItem {
-  padding: calc(var(--ant-size) / 2 * 3) calc(var(--ant-size) * 2);
-  border-radius: calc(var(--ant-size) / 2);
-  border: 1px solid var(--ant-color-border);
-  background-color: var(--ant-color-white);
+  padding: $size * 1.5 $size * 2;
+  border-radius: $size * 0.5;
+  border: 1px solid $color-border;
+  background-color: $color-white;
   height: 100%;
   word-break: break-all;
 }
 
 .title {
-  color: var(--ant-color-primary);
+  color: $color-primary;
 }
 
 .readMore {
-  color: var(--ant-color-primary);
+  color: $color-primary;
   font-weight: 600;
 }
 
 .content {
   ul {
-    padding-left: calc(var(--ant-size));
+    padding-left: $size;
     margin-bottom: 1em;
 
     &:last-child {
@@ -35,7 +36,7 @@
   }
 
   ol {
-    padding-left: calc(var(--ant-size));
+    padding-left: $size;
   }
 
   ol ol {

@@ -1,5 +1,7 @@
+@use '@style/vars' as *;
+
 .cruForm {
-  padding: calc(var(--ant-size) * 0.75);
+  padding: $size * 0.75;
 }
 
 .ext {
@@ -7,5 +9,5 @@
 }
 
 .loginForm {
-  padding: calc(var(--ant-size) * 2) 0;
+  padding: $size * 2;
 }

@@ -1,8 +1,10 @@
+@use '@style/vars' as *;
+
 .rate {
   font-size: initial !important;
 
   & > * {
-    margin-inline-end: calc(var(--ant-size) * 0.25) !important;
+    margin-inline-end: $size * 0.25 !important;
   }
 }
 

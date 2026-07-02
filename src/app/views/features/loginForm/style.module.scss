@@ -1,15 +1,17 @@
+@use '@style/vars' as *;
+
 .loginForm {
   width: 400px;
   max-width: 100%;
   margin: 0 auto;
-  background: #ffffff; // styleConfig.color.white[0]
+  background: $white;
 }
 
 .loginFormHeader {
   text-align: center;
-  padding: calc(var(--ant-size) * 3);
-  background: #393e46;
-  color: var(--ant-color-white);
+  padding: $size * 3;
+  background: $color-gray-8;
+  color: $color-white;
 
   & img {
     width: 120px;
@@ -17,19 +19,19 @@
 }
 
 .loginFormTitle {
-  font-size: var(--ant-font-size-heading-2);
+  font-size: $font-size-heading-2;
   font-weight: bold;
   text-align: center;
-  margin: calc(var(--ant-size) * 1) 0 calc(var(--ant-size) * 1) 0;
+  margin: $size * 1 0 $size * 1 0;
 }
 
 .loginFormContent {
-  padding: calc(var(--ant-size) * 2) calc(var(--ant-size) * 2) calc(var(--ant-size) * 4);
+  padding: $size * 2 $size * 2 $size * 4;
 }
 
 .btnSubmit {
   text-align: center;
-  margin: calc(var(--ant-size) * 1) 0;
+  margin: $size * 1 0;
 
   & button {
     border-radius: 0 !important;
@@ -39,24 +41,11 @@
   }
 }
 
-.register {
-  text-align: center;
-  color: #8c8c8c; // styleConfig.color.neutral[4]
-
-  & a {
-    margin-left: calc(var(--ant-size) * 0.25);
-  }
-
-  & p {
-    margin: 0;
-  }
-}
-
 .otherLoginMethod {
   position: relative;
   text-align: center;
-  color: #8c8c8c; // styleConfig.color.neutral[4]
-  margin: calc(var(--ant-size) * 1) 0;
+  color: $color-gray-4;
+  margin: $size * 1 0;
 
   &:before {
     content: '';
@@ -66,15 +55,15 @@
     top: 50%;
     left: 0;
     display: block;
-    background: var(--ant-color-primary);
+    background: $color-primary;
     z-index: 998;
   }
 
   & h3 {
     position: relative;
     display: inline-block;
-    padding: 0 calc(var(--ant-size) * 2);
-    background: #ffffff; // styleConfig.color.white[0]
+    padding: 0 $size * 2;
+    background: $white;
     margin: 0;
     z-index: 999;
   }

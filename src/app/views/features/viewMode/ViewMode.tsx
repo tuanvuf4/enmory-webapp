@@ -26,7 +26,7 @@ export const ViewMode: React.FC = () => {
                 color:
                   viewMode === EViewMode.LIST
                     ? styleConfig.color.white[0]
-                    : styleConfig.color.neutral[1],
+                    : styleConfig.color.gray[1],
               }}
             />
           }
@@ -44,7 +44,7 @@ export const ViewMode: React.FC = () => {
                 color:
                   viewMode === EViewMode.GRID
                     ? styleConfig.color.white[0]
-                    : styleConfig.color.neutral[13],
+                    : styleConfig.color.gray[13],
               }}
             />
           }

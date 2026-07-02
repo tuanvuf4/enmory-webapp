@@ -1,5 +1,6 @@
+@use '@style/vars' as *;
 .tagLabel {
-  margin-right: calc(var(--ant-size) * 0.25);
+  margin-right: $size * 0.25;
 }
 
 .tagItemContainer {
@@ -12,41 +13,41 @@
   & span {
     flex: 1;
     display: block;
-    padding: 2px calc(var(--ant-size) * 0.5);
+    padding: 2px $size * 0.5;
     color: inherit;
 
     &:hover {
-      color: var(--ant-color-primary);
+      color: $color-primary;
       cursor: pointer;
     }
   }
 
   & button {
-    padding: calc(var(--ant-size) * 0.125) 0;
+    padding: $size * 0.125 0;
     background: transparent !important;
     border: none;
-    border-left: 1px solid var(--ant-color-text);
+    border-left: 1px solid $color-text;
     outline: none;
     cursor: pointer;
     border-radius: 0;
 
     &:hover {
-      background: var(--ant-color-primary);
+      background: $color-primary;
     }
   }
 }
 
 .tagItem {
   display: inline-block;
-  margin: calc(var(--ant-size) * 0.25) calc(var(--ant-size) * 0.25);
-  border-radius: calc(var(--ant-size) * 0.25);
-  border: 1px solid var(--ant-color-text);
+  margin: $size * 0.25 $size * 0.25;
+  border-radius: $size * 0.25;
+  border: 1px solid $color-text;
 
   &.active {
-    border: 1px solid var(--ant-color-white);
+    border: 1px solid $color-white;
 
     & button {
-      border-left: 1px solid var(--ant-color-white);
+      border-left: 1px solid $color-white;
     }
   }
 }

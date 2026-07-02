@@ -1,6 +1,5 @@
-import { ThemeConfig } from 'antd/es/config-provider'
+import type { ThemeConfig } from 'antd'
 import { gray } from '@ant-design/colors'
-import { styleConfig } from './appStyle'
 
 export const appTheme: ThemeConfig = {
   cssVar: true,
@@ -8,14 +7,14 @@ export const appTheme: ThemeConfig = {
     colorWhite: '#f4f4f4',
     colorPrimary: '#72a526',
     colorTextHeading: '#ee4a79',
-    colorTextBase: '#333333',
+    colorTextBase: '#333',
     colorText: gray[6],
     colorTextSecondary: '#ee4a79',
     colorLink: '#72a526',
     colorLinkHover: '#ee4a79',
     colorLinkActive: '#ee4a79',
     colorIcon: '#72a526',
-    colorBgLayout: '#333333',
+    colorBgLayout: '#333',
     fontSizeHeading1: 30,
     fontSizeHeading2: 26,
     fontSizeHeading3: 22,
@@ -32,7 +31,7 @@ export const appTheme: ThemeConfig = {
     sizeStep: 4,
     lineHeight: 1.5,
     borderRadius: 2,
-    fontFamily: styleConfig.fontFamily.default,
+    fontFamily: 'Lora, Lato, Oswald, sans-serif',
   },
   components: {
     Input: {},
@@ -40,13 +39,9 @@ export const appTheme: ThemeConfig = {
       fontSizeHeading5: 24,
       // @ts-ignore - contentPadding is valid but not in type definitions
       contentPadding: 12,
-      // contentBg: hex2Rgba(styleConfig.itemColorBg, 1),
       headerBg: 'transparent',
-      // colorText: '#f4f4f4',
     },
-    Checkbox: {
-      // colorText: styleConfig.color.white[0],
-    },
+    Checkbox: {},
     Layout: {
       headerBg: '#fff',
       bodyBg: '#e8e8e8',
@@ -63,7 +58,7 @@ export const appTheme: ThemeConfig = {
       itemSelectedColor: '#90C53F',
       itemSelectedBg: 'transparent',
       itemBorderRadius: 4,
-      fontFamily: styleConfig.fontFamily.lato,
+      fontFamily: 'Lora, Lato, Oswald, sans-serif',
     },
     Button: {
       padding: 12,

@@ -1,9 +1,10 @@
+@use '@style/vars' as *;
 .mainNavMenu {
-  padding: calc(var(--ant-size) * 1);
+  padding: $size * 1;
 
   &:global(.horizontal) {
     & :global(ul li.ant-menu-item) {
-      color: var(--ant-color-text-base);
+      color: $color-text-base;
     }
   }
 
@@ -12,7 +13,7 @@
     text-transform: capitalize;
     font-size: 16px;
     margin: 0 !important;
-    padding-left: calc(var(--ant-size) * 1) !important;
+    padding-left: $size * 1 !important;
     width: 100% !important;
 
     & .icon {
@@ -34,7 +35,7 @@
     align-items: center !important;
 
     & li {
-      padding: 0 calc(var(--ant-size) * 1) !important;
+      padding: 0 $size * 1 !important;
       width: auto !important;
       margin: 0 !important;
       font-size: 14px;
@@ -49,7 +50,7 @@
 @media screen and (min-width: 1025px) {
   .horizontal {
     & ul li {
-      padding: 0 calc(var(--ant-size) * 2) !important;
+      padding: 0 $size * 2 !important;
     }
   }
 }

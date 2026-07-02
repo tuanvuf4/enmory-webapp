@@ -1,3 +1,5 @@
+@use '@style/vars' as *;
+
 .header {
   height: 60px !important;
   min-width: 320px;
@@ -9,16 +11,16 @@
   z-index: 999;
 
   & a {
-    color: var(--ant-color-text-base);
+    color: $color-text-base;
 
     &:hover {
-      color: var(--ant-color-link-hover);
+      color: $color-link-hover;
     }
   }
 }
 
 .rowHeader {
-  margin: 0px calc(var(--ant-size) * -1) !important;
+  margin: 0px calc($size * -1) !important;
 }
 
 .avatar {
@@ -36,14 +38,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--ant-color-text-secondary);
-    font-size: var(--ant-font-size-heading-2);
+    color: $color-text-secondary;
+    font-size: $font-size-heading-2;
 
     & a {
-      color: var(--ant-color-text-secondary);
+      color: $color-text-secondary;
 
       &:hover {
-        color: var(--ant-color-primary);
+        color: $color-primary;
       }
     }
   }
@@ -75,13 +77,13 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: calc(var(--ant-size) * 0.5px);
+  gap: $size / 2;
 }
 
 .btnToggle {
   min-width: 38px;
-  padding-inline-start: calc(var(--ant-size) * 0.5) !important;
-  padding-inline-end: calc(var(--ant-size) * 0.5) !important;
+  padding-inline-start: $size * 0.5 !important;
+  padding-inline-end: $size * 0.5 !important;
 }
 
 .btnAddNew {
@@ -91,7 +93,7 @@
   font-weight: bold !important;
 
   &:hover span {
-    color: var(--ant-color-primary);
+    color: $color-primary;
   }
 }
 
@@ -100,7 +102,7 @@
   align-items: center;
   justify-content: flex-end;
   height: 100%;
-  gap: calc(var(--ant-size));
+  gap: $size;
 }
 
 .mainNav {
@@ -110,10 +112,10 @@
     align-items: center;
 
     & li {
-      padding: 0 calc(var(--ant-size) * 3);
+      padding: 0 $size * 3;
       text-transform: uppercase;
       letter-spacing: 1px;
-      font-size: var(--ant-font-size-heading-5);
+      font-size: $font-size-heading-5;
     }
   }
 }
@@ -126,13 +128,13 @@
 
   & button,
   & button:hover {
-    color: var(--ant-color-text-base);
+    color: $color-text-base;
   }
 }
 
 .stayUp {
   & button {
-    margin-left: calc(var(--ant-size) * 0.5);
+    margin-left: $size * 0.5;
     font-weight: bold;
     min-width: 90px;
     border-radius: 0px !important;

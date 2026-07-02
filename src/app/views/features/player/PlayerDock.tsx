@@ -10,7 +10,7 @@ import {
   StepForwardOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-import { Button, message } from 'antd'
+import { Button, message, theme } from 'antd'
 import ReactPlayer from 'react-player'
 import styles from './style.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks'
@@ -19,6 +19,7 @@ import { getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import { tracksApi } from '@/services/firebase'
 
 export const PlayerDock = () => {
+  const { token } = theme.useToken()
   const playerRef = useRef<HTMLVideoElement | null>(null)
 
   const [trackListOpen, setTrackListOpen] = useState(false)
@@ -256,54 +257,56 @@ export const PlayerDock = () => {
 
       {/* Controls & seek bar */}
       <div className={styles.controls}>
-        <div className={styles.dockTitle}>{currentTrack?.title}</div>
-
         <div className={styles.dockControls}>
           <Button
-            type={loop ? 'primary' : 'text'}
-            size={'large'}
+            type={'text'}
             title={'Repeat'}
-            icon={<ReloadOutlined />}
-            style={{ background: 'transparent', boxShadow: 'none' }}
+            icon={<ReloadOutlined style={{ fontSize: '20px' }} />}
+            style={{
+              background: 'transparent',
+              boxShadow: 'none',
+              color: loop ? token.colorPrimary : token.colorWhite,
+            }}
             onClick={() => handleToggleLoop()}
           />
 
           <Button
             type='text'
-            size={'large'}
             title={'Previous'}
-            icon={<StepBackwardOutlined />}
+            icon={<StepBackwardOutlined style={{ fontSize: '20px', color: token.colorWhite }} />}
             onClick={onPrev}
           />
 
           <Button
             type='text'
-            size={'large'}
             title={'-10s'}
-            icon={<FastBackwardOutlined />}
+            icon={<FastBackwardOutlined style={{ fontSize: '20px', color: token.colorWhite }} />}
             onClick={() => onSeekBy(-10)}
           />
 
           <Button
             type='text'
-            size={'large'}
-            icon={playing ? <PauseCircleFilled /> : <PlayCircleFilled />}
+            icon={
+              playing ? (
+                <PauseCircleFilled style={{ fontSize: '20px', color: token.colorWhite }} />
+              ) : (
+                <PlayCircleFilled style={{ fontSize: '20px', color: token.colorWhite }} />
+              )
+            }
             onClick={playing ? handlePause : handlePlay}
           />
 
           <Button
             type='text'
-            size={'large'}
             title={'+10s'}
-            icon={<FastForwardOutlined />}
+            icon={<FastForwardOutlined style={{ fontSize: '20px', color: token.colorWhite }} />}
             onClick={() => onSeekBy(10)}
           />
 
           <Button
             type='text'
-            size={'large'}
             title={'Next'}
-            icon={<StepForwardOutlined />}
+            icon={<StepForwardOutlined style={{ fontSize: '20px', color: token.colorWhite }} />}
             onClick={onNext}
           />
 
@@ -311,7 +314,14 @@ export const PlayerDock = () => {
             type={trackListOpen ? 'primary' : 'text'}
             variant={'text'}
             style={{ background: 'transparent', boxShadow: 'none' }}
-            icon={<UnorderedListOutlined />}
+            icon={
+              <UnorderedListOutlined
+                style={{
+                  fontSize: '20px',
+                  color: trackListOpen ? token.colorPrimary : token.colorWhite,
+                }}
+              />
+            }
             onClick={() => setTrackListOpen((v) => !v)}
           />
         </div>
@@ -334,6 +344,9 @@ export const PlayerDock = () => {
 
       {/* Track info + seek bar */}
       <div className={styles.dockMeta}>
+        <div className={styles.dockTitle} title={currentTrack?.title}>
+          {currentTrack?.title}
+        </div>
         {activeSegmentText && <div className={styles.liveTranscript}>{activeSegmentText}</div>}
       </div>
 

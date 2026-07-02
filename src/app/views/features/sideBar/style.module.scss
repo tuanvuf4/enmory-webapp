@@ -1,19 +1,21 @@
+@use '@style/vars' as *;
+
 .aside {
-  padding: calc(var(--ant-size) * 1) 0;
+  padding: $size * 1 0;
   height: 100%;
   overflow: auto;
 }
 
 .logo {
   text-transform: capitalize;
-  font-size: calc(var(--ant-size) * 2);
+  font-size: $size * 2;
   font-style: italic;
 
   & a {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: calc(var(--ant-size) * 1);
+    padding: $size * 1;
   }
 
   & img {
@@ -22,22 +24,22 @@
 }
 
 .slogan {
-  color: var(--ant-color-white);
-  padding: calc(var(--ant-size) * 1) calc(var(--ant-size) * 2);
+  color: $color-white;
+  padding: $size * 1 $size * 2;
   text-align: center;
 
   & h2 {
-    font-size: var(--ant-font-size-heading-4);
-    padding-bottom: calc(var(--ant-size) * 2px);
+    font-size: $font-size-heading-4;
+    padding-bottom: $size * 2;
     border-bottom: 1px solid #434343; // styleConfig.border.gray[0]
     margin: 0;
   }
 
   & span {
-    font-size: var(--ant-font-size-heading-2);
+    font-size: $font-size-heading-2;
   }
 }
 
 .brandName {
-  margin-left: calc(var(--ant-size) * 1);
+  margin-left: $size * 1;
 }

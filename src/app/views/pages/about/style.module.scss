@@ -1,4 +1,5 @@
+@use '@style/vars' as *;
 .notFound {
-  margin: calc(var(--ant-size) * 1px) 0;
+  margin: $size * 1px 0;
   text-align: center;
 }

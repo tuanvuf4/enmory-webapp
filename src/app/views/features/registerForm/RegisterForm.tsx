@@ -254,7 +254,7 @@ export const RegisterForm = ({ showBanner = true }) => {
               {appConfig.appType !== EAppType.EXTENSION && (
                 <Row justify={'center'}>
                   <Col span={24}>
-                    <div className={loginStyles.register}>
+                    <div className={'text-center'}>
                       <p>
                         Already have an account? <Link to={'/login'}>Log in</Link>
                       </p>
@@ -289,7 +289,7 @@ export const RegisterForm = ({ showBanner = true }) => {
         {isRegistered && registerSuccess && (
           <Row justify={'center'}>
             <Col span={24}>
-              <div className={loginStyles.register}>
+              <div className={'text-center'}>
                 <p>
                   {registerMsg} <Link to={'/login'}>Log in</Link>
                 </p>
@@ -301,7 +301,7 @@ export const RegisterForm = ({ showBanner = true }) => {
         {isRegistered && !registerSuccess && (
           <Row justify={'center'}>
             <Col span={24}>
-              <div className={loginStyles.register}>
+              <div className={'text-center'}>
                 <p>
                   {registerMsg}
                   <Link to={'/register'} onClick={() => setIsRegistered(false)}>

@@ -1,10 +1,12 @@
+@use '@style/vars' as *;
+
 .inputAutoComplete {
   min-width: 100px;
-  margin-right: calc(var(--ant-margin) * 0.5) !important;
+  margin-right: $margin * 0.5 !important;
 }
 
 .tagPlus {
-  background: var(--ant-color-bg-container);
+  background: $color-bg-container;
   border-style: dashed !important;
   min-width: 80px;
 }
@@ -16,8 +18,8 @@
   justify-content: space-between;
   align-items: center;
   user-select: none;
-  margin-right: calc(var(--ant-size) / 2);
-  font-size: var(--ant-font-size) !important;
+  margin-right: $size * 0.5;
+  font-size: $font-size !important;
 
   & span {
     flex: 1 0;

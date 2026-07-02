@@ -1,9 +1,10 @@
+@use '@style/vars' as *;
 .items {
   margin: 0;
   padding: 0;
 }
 
 .notFound {
-  margin: calc(var(--ant-size) * 1) 0;
+  margin: $size * 1 0;
   text-align: center;
 }

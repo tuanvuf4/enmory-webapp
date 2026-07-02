@@ -1,5 +1,6 @@
+@use '@style/vars' as *;
 .label {
-  color: var(--ant-color-white);
+  color: $color-white;
 }
 
 .showMeaningOption {
@@ -8,7 +9,7 @@
   }
 
   & ul {
-    padding-left: calc(var(--ant-size) * 1);
+    padding-left: $size * 1;
 
     & li {
       display: list-item;
@@ -18,28 +19,28 @@
 }
 
 .contentStyle {
-  padding: calc(var(--ant-size) * 0.5);
-  border: 1px solid var(--ant-color-primary);
+  padding: $size * 0.5;
+  border: 1px solid $color-primary;
 }
 
 .disableMeaning {
-  border: 1px solid var(--ant-red-3);
+  border: 1px solid $color-red-3;
 }
 
 .warnIcon {
-  color: var(--ant-color-text-secondary);
-  margin-right: calc(var(--ant-size) * 0.5);
+  color: $color-text-secondary;
+  margin-right: $size * 0.5;
 }
 
 .alertIcon {
   color: #faad14;
-  margin-left: calc(var(--ant-size) * 0.5);
+  margin-left: $size * 0.5;
 }
 
 .action {
   display: flex;
   justify-content: flex-end;
-  gap: calc(var(--ant-size));
+  gap: $size;
 
   & button {
     min-width: 100px;
@@ -47,8 +48,8 @@
 }
 
 .itemExisted {
-  padding: calc(var(--ant-size) * 0.25) 0;
-  border-bottom: 1px solid var(--ant-color-primary);
+  padding: $size * 0.25 0;
+  border-bottom: 1px solid $color-primary;
 
   &:last-child {
     border: none;

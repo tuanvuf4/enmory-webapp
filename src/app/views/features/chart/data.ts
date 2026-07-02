@@ -22,7 +22,7 @@ export const getBgColorByCatId = (id: ECategory, opacity = 1) => {
   }
 
   if (id === ECategory.SLANG) {
-    return hex2Rgba(styleConfig.color.neutral[4], opacity)
+    return hex2Rgba(styleConfig.color.gray[4], opacity)
   }
 
   if (id === ECategory.SENTENCE) {

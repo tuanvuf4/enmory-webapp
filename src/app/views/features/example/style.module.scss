@@ -1,44 +1,45 @@
+@use '@style/vars' as *;
 .title {
   flex: 0 0;
   min-width: 100%;
   display: flex;
   align-items: center;
-  gap: calc(var(--ant-size) * 0.5);
-  font-size: var(--ant-font-size-heading-5);
+  gap: $size * 0.5;
+  font-size: $font-size-heading-5;
 }
 
 .exampleOverview {
-  margin-bottom: calc(var(--ant-size) * 1);
-  background: rgba(37, 39, 52, 0.9);
+  margin-bottom: $size * 1;
+  background: rgba($color-bg-item, 0.9);
   border-radius: 4px;
-  border: 1px solid rgba(37, 39, 52, 0.4);
-  box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
-  color: var(--ant-color-white);
-  padding: calc(var(--ant-size) * 1);
+  border: 1px solid rgba($color-bg-item, 0.4);
+  box-shadow: 0px 0px 30px 0px rgba($white, 0.2);
+  color: $color-white;
+  padding: $size * 1;
 
   & form {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: calc(var(--ant-size) * 0.5);
+    gap: $size * 0.5;
   }
 }
 
 .exampleForm {
   background: #ffffff;
   border-radius: 4px;
-  color: var(--ant-color-text-base);
+  color: $color-text-base;
   box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
-  padding: calc(var(--ant-size)) calc(var(--ant-size)) calc(var(--ant-size) * 2);
+  padding: $size $size $size * 2;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: calc(var(--ant-size) * 0.5);
+  gap: $size * 0.5;
 
   & textarea {
     resize: none !important;
-    color: var(--ant-color-text-base) !important;
+    color: $color-text-base !important;
     background: transparent !important;
 
     &:disabled {
@@ -49,12 +50,12 @@
 }
 
 .overviewForm {
-  margin-bottom: calc(var(--ant-size) * 1);
+  margin-bottom: $size * 1;
 }
 
 .exampleItemOverride {
   position: relative;
-  padding-right: calc(var(--ant-size) * 5) !important;
+  padding-right: $size * 5 !important;
 
   &:first-child {
     border-top: none;
@@ -75,7 +76,7 @@
 
   & .emr-select-selector {
     background: transparent !important;
-    color: var(--ant-color-white) !important;
+    color: $color-white !important;
   }
 }
 
@@ -84,7 +85,7 @@
 
   & input {
     background: transparent !important;
-    color: var(--ant-color-white) !important;
+    color: $color-white !important;
   }
 }
 
@@ -103,7 +104,7 @@
 .textarea {
   min-width: 100%;
   display: flex;
-  gap: calc(var(--ant-size) * 1);
+  gap: $size * 1;
   max-height: 800px;
   overflow: auto;
   flex-wrap: wrap;
@@ -115,14 +116,14 @@
   align-items: flex-start;
   justify-content: flex-start;
   flex-direction: column;
-  gap: calc(var(--ant-size) * 1);
+  gap: $size * 1;
 }
 
 .innerTextarea {
-  padding: calc(var(--ant-size) * 0.5);
-  background: var(--ant-color-bg-base);
-  color: var(--ant-color-text-base) !important;
-  font-size: var(--ant-font-size-heading-5) !important;
+  padding: $size * 0.5;
+  background: $color-bg-base;
+  color: $color-text-base !important;
+  font-size: $font-size-heading-5 !important;
   min-height: 250px;
   flex: 1 0;
   min-width: 100%;
@@ -133,13 +134,13 @@
   }
 
   & p {
-    margin-bottom: calc(var(--ant-size) * 0.5);
+    margin-bottom: $size * 0.5;
     line-height: 1.3em;
   }
 }
 
 .textareaDisable {
-  background: var(--ant-color-bg-base) !important;
+  background: $color-bg-base !important;
 }
 
 @media screen and (max-width: 650px) {

@@ -1,3 +1,5 @@
+@use '@style/vars' as *;
+
 .playerWrapper {
   width: 100%;
 }
@@ -9,11 +11,11 @@
   flex-flow: wrap;
   width: 1200px;
   max-width: 100%;
-  margin: calc(var(--ant-size) * 1) auto;
-  color: var(--ant-color-white);
+  margin: $size * 1 auto;
+  color: $color-white;
   font-family: Oswald, sans-serif;
   border: 1px solid rgba(244, 244, 244, 0.1);
-  border-radius: calc(var(--ant-size) * 0.25);
+  border-radius: $size * 0.25;
   box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
 }
 
@@ -23,9 +25,9 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: calc(var(--ant-size) * 1);
+  gap: $size * 1;
   min-height: 220px;
-  padding: calc(var(--ant-size));
+  padding: $size;
 }
 
 .tracks {
@@ -35,17 +37,17 @@
 .actionGroup {
   display: flex;
   align-items: center;
-  gap: calc(var(--ant-size) * 0.25);
+  gap: $size * 0.25;
 }
 
 .nowPlaying {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--ant-size) * 0.25);
+  gap: $size * 0.25;
 }
 
 .trackTitle {
-  font-size: var(--ant-font-size-heading-4);
+  font-size: $font-size-heading-4;
   font-weight: 600;
   line-height: 1.5;
   margin-bottom: 12px;
@@ -68,7 +70,7 @@
 //   display: flex;
 //   flex-wrap: wrap;
 //   align-items: center;
-//   gap: calc(var(--ant-size) * 0.5);
+//   gap: $size * 0.5;
 // }
 
 .primaryAction {
@@ -84,18 +86,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(var(--ant-size) * 0.5);
+  padding: $size * 0.5;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 
   & h2 {
     text-transform: capitalize;
-    font-size: var(--ant-font-size-heading-5);
+    font-size: $font-size-heading-5;
     margin: 0;
   }
 }
 
 .tracksContent {
-  padding: 0 0 calc(var(--ant-size) * 0.5) 0;
+  padding: 0 0 $size * 0.5 0;
 
   & ul {
     max-height: 316px;
@@ -105,9 +107,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: calc(var(--ant-size) * 0.5);
+      padding: $size * 0.5;
       cursor: pointer;
-      gap: calc(var(--ant-size) * 0.5);
+      gap: $size * 0.5;
       transition: 0.2s;
 
       &:hover {
@@ -124,23 +126,25 @@
 .seekBar {
   display: flex;
   align-items: center;
-  gap: calc(var(--ant-size) * 0.5);
+  gap: $size * 0.5;
+  margin-top: $size * 0.5;
 
   & input {
     flex: 1;
-    accent-color: var(--ant-color-primary);
+    accent-color: $color-primary;
   }
 
   & span {
     min-width: 42px;
     font-size: 12px;
+    color: $color-white;
   }
 }
 
 .transcriptCard {
   display: block;
   margin: 0 auto;
-  padding: calc(var(--ant-size));
+  padding: $size;
 }
 
 .playerDock {
@@ -152,9 +156,9 @@
   display: flex;
   height: 100px;
   align-items: center;
-  gap: calc(var(--ant-size) * 0.75);
-  padding: calc(var(--ant-size) * 0.5);
-  background: color-mix(in srgb, var(--ant-color-primary) 95%, transparent);
+  gap: $size * 0.75;
+  padding: $size * 0.5;
+  background: $color-bg-item;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
   transition: transform 0.3s ease;
@@ -165,20 +169,22 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: calc(var(--ant-size) * 0.25);
+  gap: $size * 0.25;
 }
 
 .dockTitle {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.95);
+  font-size: $font-size-heading-5;
+  margin-bottom: 4px;
+  color: $color-primary;
 }
 
 .liveTranscript {
-  font-size: 14px;
+  font-size: $font-size-heading-5;
   text-overflow: ellipsis;
+  color: $color-white;
 }
 
 .dockControls {
@@ -186,7 +192,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: calc(var(--ant-size) * 0.25);
+  gap: $size * 0.25;
 }
 
 .dockFallbackFrame {
@@ -223,7 +229,7 @@
     & li {
       padding: 12px 16px;
       cursor: pointer;
-      color: var(--ant-color-white);
+      color: $color-white;
       font-size: 14px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       transition: background 0.15s;
@@ -258,7 +264,7 @@
   line-height: 1;
 
   &:hover {
-    color: var(--ant-color-white);
+    color: $color-white;
   }
 }
 
@@ -280,7 +286,7 @@
 .liveTranscriptCount {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
-  margin-left: calc(var(--ant-size) / 4);
+  margin-left: $size * 0.25;
 }
 
 .liveTranscriptFull {
@@ -309,13 +315,13 @@
 
 .transcriptActive {
   background: rgba(255, 255, 255, 0.08);
-  border-left-color: var(--ant-color-primary);
+  border-left-color: $color-primary;
 }
 
 .transcriptTime {
   font-size: 11px;
   font-weight: 600;
-  color: var(--ant-color-primary);
+  color: $color-primary;
   display: block;
 }
 
@@ -359,15 +365,13 @@
 
     & span {
       min-width: 36px;
-      font-size: 11px;
+      font-size: 12px;
     }
   }
 
   .playerDock {
     flex-direction: column;
-    align-items: stretch;
-    gap: calc(var(--ant-size) * 0.5);
-    padding-bottom: calc(var(--ant-size) * 0.75 + env(safe-area-inset-bottom));
+    gap: $size * 0.5;
     height: auto;
   }
 }

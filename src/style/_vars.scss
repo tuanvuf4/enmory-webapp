@@ -1,0 +1,170 @@
+// ── Màu sắc ──────────────────────────────────────────────────────────────────
+$color-primary: var(--ant-color-primary); // #72a526;
+$color-white: var(--ant-color-white); // #f4f4f4
+$color-text: var(--ant-color-text); // 8c8c8c
+$color-text-base: var(--ant-color-text-base); // #333   | colorTextBase
+$color-text-secondary: var(--ant-color-text-secondary); // #ee4a79
+$color-text-heading: var(--ant-color-text-heading); // #ee4a79
+$color-bg-base: var(--ant-color-bg-base); // #333 | colorBgLayout
+$color-bg-layout: var(--ant-color-bg-layout); // #333
+$color-link: var(--ant-color-link); // #72a526
+$color-link-hover: var(--ant-color-link-hover); // #ee4a79
+$color-icon: var(--ant-color-icon); // #72a526
+
+$color-bg-item: rgba(37, 39, 52, 0.95);
+
+$white: #fff;
+$black: #000;
+
+// gray colors
+$color-gray-primary: #666666;
+$color-gray-1: #a6a6a6;
+$color-gray-2: #999999;
+$color-gray-3: #8c8c8c;
+$color-gray-4: #808080;
+$color-gray-5: #737373;
+$color-gray-6: #666666;
+$color-gray-7: #404040;
+$color-gray-8: #393e46;
+$color-gray-9: #1a1a1a;
+$color-gray-10: #000000;
+
+// blue colors
+$color-blue-primary: #1677ff;
+$color-blue-1: #e6f4ff;
+$color-blue-2: #bae0ff;
+$color-blue-3: #91caff;
+$color-blue-4: #69b1ff;
+$color-blue-5: #4096ff;
+$color-blue-6: #1677ff;
+$color-blue-7: #0958d9;
+$color-blue-8: #003eb3;
+$color-blue-9: #002c8c;
+$color-blue-10: #001d66;
+
+// red colors
+$color-red-primary: #f5222d;
+$color-red-1: #fff1f0;
+$color-red-2: #ffccc7;
+$color-red-3: #ffa39e; // --ant-red-3 (Ant preset palette)
+$color-red-4: #ff7875; // --ant-red-4 (Ant preset palette)
+$color-red-5: #ff4d4f;
+$color-red-6: #f5222d;
+$color-red-7: #cf1322;
+$color-red-8: #a8071a;
+$color-red-9: #820014;
+$color-red-10: #5c0011;
+
+// volcano colors
+$color-volcano-primary: #fa541c;
+$color-volcano-1: #fff2e8;
+$color-volcano-2: #ffd8bf;
+$color-volcano-3: #ffbb96;
+$color-volcano-4: #ff9c6e;
+$color-volcano-5: #ff7a45;
+$color-volcano-6: #fa541c;
+$color-volcano-7: #d4380d;
+$color-volcano-8: #ad2102;
+$color-volcano-9: #871400;
+$color-volcano-10: #610b00;
+
+// cyan color
+$color-cyan-primary: #13c2c2;
+$color-cyan-1: #e6fffb;
+$color-cyan-2: #b5f5ec;
+$color-cyan-3: #87e8de;
+$color-cyan-4: #5cdbd3;
+$color-cyan-5: #36cfc9;
+$color-cyan-6: #13c2c2;
+$color-cyan-7: #08979c;
+$color-cyan-8: #006d75;
+$color-cyan-9: #00474f;
+$color-cyan-10: #002329;
+
+// green colors
+$color-green-primary: #52c41a;
+$color-green-1: #f6ffed;
+$color-green-2: #d9f7be;
+$color-green-3: #b7eb8f;
+$color-green-4: #95de64;
+$color-green-5: #73d13d;
+$color-green-6: #52c41a;
+$color-green-7: #389e0d;
+$color-green-8: #237804;
+$color-green-9: #135200;
+$color-green-10: #092b00;
+
+// lime colors
+$color-lime-primary: #a0d911;
+$color-lime-1: #fcffe6;
+$color-lime-2: #f4ffb8;
+$color-lime-3: #eaff8f;
+$color-lime-4: #d3f261;
+$color-lime-5: #bae637;
+$color-lime-6: #a0d911;
+$color-lime-7: #7cb305;
+$color-lime-8: #5b8c00;
+$color-lime-9: #3f6600;
+$color-lime-10: #254000;
+
+// gold colors
+$color-gold-primary: #faad14;
+$color-gold-1: #fffbe6;
+$color-gold-2: #fff1b8;
+$color-gold-3: #ffe58f;
+$color-gold-4: #ffd666;
+$color-gold-5: #ffc53d;
+$color-gold-6: #faad14;
+$color-gold-7: #d48806;
+$color-gold-8: #ad6800;
+$color-gold-9: #874d00;
+$color-gold-10: #613400;
+
+// yellow colors
+$color-yellow-primary: #fadb14;
+$color-yellow-1: #feffe6;
+$color-yellow-2: #ffffb8;
+$color-yellow-3: #fffb8f;
+$color-yellow-4: #fff566;
+$color-yellow-5: #ffec3d;
+$color-yellow-6: #fadb14;
+$color-yellow-7: #d4b106;
+$color-yellow-8: #ad8b00;
+$color-yellow-9: #876800;
+$color-yellow-10: #614700;
+
+$color-border: #4a4a4a; // --ant-color-border (derived, dark layout)
+$color-bg-container: #252734; // --ant-color-bg-container (dark layout)
+
+// ── Typography ────────────────────────────────────────────────────────────────
+$font-size: var(--ant-font-size); // 14px
+$font-size-heading-2: var(--ant-font-size-heading-2); // 26px
+$font-size-heading-3: var(--ant-font-size-heading-3); // 22px
+$font-size-heading-4: var(--ant-font-size-heading-4); // 18px
+$font-size-heading-5: var(--ant-font-size-heading-5); // 16px
+
+$line-height: var(--ant-line-height); // 1.5
+$line-height-heading: var(--ant-line-height-heading); // 2
+
+$font-family: 'Lora, Lato, Oswald, sans-serif'; // --ant-font-family
+
+// ── Kích thước & Spacing ──────────────────────────────────────────────────────
+// sizeUnit = 4, sizeStep = 4 → size = sizeUnit + sizeStep * 2 = 4 + 4*2 = 12?
+// Thực tế Ant v5: size = sizeUnit * (sizeStep + 2) khi dùng default
+// Với sizeUnit=4, sizeStep=4 → controlHeightSM...
+// Theo Ant source: size = sizeStep * 4 = 16 (mặc định), override về 16px
+$size: 16px; // --ant-size               (base spacing unit)
+$padding: 16px; // --ant-padding
+$padding-xs: 8px; // --ant-padding-xs (sizeUnit * 2 = 8px)
+$margin: 16px; // --ant-margin
+$control-height: 38px; // --ant-control-height     | controlHeight
+$border-radius: 2px; // --ant-border-radius      | borderRadius
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cách dùng trong scss module (chỉ dùng với var() vì cssVar: true):
+//   color: $color-primary;
+//
+// Dùng biến scss này khi cần tính toán ngoài context của ant:
+//   padding: $size * 2;
+//   color: $color-primary;
+// ─────────────────────────────────────────────────────────────────────────────

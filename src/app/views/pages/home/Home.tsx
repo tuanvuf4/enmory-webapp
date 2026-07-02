@@ -106,7 +106,7 @@ const Home = () => {
         <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
           <Row justify={'center'}>
             <Col span={24}>
-              <div className={registerStyles.register}>
+              <div className={'text-center'}>
                 <p>
                   Don't have a account? <Link to={'/register'}>Register now!</Link>
                 </p>
@@ -116,7 +116,7 @@ const Home = () => {
 
           <Row justify={'center'}>
             <Col span={24}>
-              <div className={loginStyles.register}>
+              <div className={'text-center'}>
                 <p>
                   Already have an account? <Link to={'/login'}>Log in</Link>
                 </p>

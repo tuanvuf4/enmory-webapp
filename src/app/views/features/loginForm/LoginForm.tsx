@@ -110,7 +110,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
             {appConfig.appType !== EAppType.EXTENSION && (
               <Row justify={'center'}>
                 <Col span={24}>
-                  <div className={styles.register}>
+                  <div className={'text-center'}>
                     <p>
                       Don't have a account? <Link to={'/register'}></Link>
                     </p>

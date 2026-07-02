@@ -1,8 +1,9 @@
+@use '@style/vars' as *;
 // Pagination styles - TODO: Add your styles here from the original react-jss implementation
 .pagination {
   display: flex;
   align-items: center;
-  gap: calc(var(--ant-margin) / 2);
+  gap: calc($margin / 2);
 }
 
 .paginationSelect {
@@ -16,5 +17,5 @@
 .paginationNav {
   display: flex;
   align-items: center;
-  gap: calc(var(--ant-margin) / 2);
+  gap: calc($margin / 2);
 }

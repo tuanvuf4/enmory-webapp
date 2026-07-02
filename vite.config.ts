@@ -38,6 +38,7 @@ export default defineConfig(({ mode }) => {
         '@/services': path.resolve(__dirname, './src/app/services'),
         '@/store': path.resolve(__dirname, './src/app/store'),
         '@/views': path.resolve(__dirname, './src/app/views'),
+        '@style': path.resolve(__dirname, './src/style'),
         '@': path.resolve(__dirname, './src'),
       },
     },

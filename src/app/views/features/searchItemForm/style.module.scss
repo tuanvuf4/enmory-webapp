@@ -1,6 +1,7 @@
+@use '@style/vars' as *;
 .btnAddNew {
   &:hover span {
-    color: var(--ant-color-primary);
+    color: $color-primary;
   }
 }
 
@@ -8,27 +9,27 @@
   display: flex;
   justify-content: center;
   flex-flow: column;
-  gap: calc(var(--ant-size) * 0.5);
+  gap: $size * 0.5;
   width: 150px;
-  background: var(--ant-color-bg-base);
-  padding: calc(var(--ant-size) * 0.5) calc(var(--ant-size) * 0.5);
-  box-shadow: 0 0 calc(var(--ant-size) * 1) 0 rgba(0, 0, 0, 0.3);
+  background: $color-bg-base;
+  padding: $size * 0.5 $size * 0.5;
+  box-shadow: 0 0 $size * 1 0 rgba(0, 0, 0, 0.3);
 }
 
 .groupBtnAction {
   display: flex;
   justify-content: flex-start;
-  gap: calc(var(--ant-size) * 0.5);
+  gap: $size * 0.5;
 }
 
 .searchForm {
-  color: var(--ant-color-text-base);
+  color: $color-text-base;
 
   & form {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: calc(var(--ant-size) * 0.5);
+    gap: $size * 0.5;
   }
 
   & form button {
@@ -51,12 +52,12 @@
 }
 
 .padding {
-  padding: var(--ant-padding);
+  padding: $padding;
 }
 
 .label {
   display: block;
-  margin-bottom: calc(var(--ant-size) * 0.5);
+  margin-bottom: $size * 0.5;
 }
 
 .optionItem {
@@ -68,7 +69,7 @@
 .btnAdd {
   position: absolute !important;
   top: 0;
-  right: calc(var(--ant-size) * 0.25);
+  right: $size * 0.25;
   border-radius: 0px !important;
 }
 

@@ -2,12 +2,6 @@ import { gray, volcano, yellow, blue, red, cyan, green, gold, lime } from '@ant-
 
 export const styleConfig = {
   prefixClassCss: 'emr',
-  fontFamily: {
-    default: 'Lora, Lato, Oswald, sans-serif',
-    lora: 'Lora, arial, sans-serif',
-    oswald: 'Oswald, sans-serif',
-    lato: 'Lato, sans-serif',
-  },
   modal: {
     small: 500,
     medium: 750,
@@ -16,20 +10,16 @@ export const styleConfig = {
   logo: {
     fontSize: 28,
   },
-  itemColorBg: '#252734',
   sider: {
     width: 240,
     widthCollapse: 80,
   },
-  footer: {
-    background: '#fff',
-  },
   color: {
-    neutral: gray,
-    white: ['#fff'],
+    white: '#fff',
+    black: '#000',
+    gray: gray,
     blue: blue,
     red: red,
-    black: ['#393e46'],
     yellow: yellow,
     gold: gold,
     cyan: cyan,
@@ -41,10 +31,17 @@ export const styleConfig = {
     red: volcano,
     blue: blue,
   },
-  bg: {
-    black: ['#393e46'],
-  },
 }
+
+console.log(`*** gray *** `, gray)
+console.log(`*** blue *** `, blue)
+console.log(`*** red *** `, red)
+console.log(`*** volcano *** `, volcano)
+console.log(`*** cyan *** `, cyan)
+console.log(`*** green *** `, green)
+console.log(`*** lime *** `, lime)
+console.log(`*** gold *** `, gold)
+console.log(`*** yellow *** `, yellow)
 
 // Re-export for backward compatibility
 export default styleConfig

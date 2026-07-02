@@ -1,11 +1,7 @@
 .footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
+  position: relative;
   width: 100%;
   padding: 0 !important;
-  font-size: var(--ant-font-size-heading-5) !important;
   text-align: center;
   font-style: italic;
-  background: rgba(var(--ant-color-primary), 0.8) !important;
 }

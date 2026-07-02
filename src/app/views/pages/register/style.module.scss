@@ -1,3 +1,4 @@
+@use '@style/vars' as *;
 .registerForm {
   width: 600px;
 }
@@ -5,15 +6,15 @@
 .label {
   display: block;
   font-weight: 500;
-  margin-bottom: calc(var(--ant-size) * 0.25);
-  color: #d9d9d9; // styleConfig.color.neutral[6]
+  margin-bottom: $size * 0.25;
+  color: #d9d9d9; // styleConfig.color.gray[6]
   font-style: italic;
   font-size: 13px;
 }
 
 .register {
   text-align: center;
-  color: #8c8c8c; // styleConfig.color.neutral[4]
+  color: #8c8c8c; // styleConfig.color.gray[4]
 
   & p {
     margin: 0;

@@ -1,3 +1,4 @@
+@use '@style/vars' as *;
 .content {
   img {
     max-width: 100%;
@@ -5,7 +6,7 @@
   }
 
   ul {
-    padding-left: calc(var(--ant-size));
+    padding-left: $size;
     margin-bottom: 1em;
 
     &:last-child {
@@ -22,7 +23,7 @@
   }
 
   ol {
-    padding-left: calc(var(--ant-size));
+    padding-left: $size;
   }
 
   ol ol {

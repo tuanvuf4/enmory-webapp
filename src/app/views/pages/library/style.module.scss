@@ -1,18 +1,19 @@
+@use '@style/vars' as *;
 .btnInactive {
   background: transparent !important;
-  color: var(--ant-color-text-secondary) !important;
-  border-color: var(--ant-color-text-secondary) !important;
+  color: $color-text-secondary !important;
+  border-color: $color-text-secondary !important;
 }
 
 .btnActive {
   background: transparent !important;
-  color: var(--ant-color-primary) !important;
-  border-color: var(--ant-color-primary) !important;
+  color: $color-primary !important;
+  border-color: $color-primary !important;
 }
 
 .items {
-  margin: calc(var(--ant-size) * 1) 0;
-  padding-bottom: calc(var(--ant-size) * 1) 0;
+  margin: $size * 1 0;
+  padding-bottom: $size * 1 0;
 }
 
 .stickyBar {
@@ -24,12 +25,12 @@
 
 .itemTable {
   background: #ffffff;
-  margin: calc(var(--ant-size) * 1) 0;
-  padding: calc(var(--ant-size) * 1);
+  margin: $size * 1 0;
+  padding: $size * 1;
   overflow: auto;
 
   & table {
-    margin: 0 0 calc(var(--ant-size) * 1) 0;
+    margin: 0 0 $size * 1 0;
     min-width: 1200px;
 
     & tbody tr {
@@ -40,14 +41,14 @@
       }
 
       &:hover {
-        box-shadow: 0 0 calc(var(--ant-size) * 1) 0 rgba(0, 0, 0, 0.3);
+        box-shadow: 0 0 $size * 1 0 rgba(0, 0, 0, 0.3);
       }
 
       & td:nth-child(2) {
         cursor: pointer;
 
         &:hover {
-          color: var(--ant-color-link-hover);
+          color: $color-link-hover;
         }
       }
     }
@@ -57,14 +58,14 @@
     }
 
     & td {
-      padding: calc(var(--ant-size) * 0.5);
-      line-height: var(--ant-line-height);
+      padding: $size * 0.5;
+      line-height: $line-height;
     }
 
     & th {
-      padding: calc(var(--ant-size) * 0.5) calc(var(--ant-size) * 0.5) calc(var(--ant-size) * 1);
-      line-height: var(--ant-line-height);
-      font-size: var(--ant-font-size-heading-5);
+      padding: $size * 0.5 $size * 0.5 $size * 1;
+      line-height: $line-height;
+      font-size: $font-size-heading-5;
     }
 
     & thead tr th:nth-child(1) {

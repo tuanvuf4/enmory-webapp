@@ -11,7 +11,7 @@ import { InputTag, Level, ReviewableTextArea } from '@/views/components'
 import { Reference } from '@/views/features/references/References'
 import { theme, Row, Space, Col, Select, Checkbox, Button } from 'antd'
 import clsx from 'clsx'
-import { useEffect, Suspense } from 'react'
+import { useEffect, Suspense, useState } from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
 import { initItem } from './data'
 import { MeaningItemForm } from './MeaningItemForm'
@@ -24,6 +24,7 @@ import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
 import { useModal } from '@/context/modal.context'
 import { useQueryClient } from '@tanstack/react-query'
 import { getMeaningsWithExamples } from '@/helpers/item'
+import { validateAndCreateRelatedItems } from './itemValidation'
 
 interface ItemFormProps {
   item: IItem
@@ -31,6 +32,7 @@ interface ItemFormProps {
 
 export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const { token } = theme.useToken()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { openNotification } = usePrompt()
 
@@ -79,79 +81,97 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   }
 
   const onSubmit = async (data: IItem) => {
-    const meanings: Promise<IMeaning>[] =
-      data.meanings && data.meanings.length > 0
-        ? data.meanings.map(async (meaning) => ({
-            ...meaning,
-            itemId: data.id || '',
-            uid: user?.uid || '',
-            created_date: Timestamp.now().toMillis(),
-            last_update: Timestamp.now().toMillis(),
-            note: meaning.note || '',
-            collocations: meaning.collocations || '',
-            grammar: meaning.grammar || '',
-            definition: meaning.definition || '',
-            translation: meaning.translation || '',
-            pronunciation: meaning.pronunciation || { common: '', uk: '', us: '' },
-            common: meaning.common || false,
-            enable: meaning.enable || false,
-            antonyms: meaning.antonyms || [],
-            synonyms: meaning.synonyms || [],
-            examples:
-              ((await createExample(meaning)).map((example) => example.id) as string[]) ?? [],
-          }))
-        : []
+    setIsSubmitting(true)
 
-    const dataSubmit: IItem = {
-      ...data,
-      collocations: data.collocations || [],
-      forms: data.forms || [],
-      word_family: data.word_family || [],
-      relation: data.relation || [],
-      meanings: [...(await Promise.all(meanings))],
-    }
-    if (item?.id) {
+    try {
       try {
-        const { isSuccess, content } = await updateMutation({
-          id: String(item?.id),
-          data: dataSubmit,
+        // Validate and auto-create missing related items before API call
+        await validateAndCreateRelatedItems(data, user?.uid)
+      } catch (error) {
+        console.error('Error validating related items:', error)
+        openNotification({
+          type: 'error',
+          message: 'Failed to validate related items. Please try again.',
         })
-
-        if (isSuccess && content) {
-          const meaningsWithExamples = await getMeaningsWithExamples(content.meanings || [])
-
-          const itemUpdated = {
-            ...content,
-            meanings: meaningsWithExamples,
-          }
-          // update item in study set
-          if (itemUpdated && list.find((item) => item.id === itemUpdated.id)) {
-            dispatch(studySetAction.update(itemUpdated))
-          }
-          // update iotd item
-          dispatch(iotdAction.update(itemUpdated))
-
-          closeModal()
-          openNotification({ type: 'success', message: 'Update item successful!' })
-          // refresh list in library
-          await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
-        }
-      } catch (error) {
-        openNotification({ type: 'error', message: JSON.stringify(error) })
+        return
       }
-    } else {
-      try {
-        const { isSuccess } = await createMutation(dataSubmit)
-        if (isSuccess) {
-          // refresh list in library
-          await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
 
-          closeModal()
-          openNotification({ type: 'success', message: 'Create a item successful!' })
-        }
-      } catch (error) {
-        openNotification({ type: 'error', message: JSON.stringify(error) })
+      const meanings: Promise<IMeaning>[] =
+        data.meanings && data.meanings.length > 0
+          ? data.meanings.map(async (meaning) => ({
+              ...meaning,
+              itemId: data.id || '',
+              uid: user?.uid || '',
+              created_date: Timestamp.now().toMillis(),
+              last_update: Timestamp.now().toMillis(),
+              note: meaning.note || '',
+              collocations: meaning.collocations || '',
+              grammar: meaning.grammar || '',
+              definition: meaning.definition || '',
+              translation: meaning.translation || '',
+              pronunciation: meaning.pronunciation || { common: '', uk: '', us: '' },
+              common: meaning.common || false,
+              enable: meaning.enable || false,
+              antonyms: meaning.antonyms || [],
+              synonyms: meaning.synonyms || [],
+              examples:
+                ((await createExample(meaning)).map((example) => example.id) as string[]) ?? [],
+            }))
+          : []
+
+      const dataSubmit: IItem = {
+        ...data,
+        collocations: data.collocations || [],
+        forms: data.forms || [],
+        word_family: data.word_family || [],
+        relation: data.relation || [],
+        meanings: [...(await Promise.all(meanings))],
       }
+      if (item?.id) {
+        try {
+          const { isSuccess, content } = await updateMutation({
+            id: String(item?.id),
+            data: dataSubmit,
+          })
+
+          if (isSuccess && content) {
+            const meaningsWithExamples = await getMeaningsWithExamples(content.meanings || [])
+
+            const itemUpdated = {
+              ...content,
+              meanings: meaningsWithExamples,
+            }
+            // update item in study set
+            if (itemUpdated && list.find((item) => item.id === itemUpdated.id)) {
+              dispatch(studySetAction.update(itemUpdated))
+            }
+            // update iotd item
+            dispatch(iotdAction.update(itemUpdated))
+
+            closeModal()
+            openNotification({ type: 'success', message: 'Update item successful!' })
+            // refresh list in library
+            await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+          }
+        } catch (error) {
+          openNotification({ type: 'error', message: JSON.stringify(error) })
+        }
+      } else {
+        try {
+          const { isSuccess } = await createMutation(dataSubmit)
+          if (isSuccess) {
+            // refresh list in library
+            await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+
+            closeModal()
+            openNotification({ type: 'success', message: 'Create a item successful!' })
+          }
+        } catch (error) {
+          openNotification({ type: 'error', message: JSON.stringify(error) })
+        }
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -397,7 +417,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
           <Suspense fallback={<div>Loading...</div>}>
             <MeaningItemForm
-              loading={!isValid || isCreating || isUpdating}
+              loading={!isValid || isSubmitting || isCreating || isUpdating}
               origin={origin}
               catType={catType as ECategory}
               onSubmit={() => handleSubmit(onSubmit)()}
@@ -414,8 +434,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             </Button>
 
             <Button
-              loading={isCreating || isUpdating}
-              disabled={!isValid || isCreating || isUpdating || isSearching}
+              loading={isSubmitting || isCreating || isUpdating}
+              disabled={!isValid || isSubmitting || isCreating || isUpdating || isSearching}
               type={'primary'}
               onClick={() => handleSubmit(onSubmit)()}
             >

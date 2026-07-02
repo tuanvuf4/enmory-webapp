@@ -179,6 +179,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                       type={'text'}
                       onClick={onSubmit}
                       disabled={loading}
+                      loading={loading}
                       icon={<SaveOutlined />}
                       style={{ color: token.colorPrimary }}
                     />

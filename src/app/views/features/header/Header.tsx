@@ -1,11 +1,18 @@
 import appStyle from '@/style/appStyle.module.scss'
-import { MenuOutlined, SearchOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons'
+import {
+  MenuOutlined,
+  SearchOutlined,
+  PlusOutlined,
+  DownOutlined,
+  SunOutlined,
+  MoonOutlined,
+} from '@ant-design/icons'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { useAuthLogout } from '@/core/hooks/useAuthLogout'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
-import { theme, MenuProps, Row, Col, Button, Dropdown, Space } from 'antd'
+import { theme, MenuProps, Row, Col, Button, Dropdown, Space, Layout } from 'antd'
 import { useNavigate, Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
 import { MainMenu } from '../mainMenu/MainMenu'
@@ -13,16 +20,19 @@ import { menu, addNewType } from './Menu'
 import styles from './style.module.scss'
 import clsx from 'clsx'
 import { useExampleModal, useItemModal } from '@/helpers/hooks'
-import { Header } from 'antd/es/layout/layout'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
+import { Toolbar } from '../toolbar'
 
-export const AppHeader = () => {
+interface IAppHeader {
+  styles?: any
+}
+
+export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
   const { token } = theme.useToken()
 
   const { isAuth, user } = useSelector((state) => state.auth)
-  const { drawer } = useSelector((state) => state.setting)
-  const { isShowSearchFormItem } = useSelector((state) => state.setting)
+  const { drawer, isShowSearchFormItem, themeMode } = useSelector((state) => state.setting)
 
   const dispatch = useDispatch()
   const { logout } = useAuthLogout()
@@ -82,13 +92,15 @@ export const AppHeader = () => {
   }
 
   return (
-    <Header className={clsx(styles.header, isShowSearchFormItem ? 'active' : '')}>
+    <Layout.Header
+      style={{ ...customStyles, height: isShowSearchFormItem ? 'auto' : 60 }}
+      className={styles.header}
+    >
       <div className={appStyle.containerFluid}>
         <Row
           gutter={[token.size, token.size * 2]}
           justify={'space-between'}
           className={styles.rowHeader}
-          style={{ height: 60 }}
         >
           <Col xs={10} md={4}>
             {drawer && (
@@ -149,6 +161,19 @@ export const AppHeader = () => {
           <Col xs={14} md={isAuth ? 4 : 18}>
             {isAuth && (
               <div className={clsx(styles.userContainer)}>
+                <Button
+                  type='text'
+                  className={styles.btnThemeToggle}
+                  icon={
+                    themeMode === 'dark' ? (
+                      <SunOutlined style={{ fontSize: 18, color: token.colorPrimary }} />
+                    ) : (
+                      <MoonOutlined style={{ fontSize: 18, color: token.colorPrimary }} />
+                    )
+                  }
+                  onClick={() => dispatch(settingAction.toggleTheme())}
+                />
+
                 <Dropdown trigger={['click']} menu={menuAddProps} placement='bottomLeft' arrow>
                   <Button
                     className={clsx(styles.btnAddNew)}
@@ -208,7 +233,15 @@ export const AppHeader = () => {
             )}
           </Col>
         </Row>
+
+        {isAuth && (
+          <Row>
+            <Col>
+              <Toolbar pagination={undefined} />
+            </Col>
+          </Row>
+        )}
       </div>
-    </Header>
+    </Layout.Header>
   )
 }

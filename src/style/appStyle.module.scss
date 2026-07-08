@@ -66,21 +66,39 @@ $footer-background: #fff;
 }
 
 .innerContainer {
-  background: rgba($item-color-bg, 0.9);
-  color: $color-white;
+  background: color-mix(in srgb, $color-white 90%, #eee9ff 10%);
+  color: $color-text-base;
   padding: $size * 1;
   width: 800px;
   max-width: 100%;
   margin: 0 auto;
-  box-shadow: 0 0 $size 0 rgba($black, 0.3);
+  border: 1px solid color-mix(in srgb, #d9d6ff 75%, transparent);
+  border-radius: $size;
+  box-shadow: 0 10px 30px rgba(91, 92, 230, 0.08);
+
+  :global([data-theme='dark']) & {
+    background: rgba(12, 14, 44, 0.75);
+    border-color: rgba(130, 110, 255, 0.15);
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(100, 80, 255, 0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
 }
 
 .stickyBar {
   position: sticky;
   z-index: 999;
-  padding: $size * 0.5 0;
-  background: $color-white;
-  border-bottom: 1px solid rgba($black, 0.06);
+  // padding: $size * 0.5 0;
+  border-bottom: 1px solid color-mix(in srgb, #d7d9ef 75%, transparent);
+  backdrop-filter: blur(8px);
+
+  :global([data-theme='dark']) & {
+    border-bottom-color: rgba(130, 110, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
 }
 
 .bodyContent {
@@ -89,7 +107,11 @@ $footer-background: #fff;
 
 .contentPage {
   padding: $size * 2 $size $size * 3;
-  background: $color-bg-base;
+  background: linear-gradient(155deg, #f7f4ff 0%, #f0f4ff 58%, #edf8ff 100%);
+
+  :global([data-theme='dark']) & {
+    background: linear-gradient(155deg, #111438 0%, #131947 56%, #182252 100%);
+  }
 }
 
 .dark {
@@ -118,13 +140,17 @@ $footer-background: #fff;
 }
 
 .pageTitle {
-  color: $color-text-secondary;
-  margin: $size * 1.5 0;
+  color: $color-primary;
+  margin: $size * 0.75 0;
   letter-spacing: 1px;
-  font-family: $font-family-oswald;
+  font-family: $font-family-lato;
   text-align: center;
   font-size: $font-size-heading-2;
   font-weight: bold;
+
+  :global([data-theme='dark']) & {
+    color: $color-white;
+  }
 }
 
 .dkOnly {

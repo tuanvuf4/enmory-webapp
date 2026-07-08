@@ -16,11 +16,14 @@
 .contentStyle {
   color: $color-text;
   min-width: 320px;
+
+  :global([data-theme='dark']) & {
+    background: transparent !important;
+  }
 }
 
 .main {
-  padding: 0 0 $size * 2 0;
-  padding-bottom: 100px;
+  padding: $size 0 $size * 8 0;
 }
 
 @media screen and (max-width: 640px) {

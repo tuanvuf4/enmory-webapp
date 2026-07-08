@@ -5,37 +5,32 @@ import { AddedItemChart } from '@/views/features/chart/addedItemChart/AddedItemC
 import { OverviewChart } from '@/views/features/chart/overviewChart/OverviewChart'
 import { ProgressChart } from '@/views/features/chart/progressChart/ProgressChart'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { Toolbar } from '@/views/features'
 
 const Statistic = () => {
   const { token } = theme.useToken()
 
   return (
-    <>
-      <Toolbar pagination={undefined} />
+    <div className={appStyle.container}>
+      <PageTitle content={'Statistic'} />
 
-      <div className={appStyle.container}>
-        <PageTitle content={'Statistic'} />
+      <div className={classNames(appStyle.contentPage)}>
+        <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
+          <Row justify={'start'} align={'top'} gutter={[token.size * 2, token.size * 2]}>
+            <Col xs={24} md={15}>
+              <AddedItemChart />
+            </Col>
 
-        <div className={classNames(appStyle.contentPage)}>
-          <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
-            <Row justify={'start'} align={'top'} gutter={[token.size * 2, token.size * 2]}>
-              <Col xs={24} md={15}>
-                <AddedItemChart />
-              </Col>
+            <Col xs={24} md={{ span: 7, offset: 2 }}>
+              <OverviewChart />
+            </Col>
 
-              <Col xs={24} md={{ span: 7, offset: 2 }}>
-                <OverviewChart />
-              </Col>
-
-              <Col xs={24} md={24}>
-                <ProgressChart />
-              </Col>
-            </Row>
-          </Space>
-        </div>
+            <Col xs={24} md={24}>
+              <ProgressChart />
+            </Col>
+          </Row>
+        </Space>
       </div>
-    </>
+    </div>
   )
 }
 

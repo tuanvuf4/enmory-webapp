@@ -5,12 +5,12 @@
   align-items: center;
   justify-content: space-between;
   flex-flow: column wrap;
-  background: $color-bg-item;
+  // background: $color-bg-item;
 
   &:focus-visible,
   &:focus,
   &:focus-within {
-    box-shadow: 0 0 $size * 1 0 rgba(0, 0, 0, 1); // hex2Rgba(token.colorTextBase)
+    // box-shadow: 0 0 $size * 1 0 rgba(0, 0, 0, 1); // hex2Rgba(token.colorTextBase)
   }
 }
 

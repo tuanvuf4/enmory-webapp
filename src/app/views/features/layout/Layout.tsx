@@ -95,7 +95,7 @@ export const AppLayout: React.FC<PropsWithChildren> = (props) => {
         <Layout
           style={{
             paddingLeft: drawer ? 0 : isSidebarOpened ? styleConfig.sider.width : 80,
-            overflow: 'hidden',
+            overflow: 'clip',
           }}
         >
           <AppHeader />

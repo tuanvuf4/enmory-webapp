@@ -1,7 +1,7 @@
 import { ITracks } from '@/models/media.model'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { Player, Toolbar } from '@/views/features'
+import { Player } from '@/views/features'
 import { MediaUploadModal } from '@/views/features/modals/mediaUploadModal/MediaUploadModal'
 import { tracksApi } from '@/services/firebase'
 import clsx from 'clsx'
@@ -116,8 +116,6 @@ export const Listening = () => {
 
   return (
     <>
-      <Toolbar pagination={undefined} />
-
       <div className={appStyle.container}>
         <PageTitle content={'Listening'} />
 

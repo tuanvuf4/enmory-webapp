@@ -8,7 +8,6 @@ import { useArticleModal } from '@/helpers/hooks/useArticleModal'
 import { useArticleCategoryModal } from '@/helpers/hooks/useArticleCategoryModal'
 import { PlusOutlined } from '@ant-design/icons'
 import { NotFound, ArticleCategoryList } from '@/views/components'
-import { Toolbar } from '@/views/features'
 import { IArticleCategory } from '@/services/firebase/api/articleCategories.api'
 
 interface IArticleProps {
@@ -73,8 +72,6 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
 
   return (
     <>
-      <Toolbar pagination={undefined} />
-
       <div className={appStyle.containerMd}>
         <PageTitle content={pageTitle} />
 

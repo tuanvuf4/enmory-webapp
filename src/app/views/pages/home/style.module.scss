@@ -1,4 +1,14 @@
 @use '@style/vars' as *;
+
+.homePage {
+  position: relative;
+  padding-top: $size * 2;
+}
+
+.homeGrid {
+  align-items: stretch;
+}
+
 .items {
   margin: 0;
   padding: 0;
@@ -7,4 +17,10 @@
 .notFound {
   margin: $size * 1 0;
   text-align: center;
+}
+
+@media screen and (max-width: 767px) {
+  .sideColumn {
+    position: static;
+  }
 }

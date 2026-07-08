@@ -3,12 +3,12 @@ import { usePrefetchAllIotd, useSelector } from '@/core/hooks'
 import { Example } from '@/views/features/example/Example'
 import { StudySet } from '@/views/features/studySet/StudySet'
 import { Widget } from '@/views/features/widget/Widget'
-import { theme, Space, Row, Col, Skeleton } from 'antd'
+import { theme, Space, Row, Col, Skeleton, Flex } from 'antd'
 import { Item } from '@/views/features/item/Item'
 import { ExampleMode } from '@/models/example.model'
 import { Link } from 'react-router-dom'
-import { Toolbar } from '@/views/features'
 import { ExampleForm } from '@/views/features/example/ExampleForm'
+import styles from './style.module.scss'
 
 const Home = () => {
   const { token } = theme.useToken()
@@ -29,17 +29,16 @@ const Home = () => {
   return (
     <>
       {isAuth && (
-        <>
-          <Toolbar pagination={undefined} />
-
-          <div className={appStyle.container}>
-            <Space
-              direction='vertical'
-              size={[token.size, token.size]}
-              className={appStyle.fulWidth}
+        <div className={`${appStyle.container} ${styles.homePage}`}>
+          <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
+            <Row
+              justify={'start'}
+              align={'top'}
+              gutter={[token.size, token.size]}
+              className={styles.homeGrid}
             >
-              <Row justify={'start'} align={'top'} gutter={[token.size, token.size]}>
-                <Col xs={24} md={16}>
+              <Col xs={24} md={14}>
+                <Flex vertical gap={token.size}>
                   <Widget title={`Study Set`}>
                     <StudySet />
                   </Widget>
@@ -51,23 +50,25 @@ const Home = () => {
                   <Widget title={'Examples'}>
                     <Example />
                   </Widget>
-                </Col>
+                </Flex>
+              </Col>
 
-                <Col xs={24} md={8}>
+              <Col xs={24} md={10} className={styles.sideColumn}>
+                <Flex vertical gap={token.size}>
                   {word?.item && word.item.origin && (
-                    <Widget title='Word'>
+                    <Widget>
                       {isLoading && !isError ? <Skeleton /> : <Item reload data={word.item} />}
                     </Widget>
                   )}
 
                   {phrase?.item && phrase.item.origin && (
-                    <Widget title='Phrase'>
+                    <Widget>
                       {isLoading && !isError ? <Skeleton /> : <Item reload data={phrase.item} />}
                     </Widget>
                   )}
 
                   {collocation?.item && collocation.item.origin && (
-                    <Widget title='Collocation'>
+                    <Widget>
                       {isLoading && !isError ? (
                         <Skeleton />
                       ) : (
@@ -77,27 +78,27 @@ const Home = () => {
                   )}
 
                   {sentence?.item && sentence.item.origin && (
-                    <Widget title='Sentence'>
+                    <Widget>
                       {isLoading && !isError ? <Skeleton /> : <Item reload data={sentence.item} />}
                     </Widget>
                   )}
 
                   {idiom?.item && idiom.item.origin && (
-                    <Widget title='Idiom'>
+                    <Widget>
                       {isLoading && !isError ? <Skeleton /> : <Item reload data={idiom.item} />}
                     </Widget>
                   )}
 
                   {slang?.item && slang.item.origin && (
-                    <Widget title='Slang'>
+                    <Widget>
                       {isLoading && !isError ? <Skeleton /> : <Item reload data={slang.item} />}
                     </Widget>
                   )}
-                </Col>
-              </Row>
-            </Space>
-          </div>
-        </>
+                </Flex>
+              </Col>
+            </Row>
+          </Space>
+        </div>
       )}
 
       {!isAuth && (

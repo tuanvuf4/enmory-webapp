@@ -9,13 +9,12 @@
 }
 
 .exampleOverview {
-  margin-bottom: $size * 1;
-  background: rgba($color-bg-item, 0.9);
-  border-radius: 4px;
-  border: 1px solid rgba($color-bg-item, 0.4);
-  box-shadow: 0px 0px 30px 0px rgba($white, 0.2);
+  // padding: $size * 1;
+  // margin-bottom: $size * 1;
   color: $color-white;
-  padding: $size * 1;
+  // border: 1px solid rgba($color-bg-item, 0.4);
+  // border-radius: 4px;
+  box-shadow: 0px 0px 30px 0px rgba($white, 0.2);
 
   & form {
     display: flex;
@@ -26,16 +25,13 @@
 }
 
 .exampleForm {
-  background: #ffffff;
-  border-radius: 4px;
-  color: $color-text-base;
-  box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
-  padding: $size $size $size * 2;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: $size * 0.5;
+  padding: $size $size $size * 2;
+  color: $color-text-base;
+  border-radius: 4px;
 
   & textarea {
     resize: none !important;

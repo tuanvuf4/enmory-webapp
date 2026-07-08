@@ -1,7 +1,6 @@
 import appStyle from '@/style/appStyle.module.scss'
 import { EViewMode } from '@/models/app.model'
-import { Toolbar } from '@/views/features/toolbar/Toolbar'
-import { theme, Row, Col } from 'antd'
+import { theme, Row, Col, Flex, Space } from 'antd'
 import { useEffect } from 'react'
 import styles from './style.module.scss'
 import { useSelector } from '@/core/hooks'
@@ -12,7 +11,7 @@ import { NotFound } from '@/views/components'
 import { useSearchParams } from 'react-router-dom'
 import { appSetting } from '@/config/appConfig'
 import { useItems } from '@/core/hooks/useItems'
-import { Loading } from '@/views/features'
+import { Loading, Widget } from '@/views/features'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
@@ -54,42 +53,61 @@ export const Library: React.FC = () => {
 
   return (
     <>
-      <Toolbar
-        pagination={
-          <Pagination
-            page={page}
-            size={size}
-            total={pagination?.total}
-            totalPage={pagination?.totalPage}
-            options={appSetting.pagination.options}
-            onPageChange={(data) => {
-              const newParams = new URLSearchParams(searchParams)
-              newParams.set('page', data.page.toString())
-              newParams.set('size', data.size.toString())
-              setSearchParams(newParams)
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }}
-          />
-        }
-      />
+      {isLoading && <Loading show={isLoading} />}
 
       <div className={appStyle.container}>
-        {isLoading && <Loading show={isLoading} />}
+        <Space direction={'vertical'} size={token.size}>
+          <Flex align={'center'} justify={'flex-end'}>
+            <Pagination
+              page={page}
+              size={size}
+              total={pagination?.total}
+              totalPage={pagination?.totalPage}
+              options={appSetting.pagination.options}
+              onPageChange={(data) => {
+                const newParams = new URLSearchParams(searchParams)
+                newParams.set('page', data.page.toString())
+                newParams.set('size', data.size.toString())
+                setSearchParams(newParams)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+            />
+          </Flex>
 
-        {!isLoading && viewMode === EViewMode.GRID && listItem.length > 0 && (
-          <div className={styles.items}>
-            <Row gutter={[token.size, token.size * 2]}>
-              {listItem.length > 0 &&
-                listItem.map((item, idx) => {
-                  return (
-                    <Col xs={24} sm={12} md={12} lg={8} xl={6} key={idx}>
-                      <Item data={item} action active />
-                    </Col>
-                  )
-                })}
-            </Row>
-          </div>
-        )}
+          {!isLoading && viewMode === EViewMode.GRID && listItem.length > 0 && (
+            <div className={styles.items}>
+              <Row gutter={[token.size, token.size * 2]}>
+                {listItem.length > 0 &&
+                  listItem.map((item, idx) => {
+                    return (
+                      <Col xs={24} sm={12} md={12} lg={8} xl={6} key={idx}>
+                        <Widget>
+                          <Item data={item} action active />
+                        </Widget>
+                      </Col>
+                    )
+                  })}
+              </Row>
+            </div>
+          )}
+
+          <Flex align={'center'} justify={'flex-end'}>
+            <Pagination
+              page={page}
+              size={size}
+              total={pagination?.total}
+              totalPage={pagination?.totalPage}
+              options={appSetting.pagination.options}
+              onPageChange={(data) => {
+                const newParams = new URLSearchParams(searchParams)
+                newParams.set('page', data.page.toString())
+                newParams.set('size', data.size.toString())
+                setSearchParams(newParams)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+            />
+          </Flex>
+        </Space>
 
         {!isLoading && listItem.length === 0 && (
           <NotFound classNames={{ container: 'justify-center' }} showButton={false} />

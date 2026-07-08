@@ -85,19 +85,49 @@ textarea {
 }
 
 ::-webkit-scrollbar {
-  background-color: #333;
+  background-color: #e8e4f8;
   width: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
   --tw-border-opacity: 1;
   --tw-bg-opacity: 1;
-  background-color: #72a526;
+  background-color: #5b5ce6;
 }
 
 ::-webkit-scrollbar-track {
-  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  background-color: #333;
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+  background-color: #e8e4f8;
+}
+
+[data-theme='light'] #root {
+  background-color: #f1f5f9;
+  background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.18) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(232, 121, 249, 0.18) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(45, 212, 191, 0.18) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(251, 113, 133, 0.18) 0px, transparent 50%);
+}
+
+[data-theme='dark'] #root {
+  background-color: #0f172a;
+  background-image: radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.35) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(192, 38, 211, 0.35) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.35) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(244, 63, 94, 0.35) 0px, transparent 50%);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar {
+  background-color: #0e1130;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background-color: #4a3ea0;
+  border-radius: 4px;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);
+  background-color: #0e1130;
 }
 
 /* =========================

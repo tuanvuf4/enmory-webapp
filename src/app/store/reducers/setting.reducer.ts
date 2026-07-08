@@ -10,6 +10,7 @@ export interface ISettingState {
   viewMode: EViewMode
   viewPort: EViewPort
   trackIndex: number
+  themeMode: 'light' | 'dark'
   categories: IOption<string, ECategory>[]
   types: IOption<{ origin: string; abbr: string }, EType>[]
 }
@@ -22,6 +23,7 @@ export const initialState: ISettingState = {
   viewMode: EViewMode.GRID,
   viewPort: EViewPort.XS,
   trackIndex: 0,
+  themeMode: 'light',
   categories: [],
   types: [],
 }
@@ -62,6 +64,9 @@ export const settingReducer = createSlice({
     },
     setTrackIndex(state: ISettingState, action: PayloadAction<number>) {
       state.trackIndex = action.payload
+    },
+    toggleTheme(state: ISettingState) {
+      state.themeMode = state.themeMode === 'dark' ? 'light' : 'dark'
     },
     reset() {
       return initialState

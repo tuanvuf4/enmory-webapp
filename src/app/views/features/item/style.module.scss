@@ -26,16 +26,19 @@
   justify-content: space-between;
   flex-direction: column;
   height: 100%;
-  padding: $padding * 0.5 $padding * 0.75 $padding * 0.5 $padding * 0.75;
-  border-radius: 4px;
+  // padding: $padding * 0.5 $padding * 0.75 $padding * 0.5 $padding * 0.75;
+  // border-radius: 4px;
   border: none;
   box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
   color: $color-text-base;
 
-  &.active {
-    background: rgba(37, 39, 52, 0.95);
-    border: 1px solid rgba(37, 39, 52, 0.4);
-    color: $color-white;
+  :global([data-theme='dark']) & {
+    box-shadow: none;
+    color: #c8caee;
+  }
+
+  :global([data-theme='dark']) &.active {
+    color: #e0e2ff;
   }
 
   & ul,
@@ -59,7 +62,7 @@
   border-radius: $size * 0.25;
 
   &.active {
-    border: 1px solid color-mix(in srgb, $color-text-base, transparent 80%);
+    // border: 1px solid color-mix(in srgb, $color-text-base, transparent 80%);
   }
 
   & > * {
@@ -76,7 +79,7 @@
   border: 1px solid #91caff;
 
   &.active {
-    border: 1px solid #91caff;
+    // border: 1px solid #91caff;
   }
 }
 
@@ -250,7 +253,7 @@
   color: $color-text-base !important;
 
   &.active {
-    color: $color-white !important;
+    // color: $color-white !important;
   }
 }
 
@@ -287,7 +290,7 @@
   color: $color-text !important;
 
   &.active {
-    color: $color-white !important;
+    // color: $color-white !important;
   }
 
   & span {

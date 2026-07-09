@@ -31,7 +31,7 @@ const Home = () => {
         <div className={appStyle.container}>
           <Row justify={'start'} align={'top'} gutter={token.size * 1.5}>
             <Col xs={24} sm={14} md={14}>
-              <Space direction='vertical' size={token.size * 1.5} style={{ maxWidth: '100%' }}>
+              <Space direction='vertical' size={token.size * 1.5} style={{ width: '100%' }}>
                 <Widget title={`Study Set`}>
                   <StudySet />
                 </Widget>

@@ -141,31 +141,9 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning, o
       {!show && (
         <>
           {meaning.definition && (
-            <h3
-              className={styles.definition}
-              dangerouslySetInnerHTML={{ __html: meaning.definition }}
-            />
-          )}
-
-          {meaning.translation && (
-            <h3
-              className={styles.translate}
-              dangerouslySetInnerHTML={{ __html: meaning.translation }}
-            />
-          )}
-        </>
-      )}
-
-      {show && (
-        <>
-          {meaning.note && (
-            <div className={styles.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
-          )}
-
-          {meaning.definition && (
             <>
-              {/* <h5 className={'italic'}>Definition:</h5> */}
-              <h3
+              <h5 className={'italic font-bold m-0'}>Definition:</h5>
+              <div
                 className={styles.definition}
                 dangerouslySetInnerHTML={{ __html: meaning.definition }}
               />
@@ -174,8 +152,39 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning, o
 
           {meaning.translation && (
             <>
-              {/* <h5 className={'italic'}>Translation:</h5> */}
-              <h3
+              <h5 className={'italic font-bold m-0'}>Translation:</h5>
+              <div
+                className={styles.translate}
+                dangerouslySetInnerHTML={{ __html: meaning.translation }}
+              />
+            </>
+          )}
+        </>
+      )}
+
+      {show && (
+        <>
+          {meaning.note && (
+            <>
+              <h5 className={'italic font-bold m-0'}>Note:</h5>
+              <div className={styles.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
+            </>
+          )}
+
+          {meaning.definition && (
+            <>
+              <h5 className={'italic font-bold m-0'}>Definition:</h5>
+              <div
+                className={styles.definition}
+                dangerouslySetInnerHTML={{ __html: meaning.definition }}
+              />
+            </>
+          )}
+
+          {meaning.translation && (
+            <>
+              <h5 className={'italic font-bold m-0'}>Translation:</h5>
+              <div
                 className={styles.translate}
                 dangerouslySetInnerHTML={{ __html: meaning.translation }}
               />
@@ -184,14 +193,14 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning, o
 
           {meaning.collocations && (
             <div className={styles.list}>
-              <h5 className={'italic font-bold'}>Collocations:</h5>
+              <h5 className={'italic font-bold m-0'}>Collocations:</h5>
               <div dangerouslySetInnerHTML={{ __html: meaning.collocations }} />
             </div>
           )}
 
           {meaning.grammar && (
             <div className={styles.list}>
-              <h5 className={'italic font-bold'}>Grammar:</h5>
+              <h5 className={'italic font-bold m-0'}>Grammar:</h5>
               <div dangerouslySetInnerHTML={{ __html: meaning.grammar }} />
             </div>
           )}
@@ -206,8 +215,8 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning, o
 
           {meaning.examples.length > 0 && (
             <div className={styles.examples}>
-              {/* <h5 className={'italic font-bold'}>Example:</h5> */}
-              <ul>
+              <h5 className={'italic font-bold m-0'}>Example:</h5>
+              <ul className={'p-[0px_!important]'}>
                 {(meaning.examples as IExample[]).map((example, key) => {
                   return (
                     <li key={key} className={styles.exampleItem}>

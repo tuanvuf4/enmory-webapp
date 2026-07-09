@@ -188,6 +188,7 @@
       font-size: $font-size-heading-5;
       border: 2px solid rgba(255, 255, 255, 0.45);
       line-height: $line-height;
+      background: transparent;
       cursor: pointer;
 
       & i {
@@ -201,24 +202,17 @@
       }
 
       &.active {
-        background: $color-white;
-        color: #252734;
+        color: $color-text-base;
+        border: 2px solid $color-blue-6 !important;
       }
 
       &.correct {
-        border: 2px solid $color-primary !important;
-        background: $color-primary !important;
+        border: 2px solid $color-green-5 !important;
         color: $color-white;
-
-        & i {
-          color: $color-cyan-6;
-          font-weight: bold;
-        }
       }
 
       &.incorrect {
-        border: 2px solid rgba(238, 74, 121, 0.5) !important;
-        background: rgba(238, 74, 121, 0.25) !important;
+        border: 2px solid $color-red-5 !important;
         color: $color-white;
       }
     }

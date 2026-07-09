@@ -265,7 +265,7 @@ export const PlayerDock = () => {
             style={{
               background: 'transparent',
               boxShadow: 'none',
-              color: loop ? token.colorPrimary : token.colorWhite,
+              color: loop ? token.colorPrimary : token.colorText,
             }}
             onClick={() => handleToggleLoop()}
           />
@@ -273,14 +273,14 @@ export const PlayerDock = () => {
           <Button
             type='text'
             title={'Previous'}
-            icon={<StepBackwardOutlined style={{ fontSize: '20px', color: token.colorWhite }} />}
+            icon={<StepBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
             onClick={onPrev}
           />
 
           <Button
             type='text'
             title={'-10s'}
-            icon={<FastBackwardOutlined style={{ fontSize: '20px', color: token.colorWhite }} />}
+            icon={<FastBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
             onClick={() => onSeekBy(-10)}
           />
 
@@ -288,9 +288,9 @@ export const PlayerDock = () => {
             type='text'
             icon={
               playing ? (
-                <PauseCircleFilled style={{ fontSize: '20px', color: token.colorWhite }} />
+                <PauseCircleFilled style={{ fontSize: '20px', color: token.colorText }} />
               ) : (
-                <PlayCircleFilled style={{ fontSize: '20px', color: token.colorWhite }} />
+                <PlayCircleFilled style={{ fontSize: '20px', color: token.colorText }} />
               )
             }
             onClick={playing ? handlePause : handlePlay}
@@ -299,14 +299,14 @@ export const PlayerDock = () => {
           <Button
             type='text'
             title={'+10s'}
-            icon={<FastForwardOutlined style={{ fontSize: '20px', color: token.colorWhite }} />}
+            icon={<FastForwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
             onClick={() => onSeekBy(10)}
           />
 
           <Button
             type='text'
             title={'Next'}
-            icon={<StepForwardOutlined style={{ fontSize: '20px', color: token.colorWhite }} />}
+            icon={<StepForwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
             onClick={onNext}
           />
 
@@ -318,7 +318,7 @@ export const PlayerDock = () => {
               <UnorderedListOutlined
                 style={{
                   fontSize: '20px',
-                  color: trackListOpen ? token.colorPrimary : token.colorWhite,
+                  color: trackListOpen ? token.colorPrimary : token.colorText,
                 }}
               />
             }

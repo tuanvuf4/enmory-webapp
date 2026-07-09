@@ -13,7 +13,6 @@
   max-width: 100%;
   margin: $size * 1 auto;
   color: $color-white;
-  font-family: Oswald, sans-serif;
   border: 1px solid rgba(244, 244, 244, 0.1);
   border-radius: $size * 0.25;
   box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
@@ -120,7 +119,9 @@
 }
 
 .active {
-  background: rgba(82, 82, 82, 0.8);
+  background: var(--ant-color-fill-secondary);
+  color: var(--ant-color-primary) !important;
+  font-weight: 600;
 }
 
 .seekBar {
@@ -137,7 +138,7 @@
   & span {
     min-width: 42px;
     font-size: 12px;
-    color: $color-white;
+    color: $color-text;
   }
 }
 
@@ -156,12 +157,18 @@
   display: flex;
   height: 100px;
   align-items: center;
-  gap: $size * 0.75;
+  gap: $size * 2;
   padding: $size * 0.5;
   background: $color-bg-widget;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  transition: transform 0.3s ease;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+
+  :global([data-theme='dark']) & {
+    background: rgba(23, 27, 69, 0.85);
+    border-top: 1px solid rgba(130, 115, 255, 0.15);
+  }
 }
 
 .dockMeta {
@@ -178,13 +185,20 @@
   text-overflow: ellipsis;
   font-size: $font-size-heading-5;
   margin-bottom: 4px;
-  color: $color-primary;
+
+  :global([data-theme='light']) & {
+    color: $color-text-base;
+  }
+
+  :global([data-theme='dark']) & {
+    color: $color-white;
+  }
 }
 
 .liveTranscript {
   font-size: $font-size-heading-5;
   text-overflow: ellipsis;
-  color: $color-white;
+  color: $color-text-base;
 }
 
 .dockControls {
@@ -205,7 +219,7 @@
 
 .dockHint {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
+  color: $color-text-secondary;
 }
 
 /* Track list panel above the dock */
@@ -213,13 +227,15 @@
   position: fixed;
   left: 0;
   bottom: 100px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--ant-color-border);
   max-height: 40vh;
   overflow-y: auto;
   width: 300px;
-  backdrop-filter: blur(8px);
-  background: rgba(10, 16, 28, 0.97);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: var(--ant-color-bg-elevated);
   z-index: 998;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
 
   & ul {
     list-style: none;
@@ -229,14 +245,14 @@
     & li {
       padding: 12px 16px;
       cursor: pointer;
-      color: $color-white;
+      color: var(--ant-color-text-base);
       font-size: 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      transition: background 0.15s;
+      border-bottom: 1px solid var(--ant-color-border);
+      transition: background 0.15s, color 0.15s;
       text-align: left;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.08);
+        background: var(--ant-color-fill-secondary);
       }
     }
   }
@@ -329,6 +345,7 @@
   .controls {
     order: 1;
   }
+
   .dockTrackList {
     width: 100%;
     bottom: 0;
@@ -337,6 +354,7 @@
   .transcript {
     max-height: 400px;
   }
+
   .tracksContent {
     & ul {
       max-height: 200px;

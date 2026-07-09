@@ -21,6 +21,10 @@ export default defineConfig(({ mode }) => {
     },
     publicDir: isExtensionBuild ? 'public_ext' : 'public',
     css: {
+      modules: {
+        // Uses the class name only in development, keeps hash in production
+        // generateScopedName: mode === 'development' ? '[local]' : '[hash:base64:5]',
+      },
       preprocessorOptions: {
         scss: {
           api: 'modern-compiler',

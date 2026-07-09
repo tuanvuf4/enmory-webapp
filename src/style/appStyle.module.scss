@@ -26,10 +26,6 @@
 
 // Style configuration variables
 $prefix-class-css: 'emr';
-$font-family-default: 'Lora, Lato, Oswald, sans-serif';
-// $font-family-lora: 'Lora';
-// $font-family-oswald: 'Oswald';
-// $font-family-lato: 'Lato';
 $modal-small: 500px;
 $modal-medium: 750px;
 $modal-large: 1000px;
@@ -90,7 +86,6 @@ $footer-background: #fff;
 .stickyBar {
   position: sticky;
   z-index: 999;
-  // padding: $size * 0.5 0;
   border-bottom: 1px solid color-mix(in srgb, #d7d9ef 75%, transparent);
   backdrop-filter: blur(8px);
 
@@ -107,16 +102,10 @@ $footer-background: #fff;
 
 .contentPage {
   padding: $size * 2 $size $size * 3;
-  background: linear-gradient(155deg, #f7f4ff 0%, #f0f4ff 58%, #edf8ff 100%);
-
-  :global([data-theme='dark']) & {
-    background: linear-gradient(155deg, #111438 0%, #131947 56%, #182252 100%);
-  }
 }
 
 .dark {
   color: $color-white;
-  background: rgba($color-bg-item, 0.9);
 }
 
 .fulHeight {
@@ -143,7 +132,6 @@ $footer-background: #fff;
   color: $color-primary;
   margin: $size * 0.75 0;
   letter-spacing: 1px;
-  // font-family: $font-family-lato;
   text-align: center;
   font-size: $font-size-heading-2;
   font-weight: bold;

@@ -1,4 +1,3 @@
-import { styleConfig } from '@/style/appStyle'
 import { MoreOutlined } from '@ant-design/icons'
 import { appSetting } from '@/config/appConfig'
 import { IExample } from '@/models/item.model'
@@ -80,7 +79,7 @@ export const ExampleItem: React.FC<IProps> = ({
 
               <div className={styles.contentMain}>
                 <p
-                  style={{ color: styleConfig.border.blue[2] }}
+                  className={styles.translate}
                   dangerouslySetInnerHTML={{ __html: data.translation }}
                 />
 

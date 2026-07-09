@@ -9,13 +9,6 @@
 }
 
 .exampleOverview {
-  // padding: $size * 1;
-  // margin-bottom: $size * 1;
-  color: $color-white;
-  // border: 1px solid rgba($color-bg-item, 0.4);
-  // border-radius: 4px;
-  box-shadow: 0px 0px 30px 0px rgba($white, 0.2);
-
   & form {
     display: flex;
     align-items: center;
@@ -68,20 +61,15 @@
 
 .autoSearchInput {
   flex: 1 0 180px;
-  background: transparent !important;
 
   & .emr-select-selector {
-    background: transparent !important;
-    color: $color-white !important;
+    color: var(--ant-color-text-base) !important;
   }
 }
 
 .searchExampleInput {
-  background: transparent !important;
-
   & input {
-    background: transparent !important;
-    color: $color-white !important;
+    color: var(--ant-color-text-base) !important;
   }
 }
 
@@ -92,9 +80,9 @@
 }
 
 .exampleSelectedEx {
-  border-bottom: 1px solid #ffbb96;
-  border-top: 1px solid #ffbb96;
-  background: rgba(145, 202, 255, 0.15);
+  border-bottom: 1px solid var(--ant-color-primary-border);
+  border-top: 1px solid var(--ant-color-primary-border);
+  background: var(--ant-color-primary-bg);
 }
 
 .textarea {

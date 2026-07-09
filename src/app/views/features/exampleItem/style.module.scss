@@ -19,20 +19,25 @@
   flex-direction: column;
   height: 100%;
   padding: $padding * 0.5 $padding * 0.75 $padding * 0.5 $padding * 0.75;
-  background: rgba(37, 39, 52, 0.95);
-  border-radius: 4px;
-  border: 1px solid rgba(37, 39, 52, 0.4);
-  box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
-  color: $color-white;
+  background: var(--ant-color-bg-container);
+  border-radius: 8px;
+  border: 1px solid var(--ant-color-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  color: var(--ant-color-text-base);
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+
+  :global([data-theme='dark']) & {
+    box-shadow: none;
+  }
 
   &.active {
     background: none;
     border: none;
     padding: 0;
-    color: $color-text-base;
+    color: var(--ant-color-text-base);
 
     & .translate {
-      color: $color-text-secondary;
+      color: var(--ant-color-text-secondary);
     }
   }
 }
@@ -43,7 +48,7 @@
   margin: $size * 0.25 0;
   border-radius: $size * 0.25;
 
-  & > * {
+  &>* {
     margin: $size * 0.5 0;
   }
 }
@@ -80,7 +85,7 @@
 .examples {
   margin-bottom: 0;
 
-  & > ul {
+  &>ul {
     margin-left: 0;
   }
 }
@@ -88,7 +93,6 @@
 .exampleItem {
   display: block;
   padding: $padding * 0.5 $padding * 0.5 $padding * 0.5 $padding * 2;
-  border-top: 1px solid #ffa39e; // styleConfig.border.red[2]
 
   &:first-child {
     border-bottom: none;
@@ -178,7 +182,7 @@
 }
 
 .translate {
-  color: #69b1ff; // styleConfig.color.blue[4]
+  color: var(--ant-color-link);
   font-size: $font-size;
 }
 
@@ -207,7 +211,7 @@
 }
 
 .btnActions {
-  color: $color-white !important;
+  color: var(--ant-color-text-secondary) !important;
 
   & span {
     font-size: $font-size-heading-4 !important;

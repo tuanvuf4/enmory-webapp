@@ -194,7 +194,7 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
         <Button
           type='text'
           variant={'text'}
-          style={{ color: token.colorWhite }}
+          style={{ color: token.colorText }}
           onClick={() => getRandomExamples(size, true)}
         >
           <SyncOutlined spin={loading} />

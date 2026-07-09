@@ -49,7 +49,7 @@ const ThemeConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children
       componentSize='middle'
       theme={themeMode === 'dark' ? appDarkTheme : appTheme}
     >
-      <StyleProvider hashPriority='high'>
+      <StyleProvider hashPriority='low'>
         <AntdApp>{children}</AntdApp>
       </StyleProvider>
     </ConfigProvider>

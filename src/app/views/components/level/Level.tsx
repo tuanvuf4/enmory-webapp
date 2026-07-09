@@ -1,6 +1,6 @@
 import { Rate } from 'antd'
 import { StarFilled } from '@ant-design/icons'
-import styles from './style.module.scss'
+import styles from './level.module.scss'
 import { EItemLevel } from '../../features/modals/itemModal/data'
 import clsx from 'clsx'
 

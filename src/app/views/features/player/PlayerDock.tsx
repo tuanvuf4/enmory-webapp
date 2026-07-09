@@ -12,7 +12,7 @@ import {
 } from '@ant-design/icons'
 import { Button, message, theme } from 'antd'
 import ReactPlayer from 'react-player'
-import styles from './style.module.scss'
+import styles from './player.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { getActiveSegmentIndex, parseTranscript } from './transcriptUtils'

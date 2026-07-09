@@ -7,7 +7,7 @@ import { authAction } from '@/store/reducers/auth.reducer'
 import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button, message } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useState } from 'react'
-import styles from './style.module.scss'
+import styles from './setting.module.scss'
 import clsx from 'clsx'
 
 const Setting = () => {

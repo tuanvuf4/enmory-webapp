@@ -1,5 +1,5 @@
 import { Layout } from 'antd'
-import styles from './style.module.scss'
+import styles from './footer.module.scss'
 import { PlayerDock } from '../player/PlayerDock'
 
 export const AppFooter = () => {

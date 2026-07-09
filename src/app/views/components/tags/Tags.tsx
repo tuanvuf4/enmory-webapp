@@ -1,5 +1,5 @@
 import { SearchOutlined } from '@ant-design/icons'
-import styles from './style.module.scss'
+import styles from './tags.module.scss'
 import { itemApi } from '@/services/firebase/api/item.api'
 import clsx from 'clsx'
 import { useItemModal, useLoading } from '@/helpers/hooks'

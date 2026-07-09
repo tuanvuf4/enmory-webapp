@@ -1,6 +1,6 @@
 // import loading from 'src/assets/img/loading.gif'
 import { Spin } from 'antd'
-import styles from './style.module.scss'
+import styles from './loading.module.scss'
 import classNames from 'clsx'
 import { useSelector } from '@/core/hooks'
 interface ILoadingProps {

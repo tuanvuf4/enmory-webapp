@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import styles from './style.module.scss'
+import styles from './player.module.scss'
 import { formatSegmentTime, getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import { AimOutlined } from '@ant-design/icons'
 import { Button } from 'antd'

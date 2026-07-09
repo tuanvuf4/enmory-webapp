@@ -1,12 +1,20 @@
 @use '@style/vars' as *;
-@use '@style/vars' as *;
 
-.disableMeaning {
-  border: 1px solid $color-red-4 !important;
+.list {
+  & ul {
+    padding-left: $size * 1;
+
+    & li {
+      display: list-item;
+    }
+  }
 }
 
-.btnInactive {
-  background: transparent !important;
+.disableMeaning {
+  border: 1px solid #ff4d4f !important;
+}
+
+.archive {
   color: $color-text-secondary !important;
   border-color: $color-text-secondary !important;
   border-radius: $size * 0.25 !important;
@@ -18,55 +26,59 @@
   justify-content: space-between;
   flex-direction: column;
   height: 100%;
-  padding: $padding * 0.5 $padding * 0.75 $padding * 0.5 $padding * 0.75;
-  background: var(--ant-color-bg-container);
-  border-radius: 8px;
-  border: 1px solid var(--ant-color-border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  color: var(--ant-color-text-base);
-  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  // padding: $padding * 0.5 $padding * 0.75 $padding * 0.5 $padding * 0.75;
+  // border-radius: 4px;
+  border: none;
+  box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
+  color: $color-text-base;
 
   :global([data-theme='dark']) & {
     box-shadow: none;
+    color: #c8caee;
   }
 
-  &.active {
-    background: none;
-    border: none;
-    padding: 0;
-    color: var(--ant-color-text-base);
+  :global([data-theme='dark']) &.active {
+    color: #e0e2ff;
+  }
 
-    & .translate {
-      color: var(--ant-color-text-secondary);
+  & ul,
+  & ol {
+    padding-left: $size;
+
+    & p {
+      margin-bottom: $size * 0.25;
     }
+  }
+
+  & p {
+    margin-bottom: $size * 0.25;
   }
 }
 
 .meaningItem {
-  border: 1px solid #fafafa;
-  padding: $size * 0.25 $size * 0.75;
-  margin: $size * 0.25 0;
+  padding: $size * 0.25 $size * 0.5;
   border-radius: $size * 0.25;
+  border: 1px solid #91caff;
 
-  &>* {
-    margin: $size * 0.5 0;
+  &.active {
+    // border: 1px solid color-mix(in srgb, $color-text-base, transparent 80%);
   }
-}
 
-.date {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $size * 0.25;
-  margin: $margin * 0.25 0;
-  font-size: 12px;
-  font-weight: normal;
-  font-style: italic;
-  width: 100%;
+  & > * {
+    margin: $size * 0.25 0;
+  }
+
+  & img {
+    max-width: 100%;
+    height: auto;
+  }
 }
 
 .contentItem {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: $size * 0.5;
 }
 
 .title {
@@ -74,29 +86,12 @@
   align-items: center;
   justify-content: space-between;
   word-break: break-word;
-  margin-bottom: $margin * 0.25;
   min-height: $control-height;
+  gap: $size * 0.5;
 }
 
 .btnDelete {
   flex: 0 0 38px;
-}
-
-.examples {
-  margin-bottom: 0;
-
-  &>ul {
-    margin-left: 0;
-  }
-}
-
-.exampleItem {
-  display: block;
-  padding: $padding * 0.5 $padding * 0.5 $padding * 0.5 $padding * 2;
-
-  &:first-child {
-    border-bottom: none;
-  }
 }
 
 .nestedExampleItem {
@@ -104,6 +99,18 @@
   margin-top: -1px;
   padding: 0 0 0 0;
   line-height: 2em;
+
+  & ul {
+    padding-left: 0;
+
+    & li:before {
+      content: '\201C';
+    }
+
+    & li:after {
+      content: '\201D';
+    }
+  }
 
   & textarea {
     resize: none !important;
@@ -124,13 +131,13 @@
 
 .origin {
   display: flex;
+  flex: 1;
   align-items: flex-start;
   justify-content: space-between;
   gap: $size * 0.25;
-  font-size: $font-size-heading-5;
-  margin: 0 0 0 0;
-  color: $color-primary;
-  margin-bottom: 0;
+  font-size: $font-size-heading-4;
+  margin: 0;
+  padding: $size * 0.25 0;
 
   & span {
     display: block;
@@ -154,11 +161,23 @@
 .kindOfWord {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: $size * 0.5;
-  margin-bottom: $margin * 0.25;
+  margin-bottom: 0;
   font-weight: normal;
   font-style: italic;
+}
+
+.date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $size * 0.25;
+  margin: $margin * 0.25 0;
+  font-size: 11px;
+  font-weight: normal;
+  font-style: italic;
+  width: 100%;
 }
 
 .level {
@@ -179,26 +198,58 @@
 .definition {
   color: $color-primary;
   font-size: $font-size;
+
+  :global([data-theme='dark']) & {
+    color: $color-white;
+  }
+
+  & li {
+    display: list-item;
+  }
 }
 
 .translate {
-  color: var(--ant-color-link);
+  color: $color-blue-5;
   font-size: $font-size;
+
+  & li {
+    display: list-item;
+    word-break: break-word;
+  }
 }
 
 .audio {
   display: flex;
   gap: $size * 0.25;
+  align-items: center;
+  color: $color-white;
+}
+
+.btnAudio {
+  color: $color-text-base !important;
+
+  &.active {
+    // color: $color-white !important;
+  }
+}
+
+.audioIcon {
+  color: $color-white !important;
 }
 
 .note {
   font-weight: normal;
   font-style: italic;
-  display: flex;
-  gap: $size * 0.25;
-  flex-wrap: wrap;
-  row-gap: 0;
-  font-size: 13px;
+  font-size: 14px;
+  color: #f7812b;
+
+  & ul {
+    padding-left: $size * 1;
+  }
+
+  & li {
+    display: list-item;
+  }
 }
 
 .listItem {
@@ -211,7 +262,11 @@
 }
 
 .btnActions {
-  color: var(--ant-color-text-secondary) !important;
+  color: $color-text !important;
+
+  &.active {
+    // color: $color-white !important;
+  }
 
   & span {
     font-size: $font-size-heading-4 !important;

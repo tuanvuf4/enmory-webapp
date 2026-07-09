@@ -1,6 +1,6 @@
 import { appConfig } from '@/config/appConfig'
 import { Button } from 'antd'
-import styles from './style.module.scss'
+import styles from './references.module.scss'
 import React from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import { useSelector } from '@/core/hooks'
@@ -24,7 +24,6 @@ export const Reference: React.FC<IPros> = ({ origin }) => {
               key={key}
               className={appStyle.referenceBtn}
               type='text'
-              size='small'
               onClick={() => {
                 window.open(reference.url + origin, reference.target)
               }}

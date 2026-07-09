@@ -5,7 +5,7 @@ import {
   IReviewSuggestion,
   reviewSentenceService,
 } from '@/services/openai/reviewSentence.service'
-import './style.scss'
+import './reviewableTextArea.scss'
 
 /**
  * ReviewableTextArea - A web app component that wraps Ant Design TextArea with grammar/spelling review functionality

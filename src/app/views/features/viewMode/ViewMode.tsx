@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button, theme, Tooltip } from 'antd'
-import styles from './style.module.scss'
+import styles from './viewMode.module.scss'
 import { AppstoreOutlined, MenuOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { styleConfig } from '@/style/appStyle'

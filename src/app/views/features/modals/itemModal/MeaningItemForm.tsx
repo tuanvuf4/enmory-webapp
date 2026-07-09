@@ -13,7 +13,7 @@ import { theme, Space, Col, Row, Button, Select, Checkbox, Input, Flex } from 'a
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { meaningItem } from './data'
 import { ExampleItem } from './ExampleItemForm'
-import styles from './style.module.scss'
+import styles from './itemModal.module.scss'
 import clsx from 'clsx'
 import { TextEditor } from '@/views/components'
 import { usePrompt } from '@/helpers/hooks'

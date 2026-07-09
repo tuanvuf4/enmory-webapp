@@ -6,7 +6,7 @@ import { ILogin, IUser } from '@/models/user.model'
 import { theme, Space, Row, Col, Input, Button } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { Link } from 'react-router-dom'
-import styles from './style.module.scss'
+import styles from './loginForm.module.scss'
 
 import logo from '@/assets/img/logo.png'
 import clsx from 'clsx'

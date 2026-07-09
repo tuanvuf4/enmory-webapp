@@ -28,8 +28,8 @@ import {
   reviewSentenceService,
 } from '@/services/openai/reviewSentence.service'
 
-import './style.scss'
-import '../reviewableTextArea/style.scss'
+import './textEditor.scss'
+import '../reviewableTextArea/ReviewableTextArea'
 import 'ckeditor5/ckeditor5.css'
 
 // props for text editor component

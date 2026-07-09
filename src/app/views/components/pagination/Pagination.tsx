@@ -1,6 +1,6 @@
 import { Button, Select } from 'antd'
 import { CaretLeftOutlined, CaretRightOutlined } from '@ant-design/icons'
-import styles from './style.module.scss'
+import styles from './pagination.module.scss'
 import { BaseOptionType } from 'antd/es/cascader'
 import { appSetting } from '@/config/appConfig'
 

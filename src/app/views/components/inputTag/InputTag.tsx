@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AutoComplete, Space, Tag } from 'antd'
 import { CloseCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import styles from './style.module.scss'
+import styles from './inputTag.module.scss'
 import clsx from 'clsx'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { getArrayUniqueItem } from '@/helpers/item'

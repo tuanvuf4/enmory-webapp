@@ -1,5 +1,5 @@
 import { Button, Col, Row, Space, theme } from 'antd'
-import styles from './style.module.scss'
+import styles from './dictation.module.scss'
 import TextArea from 'antd/es/input/TextArea'
 import { useEffect, useState } from 'react'
 import { appSetting } from '@/config/appConfig'

@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react'
-import styles from './style.module.scss'
+import styles from './widget.module.scss'
 import appStyle from '@/style/appStyle.module.scss'
 import clsx from 'clsx'
 

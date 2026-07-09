@@ -1,7 +1,7 @@
 import { Col, Row, Space, theme } from 'antd'
 import classNames from 'clsx'
 import appStyle from '@/style/appStyle.module.scss'
-import styles from './style.module.scss'
+import styles from './profile.module.scss'
 import { useSelector } from '@/core/hooks/redux'
 import { AddedItemChart } from '@/views/features/chart/addedItemChart/AddedItemChart'
 import { OverviewChart } from '@/views/features/chart/overviewChart/OverviewChart'

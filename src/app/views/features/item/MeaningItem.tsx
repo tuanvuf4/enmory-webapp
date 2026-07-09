@@ -5,7 +5,7 @@ import { IMeaning, ECategory, IExample } from '@/models/item.model'
 import { Tags } from '@/views/components'
 import { Button, Flex } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import styles from './style.module.scss'
+import styles from './item.module.scss'
 import clsx from 'clsx'
 import { useState } from 'react'
 import { speakWord } from '@/helpers/mics'
@@ -103,146 +103,132 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning, o
   }
 
   return (
-    <div className={'relative my-4'}>
-      <div
-        className={clsx(
-          styles.meaningItem,
-          meaning.enable ? '' : styles.disableMeaning,
-          'relative',
-          active ? '' : styles.active,
-        )}
-      >
-        <Flex justify={'space-between'} align={'center'} className={`w-full`}>
-          <div>
-            <Button
-              variant='text'
-              type={'text'}
-              size={'small'}
-              color={'primary'}
-              className={'text-xs'}
-              icon={
-                show ? (
-                  <CaretUpOutlined style={{ fontSize: '12px' }} />
-                ) : (
-                  <CaretDownOutlined style={{ fontSize: '12px' }} />
-                )
-              }
-              onClick={() => setShow((prev) => !prev)}
-            />
-            {catId === ECategory.WORD && (
-              <span className='ml-2'>{getType(meaning.typeId).origin}</span>
-            )}
-          </div>
-
-          {(meaning.pronunciation.uk ||
-            meaning.pronunciation.us ||
-            meaning.pronunciation.common) && (
-            <Pronunciation origin={origin} catId={catId} meaning={meaning} active={active} />
+    <div
+      className={clsx(
+        styles.meaningItem,
+        meaning.enable ? '' : styles.disableMeaning,
+        'relative',
+        active ? '' : styles.active,
+      )}
+    >
+      <Flex justify={'space-between'} align={'center'} className={`w-full`}>
+        <div>
+          <Button
+            variant='text'
+            type={'text'}
+            size={'small'}
+            color={'primary'}
+            className={'text-xs'}
+            icon={
+              show ? (
+                <CaretUpOutlined style={{ fontSize: '12px' }} />
+              ) : (
+                <CaretDownOutlined style={{ fontSize: '12px' }} />
+              )
+            }
+            onClick={() => setShow((prev) => !prev)}
+          />
+          {catId === ECategory.WORD && (
+            <span className='ml-2'>{getType(meaning.typeId).origin}</span>
           )}
-        </Flex>
+        </div>
 
-        {!show && (
-          <>
-            {meaning.definition && (
+        {(meaning.pronunciation.uk || meaning.pronunciation.us || meaning.pronunciation.common) && (
+          <Pronunciation origin={origin} catId={catId} meaning={meaning} active={active} />
+        )}
+      </Flex>
+
+      {!show && (
+        <>
+          {meaning.definition && (
+            <h3
+              className={styles.definition}
+              dangerouslySetInnerHTML={{ __html: meaning.definition }}
+            />
+          )}
+
+          {meaning.translation && (
+            <h3
+              className={styles.translate}
+              dangerouslySetInnerHTML={{ __html: meaning.translation }}
+            />
+          )}
+        </>
+      )}
+
+      {show && (
+        <>
+          {meaning.note && (
+            <div className={styles.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
+          )}
+
+          {meaning.definition && (
+            <>
+              {/* <h5 className={'italic'}>Definition:</h5> */}
               <h3
                 className={styles.definition}
                 dangerouslySetInnerHTML={{ __html: meaning.definition }}
               />
-            )}
+            </>
+          )}
 
-            {meaning.translation && (
+          {meaning.translation && (
+            <>
+              {/* <h5 className={'italic'}>Translation:</h5> */}
               <h3
                 className={styles.translate}
                 dangerouslySetInnerHTML={{ __html: meaning.translation }}
               />
-            )}
-          </>
-        )}
+            </>
+          )}
 
-        {show && (
-          <>
-            {meaning.note && (
-              <div className={styles.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
-            )}
+          {meaning.collocations && (
+            <div className={styles.list}>
+              <h5 className={'italic font-bold'}>Collocations:</h5>
+              <div dangerouslySetInnerHTML={{ __html: meaning.collocations }} />
+            </div>
+          )}
 
-            {meaning.definition && (
-              <>
-                {/* <h5 className={'italic'}>Definition:</h5> */}
-                <h3
-                  className={styles.definition}
-                  dangerouslySetInnerHTML={{ __html: meaning.definition }}
-                />
-              </>
-            )}
+          {meaning.grammar && (
+            <div className={styles.list}>
+              <h5 className={'italic font-bold'}>Grammar:</h5>
+              <div dangerouslySetInnerHTML={{ __html: meaning.grammar }} />
+            </div>
+          )}
 
-            {meaning.translation && (
-              <>
-                {/* <h5 className={'italic'}>Translation:</h5> */}
-                <h3
-                  className={styles.translate}
-                  dangerouslySetInnerHTML={{ __html: meaning.translation }}
-                />
-              </>
-            )}
+          {meaning.synonyms.length > 0 && (
+            <Tags active={active} label={'Synonyms'} tags={meaning.synonyms} onSearch={onSearch} />
+          )}
 
-            {meaning.collocations && (
-              <div className={styles.list}>
-                <h5 className={'italic font-bold'}>Collocations:</h5>
-                <div dangerouslySetInnerHTML={{ __html: meaning.collocations }} />
-              </div>
-            )}
+          {meaning.antonyms.length > 0 && (
+            <Tags active={active} label={'Antonyms'} tags={meaning.antonyms} onSearch={onSearch} />
+          )}
 
-            {meaning.grammar && (
-              <div className={styles.list}>
-                <h5 className={'italic font-bold'}>Grammar:</h5>
-                <div dangerouslySetInnerHTML={{ __html: meaning.grammar }} />
-              </div>
-            )}
-
-            {meaning.synonyms.length > 0 && (
-              <Tags
-                active={active}
-                label={'Synonyms'}
-                tags={meaning.synonyms}
-                onSearch={onSearch}
-              />
-            )}
-
-            {meaning.antonyms.length > 0 && (
-              <Tags
-                active={active}
-                label={'Antonyms'}
-                tags={meaning.antonyms}
-                onSearch={onSearch}
-              />
-            )}
-
-            {meaning.examples.length > 0 && (
-              <div className={styles.examples}>
-                {/* <h5 className={'italic font-bold'}>Example:</h5> */}
-                <ul>
-                  {(meaning.examples as IExample[]).map((example, key) => {
-                    return (
-                      <li key={key} className={styles.exampleItem}>
-                        <ul>
-                          <li
-                            className={styles.nestedExampleItem}
-                            dangerouslySetInnerHTML={{ __html: example.origin }}
-                          />
-                          <li
-                            className={styles.nestedExampleItem}
-                            dangerouslySetInnerHTML={{ __html: example.translation }}
-                          />
-                        </ul>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          {meaning.examples.length > 0 && (
+            <div className={styles.examples}>
+              {/* <h5 className={'italic font-bold'}>Example:</h5> */}
+              <ul>
+                {(meaning.examples as IExample[]).map((example, key) => {
+                  return (
+                    <li key={key} className={styles.exampleItem}>
+                      <ul>
+                        <li
+                          className={styles.nestedExampleItem}
+                          dangerouslySetInnerHTML={{ __html: example.origin }}
+                        />
+                        <li
+                          className={styles.nestedExampleItem}
+                          dangerouslySetInnerHTML={{ __html: example.translation }}
+                        />
+                      </ul>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }

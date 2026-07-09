@@ -1,5 +1,5 @@
 import { Button } from 'antd'
-import styles from './style.module.scss'
+import styles from './player.module.scss'
 import { styleConfig } from '@/style/appStyle'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import clsx from 'clsx'

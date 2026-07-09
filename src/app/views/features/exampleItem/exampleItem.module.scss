@@ -1,78 +1,38 @@
 @use '@style/vars' as *;
-
-.list {
-  & ul {
-    padding-left: $size * 1;
-
-    & li {
-      display: list-item;
-    }
-  }
-}
+@use '@style/vars' as *;
 
 .disableMeaning {
-  border: 1px solid #ff4d4f !important;
+  border: 1px solid $color-red-4 !important;
 }
 
-.archive {
+.btnInactive {
+  background: transparent !important;
   color: $color-text-secondary !important;
   border-color: $color-text-secondary !important;
   border-radius: $size * 0.25 !important;
 }
 
-.item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-direction: column;
-  height: 100%;
-  // padding: $padding * 0.5 $padding * 0.75 $padding * 0.5 $padding * 0.75;
-  // border-radius: 4px;
-  border: none;
-  box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
-  color: $color-text-base;
+.meaningItem {
+  border: 1px solid #fafafa;
+  padding: $size * 0.25 $size * 0.75;
+  margin: $size * 0.25 0;
+  border-radius: $size * 0.25;
 
-  :global([data-theme='dark']) & {
-    box-shadow: none;
-    color: #c8caee;
-  }
-
-  :global([data-theme='dark']) &.active {
-    color: #e0e2ff;
-  }
-
-  & ul,
-  & ol {
-    padding-left: $size * 1;
-
-    & p {
-      margin-bottom: $size * 0.25;
-    }
-  }
-
-  & p {
-    margin-bottom: $size * 0.25;
+  & > * {
+    margin: $size * 0.5 0;
   }
 }
 
-.meaningItem {
-  padding: $size * 0.25 $size * 0.5;
-  margin: $size * 0.25 0;
-  border-radius: $size * 0.25;
-  border: 1px solid #91caff;
-
-  &.active {
-    // border: 1px solid color-mix(in srgb, $color-text-base, transparent 80%);
-  }
-
-  &>* {
-    margin: $size * 0.25 0;
-  }
-
-  & img {
-    max-width: 100%;
-    height: auto;
-  }
+.date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $size * 0.25;
+  margin: $margin * 0.25 0;
+  font-size: 12px;
+  font-weight: normal;
+  font-style: italic;
+  width: 100%;
 }
 
 .contentItem {
@@ -84,8 +44,8 @@
   align-items: center;
   justify-content: space-between;
   word-break: break-word;
+  margin-bottom: $margin * 0.25;
   min-height: $control-height;
-  gap: $size * 0.5;
 }
 
 .btnDelete {
@@ -95,15 +55,18 @@
 .examples {
   margin-bottom: 0;
 
-  &>ul {
-    margin-left: 0 !important;
-    padding: 0;
+  & > ul {
+    margin-left: 0;
   }
 }
 
 .exampleItem {
   display: block;
-  padding: $padding * 0.5 $padding * 0.5 $padding * 0.5 0;
+  padding: $padding * 0.5 $padding * 0.5 $padding * 0.5 $padding * 2;
+
+  &:first-child {
+    border-bottom: none;
+  }
 }
 
 .nestedExampleItem {
@@ -111,18 +74,6 @@
   margin-top: -1px;
   padding: 0 0 0 0;
   line-height: 2em;
-
-  & ul {
-    padding-left: 0;
-
-    & li:before {
-      content: '\201C';
-    }
-
-    & li:after {
-      content: '\201D';
-    }
-  }
 
   & textarea {
     resize: none !important;
@@ -143,13 +94,13 @@
 
 .origin {
   display: flex;
-  flex: 1;
   align-items: flex-start;
   justify-content: space-between;
   gap: $size * 0.25;
-  font-size: $font-size-heading-4;
-  margin: 0;
-  padding: $size * 0.25 0;
+  font-size: $font-size-heading-5;
+  margin: 0 0 0 0;
+  color: $color-primary;
+  margin-bottom: 0;
 
   & span {
     display: block;
@@ -173,23 +124,11 @@
 .kindOfWord {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: $size * 0.5;
-  margin-bottom: 0;
+  margin-bottom: $margin * 0.25;
   font-weight: normal;
   font-style: italic;
-}
-
-.date {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $size * 0.25;
-  margin: $margin * 0.25 0;
-  font-size: 11px;
-  font-weight: normal;
-  font-style: italic;
-  width: 100%;
 }
 
 .level {
@@ -210,54 +149,26 @@
 .definition {
   color: $color-primary;
   font-size: $font-size;
-
-  & li {
-    display: list-item;
-  }
 }
 
 .translate {
-  color: #4096ff;
+  color: var(--ant-color-link);
   font-size: $font-size;
-
-  & li {
-    display: list-item;
-    word-break: break-word;
-  }
 }
 
 .audio {
   display: flex;
   gap: $size * 0.25;
-  align-items: center;
-  color: $color-white;
-}
-
-.btnAudio {
-  color: $color-text-base !important;
-
-  &.active {
-    // color: $color-white !important;
-  }
-}
-
-.audioIcon {
-  color: $color-white !important;
 }
 
 .note {
   font-weight: normal;
   font-style: italic;
-  font-size: 14px;
-  color: #f7812b;
-
-  & ul {
-    padding-left: $size * 1;
-  }
-
-  & li {
-    display: list-item;
-  }
+  display: flex;
+  gap: $size * 0.25;
+  flex-wrap: wrap;
+  row-gap: 0;
+  font-size: 13px;
 }
 
 .listItem {
@@ -270,11 +181,7 @@
 }
 
 .btnActions {
-  color: $color-text !important;
-
-  &.active {
-    // color: $color-white !important;
-  }
+  color: var(--ant-color-text-secondary) !important;
 
   & span {
     font-size: $font-size-heading-4 !important;

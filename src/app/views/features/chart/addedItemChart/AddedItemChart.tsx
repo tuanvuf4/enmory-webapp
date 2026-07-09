@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Skeleton } from 'antd'
-import styles from '../style.module.scss'
+import styles from '../chart.module.scss'
 import {
   Chart as ChartJS,
   CategoryScale,

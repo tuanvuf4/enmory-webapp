@@ -5,7 +5,7 @@ import { TextEditor } from '@/views/components'
 import { theme, message, Input, Button, Flex, Select } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
-import './style.module.scss'
+import './articleForm.module.scss'
 
 interface ArticleFormProps {
   data?: IArticleItem

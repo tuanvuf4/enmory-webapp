@@ -5,7 +5,8 @@ import { MenuProps, Skeleton, Dropdown, Button } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import moment from 'moment'
 import { actionMenuExample } from './ActionMenuItem'
-import styles from './style.module.scss'
+import styles from './exampleItem.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import clsx from 'clsx'
 
 interface IProps {
@@ -47,7 +48,7 @@ export const ExampleItem: React.FC<IProps> = ({
   return (
     <div
       className={clsx({
-        [styles.item]: true,
+        [appStyle.boxItem]: true,
         [styles.active]: active,
       })}
     >

@@ -10,8 +10,8 @@ import { initRegisterForm } from '@/services/registerForm'
 import { useFirebaseAuth } from '@/core/hooks'
 
 import logo from '@/assets/img/logo.png'
-import styles from './style.module.scss'
-import loginStyles from '../loginForm/style.module.scss'
+import styles from './registerForm.module.scss'
+import loginStyles from '../loginForm/loginForm.module.scss'
 
 export const RegisterForm = ({ showBanner = true }) => {
   const { token } = theme.useToken()

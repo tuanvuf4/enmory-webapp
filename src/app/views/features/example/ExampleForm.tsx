@@ -11,7 +11,7 @@ import TextArea from 'antd/es/input/TextArea'
 import clsx from 'clsx'
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import styles from './style.module.scss'
+import styles from './example.module.scss'
 import { initExampleData } from '@/constant/example'
 import { ReviewableTextArea } from '@/views/components'
 

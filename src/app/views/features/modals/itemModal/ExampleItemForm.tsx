@@ -7,7 +7,7 @@ import { theme, Space, Col, Row, Button, AutoComplete, Flex } from 'antd'
 import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { exampleItem } from './data'
-import styles from './style.module.scss'
+import styles from './itemModal.module.scss'
 import { ReviewableTextArea } from '@/views/components'
 import TextArea from 'antd/es/input/TextArea'
 

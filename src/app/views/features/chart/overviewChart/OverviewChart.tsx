@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Skeleton } from 'antd'
-import styles from '../style.module.scss'
+import styles from '../chart.module.scss'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Pie } from 'react-chartjs-2'
 import { ECategory } from '@/models/item.model'

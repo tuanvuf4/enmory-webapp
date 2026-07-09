@@ -3,7 +3,7 @@ import { useDeleteArticleCategory } from '@/core/hooks/useArticleCategories'
 import { Table, Button, Space, Popconfirm, message, theme, Empty } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { TableProps } from 'antd'
-import './style.module.scss'
+import './articleCategoryList.module.scss'
 
 interface ArticleCategoryListProps {
   categories: IArticleCategory[]

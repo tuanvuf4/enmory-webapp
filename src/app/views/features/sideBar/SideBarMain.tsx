@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
-import styles from './style.module.scss'
+import styles from './sideBarMain.module.scss'
 import { MainMenu } from '../mainMenu/MainMenu'
 import { useSelector } from '@/core/hooks'
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useSelector } from '@/core/hooks/redux'
 import { Col, Row, Space, theme } from 'antd'
-import styles from './style.module.scss'
+import styles from './toolbar.module.scss'
 import appStyle from '@/style/appStyle.module.scss'
 import { SearchItemForm } from '../searchItemForm'
 

@@ -1,5 +1,5 @@
 import { Menu } from 'antd'
-import styles from './style.module.scss'
+import styles from './mainMenu.module.scss'
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from '@/core/hooks/redux'

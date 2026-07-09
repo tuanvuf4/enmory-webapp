@@ -15,7 +15,7 @@ import React, { useEffect, useState } from 'react'
 import { Reference } from '../references/References'
 import { getActionMenuItem } from './ActionMenuItem'
 import { MeaningItem } from './MeaningItem'
-import styles from './style.module.scss'
+import styles from './item.module.scss'
 import { actionAsyncApp } from '@/store/asyncActions'
 import { useQueryClient } from '@tanstack/react-query'
 import { styleConfig } from '@/style/appStyle'
@@ -244,131 +244,127 @@ export const Item: React.FC<IProps> = ({
       {data && (
         <>
           <div className={styles.contentItem}>
-            <div className={styles.contentHead}>
-              <div className={styles.title}>
-                <Button
-                  type='text'
-                  icon={<AudioOutlined />}
-                  onClick={() => speakWord(data.origin, 'en-US')}
-                  className={clsx({
-                    [styles.btnActions]: true,
-                    [styles.active]: active,
-                  })}
-                />
-                <h2 className={styles.origin}>
-                  {isDefect(data) && <span className={styles.warnTitle}>{data.origin}</span>}
-                  {!isDefect(data) && <span>{data.origin}</span>}
-                </h2>
-                <Flex align={'center'} gap={token.size / 8}>
-                  {reload && (
-                    <Button
-                      size='small'
-                      type={'text'}
-                      icon={<ReloadOutlined style={{ color: token.colorWhite }} spin={spin} />}
-                      onClick={() => {
-                        onRefetchIotd(data.catId as ECategory)
-                      }}
-                    />
-                  )}
+            <div className={styles.title}>
+              <Button
+                type='text'
+                icon={<AudioOutlined />}
+                onClick={() => speakWord(data.origin, 'en-US')}
+                className={clsx({
+                  [styles.btnActions]: true,
+                  [styles.active]: active,
+                })}
+              />
 
-                  {data.favorite && (
-                    <Button
-                      size='small'
-                      type={'text'}
-                      icon={<HeartFilled style={{ color: styleConfig.color.red[4] }} />}
-                    />
-                  )}
+              <h2 className={styles.origin}>
+                {isDefect(data) && <span className={styles.warnTitle}>{data.origin}</span>}
+                {!isDefect(data) && <span>{data.origin}</span>}
+              </h2>
 
-                  {data.archive && (
-                    <Button className={styles.archive} size='small' variant={'text'} type={'text'}>
-                      A
-                    </Button>
-                  )}
-
-                  {action && (
-                    <Dropdown
-                      placement='bottomRight'
-                      menu={menuProps}
-                      arrow={{ pointAtCenter: true }}
-                      trigger={['click']}
-                    >
-                      <Button
-                        size='small'
-                        type='text'
-                        icon={<MoreOutlined />}
-                        className={clsx({
-                          [styles.btnActions]: true,
-                          [styles.active]: active,
-                        })}
-                      />
-                    </Dropdown>
-                  )}
-                </Flex>
-              </div>
-
-              {!!data.catId && (
-                <h5 className={styles.kindOfWord}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: token.size / 2,
+              <Flex align={'center'} gap={token.size / 8}>
+                {reload && (
+                  <Button
+                    size='small'
+                    type={'text'}
+                    icon={<ReloadOutlined style={{ color: token.colorWhite }} spin={spin} />}
+                    onClick={() => {
+                      onRefetchIotd(data.catId as ECategory)
                     }}
+                  />
+                )}
+
+                {data.favorite && (
+                  <Button
+                    size='small'
+                    type={'text'}
+                    icon={<HeartFilled style={{ color: styleConfig.color.red[4] }} />}
+                  />
+                )}
+
+                {data.archive && (
+                  <Button className={styles.archive} size='small' variant={'text'} type={'text'}>
+                    A
+                  </Button>
+                )}
+
+                {action && (
+                  <Dropdown
+                    placement='bottomRight'
+                    menu={menuProps}
+                    arrow={{ pointAtCenter: true }}
+                    trigger={['click']}
                   >
-                    <span>{getCategory(data.catId)}</span>
-                  </div>
+                    <Button
+                      size='small'
+                      type='text'
+                      icon={<MoreOutlined />}
+                      className={clsx({
+                        [styles.btnActions]: true,
+                        [styles.active]: active,
+                      })}
+                    />
+                  </Dropdown>
+                )}
+              </Flex>
+            </div>
 
-                  {data.catId && (
-                    <div className={styles.level}>
-                      <Level level={data.level as number} />
-                    </div>
-                  )}
+            {!!data.catId && (
+              <h5 className={styles.kindOfWord}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: token.size / 2,
+                  }}
+                >
+                  <span>{getCategory(data.catId)}</span>
+                </div>
 
-                  {data.user && (
-                    <span
-                      style={{
-                        color: token.colorPrimary,
-                        fontSize: token.fontSize,
-                        marginLeft: token.size / 2,
-                      }}
-                    >
-                      {data.user.firstName} {data.user.lastName}
-                    </span>
-                  )}
-                </h5>
-              )}
-
-              <Reference origin={data.origin} />
-
-              {data.catId === ECategory.WORD && (
-                <>
-                  {data.forms &&
-                    data.forms.filter((word) => word).length > 0 &&
-                    data.forms.length > 0 && (
-                      <div className={styles.word_family}>
-                        <Tags label={'Form'} tags={data.forms} active={active} />
-                      </div>
-                    )}
-
-                  {data.word_family &&
-                    data.word_family.filter((word) => word).length > 0 &&
-                    data.word_family.length > 0 && (
-                      <div className={styles.word_family}>
-                        <Tags label={'Family'} tags={data.word_family} active={active} />
-                      </div>
-                    )}
-                </>
-              )}
-
-              {data.relation &&
-                data.relation.filter((word) => word).length > 0 &&
-                data.relation.length > 0 && (
-                  <div className={styles.word_family}>
-                    <Tags label={'Relation'} tags={data.relation} active={active} />
+                {data.catId && (
+                  <div className={styles.level}>
+                    <Level level={data.level as number} />
                   </div>
                 )}
-            </div>
+
+                {data.user && (
+                  <span
+                    style={{
+                      color: token.colorPrimary,
+                      fontSize: token.fontSize,
+                      marginLeft: token.size / 2,
+                    }}
+                  >
+                    {data.user.firstName} {data.user.lastName}
+                  </span>
+                )}
+              </h5>
+            )}
+
+            <Reference origin={data.origin} />
+
+            {data.catId === ECategory.WORD && (
+              <>
+                {data.forms &&
+                  data.forms.filter((word) => word).length > 0 &&
+                  data.forms.length > 0 && (
+                    <Tags label={'Form'} tags={data.forms} active={active} />
+                  )}
+
+                {data.word_family &&
+                  data.word_family.filter((word) => word).length > 0 &&
+                  data.word_family.length > 0 && (
+                    <Tags label={'Family'} tags={data.word_family} active={active} />
+                  )}
+              </>
+            )}
+
+            {data.relation &&
+              data.relation.filter((word) => word).length > 0 &&
+              data.relation.length > 0 && (
+                <div className={styles.word_family}>
+                  <Tags label={'Relation'} tags={data.relation} active={active} />
+                </div>
+              )}
 
             {data.meanings &&
               data.meanings.length > 0 &&

@@ -15,7 +15,7 @@ import { theme, AutoComplete, Input, Dropdown, Select, Button } from 'antd'
 import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
-import styles from './style.module.scss'
+import styles from './formSearchExtension.module.scss'
 import clsx from 'clsx'
 import { NotFound } from '@/views/components'
 

@@ -10,7 +10,8 @@ import { theme, InputRef, Button, Input, Flex } from 'antd'
 import { useState, useRef, useEffect } from 'react'
 import { Item } from '../item/Item'
 import { EItemLevel } from '../modals/itemModal/data'
-import styles from './style.module.scss'
+import styles from './studySet.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import clsx from 'clsx'
 import { useItemModal, usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
@@ -522,7 +523,7 @@ export const StudySet: React.FC = () => {
         )}
 
         {isSubmit && (
-          <div className={styles.resultReference}>
+          <div className={clsx(styles.resultReference, appStyle.boxItem)}>
             <Item data={item as IItem} />
           </div>
         )}

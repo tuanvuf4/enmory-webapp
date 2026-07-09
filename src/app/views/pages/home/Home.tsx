@@ -8,7 +8,6 @@ import { Item } from '@/views/features/item/Item'
 import { ExampleMode } from '@/models/example.model'
 import { Link } from 'react-router-dom'
 import { ExampleForm } from '@/views/features/example/ExampleForm'
-import styles from './style.module.scss'
 
 const Home = () => {
   const { token } = theme.useToken()
@@ -30,14 +29,9 @@ const Home = () => {
     <>
       {isAuth && (
         <div className={appStyle.container}>
-          <Row
-            justify={'start'}
-            align={'top'}
-            gutter={token.size * 1.5}
-            className={styles.homeGrid}
-          >
-            <Col xs={24} md={14}>
-              <Space direction='vertical' size={token.size * 1.5}>
+          <Row justify={'start'} align={'top'} gutter={token.size * 1.5}>
+            <Col xs={24} sm={14} md={14}>
+              <Space direction='vertical' size={token.size * 1.5} style={{ maxWidth: '100%' }}>
                 <Widget title={`Study Set`}>
                   <StudySet />
                 </Widget>
@@ -52,7 +46,7 @@ const Home = () => {
               </Space>
             </Col>
 
-            <Col xs={24} md={10}>
+            <Col xs={24} sm={10} md={10}>
               <Space direction='vertical' size={token.size * 1.5}>
                 {word?.item && word.item.origin && (
                   <Widget title={'Items of the day'}>

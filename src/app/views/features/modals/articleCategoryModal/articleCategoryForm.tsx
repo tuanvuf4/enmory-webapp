@@ -6,7 +6,7 @@ import { IArticleCategory } from '@/services/firebase/api/articleCategories.api'
 import { theme, message, Input, Button, Flex, ColorPicker, InputNumber } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import type { Color } from 'antd/es/color-picker'
-import './style.module.scss'
+import './articleCategoryForm.module.scss'
 
 interface ArticleCategoryFormProps {
   data?: IArticleCategory

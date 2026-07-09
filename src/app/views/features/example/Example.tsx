@@ -5,8 +5,7 @@ import { exampleApi } from '@/services/firebase/api/example.api'
 import { theme, Button, AutoComplete, Input } from 'antd'
 import { PropsWithChildren, useState, useEffect, useCallback } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import styles from './style.module.scss'
-import exStyles from '@/views/features/item/style.module.scss'
+import styles from './example.module.scss'
 import clsx from 'clsx'
 import { NotFound } from '@/views/components'
 import { ExampleItem } from '../exampleItem'
@@ -209,9 +208,9 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
       {loading && <Loading show={loading} inner={true} />}
 
       {selected && selected.origin && (
-        <div className={clsx(exStyles.examples, styles.exampleSelectedEx)}>
+        <div className={styles.exampleSelectedEx}>
           <ul>
-            <li className={clsx(exStyles.exampleItem)} style={{ paddingLeft: 8 }}>
+            <li>
               <ExampleItem
                 data={selected}
                 onEdit={() => onEdit(selected.id || '')}
@@ -230,21 +229,25 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
       )}
 
       {!loading && examples?.length > 0 && (
-        <div className={clsx(exStyles.examples)}>
-          <ul>
-            {examples.map((example, key) => {
-              return (
-                <li key={key} className={clsx(exStyles.exampleItem)} style={{ paddingLeft: 8 }}>
-                  <ExampleItem
-                    data={example}
-                    onEdit={() => onEdit(example.id || '')}
-                    onDelete={() => onDelete(example.id || '')}
-                  />
-                </li>
-              )
-            })}
-          </ul>
-        </div>
+        <ul
+          style={{
+            display: 'flex',
+            gap: token.size,
+            flexDirection: 'column',
+          }}
+        >
+          {examples.map((example, key) => {
+            return (
+              <li key={key}>
+                <ExampleItem
+                  data={example}
+                  onEdit={() => onEdit(example.id || '')}
+                  onDelete={() => onDelete(example.id || '')}
+                />
+              </li>
+            )
+          })}
+        </ul>
       )}
     </div>
   )

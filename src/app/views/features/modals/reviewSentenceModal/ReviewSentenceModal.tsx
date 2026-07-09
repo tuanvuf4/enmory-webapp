@@ -1,7 +1,7 @@
 import { IReviewSentenceResponse } from '@/services/openai/reviewSentence.service'
 import { Modal, Card, Empty, Tag, Space, Button, message, Spin } from 'antd'
 import { CheckCircleOutlined, CloseCircleOutlined, CopyOutlined } from '@ant-design/icons'
-import styles from './style.module.scss'
+import styles from './reviewSentenceModal.module.scss'
 
 export interface ReviewSentenceModalProps {
   open: boolean

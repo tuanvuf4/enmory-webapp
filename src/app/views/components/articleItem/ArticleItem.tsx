@@ -1,5 +1,5 @@
 import { IArticleItem } from '@/models/article.model'
-import styles from './style.module.scss'
+import styles from './articleItem.module.scss'
 import { appSetting } from '@/config/index'
 import moment from 'moment'
 import { useNavigate } from 'react-router-dom'

@@ -1,5 +1,5 @@
 import { useAxiosLoader } from '@/core/hooks/axiosHttpCounter'
-import styles from './style.module.scss'
+import styles from './loading.module.scss'
 
 export const LoadingBar = () => {
   const [active] = useAxiosLoader()

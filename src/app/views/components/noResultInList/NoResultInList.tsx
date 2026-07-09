@@ -1,4 +1,4 @@
-import styles from './style.module.scss'
+import styles from './noResultInList.module.scss'
 
 export const NoResultInList = () => {
   return [

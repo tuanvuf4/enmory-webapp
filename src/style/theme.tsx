@@ -33,7 +33,9 @@ export const appTheme: ThemeConfig = {
     sizeStep: 4,
     lineHeight: 1.5,
     borderRadius: 14,
-    fontFamily: 'Lora, Lato, Oswald, sans-serif',
+    // fontFamily: 'Lora, Lato, Oswald, sans-serif',
+    fontFamily:
+      'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";',
   },
   components: {
     Modal: {
@@ -59,7 +61,7 @@ export const appTheme: ThemeConfig = {
       itemSelectedColor: '#3b3fa6',
       itemSelectedBg: '#e8e7ff',
       itemBorderRadius: 12,
-      fontFamily: 'Lora, Lato, Oswald, sans-serif',
+      // fontFamily: 'Lora, Lato, Oswald, sans-serif',
     },
     Button: {
       padding: 12,
@@ -112,7 +114,9 @@ export const appDarkTheme: ThemeConfig = {
     sizeStep: 4,
     lineHeight: 1.5,
     borderRadius: 14,
-    fontFamily: 'Lora, Lato, Oswald, sans-serif',
+    // fontFamily: 'Lora, Lato, Oswald, sans-serif',
+    fontFamily:
+      'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";',
   },
   components: {
     Modal: {
@@ -140,11 +144,11 @@ export const appDarkTheme: ThemeConfig = {
       itemSelectedColor: '#c5c9ff',
       itemSelectedBg: 'rgba(130, 110, 255, 0.18)',
       itemBorderRadius: 12,
-      fontFamily: 'Lora, Lato, Oswald, sans-serif',
+      // fontFamily: 'Lora, Lato, Oswald, sans-serif',
     },
     Button: {
       padding: 12,
-      borderRadius: 8,
+      borderRadius: 12,
       defaultBg: 'rgba(130, 110, 255, 0.08)',
       defaultBorderColor: 'rgba(130, 110, 255, 0.22)',
       defaultColor: '#c5c9ff',

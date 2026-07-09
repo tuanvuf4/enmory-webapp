@@ -139,6 +139,7 @@ $color-bg-container: #252734; // --ant-color-bg-container (dark layout)
 
 // ── Typography ────────────────────────────────────────────────────────────────
 $font-size: var(--ant-font-size); // 14px
+$font-size-heading-1: var(--ant-font-size-heading-1); // 36px
 $font-size-heading-2: var(--ant-font-size-heading-2); // 26px
 $font-size-heading-3: var(--ant-font-size-heading-3); // 22px
 $font-size-heading-4: var(--ant-font-size-heading-4); // 18px
@@ -147,7 +148,7 @@ $font-size-heading-5: var(--ant-font-size-heading-5); // 16px
 $line-height: var(--ant-line-height); // 1.5
 $line-height-heading: var(--ant-line-height-heading); // 2
 
-$font-family: 'Lora, Lato, Oswald, sans-serif'; // --ant-font-family
+$font-family: 'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'; // --ant-font-family
 
 // ── Kích thước & Spacing ──────────────────────────────────────────────────────
 // sizeUnit = 4, sizeStep = 4 → size = sizeUnit + sizeStep * 2 = 4 + 4*2 = 12?

@@ -29,75 +29,69 @@ const Home = () => {
   return (
     <>
       {isAuth && (
-        <div className={`${appStyle.container} ${styles.homePage}`}>
-          <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
-            <Row
-              justify={'start'}
-              align={'top'}
-              gutter={[token.size, token.size]}
-              className={styles.homeGrid}
-            >
-              <Col xs={24} md={14}>
-                <Flex vertical gap={token.size}>
-                  <Widget title={`Study Set`}>
-                    <StudySet />
+        <div className={appStyle.container}>
+          <Row
+            justify={'start'}
+            align={'top'}
+            gutter={token.size * 1.5}
+            className={styles.homeGrid}
+          >
+            <Col xs={24} md={14}>
+              <Space direction='vertical' size={token.size * 1.5}>
+                <Widget title={`Study Set`}>
+                  <StudySet />
+                </Widget>
+
+                <Widget title={'Translator'}>
+                  <ExampleForm resetAfterSave={false} mode={ExampleMode.Translation} />
+                </Widget>
+
+                <Widget title={'Examples'}>
+                  <Example />
+                </Widget>
+              </Space>
+            </Col>
+
+            <Col xs={24} md={10}>
+              <Space direction='vertical' size={token.size * 1.5}>
+                {word?.item && word.item.origin && (
+                  <Widget title={'Items of the day'}>
+                    {isLoading && !isError ? <Skeleton /> : <Item reload data={word.item} />}
                   </Widget>
+                )}
 
-                  <Widget title={'Translator'}>
-                    <ExampleForm resetAfterSave={false} mode={ExampleMode.Translation} />
+                {phrase?.item && phrase.item.origin && (
+                  <Widget>
+                    {isLoading && !isError ? <Skeleton /> : <Item reload data={phrase.item} />}
                   </Widget>
+                )}
 
-                  <Widget title={'Examples'}>
-                    <Example />
+                {collocation?.item && collocation.item.origin && (
+                  <Widget>
+                    {isLoading && !isError ? <Skeleton /> : <Item reload data={collocation.item} />}
                   </Widget>
-                </Flex>
-              </Col>
+                )}
 
-              <Col xs={24} md={10} className={styles.sideColumn}>
-                <Flex vertical gap={token.size}>
-                  {word?.item && word.item.origin && (
-                    <Widget>
-                      {isLoading && !isError ? <Skeleton /> : <Item reload data={word.item} />}
-                    </Widget>
-                  )}
+                {sentence?.item && sentence.item.origin && (
+                  <Widget>
+                    {isLoading && !isError ? <Skeleton /> : <Item reload data={sentence.item} />}
+                  </Widget>
+                )}
 
-                  {phrase?.item && phrase.item.origin && (
-                    <Widget>
-                      {isLoading && !isError ? <Skeleton /> : <Item reload data={phrase.item} />}
-                    </Widget>
-                  )}
+                {idiom?.item && idiom.item.origin && (
+                  <Widget>
+                    {isLoading && !isError ? <Skeleton /> : <Item reload data={idiom.item} />}
+                  </Widget>
+                )}
 
-                  {collocation?.item && collocation.item.origin && (
-                    <Widget>
-                      {isLoading && !isError ? (
-                        <Skeleton />
-                      ) : (
-                        <Item reload data={collocation.item} />
-                      )}
-                    </Widget>
-                  )}
-
-                  {sentence?.item && sentence.item.origin && (
-                    <Widget>
-                      {isLoading && !isError ? <Skeleton /> : <Item reload data={sentence.item} />}
-                    </Widget>
-                  )}
-
-                  {idiom?.item && idiom.item.origin && (
-                    <Widget>
-                      {isLoading && !isError ? <Skeleton /> : <Item reload data={idiom.item} />}
-                    </Widget>
-                  )}
-
-                  {slang?.item && slang.item.origin && (
-                    <Widget>
-                      {isLoading && !isError ? <Skeleton /> : <Item reload data={slang.item} />}
-                    </Widget>
-                  )}
-                </Flex>
-              </Col>
-            </Row>
-          </Space>
+                {slang?.item && slang.item.origin && (
+                  <Widget>
+                    {isLoading && !isError ? <Skeleton /> : <Item reload data={slang.item} />}
+                  </Widget>
+                )}
+              </Space>
+            </Col>
+          </Row>
         </div>
       )}
 

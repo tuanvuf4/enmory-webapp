@@ -163,10 +163,13 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
               <div className={clsx(styles.userContainer)}>
                 <Button
                   type='text'
-                  className={styles.btnThemeToggle}
+                  className={clsx(
+                    styles.btnThemeToggle,
+                    themeMode === 'dark' ? styles.toggleThemeBtn : '',
+                  )}
                   icon={
                     themeMode === 'dark' ? (
-                      <SunOutlined style={{ fontSize: 18, color: token.colorPrimary }} />
+                      <SunOutlined style={{ fontSize: 18 }} />
                     ) : (
                       <MoonOutlined style={{ fontSize: 18, color: token.colorPrimary }} />
                     )

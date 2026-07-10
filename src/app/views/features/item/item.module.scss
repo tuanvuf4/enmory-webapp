@@ -39,7 +39,7 @@
   display: flex;
   flex-direction: column;
   gap: $size * 0.5;
-  padding: $size * 0.25 $size * 0.5;
+  padding: $size;
   border-radius: $size * 0.25;
   border: 1px solid #91caff;
 
@@ -81,8 +81,7 @@
 
 .nestedExampleItem {
   display: list-item;
-  margin-top: -1px;
-  padding: 0 0 0 0;
+  padding: 0;
   line-height: 2em;
 
   & ul {
@@ -214,10 +213,6 @@
 
 .btnAudio {
   color: $color-text-base !important;
-
-  &.active {
-    // color: $color-white !important;
-  }
 }
 
 .audioIcon {
@@ -253,10 +248,6 @@
 
 .btnActions {
   color: $color-text !important;
-
-  &.active {
-    // color: $color-white !important;
-  }
 
   & span {
     font-size: $font-size-heading-4 !important;

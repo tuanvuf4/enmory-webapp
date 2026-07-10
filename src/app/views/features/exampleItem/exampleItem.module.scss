@@ -28,15 +28,9 @@
   align-items: center;
   justify-content: space-between;
   gap: $size * 0.25;
-  margin: $margin * 0.25 0;
   font-size: 12px;
   font-weight: normal;
   font-style: italic;
-  width: 100%;
-}
-
-.contentItem {
-  width: 100%;
 }
 
 .title {
@@ -44,7 +38,6 @@
   align-items: center;
   justify-content: space-between;
   word-break: break-word;
-  margin-bottom: $margin * 0.25;
   min-height: $control-height;
 }
 
@@ -71,8 +64,7 @@
 
 .nestedExampleItem {
   display: list-item;
-  margin-top: -1px;
-  padding: 0 0 0 0;
+  padding: 0;
   line-height: 2em;
 
   & textarea {
@@ -98,9 +90,13 @@
   justify-content: space-between;
   gap: $size * 0.25;
   font-size: $font-size-heading-5;
-  margin: 0 0 0 0;
-  color: $color-primary;
+  margin: 0;
+  color: $color-text-base;
   margin-bottom: 0;
+
+  :global([data-theme='dark']) & {
+    color: $color-white;
+  }
 
   & span {
     display: block;

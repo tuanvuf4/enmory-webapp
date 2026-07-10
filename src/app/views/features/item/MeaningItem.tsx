@@ -1,4 +1,4 @@
-import { AudioOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons'
+import { AudioOutlined } from '@ant-design/icons'
 import { appSetting } from '@/config/appConfig'
 import { getType } from '@/helpers/item'
 import { IMeaning, ECategory, IExample } from '@/models/item.model'
@@ -7,7 +7,6 @@ import { Button, Flex } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import styles from './item.module.scss'
 import clsx from 'clsx'
-import { useState } from 'react'
 import { speakWord } from '@/helpers/mics'
 
 interface IMeaningProps {
@@ -89,8 +88,6 @@ const Pronunciation = ({ catId, active, origin, meaning }: IMeaningProps) => {
 
 export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning, origin }) => {
   const navigate = useNavigate()
-
-  const [show, setShow] = useState<boolean>(false)
 
   const onSearch = (keyword: string) => {
     // Navigate to library with search params

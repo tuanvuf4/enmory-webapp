@@ -1,6 +1,5 @@
 import React from 'react'
 import { Button, theme, Tooltip } from 'antd'
-import styles from './viewMode.module.scss'
 import { AppstoreOutlined, MenuOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { styleConfig } from '@/style/appStyle'
@@ -15,7 +14,7 @@ export const ViewMode: React.FC = () => {
   const dispatch = useDispatch()
 
   return (
-    <div className={styles.viewOptions}>
+    <div className='flex items-center justify-end h-full'>
       <Tooltip title='List'>
         <Button
           type={viewMode === EViewMode.LIST ? 'primary' : 'text'}

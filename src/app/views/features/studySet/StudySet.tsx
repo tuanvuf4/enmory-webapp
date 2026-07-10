@@ -356,15 +356,17 @@ export const StudySet: React.FC = () => {
 
   return (
     <div className={styles.studySet} id='studySet' tabIndex={0}>
-      <div className={styles.studySeHeader}>
+      <div className={styles.studySetHeader}>
         {inProgress && (
           <>
             {!isDone && (
               <Button
                 icon={<ReloadOutlined spin={loading} />}
                 type='primary'
-                danger
                 onClick={() => onReload()}
+                style={{
+                  background: token.palette?.red?.[5],
+                }}
               >
                 Reload
               </Button>
@@ -470,11 +472,11 @@ export const StudySet: React.FC = () => {
                   item?.quiz.answer === respond && isSubmit ? styles.correct : '',
                   item?.quiz.answer !== respond && isSubmit ? styles.incorrect : '',
                 )}
-                onInput={(e) => {
-                  const input = e.target as HTMLInputElement
-                  input.value = input.value.toLowerCase()
-                  if (isSubmit) return
-                }}
+                // onInput={(e) => {
+                //   const input = e.target as HTMLInputElement
+                //   input.value = input.value.toLowerCase()
+                //   if (isSubmit) return
+                // }}
                 ref={inputEl}
                 maxLength={item?.quiz.answer.length}
                 onChange={(e) =>
@@ -515,7 +517,11 @@ export const StudySet: React.FC = () => {
             )}
 
             {!isDone && isSubmit && currentIndex + 1 <= list.length && (
-              <Button type='default' onClick={() => onNext()}>
+              <Button
+                variant={!isDone && isSubmit ? 'outlined' : 'filled'}
+                color={'primary'}
+                onClick={() => onNext()}
+              >
                 {isDone ? 'Finish' : 'Next'}
               </Button>
             )}
@@ -525,14 +531,6 @@ export const StudySet: React.FC = () => {
         {isSubmit && (
           <div className={clsx(styles.resultReference, appStyle.boxItem)}>
             <Item data={item as IItem} />
-          </div>
-        )}
-
-        {isSubmit && !isDone && isSubmit && currentIndex + 1 <= list.length && (
-          <div className={styles.btnAction}>
-            <Button type='default' onClick={() => onNext()}>
-              {isDone ? 'Finish' : 'Next'}
-            </Button>
           </div>
         )}
       </div>

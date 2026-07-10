@@ -17,8 +17,6 @@ import { useNavigate, Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
 import { MainMenu } from '../mainMenu/MainMenu'
 import { menu, addNewType } from './Menu'
-import styles from './header.module.scss'
-import clsx from 'clsx'
 import { useExampleModal, useItemModal } from '@/helpers/hooks'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
@@ -93,32 +91,49 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
 
   return (
     <Layout.Header
-      style={{ ...customStyles, height: isShowSearchFormItem ? 'auto' : 60 }}
-      className={styles.header}
+      style={{
+        ...customStyles,
+        height: isShowSearchFormItem ? 'auto' : 60,
+        minHeight: 60,
+        minWidth: 320,
+        width: '100%',
+        lineHeight: '60px',
+        borderBottom: `1px solid ${token.colorBorder}`,
+        zIndex: 999,
+        backdropFilter: 'blur(24px)',
+      }}
+      className='sticky top-0 left-0 w-full !p-0'
     >
       <div className={appStyle.containerFluid}>
         <Row
           gutter={[token.size, token.size * 2]}
           justify={'space-between'}
-          className={styles.rowHeader}
+          style={{
+            margin: `0 -${token.size}px`,
+            minHeight: 60,
+          }}
         >
           <Col xs={10} md={4}>
             {drawer && (
-              <div className={styles.toggleSidebarBtn}>
+              <div className='h-full flex items-center justify-start gap-2'>
                 <Button
                   type='text'
                   shape='default'
-                  className={styles.btnToggle}
+                  style={{
+                    minWidth: 38,
+                    paddingInlineStart: token.size * 0.5,
+                    paddingInlineEnd: token.size * 0.5,
+                  }}
                   icon={<MenuOutlined style={{ color: token.colorTextBase }} />}
                   onClick={() => {
                     dispatch(settingAction.toggleSidebar())
                   }}
                 />
 
-                <div className={styles.logo}>
-                  <h1 className={styles.brandName}>
+                <div className='capitalize italic'>
+                  <h1 className='m-0 not-italic flex items-center justify-center'>
                     <Link to={'/'}>
-                      <img src={logo} alt='' />
+                      <img src={logo} alt='' className='block w-10' />
                     </Link>
                   </h1>
                 </div>
@@ -138,11 +153,15 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
             )}
 
             {!drawer && (
-              <div className={styles.toggleSidebarBtn}>
+              <div className='h-full flex items-center justify-start gap-2'>
                 <Button
                   type='text'
                   shape='default'
-                  className={styles.btnToggle}
+                  style={{
+                    minWidth: 38,
+                    paddingInlineStart: token.size * 0.5,
+                    paddingInlineEnd: token.size * 0.5,
+                  }}
                   icon={<MenuOutlined style={{ color: token.colorTextBase }} />}
                   onClick={() => {
                     dispatch(settingAction.toggleSidebar())
@@ -160,13 +179,22 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
 
           <Col xs={14} md={isAuth ? 4 : 18}>
             {isAuth && (
-              <div className={clsx(styles.userContainer)}>
+              <div
+                className='flex items-center justify-end h-full'
+                style={{
+                  gap: token.size,
+                }}
+              >
                 <Button
                   type='text'
-                  className={clsx(
-                    styles.btnThemeToggle,
-                    themeMode === 'dark' ? styles.toggleThemeBtn : '',
-                  )}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: 36,
+                    borderRadius: '50%',
+                    color: themeMode === 'dark' ? token.colorWarning : token.colorPrimary,
+                  }}
                   icon={
                     themeMode === 'dark' ? (
                       <SunOutlined style={{ fontSize: 18 }} />
@@ -179,7 +207,12 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
 
                 <Dropdown trigger={['click']} menu={menuAddProps} placement='bottomLeft' arrow>
                   <Button
-                    className={clsx(styles.btnAddNew)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                    }}
                     icon={
                       <PlusOutlined
                         style={{
@@ -205,7 +238,12 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
                         <img
                           src={user.photoURL}
                           alt='avatar'
-                          className={styles.avatar}
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                          }}
                           width={32}
                           height={32}
                         />
@@ -220,7 +258,12 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
             )}
 
             {!isAuth && (
-              <div className={styles.userContainer}>
+              <div
+                className='flex items-center justify-end h-full'
+                style={{
+                  gap: token.size,
+                }}
+              >
                 <Button type='primary' onClick={() => navigate('/login')} style={{ minWidth: 100 }}>
                   Login
                 </Button>

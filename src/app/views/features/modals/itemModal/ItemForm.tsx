@@ -293,7 +293,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                 }}
               />
 
-              {origin && <Reference origin={origin} />}
+              {origin && <Reference style={{ marginTop: token.size / 2 }} origin={origin} />}
             </Col>
           </Row>
 

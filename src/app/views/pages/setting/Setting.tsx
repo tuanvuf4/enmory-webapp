@@ -7,7 +7,6 @@ import { authAction } from '@/store/reducers/auth.reducer'
 import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button, message } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useState } from 'react'
-import styles from './setting.module.scss'
 import clsx from 'clsx'
 
 const Setting = () => {
@@ -59,20 +58,16 @@ const Setting = () => {
         <Row className={appStyle.innerContainer}>
           <Col xs={24}>
             <form onSubmit={handleSubmit(onSubmit)}>
-              <Space direction='vertical' style={{ display: 'flex' }}>
-                <Row
-                  align={'top'}
-                  gutter={[token.size, token.size]}
-                  style={{ marginBottom: token.size }}
-                >
+              <Space direction='vertical' style={{ display: 'flex' }} size={token.size}>
+                <Row align={'top'} gutter={[token.size, token.size]}>
                   <Col xs={24} md={8}>
-                    <h3 className={styles.grTitle}>Study Set</h3>
+                    <h3>Study Set</h3>
                   </Col>
 
                   <Col xs={24} md={16}>
                     <Row align={'middle'} gutter={[token.size, token.size]}>
                       <Col xs={12} md={12}>
-                        <h4 className={styles.title}>Number Of Words:</h4>
+                        <h4>Number Of Words:</h4>
                       </Col>
 
                       <Col xs={12} md={12}>
@@ -94,7 +89,7 @@ const Setting = () => {
                       </Col>
 
                       <Col xs={12} md={12}>
-                        <h4 className={styles.title}>Number Of Phrases:</h4>
+                        <h4>Number Of Phrases:</h4>
                       </Col>
 
                       <Col xs={12} md={12}>
@@ -116,7 +111,7 @@ const Setting = () => {
                       </Col>
 
                       <Col xs={12} md={12}>
-                        <h4 className={styles.title}>Number Of Idioms:</h4>
+                        <h4>Number Of Idioms:</h4>
                       </Col>
 
                       <Col xs={12} md={12}>
@@ -138,7 +133,7 @@ const Setting = () => {
                       </Col>
 
                       <Col xs={12} md={12}>
-                        <h4 className={styles.title}>Number Of Slang:</h4>
+                        <h4>Number Of Slang:</h4>
                       </Col>
 
                       <Col xs={12} md={12}>
@@ -160,7 +155,7 @@ const Setting = () => {
                       </Col>
 
                       <Col xs={12} md={12}>
-                        <h4 className={styles.title}>Number Of Collocations:</h4>
+                        <h4>Number Of Collocations:</h4>
                       </Col>
 
                       <Col xs={12} md={12}>
@@ -182,7 +177,7 @@ const Setting = () => {
                       </Col>
 
                       <Col xs={12} md={12}>
-                        <h4 className={styles.title}>Number Of Sentences:</h4>
+                        <h4>Number Of Sentences:</h4>
                       </Col>
 
                       <Col xs={12} md={12}>
@@ -204,7 +199,7 @@ const Setting = () => {
                       </Col>
 
                       <Col xs={12} md={12}>
-                        <h4 className={styles.title}>Number Of Example:</h4>
+                        <h4>Number Of Example:</h4>
                       </Col>
 
                       <Col xs={12} md={12}>
@@ -228,19 +223,15 @@ const Setting = () => {
                   </Col>
                 </Row>
 
-                <Row
-                  align={'middle'}
-                  gutter={[token.size, token.size]}
-                  style={{ marginBottom: token.size }}
-                >
+                <Row align={'middle'} gutter={[token.size, token.size]}>
                   <Col xs={24} md={8}>
-                    <h3 className={styles.grTitle}>Community</h3>
+                    <h3>Community</h3>
                   </Col>
 
                   <Col xs={24} md={16}>
                     <Row align={'middle'} gutter={[token.size, token.size]}>
                       <Col xs={12} md={12}>
-                        <h4 className={styles.title}>Enable Community:</h4>
+                        <h4>Enable Community:</h4>
                       </Col>
 
                       <Col xs={12} md={12}>
@@ -252,7 +243,6 @@ const Setting = () => {
                               <Checkbox
                                 checked={value}
                                 onChange={(e) => onChange(e.target.checked)}
-                                className={styles.checkbox}
                               >
                                 {value ? 'Yes' : 'No'}
                               </Checkbox>
@@ -264,19 +254,15 @@ const Setting = () => {
                   </Col>
                 </Row>
 
-                <Row
-                  align={'top'}
-                  gutter={[token.size, token.size]}
-                  style={{ marginBottom: token.size }}
-                >
+                <Row align={'top'} gutter={[token.size, token.size]}>
                   <Col xs={24} md={8}>
-                    <h3 className={styles.grTitle}>References</h3>
+                    <h3>References</h3>
                   </Col>
 
                   <Col xs={24} md={16}>
                     <Row align={'top'} gutter={[token.size, token.size]}>
                       <Col xs={12} md={12}>
-                        <h4 className={styles.title}>References:</h4>
+                        <h4>References:</h4>
                       </Col>
 
                       <Col xs={12} md={12}>
@@ -289,7 +275,11 @@ const Setting = () => {
                                 options={plainOptions}
                                 value={value}
                                 onChange={(e) => onChange(e)}
-                                className={styles.checkboxGroup}
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: token.size * 0.5,
+                                }}
                               >
                                 Active
                               </Checkbox.Group>
@@ -301,8 +291,15 @@ const Setting = () => {
                   </Col>
                 </Row>
 
-                <div className={styles.formAction}>
-                  <Button type='primary' htmlType='submit' loading={isLoading}>
+                <div className={'text-center'}>
+                  <Button
+                    type='primary'
+                    htmlType='submit'
+                    loading={isLoading}
+                    style={{
+                      minWidth: 250,
+                    }}
+                  >
                     Save
                   </Button>
                 </div>

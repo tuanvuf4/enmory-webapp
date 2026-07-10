@@ -15,8 +15,6 @@ import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select } from '
 import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { useLocation } from 'react-router-dom'
-import styles from './searchItemForm.module.scss'
-import clsx from 'clsx'
 import { NotFound } from '@/views/components'
 import { initSearchFormItem } from '@/constant/index'
 import { initItem } from '../modals/itemModal'
@@ -92,14 +90,23 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   useEffect(() => reset(urlParams), [urlParams])
 
   return (
-    <div className={styles.searchForm}>
-      <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
+    <div style={{ color: token.colorText }}>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: token.size / 2,
+        }}
+      >
         <Controller
           control={control}
           name={`keyword`}
           render={({ field: { onChange, value } }) => {
             return (
-              <div className={styles.autoSearchInputGroup}>
+              <div style={{ display: 'flex', flex: '1 0' }}>
                 <AutoComplete
                   value={value}
                   placeholder='Enter keyword...'
@@ -116,7 +123,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   }
                   children={
                     <Input
-                      className={styles.searchExampleInput}
+                      style={{ borderRadius: '999px' }}
                       suffix={isSearching ? <Loading3QuartersOutlined spin /> : undefined}
                       allowClear={
                         isSearching
@@ -137,7 +144,10 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                       }
                     />
                   }
-                  className={clsx(styles.autoSearchInput, appStyle.fulWidth)}
+                  style={{
+                    flex: '1 0',
+                    borderRadius: '999px',
+                  }}
                   options={options}
                   onSelect={async (value, option) => await onSelect(value, option)}
                   onClear={() => {
@@ -155,7 +165,32 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
           <Dropdown
             trigger={['click']}
             popupRender={() => (
-              <div className={styles.filterWrapper}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  gap: token.size / 2,
+                  width: 180,
+                  background:
+                    token.colorBgBase === '#ffffff'
+                      ? 'color-mix(in srgb, #ffffff 94%, #edebff 6%)'
+                      : 'rgba(10, 12, 44, 0.92)',
+                  border: `1px solid ${
+                    token.colorBgBase === '#ffffff'
+                      ? 'color-mix(in srgb, #d7d9ef 80%, transparent)'
+                      : 'rgba(120, 100, 255, 0.18)'
+                  }`,
+                  borderRadius: token.size * 0.75,
+                  padding: token.size / 2,
+                  boxShadow:
+                    token.colorBgBase === '#ffffff'
+                      ? '0 10px 24px rgba(49, 57, 108, 0.12)'
+                      : '0 20px 50px rgba(0, 0, 0, 0.5)',
+                  backdropFilter: token.colorBgBase === '#ffffff' ? 'none' : 'blur(20px)',
+                  WebkitBackdropFilter: token.colorBgBase === '#ffffff' ? 'none' : 'blur(20px)',
+                }}
+              >
                 <Controller
                   control={control}
                   name={`archive`}

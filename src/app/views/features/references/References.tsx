@@ -1,19 +1,29 @@
 import { appConfig } from '@/config/appConfig'
-import { Button } from 'antd'
-import styles from './references.module.scss'
+import { Button, theme } from 'antd'
 import React from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import { useSelector } from '@/core/hooks'
 
 interface IPros {
+  style: React.CSSProperties
   origin: string
 }
 
-export const Reference: React.FC<IPros> = ({ origin }) => {
+export const Reference: React.FC<IPros> = ({ origin, style }) => {
+  const { token } = theme.useToken()
   const { user } = useSelector((state) => state.auth)
 
   return (
-    <div className={styles.references}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        flexWrap: 'wrap',
+        gap: `${token.size * 0.5}px`,
+        ...style,
+      }}
+    >
       {appConfig.references.map((reference, key) => {
         if (
           user?.configuration &&

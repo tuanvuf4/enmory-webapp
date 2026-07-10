@@ -6,10 +6,8 @@ import { ILogin, IUser } from '@/models/user.model'
 import { theme, Space, Row, Col, Input, Button } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { Link } from 'react-router-dom'
-import styles from './loginForm.module.scss'
 
 import logo from '@/assets/img/logo.png'
-import clsx from 'clsx'
 
 interface Login {
   onLoginSuccess?: (uid: IUser) => void
@@ -39,15 +37,37 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
   }
 
   return (
-    <div className={styles.loginForm}>
+    <div
+      style={{
+        width: 400,
+        maxWidth: '100%',
+        margin: '0 auto',
+        background: token.colorBgBase,
+      }}
+    >
       {showBanner && (
-        <div className={styles.loginFormHeader}>
-          <img src={logo} alt='' />
-          <h2 className={styles.loginFormTitle}>Welcome to Enmory!</h2>
+        <div
+          style={{
+            textAlign: 'center',
+            padding: token.size * 3,
+            background: token.colorBgElevated,
+            color: token.colorTextLightSolid,
+          }}
+        >
+          <img src={logo} alt='' style={{ width: 120 }} />
+          <h2
+            style={{
+              fontSize: token.fontSize * 2.5,
+              fontWeight: 'bold',
+              margin: `${token.size}px 0`,
+            }}
+          >
+            Welcome to Enmory!
+          </h2>
         </div>
       )}
 
-      <div className={styles.loginFormContent}>
+      <div style={{ padding: `${token.size * 2}px ${token.size * 2}px ${token.size * 4}px` }}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
             <Row align={'middle'}>
@@ -86,20 +106,26 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
               </Col>
             </Row>
 
-            {errorMsg && <p className={clsx(appStyle.errorMsg, appStyle.textLeft)}>{errorMsg}</p>}
+            {errorMsg && <p style={{ color: token.colorError, textAlign: 'left' }}>{errorMsg}</p>}
 
             {authError && !errorMsg && (
-              <p className={clsx(appStyle.errorMsg, appStyle.textCenter)}>{authError}</p>
+              <p style={{ color: token.colorError, textAlign: 'center' }}>{authError}</p>
             )}
 
             <Row justify={'center'}>
               <Col span={24}>
-                <div className={clsx(styles.btnSubmit)}>
+                <div style={{ textAlign: 'center', margin: `${token.size}px 0` }}>
                   <Button
                     className={appStyle.fulWidth}
                     type='primary'
                     htmlType='submit'
                     loading={isLoading}
+                    style={{
+                      borderRadius: 0,
+                      letterSpacing: '1px',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase',
+                    }}
                   >
                     {isLoading ? 'Logging in...' : 'Login'}
                   </Button>
@@ -122,8 +148,37 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
             {/* Google Login Section */}
             <Row justify={'center'}>
               <Col span={24}>
-                <div className={styles.otherLoginMethod}>
-                  <h3>Or continue with</h3>
+                <div
+                  style={{
+                    position: 'relative',
+                    textAlign: 'center',
+                    color: token.colorTextSecondary,
+                    margin: `${token.size}px 0`,
+                  }}
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      width: '100%',
+                      height: 1,
+                      top: '50%',
+                      left: 0,
+                      background: token.colorPrimary,
+                      zIndex: 998,
+                    }}
+                  />
+                  <h3
+                    style={{
+                      position: 'relative',
+                      display: 'inline-block',
+                      padding: `0 ${token.size * 2}px`,
+                      background: token.colorBgBase,
+                      margin: 0,
+                      zIndex: 999,
+                    }}
+                  >
+                    Or continue with
+                  </h3>
                 </div>
               </Col>
             </Row>

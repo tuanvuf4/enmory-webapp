@@ -1,7 +1,6 @@
 import React from 'react'
 import { useSelector } from '@/core/hooks/redux'
 import { Col, Row, Space, theme } from 'antd'
-import styles from './toolbar.module.scss'
 import appStyle from '@/style/appStyle.module.scss'
 import { SearchItemForm } from '../searchItemForm'
 
@@ -20,7 +19,7 @@ export const Toolbar = ({ formSearch = <SearchItemForm />, pagination }: IProps)
   return (
     <div className={appStyle.stickyBar}>
       <div className={appStyle.container}>
-        <div className={styles.toolbar}>
+        <div>
           <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
             <Row
               justify={isShowSearchFormItem ? 'space-between' : 'end'}

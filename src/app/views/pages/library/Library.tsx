@@ -2,7 +2,6 @@ import appStyle from '@/style/appStyle.module.scss'
 import { EViewMode } from '@/models/app.model'
 import { theme, Row, Col, Flex, Space } from 'antd'
 import { useEffect } from 'react'
-import styles from './library.module.scss'
 import { useSelector } from '@/core/hooks'
 import { Pagination } from '@/views/components'
 import { Item } from '@/views/features/item/Item'
@@ -57,56 +56,58 @@ export const Library: React.FC = () => {
 
       <div className={appStyle.container}>
         <Space direction={'vertical'} size={token.size}>
-          <Flex align={'center'} justify={'flex-end'}>
-            <Pagination
-              page={page}
-              size={size}
-              total={pagination?.total}
-              totalPage={pagination?.totalPage}
-              options={appSetting.pagination.options}
-              onPageChange={(data) => {
-                const newParams = new URLSearchParams(searchParams)
-                newParams.set('page', data.page.toString())
-                newParams.set('size', data.size.toString())
-                setSearchParams(newParams)
-                window.scrollTo({ top: 0, behavior: 'smooth' })
-              }}
-            />
-          </Flex>
-
-          {!isLoading && viewMode === EViewMode.GRID && listItem.length > 0 && (
-            <div className={styles.items}>
-              <Row gutter={[token.size, token.size * 2]}>
-                {listItem.length > 0 &&
-                  listItem.map((item, idx) => {
-                    return (
-                      <Col xs={24} sm={12} md={12} lg={8} xl={6} key={idx}>
-                        <Widget>
-                          <Item data={item} action active />
-                        </Widget>
-                      </Col>
-                    )
-                  })}
-              </Row>
-            </div>
+          {!isLoading && (
+            <Flex align={'center'} justify={'flex-end'}>
+              <Pagination
+                page={page}
+                size={size}
+                total={pagination?.total}
+                totalPage={pagination?.totalPage}
+                options={appSetting.pagination.options}
+                onPageChange={(data) => {
+                  const newParams = new URLSearchParams(searchParams)
+                  newParams.set('page', data.page.toString())
+                  newParams.set('size', data.size.toString())
+                  setSearchParams(newParams)
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
+              />
+            </Flex>
           )}
 
-          <Flex align={'center'} justify={'flex-end'}>
-            <Pagination
-              page={page}
-              size={size}
-              total={pagination?.total}
-              totalPage={pagination?.totalPage}
-              options={appSetting.pagination.options}
-              onPageChange={(data) => {
-                const newParams = new URLSearchParams(searchParams)
-                newParams.set('page', data.page.toString())
-                newParams.set('size', data.size.toString())
-                setSearchParams(newParams)
-                window.scrollTo({ top: 0, behavior: 'smooth' })
-              }}
-            />
-          </Flex>
+          {!isLoading && viewMode === EViewMode.GRID && listItem.length > 0 && (
+            <Row gutter={[token.size, token.size * 2]}>
+              {listItem.length > 0 &&
+                listItem.map((item, idx) => {
+                  return (
+                    <Col xs={24} sm={12} md={12} lg={8} xl={6} key={idx}>
+                      <Widget>
+                        <Item data={item} action active />
+                      </Widget>
+                    </Col>
+                  )
+                })}
+            </Row>
+          )}
+
+          {!isLoading && (
+            <Flex align={'center'} justify={'flex-end'}>
+              <Pagination
+                page={page}
+                size={size}
+                total={pagination?.total}
+                totalPage={pagination?.totalPage}
+                options={appSetting.pagination.options}
+                onPageChange={(data) => {
+                  const newParams = new URLSearchParams(searchParams)
+                  newParams.set('page', data.page.toString())
+                  newParams.set('size', data.size.toString())
+                  setSearchParams(newParams)
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
+              />
+            </Flex>
+          )}
         </Space>
 
         {!isLoading && listItem.length === 0 && (

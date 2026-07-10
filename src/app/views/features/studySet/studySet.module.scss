@@ -6,15 +6,9 @@
   justify-content: space-between;
   flex-flow: column wrap;
   // background: $color-bg-item;
-
-  &:focus-visible,
-  &:focus,
-  &:focus-within {
-    // box-shadow: 0 0 $size * 1 0 rgba(0, 0, 0, 1); // hex2Rgba(token.colorTextBase)
-  }
 }
 
-.studySeHeader {
+.studySetHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -34,7 +28,6 @@
 .fibWrapper {
   padding: 0;
   display: inline-block;
-  background: $color-white;
   border-radius: 38px;
   box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.25) !important;
 
@@ -45,18 +38,21 @@
     font-size: $font-size-heading-4 !important;
     letter-spacing: 1.1px;
     text-align: center;
+    color: $color-gray-0;
+    border: 2px solid $color-gray-0 !important;
+
+    :global([data-theme='dark']) & {
+      color: $color-gray-7;
+      background: $color-white;
+    }
 
     &.correct {
-      border: 2px solid $color-primary !important;
-      color: $color-white !important;
-      background: $color-primary !important;
+      border: 2px solid $color-green-5 !important;
       cursor: default !important;
     }
 
     &.incorrect {
-      border: 2px solid $color-text-secondary !important;
-      color: $color-white !important;
-      background: $color-text-secondary !important;
+      border: 2px solid $color-red-5 !important;
       cursor: default !important;
     }
   }
@@ -71,7 +67,7 @@
 .fibInput {
   display: inline-block;
   min-width: $size * 1 !important;
-  color: #d9d9d9;
+  color: $color-text-base;
   font-size: $font-size-heading-3 !important;
   background: transparent;
   box-shadow: none;
@@ -110,10 +106,6 @@
   }
 }
 
-.fibInputActive {
-  color: $color-white;
-}
-
 .studySetBody {
   padding: $size * 1;
   padding-top: 0;
@@ -142,7 +134,7 @@
 
   & h5 {
     font-size: $font-size-heading-5;
-    color: #ffd666;
+    color: $color-text-base;
     line-height: $line-height;
   }
 }
@@ -184,36 +176,40 @@
       padding: $size * 0.75 $size * 1.25;
       margin: $size * 0.75 0;
       border-radius: $size * 0.5;
-      color: $color-white;
+      color: $color-text-base;
       font-size: $font-size-heading-5;
-      border: 2px solid rgba(255, 255, 255, 0.45);
+      border: 2px solid $color-gray-2;
       line-height: $line-height;
       background: transparent;
       cursor: pointer;
+
+      :global([data-theme='dark']) & {
+        color: $color-white;
+        border: 2px solid rgba(255, 255, 255, 0.45);
+      }
 
       & i {
         margin-left: $size * 0.5;
         color: $color-blue-5;
       }
 
-      &:hover {
-        border: 2px solid $color-white;
-        color: $color-white;
-      }
+      // &:hover {
+      //   border: 2px solid $color-white;
+      //   color: $color-white;
+      // }
 
       &.active {
-        color: $color-text-base;
         border: 2px solid $color-blue-6 !important;
       }
 
       &.correct {
         border: 2px solid $color-green-5 !important;
-        color: $color-white;
+        // color: $color-white;
       }
 
       &.incorrect {
         border: 2px solid $color-red-5 !important;
-        color: $color-white;
+        // color: $color-white;
       }
     }
   }

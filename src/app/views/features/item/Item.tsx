@@ -339,7 +339,7 @@ export const Item: React.FC<IProps> = ({
               </h5>
             )}
 
-            <Reference origin={data.origin} />
+            <Reference origin={data.origin} style={{}} />
 
             {data.catId === ECategory.WORD && (
               <>

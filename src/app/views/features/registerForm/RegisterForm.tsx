@@ -1,5 +1,4 @@
 import { Button, Col, Input, Row, Space, theme } from 'antd'
-import classNames from 'clsx'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons'
@@ -10,8 +9,6 @@ import { initRegisterForm } from '@/services/registerForm'
 import { useFirebaseAuth } from '@/core/hooks'
 
 import logo from '@/assets/img/logo.png'
-import styles from './registerForm.module.scss'
-import loginStyles from '../loginForm/loginForm.module.scss'
 
 export const RegisterForm = ({ showBanner = true }) => {
   const { token } = theme.useToken()
@@ -46,15 +43,37 @@ export const RegisterForm = ({ showBanner = true }) => {
   }
 
   return (
-    <div className={classNames([styles.registerForm])}>
+    <div
+      style={{
+        width: 600,
+        maxWidth: '100%',
+        margin: `${token.size * 2}px auto`,
+        background: token.colorBgBase,
+      }}
+    >
       {showBanner && (
-        <div className={loginStyles.loginFormHeader}>
-          <img src={logo} alt='' />
-          <h2 className={loginStyles.loginFormTitle}>Welcome to Enmory!</h2>
+        <div
+          style={{
+            textAlign: 'center',
+            padding: token.size * 3,
+            background: token.colorBgElevated,
+            color: token.colorTextLightSolid,
+          }}
+        >
+          <img src={logo} alt='' style={{ width: 120 }} />
+          <h2
+            style={{
+              fontSize: token.fontSize * 2.5,
+              fontWeight: 'bold',
+              margin: `${token.size}px 0`,
+            }}
+          >
+            Welcome to Enmory!
+          </h2>
         </div>
       )}
 
-      <div className={loginStyles.loginFormContent}>
+      <div style={{ padding: `${token.size * 2}px ${token.size * 2}px ${token.size * 4}px` }}>
         {!isRegistered && (
           <form onSubmit={handleSubmit(handleOk)}>
             <Space
@@ -64,7 +83,17 @@ export const RegisterForm = ({ showBanner = true }) => {
             >
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={24}>
-                  <label className={styles.label} htmlFor=''>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 500,
+                      marginBottom: token.size * 0.25,
+                      color: token.colorTextSecondary,
+                      fontStyle: 'italic',
+                      fontSize: 13,
+                    }}
+                    htmlFor=''
+                  >
                     Email:
                   </label>
                   <Controller
@@ -92,7 +121,17 @@ export const RegisterForm = ({ showBanner = true }) => {
 
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={12}>
-                  <label className={styles.label} htmlFor=''>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 500,
+                      marginBottom: token.size * 0.25,
+                      color: token.colorTextSecondary,
+                      fontStyle: 'italic',
+                      fontSize: 13,
+                    }}
+                    htmlFor=''
+                  >
                     Password:
                   </label>
                   <Controller
@@ -120,7 +159,17 @@ export const RegisterForm = ({ showBanner = true }) => {
                   />
                 </Col>
                 <Col xs={24} md={12}>
-                  <label className={styles.label} htmlFor=''>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 500,
+                      marginBottom: token.size * 0.25,
+                      color: token.colorTextSecondary,
+                      fontStyle: 'italic',
+                      fontSize: 13,
+                    }}
+                    htmlFor=''
+                  >
                     Confirm password:
                   </label>
                   <Controller
@@ -152,7 +201,17 @@ export const RegisterForm = ({ showBanner = true }) => {
 
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={12}>
-                  <label className={styles.label} htmlFor=''>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 500,
+                      marginBottom: token.size * 0.25,
+                      color: token.colorTextSecondary,
+                      fontStyle: 'italic',
+                      fontSize: 13,
+                    }}
+                    htmlFor=''
+                  >
                     First name:
                   </label>
                   <Controller
@@ -177,7 +236,17 @@ export const RegisterForm = ({ showBanner = true }) => {
                   />
                 </Col>
                 <Col xs={24} md={12}>
-                  <label className={styles.label} htmlFor=''>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 500,
+                      marginBottom: token.size * 0.25,
+                      color: token.colorTextSecondary,
+                      fontStyle: 'italic',
+                      fontSize: 13,
+                    }}
+                    htmlFor=''
+                  >
                     Last name:
                   </label>
                   <Controller
@@ -205,7 +274,17 @@ export const RegisterForm = ({ showBanner = true }) => {
 
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col span={24} md={24}>
-                  <label className={styles.label} htmlFor=''>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 500,
+                      marginBottom: token.size * 0.25,
+                      color: token.colorTextSecondary,
+                      fontStyle: 'italic',
+                      fontSize: 13,
+                    }}
+                    htmlFor=''
+                  >
                     Photo URL:
                   </label>
                   <Controller
@@ -222,15 +301,11 @@ export const RegisterForm = ({ showBanner = true }) => {
                 <Row align={'middle'}>
                   <Col span={24}>
                     {errorMsg && (
-                      <p className={classNames(appStyle.errorMsg, appStyle.textLeft)}>
-                        {authError}
-                      </p>
+                      <p style={{ color: token.colorError, textAlign: 'left' }}>{authError}</p>
                     )}
 
                     {!errorMsg && authError && (
-                      <p className={classNames(appStyle.errorMsg, appStyle.textLeft)}>
-                        {authError}
-                      </p>
+                      <p style={{ color: token.colorError, textAlign: 'left' }}>{authError}</p>
                     )}
                   </Col>
                 </Row>
@@ -238,12 +313,18 @@ export const RegisterForm = ({ showBanner = true }) => {
 
               <Row justify={'center'} gutter={[token.size, token.size]}>
                 <Col span={24}>
-                  <div className={classNames([loginStyles.btnSubmit])}>
+                  <div style={{ textAlign: 'center', margin: `${token.size}px 0` }}>
                     <Button
                       className={appStyle.fulWidth}
                       type='primary'
                       htmlType='submit'
                       loading={firebaseLoading}
+                      style={{
+                        borderRadius: 0,
+                        letterSpacing: '1px',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                      }}
                     >
                       {firebaseLoading ? 'Registering...' : 'register'}
                     </Button>
@@ -265,8 +346,37 @@ export const RegisterForm = ({ showBanner = true }) => {
 
               <Row justify={'center'} gutter={[token.size, token.size]}>
                 <Col span={24}>
-                  <div className={loginStyles.otherLoginMethod}>
-                    <h3>Register with</h3>
+                  <div
+                    style={{
+                      position: 'relative',
+                      textAlign: 'center',
+                      color: token.colorTextSecondary,
+                      margin: `${token.size}px 0`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: 'absolute',
+                        width: '100%',
+                        height: 1,
+                        top: '50%',
+                        left: 0,
+                        background: token.colorPrimary,
+                        zIndex: 998,
+                      }}
+                    />
+                    <h3
+                      style={{
+                        position: 'relative',
+                        display: 'inline-block',
+                        padding: `0 ${token.size * 2}px`,
+                        background: token.colorBgBase,
+                        margin: 0,
+                        zIndex: 999,
+                      }}
+                    >
+                      Register with
+                    </h3>
                   </div>
                 </Col>
               </Row>

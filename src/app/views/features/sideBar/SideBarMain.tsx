@@ -1,29 +1,31 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
-import styles from './sideBarMain.module.scss'
 import { MainMenu } from '../mainMenu/MainMenu'
 import { useSelector } from '@/core/hooks'
+import { theme } from 'antd'
 
 export const SideBarMain: React.FC = () => {
+  const { token } = theme.useToken()
+
   const { isSidebarOpened, drawer } = useSelector((state) => state.setting)
 
   return (
-    <div className={styles.aside}>
-      <div className={styles.logo}>
-        <Link to={'/'}>
-          <img src={logo} alt='' />
-          {drawer && <span className={styles.brandName}>Enmory</span>}
+    <div
+      className='h-full overflow-auto py-4'
+      style={{
+        background: token.colorBgContainer,
+        borderRight: `1px solid ${token.colorBorder}`,
+      }}
+    >
+      <div className='capitalize italic text-[32px]'>
+        <Link to={'/'} className='flex items-center justify-center p-4'>
+          <img src={logo} alt='' className='w-[70px]' />
+          {drawer && <span className='ml-4'>Enmory</span>}
 
-          {isSidebarOpened && !drawer && <span className={styles.brandName}>Enmory</span>}
+          {isSidebarOpened && !drawer && <span className='ml-4'>Enmory</span>}
         </Link>
       </div>
-
-      {/* <div className={styles.slogan}>
-        <h2>
-          <span>Learn English</span> <br /> the way you like!
-        </h2>
-      </div> */}
 
       <MainMenu direction='vertical' />
     </div>

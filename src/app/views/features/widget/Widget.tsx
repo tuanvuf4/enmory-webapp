@@ -1,18 +1,41 @@
 import React, { PropsWithChildren } from 'react'
-import styles from './widget.module.scss'
-import appStyle from '@/style/appStyle.module.scss'
-import clsx from 'clsx'
+import { theme } from 'antd'
 
 interface IProps {
   title?: string
 }
 
 export const Widget: React.FC<PropsWithChildren & IProps> = ({ children, title }) => {
-  return (
-    <div className={styles.widget}>
-      {title && <h3 className={clsx(styles.widgetTitle, appStyle.pageTitle)}>{title}</h3>}
+  const { token } = theme.useToken()
 
-      <div className={styles.widgetContent}>{children}</div>
+  return (
+    <div>
+      {title && (
+        <h3
+          className='text-center font-bold italic capitalize m-0 mb-4'
+          style={{
+            fontSize: token.fontSizeHeading3,
+            color: token.colorPrimary,
+          }}
+        >
+          {title}
+        </h3>
+      )}
+
+      <div
+        className='p-4 rounded-lg border transition-all duration-300'
+        style={{
+          padding: token.size,
+          borderRadius: token.borderRadius,
+          background: token.colorBgWidget,
+          border: `1px solid ${token.colorBorder}`,
+          boxShadow: token.boxShadow,
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+        }}
+      >
+        {children}
+      </div>
     </div>
   )
 }

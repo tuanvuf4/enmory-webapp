@@ -1,7 +1,6 @@
 export * from './google'
 export * from './inputTag'
 export * from './level'
-export * from './noResultInList'
 export * from './notFound'
 export * from './pagination'
 export * from './tags'

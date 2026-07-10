@@ -1,10 +1,10 @@
 import type { ThemeConfig } from 'antd'
 
 export const appTheme: ThemeConfig = {
-  cssVar: false,
+  cssVar: true,
   token: {
     colorBgItem: 'rgba(37, 39, 52, 0.95)',
-    colorBgWidget: 'rgba(37, 39, 52, 0.95)',
+    colorBgWidget: 'rgba(255, 255, 255, 0.65)',
     colorWhite: '#fff',
     colorBlack: '#000',
     palette: {
@@ -164,14 +164,23 @@ export const appTheme: ThemeConfig = {
       // @ts-ignore - contentPadding is valid but not in type definitions
       contentPadding: 12,
       headerBg: 'transparent',
+      titleFontSize: 20,
+      titleLineHeight: 1.6,
     },
-    Checkbox: {},
+    Checkbox: {
+      size: 16,
+      borderRadiusSM: 4,
+    },
     Layout: {
       headerBg: 'transparent',
       bodyBg: 'transparent',
+      headerHeight: 64,
+      headerPadding: '0 24px',
+      headerColor: '#5c648e',
     },
     Drawer: {
-      colorBgElevated: '#ffffff', // bg body drawer
+      colorBgElevated: '#ffffff',
+      boxShadowSecondary: '0 6px 16px rgba(0, 0, 0, 0.08)',
     },
     Menu: {
       itemBg: 'transparent',
@@ -182,18 +191,57 @@ export const appTheme: ThemeConfig = {
       itemSelectedColor: '#3b3fa6',
       itemSelectedBg: '#e8e7ff',
       itemBorderRadius: 12,
-      // fontFamily: 'Lora, Lato, Oswald, sans-serif',
+      itemHeight: 40,
+      itemPaddingInline: 12,
     },
     Button: {
       padding: 12,
       borderRadius: 12,
+      controlHeight: 40,
+      fontWeight: 500,
+      defaultShadow: 'none',
+      primaryShadow: 'none',
+      dangerShadow: 'none',
     },
     Input: {
       activeBorderColor: '#7a6ef7',
       hoverBorderColor: '#b9b5ff',
+      controlHeight: 40,
+      borderRadius: 8,
+      colorBgContainer: '#ffffff',
+    },
+    InputNumber: {
+      controlHeight: 40,
+      borderRadius: 8,
     },
     Select: {
       optionSelectedBg: '#ebeaff',
+      controlHeight: 40,
+      borderRadius: 8,
+      multipleItemHeight: 32,
+    },
+    Card: {
+      borderRadius: 14,
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+      colorBgContainer: '#ffffff',
+      colorBorder: '#dddff2',
+    },
+    Table: {
+      borderRadius: 14,
+      colorBgContainer: '#ffffff',
+      colorBorder: '#dddff2',
+    },
+    Badge: {
+      colorBgContainer: '#f0f0f0',
+    },
+    Tag: {
+      borderRadiusSM: 4,
+      colorBgContainer: '#f6f5ff',
+    },
+    Tooltip: {
+      colorBgSpotlight: 'rgba(0, 0, 0, 0.85)',
+      colorTextLightSolid: '#ffffff',
+      borderRadius: 8,
     },
   },
 }
@@ -201,6 +249,10 @@ export const appTheme: ThemeConfig = {
 export const appDarkTheme: ThemeConfig = {
   cssVar: true,
   token: {
+    colorBgItem: 'rgba(37, 39, 52, 0.95)',
+    colorBgWidget: 'rgba(255, 255, 255, 0.08)',
+    colorWhite: '#eceeff',
+    colorBlack: '#000',
     palette: {
       gray: [
         '#666666',
@@ -320,10 +372,6 @@ export const appDarkTheme: ThemeConfig = {
         '#614700',
       ],
     },
-    colorBgItem: 'rgba(37, 39, 52, 0.95)',
-    colorBgWidget: 'rgba(37, 39, 52, 0.95)',
-    colorWhite: '#eceeff',
-    colorBlack: '#000',
     colorPrimary: '#8b6ef7',
     colorTextHeading: '#eceeff',
     colorTextBase: '#e0e2ff',
@@ -367,15 +415,25 @@ export const appDarkTheme: ThemeConfig = {
       contentPadding: 12,
       headerBg: 'transparent',
       contentBg: '#111332',
+      titleFontSize: 20,
+      titleLineHeight: 1.6,
     },
-    Checkbox: {},
+    Checkbox: {
+      size: 16,
+      borderRadiusSM: 4,
+      colorPrimary: '#8b6ef7',
+    },
     Layout: {
       headerBg: 'transparent',
       bodyBg: 'transparent',
       siderBg: '#0b0e2a',
+      headerHeight: 64,
+      headerPadding: '0 24px',
+      headerColor: '#8890b8',
     },
     Drawer: {
       colorBgElevated: '#191d49',
+      boxShadowSecondary: '0 6px 16px rgba(0, 0, 0, 0.45)',
     },
     Menu: {
       itemBg: 'transparent',
@@ -386,11 +444,17 @@ export const appDarkTheme: ThemeConfig = {
       itemSelectedColor: '#c5c9ff',
       itemSelectedBg: 'rgba(130, 110, 255, 0.18)',
       itemBorderRadius: 12,
-      // fontFamily: 'Lora, Lato, Oswald, sans-serif',
+      itemHeight: 40,
+      itemPaddingInline: 12,
     },
     Button: {
       padding: 12,
       borderRadius: 12,
+      controlHeight: 40,
+      fontWeight: 500,
+      defaultShadow: 'none',
+      primaryShadow: 'none',
+      dangerShadow: 'none',
       defaultBg: 'rgba(130, 110, 255, 0.08)',
       defaultBorderColor: 'rgba(130, 110, 255, 0.22)',
       defaultColor: '#c5c9ff',
@@ -400,20 +464,98 @@ export const appDarkTheme: ThemeConfig = {
       hoverBorderColor: 'rgba(139, 110, 247, 0.45)',
       colorBgContainer: 'rgba(14, 16, 53, 0.8)',
       colorText: '#c8caee',
+      controlHeight: 40,
+      borderRadius: 8,
+    },
+    InputNumber: {
+      controlHeight: 40,
+      borderRadius: 8,
+      colorBgContainer: 'rgba(126, 126, 133, 0.8)',
     },
     Select: {
       optionSelectedBg: 'rgba(130, 110, 255, 0.18)',
       colorBgContainer: 'rgba(14, 16, 53, 0.8)',
+      controlHeight: 40,
+      borderRadius: 8,
+      multipleItemHeight: 32,
     },
     Dropdown: {
       colorBgElevated: '#1b2050',
+      boxShadowSecondary: '0 6px 16px rgba(0, 0, 0, 0.45)',
     },
     AutoComplete: {
       colorBgContainer: 'rgba(23, 27, 69, 0.95)',
     },
+    Card: {
+      borderRadius: 14,
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.45)',
+      colorBgContainer: 'rgba(23, 27, 69, 0.8)',
+      colorBorder: 'rgba(130, 115, 255, 0.14)',
+    },
+    Table: {
+      borderRadius: 14,
+      colorBgContainer: 'rgba(23, 27, 69, 0.8)',
+      colorBorder: 'rgba(130, 115, 255, 0.14)',
+    },
+    Badge: {
+      colorBgContainer: 'rgba(130, 115, 255, 0.12)',
+    },
+    Tag: {
+      borderRadiusSM: 4,
+      colorBgContainer: 'rgba(130, 115, 255, 0.15)',
+    },
+    Tooltip: {
+      colorBgSpotlight: 'rgba(0, 0, 0, 0.85)',
+      colorTextLightSolid: '#ffffff',
+      borderRadius: 8,
+    },
     Skeleton: {
       gradientFromColor: 'rgba(130, 115, 255, 0.06)',
       gradientToColor: 'rgba(130, 115, 255, 0.12)',
+    },
+  },
+}
+
+// Semantic tokens and utilities for components (can be extended as needed)
+export const semanticTokens = {
+  light: {
+    shadows: {
+      sm: '0 2px 8px rgba(0, 0, 0, 0.06)',
+      md: '0 10px 30px rgba(91, 92, 230, 0.08)',
+      lg: '0 20px 60px rgba(0, 0, 0, 0.15)',
+    },
+    glassmorphism: {
+      bg: 'rgba(243, 238, 252, 0.8)',
+      border: 'rgba(221, 217, 255, 0.6)',
+      backdropFilter: 'blur(8px)',
+    },
+    spacing: {
+      xs: 4,
+      sm: 8,
+      md: 12,
+      lg: 16,
+      xl: 24,
+      xxl: 32,
+    },
+  },
+  dark: {
+    shadows: {
+      sm: '0 2px 8px rgba(0, 0, 0, 0.45)',
+      md: '0 20px 60px rgba(0, 0, 0, 0.5)',
+      lg: '0 20px 60px rgba(0, 0, 0, 0.6)',
+    },
+    glassmorphism: {
+      bg: 'rgba(14, 17, 48, 0.8)',
+      border: 'rgba(130, 110, 255, 0.15)',
+      backdropFilter: 'blur(20px)',
+    },
+    spacing: {
+      xs: 4,
+      sm: 8,
+      md: 12,
+      lg: 16,
+      xl: 24,
+      xxl: 32,
     },
   },
 }

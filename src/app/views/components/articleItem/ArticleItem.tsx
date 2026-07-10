@@ -19,12 +19,9 @@ export const ArticleItem = ({
   const { openArticleModal } = useArticleModal()
 
   return (
-    <div className={clsx(styles.articleItem, styles.content)}>
+    <div className={clsx(styles.articleItem, 'article')}>
       <Flex justify={'space-between'} gap={8}>
-        <h2
-          className={clsx(styles.title, 'font-bold cursor-pointer')}
-          onClick={() => navigate(`/article/${id}`)}
-        >
+        <h2 className={'font-bold cursor-pointer'} onClick={() => navigate(`/article/${id}`)}>
           {title}
         </h2>
 
@@ -50,7 +47,7 @@ export const ArticleItem = ({
         }}
       />
 
-      <div className={clsx(styles.readMore, 'cursor-pointer')}>
+      <div className={'cursor-pointer'}>
         <Button variant={'outlined'} type={'default'} onClick={() => navigate(`/article/${id}`)}>
           Read more
         </Button>

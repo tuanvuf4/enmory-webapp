@@ -264,6 +264,26 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
                   gap: token.size,
                 }}
               >
+                <Button
+                  type='text'
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: 36,
+                    borderRadius: '50%',
+                    color: themeMode === 'dark' ? token.colorWarning : token.colorPrimary,
+                  }}
+                  icon={
+                    themeMode === 'dark' ? (
+                      <SunOutlined style={{ fontSize: 18 }} />
+                    ) : (
+                      <MoonOutlined style={{ fontSize: 18, color: token.colorPrimary }} />
+                    )
+                  }
+                  onClick={() => dispatch(settingAction.toggleTheme())}
+                />
+
                 <Button type='primary' onClick={() => navigate('/login')} style={{ minWidth: 100 }}>
                   Login
                 </Button>
@@ -280,13 +300,7 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
           </Col>
         </Row>
 
-        {isAuth && (
-          <Row>
-            <Col>
-              <Toolbar pagination={undefined} />
-            </Col>
-          </Row>
-        )}
+        {isAuth && <Toolbar pagination={undefined} />}
       </div>
     </Layout.Header>
   )

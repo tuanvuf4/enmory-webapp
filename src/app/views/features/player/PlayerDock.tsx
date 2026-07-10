@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  CloseOutlined,
+  ArrowsAltOutlined,
   FastBackwardOutlined,
   FastForwardOutlined,
   PauseCircleFilled,
   PlayCircleFilled,
   ReloadOutlined,
+  ShrinkOutlined,
   StepBackwardOutlined,
   StepForwardOutlined,
   UnorderedListOutlined,
@@ -17,15 +18,17 @@ import { useDispatch, useSelector } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import { tracksApi } from '@/services/firebase'
+import { TrackList } from './TrackList'
 
-export const PlayerDock = () => {
+export const PlayerDock: React.FC = () => {
   const { token } = theme.useToken()
   const playerRef = useRef<HTMLVideoElement | null>(null)
 
   const [trackListOpen, setTrackListOpen] = useState(false)
   const [playerKey, setPlayerKey] = useState(0)
 
-  const { currentTrack, tracks, player } = useSelector((state) => state.listening)
+  const { currentTrack, tracks, player, showPlayer } = useSelector((state) => state.listening)
+
   const dispatch = useDispatch()
 
   const trackIndex = tracks.findIndex((t) => t.id === currentTrack?.id)
@@ -226,128 +229,123 @@ export const PlayerDock = () => {
   }
 
   return (
-    <div className={styles.playerDock}>
+    <div
+      className={styles.playerDock}
+      style={{
+        width: showPlayer ? '100%' : 40,
+        padding: showPlayer ? token.size / 2 : 0,
+        transition: 'width 0.3s ease, padding 0.3s ease',
+      }}
+    >
       {/* Track list panel (appears inside dock, above controls) */}
       {trackListOpen && (
         <div className={styles.dockTrackList}>
-          <div className={styles.dockTrackListHeader}>
-            <span>Track list</span>
-            <button className={styles.dockTrackListClose} onClick={() => setTrackListOpen(false)}>
-              <CloseOutlined />
-            </button>
-          </div>
-
-          <ul>
-            {tracks.map((track, index) => (
-              <li
-                key={`dock-track-${track.id ?? index}`}
-                className={index === trackIndex ? styles.active : ''}
-                onClick={() => {
-                  setTrackListOpen(false)
-                  dispatch(listeningAction.resetPlayer({ loop }))
-                  dispatch(listeningAction.setCurrentTrack(track))
-                }}
-              >
-                {`${index + 1}. ${track.title}`}
-              </li>
-            ))}
-          </ul>
+          <TrackList />
         </div>
       )}
 
       {/* Controls & seek bar */}
-      <div className={styles.controls}>
-        <div className={styles.dockControls}>
-          <Button
-            type={'text'}
-            title={'Repeat'}
-            icon={<ReloadOutlined style={{ fontSize: '20px' }} />}
-            style={{
-              background: 'transparent',
-              boxShadow: 'none',
-              color: loop ? token.colorPrimary : token.colorText,
-            }}
-            onClick={() => handleToggleLoop()}
-          />
+      {showPlayer && (
+        <div className={styles.controls}>
+          <div className={styles.dockControls}>
+            <Button
+              type={'text'}
+              title={'Repeat'}
+              icon={<ReloadOutlined style={{ fontSize: '20px' }} />}
+              style={{
+                background: 'transparent',
+                boxShadow: 'none',
+                color: loop ? token.colorPrimary : token.colorText,
+              }}
+              onClick={() => handleToggleLoop()}
+            />
 
-          <Button
-            type='text'
-            title={'Previous'}
-            icon={<StepBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
-            onClick={onPrev}
-          />
+            <Button
+              type='text'
+              title={'Previous'}
+              icon={<StepBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
+              onClick={onPrev}
+            />
 
-          <Button
-            type='text'
-            title={'-10s'}
-            icon={<FastBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
-            onClick={() => onSeekBy(-10)}
-          />
+            <Button
+              type='text'
+              title={'-10s'}
+              icon={<FastBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
+              onClick={() => onSeekBy(-10)}
+            />
 
-          <Button
-            type='text'
-            icon={
-              playing ? (
-                <PauseCircleFilled style={{ fontSize: '20px', color: token.colorText }} />
-              ) : (
-                <PlayCircleFilled style={{ fontSize: '20px', color: token.colorText }} />
-              )
-            }
-            onClick={playing ? handlePause : handlePlay}
-          />
+            <Button
+              type='text'
+              icon={
+                playing ? (
+                  <PauseCircleFilled style={{ fontSize: '20px', color: token.colorText }} />
+                ) : (
+                  <PlayCircleFilled style={{ fontSize: '20px', color: token.colorText }} />
+                )
+              }
+              onClick={playing ? handlePause : handlePlay}
+            />
 
-          <Button
-            type='text'
-            title={'+10s'}
-            icon={<FastForwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
-            onClick={() => onSeekBy(10)}
-          />
+            <Button
+              type='text'
+              title={'+10s'}
+              icon={<FastForwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
+              onClick={() => onSeekBy(10)}
+            />
 
-          <Button
-            type='text'
-            title={'Next'}
-            icon={<StepForwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
-            onClick={onNext}
-          />
+            <Button
+              type='text'
+              title={'Next'}
+              icon={<StepForwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
+              onClick={onNext}
+            />
 
-          <Button
-            type={trackListOpen ? 'primary' : 'text'}
-            variant={'text'}
-            style={{ background: 'transparent', boxShadow: 'none' }}
-            icon={
-              <UnorderedListOutlined
-                style={{
-                  fontSize: '20px',
-                  color: trackListOpen ? token.colorPrimary : token.colorText,
-                }}
-              />
-            }
-            onClick={() => setTrackListOpen((v) => !v)}
-          />
+            <Button
+              type={trackListOpen ? 'primary' : 'text'}
+              variant={'text'}
+              style={{ background: 'transparent', boxShadow: 'none' }}
+              icon={
+                <UnorderedListOutlined
+                  style={{
+                    fontSize: '20px',
+                    color: trackListOpen ? token.colorPrimary : token.colorText,
+                  }}
+                />
+              }
+              onClick={() => setTrackListOpen((v) => !v)}
+            />
+          </div>
+
+          <div className={styles.seekBar}>
+            <span>{formatTime(duration * played)}</span>
+            <input
+              type='range'
+              min={0}
+              max={0.999999}
+              step='any'
+              value={played}
+              onMouseDown={handleSeekMouseDown}
+              onChange={handleSeekChange}
+              onMouseUp={handleSeekMouseUp}
+            />
+            <span>{formatTime(duration)}</span>
+          </div>
         </div>
-
-        <div className={styles.seekBar}>
-          <span>{formatTime(duration * played)}</span>
-          <input
-            type='range'
-            min={0}
-            max={0.999999}
-            step='any'
-            value={played}
-            onMouseDown={handleSeekMouseDown}
-            onChange={handleSeekChange}
-            onMouseUp={handleSeekMouseUp}
-          />
-          <span>{formatTime(duration)}</span>
-        </div>
-      </div>
+      )}
 
       {/* Track info + seek bar */}
       <div className={styles.dockMeta}>
         <div className={styles.dockTitle} title={currentTrack?.title}>
-          {currentTrack?.title}
+          <Button
+            onClick={() => dispatch(listeningAction.toggleShowPlayer())}
+            type='text'
+            icon={showPlayer ? <ShrinkOutlined /> : <ArrowsAltOutlined />}
+          />
+          {showPlayer && currentTrack?.title}
         </div>
-        {activeSegmentText && <div className={styles.liveTranscript}>{activeSegmentText}</div>}
+        {activeSegmentText && showPlayer && (
+          <div className={styles.liveTranscript}>{activeSegmentText}</div>
+        )}
       </div>
 
       {/* Hidden ReactPlayer engine */}

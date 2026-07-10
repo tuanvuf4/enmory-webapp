@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Skeleton } from 'antd'
+import { Skeleton, theme } from 'antd'
 import styles from '../chart.module.scss'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Pie } from 'react-chartjs-2'
 import { ECategory } from '@/models/item.model'
-import { getBgColorByCatId } from '../data'
 import { itemApi } from '@/services/firebase'
+import { getBgColorByCatId } from '../data'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -19,23 +19,33 @@ export const OverviewChart: React.FC<IProps> = () => {
   const [total, setTotal] = useState<number>(0)
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
 
+  const { token } = theme.useToken()
+
   const settingUI = useMemo(() => {
+    const colors = [
+      token.palette?.lime?.[7] || '',
+      token.palette?.gold?.[3] || '',
+      token.palette?.cyan?.[2] || '',
+      token.palette?.blue?.[3] || '',
+      token.palette?.gray?.[4] || '',
+      token.palette?.red?.[2] || '',
+    ]
     return {
       backgroundColor: [
-        getBgColorByCatId(ECategory.WORD, 0.8),
-        getBgColorByCatId(ECategory.PHRASE, 0.8),
-        getBgColorByCatId(ECategory.IDIOM, 0.8),
-        getBgColorByCatId(ECategory.SLANG, 0.8),
-        getBgColorByCatId(ECategory.COLLOCATION, 0.8),
-        getBgColorByCatId(ECategory.SENTENCE, 0.8),
+        getBgColorByCatId(ECategory.WORD, colors, 0.8),
+        getBgColorByCatId(ECategory.PHRASE, colors, 0.8),
+        getBgColorByCatId(ECategory.IDIOM, colors, 0.8),
+        getBgColorByCatId(ECategory.SLANG, colors, 0.8),
+        getBgColorByCatId(ECategory.COLLOCATION, colors, 0.8),
+        getBgColorByCatId(ECategory.SENTENCE, colors, 0.8),
       ],
       borderColor: [
-        getBgColorByCatId(ECategory.WORD),
-        getBgColorByCatId(ECategory.PHRASE),
-        getBgColorByCatId(ECategory.IDIOM),
-        getBgColorByCatId(ECategory.SLANG),
-        getBgColorByCatId(ECategory.COLLOCATION),
-        getBgColorByCatId(ECategory.SENTENCE),
+        getBgColorByCatId(ECategory.WORD, colors),
+        getBgColorByCatId(ECategory.PHRASE, colors),
+        getBgColorByCatId(ECategory.IDIOM, colors),
+        getBgColorByCatId(ECategory.SLANG, colors),
+        getBgColorByCatId(ECategory.COLLOCATION, colors),
+        getBgColorByCatId(ECategory.SENTENCE, colors),
       ],
       borderWidth: 1,
     }
@@ -60,7 +70,7 @@ export const OverviewChart: React.FC<IProps> = () => {
         setTotal(mergeTotal)
       }
     })
-  }, [settingUI])
+  }, [])
 
   return (
     <div className={styles.chartItem}>

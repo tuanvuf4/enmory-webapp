@@ -70,10 +70,11 @@ export const MainMenu: React.FC<IPros> = ({ direction, onPageChange }: IPros) =>
       )}
     >
       <Menu
-        mode={direction === 'horizontal' ? 'horizontal' : 'inline'}
+        mode={direction === 'horizontal' ? 'horizontal' : 'vertical'}
         selectedKeys={[current]}
         defaultSelectedKeys={['1']}
         items={menu}
+        style={{ border: 'none' }}
         onClick={onItemClick}
       />
     </div>

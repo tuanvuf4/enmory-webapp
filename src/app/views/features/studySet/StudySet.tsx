@@ -362,11 +362,8 @@ export const StudySet: React.FC = () => {
             {!isDone && (
               <Button
                 icon={<ReloadOutlined spin={loading} />}
-                type='primary'
+                variant='outlined'
                 onClick={() => onReload()}
-                style={{
-                  background: token.palette?.red?.[5],
-                }}
               >
                 Reload
               </Button>

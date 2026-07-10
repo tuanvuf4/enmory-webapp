@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Skeleton } from 'antd'
+import { Skeleton, theme } from 'antd'
 import styles from '../chart.module.scss'
 import {
   Chart as ChartJS,
@@ -42,23 +42,33 @@ export const AddedItemChart: React.FC<IProps> = ({ title = 'Added Items' }) => {
   const [data, setData] = useState<any>()
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
 
-  useEffect(() => {
-    const getChartData = async () => {
-      const { isSuccess, content } = await itemApi.getNewAddedItemByPeriod(queryPeriods)
-      if (isSuccess && content) {
-        const datasets = content.map((value) => ({
-          label: value.label,
-          data: value.data,
-          borderColor: getBgColorByCatId(value.id),
-          backgroundColor: getBgColorByCatId(value.id, 0.7),
-        }))
-        setIsLoaded(true)
-        setData({ labels: labelPeriods, datasets })
-      } else {
-        setIsLoaded(false)
-      }
-    }
+  const { token } = theme.useToken()
 
+  const getChartData = async () => {
+    const colors = [
+      token.palette?.lime?.[7] || '',
+      token.palette?.gold?.[3] || '',
+      token.palette?.cyan?.[2] || '',
+      token.palette?.blue?.[3] || '',
+      token.palette?.gray?.[4] || '',
+      token.palette?.red?.[2] || '',
+    ]
+    const { isSuccess, content } = await itemApi.getNewAddedItemByPeriod(queryPeriods)
+    if (isSuccess && content) {
+      const datasets = content.map((value) => ({
+        label: value.label,
+        data: value.data,
+        borderColor: getBgColorByCatId(value.id, colors),
+        backgroundColor: getBgColorByCatId(value.id, colors, 0.7),
+      }))
+      setIsLoaded(true)
+      setData({ labels: labelPeriods, datasets })
+    } else {
+      setIsLoaded(false)
+    }
+  }
+
+  useEffect(() => {
     getChartData()
   }, [])
 

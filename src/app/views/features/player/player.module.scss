@@ -9,13 +9,11 @@
   align-items: flex-start;
   justify-content: space-between;
   flex-flow: wrap;
-  width: 1200px;
   max-width: 100%;
-  margin: $size * 1 auto;
+  padding: $size;
   color: $color-white;
-  border: 1px solid rgba(244, 244, 244, 0.1);
-  border-radius: $size * 0.25;
-  box-shadow: 0px 0px 30px 0px rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba($color-gray-1, 0.2);
+  border-radius: $size * 0.5;
 }
 
 .playerCard {
@@ -31,6 +29,7 @@
 
 .tracks {
   flex: 0 0 350px;
+  color: $color-text-base;
 }
 
 .actionGroup {
@@ -50,10 +49,11 @@
   font-weight: 600;
   line-height: 1.5;
   margin-bottom: 12px;
+  color: $color-primary;
 }
 
 .trackDescription {
-  color: rgba(255, 255, 255, 0.6);
+  color: $color-text-base;
 
   ul {
     padding-left: 20px;
@@ -86,12 +86,12 @@
   align-items: center;
   justify-content: space-between;
   padding: $size * 0.5;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: $color-text-base;
+  font-size: $font-size-heading-5;
+  border-bottom: 1px solid $color-border;
 
-  & h2 {
-    text-transform: capitalize;
-    font-size: $font-size-heading-5;
-    margin: 0;
+  button {
+    color: $color-text-base;
   }
 }
 
@@ -101,18 +101,19 @@
   & ul {
     max-height: 316px;
     overflow: auto;
+    color: $color-text-base;
 
     & li {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: $size * 0.5;
-      cursor: pointer;
       gap: $size * 0.5;
       transition: 0.2s;
+      cursor: pointer;
 
       &:hover {
-        background: rgba(82, 82, 82, 0.8);
+        background: var(--ant-color-fill-secondary);
       }
     }
   }
@@ -121,7 +122,6 @@
 .active {
   background: var(--ant-color-fill-secondary);
   color: var(--ant-color-primary) !important;
-  font-weight: 600;
 }
 
 .seekBar {
@@ -142,12 +142,6 @@
   }
 }
 
-.transcriptCard {
-  display: block;
-  margin: 0 auto;
-  padding: $size;
-}
-
 .playerDock {
   position: fixed;
   left: 0;
@@ -155,10 +149,8 @@
   bottom: 0;
   z-index: 999;
   display: flex;
-  height: 100px;
   align-items: center;
   gap: $size * 2;
-  padding: $size * 0.5;
   background: $color-bg-widget;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(12px);
@@ -186,12 +178,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: $font-size-heading-5;
-  margin-bottom: 4px;
-
-  :global([data-theme='light']) & {
-    color: $color-text-base;
-  }
+  font-size: $font-size-heading-4;
+  color: $color-primary;
+  font-weight: 500;
 
   :global([data-theme='dark']) & {
     color: $color-white;
@@ -231,8 +220,6 @@
   left: 0;
   bottom: 100px;
   border: 1px solid var(--ant-color-border);
-  max-height: 40vh;
-  overflow-y: auto;
   width: 300px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -263,32 +250,6 @@
   }
 }
 
-.dockTrackListHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.dockTrackListClose {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  font-size: 14px;
-  padding: 0;
-  line-height: 1;
-
-  &:hover {
-    color: $color-white;
-  }
-}
-
 /* ── LiveTranscript full view (Player page) ────────────────────────────────── */
 
 .liveTranscriptWrapper {
@@ -302,12 +263,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 4px;
-}
+  color: $color-text-base;
 
-.liveTranscriptCount {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-  margin-left: $size * 0.25;
+  span {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-left: $size * 0.25;
+  }
 }
 
 .liveTranscriptFull {
@@ -322,6 +284,7 @@
   cursor: pointer;
   border-left: 3px solid transparent;
   transition: background 0.15s;
+  color: $color-text-base;
 
   & p {
     margin: 4px 0 0;
@@ -351,11 +314,6 @@
     order: 1;
   }
 
-  .dockTrackList {
-    width: 100%;
-    bottom: 0;
-  }
-
   .transcript {
     max-height: 400px;
   }
@@ -364,15 +322,6 @@
     & ul {
       max-height: 200px;
     }
-  }
-
-  .playerWrapper {
-    position: relative;
-  }
-
-  .audioPlayer {
-    display: block;
-    margin: 0 auto;
   }
 
   .playerCard {

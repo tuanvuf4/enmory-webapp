@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Skeleton } from 'antd'
+import { Skeleton, theme } from 'antd'
 import styles from '../chart.module.scss'
 import {
   Chart as ChartJS,
@@ -11,8 +11,8 @@ import {
   Legend,
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
-import { getBgColorByCatId } from '..'
 import { itemApi } from '@/services/firebase'
+import { getBgColorByCatId } from '../data'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
@@ -23,6 +23,8 @@ interface IProps {
 export const ProgressChart: React.FC<IProps> = ({ title = 'Progress' }) => {
   const [data, setData] = useState<any>()
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
+
+  const { token } = theme.useToken()
 
   const options = {
     responsive: true,
@@ -42,11 +44,20 @@ export const ProgressChart: React.FC<IProps> = ({ title = 'Progress' }) => {
   const getChartData = async () => {
     const { isSuccess, content } = await itemApi.getItemsByLevel()
     if (isSuccess && content) {
+      const colors = [
+        token.palette?.lime?.[7] || '',
+        token.palette?.gold?.[3] || '',
+        token.palette?.cyan?.[2] || '',
+        token.palette?.blue?.[3] || '',
+        token.palette?.gray?.[4] || '',
+        token.palette?.red?.[2] || '',
+      ]
+
       const datasets = content.map((value) => ({
         label: value.label,
         data: value.data,
-        borderColor: getBgColorByCatId(value.id),
-        backgroundColor: getBgColorByCatId(value.id, 0.7),
+        borderColor: getBgColorByCatId(value.id, colors),
+        backgroundColor: getBgColorByCatId(value.id, colors, 0.7),
       }))
       setIsLoaded(true)
       setData({ labels, datasets })

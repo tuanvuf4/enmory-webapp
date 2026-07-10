@@ -24,7 +24,12 @@ const ArticleDetail: React.FC = () => {
     <div className={appStyle.containerMd}>
       <PageTitle content={article?.title || 'Article detail'} />
 
-      <div className={clsx(appStyle.contentPage, '!px-8')}>
+      <div
+        className={clsx(appStyle.contentPage, '!px-8')}
+        style={{
+          background: token.colorBgContainer,
+        }}
+      >
         {article && (
           <Flex justify={'space-between'} align={'center'} gap={token.size} className={'!mb-4'}>
             <i className={'text-xs'}>

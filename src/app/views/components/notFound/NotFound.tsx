@@ -54,7 +54,7 @@ const ActionButton = ({ onClickBtn, classNames }: ActionButtonProps) => {
       }
       onClick={() => onClickBtn?.()}
     >
-      Add New
+      Add
     </Button>
   )
 }

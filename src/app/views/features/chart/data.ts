@@ -1,32 +1,31 @@
-import { styleConfig } from '@/style/appStyle'
 import { dateTimeUtils, hex2Rgba } from '@/core/utils'
 import { ECategory, IQueryPeriods } from '@/models/item.model'
 
-export const getBgColorByCatId = (id: ECategory, opacity = 1) => {
+export const getBgColorByCatId = (id: ECategory, color: string[], opacity = 1) => {
   if (!id) id = ECategory.WORD
 
   if (id === ECategory.WORD) {
-    return hex2Rgba(styleConfig.color.lime[7], opacity)
+    return hex2Rgba(color[0], opacity)
   }
 
   if (id === ECategory.PHRASE) {
-    return hex2Rgba(styleConfig.color.gold[3], opacity)
+    return hex2Rgba(color[1], opacity)
   }
 
   if (id === ECategory.COLLOCATION) {
-    return hex2Rgba(styleConfig.color.cyan[2], opacity)
+    return hex2Rgba(color[2], opacity)
   }
 
   if (id === ECategory.IDIOM) {
-    return hex2Rgba(styleConfig.color.blue[3], opacity)
+    return hex2Rgba(color[3], opacity)
   }
 
   if (id === ECategory.SLANG) {
-    return hex2Rgba(styleConfig.color.gray[4], opacity)
+    return hex2Rgba(color[4], opacity)
   }
 
   if (id === ECategory.SENTENCE) {
-    return hex2Rgba(styleConfig.color.red[2], opacity)
+    return hex2Rgba(color[5], opacity)
   }
 }
 

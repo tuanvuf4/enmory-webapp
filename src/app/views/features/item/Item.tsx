@@ -18,7 +18,6 @@ import { MeaningItem } from './MeaningItem'
 import styles from './item.module.scss'
 import { actionAsyncApp } from '@/store/asyncActions'
 import { useQueryClient } from '@tanstack/react-query'
-import { styleConfig } from '@/style/appStyle'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { IHttpResponse } from '@/models/http.model'
@@ -275,7 +274,7 @@ export const Item: React.FC<IProps> = ({
                   <Button
                     size='small'
                     type={'text'}
-                    icon={<HeartFilled style={{ color: styleConfig.color.red[4] }} />}
+                    icon={<HeartFilled style={{ color: token.palette?.red?.[4] }} />}
                   />
                 )}
 

@@ -1,9 +1,25 @@
+@use '@style/vars' as *;
+
 .text-editor {
   position: relative;
 
   .ck-content {
     padding: 8px 12px !important;
-    color: #333333 !important;
+    background: transparent !important;
+    color: $color-text-base !important;
+
+    :global([data-theme='dark']) & {
+      color: white !important;
+    }
+  }
+
+  .ck-reset_all *:not(.ck-reset_all-excluded *) {
+    color: $color-text-base !important;
+    font-family: 'Lato' !important;
+  }
+
+  .ck.ck-toolbar {
+    background: transparent !important;
   }
 
   .ck-editor__editable {

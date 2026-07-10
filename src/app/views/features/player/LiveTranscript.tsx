@@ -54,7 +54,7 @@ export const LiveTranscript: React.FC<IProps> = ({ transcript, playedSeconds, on
       <div className={styles.liveTranscriptHeader}>
         <h3>
           Transcript
-          <span className={styles.liveTranscriptCount}>
+          <span>
             {activeIndex >= 0
               ? `(${activeIndex + 1} / ${segments.length})`
               : `(0 / ${segments.length})`}

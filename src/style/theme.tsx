@@ -214,6 +214,9 @@ export const appTheme: ThemeConfig = {
       controlHeight: 40,
       borderRadius: 8,
     },
+    AutoComplete: {
+      colorBgContainer: '#ffffff',
+    },
     Select: {
       optionSelectedBg: '#ebeaff',
       controlHeight: 40,
@@ -462,7 +465,8 @@ export const appDarkTheme: ThemeConfig = {
     Input: {
       activeBorderColor: '#8b6ef7',
       hoverBorderColor: 'rgba(139, 110, 247, 0.45)',
-      colorBgContainer: 'rgba(14, 16, 53, 0.8)',
+      // colorBgContainer: 'rgba(14, 16, 53, 0.8)',
+      colorBgContainer: 'transparent',
       colorText: '#c8caee',
       controlHeight: 40,
       borderRadius: 8,
@@ -484,7 +488,7 @@ export const appDarkTheme: ThemeConfig = {
       boxShadowSecondary: '0 6px 16px rgba(0, 0, 0, 0.45)',
     },
     AutoComplete: {
-      colorBgContainer: 'rgba(23, 27, 69, 0.95)',
+      colorBgContainer: 'transparent',
     },
     Card: {
       borderRadius: 14,

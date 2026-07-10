@@ -49,6 +49,7 @@ export const RegisterForm = ({ showBanner = true }) => {
         maxWidth: '100%',
         margin: `${token.size * 2}px auto`,
         background: token.colorBgBase,
+        boxShadow: '0 0 35px',
       }}
     >
       {showBanner && (
@@ -57,7 +58,7 @@ export const RegisterForm = ({ showBanner = true }) => {
             textAlign: 'center',
             padding: token.size * 3,
             background: token.colorBgElevated,
-            color: token.colorTextLightSolid,
+            color: token.colorTextBase,
           }}
         >
           <img src={logo} alt='' style={{ width: 120 }} />

@@ -2,7 +2,6 @@ import React from 'react'
 import { Button, theme, Tooltip } from 'antd'
 import { AppstoreOutlined, MenuOutlined } from '@ant-design/icons'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { styleConfig } from '@/style/appStyle'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { EViewMode } from '@/models/app.model'
 
@@ -22,10 +21,7 @@ export const ViewMode: React.FC = () => {
           icon={
             <MenuOutlined
               style={{
-                color:
-                  viewMode === EViewMode.LIST
-                    ? styleConfig.color.white[0]
-                    : styleConfig.color.gray[1],
+                color: viewMode === EViewMode.LIST ? token.colorTextBase : token.palette?.gray?.[1],
               }}
             />
           }
@@ -40,10 +36,7 @@ export const ViewMode: React.FC = () => {
           icon={
             <AppstoreOutlined
               style={{
-                color:
-                  viewMode === EViewMode.GRID
-                    ? styleConfig.color.white[0]
-                    : styleConfig.color.gray[13],
+                color: viewMode === EViewMode.GRID ? token.colorTextBase : token.palette?.gray?.[9],
               }}
             />
           }

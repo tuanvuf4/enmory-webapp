@@ -3,9 +3,7 @@
   padding: $size * 1;
 
   &:global(.horizontal) {
-    & :global(ul li.ant-menu-item) {
-      color: $color-text-base;
-    }
+    color: $color-text-base;
   }
 
   & li {

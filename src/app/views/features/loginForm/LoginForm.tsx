@@ -43,6 +43,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
         maxWidth: '100%',
         margin: '0 auto',
         background: token.colorBgBase,
+        boxShadow: '0 0 35px',
       }}
     >
       {showBanner && (
@@ -51,7 +52,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
             textAlign: 'center',
             padding: token.size * 3,
             background: token.colorBgElevated,
-            color: token.colorTextLightSolid,
+            color: token.colorTextBase,
           }}
         >
           <img src={logo} alt='' style={{ width: 120 }} />
@@ -185,7 +186,11 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
 
             <Row justify={'center'}>
               <Col span={24}>
-                <Button className={appStyle.fulWidth} onClick={handleGoogleLogin}>
+                <Button
+                  variant={'outlined'}
+                  className={appStyle.fulWidth}
+                  onClick={handleGoogleLogin}
+                >
                   Google
                 </Button>
               </Col>

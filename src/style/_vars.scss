@@ -13,6 +13,8 @@ $color-icon: var(--ant-color-icon); // #72a526
 
 $color-bg-item: rgba(37, 39, 52, 0.95);
 $color-bg-widget: rgba(255, 255, 255, 0.65);
+$color-bg-container: var(--ant-color-bg-container); // #ffffff | #171b45 | colorBgContainer
+$color-border: var(--ant-color-border); // #dddff2 | rgba(130, 115, 255, 0.14) | colorBorder
 
 $white: #fff;
 $black: #000;
@@ -133,9 +135,6 @@ $color-yellow-7: #d4b106;
 $color-yellow-8: #ad8b00;
 $color-yellow-9: #876800;
 $color-yellow-10: #614700;
-
-$color-border: #4a4a4a; // --ant-color-border (derived, dark layout)
-$color-bg-container: #252734; // --ant-color-bg-container (dark layout)
 
 // ── Typography ────────────────────────────────────────────────────────────────
 $font-size: var(--ant-font-size); // 14px

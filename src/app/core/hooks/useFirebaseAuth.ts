@@ -31,12 +31,12 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
     try {
       const result = await dispatch(signInWithEmail({ email, password }) as any)
 
-      if (result.payload?.user) {
-        dispatch(authAction.setGoogleAuth(result.payload.user))
+      if (result.payload) {
+        dispatch(authAction.setGoogleAuth(result.payload))
         if (redirectAfterSuccess) {
           navigate('/')
         }
-        return { success: true, user: result.payload.user }
+        return { success: true, user: result.payload }
       } else if (result.error) {
         const error = result.error.message || 'Login failed. Please check your credentials.'
         setErrorMsg(error)

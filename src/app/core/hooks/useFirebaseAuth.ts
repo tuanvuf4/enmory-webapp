@@ -31,22 +31,25 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
     try {
       const result = await dispatch(signInWithEmail({ email, password }) as any)
 
-      if (result.payload) {
+      if (!result.error) {
         dispatch(authAction.setGoogleAuth(result.payload))
-        if (redirectAfterSuccess) {
-          navigate('/')
-        }
+        if (redirectAfterSuccess) navigate('/')
         return { success: true, user: result.payload }
-      } else if (result.error) {
-        const error = result.error.message || 'Login failed. Please check your credentials.'
-        setErrorMsg(error)
-        return { success: false, error }
+      } else {
+        const message = result.error.message || 'Login failed. Please check your credentials.'
+        if (result.payload.includes('auth/invalid-credential')) {
+          const message =
+            'Your account has already been registered. Please log in with your Google account. You can link your email account to your Google account in your profile settings.'
+          setErrorMsg(message)
+          return { success: false, message }
+        }
+        setErrorMsg(message)
+        return { success: false, message }
       }
     } catch (error: any) {
       console.error('Firebase email login error:', error)
       const errorMessage = error.message || 'Login failed. Please try again.'
       setErrorMsg(errorMessage)
-      return { success: false, error: errorMessage }
     }
     return { success: false, error: 'Unknown error occurred' }
   }

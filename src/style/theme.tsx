@@ -154,9 +154,9 @@ export const appTheme: ThemeConfig = {
     sizeStep: 4,
     lineHeight: 1.5,
     borderRadius: 14,
-    // fontFamily: 'Lora, Lato, Oswald, sans-serif',
-    fontFamily:
-      'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";',
+    fontFamily: 'Lora, Lato, Oswald, sans-serif',
+    // fontFamily:
+    //   'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";',
   },
   components: {
     Modal: {
@@ -407,9 +407,9 @@ export const appDarkTheme: ThemeConfig = {
     sizeStep: 4,
     lineHeight: 1.5,
     borderRadius: 14,
-    // fontFamily: 'Lora, Lato, Oswald, sans-serif',
-    fontFamily:
-      'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";',
+    fontFamily: 'Lora, Lato, Oswald, sans-serif',
+    // fontFamily:
+    //   'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";',
   },
   components: {
     Modal: {

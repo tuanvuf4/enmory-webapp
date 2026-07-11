@@ -9,6 +9,8 @@ import {
   signInWithCredential,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  linkWithCredential,
+  EmailAuthProvider,
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
@@ -62,6 +64,9 @@ export class FirebaseAuthService {
     // Configure Google provider
     this.googleProvider.addScope('profile')
     this.googleProvider.addScope('email')
+    this.googleProvider.setCustomParameters({
+      prompt: 'select_account',
+    })
   }
 
   /**
@@ -359,6 +364,31 @@ export class FirebaseAuthService {
    */
   getCurrentUser(): User | null {
     return this.auth.currentUser
+  }
+
+  /**
+   * Link email/password credentials to the current signed-in user
+   * @param email User email
+   * @param password User password
+   */
+  async linkEmailPasswordToCurrentUser(email: string, password: string): Promise<UserCredential> {
+    const currentUser = this.auth.currentUser
+    if (!currentUser) {
+      throw new Error('Please sign in with Google first before enabling email/password login.')
+    }
+
+    if (!currentUser.email) {
+      throw new Error('Unable to determine your email address. Please sign in again.')
+    }
+
+    if (currentUser.email !== email) {
+      throw new Error('The email does not match your signed-in Google account.')
+    }
+
+    const credential = EmailAuthProvider.credential(email, password)
+    const result = await linkWithCredential(currentUser, credential)
+
+    return result
   }
 
   /**

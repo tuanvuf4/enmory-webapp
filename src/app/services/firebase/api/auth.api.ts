@@ -168,6 +168,28 @@ const signInWithGoogle = async () => {
 }
 
 /**
+ * Link email/password login to the currently signed-in Google account
+ */
+const linkEmailPassword = async (email: string, password: string) => {
+  try {
+    const result = await firebaseAuthService.linkEmailPasswordToCurrentUser(email, password)
+
+    return {
+      isSuccess: true,
+      message: 'Email/password login enabled successfully',
+      content: {
+        uid: result.user.uid,
+        email: result.user.email,
+      },
+      statusCode: 200,
+    }
+  } catch (error: any) {
+    console.error('Link email/password error:', error)
+    throw error
+  }
+}
+
+/**
  * Sign out user from Firebase
  */
 const signOut = async () => {
@@ -206,6 +228,7 @@ export const apiAuth = {
   register,
   refreshToken,
   signInWithGoogle,
+  linkEmailPassword,
   signOut,
   getAuthToken,
   isAuthenticated,

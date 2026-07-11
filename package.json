@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port=9999 --host --mode web",
+    "dev": "env-cmd -f .env vite --port=9999 --host --mode web --open",
     "build": "tsc -b && vite build",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
     "deploy:web": "npm run format && npm run build:web && firebase deploy",

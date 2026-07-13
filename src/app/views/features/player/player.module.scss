@@ -43,14 +43,6 @@
   gap: $size * 0.25;
 }
 
-.trackTitle {
-  font-size: $font-size-heading-4;
-  font-weight: 600;
-  line-height: 1.5;
-  margin-bottom: 12px;
-  color: $color-primary;
-}
-
 .trackDescription {
   color: $color-text-base;
 
@@ -84,7 +76,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $size * 0.5 0;
+  padding: $size * 0.75 0;
   color: $color-text-base;
   font-size: $font-size-heading-5;
   border-bottom: 1px solid $color-border;
@@ -142,10 +134,9 @@
 }
 
 .playerDock {
-  position: fixed;
+  position: relative;
   left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0;
   z-index: 999;
   display: flex;
   align-items: center;
@@ -215,17 +206,21 @@
 
 /* Track list panel above the dock */
 .dockTrackList {
-  position: fixed;
+  position: absolute;
   left: 0;
-  bottom: 100px;
+  bottom: 100%;
   border: 1px solid var(--ant-color-border);
   padding: 0 $size;
-  width: 300px;
+  width: 375px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   background: var(--ant-color-bg-elevated);
   z-index: 998;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+
+  @media screen and (max-width: 575px) {
+    width: 100vw;
+  }
 
   & ul {
     list-style: none;

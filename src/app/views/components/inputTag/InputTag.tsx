@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AutoComplete, Space, Tag } from 'antd'
-import { CloseCircleOutlined, PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined } from '@ant-design/icons'
 import styles from './inputTag.module.scss'
 import clsx from 'clsx'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
@@ -108,7 +108,6 @@ export const InputTag: React.FC<IPros> = ({ tags, allowSpace = true, onChange })
                   key={tag + index}
                   value={editInputValue}
                   className={clsx([styles.tag, styles.inputAutoComplete])}
-                  allowClear={{ clearIcon: <CloseCircleOutlined style={{ fontSize: 14 }} /> }}
                   options={options}
                   onSearch={onSearch}
                   onSelect={onSelect}
@@ -152,7 +151,6 @@ export const InputTag: React.FC<IPros> = ({ tags, allowSpace = true, onChange })
           onChange={onInputChange}
           onBlur={onBlur}
           placeholder='New word'
-          allowClear={{ clearIcon: <CloseCircleOutlined style={{ fontSize: 14 }} /> }}
         />
       ) : (
         <Tag className={clsx([styles.tag, styles.tagPlus])} onClick={() => setInputVisible(true)}>

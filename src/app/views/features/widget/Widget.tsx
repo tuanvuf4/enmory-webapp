@@ -12,10 +12,11 @@ export const Widget: React.FC<PropsWithChildren & IProps> = ({ children, title }
     <div>
       {title && (
         <h3
-          className='text-center font-bold italic capitalize m-0 mb-4'
+          className='text-center font-bold italic capitalize m-0'
           style={{
             fontSize: token.fontSizeHeading3,
             color: token.colorPrimary,
+            padding: token.size,
           }}
         >
           {title}

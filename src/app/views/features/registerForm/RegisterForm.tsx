@@ -1,6 +1,6 @@
 import { Button, Col, Input, Row, Space, theme } from 'antd'
 import { Controller, useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons'
 import appStyle from '@/style/appStyle.module.scss'
 import { appConfig, EAppType } from '@/config/appConfig'
@@ -15,8 +15,6 @@ export const RegisterForm = ({ showBanner = true }) => {
   // Removed hook
   // Removed hook
   // Removed hook
-
-  const navigate = useNavigate()
 
   const {
     register: registerUser,

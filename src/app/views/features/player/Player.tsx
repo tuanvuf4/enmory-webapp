@@ -19,11 +19,14 @@ export const Player: React.FC = () => {
         <div className={styles.audioPlayer} style={{ background: token.colorBgContainer }}>
           <div className={styles.playerCard}>
             <div className={styles.nowPlaying}>
-              <div className={styles.trackTitle}>
+              <h3
+                style={{ color: token.colorPrimary, fontSize: token.fontSizeHeading4 }}
+                className={styles.trackTitle}
+              >
                 {tracks.findIndex((t) => t.id === currentTrack?.id) !== -1
                   ? tracks.find((t) => t.id === currentTrack?.id)?.title
                   : 'No track selected'}
-              </div>
+              </h3>
               <div
                 className={styles.trackDescription}
                 dangerouslySetInnerHTML={{

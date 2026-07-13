@@ -5,7 +5,7 @@ import { ExampleMode } from '@/models/example.model'
 import { IExample } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import { exampleAction } from '@/store/reducers/example.reducer'
-import { CloseOutlined, SyncOutlined } from '@ant-design/icons'
+import { SyncOutlined } from '@ant-design/icons'
 import { Button, Col, Flex, Row, Space, theme } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import clsx from 'clsx'
@@ -158,19 +158,6 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                     onChange={onChange}
                     language='en'
                     enableReview={true}
-                    allowClear={{
-                      clearIcon: (
-                        <CloseOutlined
-                          style={{
-                            background: token.colorWhite,
-                            padding: token.size / 8,
-                            borderRadius: '50%',
-                            color: token.colorBgLayout,
-                            fontSize: 10,
-                          }}
-                        />
-                      ),
-                    }}
                   />
                 )
               }}
@@ -199,19 +186,6 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                     placeholder='Translation'
                     className={styles.autoSearchInput}
                     onChange={(text) => onChange(text.target.value)}
-                    allowClear={{
-                      clearIcon: (
-                        <CloseOutlined
-                          style={{
-                            background: token.colorWhite,
-                            padding: token.size / 8,
-                            borderRadius: '50%',
-                            color: token.colorBgLayout,
-                            fontSize: 10,
-                          }}
-                        />
-                      ),
-                    }}
                   />
                 )
               }}
@@ -234,19 +208,6 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                     placeholder='Note'
                     className={styles.autoSearchInput}
                     onChange={(text) => onChange(text.target.value)}
-                    allowClear={{
-                      clearIcon: (
-                        <CloseOutlined
-                          style={{
-                            background: token.colorWhite,
-                            padding: token.size / 8,
-                            borderRadius: '50%',
-                            color: token.colorBgLayout,
-                            fontSize: 10,
-                          }}
-                        />
-                      ),
-                    }}
                   />
                 )
               }}
@@ -264,19 +225,6 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                 autoSize={{ minRows: 2 }}
                 placeholder='Text here...'
                 onChange={(text) => setAnswer(text.target.value)}
-                allowClear={{
-                  clearIcon: (
-                    <CloseOutlined
-                      style={{
-                        background: token.colorWhite,
-                        padding: token.size / 8,
-                        borderRadius: '50%',
-                        color: token.colorBgLayout,
-                        fontSize: 10,
-                      }}
-                    />
-                  ),
-                }}
               />
             </Col>
           </Row>
@@ -287,7 +235,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
             <Flex
               justify={mode === ExampleMode.Translation ? 'space-between' : 'flex-end'}
               gap={token.size}
-              className={'pt-4'}
+              className={'py-4'}
             >
               {onCancel && (
                 <Button

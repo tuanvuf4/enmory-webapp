@@ -1,6 +1,5 @@
 import appStyle from '@/style/appStyle.module.scss'
 import {
-  CloseCircleOutlined,
   FilterOutlined,
   SyncOutlined,
   SearchOutlined,
@@ -101,23 +100,6 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                     <Input
                       className={styles.searchExampleInput}
                       suffix={isSearching ? <Loading3QuartersOutlined spin /> : undefined}
-                      allowClear={
-                        isSearching
-                          ? false
-                          : {
-                              clearIcon: (
-                                <CloseCircleOutlined
-                                  style={{
-                                    background: token.colorWhite,
-                                    padding: token.size / 4,
-                                    borderRadius: '50%',
-                                    color: token.colorBgLayout,
-                                    fontSize: 14,
-                                  }}
-                                />
-                              ),
-                            }
-                      }
                     />
                   }
                   className={clsx(styles.autoSearchInput, appStyle.fulWidth)}

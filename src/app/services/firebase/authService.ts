@@ -205,7 +205,6 @@ export class FirebaseAuthService {
 
       // Check if this is a new user
       const userDocRef = doc(this.db, dbCollections.users, user.uid)
-      const userDoc = await getDoc(userDocRef)
 
       // If new user, create user profile in Firestore
       // if (!userDoc.exists()) {

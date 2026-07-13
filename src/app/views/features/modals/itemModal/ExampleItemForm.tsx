@@ -1,5 +1,5 @@
 import appStyle from '@/style/appStyle.module.scss'
-import { PlusOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IItem } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
@@ -98,9 +98,6 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           <AutoComplete
                             value={activeFieldIndex === key ? currentSearch : ''}
                             autoFocus={true}
-                            allowClear={{
-                              clearIcon: <CloseCircleOutlined style={{ fontSize: 14 }} />,
-                            }}
                             options={activeFieldIndex === key ? options : []}
                             onSearch={(text) => onSearch(text, key)}
                             onSelect={(value) => onSelect(nestIndex, key, value)}

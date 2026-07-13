@@ -1,5 +1,5 @@
 import appStyle from '@/style/appStyle.module.scss'
-import { SyncOutlined, CloseCircleOutlined, SearchOutlined } from '@ant-design/icons'
+import { SyncOutlined, SearchOutlined } from '@ant-design/icons'
 import { useAutoComplete, useExampleModal, useLoading, usePrompt } from '@/helpers/hooks'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import { theme, Button, AutoComplete, Input } from 'antd'
@@ -132,10 +132,6 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
     }
   }
 
-  const onClear = () => {
-    setValue('query', '')
-  }
-
   useEffect(() => {
     getRandomExamples()
   }, [])
@@ -162,25 +158,7 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
                     label={<span style={{ color: token.colorText }}>Not found</span>}
                   />
                 }
-                children={
-                  <Input
-                    className={styles.searchExampleInput}
-                    onClear={() => onClear()}
-                    allowClear={{
-                      clearIcon: (
-                        <CloseCircleOutlined
-                          style={{
-                            background: token.colorWhite,
-                            padding: token.size / 8,
-                            borderRadius: '50%',
-                            color: token.colorBgLayout,
-                            fontSize: 14,
-                          }}
-                        />
-                      ),
-                    }}
-                  />
-                }
+                children={<Input className={styles.searchExampleInput} />}
                 options={options}
                 onSelect={(_, o) => onSelect(o)}
                 onChange={(text) => onChange(text)}

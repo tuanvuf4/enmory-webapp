@@ -1,6 +1,5 @@
 import appStyle from '@/style/appStyle.module.scss'
 import {
-  CloseCircleOutlined,
   FilterOutlined,
   SyncOutlined,
   SearchOutlined,
@@ -125,23 +124,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                     <Input
                       style={{ borderRadius: '999px' }}
                       suffix={isSearching ? <Loading3QuartersOutlined spin /> : undefined}
-                      allowClear={
-                        isSearching
-                          ? false
-                          : {
-                              clearIcon: (
-                                <CloseCircleOutlined
-                                  style={{
-                                    background: token.colorWhite,
-                                    padding: token.size / 4,
-                                    borderRadius: '50%',
-                                    color: token.colorBgLayout,
-                                    fontSize: 14,
-                                  }}
-                                />
-                              ),
-                            }
-                      }
                     />
                   }
                   style={{

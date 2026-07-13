@@ -24,7 +24,6 @@
   justify-content: flex-start;
   gap: $size * 1;
   min-height: 220px;
-  padding: $size;
 }
 
 .tracks {
@@ -85,7 +84,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $size * 0.5;
+  padding: $size * 0.5 0;
   color: $color-text-base;
   font-size: $font-size-heading-5;
   border-bottom: 1px solid $color-border;
@@ -220,6 +219,7 @@
   left: 0;
   bottom: 100px;
   border: 1px solid var(--ant-color-border);
+  padding: 0 $size;
   width: 300px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);

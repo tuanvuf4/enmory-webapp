@@ -107,7 +107,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
               </Col>
             </Row>
 
-            {errorMsg && <p style={{ color: token.colorError, textAlign: 'left' }}>{errorMsg}</p>}
+            {errorMsg && <p style={{ color: token.colorError, textAlign: 'center' }}>{errorMsg}</p>}
 
             {authError && !errorMsg && (
               <p style={{ color: token.colorError, textAlign: 'center' }}>{authError}</p>

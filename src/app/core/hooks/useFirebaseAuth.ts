@@ -38,8 +38,7 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
       } else {
         const message = result.error.message || 'Login failed. Please check your credentials.'
         if (result.payload.includes('auth/invalid-credential')) {
-          const message =
-            'Your account has already been registered. Please log in with your Google account. You can link your email account to your Google account in your profile settings.'
+          const message = 'Your account has not been registered.'
           setErrorMsg(message)
           return { success: false, message }
         }
@@ -119,7 +118,7 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
         }) as any,
       )
 
-      if (result.payload?.user) {
+      if (result.payload) {
         setIsRegistered(true)
         setRegisterSuccess(true)
         setRegisterMsg('Registration successful! Redirecting to home...')
@@ -129,12 +128,7 @@ export const useFirebaseAuth = (options: UseFirebaseAuthOptions = {}) => {
         }
 
         // Redirect after a short delay
-        if (redirectAfterSuccess) {
-          setTimeout(() => {
-            navigate('/')
-          }, 2000)
-        }
-
+        if (redirectAfterSuccess) navigate('/')
         return { success: true, user: result.payload.user }
       } else if (result.error) {
         const error = result.error.message || 'Registration failed. Please try again.'

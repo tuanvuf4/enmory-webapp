@@ -47,9 +47,7 @@ export const Listening = () => {
       <div className={appStyle.container}>
         <PageTitle content={'Listening'} />
 
-        <div className={clsx(appStyle.contentPage)}>
-          <Player />
-        </div>
+        <Player />
       </div>
     </>
   )

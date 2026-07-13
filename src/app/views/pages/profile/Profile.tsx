@@ -1,5 +1,4 @@
 import { Button, Col, Input, message, Row, Space, theme } from 'antd'
-import classNames from 'clsx'
 import appStyle from '@/style/appStyle.module.scss'
 import { useSelector } from '@/core/hooks/redux'
 import { AddedItemChart } from '@/views/features/chart/addedItemChart/AddedItemChart'
@@ -7,6 +6,7 @@ import { OverviewChart } from '@/views/features/chart/overviewChart/OverviewChar
 import { ProgressChart } from '@/views/features/chart/progressChart/ProgressChart'
 import { useState } from 'react'
 import { apiAuth } from '@/services/firebase'
+import clsx from 'clsx'
 
 const Profile = () => {
   const { token } = theme.useToken()
@@ -50,30 +50,41 @@ const Profile = () => {
 
   return (
     <div className={appStyle.container}>
-      <h2 className={classNames(appStyle.pageTitle)}>Profile</h2>
+      <h2 className={clsx(appStyle.pageTitle)}>Profile</h2>
 
-      <div className={classNames(appStyle.bodyContent)}>
+      <div className={clsx(appStyle.bodyContent)}>
         <Row className={appStyle.innerContainer}>
           <Col xs={24} md={24}>
-            <Space direction={'vertical'}>
-              <h2>Hello, {user?.firstName + ' ' + user?.lastName}</h2>
+            <Space direction={'vertical'} size={token.size}>
+              <h2
+                style={{
+                  fontSize: token.fontSizeHeading2,
+                  margin: 0,
+                }}
+              >
+                Hello, {user?.firstName + ' ' + user?.lastName}
+              </h2>
+
+              <h4
+                style={{
+                  fontSize: token.fontSizeHeading4,
+                  margin: 0,
+                }}
+              >
+                {user?.email}
+              </h4>
 
               <img src={user?.photoURL} style={{ maxWidth: '200px' }} alt='' />
 
-              <h5 className={'italic'}>{user?.email}</h5>
-
               {user?.provider === 'google' && (
-                <Space direction='vertical' style={{ width: '100%' }} size='middle'>
-                  <h3>
-                    Enable email/password login (Your account is currently signed in with Google.
-                    Set a password to allow login with email and password in the future.)
-                  </h3>
-                  <Row gutter={[16, 16]} align='middle'>
+                <Space direction='vertical' style={{ width: '100%' }} size={token.size / 2}>
+                  <p style={{ margin: 0 }}>Enable login using the email/password</p>
+                  <Row gutter={[token.size / 2, token.size / 2]} align='middle'>
                     <Col xs={24} md={16}>
                       <Input.Password
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder='New password'
+                        placeholder='Password'
                       />
                     </Col>
                     <Col xs={24} md={8}>
@@ -83,7 +94,7 @@ const Profile = () => {
                         loading={isLoading}
                         style={{ minWidth: '100%' }}
                       >
-                        Enable email/password login
+                        Link account
                       </Button>
                     </Col>
                   </Row>
@@ -93,8 +104,12 @@ const Profile = () => {
           </Col>
         </Row>
 
-        <div className={classNames(appStyle.contentPage, 'mt-8')}>
-          <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
+        <div className={clsx(appStyle.contentPage, 'mt-8')}>
+          <Space
+            direction='vertical'
+            size={[token.size, token.size]}
+            className={clsx(appStyle.fulWidth)}
+          >
             <Row justify={'start'} align={'top'} gutter={[token.size * 2, token.size * 2]}>
               <Col xs={24} md={15}>
                 <AddedItemChart />

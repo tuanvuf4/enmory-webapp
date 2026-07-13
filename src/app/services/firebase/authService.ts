@@ -208,24 +208,24 @@ export class FirebaseAuthService {
       const userDoc = await getDoc(userDocRef)
 
       // If new user, create user profile in Firestore
-      if (!userDoc.exists()) {
-        const userProfile: IUserProfile = {
-          uid: user.uid,
-          email: user.email || '',
-          displayName: user.displayName || '',
-          photoURL: user.photoURL || '',
-          firstName: user.displayName?.split(' ')[0] || '',
-          lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          provider: 'google',
-          configuration: {
-            ...appSetting.meta,
-          },
-        }
-
-        await setDoc(userDocRef, userProfile)
+      // if (!userDoc.exists()) {
+      const userProfile: IUserProfile = {
+        uid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || '',
+        photoURL: user.photoURL || '',
+        firstName: user.displayName?.split(' ')[0] || '',
+        lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        provider: 'google',
+        configuration: {
+          ...appSetting.meta,
+        },
       }
+
+      await setDoc(userDocRef, userProfile)
+      // }
 
       return result
     } catch (error) {

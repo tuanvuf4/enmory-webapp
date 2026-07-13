@@ -81,6 +81,10 @@ $footer-background: #fff;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
+
+  @media screen and (max-width: 575px) {
+    padding: $size;
+  }
 }
 
 .stickyBar {

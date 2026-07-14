@@ -7,7 +7,6 @@ import { theme, Space, Col, Row, Button, AutoComplete, Flex } from 'antd'
 import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { exampleItem } from './data'
-import styles from './itemModal.module.scss'
 import { ReviewableTextArea } from '@/views/components'
 import TextArea from 'antd/es/input/TextArea'
 
@@ -82,43 +81,49 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
             <Col md={24} key={example.id || key}>
               <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
                 <Col md={{ span: 20, offset: 4 }} xs={{ span: 24, offset: 0 }}>
-                  <div className={styles.contentStyle}>
+                  <div
+                    style={{
+                      padding: token.size,
+                      border: `1px solid ${token.colorBorder}`,
+                    }}
+                  >
                     <Space
                       size={[token.size / 2, token.size / 2]}
                       direction='vertical'
                       className={appStyle.fulWidth}
                     >
-                      <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                        <Flex
-                          justify={'space-between'}
-                          align={'center'}
-                          className={'w-full'}
-                          gap={token.size}
-                        >
-                          <AutoComplete
-                            value={activeFieldIndex === key ? currentSearch : ''}
-                            autoFocus={true}
-                            options={activeFieldIndex === key ? options : []}
-                            onSearch={(text) => onSearch(text, key)}
-                            onSelect={(value) => onSelect(nestIndex, key, value)}
-                            placeholder='Search an example...'
+                      <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
+                        <Col md={24} xs={24}>
+                          <Flex
+                            justify={'space-between'}
+                            align={'center'}
                             className={'w-full'}
-                          />
+                            gap={token.size}
+                          >
+                            <AutoComplete
+                              value={activeFieldIndex === key ? currentSearch : ''}
+                              autoFocus={true}
+                              options={activeFieldIndex === key ? options : []}
+                              onSearch={(text) => onSearch(text, key)}
+                              onSelect={(value) => onSelect(nestIndex, key, value)}
+                              placeholder='Search an example...'
+                              className={'w-full'}
+                            />
 
-                          <Button
-                            className={'min-w-10'}
-                            danger
-                            style={{ color: token.colorTextSecondary }}
-                            onClick={() => {
-                              confirmDeleteModal({
-                                onOk: () => {
-                                  remove(key)
-                                },
-                              })
-                            }}
-                            icon={<DeleteOutlined />}
-                          />
-                        </Flex>
+                            <Button
+                              className={'min-w-10'}
+                              danger
+                              onClick={() => {
+                                confirmDeleteModal({
+                                  onOk: () => {
+                                    remove(key)
+                                  },
+                                })
+                              }}
+                              icon={<DeleteOutlined />}
+                            />
+                          </Flex>
+                        </Col>
                       </Row>
 
                       <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>

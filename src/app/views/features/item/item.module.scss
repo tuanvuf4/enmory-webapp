@@ -23,8 +23,6 @@
 .item {
   & ul,
   & ol {
-    padding-left: $size;
-
     & p {
       margin-bottom: $size * 0.25;
     }
@@ -57,6 +55,12 @@
   h6 {
     margin: 0;
   }
+
+  h5 {
+    :global([data-theme='dark']) & {
+      color: $color-white;
+    }
+  }
 }
 
 .contentItem {
@@ -77,40 +81,6 @@
 
 .btnDelete {
   flex: 0 0 38px;
-}
-
-.nestedExampleItem {
-  display: list-item;
-  padding: 0;
-  line-height: 2em;
-
-  & ul {
-    padding-left: 0;
-
-    & li:before {
-      content: '\201C';
-    }
-
-    & li:after {
-      content: '\201D';
-    }
-  }
-
-  & textarea {
-    resize: none !important;
-    color: $color-white !important;
-    background: transparent !important;
-
-    &:focus {
-      color: $color-white !important;
-      background: transparent !important;
-    }
-
-    &:focus-within {
-      color: $color-white !important;
-      background: transparent !important;
-    }
-  }
 }
 
 .origin {
@@ -156,8 +126,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $size * 0.25;
-  margin: $margin * 0.25 0;
+  gap: $size * 0.5;
+  margin: $margin * 0.5 0;
   font-size: 11px;
   font-weight: normal;
   font-style: italic;
@@ -179,12 +149,43 @@
   font-weight: normal;
 }
 
+.examples {
+  padding-left: 0;
+
+  > li {
+    > ul {
+      padding: $size * 0.5 $size * 0.5 $size * 0.5 $size;
+      border-top: 1px solid $color-text-secondary;
+
+      li {
+        display: list-item;
+      }
+    }
+  }
+
+  & textarea {
+    resize: none !important;
+    color: $color-white !important;
+    background: transparent !important;
+
+    &:focus {
+      color: $color-white !important;
+      background: transparent !important;
+    }
+
+    &:focus-within {
+      color: $color-white !important;
+      background: transparent !important;
+    }
+  }
+}
+
 .definition {
   font-size: $font-size;
 
-  :global([data-theme='dark']) & {
-    color: $color-white;
-  }
+  // :global([data-theme='dark']) & {
+  //   color: $color-white;
+  // }
 
   & li {
     display: list-item;
@@ -194,9 +195,9 @@
 .translate {
   font-size: $font-size;
 
-  :global([data-theme='dark']) & {
-    color: $color-white;
-  }
+  // :global([data-theme='dark']) & {
+  //   color: $color-white;
+  // }
 
   & li {
     display: list-item;

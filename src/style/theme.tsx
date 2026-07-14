@@ -162,7 +162,7 @@ export const appTheme: ThemeConfig = {
     Modal: {
       fontSizeHeading5: 24,
       // @ts-ignore - contentPadding is valid but not in type definitions
-      contentPadding: 12,
+      contentPadding: 16,
       headerBg: 'transparent',
       titleFontSize: 20,
       titleLineHeight: 1.6,
@@ -415,7 +415,7 @@ export const appDarkTheme: ThemeConfig = {
     Modal: {
       fontSizeHeading5: 24,
       // @ts-ignore
-      contentPadding: 12,
+      contentPadding: 16,
       headerBg: 'transparent',
       contentBg: '#111332',
       titleFontSize: 20,

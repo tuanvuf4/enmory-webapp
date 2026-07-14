@@ -133,7 +133,7 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
   }
 
   useEffect(() => {
-    getRandomExamples()
+    getRandomExamples(size, true)
   }, [])
 
   return (

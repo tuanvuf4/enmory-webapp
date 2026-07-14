@@ -3,7 +3,7 @@ import { appSetting } from '@/config/appConfig'
 import { getType } from '@/helpers/item'
 import { IMeaning, ECategory, IExample } from '@/models/item.model'
 import { Tags } from '@/views/components'
-import { Button, Flex } from 'antd'
+import { Button, Flex, Space, theme } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import styles from './item.module.scss'
 import clsx from 'clsx'
@@ -13,10 +13,9 @@ interface IMeaningProps {
   origin: string
   meaning: IMeaning
   catId: ECategory
-  active?: boolean
 }
 
-const Pronunciation = ({ catId, active, origin, meaning }: IMeaningProps) => {
+const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
   if (catId === ECategory.WORD && (meaning.pronunciation.us || meaning.pronunciation.uk)) {
     return (
       <div className={`${styles.pronouns} flex justify-end flex-wrap gap-x-2 gap-y-1 items-center`}>
@@ -27,10 +26,7 @@ const Pronunciation = ({ catId, active, origin, meaning }: IMeaningProps) => {
               variant={'text'}
               type={'text'}
               size={'small'}
-              className={clsx({
-                [styles.btnAudio]: true,
-                [styles.active]: active,
-              })}
+              className={clsx({ [styles.btnAudio]: true })}
               icon={<AudioOutlined />}
               onClick={() => speakWord(origin)}
             >
@@ -46,10 +42,7 @@ const Pronunciation = ({ catId, active, origin, meaning }: IMeaningProps) => {
               variant={'text'}
               type={'text'}
               size={'small'}
-              className={clsx({
-                [styles.btnAudio]: true,
-                [styles.active]: active,
-              })}
+              className={clsx({ [styles.btnAudio]: true })}
               icon={<AudioOutlined />}
               onClick={() => speakWord(origin, 'en-US')}
             >
@@ -69,10 +62,7 @@ const Pronunciation = ({ catId, active, origin, meaning }: IMeaningProps) => {
             variant={'text'}
             type={'text'}
             size={'small'}
-            className={clsx({
-              [styles.btnAudio]: true,
-              [styles.active]: active,
-            })}
+            className={clsx({ [styles.btnAudio]: true })}
             icon={<AudioOutlined />}
             onClick={() => speakWord(origin, 'en-US')}
           >
@@ -86,76 +76,28 @@ const Pronunciation = ({ catId, active, origin, meaning }: IMeaningProps) => {
   return null
 }
 
-export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning, origin }) => {
+export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin }) => {
   const navigate = useNavigate()
 
+  const { token } = theme.useToken()
+
   const onSearch = (keyword: string) => {
-    // Navigate to library with search params
     const params = new URLSearchParams()
     params.set('keyword', keyword)
     params.set('page', '0')
     params.set('size', appSetting.pagination.size.toString())
-
     navigate(`/library?${params.toString()}`)
   }
 
   return (
-    <div
-      className={clsx(
-        styles.meaningItem,
-        meaning.enable ? '' : styles.disableMeaning,
-        'relative',
-        active ? '' : styles.active,
-      )}
-    >
+    <div className={clsx(styles.meaningItem)}>
       <Flex justify={'space-between'} align={'center'} className={`w-full`}>
-        <div>
-          {/* <Button
-            variant='text'
-            type={'text'}
-            size={'small'}
-            color={'primary'}
-            className={'text-xs'}
-            icon={
-              show ? (
-                <CaretUpOutlined style={{ fontSize: '12px' }} />
-              ) : (
-                <CaretDownOutlined style={{ fontSize: '12px' }} />
-              )
-            }
-            onClick={() => setShow((prev) => !prev)}
-          /> */}
-          {catId === ECategory.WORD && <span>{getType(meaning.typeId).origin}</span>}
-        </div>
+        <div>{catId === ECategory.WORD && <span>{getType(meaning.typeId).origin}</span>}</div>
 
         {(meaning.pronunciation.uk || meaning.pronunciation.us || meaning.pronunciation.common) && (
-          <Pronunciation origin={origin} catId={catId} meaning={meaning} active={active} />
+          <Pronunciation origin={origin} catId={catId} meaning={meaning} />
         )}
       </Flex>
-
-      {/* {!show && (
-        <>
-          {meaning.definition && (
-            <>
-              <h5 className={'italic font-bold m-0'}>Definition:</h5>
-              <div
-                className={styles.definition}
-                dangerouslySetInnerHTML={{ __html: meaning.definition }}
-              />
-            </>
-          )}
-
-          {meaning.translation && (
-            <>
-              <h5 className={'italic font-bold m-0'}>Translation:</h5>
-              <div
-                className={styles.translate}
-                dangerouslySetInnerHTML={{ __html: meaning.translation }}
-              />
-            </>
-          )}
-        </>
-      )} */}
 
       <>
         {meaning.note && (
@@ -200,35 +142,29 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, active, meaning, o
         )}
 
         {meaning.synonyms.length > 0 && (
-          <Tags active={active} label={'Synonyms'} tags={meaning.synonyms} onSearch={onSearch} />
+          <Tags label={'Synonyms'} tags={meaning.synonyms} onSearch={onSearch} />
         )}
 
         {meaning.antonyms.length > 0 && (
-          <Tags active={active} label={'Antonyms'} tags={meaning.antonyms} onSearch={onSearch} />
+          <Tags label={'Antonyms'} tags={meaning.antonyms} onSearch={onSearch} />
         )}
 
         {meaning.examples.length > 0 && (
-          <div className={styles.examples}>
+          <Space size={token.size / 2} direction={'vertical'}>
             <h5 className={'italic font-bold m-0'}>Example:</h5>
-            <ul className={'p-[0px_!important]'}>
+            <ul className={styles.examples}>
               {(meaning.examples as IExample[]).map((example, key) => {
                 return (
                   <li key={key} className={styles.exampleItem}>
                     <ul>
-                      <li
-                        className={styles.nestedExampleItem}
-                        dangerouslySetInnerHTML={{ __html: example.origin }}
-                      />
-                      <li
-                        className={styles.nestedExampleItem}
-                        dangerouslySetInnerHTML={{ __html: example.translation }}
-                      />
+                      <li dangerouslySetInnerHTML={{ __html: example.origin }} />
+                      <li dangerouslySetInnerHTML={{ __html: example.translation }} />
                     </ul>
                   </li>
                 )
               })}
             </ul>
-          </div>
+          </Space>
         )}
       </>
     </div>

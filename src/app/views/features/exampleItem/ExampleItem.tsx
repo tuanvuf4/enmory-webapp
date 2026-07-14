@@ -1,9 +1,7 @@
 import { MoreOutlined } from '@ant-design/icons'
-import { appSetting } from '@/config/appConfig'
 import { IExample } from '@/models/item.model'
 import { MenuProps, Skeleton, Dropdown, Button, theme } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
-import moment from 'moment'
 import { actionMenuExample } from './ActionMenuItem'
 import styles from './exampleItem.module.scss'
 import appStyle from '@/style/appStyle.module.scss'
@@ -55,6 +53,7 @@ export const ExampleItem: React.FC<IProps> = ({
         alignItems: 'stretch',
         flexDirection: 'column',
         gap: token.size * 0.5,
+        paddingBottom: token.size * 0.75,
       }}
     >
       {!data && <Skeleton />}
@@ -85,10 +84,10 @@ export const ExampleItem: React.FC<IProps> = ({
 
           {data.note && <div style={{ fontStyle: 'italic' }}>{data.note}</div>}
 
-          <div className={styles.date}>
+          {/* <div className={styles.date}>
             <span>{moment(data.created_date).format(appSetting.dateTimeFormat)}</span>
             <span>{moment(data.last_update).format(appSetting.dateTimeFormat)}</span>
-          </div>
+          </div> */}
         </>
       )}
     </div>

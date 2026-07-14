@@ -1,7 +1,4 @@
 @use '@style/vars' as *;
-.tagLabel {
-  margin-right: $size * 0.25;
-}
 
 .tagItemContainer {
   display: flex;
@@ -38,8 +35,6 @@
 }
 
 .tagItem {
-  display: inline-block;
-  margin: $size * 0.25 $size * 0.25;
   border-radius: $size * 0.25;
   border: 1px solid $color-text;
 

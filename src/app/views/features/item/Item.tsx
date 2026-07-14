@@ -1,4 +1,3 @@
-import { appSetting } from '@/config/appConfig'
 import { itemKeys, useDeleteItem, useDispatch, useSelector } from '@/core/hooks'
 import { useItemModal, usePrompt } from '@/helpers/hooks'
 import { getCategory, isDefect } from '@/helpers/item'
@@ -10,7 +9,6 @@ import { MoreOutlined, ReloadOutlined, HeartFilled } from '@ant-design/icons'
 import { Button, Dropdown, Flex, MenuProps, Skeleton, theme } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import clsx from 'clsx'
-import moment from 'moment'
 import React, { useEffect, useState } from 'react'
 import { Reference } from '../references/References'
 import { getActionMenuItem } from './ActionMenuItem'
@@ -234,7 +232,6 @@ export const Item: React.FC<IProps> = ({
     <div
       className={clsx({
         [styles.item]: true,
-        [styles.active]: active,
       })}
     >
       {!data && <Skeleton />}
@@ -243,16 +240,6 @@ export const Item: React.FC<IProps> = ({
         <>
           <div className={styles.contentItem}>
             <div className={styles.title}>
-              {/* <Button
-                type='text'
-                icon={<AudioOutlined />}
-                onClick={() => speakWord(data.origin, 'en-US')}
-                className={clsx({
-                  [styles.btnActions]: true,
-                  [styles.active]: active,
-                })}
-              /> */}
-
               <h2 className={styles.origin}>
                 {isDefect(data) && <span className={styles.warnTitle}>{data.origin}</span>}
                 {!isDefect(data) && <span>{data.origin}</span>}
@@ -344,31 +331,22 @@ export const Item: React.FC<IProps> = ({
               <>
                 {data.forms &&
                   data.forms.filter((word) => word).length > 0 &&
-                  data.forms.length > 0 && (
-                    <Tags label={'Form'} tags={data.forms} active={active} />
-                  )}
+                  data.forms.length > 0 && <Tags label={'Form'} tags={data.forms} />}
 
                 {data.word_family &&
                   data.word_family.filter((word) => word).length > 0 &&
-                  data.word_family.length > 0 && (
-                    <Tags label={'Family'} tags={data.word_family} active={active} />
-                  )}
+                  data.word_family.length > 0 && <Tags label={'Family'} tags={data.word_family} />}
               </>
             )}
 
             {data.relation &&
               data.relation.filter((word) => word).length > 0 &&
-              data.relation.length > 0 && (
-                <div className={styles.word_family}>
-                  <Tags label={'Relation'} tags={data.relation} active={active} />
-                </div>
-              )}
+              data.relation.length > 0 && <Tags label={'Relation'} tags={data.relation} />}
 
             {data.meanings &&
               data.meanings.length > 0 &&
               data.meanings.map((meaning, key) => (
                 <MeaningItem
-                  active={active}
                   key={key}
                   meaning={meaning}
                   catId={data.catId as ECategory}
@@ -377,10 +355,10 @@ export const Item: React.FC<IProps> = ({
               ))}
           </div>
 
-          <div className={styles.date}>
+          {/* <div className={styles.date}>
             <span>{moment(data.created_date).format(appSetting.dateTimeFormat)}</span>
             <span>{moment(data.last_update).format(appSetting.dateTimeFormat)}</span>
-          </div>
+          </div> */}
         </>
       )}
     </div>

@@ -1,24 +1,25 @@
 import { SearchOutlined } from '@ant-design/icons'
 import styles from './tags.module.scss'
 import { itemApi } from '@/services/firebase/api/item.api'
-import clsx from 'clsx'
 import { useItemModal, useLoading } from '@/helpers/hooks'
 import { usePrompt } from '@/helpers/hooks'
 import { appSetting } from '@/config/appConfig'
 import { useNavigate } from 'react-router-dom'
+import { Flex, theme } from 'antd'
 
 interface IPros {
   label?: string
   tags: string[]
-  active?: boolean
   onSearch?: (tag: string) => void
 }
 
-export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
+export const Tags: React.FC<IPros> = ({ label, tags, onSearch }) => {
   const { showLoading, hideLoading } = useLoading()
 
   const { openItemModal } = useItemModal()
   const { openMessage } = usePrompt()
+
+  const { token } = theme.useToken()
 
   const navigate = useNavigate()
 
@@ -60,19 +61,12 @@ export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
   }
 
   return (
-    <div className={styles.tagList}>
-      <span className={styles.tagLabel}>{label}:</span>
+    <Flex align={'center'} justify={'flex-start'} wrap={'wrap'} gap={token.size / 2}>
+      <span>{label}:</span>
 
       {tags.map((tag, key) => {
         return (
-          <div
-            key={key}
-            className={clsx({
-              [styles.tagItem]: true,
-              active,
-            })}
-            onClick={() => getItem(tag)}
-          >
+          <div key={key} className={styles.tagItem} onClick={() => getItem(tag)}>
             <div className={styles.tagItemContainer}>
               <span className={'select-none'}>{tag}</span>
               <button
@@ -87,6 +81,6 @@ export const Tags: React.FC<IPros> = ({ label, tags, active, onSearch }) => {
           </div>
         )
       })}
-    </div>
+    </Flex>
   )
 }

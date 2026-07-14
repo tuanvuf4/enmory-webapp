@@ -1,5 +1,5 @@
 import { appConfig } from '@/config/appConfig'
-import { Button, theme } from 'antd'
+import { Button, Flex, theme } from 'antd'
 import React from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import { useSelector } from '@/core/hooks'
@@ -13,16 +13,15 @@ export const Reference: React.FC<IPros> = ({ origin, style }) => {
   const { token } = theme.useToken()
   const { user } = useSelector((state) => state.auth)
 
+  if (appConfig.references.length === 0) return null
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        flexWrap: 'wrap',
-        gap: `${token.size * 0.5}px`,
-        ...style,
-      }}
+    <Flex
+      align={'center'}
+      justify={'flex-start'}
+      wrap={'wrap'}
+      gap={token.size * 0.5}
+      style={{ ...style }}
     >
       {appConfig.references.map((reference, key) => {
         if (
@@ -42,6 +41,6 @@ export const Reference: React.FC<IPros> = ({ origin, style }) => {
             </Button>
           )
       })}
-    </div>
+    </Flex>
   )
 }

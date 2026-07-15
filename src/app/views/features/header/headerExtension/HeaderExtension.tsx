@@ -1,5 +1,5 @@
 import { DownOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Col, Dropdown, Layout, MenuProps, Row, Space, theme } from 'antd'
+import { Button, Dropdown, Flex, Layout, MenuProps, Space, theme } from 'antd'
 import classNames from 'clsx'
 import { addNewTypeExtension, menuExtension } from './Menu'
 import styles from './headerExtension.module.scss'
@@ -70,22 +70,24 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
   }
 
   return (
-    <Layout.Header className={styles.header} style={{ backgroundColor: token.colorBgContainer }}>
+    <Layout.Header
+      className={styles.header}
+      style={{ backgroundColor: 'transparent', position: 'static' }}
+    >
       <div className={appStyle.containerFluid}>
-        <Row
-          gutter={[token.size, token.size * 2]}
+        <Flex
+          gap={token.size}
+          align={'center'}
           justify={'space-between'}
           className={styles.rowHeader}
         >
-          <Col xs={12}>
-            <div className={styles.logo}>
-              <h1 className={styles.brandName}>
-                <Link to={'/'}>
-                  <img src={logo} alt='' />
-                </Link>
-              </h1>
-            </div>
-          </Col>
+          <div className={styles.logo}>
+            <h1 className={styles.brandName}>
+              <Link to={'/'}>
+                <img src={logo} alt='' />
+              </Link>
+            </h1>
+          </div>
 
           {/* {isAuth && (
             <Col xs={12}>
@@ -93,9 +95,9 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
             </Col>
           )} */}
 
-          {isAuth && (
-            <Col xs={12}>
-              <div className={classNames(styles.userContainer)}>
+          <div className={classNames(styles.userContainer)}>
+            {isAuth && (
+              <>
                 <Dropdown trigger={['click']} menu={menuAddProps} placement='bottomLeft' arrow>
                   <Button
                     className={classNames(styles.btnAddNew)}
@@ -121,13 +123,11 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
                     </Space>
                   </Button>
                 </Dropdown>
-              </div>
-            </Col>
-          )}
+              </>
+            )}
 
-          {!isAuth && (
-            <Col xs={12}>
-              <div className={styles.userContainer}>
+            {!isAuth && (
+              <>
                 <Button type='primary' onClick={() => onPageChange(EPageExt.LOGIN)}>
                   Login
                 </Button>
@@ -135,10 +135,10 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
                 <Button type='default' onClick={() => onPageChange(EPageExt.REGISTER)}>
                   Register
                 </Button>
-              </div>
-            </Col>
-          )}
-        </Row>
+              </>
+            )}
+          </div>
+        </Flex>
       </div>
     </Layout.Header>
   )

@@ -76,11 +76,15 @@ export const PopupExtension = () => {
         <>
           {currentPage === EPageExt.LOGIN && (
             <div className={styles.loginForm}>
-              <LoginForm showBanner={false} />
+              <LoginForm showBanner={true} />
             </div>
           )}
 
-          {currentPage === EPageExt.REGISTER && <RegisterForm showBanner={false} />}
+          {currentPage === EPageExt.REGISTER && (
+            <div className={styles.loginForm}>
+              <RegisterForm showBanner={true} />
+            </div>
+          )}
         </>
       )}
 

@@ -185,7 +185,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                     />
 
                     <Button
-                      style={{ color: token.colorTextSecondary }}
+                      style={{ color: token.palette?.red?.[6] }}
                       type={'text'}
                       onClick={() => {
                         confirmDeleteModal({

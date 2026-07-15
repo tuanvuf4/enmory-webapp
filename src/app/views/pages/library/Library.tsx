@@ -55,7 +55,7 @@ export const Library: React.FC = () => {
       {isLoading && <Loading show={isLoading} />}
 
       <div className={appStyle.container}>
-        <Space direction={'vertical'} size={token.size}>
+        <Space direction={'vertical'} size={token.size} className={'w-full'}>
           {!isLoading && (
             <Flex align={'center'} justify={'flex-end'}>
               <Pagination

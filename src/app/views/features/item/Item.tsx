@@ -5,7 +5,7 @@ import { EViewMode } from '@/models/app.model'
 import { ECategory, IItem } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { Level, Tags } from '@/views/components'
-import { MoreOutlined, ReloadOutlined, HeartFilled } from '@ant-design/icons'
+import { MoreOutlined, ReloadOutlined, HeartFilled, BookOutlined } from '@ant-design/icons'
 import { Button, Dropdown, Flex, MenuProps, Skeleton, theme } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import clsx from 'clsx'
@@ -20,6 +20,7 @@ import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { IHttpResponse } from '@/models/http.model'
 import { initItem } from '../modals'
+import { speakWord } from '@/helpers/index'
 
 interface IProps {
   action?: boolean
@@ -240,7 +241,7 @@ export const Item: React.FC<IProps> = ({
         <>
           <div className={styles.contentItem}>
             <div className={styles.title}>
-              <h2 className={styles.origin}>
+              <h2 className={styles.origin} onClick={() => speakWord(data.origin, 'en-US')}>
                 {isDefect(data) && <span className={styles.warnTitle}>{data.origin}</span>}
                 {!isDefect(data) && <span>{data.origin}</span>}
               </h2>
@@ -250,10 +251,22 @@ export const Item: React.FC<IProps> = ({
                   <Button
                     size='small'
                     type={'text'}
-                    icon={<ReloadOutlined style={{ color: token.colorWhite }} spin={spin} />}
+                    icon={<ReloadOutlined spin={spin} />}
+                    title={'Reload'}
                     onClick={() => {
                       onRefetchIotd(data.catId as ECategory)
                     }}
+                  />
+                )}
+
+                {data.archive && (
+                  <Button
+                    className={styles.archive}
+                    size='small'
+                    variant={'text'}
+                    type={'text'}
+                    title={'Archive'}
+                    icon={<BookOutlined style={{ color: token.palette?.red?.[4] }} />}
                   />
                 )}
 
@@ -261,14 +274,9 @@ export const Item: React.FC<IProps> = ({
                   <Button
                     size='small'
                     type={'text'}
+                    title={'Favorite'}
                     icon={<HeartFilled style={{ color: token.palette?.red?.[4] }} />}
                   />
-                )}
-
-                {data.archive && (
-                  <Button className={styles.archive} size='small' variant={'text'} type={'text'}>
-                    A
-                  </Button>
                 )}
 
                 {action && (

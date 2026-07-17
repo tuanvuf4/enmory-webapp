@@ -21,7 +21,6 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
       <div className={`${styles.pronouns} flex justify-end flex-wrap gap-x-2 gap-y-1 items-center`}>
         {meaning.pronunciation.uk && (
           <div className={styles.audio}>
-            {/* <span className={styles.accent}>UK</span> */}
             <Button
               variant={'text'}
               type={'text'}

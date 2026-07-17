@@ -33,6 +33,10 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
 }) => {
   const { token } = theme.useToken()
 
+  const themeMode = useSelector((state) => state.setting.themeMode)
+
+  const isLight = themeMode === 'light'
+
   const location = useLocation()
   const { showLoading, hideLoading } = useLoading()
 
@@ -146,6 +150,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
         {filter && (
           <Dropdown
             trigger={['click']}
+            arrow
             popupRender={() => (
               <div
                 style={{
@@ -154,21 +159,17 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   justifyContent: 'center',
                   gap: token.size / 2,
                   width: 180,
-                  background:
-                    token.colorBgBase === '#ffffff'
-                      ? 'color-mix(in srgb, #ffffff 94%, #edebff 6%)'
-                      : 'rgba(10, 12, 44, 0.92)',
+                  background: isLight
+                    ? 'color-mix(in srgb, #ffffff 94%, #edebff 6%)'
+                    : 'rgba(10, 12, 44, 0.92)',
                   border: `1px solid ${
-                    token.colorBgBase === '#ffffff'
+                    isLight
                       ? 'color-mix(in srgb, #d7d9ef 80%, transparent)'
                       : 'rgba(120, 100, 255, 0.18)'
                   }`,
                   borderRadius: token.size * 0.75,
                   padding: token.size / 2,
-                  boxShadow:
-                    token.colorBgBase === '#ffffff'
-                      ? '0 10px 24px rgba(49, 57, 108, 0.12)'
-                      : '0 20px 50px rgba(0, 0, 0, 0.5)',
+                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
                   backdropFilter: token.colorBgBase === '#ffffff' ? 'none' : 'blur(20px)',
                   WebkitBackdropFilter: token.colorBgBase === '#ffffff' ? 'none' : 'blur(20px)',
                 }}
@@ -249,8 +250,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                     />
                   )}
                 />
-
-                <hr style={{ margin: `${token.size / 4}px 0px` }} />
 
                 <Button
                   type={'primary'}

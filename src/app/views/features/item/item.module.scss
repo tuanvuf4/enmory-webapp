@@ -16,8 +16,6 @@
 
 .archive {
   color: $color-text-secondary !important;
-  border-color: $color-text-secondary !important;
-  border-radius: $size * 0.25 !important;
 }
 
 .item {
@@ -92,6 +90,7 @@
   font-size: $font-size-heading-4;
   margin: 0;
   padding: $size * 0.25 0;
+  cursor: pointer;
 
   & span {
     display: block;
@@ -180,24 +179,13 @@
   }
 }
 
-.definition {
-  font-size: $font-size;
-
-  // :global([data-theme='dark']) & {
-  //   color: $color-white;
-  // }
-
-  & li {
-    display: list-item;
-  }
-}
-
+.definition,
 .translate {
   font-size: $font-size;
 
-  // :global([data-theme='dark']) & {
-  //   color: $color-white;
-  // }
+  ul {
+    padding-left: $size;
+  }
 
   & li {
     display: list-item;
@@ -224,10 +212,6 @@
   font-weight: normal;
   font-style: italic;
   font-size: 14px;
-
-  :global([data-theme='dark']) & {
-    color: $color-white;
-  }
 
   & ul {
     padding-left: $size * 1;

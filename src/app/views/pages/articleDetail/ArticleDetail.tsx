@@ -12,13 +12,17 @@ import { useArticleModal } from '@/helpers/hooks/useArticleModal'
 import clsx from 'clsx'
 
 const ArticleDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>()
+  const params = useParams<{ id: string }>()
 
   const { token } = theme.useToken()
 
   const { openArticleModal } = useArticleModal()
 
+  const { id } = params
+
   const { data: article, isLoading } = useArticle(id || '', !!id)
+
+  console.log(`*** params *** `, params)
 
   return (
     <div className={appStyle.containerMd}>

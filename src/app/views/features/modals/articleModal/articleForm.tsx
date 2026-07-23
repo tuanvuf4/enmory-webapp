@@ -6,6 +6,7 @@ import { theme, message, Input, Button, Flex, Select } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import './articleForm.module.scss'
+import { useLocation } from 'react-router-dom'
 
 interface ArticleFormProps {
   data?: IArticleItem
@@ -21,10 +22,16 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
   const { mutate: createArticle, isPending: isCreating } = useCreateArticle()
   const { mutate: updateArticle, isPending: isUpdating } = useUpdateArticle()
 
-  const { data: categories = [] } = useArticleCategories({
+  const location = useLocation()
+
+  const isPosts = location.pathname.includes('posts')
+
+  const { data: cats = [] } = useArticleCategories({
     orderBy: 'order',
     order: 'ASC',
   })
+
+  const categories = cats.filter((cat) => cat.category_type === (isPosts ? 'posts' : 'articles'))
 
   const isEditing = !!data?.id
   const isPending = isCreating || isUpdating
@@ -84,12 +91,12 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      {/* Title Field */}
-      <Flex style={{ width: '100%' }} gap={token.size}>
+      <Flex style={{ width: '100%' }} gap={token.size} align={'flex-end'} wrap={'wrap'}>
         <div style={{ marginBottom: token.size, flex: 1 }}>
           <label style={{ display: 'block', marginBottom: token.size / 2 }}>
             Title <span style={{ color: token.colorError }}>*</span>
           </label>
+
           <Controller
             control={control}
             name='title'
@@ -113,6 +120,7 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
 
         <div style={{ marginBottom: token.size, flex: '0 0 150px' }}>
           <label style={{ display: 'block', marginBottom: token.size / 2 }}>Category</label>
+
           <Controller
             control={control}
             name='category_id'

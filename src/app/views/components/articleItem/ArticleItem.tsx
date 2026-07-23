@@ -1,9 +1,7 @@
 import { IArticleItem } from '@/models/article.model'
-import styles from './articleItem.module.scss'
 import { appSetting } from '@/config/index'
 import moment from 'moment'
-import { useNavigate } from 'react-router-dom'
-import clsx from 'clsx'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Button, Flex } from 'antd'
 import { EditOutlined } from '@ant-design/icons'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
@@ -18,13 +16,19 @@ export const ArticleItem = ({
   const navigate = useNavigate()
   const { openArticleModal } = useArticleModal()
 
+  const location = useLocation()
+
+  const isPosts = location.pathname.includes('posts')
+
   return (
-    <div className={clsx(styles.articleItem, 'article')}>
+    <>
       <Flex justify={'space-between'} gap={8}>
-        <h2 className={'font-bold cursor-pointer'} onClick={() => navigate(`/article/${id}`)}>
+        <h2
+          className={'font-bold cursor-pointer'}
+          onClick={() => navigate(`${isPosts ? '/posts' : '/article'}/${id}`)}
+        >
           {title}
         </h2>
-
         <Button
           variant={'text'}
           type={'text'}
@@ -34,6 +38,7 @@ export const ArticleItem = ({
           }}
         />
       </Flex>
+
       <div>
         <span className={'italic'}>
           Posted on: {moment(created_date).format(appSetting.dateTimeFormat)}
@@ -48,10 +53,14 @@ export const ArticleItem = ({
       />
 
       <div className={'cursor-pointer'}>
-        <Button variant={'outlined'} type={'default'} onClick={() => navigate(`/article/${id}`)}>
+        <Button
+          variant={'outlined'}
+          type={'default'}
+          onClick={() => navigate(`${isPosts ? '/posts' : '/article'}/${id}`)}
+        >
           Read more
         </Button>
       </div>
-    </div>
+    </>
   )
 }

@@ -49,6 +49,14 @@ export const ArticleCategoryList: React.FC<ArticleCategoryListProps> = ({
       render: (text: string) => text || '-',
     },
     {
+      title: 'Type',
+      dataIndex: 'category_type',
+      key: 'category_type',
+      width: '10%',
+      ellipsis: true,
+      render: (text: string) => text?.charAt(0).toUpperCase() + text?.slice(1) || '-',
+    },
+    {
       title: 'Color',
       dataIndex: 'color',
       key: 'color',
@@ -102,27 +110,20 @@ export const ArticleCategoryList: React.FC<ArticleCategoryListProps> = ({
     },
   ]
 
+  if (categories.length === 0 && !isLoading) {
+    return <Empty description='No categories found' style={{ marginTop: token.size * 2 }} />
+  }
+
   return (
-    <div
-      style={{
-        backgroundColor: token.colorBgContainer,
-        padding: token.size,
-        borderRadius: token.borderRadius,
-      }}
-    >
-      {categories.length === 0 && !isLoading ? (
-        <Empty description='No categories found' style={{ marginTop: token.size * 2 }} />
-      ) : (
-        <Table
-          columns={columns}
-          dataSource={categories}
-          rowKey='id'
-          loading={isLoading || isDeleting}
-          pagination={false}
-          size='small'
-          bordered
-        />
-      )}
-    </div>
+    <Table
+      columns={columns}
+      style={{ marginTop: token.size * 2 }}
+      dataSource={categories}
+      rowKey='id'
+      loading={isLoading || isDeleting}
+      pagination={false}
+      size='small'
+      bordered
+    />
   )
 }

@@ -20,6 +20,7 @@ export interface IArticleCategory {
   uid?: string
   name: string
   description?: string
+  category_type?: 'posts' | 'articles'
   color?: string
   order?: number
   created_date?: number
@@ -92,6 +93,7 @@ export const articleCategoriesApi = {
           uid: data.uid,
           name: data.name,
           description: data.description,
+          category_type: data.category_type,
           color: data.color,
           order: data.order,
           created_date: data.created_date,
@@ -241,6 +243,7 @@ export const articleCategoriesApi = {
       const categoryData = {
         name: data.name,
         description: data.description,
+        category_type: data.category_type,
         color: data.color,
         order: data.order,
         last_update: Timestamp.now().toMillis(),

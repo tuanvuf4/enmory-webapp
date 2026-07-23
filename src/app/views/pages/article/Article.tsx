@@ -6,24 +6,27 @@ import { ArticleItem } from '@/views/components/articleItem/ArticleItem'
 import { useArticles, useArticlesCount, useArticleCategories } from '@/core/hooks'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
 import { useArticleCategoryModal } from '@/helpers/hooks/useArticleCategoryModal'
-import { PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { NotFound, ArticleCategoryList } from '@/views/components'
 import { IArticleCategory } from '@/services/firebase/api/articleCategories.api'
-
-interface IArticleProps {
-  pageTitle: string
-}
+import { useLocation } from 'react-router-dom'
+import { Widget } from '@/views/features'
 
 const PAGE_SIZE = 10
 
-export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
+export const Article = () => {
   const { token } = theme.useToken()
+
   const [page, setPage] = useState(0)
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>()
   const [showCategoryModal, setShowCategoryModal] = useState(false)
 
   const { openArticleModal } = useArticleModal()
   const { openArticleCategoryModal } = useArticleCategoryModal()
+
+  const location = useLocation()
+
+  const isPosts = location.pathname.includes('posts')
 
   const {
     data: articles = [],
@@ -39,10 +42,20 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
 
   const { data: totalCount = 0 } = useArticlesCount(selectedCategory)
 
-  const { data: categories = [], isLoading: isLoadingCategories } = useArticleCategories({
+  const { data: cats = [], isLoading: isLoadingCategories } = useArticleCategories({
     orderBy: 'order',
     order: 'ASC',
   })
+
+  const categories = cats.filter((cat) => cat.category_type === (isPosts ? 'posts' : 'articles'))
+
+  useEffect(() => {
+    setSelectedCategory(categories[0]?.id)
+  }, [location])
+
+  useEffect(() => {
+    setSelectedCategory(categories[0]?.id)
+  }, [])
 
   useEffect(() => {
     if (articlesError) {
@@ -67,51 +80,49 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
   }
 
   const onChangeRadio = (e: any) => {
+    setPage(0)
     setSelectedCategory(e.target.value === 'all' ? undefined : e.target.value)
   }
 
   return (
     <>
       <div className={appStyle.containerMd}>
-        <PageTitle content={pageTitle} />
+        <PageTitle content={isPosts ? 'Posts' : 'Articles'} />
 
-        <Flex justify='flex-start' align={'flex-start'} gap={token.size}>
-          <Button
-            variant={'solid'}
-            type={'primary'}
-            icon={<PlusOutlined />}
-            onClick={() =>
-              openArticleModal('add', {
-                description: '',
-                title: '',
-                category_id: selectedCategory,
-              })
-            }
-          >
-            Post
-          </Button>
+        <Flex justify='space-between' align={'center'} gap={token.size} wrap={'wrap'}>
+          <Flex justify='flex-start' align={'center'} gap={token.size} wrap={'nowrap'}>
+            <Button
+              variant={'solid'}
+              type={'primary'}
+              icon={<PlusOutlined />}
+              onClick={() =>
+                openArticleModal('add', {
+                  description: '',
+                  title: '',
+                  category_id: selectedCategory,
+                })
+              }
+            >
+              Add New
+            </Button>
 
-          <Button
-            variant={'solid'}
-            type={'primary'}
-            icon={<PlusOutlined />}
-            onClick={handleOpenCategoryModal}
-          >
-            Categories
-          </Button>
-
-          <Flex className='flex-1' justify='flex-end' align={'flex-start'} gap={token.size}>
-            <Radio.Group
-              options={[
-                { label: 'All', value: 'all' },
-                ...categories.map((cat) => ({ label: cat.name, value: cat.id })),
-              ]}
-              onChange={onChangeRadio}
-              value={selectedCategory || 'all'}
-              optionType='button'
-              buttonStyle='solid'
-            />
+            <Button
+              variant={'outlined'}
+              type={'default'}
+              icon={<UnorderedListOutlined />}
+              onClick={handleOpenCategoryModal}
+            >
+              Categories
+            </Button>
           </Flex>
+
+          <Radio.Group
+            options={[...categories.map((cat) => ({ label: cat.name, value: cat.id }))]}
+            onChange={onChangeRadio}
+            value={selectedCategory || 'all'}
+            optionType='button'
+            buttonStyle='solid'
+          />
         </Flex>
 
         <Spin spinning={isLoadingArticles}>
@@ -140,13 +151,15 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
             <Row gutter={[token.size, token.size]} className={'my-4'}>
               {articles.map((article) => (
                 <Col xs={24} sm={12} md={12} lg={12} xl={12} key={article.id || Math.random()}>
-                  <ArticleItem
-                    id={article.id}
-                    title={article.title}
-                    description={article.description}
-                    created_date={article.created_date}
-                    category_id={article.category_id}
-                  />
+                  <Widget styles={{ wrapper: { height: '100%' }, content: { height: '100%' } }}>
+                    <ArticleItem
+                      id={article.id}
+                      title={article.title}
+                      description={article.description}
+                      created_date={article.created_date}
+                      category_id={article.category_id}
+                    />
+                  </Widget>
                 </Col>
               ))}
             </Row>
@@ -168,7 +181,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
                       })
                     }
                   >
-                    Add Post
+                    Add New
                   </Button>
                 }
               />
@@ -189,14 +202,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
       {/* Article Category Modal */}
       <Modal
         title={
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-              gap: token.size,
-            }}
-          >
+          <Flex align={'center'} gap={token.size}>
             <span>Categories</span>
             <Button
               type='primary'
@@ -204,7 +210,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
               onClick={handleAddCategory}
               size='small'
             />
-          </div>
+          </Flex>
         }
         open={showCategoryModal}
         onCancel={handleCloseCategoryModal}
@@ -214,7 +220,7 @@ export const Article = ({ pageTitle = 'Articles' }: IArticleProps) => {
         maskClosable={false}
       >
         <ArticleCategoryList
-          categories={categories}
+          categories={cats}
           isLoading={isLoadingCategories}
           onEdit={handleEditCategory}
         />

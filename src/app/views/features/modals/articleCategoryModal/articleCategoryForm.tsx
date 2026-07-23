@@ -3,7 +3,7 @@ import {
   useUpdateArticleCategory,
 } from '@/core/hooks/useArticleCategories'
 import { IArticleCategory } from '@/services/firebase/api/articleCategories.api'
-import { theme, message, Input, Button, Flex, ColorPicker, InputNumber } from 'antd'
+import { theme, message, Input, Button, Flex, ColorPicker, InputNumber, Select } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import type { Color } from 'antd/es/color-picker'
 import './articleCategoryForm.module.scss'
@@ -29,6 +29,17 @@ export const ArticleCategoryForm: React.FC<ArticleCategoryFormProps> = ({
   const isEditing = !!data?.id
   const isPending = isCreating || isUpdating
 
+  const categoryTypeOptions = [
+    {
+      label: 'Posts',
+      value: 'posts',
+    },
+    {
+      label: 'Articles',
+      value: 'articles',
+    },
+  ]
+
   const {
     control,
     handleSubmit,
@@ -38,6 +49,7 @@ export const ArticleCategoryForm: React.FC<ArticleCategoryFormProps> = ({
     defaultValues: {
       name: data?.name || '',
       description: data?.description || '',
+      category_type: data?.category_type || 'articles',
       color: data?.color || '',
       order: data?.order || 0,
     },
@@ -114,6 +126,25 @@ export const ArticleCategoryForm: React.FC<ArticleCategoryFormProps> = ({
               placeholder='Category description'
               rows={3}
               status={errors.description ? 'error' : ''}
+            />
+          )}
+        />
+      </div>
+
+      {/* Type Field */}
+      <div style={{ marginBottom: token.size }}>
+        <label style={{ display: 'block', marginBottom: token.size / 2 }}>Type:</label>
+
+        <Controller
+          control={control}
+          name='category_type'
+          render={({ field }) => (
+            <Select
+              {...field}
+              style={{ width: '100%' }}
+              placeholder='Select a category type'
+              allowClear
+              options={categoryTypeOptions}
             />
           )}
         />

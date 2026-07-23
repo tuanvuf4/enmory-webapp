@@ -1,5 +1,4 @@
 import {
-  AreaChartOutlined,
   BookOutlined,
   CustomerServiceOutlined,
   HomeOutlined,
@@ -47,15 +46,20 @@ export const menus: MenuProps['items'] = [
     label: 'article',
   },
   {
-    key: '6',
-    icon: <AreaChartOutlined className='icon' />,
-    label: 'statistic',
+    key: '13',
+    icon: <ReadOutlined className='icon' />,
+    label: 'posts',
   },
-  {
-    key: '11',
-    icon: <InfoCircleOutlined className='icon' />,
-    label: 'About',
-  },
+  // {
+  //   key: '6',
+  //   icon: <AreaChartOutlined className='icon' />,
+  //   label: 'statistic',
+  // },
+  // {
+  //   key: '11',
+  //   icon: <InfoCircleOutlined className='icon' />,
+  //   label: 'About',
+  // },
   // {
   //   key: '7',
   //   icon: <InfoCircleOutlined className='icon' />,
@@ -157,5 +161,9 @@ export const keyPaths = [
   {
     key: '12',
     path: '/article',
+  },
+  {
+    key: '13',
+    path: '/posts',
   },
 ]

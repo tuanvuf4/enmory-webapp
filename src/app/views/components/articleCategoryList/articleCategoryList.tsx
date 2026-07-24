@@ -44,7 +44,7 @@ export const ArticleCategoryList: React.FC<ArticleCategoryListProps> = ({
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
-      width: '40%',
+      width: '20%',
       ellipsis: true,
       render: (text: string) => text || '-',
     },
@@ -52,7 +52,7 @@ export const ArticleCategoryList: React.FC<ArticleCategoryListProps> = ({
       title: 'Type',
       dataIndex: 'category_type',
       key: 'category_type',
-      width: '10%',
+      width: '15%',
       ellipsis: true,
       render: (text: string) => text?.charAt(0).toUpperCase() + text?.slice(1) || '-',
     },
@@ -68,6 +68,7 @@ export const ArticleCategoryList: React.FC<ArticleCategoryListProps> = ({
             height: 30,
             backgroundColor: color || '#1890ff',
             borderRadius: 4,
+            margin: 'auto',
             border: `1px solid ${token.colorBorder}`,
           }}
           title={color}
@@ -78,14 +79,14 @@ export const ArticleCategoryList: React.FC<ArticleCategoryListProps> = ({
       title: 'Order',
       dataIndex: 'order',
       key: 'order',
-      width: '8%',
+      width: '10%',
       align: 'center',
       render: (order: number) => order ?? '-',
     },
     {
       title: 'Actions',
       key: 'actions',
-      width: '12%',
+      width: '15%',
       align: 'center',
       render: (_, record) => (
         <Space size='small'>
@@ -115,15 +116,17 @@ export const ArticleCategoryList: React.FC<ArticleCategoryListProps> = ({
   }
 
   return (
-    <Table
-      columns={columns}
-      style={{ marginTop: token.size * 2 }}
-      dataSource={categories}
-      rowKey='id'
-      loading={isLoading || isDeleting}
-      pagination={false}
-      size='small'
-      bordered
-    />
+    <div style={{ overflow: 'auto' }}>
+      <Table
+        columns={columns}
+        style={{ marginTop: token.size * 2, minWidth: 650 }}
+        dataSource={categories}
+        rowKey='id'
+        loading={isLoading || isDeleting}
+        pagination={false}
+        size='small'
+        bordered
+      />
+    </div>
   )
 }

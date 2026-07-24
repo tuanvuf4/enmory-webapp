@@ -6,10 +6,10 @@ import { useArticle } from '@/core/hooks'
 import { Button, Flex, Spin, theme } from 'antd'
 import { appSetting } from '@/config/appConfig'
 import moment from 'moment'
-import { NotFound } from '@/views/components'
 import { EditOutlined } from '@ant-design/icons'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
 import clsx from 'clsx'
+import { Widget } from '@/views/features/widget/Widget'
 
 const ArticleDetail: React.FC = () => {
   const params = useParams<{ id: string }>()
@@ -22,55 +22,42 @@ const ArticleDetail: React.FC = () => {
 
   const { data: article, isLoading } = useArticle(id || '', !!id)
 
-  console.log(`*** params *** `, params)
-
   return (
-    <div className={appStyle.containerMd}>
-      <PageTitle content={article?.title || 'Article detail'} />
-
-      <div
-        className={clsx(appStyle.contentPage, '!px-8')}
-        style={{
-          background: token.colorBgContainer,
-        }}
-      >
+    <div className={clsx(appStyle.contentPage, appStyle.containerMd)}>
+      <Spin spinning={isLoading} style={{ width: '100%' }}>
         {article && (
-          <Flex justify={'space-between'} align={'center'} gap={token.size} className={'!mb-4'}>
-            <i className={'text-xs'}>
-              {`Posted on: `}
-              {article?.created_date
-                ? moment(article.created_date).format(appSetting.dateTimeFormat)
-                : ''}
-            </i>
+          <>
+            <PageTitle content={article?.title || 'Article detail'} />
 
-            <Button
-              variant={'text'}
-              type={'default'}
-              icon={<EditOutlined />}
-              onClick={() => {
-                openArticleModal('edit', { ...article })
-              }}
-            >
-              Edit
-            </Button>
-          </Flex>
+            <Flex justify={'space-between'} align={'center'} gap={token.size} className={'!mb-4'}>
+              <i className={'text-xs'}>
+                {`Posted on: `}
+                {article?.created_date
+                  ? moment(article.created_date).format(appSetting.dateTimeFormat)
+                  : ''}
+              </i>
+
+              <Button
+                variant={'text'}
+                type={'default'}
+                icon={<EditOutlined />}
+                onClick={() => {
+                  openArticleModal('edit', { ...article })
+                }}
+              >
+                Edit
+              </Button>
+            </Flex>
+
+            <Widget>
+              <div
+                className={clsx(appStyle.article)}
+                dangerouslySetInnerHTML={{ __html: article.description || '' }}
+              />
+            </Widget>
+          </>
         )}
-
-        <Spin spinning={isLoading}>
-          {article ? (
-            <div
-              className={clsx('article', 'mb-4')}
-              dangerouslySetInnerHTML={{ __html: article.description || '' }}
-            />
-          ) : (
-            <NotFound
-              classNames={{ container: 'justify-center' }}
-              label={<h2>Article not found.</h2>}
-              showButton={false}
-            />
-          )}
-        </Spin>
-      </div>
+      </Spin>
     </div>
   )
 }

@@ -103,7 +103,7 @@ export const Article = () => {
                 })
               }
             >
-              Add New
+              Add
             </Button>
 
             <Button
@@ -147,6 +147,7 @@ export const Article = () => {
               />
             </div>
           )}
+
           {!articlesError && articles.length > 0 ? (
             <Row gutter={[token.size, token.size]} className={'my-4'}>
               {articles.map((article) => (
@@ -181,7 +182,7 @@ export const Article = () => {
                       })
                     }
                   >
-                    Add New
+                    Add
                   </Button>
                 }
               />

@@ -21,9 +21,10 @@ import { useExampleModal, useItemModal } from '@/helpers/hooks'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
 import { Toolbar } from '../toolbar'
+import { CSSProperties } from 'react'
 
 interface IAppHeader {
-  styles?: any
+  styles?: CSSProperties
 }
 
 export const AppHeader = ({ styles: customStyles }: IAppHeader) => {

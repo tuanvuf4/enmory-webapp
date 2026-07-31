@@ -63,6 +63,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
   const origin = getValues('origin')
 
+  const word_family = getValues('word_family')
+
+  console.log(`*** word_family *** `, word_family)
+
   const { options, isSearching } = useAutoComplete(
     {
       keyword: origin || '',
@@ -360,7 +364,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                     name={`forms`}
                     render={() => (
                       <InputTag
-                        tags={getValues('forms')}
+                        tags={getValues('forms') || []}
                         onChange={(value: string[]) => {
                           setValue('forms', value)
                         }}
@@ -381,7 +385,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                     name={`word_family`}
                     render={() => (
                       <InputTag
-                        tags={getValues('word_family')}
+                        tags={getValues('word_family') || []}
                         allowSpace={false}
                         onChange={(value: string[]) => {
                           setValue('word_family', value)
@@ -405,7 +409,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                 name={`relation`}
                 render={() => (
                   <InputTag
-                    tags={getValues('relation')}
+                    tags={getValues('relation') || []}
                     onChange={(value: string[]) => {
                       setValue('relation', value)
                     }}

@@ -174,6 +174,7 @@ export const appTheme: ThemeConfig = {
     Layout: {
       headerBg: 'transparent',
       bodyBg: 'transparent',
+      footerBg: 'transparent',
       headerHeight: 64,
       headerPadding: '0 24px',
       headerColor: '#5c648e',
@@ -429,6 +430,7 @@ export const appDarkTheme: ThemeConfig = {
     Layout: {
       headerBg: 'transparent',
       bodyBg: 'transparent',
+      footerBg: 'transparent',
       siderBg: '#0b0e2a',
       headerHeight: 64,
       headerPadding: '0 24px',

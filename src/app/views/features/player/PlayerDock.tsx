@@ -232,7 +232,7 @@ export const PlayerDock: React.FC = () => {
     <div
       className={styles.playerDock}
       style={{
-        width: showPlayer ? '100%' : 40,
+        width: showPlayer ? '100%' : 50,
         padding: showPlayer ? token.size / 2 : 0,
         transition: 'width 0.3s ease, padding 0.3s ease',
       }}
@@ -339,7 +339,14 @@ export const PlayerDock: React.FC = () => {
           <Button
             onClick={() => dispatch(listeningAction.toggleShowPlayer())}
             type='text'
-            icon={showPlayer ? <ShrinkOutlined /> : <ArrowsAltOutlined />}
+            size={'large'}
+            icon={
+              showPlayer ? (
+                <ShrinkOutlined style={{ fontSize: 20 }} />
+              ) : (
+                <ArrowsAltOutlined style={{ fontSize: 20 }} />
+              )
+            }
           />
           {showPlayer && currentTrack?.title}
         </div>

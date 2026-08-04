@@ -356,35 +356,32 @@ export const StudySet: React.FC = () => {
 
   return (
     <div className={styles.studySet} id='studySet' tabIndex={0}>
-      <div className={styles.studySetHeader}>
-        {inProgress && (
-          <>
-            {!isDone && (
-              <Button
-                icon={<ReloadOutlined spin={loading} />}
-                variant='outlined'
-                onClick={() => onReload()}
-              >
-                Reload
-              </Button>
-            )}
+      {inProgress && (
+        <div className={styles.studySetHeader}>
+          {!isDone && (
+            <Button
+              icon={<ReloadOutlined spin={loading} />}
+              variant='outlined'
+              onClick={() => onReload()}
+            >
+              Reload
+            </Button>
+          )}
 
-            <div className={styles.progress}>
-              <div className={styles.progressCounter}>{`${currentIndex + 1}/${list.length}`}</div>
-            </div>
-          </>
-        )}
-      </div>
+          <div className={styles.progress}>
+            <div className={styles.progressCounter}>{`${currentIndex + 1}/${list.length}`}</div>
+          </div>
+        </div>
+      )}
 
       <div className={styles.studySetBody}>
         {!isDone && !inProgress && <h2>LET'S PRACTICE!</h2>}
 
         {isDone && !inProgress && (
           <div className={styles.result}>
-            <h2>Result</h2>
-            <h3>
-              {list.filter((item) => item.quiz.result).length}/{list.length}
-            </h3>
+            <h2>
+              Result: {list.filter((item) => item.quiz.result).length}/{list.length}
+            </h2>
           </div>
         )}
 
@@ -438,21 +435,22 @@ export const StudySet: React.FC = () => {
                         : onSelectMultiChoice(ans as IOption<string, boolean>)
                     }}
                   >
-                    <Flex justify={'space-between'} align={'center'} gap={token.size / 4}>
-                      <div className={'flex items-center justify-between'}>
-                        <span dangerouslySetInnerHTML={{ __html: `${ans.label}` }} />
-
-                        <i
-                          dangerouslySetInnerHTML={{ __html: `${isSubmit ? `${ans.key}` : ''}` }}
-                        />
-                      </div>
-
+                    <Flex align={'center'} gap={token.size / 2}>
                       {isSubmit && item.catId === ECategory.WORD && ans.typeId && (
-                        <i className={'text-sm'}>
+                        <span className={'text-sm'}>
                           {`(${getType(ans.typeId).origin.toLowerCase()})`}
-                        </i>
+                        </span>
                       )}
+
+                      <span
+                        style={{ wordBreak: 'break-word' }}
+                        dangerouslySetInnerHTML={{ __html: `${ans.label}` }}
+                      />
                     </Flex>
+
+                    <div>
+                      <i dangerouslySetInnerHTML={{ __html: `${isSubmit ? `${ans.key}` : ''}` }} />
+                    </div>
                   </li>
                 )
               })}

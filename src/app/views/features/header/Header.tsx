@@ -22,6 +22,7 @@ import { exampleAction } from '@/store/reducers/example.reducer'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
 import { Toolbar } from '../toolbar'
 import { CSSProperties } from 'react'
+import { initExampleData } from '@/constant/example'
 
 interface IAppHeader {
   styles?: CSSProperties
@@ -77,7 +78,7 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
     }
 
     if (e.key === 'ADD_EXAMPLE') {
-      openExampleModal('add')
+      openExampleModal('add', initExampleData)
     }
 
     if (e.key === 'ADD_POST') {

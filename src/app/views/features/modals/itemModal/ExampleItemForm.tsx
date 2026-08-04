@@ -7,7 +7,6 @@ import { theme, Space, Col, Row, Button, AutoComplete, Flex } from 'antd'
 import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { exampleItem } from './data'
-import { ReviewableTextArea } from '@/views/components'
 import TextArea from 'antd/es/input/TextArea'
 
 interface IProps {
@@ -131,14 +130,11 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           <Controller
                             control={control}
                             name={`meanings.${nestIndex}.examples.${key}.origin`}
-                            render={({ field: { onChange, value } }) => (
-                              <ReviewableTextArea
+                            render={({ field }) => (
+                              <TextArea
                                 autoSize={{ minRows: 1, maxRows: 4 }}
-                                placeholder='Original:'
-                                value={value}
-                                onChange={onChange}
-                                language='en'
-                                enableReview={true}
+                                placeholder='Origin:'
+                                {...field}
                               />
                             )}
                           />

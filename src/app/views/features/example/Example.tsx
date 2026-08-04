@@ -86,7 +86,6 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
   )
 
   const onEdit = async (id: string) => {
-    openExampleModal
     try {
       showLoading()
       const { isSuccess, content } = await exampleApi.getExampleById(id)

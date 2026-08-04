@@ -5,14 +5,18 @@
   align-items: center;
   justify-content: space-between;
   flex-flow: column wrap;
-  // background: $color-bg-item;
+  gap: $size;
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+  }
 }
 
 .studySetHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $size * 1;
   width: 100%;
   text-align: center;
 }
@@ -107,8 +111,6 @@
 }
 
 .studySetBody {
-  padding: $size * 1;
-  padding-top: 0;
   width: 100%;
   text-align: center;
 
@@ -120,7 +122,6 @@
 
   & h3 {
     font-size: $font-size-heading-3;
-    color: $color-white;
     margin-bottom: $size * 0.5;
     line-height: $line-height;
   }
@@ -147,7 +148,6 @@
 }
 
 .progressCounter {
-  color: $color-white;
   font-weight: bold;
 }
 
@@ -189,7 +189,6 @@
       }
 
       & i {
-        margin-left: $size * 0.5;
         color: $color-blue-5;
       }
 
@@ -218,12 +217,10 @@
 .resultReference {
   text-align: left;
   max-width: 100%;
-  margin-bottom: $size * 1 !important;
 }
 
 .studySetFooter {
   width: 100%;
-  padding: $size * 1 $size * 1;
   text-align: center;
   display: flex;
   align-items: center;
@@ -237,7 +234,6 @@
   align-items: center;
   justify-content: flex-start;
   gap: $size * 1;
-  margin-bottom: $size * 1;
 
   & button {
     min-width: $size * 7.5;

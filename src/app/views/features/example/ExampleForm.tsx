@@ -49,13 +49,15 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   const showTranslation =
     mode === ExampleMode.Default || (isChecked && mode === ExampleMode.Translation)
 
+  console.log(`*** data *** `, data)
+
   const {
     control,
     handleSubmit,
     reset,
     formState: { isValid },
   } = useForm<IExample>({
-    defaultValues: data || translate || initExampleData,
+    defaultValues: data || (translate as IExample),
   })
 
   const onSubmit = async (formData: IExample) => {
@@ -118,7 +120,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 
   useEffect(() => {
     // Check if translate example already exists in Redux
-    if (translate) {
+    if (translate && !data) {
       reset({ ...translate })
       return
     }
@@ -235,7 +237,6 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
             <Flex
               justify={mode === ExampleMode.Translation ? 'space-between' : 'flex-end'}
               gap={token.size}
-              className={'py-4'}
             >
               {onCancel && (
                 <Button

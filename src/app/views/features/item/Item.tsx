@@ -179,6 +179,8 @@ export const Item: React.FC<IProps> = ({
     const now = new Date().getTime()
     const response = await itemApi.updateItem(data.id || '', {
       ...initItem,
+      origin: '*',
+      origin_lowercase: '*',
       created_date: now,
       last_update: now,
     })
@@ -267,6 +269,7 @@ export const Item: React.FC<IProps> = ({
                     type={'text'}
                     title={'Archive'}
                     icon={<BookOutlined style={{ color: token.palette?.red?.[4] }} />}
+                    onClick={() => archive(data)}
                   />
                 )}
 
@@ -276,6 +279,7 @@ export const Item: React.FC<IProps> = ({
                     type={'text'}
                     title={'Favorite'}
                     icon={<HeartFilled style={{ color: token.palette?.red?.[4] }} />}
+                    onClick={() => favorite(data)}
                   />
                 )}
 

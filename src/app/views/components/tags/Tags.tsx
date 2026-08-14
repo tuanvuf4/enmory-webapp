@@ -7,13 +7,15 @@ import { appSetting } from '@/config/appConfig'
 import { useNavigate } from 'react-router-dom'
 import { Flex, theme } from 'antd'
 
+type TSearchBy = 'keyword' | 'tags'
 interface IPros {
   label?: string
   tags: string[]
+  searchBy?: TSearchBy
   onSearch?: (tag: string) => void
 }
 
-export const Tags: React.FC<IPros> = ({ label, tags, onSearch }) => {
+export const Tags: React.FC<IPros> = ({ label, tags, onSearch, searchBy = 'keyword' }) => {
   const { showLoading, hideLoading } = useLoading()
 
   const { openItemModal } = useItemModal()
@@ -55,7 +57,7 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch }) => {
     params.set('page', appSetting.pagination.page.toString())
     params.set('size', appSetting.pagination.size.toString())
 
-    onSearch?.(keyword)
+    if (searchBy === 'keyword') onSearch?.(keyword)
 
     navigate(`/library?${params.toString()}`)
   }

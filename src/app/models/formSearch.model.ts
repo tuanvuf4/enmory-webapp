@@ -3,6 +3,7 @@ import { ECategory } from './item.model'
 
 export interface IFormSearchItem {
   keyword: string
+  tags: string[]
   cat: ECategory | ''
   archive: boolean
   favorite: boolean

@@ -4,17 +4,18 @@ import {
   SyncOutlined,
   SearchOutlined,
   Loading3QuartersOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons'
 import { useItemSearchParams, useSelector } from '@/core/hooks'
 import { useAutoComplete, useItemModal, useLoading } from '@/helpers/hooks'
 import { orderByOptions, orderOptions } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { ECategory } from '@/models/item.model'
-import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select } from 'antd'
-import { useEffect } from 'react'
+import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select, Flex } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { useLocation } from 'react-router-dom'
-import { NotFound } from '@/views/components'
+import { NotFound, TagManagerModal } from '@/views/components'
 import { initSearchFormItem } from '@/constant/index'
 import { initItem } from '../modals/itemModal'
 import { BaseOptionType } from 'antd/es/select'
@@ -44,14 +45,44 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
 
   const { openItemModal } = useItemModal()
 
-  const { categories } = useSelector((state) => state.setting)
+  const [showTagModal, setShowTagModal] = useState(false)
 
-  const { control, handleSubmit, reset, watch, getValues } = useForm<IFormSearchItem>({
+  const { categories, tags: allTags } = useSelector((state) => state.setting)
+
+  const tagOptions = useMemo(
+    () =>
+      (allTags || [])
+        .map((tag) => String(tag.value))
+        .filter(Boolean)
+        .map((tag) => ({ label: tag, value: tag })),
+    [allTags],
+  )
+
+  const { control, handleSubmit, reset, watch, getValues, setValue } = useForm<IFormSearchItem>({
     defaultValues: urlParams || initSearchFormItem,
   })
 
   const keyword = watch('keyword')
   const cat = watch('cat')
+  const handleOpenTagModal = () => {
+    setShowTagModal(true)
+  }
+
+  const handleTagUpdated = (previousValue: string, nextValue: string) => {
+    const currentTags = getValues('tags') || []
+    const nextTags = Array.from(
+      new Set(currentTags.map((tag) => (tag === previousValue ? nextValue : tag))),
+    )
+    setValue('tags', nextTags)
+  }
+
+  const handleTagDeleted = (deletedValue: string) => {
+    const currentTags = getValues('tags') || []
+    setValue(
+      'tags',
+      currentTags.filter((tag) => tag !== deletedValue),
+    )
+  }
 
   const { options, isSearching } = useAutoComplete(
     {
@@ -158,7 +189,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   flexDirection: 'column',
                   justifyContent: 'center',
                   gap: token.size / 2,
-                  width: 180,
+                  width: 280,
                   background: isLight
                     ? 'color-mix(in srgb, #ffffff 94%, #edebff 6%)'
                     : 'rgba(10, 12, 44, 0.92)',
@@ -199,6 +230,38 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                     >
                       Favorite
                     </Checkbox>
+                  )}
+                />
+
+                <Flex align={'center'} gap={token.size / 2}>
+                  <p style={{ margin: 0 }}>Tags:</p>
+                  <Button
+                    size={'small'}
+                    icon={<UnorderedListOutlined />}
+                    onClick={handleOpenTagModal}
+                  />
+                </Flex>
+
+                <Controller
+                  control={control}
+                  name={`tags`}
+                  render={({ field: { onChange, value } }) => (
+                    <Select
+                      mode='multiple'
+                      allowClear
+                      showSearch
+                      className={appStyle.fulWidth}
+                      value={value || []}
+                      placeholder='Select tags'
+                      options={tagOptions}
+                      optionFilterProp='label'
+                      filterOption={(input, option) =>
+                        String(option?.label || '')
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                      onChange={(values) => onChange(values as string[])}
+                    />
                   )}
                 />
 
@@ -305,6 +368,14 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
           </Button>
         )}
       </form>
+
+      <TagManagerModal
+        title='Tags'
+        open={showTagModal}
+        onClose={() => setShowTagModal(false)}
+        onTagUpdated={handleTagUpdated}
+        onTagDeleted={handleTagDeleted}
+      />
     </div>
   )
 }

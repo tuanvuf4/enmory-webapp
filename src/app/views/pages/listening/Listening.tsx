@@ -4,18 +4,16 @@ import { Player } from '@/views/features'
 import { tracksApi } from '@/services/firebase'
 import { useEffect } from 'react'
 import { message } from 'antd'
-import { onAuthStateChanged } from 'firebase/auth'
-import { getAuth } from 'firebase/auth'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { useDispatch } from '@/core/hooks'
+import { firebaseAuthService } from '@/services/firebase/authService'
 
 export const Listening = () => {
   const dispatch = useDispatch()
 
   // Fetch tracks when user is authenticated
   useEffect(() => {
-    const auth = getAuth()
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
       user ? fetchTracks() : dispatch(listeningAction.setTracks([]))
     })
 

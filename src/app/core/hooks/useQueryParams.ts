@@ -10,8 +10,14 @@ export const useItemSearchParams = () => {
   const [urlParams, setParams] = useState<IFormSearchItem>()
 
   useEffect(() => {
+    const tagsParam = searchParams.get('tags') || ''
+
     setParams({
       keyword: searchParams.get('keyword') || '',
+      tags: tagsParam
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean),
       cat:
         searchParams.get('cat') && searchParams.get('cat') !== '0'
           ? Number(searchParams.get('cat'))
@@ -26,7 +32,7 @@ export const useItemSearchParams = () => {
   }, [searchParams])
 
   const setUrlParams = (data: Partial<IFormSearchItem>, resetPage = true) => {
-    const params = new URLSearchParams(data as Record<string, string>)
+    const params = new URLSearchParams()
 
     // Reset page to 0 when filters change (unless explicitly disabled)
     if (resetPage) {
@@ -34,7 +40,13 @@ export const useItemSearchParams = () => {
     }
 
     Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          params.set(key, value.join(','))
+        } else {
+          params.delete(key)
+        }
+      } else if (value !== undefined && value !== '') {
         params.set(key, String(value))
       } else {
         params.delete(key)
@@ -48,7 +60,13 @@ export const useItemSearchParams = () => {
     const params = new URLSearchParams()
 
     Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          params.set(key, value.join(','))
+        } else {
+          params.delete(key)
+        }
+      } else if (value !== undefined && value !== '') {
         params.set(key, String(value))
       } else {
         params.delete(key)

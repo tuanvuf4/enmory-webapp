@@ -10,6 +10,7 @@ export const app = initializeApp({ ...appConfig.firebase })
 export const dbCollections = {
   users: 'users',
   items: 'items',
+  tags: 'tags',
   examples: 'examples',
   iotd: 'iotd',
   articles: 'articles',

@@ -1,4 +1,4 @@
-import { useDispatch } from '@/core/hooks'
+import { useDispatch, useSelector } from '@/core/hooks'
 import { useAuthInit } from '@/core/hooks/useAuthInit'
 import { AppLayout } from '@/views/features/layout/Layout'
 import { useEffect, useState } from 'react'
@@ -7,12 +7,14 @@ import moment from 'moment'
 import { Loading } from './views/features/loading/Loading'
 import { useCategories, useTypes } from '@/core/hooks/useCommon'
 import { settingAction } from '@/store/reducers/setting.reducer'
+import { actionAsyncApp } from '@/store/asyncActions'
 import { useLoading } from './helpers'
 
 export const App = () => {
   const [isInitializing, setIsInitializing] = useState(true)
 
   const dispatch = useDispatch()
+  const user = useSelector((state) => state.auth.user)
   const { hideLoading } = useLoading()
 
   useAuthInit()
@@ -41,6 +43,14 @@ export const App = () => {
   useEffect(() => {
     if (types) dispatch(settingAction.setTypes(types))
   }, [types, dispatch])
+
+  useEffect(() => {
+    if (user?.uid) {
+      dispatch(actionAsyncApp.fetchTags())
+    } else {
+      dispatch(settingAction.setTags([]))
+    }
+  }, [user?.uid, dispatch])
 
   if (isInitializing) {
     return <Loading show={isInitializing} />

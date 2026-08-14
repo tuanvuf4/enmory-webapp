@@ -47,6 +47,7 @@ export const allSelect: IOption<string, ECategory> = {
 
 export const itemDefault: IItem = {
   origin: '',
+  tags: [],
   favorite: false,
   archive: false,
   is_deleted: false,
@@ -67,6 +68,7 @@ export const initSearchFormEx: IFormSearchEx = {
 
 export const initSearchFormItem: IFormSearchItem = {
   keyword: '',
+  tags: [],
   cat: ECategory.ALL,
   archive: false,
   favorite: false,

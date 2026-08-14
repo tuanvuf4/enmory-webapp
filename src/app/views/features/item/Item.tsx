@@ -339,6 +339,10 @@ export const Item: React.FC<IProps> = ({
 
             <Reference origin={data.origin} style={{}} />
 
+            {data.tags && data.tags.filter((word) => word).length > 0 && data.tags.length > 0 && (
+              <Tags label={'Tags'} tags={data.tags} searchBy={'tags'} />
+            )}
+
             {data.catId === ECategory.WORD && (
               <>
                 {data.forms &&

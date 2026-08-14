@@ -33,6 +33,7 @@ import { shuffleArray } from '@/helpers/mics'
 
 export interface IItemRequestParams {
   keyword: string
+  tags?: string[]
   page: number
   size: number
   cat?: number
@@ -42,6 +43,16 @@ export interface IItemRequestParams {
   order?: AppOrderQuery
   orderBy?: AppOrderByQuery
   lastDocId?: string // For cursor-based pagination
+}
+
+const normalizeTags = (tags: string[] = []) => {
+  const cleanTags = tags.map((tag) => tag.trim()).filter(Boolean)
+  return Array.from(new Set(cleanTags))
+}
+
+const normalizeLowercaseTags = (tags: string[] = []) => {
+  const normalized = normalizeTags(tags).map((tag) => tag.toLowerCase())
+  return Array.from(new Set(normalized))
 }
 
 /**
@@ -69,6 +80,11 @@ const buildQueryConstraints = (params: IItemRequestParams): QueryConstraint[] =>
   // Filter by favorite status
   if (params.favorite) {
     constraints.push(where('favorite', '==', params.favorite))
+  }
+
+  const filterTags = normalizeLowercaseTags(params.tags || [])
+  if (filterTags.length > 0) {
+    constraints.push(where('tags_lowercase', 'array-contains-any', filterTags.slice(0, 10)))
   }
 
   // Filter by deleted status
@@ -566,8 +582,12 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
     }
 
     const now = Timestamp.now().toMillis()
+    const normalizedTags = normalizeTags(item.tags || [])
+
     const newItem = {
       ...item,
+      tags: normalizedTags,
+      tags_lowercase: normalizeLowercaseTags(normalizedTags),
       uid: currentUser.uid,
       created_date: now,
       last_update: now,
@@ -608,8 +628,12 @@ const createItems = async (items: IItem[]): Promise<IHttpResponse<IItem>> => {
     const createdItems: IItem[] = []
 
     for (const item of items) {
+      const normalizedTags = normalizeTags(item.tags || [])
+
       const newItem = {
         ...item,
+        tags: normalizedTags,
+        tags_lowercase: normalizeLowercaseTags(normalizedTags),
         uid: currentUser.uid,
         created_date: now,
         last_update: now,
@@ -650,10 +674,19 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
     }
 
     const itemDocRef = doc(db, dbCollections.items, id)
-    const updateData = {
+    const updateData: Partial<IItem> & { last_update: number; origin_lowercase?: string } = {
       ...item,
-      origin_lowercase: item.origin?.toLowerCase() || '',
       last_update: Timestamp.now().toMillis(),
+    }
+
+    if (item.origin !== undefined) {
+      updateData.origin_lowercase = item.origin.toLowerCase()
+    }
+
+    if (item.tags !== undefined) {
+      const normalizedTags = normalizeTags(item.tags)
+      updateData.tags = normalizedTags
+      updateData.tags_lowercase = normalizeLowercaseTags(normalizedTags)
     }
 
     await updateDoc(itemDocRef, updateData)

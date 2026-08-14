@@ -4,13 +4,15 @@ import { useSelector, useDispatch } from '@/core/hooks'
 import { IUserConfig } from '@/models/user.model'
 import { apiUser } from '@/services/firebase/api/user.api'
 import { authAction } from '@/store/reducers/auth.reducer'
-import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button, message } from 'antd'
+import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useState } from 'react'
 import clsx from 'clsx'
+import { usePrompt } from '@/helpers/hooks'
 
 const Setting = () => {
   const { token } = theme.useToken()
+  const { openMessage } = usePrompt()
 
   // User info comes from Firebase auth state
   const { user } = useSelector((state) => state.auth)
@@ -28,16 +30,25 @@ const Setting = () => {
       const result = await apiUser.updateUserConfig(data)
 
       if (result.isSuccess) {
-        message.success('Settings saved successfully!')
+        openMessage({
+          type: 'success',
+          content: 'Settings saved successfully!',
+        })
 
         // Update user configuration in Redux store
         dispatch(authAction.updateUserConfig(data))
       } else {
-        message.error(result.message || 'Failed to save settings')
+        openMessage({
+          type: 'error',
+          content: result.message || 'Failed to save settings',
+        })
       }
     } catch (error) {
       console.error('Error saving settings:', error)
-      message.error('Failed to save settings. Please try again.')
+      openMessage({
+        type: 'error',
+        content: 'Failed to save settings. Please try again.',
+      })
     } finally {
       setIsLoading(false)
     }

@@ -7,20 +7,28 @@ import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { getArrayUniqueItem } from '@/helpers/item'
 import { isGroupWord } from '@/helpers/validate'
 
+type TSuggestType = 'item' | 'example' | 'tag'
+
 interface IPros {
   onChange: (args: string[]) => void
   tags: string[]
   allowSpace?: boolean
+  suggestType?: TSuggestType
 }
 
-export const InputTag: React.FC<IPros> = ({ tags, allowSpace = true, onChange }) => {
+export const InputTag: React.FC<IPros> = ({
+  tags,
+  allowSpace = true,
+  suggestType = 'item',
+  onChange,
+}) => {
   const [inputVisible, setInputVisible] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [editInputIndex, setEditInputIndex] = useState(-1)
   const [editInputValue, setEditInputValue] = useState('')
   const [currentSearch, setCurrentSearch] = useState<string>('')
 
-  const { options } = useAutoComplete({ keyword: currentSearch })
+  const { options } = useAutoComplete({ keyword: currentSearch }, suggestType)
 
   const onSearch = (searchText: string) => {
     setCurrentSearch(searchText)

@@ -3,11 +3,12 @@ import { IHttpResponse } from '@/models/http.model'
 import { IItem, IExample } from '@/models/item.model'
 import { itemApi, IItemRequestParams } from '@/services/firebase/api/item.api'
 import { exampleApi } from '@/services/firebase/api/example.api'
+import { tagApi } from '@/services/firebase/api/tag.api'
 import _ from 'lodash'
 import { useState, useEffect } from 'react'
 import { BaseOptionType } from 'antd/es/select'
 
-type searchType = 'item' | 'example'
+type searchType = 'item' | 'example' | 'tag'
 
 export const useAutoComplete = (
   filters: Partial<IItemRequestParams> = {},
@@ -76,6 +77,29 @@ export const useAutoComplete = (
         }
       }, timeout)
     }
+
+    handleSession = setTimeout(() => {
+      setIsSearching(true)
+
+      if (type === 'tag') {
+        tagApi
+          .getTags(keyword || '')
+          .then((response) => {
+            if (response.content && response.content.length > 0) {
+              setOptions(
+                response.content.map((tag) => ({
+                  id: tag.id,
+                  label: tag.value,
+                  value: tag.value,
+                })),
+              )
+            } else setOptions([])
+          })
+          .finally(() => {
+            setIsSearching(false)
+          })
+      }
+    }, timeout)
 
     return () => {
       clearTimeout(handleSession)

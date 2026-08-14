@@ -53,7 +53,12 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch, searchBy = 'keywo
     // Navigate to library with search params
     const params = new URLSearchParams()
 
-    params.set('keyword', keyword)
+    if (searchBy === 'tags') {
+      params.set('tags', keyword)
+    } else {
+      params.set('keyword', keyword)
+    }
+
     params.set('page', appSetting.pagination.page.toString())
     params.set('size', appSetting.pagination.size.toString())
 
@@ -68,7 +73,11 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch, searchBy = 'keywo
 
       {tags.map((tag, key) => {
         return (
-          <div key={key} className={styles.tagItem} onClick={() => getItem(tag)}>
+          <div
+            key={key}
+            className={styles.tagItem}
+            onClick={() => (searchBy === 'tags' ? onNavigate(tag) : getItem(tag))}
+          >
             <div className={styles.tagItemContainer}>
               <span className={'select-none'}>{tag}</span>
               <button

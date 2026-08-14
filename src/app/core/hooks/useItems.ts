@@ -29,6 +29,7 @@ export const useItems = (params: IItemRequestParams) => {
   // Create a unique key for this query configuration (excluding page)
   const queryConfigKey = JSON.stringify({
     keyword: params.keyword,
+    tags: params.tags,
     cat: params.cat,
     archive: params.archive,
     favorite: params.favorite,

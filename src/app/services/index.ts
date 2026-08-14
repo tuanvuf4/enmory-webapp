@@ -35,6 +35,7 @@ export const allSelect: IOption<string, ECategory> = {
 
 export const itemDefault: IItem = {
   origin: '',
+  tags: [],
   favorite: false,
   archive: false,
   is_deleted: false,

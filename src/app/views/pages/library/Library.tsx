@@ -28,6 +28,10 @@ export const Library: React.FC = () => {
   // Use React Query hooks
   const { data, isLoading, error } = useItems({
     keyword: searchParams.get('keyword') || '',
+    tags: (searchParams.get('tags') || '')
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean),
     cat:
       searchParams.get('cat') && searchParams.get('cat') !== '0'
         ? Number(searchParams.get('cat'))

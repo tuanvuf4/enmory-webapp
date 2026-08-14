@@ -49,8 +49,6 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   const showTranslation =
     mode === ExampleMode.Default || (isChecked && mode === ExampleMode.Translation)
 
-  console.log(`*** data *** `, data)
-
   const {
     control,
     handleSubmit,

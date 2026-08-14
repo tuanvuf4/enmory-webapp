@@ -84,6 +84,8 @@ export interface IItem {
   catId?: ECategory
   origin: string
   origin_lowercase?: string
+  tags: string[]
+  tags_lowercase?: string[]
   favorite?: boolean
   level: number
   last_update?: number

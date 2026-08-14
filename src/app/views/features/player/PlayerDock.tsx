@@ -19,6 +19,7 @@ import { listeningAction } from '@/store/reducers/listening.reducer'
 import { getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import { tracksApi } from '@/services/firebase'
 import { TrackList } from './TrackList'
+import { firebaseAuthService } from '@/services/firebase/authService'
 
 export const PlayerDock: React.FC = () => {
   const { token } = theme.useToken()
@@ -34,7 +35,15 @@ export const PlayerDock: React.FC = () => {
   const trackIndex = tracks.findIndex((t) => t.id === currentTrack?.id)
 
   useEffect(() => {
-    fetchTracks()
+    const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
+      if (user) {
+        fetchTracks()
+      } else {
+        dispatch(listeningAction.setTracks([]))
+      }
+    })
+
+    return () => unsubscribe()
   }, [])
 
   const fetchTracks = async () => {

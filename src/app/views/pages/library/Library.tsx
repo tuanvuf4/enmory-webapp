@@ -54,6 +54,20 @@ export const Library: React.FC = () => {
     }
   }, [error])
 
+  // Keep page in range when dataset changes after create/update/delete
+  useEffect(() => {
+    if (isLoading) return
+
+    const totalPage = Number(pagination?.totalPage || 0)
+    const safeMaxPage = Math.max(totalPage - 1, 0)
+
+    if (page > safeMaxPage) {
+      const newParams = new URLSearchParams(searchParams)
+      newParams.set('page', safeMaxPage.toString())
+      setSearchParams(newParams)
+    }
+  }, [isLoading, pagination?.totalPage, page, searchParams, setSearchParams])
+
   return (
     <>
       {isLoading && <Loading show={isLoading} />}

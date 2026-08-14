@@ -46,20 +46,41 @@ export const useItems = (params: IItemRequestParams) => {
       }
       const pageMap = lastDocStore.get(queryConfigKey)!
 
+      const ensureCursorForPage = async (targetPage: number) => {
+        if (targetPage <= 0) return
+
+        // Cursor needed for page N is the lastDoc of page N-1
+        if (pageMap.get(targetPage - 1)) return
+
+        pageMap.clear()
+
+        let previousLastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined
+
+        for (let i = 0; i < targetPage; i++) {
+          const warmupResponse = await itemApi.getItems(
+            {
+              ...params,
+              page: i,
+            },
+            previousLastDoc,
+          )
+
+          if (!warmupResponse.lastDoc) {
+            break
+          }
+
+          pageMap.set(i, warmupResponse.lastDoc)
+          previousLastDoc = warmupResponse.lastDoc
+        }
+      }
+
       // For page 0, no cursor needed
       // For page N, we need to navigate through all previous pages to get the correct cursor
       let lastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined
 
       if (params.page > 0) {
-        // Check if we have the cursor for the previous page
+        await ensureCursorForPage(params.page)
         lastDoc = pageMap.get(params.page - 1)
-
-        // If cursor is missing for previous page, we need to fetch from page 0
-        if (!lastDoc) {
-          console.warn(`Missing cursor for page ${params.page - 1}, pagination may be inconsistent`)
-          // Clear the store for this query to force refetch from beginning
-          pageMap.clear()
-        }
       }
 
       const response = await itemApi.getItems(params, lastDoc)

@@ -19,7 +19,7 @@ import { MeaningItemForm } from './MeaningItemForm'
 import styles from './itemModal.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { usePrompt } from '@/helpers/hooks'
-import { exampleApi, tagApi } from '@/services/firebase'
+import { exampleApi, itemApi, tagApi } from '@/services/firebase'
 import { Timestamp } from 'firebase/firestore'
 import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
 import { useModal } from '@/context/modal.context'
@@ -81,6 +81,86 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
       ...(await exampleApi.createExample(example as IExample)).content,
     }))
     return await Promise.all(examplePromises)
+  }
+
+  const normalizeUniqueWords = (words: string[] = []) => {
+    const map = new Map<string, string>()
+
+    words
+      .map((word) => String(word || '').trim())
+      .filter(Boolean)
+      .forEach((word) => {
+        const key = word.toLowerCase()
+        if (!map.has(key)) {
+          map.set(key, word)
+        }
+      })
+
+    return Array.from(map.values())
+  }
+
+  const isSameWordFamily = (left: string[] = [], right: string[] = []) => {
+    const normalize = (values: string[]) =>
+      Array.from(new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean))).sort()
+
+    const leftNormalized = normalize(left)
+    const rightNormalized = normalize(right)
+
+    if (leftNormalized.length !== rightNormalized.length) return false
+
+    return leftNormalized.every((value, index) => value === rightNormalized[index])
+  }
+
+  const syncWordFamilyNetwork = async (savedItem: IItem) => {
+    const baseOrigin = String(savedItem.origin || '').trim()
+    if (!baseOrigin) return
+
+    const initialFamily = normalizeUniqueWords(savedItem.word_family || []).filter(
+      (word) => word.toLowerCase() !== baseOrigin.toLowerCase(),
+    )
+
+    if (initialFamily.length === 0) return
+
+    const networkWords = normalizeUniqueWords([baseOrigin, ...initialFamily])
+
+    const fetchedItems = await Promise.all(
+      networkWords.map(async (word) => {
+        const response = await itemApi.getItems(
+          {
+            keyword: word,
+            page: 0,
+            size: 1,
+            exact: true,
+          },
+          undefined,
+        )
+
+        if (response.isSuccess && response.content && response.content.length > 0) {
+          return response.content[0]
+        }
+
+        return null
+      }),
+    )
+
+    const existingItems = fetchedItems.filter((item): item is IItem => !!item && !!item.id)
+
+    await Promise.all(
+      existingItems.map(async (networkItem) => {
+        const currentOrigin = String(networkItem.origin || '').trim()
+        if (!currentOrigin) return
+
+        const expectedFamily = networkWords.filter(
+          (word) => word.toLowerCase() !== currentOrigin.toLowerCase(),
+        )
+
+        if (isSameWordFamily(networkItem.word_family || [], expectedFamily)) return
+
+        await itemApi.updateItem(String(networkItem.id), {
+          word_family: expectedFamily,
+        })
+      }),
+    )
   }
 
   const onSubmit = async (data: IItem) => {
@@ -181,6 +261,15 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
           })
 
           if (isSuccess && content) {
+            try {
+              await syncWordFamilyNetwork(content)
+            } catch (error: any) {
+              openNotification({
+                type: 'warning',
+                message: error?.message || 'Failed to sync word family network',
+              })
+            }
+
             const meaningsWithExamples = await getMeaningsWithExamples(content.meanings || [])
 
             const itemUpdated = {
@@ -204,8 +293,19 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         }
       } else {
         try {
-          const { isSuccess } = await createMutation(dataSubmit)
+          const { isSuccess, content } = await createMutation(dataSubmit)
           if (isSuccess) {
+            if (content) {
+              try {
+                await syncWordFamilyNetwork(content)
+              } catch (error: any) {
+                openNotification({
+                  type: 'warning',
+                  message: error?.message || 'Failed to sync word family network',
+                })
+              }
+            }
+
             // refresh list in library
             await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
 

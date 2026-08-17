@@ -189,6 +189,10 @@ $footer-background: #fff;
   display: none !important;
 }
 
+.fromXs {
+  display: none !important;
+}
+
 .toSm {
   display: none !important;
 }
@@ -282,6 +286,12 @@ $footer-background: #fff;
 
 @media screen and (max-width: 575px) {
   .toXs {
+    display: block !important;
+  }
+}
+
+@media screen and (min-width: 576px) {
+  .fromXs {
     display: block !important;
   }
 }

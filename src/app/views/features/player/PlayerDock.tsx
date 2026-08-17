@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import appStyle from '@/style/appStyle.module.scss'
 import {
   ArrowsAltOutlined,
   FastBackwardOutlined,
@@ -462,6 +463,7 @@ export const PlayerDock: React.FC = () => {
             <Button
               onClick={handleToggleShowPlayer}
               type='text'
+              className={appStyle.fromXs}
               icon={<ShrinkOutlined style={{ fontSize: 20 }} />}
             />
             <Button
@@ -533,13 +535,14 @@ export const PlayerDock: React.FC = () => {
             <Button
               type='text'
               onClick={toggleDocumentPiP}
+              className={appStyle.fromXs}
               icon={
                 <svg
                   viewBox='0 0 24 24'
-                  width='20'
-                  height='20'
+                  width='22'
+                  height='22'
                   fill='currentColor'
-                  style={{ verticalAlign: 'middle', color: pipWindow ? '#72a526' : 'inherit' }}
+                  style={{ color: pipWindow ? '#72a526' : 'inherit' }}
                 >
                   <path d='M19 11h-8v6h8v-6zm4 8V5c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 0H3V5h18v14z' />
                 </svg>

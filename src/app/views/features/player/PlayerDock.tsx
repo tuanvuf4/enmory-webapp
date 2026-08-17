@@ -90,7 +90,7 @@ export const PlayerDock: React.FC = () => {
       // @ts-ignore
       const w = await window.documentPictureInPicture.requestWindow({
         width: 500,
-        height: 180,
+        height: 280,
       })
 
       const d = w.document

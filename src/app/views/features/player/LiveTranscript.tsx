@@ -42,7 +42,7 @@ export const LiveTranscript: React.FC<IProps> = ({
     const endTime =
       activeIndex < segments.length - 1
         ? segments[activeIndex + 1].timeSeconds
-        : (duration || startTime + 5)
+        : duration || startTime + 5
     const segDuration = endTime - startTime
     const elapsed = smoothTime - startTime
     return segDuration > 0 ? Math.max(0, Math.min(100, (elapsed / segDuration) * 100)) : 0
@@ -94,6 +94,7 @@ export const LiveTranscript: React.FC<IProps> = ({
           icon={<AimOutlined />}
           title={'Sync'}
           onClick={handleSync}
+          style={{ background: 'transparent' }}
           color={autoFollow ? 'primary' : 'gold'}
         />
       </div>

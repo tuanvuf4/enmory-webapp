@@ -1,6 +1,6 @@
 import { IArticleCategory } from '@/services/firebase/api/articleCategories.api'
 import { useDeleteArticleCategory } from '@/core/hooks/useArticleCategories'
-import { Table, Button, Space, Popconfirm, message, theme, Empty } from 'antd'
+import { App, Table, Button, Space, Popconfirm, theme, Empty } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { TableProps } from 'antd'
 
@@ -15,6 +15,7 @@ export const ArticleCategoryList: React.FC<ArticleCategoryListProps> = ({
   isLoading = false,
   onEdit,
 }) => {
+  const { message } = App.useApp()
   const { token } = theme.useToken()
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteArticleCategory()
 

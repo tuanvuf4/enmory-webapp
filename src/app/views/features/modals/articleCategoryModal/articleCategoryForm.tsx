@@ -3,7 +3,7 @@ import {
   useUpdateArticleCategory,
 } from '@/core/hooks/useArticleCategories'
 import { IArticleCategory } from '@/services/firebase/api/articleCategories.api'
-import { theme, message, Input, Button, Flex, ColorPicker, InputNumber, Select } from 'antd'
+import { App, theme, Input, Button, Flex, ColorPicker, InputNumber, Select } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import type { Color } from 'antd/es/color-picker'
 import './articleCategoryForm.module.scss'
@@ -21,6 +21,7 @@ export const ArticleCategoryForm: React.FC<ArticleCategoryFormProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { message } = App.useApp()
   const { token } = theme.useToken()
 
   const { mutate: createCategory, isPending: isCreating } = useCreateArticleCategory()

@@ -2,7 +2,7 @@ import { initMediaForm, msgErrors, TSourceTypes } from '@/constant/index'
 import { CloseSquareOutlined } from '@ant-design/icons'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { theme, Input, Modal, Space, Row, Col, Button, Select, message } from 'antd'
+import { App, theme, Input, Modal, Space, Row, Col, Button, Select } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { appSetting } from '@/config/appConfig'
 import { IMediaForm, ITracks } from '@/models/media.model'
@@ -26,6 +26,7 @@ export const MediaUploadModal: React.FC<IProps> = ({
   onConfirm,
   trackData,
 }) => {
+  const { message } = App.useApp()
   const { token } = theme.useToken()
   const [loading, setLoading] = useState(false)
 

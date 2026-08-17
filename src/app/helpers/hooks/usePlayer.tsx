@@ -4,9 +4,10 @@ import { usePrompt } from './usePrompt'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { tracksApi } from '@/services/firebase'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { message } from 'antd'
+import { App } from 'antd'
 
 export const usePlayer = () => {
+  const { message } = App.useApp()
   const { currentTrack, tracks } = useSelector((state) => state.listening)
 
   const { confirmDeleteModal } = usePrompt()

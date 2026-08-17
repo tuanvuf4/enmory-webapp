@@ -1,5 +1,5 @@
 import { IReviewSentenceResponse } from '@/services/openai/reviewSentence.service'
-import { Modal, Card, Empty, Tag, Space, Button, message, Spin } from 'antd'
+import { App, Modal, Card, Empty, Tag, Space, Button, Spin } from 'antd'
 import { CheckCircleOutlined, CloseCircleOutlined, CopyOutlined } from '@ant-design/icons'
 import styles from './reviewSentenceModal.module.scss'
 
@@ -18,6 +18,8 @@ export const ReviewSentenceModal: React.FC<ReviewSentenceModalProps> = ({
   onClose,
   onApplySuggestion,
 }) => {
+  const { message } = App.useApp()
+
   const handleCopySuggestion = (suggestion: string) => {
     navigator.clipboard.writeText(suggestion)
     message.success('Suggestion copied to clipboard!')

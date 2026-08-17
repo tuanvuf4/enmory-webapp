@@ -3,12 +3,13 @@ import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 import { Player } from '@/views/features'
 import { tracksApi } from '@/services/firebase'
 import { useEffect } from 'react'
-import { message } from 'antd'
+import { App } from 'antd'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { useDispatch } from '@/core/hooks'
 import { firebaseAuthService } from '@/services/firebase/authService'
 
 export const Listening = () => {
+  const { message } = App.useApp()
   const dispatch = useDispatch()
 
   // Fetch tracks when user is authenticated

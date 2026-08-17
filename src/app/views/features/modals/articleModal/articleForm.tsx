@@ -2,7 +2,7 @@ import { useCreateArticle, useUpdateArticle, useArticleCategories } from '@/core
 import { articleKeys } from '@/core/hooks/useArticles'
 import { IArticleItem } from '@/models/article.model'
 import { TextEditor } from '@/views/components'
-import { theme, message, Input, Button, Flex, Select } from 'antd'
+import { App, theme, Input, Button, Flex, Select } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import './articleForm.module.scss'
@@ -16,6 +16,7 @@ interface ArticleFormProps {
 }
 
 export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClose, onSuccess }) => {
+  const { message } = App.useApp()
   const { token } = theme.useToken()
   const queryClient = useQueryClient()
 

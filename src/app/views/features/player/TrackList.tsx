@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, message, theme } from 'antd'
+import { App, Button, theme } from 'antd'
 import styles from './player.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
@@ -11,6 +11,7 @@ import { settingAction } from '@/store/reducers/setting.reducer'
 import { useState } from 'react'
 
 export const TrackList: React.FC = () => {
+  const { message } = App.useApp()
   const [open, setOpen] = useState(false)
   const [selectedTrack, setSelectedTrack] = useState<ITracks | undefined>(undefined)
 

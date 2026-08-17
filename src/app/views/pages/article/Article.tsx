@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Radio, message } from 'antd'
+import { App, Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Radio } from 'antd'
 import { ArticleItem } from '@/views/components/articleItem/ArticleItem'
 import { useArticles, useArticlesCount, useArticleCategories } from '@/core/hooks'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
@@ -15,6 +15,7 @@ import { Widget } from '@/views/features'
 const PAGE_SIZE = 10
 
 export const Article = () => {
+  const { message } = App.useApp()
   const { token } = theme.useToken()
 
   const [page, setPage] = useState(0)

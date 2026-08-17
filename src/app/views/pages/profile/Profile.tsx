@@ -1,4 +1,4 @@
-import { Button, Col, Input, message, Row, Space, theme } from 'antd'
+import { App, Button, Col, Input, Row, Space, theme } from 'antd'
 import appStyle from '@/style/appStyle.module.scss'
 import { useSelector } from '@/core/hooks/redux'
 import { AddedItemChart } from '@/views/features/chart/addedItemChart/AddedItemChart'
@@ -9,6 +9,7 @@ import { apiAuth } from '@/services/firebase'
 import clsx from 'clsx'
 
 const Profile = () => {
+  const { message } = App.useApp()
   const { token } = theme.useToken()
 
   const [isLoading, setIsLoading] = useState(false)

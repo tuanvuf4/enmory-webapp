@@ -11,7 +11,7 @@ import {
   StepForwardOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-import { Button, message, theme } from 'antd'
+import { App, Button, theme } from 'antd'
 import ReactPlayer from 'react-player'
 import { createPortal } from 'react-dom'
 import styles from './player.module.scss'
@@ -25,6 +25,7 @@ import { TrackList } from './TrackList'
 import { firebaseAuthService } from '@/services/firebase/authService'
 
 export const PlayerDock: React.FC = () => {
+  const { message } = App.useApp()
   const { token } = theme.useToken()
   const playerRef = useRef<HTMLVideoElement | null>(null)
   const isFirstLoadRef = useRef(true)

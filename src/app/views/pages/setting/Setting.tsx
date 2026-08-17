@@ -6,7 +6,7 @@ import { apiUser } from '@/services/firebase/api/user.api'
 import { authAction } from '@/store/reducers/auth.reducer'
 import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
 
@@ -20,9 +20,15 @@ const Setting = () => {
   const dispatch = useDispatch()
   const [isLoading, setIsLoading] = useState(false)
 
-  const { control, handleSubmit } = useForm<IUserConfig>({
+  const { control, handleSubmit, reset } = useForm<IUserConfig>({
     defaultValues: user?.configuration || appSetting.meta,
   })
+
+  useEffect(() => {
+    if (user?.configuration) {
+      reset(user.configuration)
+    }
+  }, [user?.configuration, reset])
 
   const onSubmit = async (data: IUserConfig) => {
     setIsLoading(true)
@@ -249,6 +255,37 @@ const Setting = () => {
                         <Controller
                           control={control}
                           name={`community`}
+                          render={({ field: { onChange, value } }) => {
+                            return (
+                              <Checkbox
+                                checked={value}
+                                onChange={(e) => onChange(e.target.checked)}
+                              >
+                                {value ? 'Yes' : 'No'}
+                              </Checkbox>
+                            )
+                          }}
+                        />
+                      </Col>
+                    </Row>
+                  </Col>
+                </Row>
+
+                <Row align={'middle'} gutter={[token.size, token.size]}>
+                  <Col xs={24} md={8}>
+                    <h3>Player</h3>
+                  </Col>
+
+                  <Col xs={24} md={16}>
+                    <Row align={'middle'} gutter={[token.size, token.size]}>
+                      <Col xs={12} md={12}>
+                        <h4>Show Player:</h4>
+                      </Col>
+
+                      <Col xs={12} md={12}>
+                        <Controller
+                          control={control}
+                          name={`showPlayer`}
                           render={({ field: { onChange, value } }) => {
                             return (
                               <Checkbox

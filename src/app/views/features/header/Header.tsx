@@ -140,17 +140,19 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
                   </h1>
                 </div>
 
-                <Button
-                  type={'text'}
-                  size={'large'}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                  icon={<SearchOutlined style={{ fontSize: 22, color: token.colorPrimary }} />}
-                  onClick={() => dispatch(settingAction.toggleSearchFormItem())}
-                />
+                {isAuth && (
+                  <Button
+                    type={'text'}
+                    size={'large'}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                    icon={<SearchOutlined style={{ fontSize: 22, color: token.colorPrimary }} />}
+                    onClick={() => dispatch(settingAction.toggleSearchFormItem())}
+                  />
+                )}
               </div>
             )}
 

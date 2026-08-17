@@ -17,6 +17,9 @@ import { createPortal } from 'react-dom'
 import styles from './player.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
+import { authAction } from '@/store/reducers/auth.reducer'
+import { apiUser } from '@/services/firebase/api/user.api'
+import { appSetting } from '@/config/appConfig'
 import { getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import { KaraokeText } from './KaraokeText'
 import { useSmoothTime } from './useSmoothTime'
@@ -35,12 +38,30 @@ export const PlayerDock: React.FC = () => {
   const [playerKey, setPlayerKey] = useState(0)
   const [pipWindow, setPipWindow] = useState<Window | null>(null)
 
-  const { currentTrack, tracks, player, showPlayer } = useSelector((state) => state.listening)
+  const { currentTrack, tracks, player } = useSelector((state) => state.listening)
+  const { user } = useSelector((state) => state.auth)
+  const showPlayer = user?.configuration?.showPlayer ?? appSetting.meta.showPlayer
   const themeMode = useSelector((state) => state.setting.themeMode)
 
   const dispatch = useDispatch()
 
   const trackIndex = tracks.findIndex((t) => t.id === currentTrack?.id)
+
+  const handleToggleShowPlayer = async () => {
+    const currentConfig = user?.configuration || appSetting.meta
+    const newConfig = {
+      ...currentConfig,
+      showPlayer: !showPlayer,
+    }
+    dispatch(authAction.updateUserConfig(newConfig))
+    if (user?.uid) {
+      try {
+        await apiUser.updateUserConfig(newConfig)
+      } catch (err) {
+        console.error('Failed to update showPlayer config:', err)
+      }
+    }
+  }
 
   useEffect(() => {
     const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
@@ -435,20 +456,13 @@ export const PlayerDock: React.FC = () => {
       )}
 
       {/* Controls & seek bar */}
-      {showPlayer && (
+      {showPlayer ? (
         <div className={styles.controls}>
           <div className={styles.dockControls}>
             <Button
-              onClick={() => dispatch(listeningAction.toggleShowPlayer())}
+              onClick={handleToggleShowPlayer}
               type='text'
-              size={'large'}
-              icon={
-                showPlayer ? (
-                  <ShrinkOutlined style={{ fontSize: 20 }} />
-                ) : (
-                  <ArrowsAltOutlined style={{ fontSize: 20 }} />
-                )
-              }
+              icon={<ShrinkOutlined style={{ fontSize: 20 }} />}
             />
             <Button
               type={'text'}
@@ -518,7 +532,6 @@ export const PlayerDock: React.FC = () => {
             />
             <Button
               type='text'
-              size={'large'}
               onClick={toggleDocumentPiP}
               icon={
                 <svg
@@ -550,19 +563,27 @@ export const PlayerDock: React.FC = () => {
             <span>{formatTime(duration)}</span>
           </div>
         </div>
+      ) : (
+        <Button
+          onClick={handleToggleShowPlayer}
+          type='text'
+          icon={<ArrowsAltOutlined style={{ fontSize: 20 }} />}
+        />
       )}
 
       {/* Track info + seek bar */}
-      <div className={styles.dockMeta}>
-        <div className={styles.dockTitle} title={currentTrack?.title}>
-          {showPlayer && currentTrack?.title}
-        </div>
-        {activeSegmentText && showPlayer && (
-          <div className={styles.liveTranscript}>
-            <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
+      {showPlayer && (
+        <div className={styles.dockMeta}>
+          <div className={styles.dockTitle} title={currentTrack?.title}>
+            {currentTrack?.title}
           </div>
-        )}
-      </div>
+          {activeSegmentText && (
+            <div className={styles.liveTranscript}>
+              <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Hidden ReactPlayer engine */}
       <div style={{ display: 'none' }}>

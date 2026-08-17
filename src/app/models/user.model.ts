@@ -15,6 +15,7 @@ export interface IUserConfig<R = number[]> {
   numberOfExampleReview: number
   references: R
   community: boolean
+  showPlayer: boolean
 }
 
 export interface IUser<R = number[]> {

@@ -144,6 +144,7 @@ export const appSetting = {
     numberOfSentencesInStudySet: 3,
     numberOfExampleReview: 10,
     community: true,
+    showPlayer: true,
     references: [],
   },
   options: [

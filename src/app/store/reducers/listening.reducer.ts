@@ -22,14 +22,12 @@ export interface PlayerState {
 
 export interface IListeningState {
   currentTrack: IMediaForm | null
-  showPlayer: boolean
   tracks: ITracks[]
   player: PlayerState
 }
 
 export const initialState: IListeningState = {
   currentTrack: null,
-  showPlayer: true,
   tracks: [],
   player: {
     src: undefined,
@@ -86,9 +84,6 @@ export const listeningReducer = createSlice({
       prepare(payload?: Partial<PlayerState>) {
         return { payload }
       },
-    },
-    toggleShowPlayer(state: IListeningState) {
-      state.showPlayer = !state.showPlayer
     },
   },
   extraReducers: (builder) => {

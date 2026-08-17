@@ -47,6 +47,9 @@ export const Player: React.FC = () => {
             <LiveTranscript
               transcript={currentTrack.transcript}
               playedSeconds={player.playedSeconds}
+              duration={player.duration}
+              playing={player.playing}
+              playbackRate={player.playbackRate}
               onSeekTo={(seconds) =>
                 dispatch(listeningAction.updatePlayer({ seekTo: seconds, playing: true }))
               }

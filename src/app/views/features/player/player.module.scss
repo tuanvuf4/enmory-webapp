@@ -297,6 +297,30 @@
   border-left-color: $color-primary;
 }
 
+.transcriptPlayed {
+  font-weight: bold;
+}
+
+.boldWord {
+  font-weight: bold;
+}
+
+.karaokeWord {
+  --word-progress: 0%;
+
+  display: inline;
+  background-image: linear-gradient(to right, $color-primary 50%, $color-text-secondary 50%);
+  background-size: 200% 100%;
+  background-position: calc(100% - var(--word-progress)) 0;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: background-position 0.15s linear;
+
+  :global([data-theme='dark']) & {
+    background-image: linear-gradient(to right, $color-yellow-7 50%, $color-white 50%);
+  }
+}
+
 .transcriptTime {
   font-size: 11px;
   font-weight: 600;

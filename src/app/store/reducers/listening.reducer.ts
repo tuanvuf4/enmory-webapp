@@ -91,6 +91,13 @@ export const listeningReducer = createSlice({
       state.showPlayer = !state.showPlayer
     },
   },
+  extraReducers: (builder) => {
+    builder.addCase('persist/REHYDRATE', (state) => {
+      if (state?.player) {
+        state.player.playing = false
+      }
+    })
+  },
 })
 
 export const listeningAction = listeningReducer.actions

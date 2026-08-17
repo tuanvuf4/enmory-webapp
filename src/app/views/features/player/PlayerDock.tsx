@@ -353,7 +353,6 @@ export const PlayerDock: React.FC = () => {
   }
 
   const handleEnded = () => {
-    console.log(`*** handleEnded *** `)
     if (loop) {
       setPlayerKey((prevKey) => prevKey + 1)
     } else {
@@ -471,9 +470,9 @@ export const PlayerDock: React.FC = () => {
 
             <Button
               type='text'
-              title={'-10s'}
+              title={'-5s'}
               icon={<FastBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
-              onClick={() => onSeekBy(-10)}
+              onClick={() => onSeekBy(-5)}
             />
 
             <Button
@@ -490,7 +489,7 @@ export const PlayerDock: React.FC = () => {
 
             <Button
               type='text'
-              title={'+10s'}
+              title={'+5s'}
               icon={<FastForwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
               onClick={() => onSeekBy(10)}
             />
@@ -681,16 +680,26 @@ export const PlayerDock: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '20px',
+                gap: token.size,
                 marginTop: '4px',
               }}
             >
               <Button
                 type='text'
-                style={{ color: 'var(--ant-color-text)', fontSize: '18px' }}
+                title={'Previous'}
+                style={{ fontSize: '18px', color: token.colorText }}
                 icon={<StepBackwardOutlined />}
                 onClick={onPrev}
               />
+
+              <Button
+                type='text'
+                title={'-5s'}
+                style={{ fontSize: '18px', color: token.colorText }}
+                icon={<FastBackwardOutlined />}
+                onClick={() => onSeekBy(-5)}
+              />
+
               {playing ? (
                 <Button
                   type='text'
@@ -718,9 +727,19 @@ export const PlayerDock: React.FC = () => {
                   onClick={handlePlay}
                 />
               )}
+
               <Button
                 type='text'
-                style={{ color: 'var(--ant-color-text)', fontSize: '18px' }}
+                title={'+5s'}
+                style={{ fontSize: '18px', color: token.colorText }}
+                icon={<FastForwardOutlined />}
+                onClick={() => onSeekBy(10)}
+              />
+
+              <Button
+                type='text'
+                title={'Next'}
+                style={{ fontSize: '18px', color: token.colorText }}
                 icon={<StepForwardOutlined />}
                 onClick={onNext}
               />

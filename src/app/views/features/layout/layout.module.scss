@@ -23,13 +23,7 @@
 }
 
 .main {
-  padding: $size 0 $size * 8 0;
-}
-
-@media screen and (max-width: 640px) {
-  .main {
-    padding-bottom: 180px;
-  }
+  padding: $size 0 $size 0;
 }
 
 .siteLayout {

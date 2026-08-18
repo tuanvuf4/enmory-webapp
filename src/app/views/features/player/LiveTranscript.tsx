@@ -83,8 +83,8 @@ export const LiveTranscript: React.FC<IProps> = ({
           Transcript
           <span>
             {activeIndex >= 0
-              ? `(${activeIndex + 1} / ${segments.length})`
-              : `(0 / ${segments.length})`}
+              ? `(${activeIndex + 1}/${segments.length})`
+              : `(0/${segments.length})`}
           </span>
         </h3>
 

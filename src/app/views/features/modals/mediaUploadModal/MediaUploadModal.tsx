@@ -28,11 +28,7 @@ export const MediaUploadModal: React.FC<IProps> = ({
       footer={false}
       maskClosable={false}
     >
-      <MediaUploadForm
-        trackData={trackData}
-        onConfirm={onConfirm}
-        onCancel={onCancel}
-      />
+      <MediaUploadForm trackData={trackData} onConfirm={onConfirm} onCancel={onCancel} />
     </Modal>
   )
 }

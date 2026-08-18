@@ -26,11 +26,7 @@ export const TagManagerModal: React.FC<ITagManagerModalProps> = ({
       width={800}
       maskClosable={false}
     >
-      <TagManagerForm
-        onClose={onClose}
-        onTagUpdated={onTagUpdated}
-        onTagDeleted={onTagDeleted}
-      />
+      <TagManagerForm onClose={onClose} onTagUpdated={onTagUpdated} onTagDeleted={onTagDeleted} />
     </Modal>
   )
 }

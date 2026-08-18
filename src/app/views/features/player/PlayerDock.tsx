@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import {
+  CaretRightFilled,
   FastBackwardOutlined,
   FastForwardOutlined,
   PauseCircleFilled,
+  PauseOutlined,
   PlayCircleFilled,
   ReloadOutlined,
   StepBackwardOutlined,
@@ -38,7 +40,6 @@ export const PlayerDock: React.FC = () => {
   const { currentTrack, tracks, player } = useSelector((state) => state.listening)
   const { user } = useSelector((state) => state.auth)
   const showPlayer = user?.configuration?.showPlayer ?? appSetting.meta.showPlayer
-  const themeMode = useSelector((state) => state.setting.themeMode)
 
   const dispatch = useDispatch()
 
@@ -117,13 +118,18 @@ export const PlayerDock: React.FC = () => {
       // Copy all styles from the main window to the PiP window
       Array.from(document.styleSheets).forEach((styleSheet) => {
         try {
-          if (styleSheet.cssRules) {
+          if (styleSheet.cssRules && styleSheet.cssRules.length > 0) {
             const newStyle = d.createElement('style')
             const rules = Array.from(styleSheet.cssRules)
               .map((rule) => rule.cssText)
               .join('\n')
             newStyle.appendChild(d.createTextNode(rules))
             d.head.appendChild(newStyle)
+          } else if (styleSheet.href) {
+            const newLink = d.createElement('link')
+            newLink.rel = 'stylesheet'
+            newLink.href = styleSheet.href
+            d.head.appendChild(newLink)
           }
         } catch (e) {
           if (styleSheet.href) {
@@ -132,6 +138,20 @@ export const PlayerDock: React.FC = () => {
             newLink.href = styleSheet.href
             d.head.appendChild(newLink)
           }
+        }
+      })
+
+      // Also copy any direct <style> or <link> tags in document.head that might not be in document.styleSheets
+      document.head.querySelectorAll('link[rel="stylesheet"], style').forEach((el) => {
+        if (el.tagName.toLowerCase() === 'link') {
+          const href = (el as HTMLLinkElement).href
+          if (href && !d.head.querySelector(`link[href="${href}"]`)) {
+            d.head.appendChild(el.cloneNode(true))
+          }
+        } else if (el.tagName.toLowerCase() === 'style' && el.textContent) {
+          const newStyle = d.createElement('style')
+          newStyle.textContent = el.textContent
+          d.head.appendChild(newStyle)
         }
       })
 
@@ -146,45 +166,19 @@ export const PlayerDock: React.FC = () => {
     }
   }
 
-  // Synchronize theme attribute and CSS variables inside the PiP window document
+  // Set fixed styling inside the PiP window document (independent of app theme)
   useEffect(() => {
     if (!pipWindow) return
     const d = pipWindow.document
 
-    // Copy data-theme attribute
-    d.documentElement.setAttribute('data-theme', themeMode)
-
-    // Copy inline style attributes (which carry Ant Design CSS variables)
-    const mainHtml = document.documentElement
-    if (mainHtml.getAttribute('style')) {
-      d.documentElement.setAttribute('style', mainHtml.getAttribute('style')!)
-    } else {
-      d.documentElement.removeAttribute('style')
-    }
-
-    if (document.body.getAttribute('style')) {
-      d.body.setAttribute('style', document.body.getAttribute('style')!)
-    } else {
-      d.body.removeAttribute('style')
-    }
-
-    // Set dynamic body styles using computed background of .playerDock
-    const playerDockEl = document.querySelector(`.${styles.playerDock}`)
-    let bg = ''
-    if (playerDockEl) {
-      bg = window.getComputedStyle(playerDockEl).backgroundColor
-    }
-    d.body.style.background = bg || 'var(--ant-color-bg-container)'
-    d.body.style.color = 'var(--ant-color-text)'
+    d.documentElement.setAttribute('data-theme', 'dark')
     d.body.style.margin = '0'
-    d.body.style.display = 'flex'
-    d.body.style.flexDirection = 'column'
-    d.body.style.alignItems = 'center'
-    d.body.style.justifyContent = 'center'
-    d.body.style.height = '100vh'
-    d.body.style.fontFamily = 'system-ui, -apple-system, sans-serif'
+    d.body.style.padding = '0'
+    d.body.style.backgroundColor = '#054753'
+    d.body.style.color = '#8ea5b0'
+    d.body.style.fontFamily = "'Lora', Georgia, serif"
     d.body.style.overflow = 'hidden'
-  }, [themeMode, pipWindow])
+  }, [pipWindow])
 
   useEffect(() => {
     return () => {
@@ -480,12 +474,23 @@ export const PlayerDock: React.FC = () => {
         </div>
       )}
 
+      {/* Track info + seek bar */}
       {showPlayer && (
-        <Space size={[0, 8]} direction={'vertical'}>
+        <div className={styles.dockMeta}>
           <div className={styles.dockTitle} title={currentTrack?.title}>
             {currentTrack?.title}
           </div>
 
+          {activeSegmentText && (
+            <div className={styles.liveTranscript}>
+              <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {showPlayer && (
+        <Space size={[0, 8]} direction={'vertical'}>
           {/* controls */}
           <Flex gap={token.size / 4}>
             <Button
@@ -608,17 +613,6 @@ export const PlayerDock: React.FC = () => {
         </Space>
       )}
 
-      {/* Track info + seek bar */}
-      {showPlayer && (
-        <div className={styles.dockMeta}>
-          {activeSegmentText && (
-            <div className={styles.liveTranscript}>
-              <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Hidden ReactPlayer engine */}
       <div style={{ display: 'none' }}>
         <ReactPlayer
@@ -678,72 +672,27 @@ export const PlayerDock: React.FC = () => {
 
       {pipWindow &&
         createPortal(
-          <div
-            className={styles.playerDock}
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              height: '100%',
-              boxSizing: 'border-box',
-              textAlign: 'center',
-              gap: '12px',
-              position: 'relative',
-              left: 'auto',
-              top: 'auto',
-              borderTop: 'none',
-              backdropFilter: 'none',
-              WebkitBackdropFilter: 'none',
-            }}
-          >
+          <div className={styles.pipContainer}>
             {/* Title */}
-            <div
-              style={{
-                fontSize: '20px',
-                fontWeight: 600,
-                color: 'var(--ant-color-primary)',
-                maxWidth: '100%',
-              }}
-            >
-              {currentTrack?.title || 'No Track Playing'}
-            </div>
+            <div className={styles.pipTitle}>{currentTrack?.title || 'No Track Playing'}</div>
 
             {/* Karaoke text */}
-            <div
-              style={{
-                fontSize: '20px',
-                minHeight: '28px',
-                lineHeight: '1.4',
-                color: 'var(--ant-color-text)',
-                fontWeight: 500,
-                width: '100%',
-                wordWrap: 'break-word',
-              }}
-            >
-              {activeSegmentText ? (
-                <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
-              ) : (
-                <span style={{ color: 'var(--ant-color-text-description)' }}>...</span>
-              )}
+            <div className={styles.pipContentWrapper}>
+              <div className={styles.pipKaraokeText}>
+                {activeSegmentText ? (
+                  <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
+                ) : (
+                  <span style={{ color: '#8ea5b0', opacity: 0.6 }}>...</span>
+                )}
+              </div>
             </div>
 
             {/* Controls */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: token.size,
-                marginTop: '4px',
-              }}
-            >
+            <div className={styles.pipControls}>
               <Button
                 type='text'
                 title={'Previous'}
-                style={{ fontSize: '18px', color: token.colorText }}
+                className={styles.pipBtnSecondary}
                 icon={<StepBackwardOutlined />}
                 onClick={onPrev}
               />
@@ -751,43 +700,30 @@ export const PlayerDock: React.FC = () => {
               <Button
                 type='text'
                 title={'-5s'}
-                style={{ fontSize: '18px', color: token.colorText }}
+                className={styles.pipBtnSecondary}
                 icon={<FastBackwardOutlined />}
                 onClick={() => onSeekBy(-5)}
               />
 
-              {playing ? (
-                <Button
-                  type='text'
-                  style={{
-                    color: 'var(--ant-color-text)',
-                    fontSize: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                  icon={<PauseCircleFilled style={{ fontSize: '36px' }} />}
-                  onClick={handlePause}
-                />
-              ) : (
-                <Button
-                  type='text'
-                  style={{
-                    color: 'var(--ant-color-text)',
-                    fontSize: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                  icon={<PlayCircleFilled style={{ fontSize: '36px' }} />}
-                  onClick={handlePlay}
-                />
-              )}
+              <Button
+                type='text'
+                className={styles.pipBtnPlay}
+                icon={
+                  playing ? (
+                    <PauseOutlined style={{ fontSize: '20px', color: '#054753' }} />
+                  ) : (
+                    <CaretRightFilled
+                      style={{ fontSize: '22px', color: '#054753', marginLeft: '3px' }}
+                    />
+                  )
+                }
+                onClick={playing ? handlePause : handlePlay}
+              />
 
               <Button
                 type='text'
                 title={'+5s'}
-                style={{ fontSize: '18px', color: token.colorText }}
+                className={styles.pipBtnSecondary}
                 icon={<FastForwardOutlined />}
                 onClick={() => onSeekBy(10)}
               />
@@ -795,7 +731,7 @@ export const PlayerDock: React.FC = () => {
               <Button
                 type='text'
                 title={'Next'}
-                style={{ fontSize: '18px', color: token.colorText }}
+                className={styles.pipBtnSecondary}
                 icon={<StepForwardOutlined />}
                 onClick={onNext}
               />

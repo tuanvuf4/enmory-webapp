@@ -2,11 +2,11 @@ import { App, MessageArgsProps, ModalFuncProps, theme } from 'antd'
 import { ArgsProps } from 'antd/es/notification'
 
 export const usePrompt = () => {
-  const { modal, notification, message } = App.useApp()
+  const { modal: modalRef, notification: notificationRef, message: messageRef } = App.useApp()
 
   const { token } = theme.useToken()
 
-  const confirmDeleteModal = ({
+  const confirm = ({
     type = 'warning',
     title = 'Deleting...!',
     content = 'Are you sure you want to delete this item?',
@@ -14,7 +14,7 @@ export const usePrompt = () => {
     onOk,
     onCancel,
   }: ModalFuncProps) => {
-    modal.confirm({
+    modalRef.confirm({
       type,
       title,
       content,
@@ -26,8 +26,8 @@ export const usePrompt = () => {
     })
   }
 
-  const openNotification = ({ type = 'success', message, ...props }: ArgsProps) => {
-    notification.open({
+  const notification = ({ type = 'success', message, ...props }: ArgsProps) => {
+    notificationRef.open({
       type,
       duration: 2.5,
       message: <h4 style={{ color: token.colorText }}>{message}</h4>,
@@ -35,8 +35,8 @@ export const usePrompt = () => {
     })
   }
 
-  const openMessage = ({ type = 'success', content, ...props }: MessageArgsProps) => {
-    message.open({
+  const message = ({ type = 'success', content, ...props }: MessageArgsProps) => {
+    messageRef.open({
       type,
       duration: 5,
       content: <h4 style={{ color: token.colorText }}>{content}</h4>,
@@ -44,5 +44,5 @@ export const usePrompt = () => {
     })
   }
 
-  return { confirmDeleteModal, openNotification, openMessage }
+  return { confirm, notification, message }
 }

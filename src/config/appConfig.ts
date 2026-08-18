@@ -180,7 +180,6 @@ export const appSetting = {
     { value: 25, label: 25 },
   ],
   listening: {
-    threshold: 50,
     maxLengthShortInput: 250,
     maxLengthInput: 500,
     maxLengthTranscript: 50000,

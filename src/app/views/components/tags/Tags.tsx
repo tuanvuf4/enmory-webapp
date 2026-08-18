@@ -1,11 +1,12 @@
-import { SearchOutlined } from '@ant-design/icons'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import styles from './tags.module.scss'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { useItemModal, useLoading } from '@/helpers/hooks'
 import { usePrompt } from '@/helpers/hooks'
 import { appSetting } from '@/config/appConfig'
 import { useNavigate } from 'react-router-dom'
-import { Flex, theme } from 'antd'
+import { Button, Flex, theme } from 'antd'
+import { initItem } from '@/views/features/modals'
 
 type TSearchBy = 'keyword' | 'tags'
 interface IPros {
@@ -19,7 +20,7 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch, searchBy = 'keywo
   const { showLoading, hideLoading } = useLoading()
 
   const { openItemModal } = useItemModal()
-  const { openMessage } = usePrompt()
+  const { message } = usePrompt()
 
   const { token } = theme.useToken()
 
@@ -38,13 +39,30 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch, searchBy = 'keywo
       if (isSuccess && content) {
         content.length > 0
           ? openItemModal('view', content[0])
-          : openMessage({
+          : message({
               type: 'warning',
-              content: `No item found with "${origin}"`,
+              content: (
+                <Flex align={'center'} justify={'center'} gap={token.size * 0.5}>
+                  <span>No item found with "{origin}"</span>
+                  <Button
+                    size={'small'}
+                    icon={<PlusOutlined />}
+                    onClick={() =>
+                      openItemModal('add', {
+                        ...initItem,
+                        origin: origin.trim(),
+                      })
+                    }
+                  >
+                    Add
+                  </Button>
+                </Flex>
+              ),
             })
       }
-      hideLoading()
     } catch (error) {
+      console.log(`*** error *** `, error)
+    } finally {
       hideLoading()
     }
   }

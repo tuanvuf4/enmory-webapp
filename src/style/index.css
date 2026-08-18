@@ -244,3 +244,8 @@ input[type='range']:active::-moz-range-thumb {
 .ck .ck-content[contenteditable='false'] {
   background-color: #333 !important;
 }
+
+.ck.ck-button.ck-on {
+  background: transparent !important;
+  border: 1px solid;
+}

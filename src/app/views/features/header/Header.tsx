@@ -17,7 +17,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
 import { MainMenu } from '../mainMenu/MainMenu'
 import { menu, addNewType } from './Menu'
-import { useExampleModal, useItemModal } from '@/helpers/hooks'
+import { useExampleModal, useItemModal, useMediaUploadModal } from '@/helpers/hooks'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
 import { Toolbar } from '../toolbar'
@@ -42,6 +42,7 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
   const { openItemModal } = useItemModal()
   const { openExampleModal } = useExampleModal()
   const { openArticleModal } = useArticleModal()
+  const { openMediaUploadModal } = useMediaUploadModal()
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
@@ -83,6 +84,10 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
 
     if (e.key === 'ADD_POST') {
       openArticleModal('add')
+    }
+
+    if (e.key === 'ADD_MEDIA') {
+      openMediaUploadModal('add')
     }
   }
 
@@ -209,6 +214,7 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
                   onClick={() => dispatch(settingAction.toggleTheme())}
                 />
 
+                {/* add button */}
                 <Dropdown trigger={['click']} menu={menuAddProps} placement='bottomLeft' arrow>
                   <Button
                     style={{

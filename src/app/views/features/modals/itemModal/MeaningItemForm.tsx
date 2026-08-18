@@ -35,7 +35,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
 
   const { types } = useSelector((state) => state.setting)
 
-  const { confirmDeleteModal } = usePrompt()
+  const { confirm } = usePrompt()
 
   const { control, getValues, trigger, watch } = useFormContext<IItem>()
 
@@ -188,7 +188,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                       style={{ color: token.palette?.red?.[6] }}
                       type={'text'}
                       onClick={() => {
-                        confirmDeleteModal({
+                        confirm({
                           onOk: () => {
                             remove(index)
                             setShow((prev) => prev.filter((_, key) => key !== index))

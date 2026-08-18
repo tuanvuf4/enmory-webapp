@@ -23,7 +23,7 @@ export const StudySet: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const inputEl = useRef<InputRef | null>(null)
 
-  const { openNotification } = usePrompt()
+  const { notification } = usePrompt()
 
   const { openItemModal } = useItemModal()
 
@@ -68,7 +68,7 @@ export const StudySet: React.FC = () => {
       const response = await itemApi.getStudySet(studySetParams)
 
       if (!response.isSuccess) {
-        openNotification({
+        notification({
           type: 'error',
           message: response.message || 'Failed to create study set',
         })
@@ -94,11 +94,11 @@ export const StudySet: React.FC = () => {
         dispatch(studySetAction.setList(formattedItems))
         dispatch(studySetAction.updateProgress({ ...params }))
       } else {
-        openNotification({ type: 'warning', message: 'No items found for study set' })
+        notification({ type: 'warning', message: 'No items found for study set' })
       }
     } catch (error) {
       console.error('Error creating study set:', error)
-      openNotification({
+      notification({
         type: 'error',
         message:
           'Failed to create study set: ' +
@@ -215,7 +215,7 @@ export const StudySet: React.FC = () => {
         openItemModal('view', content)
       }
     } catch (error) {
-      openNotification({ type: 'error', message: JSON.stringify(error) })
+      notification({ type: 'error', message: JSON.stringify(error) })
     }
   }
 
@@ -332,7 +332,7 @@ export const StudySet: React.FC = () => {
   //   try {
   //     const { content } = await itemApi.getItemById(id)
   //   } catch (error) {
-  //     openNotification({ type: 'error', message: JSON.stringify(error) })
+  //     notification({ type: 'error', message: JSON.stringify(error) })
   //   }
   // }
 

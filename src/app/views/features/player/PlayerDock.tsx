@@ -1,25 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import {
-  ArrowsAltOutlined,
   FastBackwardOutlined,
   FastForwardOutlined,
   PauseCircleFilled,
   PlayCircleFilled,
   ReloadOutlined,
-  ShrinkOutlined,
   StepBackwardOutlined,
   StepForwardOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-import { App, Button, theme } from 'antd'
+import { App, Button, Flex, Space, theme } from 'antd'
 import ReactPlayer from 'react-player'
 import { createPortal } from 'react-dom'
 import styles from './player.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
-import { authAction } from '@/store/reducers/auth.reducer'
-import { apiUser } from '@/services/firebase/api/user.api'
 import { appSetting } from '@/config/appConfig'
 import { getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import { KaraokeText } from './KaraokeText'
@@ -48,21 +44,21 @@ export const PlayerDock: React.FC = () => {
 
   const trackIndex = tracks.findIndex((t) => t.id === currentTrack?.id)
 
-  const handleToggleShowPlayer = async () => {
-    const currentConfig = user?.configuration || appSetting.meta
-    const newConfig = {
-      ...currentConfig,
-      showPlayer: !showPlayer,
-    }
-    dispatch(authAction.updateUserConfig(newConfig))
-    if (user?.uid) {
-      try {
-        await apiUser.updateUserConfig(newConfig)
-      } catch (err) {
-        console.error('Failed to update showPlayer config:', err)
-      }
-    }
-  }
+  // const handleToggleShowPlayer = async () => {
+  //   const currentConfig = user?.configuration || appSetting.meta
+  //   const newConfig = {
+  //     ...currentConfig,
+  //     showPlayer: !showPlayer,
+  //   }
+  //   dispatch(authAction.updateUserConfig(newConfig))
+  //   if (user?.uid) {
+  //     try {
+  //       await apiUser.updateUserConfig(newConfig)
+  //     } catch (err) {
+  //       console.error('Failed to update showPlayer config:', err)
+  //     }
+  //   }
+  // }
 
   useEffect(() => {
     const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
@@ -113,7 +109,7 @@ export const PlayerDock: React.FC = () => {
       // @ts-ignore
       const w = await window.documentPictureInPicture.requestWindow({
         width: 500,
-        height: 280,
+        height: 350,
       })
 
       const d = w.document
@@ -218,6 +214,12 @@ export const PlayerDock: React.FC = () => {
     playerRef.current = player
   }, [])
 
+  const playedSecondsRef = useRef(playedSeconds)
+
+  useEffect(() => {
+    playedSecondsRef.current = playedSeconds
+  }, [playedSeconds])
+
   const smoothTime = useSmoothTime(playedSeconds, playing, playbackRate)
 
   const transcriptSegments = useMemo(
@@ -255,12 +257,14 @@ export const PlayerDock: React.FC = () => {
   const handlePlay = () => {
     if (playerRef.current) {
       const current = playerRef.current.currentTime
-      if (current < 1 && playedSeconds > 0 && Math.abs(current - playedSeconds) > 1) {
-        playerRef.current.currentTime = playedSeconds
+      const latestPlayedSeconds = playedSecondsRef.current
+      if (current < 1 && latestPlayedSeconds > 0 && Math.abs(current - latestPlayedSeconds) > 1) {
+        playerRef.current.currentTime = latestPlayedSeconds
       }
     }
     dispatch(listeningAction.updatePlayer({ playing: true }))
   }
+
   const handlePause = () => dispatch(listeningAction.updatePlayer({ playing: false }))
 
   const load = (src?: string, startPosition?: number) => {
@@ -406,7 +410,17 @@ export const PlayerDock: React.FC = () => {
   }
 
   const onPrev = () => {
-    dispatch(listeningAction.resetPlayer({ loop }))
+    if (playerRef.current) playerRef.current.currentTime = 0
+    dispatch(
+      listeningAction.resetPlayer({
+        loop,
+        playing: false,
+        loaded: 0,
+        loadedSeconds: 0,
+        played: 0,
+        playedSeconds: 0,
+      }),
+    )
     const index = trackIndex - 1 < 0 ? tracks.length - 1 : trackIndex - 1
     const item = tracks[index]
     dispatch(listeningAction.setCurrentTrack(item))
@@ -414,7 +428,17 @@ export const PlayerDock: React.FC = () => {
   }
 
   const onNext = () => {
-    dispatch(listeningAction.resetPlayer({ loop }))
+    if (playerRef.current) playerRef.current.currentTime = 0
+    dispatch(
+      listeningAction.resetPlayer({
+        loop,
+        playing: false,
+        loaded: 0,
+        loadedSeconds: 0,
+        played: 0,
+        playedSeconds: 0,
+      }),
+    )
     const index = trackIndex + 1 === tracks.length ? 0 : trackIndex + 1
     const item = tracks[index]
     dispatch(listeningAction.setCurrentTrack(item))
@@ -456,30 +480,37 @@ export const PlayerDock: React.FC = () => {
         </div>
       )}
 
-      {/* Controls & seek bar */}
-      {showPlayer ? (
-        <div className={styles.controls}>
-          <div className={styles.dockControls}>
+      {showPlayer && (
+        <Space size={[0, 8]} direction={'vertical'}>
+          <div className={styles.dockTitle} title={currentTrack?.title}>
+            {currentTrack?.title}
+          </div>
+
+          {/* controls */}
+          <Flex gap={token.size / 4}>
             <Button
-              onClick={handleToggleShowPlayer}
-              type='text'
-              className={appStyle.fromXs}
-              icon={<ShrinkOutlined style={{ fontSize: 20 }} />}
+              type={trackListOpen ? 'primary' : 'text'}
+              variant={'text'}
+              size={'middle'}
+              style={{ background: 'transparent', boxShadow: 'none' }}
+              icon={
+                <UnorderedListOutlined
+                  style={{
+                    fontSize: '20px',
+                    color: trackListOpen ? token.palette?.yellow?.[0] : token.colorText,
+                  }}
+                />
+              }
+              onClick={() => setTrackListOpen((v) => !v)}
             />
-            <Button
-              type={'text'}
-              title={'Repeat'}
-              icon={<ReloadOutlined style={{ fontSize: '20px' }} />}
-              style={{
-                background: 'transparent',
-                boxShadow: 'none',
-                color: loop ? token.colorPrimary : token.colorText,
-              }}
-              onClick={() => handleToggleLoop()}
-            />
+
+            <Button type='text' title={'Rate'} size={'middle'}>
+              1x
+            </Button>
 
             <Button
               type='text'
+              size={'middle'}
               title={'Previous'}
               icon={<StepBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
               onClick={onPrev}
@@ -487,6 +518,7 @@ export const PlayerDock: React.FC = () => {
 
             <Button
               type='text'
+              size={'middle'}
               title={'-5s'}
               icon={<FastBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
               onClick={() => onSeekBy(-5)}
@@ -494,11 +526,16 @@ export const PlayerDock: React.FC = () => {
 
             <Button
               type='text'
+              size={'middle'}
               icon={
                 playing ? (
-                  <PauseCircleFilled style={{ fontSize: '20px', color: token.colorText }} />
+                  <PauseCircleFilled
+                    style={{ fontSize: '20px', color: token.palette?.yellow?.[0] }}
+                  />
                 ) : (
-                  <PlayCircleFilled style={{ fontSize: '20px', color: token.colorText }} />
+                  <PlayCircleFilled
+                    style={{ fontSize: '20px', color: token.palette?.yellow?.[0] }}
+                  />
                 )
               }
               onClick={playing ? handlePause : handlePlay}
@@ -507,6 +544,7 @@ export const PlayerDock: React.FC = () => {
             <Button
               type='text'
               title={'+5s'}
+              size={'middle'}
               icon={<FastForwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
               onClick={() => onSeekBy(10)}
             />
@@ -514,26 +552,27 @@ export const PlayerDock: React.FC = () => {
             <Button
               type='text'
               title={'Next'}
+              size={'middle'}
               icon={<StepForwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
               onClick={onNext}
             />
 
             <Button
-              type={trackListOpen ? 'primary' : 'text'}
-              variant={'text'}
-              style={{ background: 'transparent', boxShadow: 'none' }}
-              icon={
-                <UnorderedListOutlined
-                  style={{
-                    fontSize: '20px',
-                    color: trackListOpen ? token.colorPrimary : token.colorText,
-                  }}
-                />
-              }
-              onClick={() => setTrackListOpen((v) => !v)}
+              type={'text'}
+              size={'middle'}
+              title={'Repeat'}
+              icon={<ReloadOutlined style={{ fontSize: '20px' }} />}
+              style={{
+                background: 'transparent',
+                boxShadow: 'none',
+                color: loop ? token.palette?.yellow?.[0] : token.colorText,
+              }}
+              onClick={() => handleToggleLoop()}
             />
+
             <Button
               type='text'
+              size={'middle'}
               onClick={toggleDocumentPiP}
               className={appStyle.fromXs}
               icon={
@@ -542,16 +581,17 @@ export const PlayerDock: React.FC = () => {
                   width='22'
                   height='22'
                   fill='currentColor'
-                  style={{ color: pipWindow ? '#72a526' : 'inherit' }}
+                  style={{ color: pipWindow ? token.palette?.yellow?.[0] : 'inherit' }}
                 >
                   <path d='M19 11h-8v6h8v-6zm4 8V5c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 0H3V5h18v14z' />
                 </svg>
               }
               title='Picture in Picture'
             />
-          </div>
+          </Flex>
 
-          <div className={styles.seekBar}>
+          {/* seek bar */}
+          <Flex gap={token.size / 2} align={'center'}>
             <span>{formatTime(duration * played)}</span>
             <input
               type='range'
@@ -564,22 +604,13 @@ export const PlayerDock: React.FC = () => {
               onMouseUp={handleSeekMouseUp}
             />
             <span>{formatTime(duration)}</span>
-          </div>
-        </div>
-      ) : (
-        <Button
-          onClick={handleToggleShowPlayer}
-          type='text'
-          icon={<ArrowsAltOutlined style={{ fontSize: 20 }} />}
-        />
+          </Flex>
+        </Space>
       )}
 
       {/* Track info + seek bar */}
       {showPlayer && (
         <div className={styles.dockMeta}>
-          <div className={styles.dockTitle} title={currentTrack?.title}>
-            {currentTrack?.title}
-          </div>
           {activeSegmentText && (
             <div className={styles.liveTranscript}>
               <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
@@ -627,18 +658,18 @@ export const PlayerDock: React.FC = () => {
               closed_caption: false,
             },
           }}
-          onLoadStart={() => console.log('onLoadStart')}
+          // onLoadStart={() => console.log('onLoadStart')}
           onReady={handleReady}
           onEnterPictureInPicture={() => dispatch(listeningAction.updatePlayer({ pip: true }))}
           onLeavePictureInPicture={() => dispatch(listeningAction.updatePlayer({ pip: false }))}
-          onStart={(e) => console.log('onStart', e)}
+          // onStart={(e) => console.log('onStart', e)}
           onPlay={handlePlay}
           onPause={handlePause}
           onRateChange={handleRateChange}
-          onSeeking={(e) => console.log('onSeeking', e)}
-          onSeeked={(e) => console.log('onSeeked', e)}
+          // onSeeking={(e) => console.log('onSeeking', e)}
+          // onSeeked={(e) => console.log('onSeeked', e)}
           onEnded={handleEnded}
-          onError={(e) => console.log('onError', e)}
+          // onError={(e) => console.log('onError', e)}
           onTimeUpdate={handleTimeUpdate}
           onProgress={handleProgress}
           onDurationChange={handleDurationChange}

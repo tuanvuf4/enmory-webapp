@@ -11,6 +11,8 @@ export const initMediaForm: IMediaForm = {
   description: '',
   transcript: '',
   translation: '',
+  tags: [],
+  relation: [],
   srcUrl: '',
   srcType: TSourceTypes.LINK,
 }

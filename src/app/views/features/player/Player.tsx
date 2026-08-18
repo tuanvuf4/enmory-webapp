@@ -1,10 +1,11 @@
-import { Space, theme } from 'antd'
+import { Flex, Space, theme } from 'antd'
 import styles from './player.module.scss'
 import clsx from 'clsx'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { LiveTranscript } from './LiveTranscript'
 import { TrackList } from './TrackList'
+import { Tags } from '@/views/components'
 
 export const Player: React.FC = () => {
   const { token } = theme.useToken()
@@ -16,32 +17,32 @@ export const Player: React.FC = () => {
   return (
     <div className={styles.playerWrapper}>
       <Space direction={'vertical'} size={token.size} style={{ width: '100%' }}>
-        <div className={styles.audioPlayer} style={{ background: token.colorBgContainer }}>
-          <div className={styles.playerCard}>
-            <div className={styles.nowPlaying}>
-              <h3
-                style={{ color: token.colorPrimary, fontSize: token.fontSizeHeading4 }}
-                className={styles.trackTitle}
-              >
-                {tracks.findIndex((t) => t.id === currentTrack?.id) !== -1
-                  ? tracks.find((t) => t.id === currentTrack?.id)?.title
-                  : 'No track selected'}
-              </h3>
-              <div
-                className={styles.trackDescription}
-                dangerouslySetInnerHTML={{
-                  __html: currentTrack?.description || 'No description available',
-                }}
-              />
-            </div>
-          </div>
+        <Flex gap={token.size} wrap={true} style={{ background: token.colorBgContainer }}>
+          <Space direction={'vertical'} size={token.size} style={{ flex: 1, padding: token.size }}>
+            <h3 style={{ color: token.colorPrimary, fontSize: token.fontSizeHeading4, margin: 0 }}>
+              {tracks.findIndex((t) => t.id === currentTrack?.id) !== -1
+                ? tracks.find((t) => t.id === currentTrack?.id)?.title
+                : 'No track selected'}
+            </h3>
+
+            <div
+              className={styles.trackDescription}
+              dangerouslySetInnerHTML={{
+                __html: currentTrack?.description || 'No description available',
+              }}
+            />
+
+            <Tags label={'Tags'} searchBy={'tags'} tags={currentTrack?.tags || []} />
+
+            <Tags label={'Relation'} tags={currentTrack?.relation || []} />
+          </Space>
 
           <TrackList />
-        </div>
+        </Flex>
 
         {currentTrack?.transcript && (
           <div
-            className={clsx(styles.audioPlayer, styles.transcriptCard)}
+            className={clsx(styles.transcriptCard)}
             style={{ background: token.colorBgContainer }}
           >
             <LiveTranscript

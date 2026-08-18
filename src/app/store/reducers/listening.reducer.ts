@@ -70,6 +70,9 @@ export const listeningReducer = createSlice({
     },
     updateTrack(state: IListeningState, action: PayloadAction<ITracks>) {
       state.tracks = state.tracks.map((t) => (t.id === action.payload.id ? action.payload : t))
+      if (state.currentTrack?.id === action.payload.id) {
+        state.currentTrack = action.payload
+      }
     },
     removeTrack(state: IListeningState, action: PayloadAction<number>) {
       state.tracks = state.tracks.filter((t) => t.id !== action.payload)

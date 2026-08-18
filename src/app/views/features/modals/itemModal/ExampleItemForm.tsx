@@ -19,7 +19,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
   const [currentSearch, setCurrentSearch] = useState<string>('')
   const [activeFieldIndex, setActiveFieldIndex] = useState<number | null>(null)
 
-  const { confirmDeleteModal } = usePrompt()
+  const { confirm } = usePrompt()
 
   const { options } = useAutoComplete(
     {
@@ -113,7 +113,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                               className={'min-w-10'}
                               danger
                               onClick={() => {
-                                confirmDeleteModal({
+                                confirm({
                                   onOk: () => {
                                     remove(key)
                                   },

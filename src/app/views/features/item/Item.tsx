@@ -53,7 +53,6 @@ export const Item: React.FC<IProps> = ({
 
   const [, setSize] = useState<number>(8)
   const [spin, setSpin] = useState(false)
-  const { openMessage } = usePrompt()
 
   const dispatch = useDispatch()
 
@@ -61,7 +60,7 @@ export const Item: React.FC<IProps> = ({
 
   const { mutate: mutateDeleteItem } = useDeleteItem()
 
-  const { confirmDeleteModal, openNotification } = usePrompt()
+  const { confirm, notification, message } = usePrompt()
 
   const { viewMode } = useSelector((state) => state.setting)
 
@@ -147,22 +146,22 @@ export const Item: React.FC<IProps> = ({
         onEditSuccess?.()
       }
     } catch (error) {
-      openNotification({ type: 'error', message: JSON.stringify(error) })
+      notification({ type: 'error', message: JSON.stringify(error) })
     }
   }
 
   const onDelete = (id: string) => {
-    confirmDeleteModal({
+    confirm({
       onOk: async () => {
         try {
           mutateDeleteItem(id, {
             onSuccess: () => {
               onDeleteSuccess?.()
-              openNotification({ type: 'success', message: 'Item deleted successfully!' })
+              notification({ type: 'success', message: 'Item deleted successfully!' })
             },
           })
         } catch (error) {
-          openNotification({ type: 'error', message: JSON.stringify(error) })
+          notification({ type: 'error', message: JSON.stringify(error) })
         }
       },
     })
@@ -185,7 +184,7 @@ export const Item: React.FC<IProps> = ({
       last_update: now,
     })
     await onUpdateItemSuccess(response)
-    openMessage({
+    message({
       type: 'success',
       content: `Item has been reset successfully!`,
     })
@@ -195,7 +194,7 @@ export const Item: React.FC<IProps> = ({
     const level = data.level === 5 ? 0 : 5
     const response = await itemApi.updateItem(data.id || '', { level })
     await onUpdateItemSuccess(response)
-    openMessage({
+    message({
       type: 'success',
       content: `Item has been set to level ${level} successfully!`,
     })
@@ -205,7 +204,7 @@ export const Item: React.FC<IProps> = ({
     const archive = !data.archive
     const response = await itemApi.updateItem(data.id || '', { archive })
     await onUpdateItemSuccess(response)
-    openMessage({
+    message({
       type: 'success',
       content: `Item has been ${archive ? 'archived' : 'unarchived'} successfully!`,
     })
@@ -215,7 +214,7 @@ export const Item: React.FC<IProps> = ({
     const favorite = !data.favorite
     const response = await itemApi.updateItem(data.id || '', { favorite })
     await onUpdateItemSuccess(response)
-    openMessage({
+    message({
       type: 'success',
       content: `Item has been ${favorite ? 'added to' : 'removed from'} favorites successfully!`,
     })

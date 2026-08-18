@@ -32,7 +32,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 }) => {
   const { token } = theme.useToken()
 
-  const { openNotification } = usePrompt()
+  const { notification } = usePrompt()
   const { closeExampleModal } = useExampleModal()
 
   const dispatch = useDispatch()
@@ -73,10 +73,10 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
         dispatch(exampleAction.setTranslate(result))
         // update example list in Redux store
         dispatch(exampleAction.batchUpdate(result ? [result] : []))
-        openNotification({ type: 'success', message: 'Update example successful!' })
+        notification({ type: 'success', message: 'Update example successful!' })
       } else {
         result = await createMutation({ ...updatedData })
-        openNotification({ type: 'success', message: 'Add example successful!' })
+        notification({ type: 'success', message: 'Add example successful!' })
       }
 
       closeExampleModal()
@@ -86,7 +86,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
         onSuccess?.(result)
       }
     } catch (error: Error | any) {
-      openNotification({ type: 'error', message: JSON.stringify(error.message) })
+      notification({ type: 'error', message: JSON.stringify(error.message) })
     } finally {
       setLoading(false)
     }

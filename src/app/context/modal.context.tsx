@@ -4,6 +4,7 @@ import { CloseSquareOutlined } from '@ant-design/icons'
 import { styleConfig } from '@/style/appStyle'
 
 interface ModalConfig extends Omit<ModalProps, 'open' | 'onCancel' | 'onOk'> {
+  id?: string
   content: ReactNode
   onConfirm?: () => void | Promise<void>
   onClose?: () => void
@@ -18,65 +19,69 @@ interface ModalContextType {
 const ModalContext = createContext<ModalContextType | undefined>(undefined)
 
 export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [modalConfig, setModalConfig] = useState<ModalConfig | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [modals, setModals] = useState<ModalConfig[]>([])
+  const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({})
 
   const openModal = (config: ModalConfig) => {
-    setModalConfig(config)
-    setIsOpen(true)
+    const id = Math.random().toString(36).substring(7)
+    setModals((prev) => [...prev, { ...config, id }])
   }
 
   const closeModal = () => {
-    setIsOpen(false)
-    setLoading(false)
-    // Clear config after animation completes
-    setTimeout(() => setModalConfig(null), 300)
+    setModals((prev) => prev.slice(0, -1))
   }
 
   const updateModal = (config: Partial<ModalConfig>) => {
-    setModalConfig((prev) => (prev ? { ...prev, ...config } : null))
+    setModals((prev) => {
+      if (prev.length === 0) return prev
+      const next = [...prev]
+      next[next.length - 1] = { ...next[next.length - 1], ...config }
+      return next
+    })
   }
 
-  const handleOk = async () => {
-    if (modalConfig?.onConfirm) {
+  const handleOk = async (id: string) => {
+    const config = modals.find((m) => m.id === id)
+    if (config?.onConfirm) {
       try {
-        setLoading(true)
-        await modalConfig.onConfirm()
-        closeModal()
+        setLoadingMap((prev) => ({ ...prev, [id]: true }))
+        await config.onConfirm()
+        setModals((prev) => prev.filter((m) => m.id !== id))
       } catch (error) {
         console.error('Modal confirm error:', error)
       } finally {
-        setLoading(false)
+        setLoadingMap((prev) => ({ ...prev, [id]: false }))
       }
     } else {
-      closeModal()
+      setModals((prev) => prev.filter((m) => m.id !== id))
     }
   }
 
-  const handleCancel = () => {
-    modalConfig?.onClose?.()
-    closeModal()
+  const handleCancel = (id: string) => {
+    const config = modals.find((m) => m.id === id)
+    config?.onClose?.()
+    setModals((prev) => prev.filter((m) => m.id !== id))
   }
 
   return (
     <ModalContext.Provider value={{ openModal, closeModal, updateModal }}>
       {children}
-      {modalConfig && (
+      {modals.map((config) => (
         <Modal
-          open={isOpen}
-          onOk={handleOk}
-          onCancel={handleCancel}
-          confirmLoading={loading}
+          key={config.id}
+          open={true}
+          onOk={() => handleOk(config.id!)}
+          onCancel={() => handleCancel(config.id!)}
+          confirmLoading={loadingMap[config.id!] || false}
           closeIcon={<CloseSquareOutlined />}
           destroyOnHidden
           keyboard={false}
           getContainer={`.${styleConfig.prefixClassCss}-layout`}
-          {...modalConfig}
+          {...config}
         >
-          {modalConfig.content}
+          {config.content}
         </Modal>
-      )}
+      ))}
     </ModalContext.Provider>
   )
 }

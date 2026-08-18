@@ -8,17 +8,17 @@ import { ECategory, IItem, IExample, IMeaning } from '@/models/item.model'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
-import { InputTag, Level, ReviewableTextArea, TagManagerModal } from '@/views/components'
+import { InputTag, Level, ReviewableTextArea } from '@/views/components'
 import { Reference } from '@/views/features/references/References'
 import { theme, Row, Space, Col, Select, Checkbox, Button, Flex } from 'antd'
 import clsx from 'clsx'
-import { useEffect, Suspense, useState } from 'react'
+import { useEffect, Suspense, useState, useMemo } from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
 import { initItem } from './data'
 import { MeaningItemForm } from './MeaningItemForm'
 import styles from './itemModal.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
-import { usePrompt } from '@/helpers/hooks'
+import { usePrompt, useTagManagerModal } from '@/helpers/hooks'
 import { exampleApi, itemApi, tagApi } from '@/services/firebase'
 import { Timestamp } from 'firebase/firestore'
 import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
@@ -35,15 +35,24 @@ interface ItemFormProps {
 export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const { token } = theme.useToken()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showTagModal, setShowTagModal] = useState(false)
+  const { openTagManagerModal } = useTagManagerModal()
 
-  const { openNotification } = usePrompt()
+  const { notification } = usePrompt()
 
   const dispatch = useDispatch()
 
   const { user } = useSelector((state) => state.auth)
-  const { categories } = useSelector((state) => state.setting)
+  const { categories, tags: allTags } = useSelector((state) => state.setting)
   const { list } = useSelector((state) => state.studySet)
+
+  const tagOptions = useMemo(
+    () =>
+      (allTags || [])
+        .map((tag) => String(tag.value))
+        .filter(Boolean)
+        .map((tag) => ({ label: tag, value: tag })),
+    [allTags],
+  )
 
   // React Query mutations
   const { isPending: isCreating, mutateAsync: createMutation } = useCreateItem()
@@ -207,14 +216,14 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         setValue('tags', validTags)
 
         if (removedTags.length > 0) {
-          openNotification({
+          notification({
             type: 'warning',
             message: `Removed non-existing tags: ${removedTags.join(', ')}`,
           })
         }
       } catch (error) {
         console.error('Error validating related items or syncing tags:', error)
-        openNotification({
+        notification({
           type: 'error',
           message: 'Failed to validate related items or sync tags. Please try again.',
         })
@@ -264,7 +273,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             try {
               await syncWordFamilyNetwork(content)
             } catch (error: any) {
-              openNotification({
+              notification({
                 type: 'warning',
                 message: error?.message || 'Failed to sync word family network',
               })
@@ -284,12 +293,12 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             dispatch(iotdAction.update(itemUpdated))
 
             closeModal()
-            openNotification({ type: 'success', message: 'Update item successful!' })
+            notification({ type: 'success', message: 'Update item successful!' })
             // refresh list in library
             await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
           }
         } catch (error) {
-          openNotification({ type: 'error', message: JSON.stringify(error) })
+          notification({ type: 'error', message: JSON.stringify(error) })
         }
       } else {
         try {
@@ -299,7 +308,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
               try {
                 await syncWordFamilyNetwork(content)
               } catch (error: any) {
-                openNotification({
+                notification({
                   type: 'warning',
                   message: error?.message || 'Failed to sync word family network',
                 })
@@ -310,10 +319,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
 
             closeModal()
-            openNotification({ type: 'success', message: 'Create a item successful!' })
+            notification({ type: 'success', message: 'Create a item successful!' })
           }
         } catch (error) {
-          openNotification({ type: 'error', message: JSON.stringify(error) })
+          notification({ type: 'error', message: JSON.stringify(error) })
         }
       }
     } finally {
@@ -324,7 +333,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const handleCancel = () => closeModal()
 
   const handleOpenTagModal = () => {
-    setShowTagModal(true)
+    openTagManagerModal({
+      onTagUpdated: handleTagUpdated,
+      onTagDeleted: handleTagDeleted,
+    })
   }
 
   const handleTagUpdated = (previousValue: string, nextValue: string) => {
@@ -530,13 +542,22 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                 <Controller
                   control={control}
                   name={`tags`}
-                  render={() => (
-                    <InputTag
-                      suggestType='tag'
-                      tags={getValues('tags') || []}
-                      onChange={(value: string[]) => {
-                        setValue('tags', value)
-                      }}
+                  render={({ field }) => (
+                    <Select
+                      mode='multiple'
+                      allowClear
+                      showSearch
+                      style={{ width: '100%' }}
+                      value={field.value || []}
+                      placeholder='Select tags'
+                      options={tagOptions}
+                      optionFilterProp='label'
+                      filterOption={(input, option) =>
+                        String(option?.label || '')
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                      onChange={field.onChange}
                     />
                   )}
                 />
@@ -641,13 +662,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
           </Col>
         </Row>
       </form>
-
-      <TagManagerModal
-        open={showTagModal}
-        onClose={() => setShowTagModal(false)}
-        onTagUpdated={handleTagUpdated}
-        onTagDeleted={handleTagDeleted}
-      />
     </>
   )
 }

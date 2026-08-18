@@ -35,7 +35,8 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
 
   const { list: examples } = useSelector((state) => state.example)
 
-  const { openNotification, confirmDeleteModal } = usePrompt()
+  const { notification, confirm } = usePrompt()
+
   const { openExampleModal } = useExampleModal()
 
   const size = user?.configuration?.numberOfExampleReview ?? 10
@@ -77,12 +78,12 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
         }
       } catch (error) {
         console.error('Error fetching random examples:', error)
-        openNotification({ type: 'error', message: 'Failed to fetch examples' })
+        notification({ type: 'error', message: 'Failed to fetch examples' })
       } finally {
         setLoading(false)
       }
     },
-    [dispatch, openNotification, examples.length],
+    [dispatch, notification, examples.length],
   )
 
   const onEdit = async (id: string) => {
@@ -91,18 +92,17 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
       const { isSuccess, content } = await exampleApi.getExampleById(id)
       if (isSuccess && content) {
         openExampleModal('edit', content)
-
-        hideLoading()
       }
     } catch (error: any) {
-      openNotification({ type: 'error', message: error.message })
+      notification({ type: 'error', message: error.message })
+    } finally {
       hideLoading()
     }
   }
 
   const onDelete = async (id: string) => {
     try {
-      confirmDeleteModal({
+      confirm({
         onOk: async () => {
           showLoading()
           await exampleApi.deleteExample(id)
@@ -110,12 +110,12 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
           if (selected?.id === id) {
             setSelected(undefined)
           }
-          openNotification({ type: 'success', message: 'Example deleted successfully' })
-          hideLoading()
+          notification({ type: 'success', message: 'Example deleted successfully' })
         },
       })
     } catch (error) {
-      openNotification({ type: 'error', message: JSON.stringify(error) })
+      notification({ type: 'error', message: JSON.stringify(error) })
+    } finally {
       hideLoading()
     }
   }

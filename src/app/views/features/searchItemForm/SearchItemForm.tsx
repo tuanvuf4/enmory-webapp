@@ -7,15 +7,15 @@ import {
   UnorderedListOutlined,
 } from '@ant-design/icons'
 import { useItemSearchParams, useSelector } from '@/core/hooks'
-import { useAutoComplete, useItemModal, useLoading } from '@/helpers/hooks'
+import { useAutoComplete, useItemModal, useLoading, useTagManagerModal } from '@/helpers/hooks'
 import { orderByOptions, orderOptions } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { ECategory } from '@/models/item.model'
 import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select, Flex } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { useLocation } from 'react-router-dom'
-import { NotFound, TagManagerModal } from '@/views/components'
+import { NotFound } from '@/views/components'
 import { initSearchFormItem } from '@/constant/index'
 import { initItem } from '../modals/itemModal'
 import { BaseOptionType } from 'antd/es/select'
@@ -44,8 +44,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   const { urlParams, setUrlParams, navigateWithParams } = useItemSearchParams()
 
   const { openItemModal } = useItemModal()
-
-  const [showTagModal, setShowTagModal] = useState(false)
+  const { openTagManagerModal } = useTagManagerModal()
 
   const { categories, tags: allTags } = useSelector((state) => state.setting)
 
@@ -65,7 +64,10 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   const keyword = watch('keyword')
   const cat = watch('cat')
   const handleOpenTagModal = () => {
-    setShowTagModal(true)
+    openTagManagerModal({
+      onTagUpdated: handleTagUpdated,
+      onTagDeleted: handleTagDeleted,
+    })
   }
 
   const handleTagUpdated = (previousValue: string, nextValue: string) => {
@@ -368,14 +370,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
           </Button>
         )}
       </form>
-
-      <TagManagerModal
-        title='Tags'
-        open={showTagModal}
-        onClose={() => setShowTagModal(false)}
-        onTagUpdated={handleTagUpdated}
-        onTagDeleted={handleTagDeleted}
-      />
     </div>
   )
 }

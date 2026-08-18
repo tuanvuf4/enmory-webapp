@@ -6,6 +6,8 @@ export interface IMediaForm {
   description?: string
   transcript?: string
   translation?: string
+  tags?: string[]
+  relation?: string[]
   srcUrl?: string
   srcType?: TSourceTypes
 }

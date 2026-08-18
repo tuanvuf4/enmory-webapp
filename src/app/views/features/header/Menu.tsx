@@ -40,4 +40,9 @@ export const addNewType: MenuProps['items'] = [
     label: 'Post',
     icon: <PlusOutlined />,
   },
+  {
+    key: 'ADD_MEDIA',
+    label: 'Media',
+    icon: <PlusOutlined />,
+  },
 ]

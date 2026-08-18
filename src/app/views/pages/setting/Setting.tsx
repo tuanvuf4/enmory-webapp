@@ -12,7 +12,7 @@ import { usePrompt } from '@/helpers/hooks'
 
 const Setting = () => {
   const { token } = theme.useToken()
-  const { openMessage } = usePrompt()
+  const { message } = usePrompt()
 
   // User info comes from Firebase auth state
   const { user } = useSelector((state) => state.auth)
@@ -36,7 +36,7 @@ const Setting = () => {
       const result = await apiUser.updateUserConfig(data)
 
       if (result.isSuccess) {
-        openMessage({
+        message({
           type: 'success',
           content: 'Settings saved successfully!',
         })
@@ -44,14 +44,14 @@ const Setting = () => {
         // Update user configuration in Redux store
         dispatch(authAction.updateUserConfig(data))
       } else {
-        openMessage({
+        message({
           type: 'error',
           content: result.message || 'Failed to save settings',
         })
       }
     } catch (error) {
       console.error('Error saving settings:', error)
-      openMessage({
+      message({
         type: 'error',
         content: 'Failed to save settings. Please try again.',
       })

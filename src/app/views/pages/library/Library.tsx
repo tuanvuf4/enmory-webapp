@@ -17,7 +17,7 @@ export const Library: React.FC = () => {
 
   const { viewMode } = useSelector((state) => state.setting)
 
-  const { openNotification } = usePrompt()
+  const { notification } = usePrompt()
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -50,7 +50,7 @@ export const Library: React.FC = () => {
   // Handle errors
   useEffect(() => {
     if (error) {
-      openNotification({ type: 'error', message: JSON.stringify(error) })
+      notification({ type: 'error', message: JSON.stringify(error) })
     }
   }, [error])
 

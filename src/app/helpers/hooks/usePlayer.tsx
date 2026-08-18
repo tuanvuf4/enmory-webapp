@@ -5,18 +5,21 @@ import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { tracksApi } from '@/services/firebase'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { App } from 'antd'
+import { useMediaUploadModal } from './useMediaUploadModal'
 
 export const usePlayer = () => {
   const { message } = App.useApp()
   const { currentTrack, tracks } = useSelector((state) => state.listening)
 
-  const { confirmDeleteModal } = usePrompt()
+  const { openMediaUploadModal } = useMediaUploadModal()
+
+  const { confirm } = usePrompt()
 
   const dispatch = useDispatch()
 
   const trackIndex = tracks.findIndex((t) => t.id === currentTrack?.id)
 
-  const onDelete = async (trackId: number) => {
+  const onDeleteTrack = async (trackId: number) => {
     try {
       const response = await tracksApi.removeTrack(String(trackId))
 
@@ -51,20 +54,31 @@ export const usePlayer = () => {
     }
   }
 
-  const handleDelete = (trackId: number, trackTitle: string) => {
-    confirmDeleteModal({
+  const handleDeleteTrack = (trackId: number, trackTitle: string) => {
+    confirm({
       title: 'Delete Track',
       content: `Are you sure you want to delete "${trackTitle}"?`,
       okText: 'Delete',
       okType: 'danger',
       cancelText: 'Cancel',
       onOk() {
-        onDelete(trackId)
+        onDeleteTrack(trackId)
       },
     })
   }
 
+  const handleUpdateTrack = (trackId: number) => {
+    const track = tracks.find((t) => t.id === trackId)
+    if (track) openMediaUploadModal('edit', track)
+  }
+
+  const handleCreateTrack = () => {
+    openMediaUploadModal('add')
+  }
+
   return {
-    handleDelete,
+    handleDeleteTrack,
+    handleUpdateTrack,
+    handleCreateTrack,
   }
 }

@@ -30,10 +30,10 @@ jobs:
       - name: Build Web Application
         run: npm run build:web
 
-      - name: Deploy to Firebase Hosting & Firestore
-        uses: FirebaseExtended/action-hosting-deploy@v0
+      - name: Authenticate to Google Cloud / Firebase
+        uses: google-github-actions/auth@v2
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ENMORY_21593 }}
-          channelId: live
-          projectId: enmory-21593
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ENMORY_21593 }}
+
+      - name: Deploy to Firebase (Hosting & Firestore)
+        run: npx firebase-tools deploy --project enmory-21593 --non-interactive

@@ -26,9 +26,13 @@ export const Player: React.FC = () => {
           }}
         />
 
-        <Tags label={'Tags'} searchBy={'tags'} tags={currentTrack?.tags || []} />
+        {currentTrack?.tags && currentTrack?.tags?.length > 0 && (
+          <Tags label={'Tags'} searchBy={'tags'} tags={currentTrack?.tags} />
+        )}
 
-        <Tags label={'Relation'} tags={currentTrack?.relation || []} />
+        {currentTrack?.relation && currentTrack?.relation?.length > 0 && (
+          <Tags label={'Relation'} tags={currentTrack?.relation} />
+        )}
       </Space>
 
       <TrackList />

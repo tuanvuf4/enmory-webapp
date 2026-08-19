@@ -12,6 +12,7 @@
 
 .trackList {
   overflow: auto;
+  max-height: 250px;
 
   li {
     display: flex;
@@ -397,10 +398,6 @@
 
   .description {
     border-bottom: 1px solid var(--ant-color-border);
-  }
-
-  .trackList {
-    max-height: 200px;
   }
 
   .playerCard {

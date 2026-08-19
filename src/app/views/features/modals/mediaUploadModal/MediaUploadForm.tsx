@@ -323,7 +323,7 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
           <Col xs={24}>
             <Row gutter={[token.size / 2, token.size / 2]}>
               <Col xs={24}>
-                Source URL:{' '}
+                Source URL:<span style={{ color: 'red' }}>*</span>{' '}
                 {errors.srcUrl && (
                   <span style={{ color: 'red', fontSize: '12px' }}>{errors.srcUrl.message}</span>
                 )}

@@ -31,9 +31,9 @@ export const TrackList: React.FC = () => {
         justify={'space-between'}
         align={'center'}
         style={{
-          padding: token.size,
           borderBottom: `1px solid ${token.colorBorder}`,
-          paddingLeft: token.size / 2,
+          padding: token.size / 2,
+          paddingRight: token.size * 0.75,
         }}
       >
         <Flex align='center' gap={4}>

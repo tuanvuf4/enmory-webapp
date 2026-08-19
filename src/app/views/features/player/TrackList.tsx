@@ -44,9 +44,9 @@ export const TrackList: React.FC = () => {
             icon={show ? <CaretUpFilled /> : <CaretDownFilled />}
             onClick={() => setShow(!show)}
             style={{ background: 'transparent' }}
-          />
-
-          <span style={{ fontStyle: 'italic' }}>Track list</span>
+          >
+            Track list
+          </Button>
         </Flex>
 
         <Button

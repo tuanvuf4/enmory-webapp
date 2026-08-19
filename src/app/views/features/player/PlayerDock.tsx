@@ -512,10 +512,6 @@ export const PlayerDock: React.FC = () => {
               onClick={() => setTrackListOpen((v) => !v)}
             />
 
-            <Button type='text' title={'Rate'} size={'middle'}>
-              1x
-            </Button>
-
             <Button
               type='text'
               size={'middle'}

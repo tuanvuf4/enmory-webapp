@@ -1,14 +1,16 @@
-import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { Player } from '@/views/features'
+import { LiveTranscript, Player } from '@/views/features'
 import { tracksApi } from '@/services/firebase'
 import { useEffect } from 'react'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { useDispatch } from '@/core/hooks'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { usePrompt } from '@/helpers/hooks'
+import { Space, theme } from 'antd'
+import appStyle from '@/style/appStyle.module.scss'
 
 export const Listening = () => {
+  const { token } = theme.useToken()
   const { message } = usePrompt()
   const dispatch = useDispatch()
 
@@ -45,7 +47,11 @@ export const Listening = () => {
       <div className={appStyle.container}>
         <PageTitle content={'Listening'} />
 
-        <Player />
+        <Space direction={'vertical'} size={token.size} style={{ width: '100%' }}>
+          <Player />
+
+          <LiveTranscript />
+        </Space>
       </div>
     </>
   )

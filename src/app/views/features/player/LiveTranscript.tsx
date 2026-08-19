@@ -2,27 +2,24 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './player.module.scss'
 import { formatSegmentTime, getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import { AimOutlined } from '@ant-design/icons'
-import { Button } from 'antd'
+import { Button, theme } from 'antd'
 import { KaraokeText } from './KaraokeText'
 import { useSmoothTime } from './useSmoothTime'
+import { useSelector } from '@/core/hooks'
+import { useDispatch } from 'react-redux'
+import { listeningAction } from '@/store/reducers/listening.reducer'
 
-interface IProps {
-  transcript: string
-  playedSeconds: number
-  duration: number
-  playing: boolean
-  playbackRate?: number
-  onSeekTo?: (seconds: number) => void
-}
+export const LiveTranscript: React.FC = () => {
+  const { token } = theme.useToken()
 
-export const LiveTranscript: React.FC<IProps> = ({
-  transcript,
-  playedSeconds,
-  duration,
-  playing,
-  playbackRate = 1,
-  onSeekTo,
-}) => {
+  const { currentTrack, player } = useSelector((state) => state.listening)
+
+  const dispatch = useDispatch()
+
+  const transcript = currentTrack?.transcript || ''
+
+  const { playedSeconds, duration, playing, playbackRate = 1 } = player
+
   const containerRef = useRef<HTMLDivElement | null>(null)
   const activeRef = useRef<HTMLDivElement | null>(null)
   const isUserScrolling = useRef(false)
@@ -76,8 +73,10 @@ export const LiveTranscript: React.FC<IProps> = ({
     return <div className={styles.transcript} dangerouslySetInnerHTML={{ __html: transcript }} />
   }
 
+  if (!currentTrack?.transcript) return null
+
   return (
-    <div className={styles.liveTranscriptWrapper}>
+    <div className={styles.liveTranscriptWrapper} style={{ background: token.colorBgContainer }}>
       <div className={styles.liveTranscriptHeader}>
         <h3>
           Transcript
@@ -110,8 +109,9 @@ export const LiveTranscript: React.FC<IProps> = ({
               className={`${styles.transcriptSegment} ${
                 isActive ? styles.transcriptActive : ''
               } ${isPlayed ? styles.transcriptPlayed : ''}`}
-              onClick={() => onSeekTo?.(seg.timeSeconds)}
-              title='Click to seek'
+              onClick={() =>
+                dispatch(listeningAction.updatePlayer({ seekTo: seg.timeSeconds, playing: true }))
+              }
             >
               <span className={styles.transcriptTime}>{formatSegmentTime(seg.timeSeconds)}</span>
               <p>

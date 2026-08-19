@@ -1,8 +1,8 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, theme } from 'antd'
-import styles from './player.module.scss'
+import { Button, Flex, theme } from 'antd'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
+import styles from './player.module.scss'
 
 import { usePlayer } from '@/helpers/hooks'
 
@@ -18,9 +18,16 @@ export const TrackList: React.FC = () => {
   const trackIndex = tracks.findIndex((t) => t.id === currentTrack?.id)
 
   return (
-    <div className={styles.tracks}>
-      <div className={styles.tracksTitle}>
-        <span>Track list</span>
+    <Flex vertical wrap className={styles.tracks}>
+      <Flex
+        justify={'space-between'}
+        align={'center'}
+        style={{
+          padding: token.size,
+          borderBottom: `1px solid ${token.colorBorder}`,
+        }}
+      >
+        <span style={{ fontStyle: 'italic' }}>Track list</span>
 
         <Button
           size={'small'}
@@ -28,56 +35,54 @@ export const TrackList: React.FC = () => {
           icon={<PlusOutlined />}
           onClick={() => handleCreateTrack()}
         />
-      </div>
+      </Flex>
 
-      <div className={styles.tracksContent}>
-        <ul>
-          {tracks.map((track, key) => (
-            <li
-              className={key === trackIndex ? styles.active : ''}
-              key={`track-${track.id}`}
-              onClick={() => {
-                dispatch(
-                  listeningAction.resetPlayer({
-                    loop: player.loop,
-                  }),
-                )
-                dispatch(listeningAction.setCurrentTrack(track))
-              }}
-            >
-              <div>{`${key + 1}. ${track.title}`}</div>
+      <ul className={styles.trackList}>
+        {tracks.map((track, key) => (
+          <li
+            className={key === trackIndex ? styles.active : ''}
+            key={`track-${track.id}`}
+            onClick={() => {
+              dispatch(
+                listeningAction.resetPlayer({
+                  loop: player.loop,
+                }),
+              )
+              dispatch(listeningAction.setCurrentTrack(track))
+            }}
+          >
+            <div>{`${key + 1}. ${track.title}`}</div>
 
-              <div className={styles.actionGroup}>
-                <Button
-                  size='small'
-                  type='text'
-                  variant={'text'}
-                  style={{ color: token.palette?.yellow?.[7] }}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleUpdateTrack(track.id as number)
-                  }}
-                >
-                  <EditOutlined />
-                </Button>
+            <div className={styles.action}>
+              <Button
+                size='small'
+                type='text'
+                variant={'text'}
+                style={{ color: token.palette?.yellow?.[7] }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleUpdateTrack(track.id as number)
+                }}
+              >
+                <EditOutlined />
+              </Button>
 
-                <Button
-                  size='small'
-                  type='text'
-                  variant={'text'}
-                  style={{ color: token.palette?.red?.[6] }}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDeleteTrack(track.id as number, track.title)
-                  }}
-                >
-                  <DeleteOutlined />
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+              <Button
+                size='small'
+                type='text'
+                variant={'text'}
+                style={{ color: token.palette?.red?.[6] }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDeleteTrack(track.id as number, track.title)
+                }}
+              >
+                <DeleteOutlined />
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Flex>
   )
 }

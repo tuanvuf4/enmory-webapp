@@ -10,54 +10,26 @@
   min-height: 220px;
 }
 
-.tracks {
-  display: flex;
-  flex-direction: column;
-  flex: 0 0 375px;
-  height: 100%;
-}
+.trackList {
+  overflow: auto;
 
-.tracksTitle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $size * 0.75 $size;
-  border-bottom: 1px solid $color-border;
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $size * 0.5;
+    padding-left: $size;
+    gap: $size * 0.5;
+    transition: 0.2s;
+    cursor: pointer;
 
-  span {
-    font-style: italic;
-  }
-}
-
-.tracksContent {
-  // padding: 0 0 $size * 0.5 0;
-
-  & ul {
-    height: 100%;
-    overflow: auto;
-
-    & li {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: $size * 0.5;
-      padding-left: $size;
-      gap: $size * 0.5;
-      transition: 0.2s;
-      cursor: pointer;
-
-      &:hover {
-        background: var(--ant-color-fill-secondary);
-      }
+    &:hover {
+      background: var(--ant-color-fill-secondary);
     }
   }
 }
 
-.trackDescription {
-  flex: 1;
-}
-
-.actionGroup {
+.action {
   display: flex;
   align-items: center;
   gap: $size * 0.25;
@@ -404,6 +376,16 @@
   }
 }
 
+.tracks {
+  width: 375px;
+  max-width: 100%;
+}
+
+.description {
+  flex: 1;
+  padding: $size;
+}
+
 @media screen and (max-width: 640px) {
   .controls {
     order: 1;
@@ -413,10 +395,12 @@
     max-height: 400px;
   }
 
-  .tracksContent {
-    & ul {
-      max-height: 200px;
-    }
+  .description {
+    border-bottom: 1px solid var(--ant-color-border);
+  }
+
+  .trackList {
+    max-height: 200px;
   }
 
   .playerCard {
@@ -424,7 +408,7 @@
   }
 
   .tracks {
-    flex: 1 0 100%;
+    width: 100%;
   }
 
   .seekBar {

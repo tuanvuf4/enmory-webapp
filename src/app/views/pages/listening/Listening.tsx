@@ -3,13 +3,13 @@ import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 import { Player } from '@/views/features'
 import { tracksApi } from '@/services/firebase'
 import { useEffect } from 'react'
-import { App } from 'antd'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { useDispatch } from '@/core/hooks'
 import { firebaseAuthService } from '@/services/firebase/authService'
+import { usePrompt } from '@/helpers/hooks'
 
 export const Listening = () => {
-  const { message } = App.useApp()
+  const { message } = usePrompt()
   const dispatch = useDispatch()
 
   // Fetch tracks when user is authenticated
@@ -33,10 +33,10 @@ export const Listening = () => {
       if (response.isSuccess && response.content) {
         dispatch(listeningAction.setTracks(response.content))
       } else {
-        message.error(response.message || 'Failed to fetch tracks')
+        message({ type: 'error', content: response.message || 'Failed to fetch tracks' })
       }
     } catch (error: any) {
-      message.error(error.message || 'Error fetching tracks')
+      message({ type: 'error', content: error.message || 'Error fetching tracks' })
     }
   }
 

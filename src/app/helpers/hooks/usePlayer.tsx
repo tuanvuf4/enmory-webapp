@@ -4,11 +4,10 @@ import { usePrompt } from './usePrompt'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { tracksApi } from '@/services/firebase'
 import { settingAction } from '@/store/reducers/setting.reducer'
-import { App } from 'antd'
 import { useMediaUploadModal } from './useMediaUploadModal'
 
 export const usePlayer = () => {
-  const { message } = App.useApp()
+  const { message } = usePrompt()
   const { currentTrack, tracks } = useSelector((state) => state.listening)
 
   const { openMediaUploadModal } = useMediaUploadModal()
@@ -45,12 +44,12 @@ export const usePlayer = () => {
           dispatch(settingAction.setTrackIndex(0))
         }
 
-        message.success(response.message || 'Track deleted successfully')
+        message({ type: 'success', content: response.message || 'Track deleted successfully' })
       } else {
-        message.error(response.message || 'Failed to delete track')
+        message({ type: 'error', content: response.message || 'Failed to delete track' })
       }
     } catch (error: any) {
-      message.error(error.message || 'Error deleting track')
+      message({ type: 'error', content: error.message || 'Error deleting track' })
     }
   }
 

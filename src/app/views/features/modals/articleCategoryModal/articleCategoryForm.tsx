@@ -3,10 +3,11 @@ import {
   useUpdateArticleCategory,
 } from '@/core/hooks/useArticleCategories'
 import { IArticleCategory } from '@/services/firebase/api/articleCategories.api'
-import { App, theme, Input, Button, Flex, ColorPicker, InputNumber, Select } from 'antd'
+import { theme, Input, Button, Flex, ColorPicker, InputNumber, Select } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import type { Color } from 'antd/es/color-picker'
 import './articleCategoryForm.module.scss'
+import { usePrompt } from '@/helpers/hooks'
 
 interface ArticleCategoryFormProps {
   data?: IArticleCategory
@@ -21,7 +22,7 @@ export const ArticleCategoryForm: React.FC<ArticleCategoryFormProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { message } = App.useApp()
+  const { message } = usePrompt()
   const { token } = theme.useToken()
 
   const { mutate: createCategory, isPending: isCreating } = useCreateArticleCategory()
@@ -66,10 +67,10 @@ export const ArticleCategoryForm: React.FC<ArticleCategoryFormProps> = ({
             reset()
             onSuccess?.()
             onClose?.()
-            message.success('Category updated successfully')
+            message({ type: 'success', content: 'Category updated successfully' })
           },
           onError: (error) => {
-            message.error('Failed to update category')
+            message({ type: 'error', content: 'Failed to update category' })
             console.error(error)
           },
         },
@@ -81,10 +82,10 @@ export const ArticleCategoryForm: React.FC<ArticleCategoryFormProps> = ({
           reset()
           onSuccess?.()
           onClose?.()
-          message.success('Category created successfully')
+          message({ type: 'success', content: 'Category created successfully' })
         },
         onError: (error) => {
-          message.error('Failed to create category')
+          message({ type: 'error', content: 'Failed to create category' })
           console.error(error)
         },
       })

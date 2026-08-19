@@ -2,11 +2,12 @@ import { useCreateArticle, useUpdateArticle, useArticleCategories } from '@/core
 import { articleKeys } from '@/core/hooks/useArticles'
 import { IArticleItem } from '@/models/article.model'
 import { TextEditor } from '@/views/components'
-import { App, theme, Input, Button, Flex, Select } from 'antd'
+import { theme, Input, Button, Flex, Select } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import './articleForm.module.scss'
 import { useLocation } from 'react-router-dom'
+import { usePrompt } from '@/helpers/hooks'
 
 interface ArticleFormProps {
   data?: IArticleItem
@@ -16,7 +17,7 @@ interface ArticleFormProps {
 }
 
 export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClose, onSuccess }) => {
-  const { message } = App.useApp()
+  const { message } = usePrompt()
   const { token } = theme.useToken()
   const queryClient = useQueryClient()
 
@@ -64,10 +65,10 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
             if (data.id) {
               queryClient.invalidateQueries({ queryKey: articleKeys.detail(data.id) })
             }
-            message.success('Article updated successfully')
+            message({ type: 'success', content: 'Article updated successfully' })
           },
           onError: (error) => {
-            message.error('Failed to update article')
+            message({ type: 'error', content: 'Failed to update article' })
             console.error(error)
           },
         },
@@ -80,10 +81,10 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({ data, onCancel, onClos
           onSuccess?.()
           onClose?.()
           queryClient.invalidateQueries({ queryKey: articleKeys.lists() })
-          message.success('Article created successfully')
+          message({ type: 'success', content: 'Article created successfully' })
         },
         onError: (error) => {
-          message.error('Failed to create article')
+          message({ type: 'error', content: 'Failed to create article' })
           console.error(error)
         },
       })

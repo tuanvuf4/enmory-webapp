@@ -12,7 +12,7 @@ import {
   StepForwardOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-import { App, Button, Flex, Space, theme } from 'antd'
+import { Button, Flex, Space, theme } from 'antd'
 import ReactPlayer from 'react-player'
 import { createPortal } from 'react-dom'
 import styles from './player.module.scss'
@@ -25,9 +25,10 @@ import { useSmoothTime } from './useSmoothTime'
 import { tracksApi } from '@/services/firebase'
 import { TrackList } from './TrackList'
 import { firebaseAuthService } from '@/services/firebase/authService'
+import { usePrompt } from '@/helpers/hooks'
 
 export const PlayerDock: React.FC = () => {
-  const { message } = App.useApp()
+  const { message } = usePrompt()
   const { token } = theme.useToken()
   const playerRef = useRef<HTMLVideoElement | null>(null)
   const isFirstLoadRef = useRef(true)
@@ -85,10 +86,10 @@ export const PlayerDock: React.FC = () => {
       if (response.isSuccess && response.content) {
         dispatch(listeningAction.setTracks(response.content))
       } else {
-        message.error(response.message || 'Failed to fetch tracks')
+        message({ type: 'error', content: response.message || 'Failed to fetch tracks' })
       }
     } catch (error: any) {
-      message.error(error.message || 'Error fetching tracks')
+      message({ type: 'error', content: error.message || 'Error fetching tracks' })
     }
   }
 
@@ -100,9 +101,11 @@ export const PlayerDock: React.FC = () => {
     }
 
     if (!('documentPictureInPicture' in window)) {
-      message.warning(
-        'Trình duyệt của bạn không hỗ trợ chế độ Document Picture-in-Picture. Hãy thử Chrome hoặc Edge.',
-      )
+      message({
+        type: 'warning',
+        content:
+          'Trình duyệt của bạn không hỗ trợ chế độ Document Picture-in-Picture. Hãy thử Chrome hoặc Edge.',
+      })
       return
     }
 
@@ -162,7 +165,7 @@ export const PlayerDock: React.FC = () => {
       setPipWindow(w)
     } catch (err) {
       console.error(err)
-      message.error('Không thể mở cửa sổ Picture-in-Picture.')
+      message({ type: 'error', content: 'Không thể mở cửa sổ Picture-in-Picture.' })
     }
   }
 

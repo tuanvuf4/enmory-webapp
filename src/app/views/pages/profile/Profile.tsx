@@ -1,4 +1,4 @@
-import { App, Button, Col, Input, Row, Space, theme } from 'antd'
+import { Button, Col, Input, Row, Space, theme } from 'antd'
 import appStyle from '@/style/appStyle.module.scss'
 import { useSelector } from '@/core/hooks/redux'
 import { AddedItemChart } from '@/views/features/chart/addedItemChart/AddedItemChart'
@@ -7,9 +7,10 @@ import { ProgressChart } from '@/views/features/chart/progressChart/ProgressChar
 import { useState } from 'react'
 import { apiAuth } from '@/services/firebase'
 import clsx from 'clsx'
+import { usePrompt } from '@/helpers/hooks'
 
 const Profile = () => {
-  const { message } = App.useApp()
+  const { message } = usePrompt()
   const { token } = theme.useToken()
 
   const [isLoading, setIsLoading] = useState(false)
@@ -19,12 +20,12 @@ const Profile = () => {
 
   const handleEnableEmailPassword = async () => {
     if (!user?.email) {
-      message.error('No email available for the current user.')
+      message({ type: 'error', content: 'No email available for the current user.' })
       return
     }
 
     if (!password || password.length < 6) {
-      message.error('Password must be at least 6 characters.')
+      message({ type: 'error', content: 'Password must be at least 6 characters.' })
       return
     }
 
@@ -32,18 +33,24 @@ const Profile = () => {
     try {
       const result = await apiAuth.linkEmailPassword(user.email, password)
       if (result.isSuccess) {
-        message.success('Email/password login enabled successfully.')
+        message({
+          type: 'success',
+          content: 'Email/password login enabled successfully.',
+        })
         setPassword('')
       } else {
-        message.error(result.message || 'Failed to enable email/password login.')
+        message({
+          type: 'error',
+          content: result.message || 'Failed to enable email/password login.',
+        })
       }
     } catch (error: any) {
       console.error('Error enabling email/password login:', error)
       if (error.code === 'auth/provider-already-linked') {
-        message.error('This email is already linked to your account.')
+        message({ type: 'error', content: 'This email is already linked to your account.' })
         return
       }
-      message.error(error.message || 'Failed to enable email/password login.')
+      message({ type: 'error', content: error.message || 'Failed to enable email/password login.' })
     } finally {
       setIsLoading(false)
     }

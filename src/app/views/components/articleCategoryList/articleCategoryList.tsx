@@ -1,8 +1,9 @@
 import { IArticleCategory } from '@/services/firebase/api/articleCategories.api'
 import { useDeleteArticleCategory } from '@/core/hooks/useArticleCategories'
-import { App, Table, Button, Space, Popconfirm, theme, Empty } from 'antd'
+import { Table, Button, Space, Popconfirm, theme, Empty } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { TableProps } from 'antd'
+import { usePrompt } from '@/helpers/hooks'
 
 interface ArticleCategoryListProps {
   categories: IArticleCategory[]
@@ -15,7 +16,7 @@ export const ArticleCategoryList: React.FC<ArticleCategoryListProps> = ({
   isLoading = false,
   onEdit,
 }) => {
-  const { message } = App.useApp()
+  const { message } = usePrompt()
   const { token } = theme.useToken()
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteArticleCategory()
 
@@ -24,10 +25,10 @@ export const ArticleCategoryList: React.FC<ArticleCategoryListProps> = ({
 
     deleteCategory(id, {
       onSuccess: () => {
-        message.success('Category deleted successfully')
+        message({ type: 'success', content: 'Category deleted successfully' })
       },
       onError: (error) => {
-        message.error('Failed to delete category')
+        message({ type: 'error', content: 'Failed to delete category' })
         console.error(error)
       },
     })

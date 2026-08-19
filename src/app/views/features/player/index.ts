@@ -1,1 +1,7 @@
+export * from './KaraokeText'
+export * from './LiveTranscript'
 export * from './Player'
+export * from './PlayerDock'
+export * from './TrackList'
+export * from './transcriptUtils'
+export * from './useSmoothTime'

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { App, Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Radio } from 'antd'
+import { Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Radio } from 'antd'
 import { ArticleItem } from '@/views/components/articleItem/ArticleItem'
 import { useArticles, useArticlesCount, useArticleCategories } from '@/core/hooks'
 import { useArticleModal } from '@/helpers/hooks/useArticleModal'
@@ -11,11 +11,12 @@ import { NotFound, ArticleCategoryList } from '@/views/components'
 import { IArticleCategory } from '@/services/firebase/api/articleCategories.api'
 import { useLocation } from 'react-router-dom'
 import { Widget } from '@/views/features'
+import { usePrompt } from '@/helpers/hooks'
 
 const PAGE_SIZE = 10
 
 export const Article = () => {
-  const { message } = App.useApp()
+  const { message } = usePrompt()
   const { token } = theme.useToken()
 
   const [page, setPage] = useState(0)
@@ -60,7 +61,10 @@ export const Article = () => {
 
   useEffect(() => {
     if (articlesError) {
-      message.error((articlesError as Error)?.message || 'Failed to load articles')
+      message({
+        type: 'error',
+        content: (articlesError as Error)?.message || 'Failed to load articles',
+      })
     }
   }, [articlesError])
 

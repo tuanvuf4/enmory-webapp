@@ -1,9 +1,5 @@
 @use '@style/vars' as *;
 
-.playerWrapper {
-  width: 100%;
-}
-
 .playerCard {
   flex: 1 0;
   margin: 0 auto;
@@ -15,68 +11,17 @@
 }
 
 .tracks {
-  flex: 0 0 375px;
-  color: $color-text-base;
-  padding: 0 $size;
-
-  & ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-
-    & li {
-      padding: 12px 16px;
-      cursor: pointer;
-      color: var(--ant-color-text-base);
-      font-size: 14px;
-      border-bottom: 1px solid var(--ant-color-border);
-      transition:
-        background 0.15s,
-        color 0.15s;
-      text-align: left;
-
-      &:hover {
-        background: var(--ant-color-fill-secondary);
-      }
-    }
-  }
-}
-
-.actionGroup {
   display: flex;
-  align-items: center;
-  gap: $size * 0.25;
-  min-width: 65px;
-}
-
-.trackDescription {
-  color: $color-text-base;
-
-  ul {
-    padding-left: 20px;
-    margin-bottom: 10px;
-
-    li {
-      display: list-item;
-    }
-  }
-}
-
-.primaryAction {
-  font-size: 30px !important;
-}
-
-.transcript {
-  overflow: auto;
-  max-height: 800px;
+  flex-direction: column;
+  flex: 0 0 375px;
+  height: 100%;
 }
 
 .tracksTitle {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $size * 0.75 0;
-  color: $color-text-base;
+  padding: $size * 0.75 $size;
   border-bottom: 1px solid $color-border;
 
   span {
@@ -85,18 +30,18 @@
 }
 
 .tracksContent {
-  padding: 0 0 $size * 0.5 0;
+  // padding: 0 0 $size * 0.5 0;
 
   & ul {
-    max-height: 316px;
+    height: 100%;
     overflow: auto;
-    color: $color-text-base;
 
     & li {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: $size * 0.5;
+      padding-left: $size;
       gap: $size * 0.5;
       transition: 0.2s;
       cursor: pointer;
@@ -106,6 +51,26 @@
       }
     }
   }
+}
+
+.trackDescription {
+  flex: 1;
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: $size * 0.25;
+  min-width: 65px;
+}
+
+.primaryAction {
+  font-size: 30px !important;
+}
+
+.transcript {
+  overflow: auto;
+  max-height: 800px;
 }
 
 .active {

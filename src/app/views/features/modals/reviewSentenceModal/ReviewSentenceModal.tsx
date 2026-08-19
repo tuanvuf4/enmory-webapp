@@ -1,7 +1,8 @@
 import { IReviewSentenceResponse } from '@/services/openai/reviewSentence.service'
-import { App, Modal, Card, Empty, Tag, Space, Button, Spin } from 'antd'
+import { Modal, Card, Empty, Tag, Space, Button, Spin } from 'antd'
 import { CheckCircleOutlined, CloseCircleOutlined, CopyOutlined } from '@ant-design/icons'
 import styles from './reviewSentenceModal.module.scss'
+import { usePrompt } from '@/helpers/hooks'
 
 export interface ReviewSentenceModalProps {
   open: boolean
@@ -18,11 +19,11 @@ export const ReviewSentenceModal: React.FC<ReviewSentenceModalProps> = ({
   onClose,
   onApplySuggestion,
 }) => {
-  const { message } = App.useApp()
+  const { message } = usePrompt()
 
   const handleCopySuggestion = (suggestion: string) => {
     navigator.clipboard.writeText(suggestion)
-    message.success('Suggestion copied to clipboard!')
+    message({ type: 'success', content: 'Suggestion copied to clipboard!' })
   }
 
   const getScoreColor = (score: number) => {

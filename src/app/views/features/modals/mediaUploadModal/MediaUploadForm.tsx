@@ -2,14 +2,14 @@ import { initMediaForm, msgErrors } from '@/constant/index'
 import { UnorderedListOutlined } from '@ant-design/icons'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { App, theme, Input, Space, Row, Col, Button, Select, Flex } from 'antd'
+import { theme, Input, Space, Row, Col, Button, Select, Flex } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { appSetting } from '@/config/appConfig'
 import { IMediaForm, ITracks } from '@/models/media.model'
 import { tracksApi } from '@/services/firebase'
 import { useState, useEffect, useMemo } from 'react'
 import { TextEditor, InputTag } from '@/views/components'
-import { useTagManagerModal } from '@/helpers/hooks'
+import { usePrompt, useTagManagerModal } from '@/helpers/hooks'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -25,7 +25,7 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
   onConfirm,
   trackData,
 }) => {
-  const { message } = App.useApp()
+  const { message } = usePrompt()
   const { token } = theme.useToken()
   const [loading, setLoading] = useState(false)
   const { openTagManagerModal } = useTagManagerModal()
@@ -153,7 +153,7 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
       console.log(`*** result ***`, result)
 
       if (result.isSuccess && result.content) {
-        message.success(result.message)
+        message({ type: 'success', content: result.message })
         if (trackData?.id) {
           dispatch(listeningAction.updateTrack(result.content))
         } else {
@@ -164,10 +164,10 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
         reset()
         onConfirm?.(result.content)
       } else {
-        message.error(result.message || 'Failed to save track')
+        message({ type: 'error', content: result.message || 'Failed to save track' })
       }
     } catch (error: any) {
-      message.error(error.message || 'Error saving track')
+      message({ type: 'error', content: error.message || 'Error saving track' })
     } finally {
       setLoading(false)
     }

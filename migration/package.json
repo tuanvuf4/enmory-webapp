@@ -6,7 +6,8 @@
   "main": "migration.js",
   "scripts": {
     "migrate": "node migration.js",
-    "validate": "node validateSchema.js"
+    "validate": "node validateSchema.js",
+    "migrate-keywords": "node migrate-keywords.js"
   },
   "keywords": [
     "firebase",

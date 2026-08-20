@@ -36,6 +36,7 @@ export interface IExample {
   note: string
   randomIndex?: number
   origin_lowercase?: string
+  keywords?: string[]
 }
 
 export interface IType {
@@ -84,6 +85,7 @@ export interface IItem {
   catId?: ECategory
   origin: string
   origin_lowercase?: string
+  keywords?: string[]
   tags: string[]
   tags_lowercase?: string[]
   favorite?: boolean

@@ -3,11 +3,12 @@ import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useAutoComplete, usePrompt } from '@/helpers/hooks'
 import { IItem } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
-import { theme, Space, Col, Row, Button, AutoComplete, Flex } from 'antd'
+import { theme, Space, Col, Row, Button, AutoComplete } from 'antd'
 import { useState } from 'react'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { exampleItem } from './data'
 import TextArea from 'antd/es/input/TextArea'
+import { removeLineBreaks } from '@/core/utils'
 
 interface IProps {
   nestIndex: number
@@ -44,11 +45,18 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
     prepend({ ...exampleItem })
   }
 
-  const onSelect = (idxNested: number, idxExp: number, value: string) => {
-    exampleApi.getExampleById(value).then(({ isSuccess, content }) => {
+  const onSelect = (idxNested: number, idxExp: number, value: string, option?: any) => {
+    const exampleId = option?.id || value
+    exampleApi.getExampleById(exampleId).then(({ isSuccess, content }) => {
       if (isSuccess && content) {
-        setValue(`meanings.${idxNested}.examples.${idxExp}.origin`, content.origin)
-        setValue(`meanings.${idxNested}.examples.${idxExp}.translation`, content.translation)
+        setValue(
+          `meanings.${idxNested}.examples.${idxExp}.origin`,
+          removeLineBreaks(content.origin),
+        )
+        setValue(
+          `meanings.${idxNested}.examples.${idxExp}.translation`,
+          removeLineBreaks(content.translation),
+        )
         setValue(`meanings.${idxNested}.examples.${idxExp}.id`, content.id)
         setCurrentSearch('')
         setActiveFieldIndex(null)
@@ -82,10 +90,23 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                 <Col md={{ span: 20, offset: 4 }} xs={{ span: 24, offset: 0 }}>
                   <div
                     style={{
-                      padding: token.size,
-                      border: `1px solid ${token.colorBorder}`,
+                      padding: 0,
+                      paddingRight: 50,
+                      position: 'relative',
                     }}
                   >
+                    <Button
+                      style={{
+                        position: 'absolute',
+                        right: 5,
+                        color: token.palette?.red?.[6],
+                      }}
+                      type={'text'}
+                      onClick={() => {
+                        confirm({ onOk: () => remove(key) })
+                      }}
+                      icon={<DeleteOutlined />}
+                    />
                     <Space
                       size={[token.size / 2, token.size / 2]}
                       direction='vertical'
@@ -93,49 +114,36 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                     >
                       <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
                         <Col md={24} xs={24}>
-                          <Flex
-                            justify={'space-between'}
-                            align={'center'}
-                            className={'w-full'}
-                            gap={token.size}
-                          >
-                            <AutoComplete
-                              value={activeFieldIndex === key ? currentSearch : ''}
-                              autoFocus={true}
-                              options={activeFieldIndex === key ? options : []}
-                              onSearch={(text) => onSearch(text, key)}
-                              onSelect={(value) => onSelect(nestIndex, key, value)}
-                              placeholder='Search an example...'
-                              className={'w-full'}
-                            />
-
-                            <Button
-                              className={'min-w-10'}
-                              danger
-                              onClick={() => {
-                                confirm({
-                                  onOk: () => {
-                                    remove(key)
-                                  },
-                                })
-                              }}
-                              icon={<DeleteOutlined />}
-                            />
-                          </Flex>
-                        </Col>
-                      </Row>
-
-                      <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
-                        <Col md={24} xs={24}>
                           <Controller
                             control={control}
                             name={`meanings.${nestIndex}.examples.${key}.origin`}
                             render={({ field }) => (
-                              <TextArea
-                                autoSize={{ minRows: 1, maxRows: 4 }}
+                              <AutoComplete
+                                value={field.value}
+                                options={activeFieldIndex === key ? options : []}
+                                onSearch={(text) => onSearch(text, key)}
+                                onSelect={(value, option) =>
+                                  onSelect(nestIndex, key, value, option)
+                                }
+                                onChange={(text) => {
+                                  field.onChange(text)
+                                  onSearch(text, key)
+                                }}
+                                onFocus={() => {
+                                  setActiveFieldIndex(key)
+                                  setCurrentSearch(field.value || '')
+                                }}
+                                onBlur={() => {
+                                  field.onChange(removeLineBreaks(field.value))
+                                }}
                                 placeholder='Origin:'
-                                {...field}
-                              />
+                                className={'w-full'}
+                              >
+                                <TextArea
+                                  autoSize={{ minRows: 1, maxRows: 4 }}
+                                  placeholder='Origin:'
+                                />
+                              </AutoComplete>
                             )}
                           />
                         </Col>
@@ -151,6 +159,9 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                                 autoSize={{ minRows: 1, maxRows: 4 }}
                                 placeholder='Translation:'
                                 {...field}
+                                onBlur={() => {
+                                  field.onChange(removeLineBreaks(field.value))
+                                }}
                               />
                             )}
                           />

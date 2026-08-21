@@ -64,7 +64,7 @@ export const useAutoComplete = (
                   response.content.map((example) => {
                     return {
                       id: `${example.id}`,
-                      value: `${example.id}`,
+                      value: example.origin,
                       label: example.origin,
                     }
                   }),

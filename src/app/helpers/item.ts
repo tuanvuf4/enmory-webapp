@@ -120,10 +120,7 @@ export const getMeaningsWithExamples = async (meanings: IMeaning[]) => {
 
 export const extractKeywords = (text: string): string[] => {
   if (!text) return []
-  const cleanText = text
-    .toLowerCase()
-    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'’]/g, ' ')
+  const cleanText = text.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'’]/g, ' ')
   const words = cleanText.split(/\s+/)
   return Array.from(new Set(words.filter((word) => word.trim().length > 0)))
 }
-

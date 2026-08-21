@@ -14,6 +14,7 @@ import { Controller, useForm } from 'react-hook-form'
 import styles from './example.module.scss'
 import { initExampleData } from '@/constant/example'
 import { ReviewableTextArea } from '@/views/components'
+import { removeLineBreaks } from '@/core/utils'
 
 interface IProps {
   data?: IExample
@@ -65,6 +66,8 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 
       const updatedData = {
         ...formData,
+        origin: removeLineBreaks(formData.origin),
+        translation: removeLineBreaks(formData.translation),
         note: formData.note || '',
       }
 

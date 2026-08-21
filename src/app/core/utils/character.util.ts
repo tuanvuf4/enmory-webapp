@@ -29,3 +29,11 @@ export function removeVietnameseTones(str: string) {
   )
   return str
 }
+
+export function removeLineBreaks(str?: string): string {
+  if (!str) return ''
+  return str
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}

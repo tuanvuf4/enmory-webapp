@@ -148,7 +148,9 @@ const Setting = () => {
 
   const [isDeduplicating, setIsDeduplicating] = useState(false)
   const [deduplicateStatus, setDeduplicateStatus] = useState<string>('')
-  const [deletedExamples, setDeletedExamples] = useState<{ id: string; origin: string; translation: string }[]>([])
+  const [deletedExamples, setDeletedExamples] = useState<
+    { id: string; origin: string; translation: string }[]
+  >([])
 
   const handleDeduplicateExamples = async () => {
     setIsDeduplicating(true)
@@ -166,14 +168,17 @@ const Setting = () => {
       // 1. Fetch all examples and find duplicates by origin text
       setDeduplicateStatus('Fetching examples...')
       const examplesSnapshot = await getDocs(collection(db, 'examples'))
-      
-      const examplesMap: Record<string, { id: string; ref: any; origin: string; translation: string }[]> = {}
+
+      const examplesMap: Record<
+        string,
+        { id: string; ref: any; origin: string; translation: string }[]
+      > = {}
       for (const document of examplesSnapshot.docs) {
         const data = document.data()
         const origin = (data.origin || '').trim()
         const originLower = origin.toLowerCase()
         if (!originLower) continue
-        
+
         if (!examplesMap[originLower]) {
           examplesMap[originLower] = []
         }
@@ -208,7 +213,9 @@ const Setting = () => {
         }
       }
 
-      setDeduplicateStatus(`Found ${duplicateDocsCount} duplicate examples. Fetching items to update references...`)
+      setDeduplicateStatus(
+        `Found ${duplicateDocsCount} duplicate examples. Fetching items to update references...`,
+      )
 
       // 2. Fetch all items to clean up their referenced example IDs
       const itemsSnapshot = await getDocs(collection(db, 'items'))
@@ -233,7 +240,7 @@ const Setting = () => {
             itemChanged = true
             return {
               ...meaning,
-              examples: uniqueIds
+              examples: uniqueIds,
             }
           }
           return meaning
@@ -257,8 +264,10 @@ const Setting = () => {
       }
 
       // 3. Delete duplicate example documents from Firestore
-      setDeduplicateStatus(`Updated ${itemsUpdatedCount} items. Deleting duplicate example documents...`)
-      
+      setDeduplicateStatus(
+        `Updated ${itemsUpdatedCount} items. Deleting duplicate example documents...`,
+      )
+
       let deleteBatch = writeBatch(db)
       let deletedCount = 0
       let deleteProcessed = 0
@@ -284,7 +293,9 @@ const Setting = () => {
         type: 'success',
         content: `Deduplication complete! Deleted ${deletedCount} duplicate examples, updated references in ${itemsUpdatedCount} items.`,
       })
-      setDeduplicateStatus(`Deduplication complete! Deleted ${deletedCount} duplicate examples, updated references in ${itemsUpdatedCount} items.`)
+      setDeduplicateStatus(
+        `Deduplication complete! Deleted ${deletedCount} duplicate examples, updated references in ${itemsUpdatedCount} items.`,
+      )
     } catch (error) {
       console.error('Deduplication error:', error)
       message({
@@ -631,7 +642,7 @@ const Setting = () => {
                       </Col>
 
                       <Col xs={24} md={16}>
-                        <Space direction="vertical" style={{ width: '100%' }} size={token.size / 2}>
+                        <Space direction='vertical' style={{ width: '100%' }} size={token.size / 2}>
                           <Button
                             type='dashed'
                             danger
@@ -672,7 +683,9 @@ const Setting = () => {
 
                           {deletedExamples.length > 0 && (
                             <div style={{ marginTop: 12, width: '100%' }}>
-                              <h4 style={{ marginBottom: 8, color: token.colorText }}>Deleted Duplicates:</h4>
+                              <h4 style={{ marginBottom: 8, color: token.colorText }}>
+                                Deleted Duplicates:
+                              </h4>
                               <Table
                                 dataSource={deletedExamples}
                                 columns={[
@@ -695,9 +708,9 @@ const Setting = () => {
                                     width: '30%',
                                   },
                                 ]}
-                                rowKey="id"
+                                rowKey='id'
                                 pagination={{ pageSize: 5 }}
-                                size="small"
+                                size='small'
                                 bordered
                               />
                             </div>

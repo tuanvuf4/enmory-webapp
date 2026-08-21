@@ -74,7 +74,7 @@ export const Library: React.FC = () => {
 
       <div className={appStyle.container}>
         <Space direction={'vertical'} size={token.size} className={'w-full'}>
-          {!isLoading && (
+          {!isLoading && listItem.length > 0 && (
             <Flex align={'center'} justify={'flex-end'}>
               <Pagination
                 page={page}
@@ -108,7 +108,7 @@ export const Library: React.FC = () => {
             </Row>
           )}
 
-          {!isLoading && (
+          {!isLoading && listItem.length > 0 && (
             <Flex align={'center'} justify={'flex-end'}>
               <Pagination
                 page={page}

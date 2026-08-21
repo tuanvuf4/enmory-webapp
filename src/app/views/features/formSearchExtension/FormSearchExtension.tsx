@@ -59,8 +59,9 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
     'example',
   )
 
-  const onSelect = (value: string) => {
-    exampleApi.getExampleById(value).then(() => {
+  const onSelect = (value: string, option?: any) => {
+    const id = option?.id || value
+    exampleApi.getExampleById(id).then(() => {
       reset({ ...initSearchFormEx, keyword: '' })
 
       // Update URL params

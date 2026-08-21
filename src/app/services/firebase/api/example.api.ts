@@ -3,6 +3,7 @@ import { IExample } from '@/models/item.model'
 import { IExampleQuery } from '@/models/example.model'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
+import { removeLineBreaks } from '@/core/utils'
 import {
   collection,
   query,
@@ -31,13 +32,18 @@ const createExample = async (body: IExample): Promise<IHttpResponse<IExample>> =
       throw new Error('User not authenticated')
     }
 
+    const origin = removeLineBreaks(body.origin)
+    const translation = removeLineBreaks(body.translation)
+
     const exampleData: IExample = {
       ...body,
+      origin,
+      translation,
       uid: currentUser.uid,
       created_date: Timestamp.now().toMillis(),
       last_update: Timestamp.now().toMillis(),
       randomIndex: Math.random(), // For efficient random queries
-      origin_lowercase: body.origin?.toLowerCase() || '', // For case-insensitive search
+      origin_lowercase: origin.toLowerCase(), // For case-insensitive search
     }
 
     const docRef = await addDoc(collection(db, dbCollections.examples), exampleData)
@@ -198,10 +204,19 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
     }
 
     const exampleDocRef = doc(db, dbCollections.examples, String(body.id))
-    const updateData = {
+    const updateData: any = {
       ...body,
-      origin_lowercase: body.origin?.toLowerCase() || '',
       last_update: Timestamp.now().toMillis(),
+    }
+
+    if (body.origin !== undefined) {
+      const origin = removeLineBreaks(body.origin)
+      updateData.origin = origin
+      updateData.origin_lowercase = origin.toLowerCase()
+    }
+
+    if (body.translation !== undefined) {
+      updateData.translation = removeLineBreaks(body.translation)
     }
 
     await updateDoc(exampleDocRef, updateData)

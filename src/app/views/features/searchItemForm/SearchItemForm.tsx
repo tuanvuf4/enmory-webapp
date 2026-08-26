@@ -5,6 +5,7 @@ import {
   SearchOutlined,
   Loading3QuartersOutlined,
   UnorderedListOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons'
 import { useItemSearchParams, useSelector } from '@/core/hooks'
 import { useAutoComplete, useItemModal, useLoading, useTagManagerModal } from '@/helpers/hooks'
@@ -159,8 +160,20 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   }
                   children={
                     <Input
-                      style={{ borderRadius: '999px' }}
-                      suffix={isSearching ? <Loading3QuartersOutlined spin /> : undefined}
+                      style={{ borderRadius: '999px', paddingLeft: token.size }}
+                      suffix={
+                        isSearching ? (
+                          <Loading3QuartersOutlined spin />
+                        ) : (
+                          <CloseCircleOutlined
+                            style={{ fontSize: 16, cursor: 'pointer' }}
+                            onClick={() => {
+                              onChange('')
+                              setUrlParams({ keyword: '' })
+                            }}
+                          />
+                        )
+                      }
                     />
                   }
                   style={{
@@ -169,10 +182,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   }}
                   options={options}
                   onSelect={async (value, option) => await onSelect(value, option)}
-                  onClear={() => {
-                    onChange('')
-                    setUrlParams({ keyword: '' })
-                  }}
                   onChange={(text) => onChange(text)}
                 />
               </div>

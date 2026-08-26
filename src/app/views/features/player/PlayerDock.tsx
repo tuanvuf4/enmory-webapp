@@ -279,6 +279,42 @@ export const PlayerDock: React.FC = () => {
 
   const handlePause = () => dispatch(listeningAction.updatePlayer({ playing: false }))
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const targetDoc = event.view?.document || document
+      const activeEl = targetDoc.activeElement
+      if (
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.hasAttribute('contenteditable'))
+      ) {
+        return
+      }
+
+      if (event.code === 'Space') {
+        event.preventDefault()
+        if (playing) {
+          handlePause()
+        } else {
+          handlePlay()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    if (pipWindow) {
+      pipWindow.addEventListener('keydown', handleKeyDown)
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      if (pipWindow) {
+        pipWindow.removeEventListener('keydown', handleKeyDown)
+      }
+    }
+  }, [playing, pipWindow])
+
   const load = (src?: string, startPosition?: number) => {
     dispatch(
       listeningAction.updatePlayer({

@@ -12,7 +12,7 @@ import {
   StepForwardOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-import { Button, Flex, Space, theme } from 'antd'
+import { Button, Dropdown, Flex, MenuProps, Space, theme } from 'antd'
 import ReactPlayer from 'react-player'
 import { createPortal } from 'react-dom'
 import styles from './player.module.scss'
@@ -202,7 +202,6 @@ export const PlayerDock: React.FC = () => {
     played,
     duration,
     playbackRate,
-    pip,
     seekTo,
     playedSeconds,
   } = player
@@ -255,7 +254,23 @@ export const PlayerDock: React.FC = () => {
     if (playerRef.current) {
       const current = playerRef.current.currentTime
       const latestPlayedSeconds = playedSecondsRef.current
-      if (current < 1 && latestPlayedSeconds > 0 && Math.abs(current - latestPlayedSeconds) > 1) {
+      const hasDuration = duration > 0
+      const isAtEnd = hasDuration && latestPlayedSeconds >= duration - 1
+
+      if (hasDuration && current >= duration - 1) {
+        playerRef.current.currentTime = 0
+        dispatch(
+          listeningAction.updatePlayer({
+            played: 0,
+            playedSeconds: 0,
+          }),
+        )
+      } else if (
+        current < 1 &&
+        latestPlayedSeconds > 0 &&
+        Math.abs(current - latestPlayedSeconds) > 1 &&
+        !isAtEnd
+      ) {
         playerRef.current.currentTime = latestPlayedSeconds
       }
     }
@@ -378,6 +393,13 @@ export const PlayerDock: React.FC = () => {
 
   const handleEnded = () => {
     if (loop) {
+      dispatch(
+        listeningAction.updatePlayer({
+          playing: true,
+          played: 0,
+          playedSeconds: 0,
+        }),
+      )
       setPlayerKey((prevKey) => prevKey + 1)
     } else {
       onNext()
@@ -461,6 +483,22 @@ export const PlayerDock: React.FC = () => {
     return `${min}:${String(sec).padStart(2, '0')}`
   }
 
+  const speedMenuProps: MenuProps = {
+    items: [
+      { key: '0.5', label: '0.5x' },
+      { key: '0.75', label: '0.75x' },
+      { key: '1', label: '1x' },
+      { key: '1.25', label: '1.25x' },
+      { key: '1.5', label: '1.5x' },
+    ],
+    selectable: true,
+    selectedKeys: [String(playbackRate)],
+    onClick: (e) => {
+      const speed = Number.parseFloat(e.key)
+      dispatch(listeningAction.updatePlayer({ playbackRate: speed }))
+    },
+  }
+
   return (
     <div
       className={styles.playerDock}
@@ -512,9 +550,11 @@ export const PlayerDock: React.FC = () => {
               onClick={() => setTrackListOpen((v) => !v)}
             />
 
-            <Button type='text' title={'Rate'} size={'middle'} className={appStyle.fromXs}>
-              1x
-            </Button>
+            <Dropdown menu={speedMenuProps} trigger={['click']} placement='bottomLeft'>
+              <Button type='text' title={'Rate'} size={'middle'} className={appStyle.fromXs}>
+                {playbackRate}x
+              </Button>
+            </Dropdown>
 
             <Button
               type='text'
@@ -624,7 +664,6 @@ export const PlayerDock: React.FC = () => {
           className='react-player'
           style={{ width: '100%', height: 'auto', aspectRatio: '16/9' }}
           src={src}
-          pip={pip}
           playing={playing}
           controls={controls}
           light={light}
@@ -657,8 +696,6 @@ export const PlayerDock: React.FC = () => {
           }}
           // onLoadStart={() => console.log('onLoadStart')}
           onReady={handleReady}
-          onEnterPictureInPicture={() => dispatch(listeningAction.updatePlayer({ pip: true }))}
-          onLeavePictureInPicture={() => dispatch(listeningAction.updatePlayer({ pip: false }))}
           // onStart={(e) => console.log('onStart', e)}
           onPlay={handlePlay}
           onPause={handlePause}

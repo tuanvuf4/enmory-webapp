@@ -18,7 +18,7 @@ import React from 'react'
 import { AppContext } from './app/context/app.context'
 import { store } from '@/store/store'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+// import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { PopupExtension } from './extension/PopupExtension'
 
 // Create a client
@@ -68,7 +68,7 @@ const AppWrapper: React.FC<IAppTypeProps> = ({ type }) => (
               </PersistGate>
             </AppContext>
           </ThemeConfigProvider>
-          <ReactQueryDevtools initialIsOpen={false} />
+          {/* <ReactQueryDevtools initialIsOpen={false} /> */}
         </QueryClientProvider>
       </BrowserRouter>
     </Provider>

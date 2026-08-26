@@ -83,97 +83,98 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
           </Row>
         </Col>
 
-        {fields.map((example, key) => {
-          return (
-            <Col md={24} key={example.id || key}>
-              <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
-                <Col md={{ span: 20, offset: 4 }} xs={{ span: 24, offset: 0 }}>
-                  <div
+        <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
+          {fields.map((example, key) => {
+            return (
+              <Col
+                key={example.id || key}
+                md={{ span: 20, offset: 4 }}
+                xs={{ span: 24, offset: 0 }}
+              >
+                <div
+                  style={{
+                    padding: token.size / 2,
+                    paddingRight: 50,
+                    position: 'relative',
+                    border: `1px solid ${token.colorBorder}`,
+                  }}
+                >
+                  <Button
                     style={{
-                      padding: 0,
-                      paddingRight: 50,
-                      position: 'relative',
+                      position: 'absolute',
+                      right: 5,
+                      color: token.palette?.red?.[6],
                     }}
+                    type={'text'}
+                    onClick={() => {
+                      confirm({ onOk: () => remove(key) })
+                    }}
+                    icon={<DeleteOutlined />}
+                  />
+                  <Space
+                    size={[token.size / 2, token.size / 2]}
+                    direction='vertical'
+                    className={appStyle.fulWidth}
                   >
-                    <Button
-                      style={{
-                        position: 'absolute',
-                        right: 5,
-                        color: token.palette?.red?.[6],
-                      }}
-                      type={'text'}
-                      onClick={() => {
-                        confirm({ onOk: () => remove(key) })
-                      }}
-                      icon={<DeleteOutlined />}
-                    />
-                    <Space
-                      size={[token.size / 2, token.size / 2]}
-                      direction='vertical'
-                      className={appStyle.fulWidth}
-                    >
-                      <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
-                        <Col md={24} xs={24}>
-                          <Controller
-                            control={control}
-                            name={`meanings.${nestIndex}.examples.${key}.origin`}
-                            render={({ field }) => (
-                              <AutoComplete
-                                value={field.value}
-                                options={activeFieldIndex === key ? options : []}
-                                onSearch={(text) => onSearch(text, key)}
-                                onSelect={(value, option) =>
-                                  onSelect(nestIndex, key, value, option)
-                                }
-                                onChange={(text) => {
-                                  field.onChange(text)
-                                  onSearch(text, key)
-                                }}
-                                onFocus={() => {
-                                  setActiveFieldIndex(key)
-                                  setCurrentSearch(field.value || '')
-                                }}
-                                onBlur={() => {
-                                  field.onChange(removeLineBreaks(field.value))
-                                }}
-                                placeholder='Origin:'
-                                className={'w-full'}
-                              >
-                                <TextArea
-                                  autoSize={{ minRows: 1, maxRows: 4 }}
-                                  placeholder='Origin:'
-                                />
-                              </AutoComplete>
-                            )}
-                          />
-                        </Col>
-                      </Row>
-
-                      <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
-                        <Col md={24} xs={24}>
-                          <Controller
-                            control={control}
-                            name={`meanings.${nestIndex}.examples.${key}.translation`}
-                            render={({ field }) => (
+                    <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
+                      <Col md={24} xs={24}>
+                        <Controller
+                          control={control}
+                          name={`meanings.${nestIndex}.examples.${key}.origin`}
+                          render={({ field }) => (
+                            <AutoComplete
+                              value={field.value}
+                              options={activeFieldIndex === key ? options : []}
+                              onSearch={(text) => onSearch(text, key)}
+                              onSelect={(value, option) => onSelect(nestIndex, key, value, option)}
+                              onChange={(text) => {
+                                field.onChange(text)
+                                onSearch(text, key)
+                              }}
+                              onFocus={() => {
+                                setActiveFieldIndex(key)
+                                setCurrentSearch(field.value || '')
+                              }}
+                              onBlur={() => {
+                                field.onChange(removeLineBreaks(field.value))
+                              }}
+                              placeholder='Origin:'
+                              className={'w-full'}
+                            >
                               <TextArea
                                 autoSize={{ minRows: 1, maxRows: 4 }}
-                                placeholder='Translation:'
-                                {...field}
-                                onBlur={() => {
-                                  field.onChange(removeLineBreaks(field.value))
-                                }}
+                                placeholder='Origin:'
                               />
-                            )}
-                          />
-                        </Col>
-                      </Row>
-                    </Space>
-                  </div>
-                </Col>
-              </Row>
-            </Col>
-          )
-        })}
+                            </AutoComplete>
+                          )}
+                        />
+                      </Col>
+                    </Row>
+
+                    <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
+                      <Col md={24} xs={24}>
+                        <Controller
+                          control={control}
+                          name={`meanings.${nestIndex}.examples.${key}.translation`}
+                          render={({ field }) => (
+                            <TextArea
+                              autoSize={{ minRows: 1, maxRows: 4 }}
+                              placeholder='Translation:'
+                              {...field}
+                              onBlur={() => {
+                                field.onChange(removeLineBreaks(field.value))
+                              }}
+                            />
+                          )}
+                        />
+                      </Col>
+                    </Row>
+                  </Space>
+                </div>
+              </Col>
+            )
+          })}
+        </Row>
       </Space>
     </>
   )

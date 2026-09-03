@@ -258,44 +258,9 @@ export const PlayerDock: React.FC = () => {
 
   const playedSecondsRef = useRef(playedSeconds)
 
-  const savePlaybackSession = useCallback(
-    (timeInSeconds: number) => {
-      if (!currentTrack) return
-      localStorage.setItem(
-        'enmory_playback_session',
-        JSON.stringify({
-          trackId: currentTrack.id,
-          playedSeconds: timeInSeconds,
-        }),
-      )
-    },
-    [currentTrack],
-  )
-
   useEffect(() => {
     playedSecondsRef.current = playedSeconds
   }, [playedSeconds])
-
-  useEffect(() => {
-    const persistCurrentTime = () => {
-      if (!playerRef.current) return
-      savePlaybackSession(playerRef.current.currentTime || playedSecondsRef.current || 0)
-    }
-
-    const onVisibilityChange = () => {
-      if (document.hidden) {
-        persistCurrentTime()
-      }
-    }
-
-    document.addEventListener('visibilitychange', onVisibilityChange)
-    window.addEventListener('pagehide', persistCurrentTime)
-
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibilityChange)
-      window.removeEventListener('pagehide', persistCurrentTime)
-    }
-  }, [savePlaybackSession])
 
   const smoothTime = useSmoothTime(playedSeconds, playing, playbackRate)
 
@@ -480,7 +445,15 @@ export const PlayerDock: React.FC = () => {
 
     if (!player.duration) return
 
-    savePlaybackSession(player.currentTime)
+    if (currentTrack) {
+      localStorage.setItem(
+        'enmory_playback_session',
+        JSON.stringify({
+          trackId: currentTrack.id,
+          playedSeconds: player.currentTime,
+        }),
+      )
+    }
 
     dispatch(
       listeningAction.updatePlayer({
@@ -602,39 +575,6 @@ export const PlayerDock: React.FC = () => {
       }),
     )
   }
-
-  useEffect(() => {
-    if (!('mediaSession' in navigator)) return
-
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: currentTrack?.title || 'Enmory',
-      artist: currentTrack?.description || 'Enmory',
-      album: 'Listening',
-    })
-
-    navigator.mediaSession.playbackState = playing ? 'playing' : 'paused'
-
-    navigator.mediaSession.setActionHandler('play', handlePlay)
-    navigator.mediaSession.setActionHandler('pause', handlePause)
-    navigator.mediaSession.setActionHandler('previoustrack', onPrev)
-    navigator.mediaSession.setActionHandler('nexttrack', onNext)
-    navigator.mediaSession.setActionHandler('seekbackward', () => onSeekBy(-10))
-    navigator.mediaSession.setActionHandler('seekforward', () => onSeekBy(10))
-    navigator.mediaSession.setActionHandler('seekto', (details) => {
-      if (typeof details.seekTime !== 'number' || !playerRef.current) return
-      playerRef.current.currentTime = details.seekTime
-    })
-
-    return () => {
-      navigator.mediaSession.setActionHandler('play', null)
-      navigator.mediaSession.setActionHandler('pause', null)
-      navigator.mediaSession.setActionHandler('previoustrack', null)
-      navigator.mediaSession.setActionHandler('nexttrack', null)
-      navigator.mediaSession.setActionHandler('seekbackward', null)
-      navigator.mediaSession.setActionHandler('seekforward', null)
-      navigator.mediaSession.setActionHandler('seekto', null)
-    }
-  }, [currentTrack, playing, handlePlay, handlePause, onPrev, onNext])
 
   const formatTime = (seconds: number) => {
     const s = Math.max(0, Math.floor(seconds))
@@ -817,19 +757,7 @@ export const PlayerDock: React.FC = () => {
       )}
 
       {/* Hidden ReactPlayer engine */}
-      <div
-        style={{
-          position: 'fixed',
-          width: 1,
-          height: 1,
-          opacity: 0,
-          pointerEvents: 'none',
-          bottom: 0,
-          left: 0,
-          zIndex: -1,
-        }}
-        aria-hidden='true'
-      >
+      <div style={{ display: 'none' }}>
         <ReactPlayer
           key={playerKey}
           ref={setPlayerRef}
@@ -840,7 +768,6 @@ export const PlayerDock: React.FC = () => {
           controls={controls}
           light={light}
           loop={loop}
-          playsInline={true}
           playbackRate={playbackRate}
           volume={volume}
           muted={muted}

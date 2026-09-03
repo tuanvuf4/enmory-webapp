@@ -212,9 +212,44 @@ export const PlayerDock: React.FC = () => {
 
   const playedSecondsRef = useRef(playedSeconds)
 
+  const savePlaybackSession = useCallback(
+    (timeInSeconds: number) => {
+      if (!currentTrack) return
+      localStorage.setItem(
+        'enmory_playback_session',
+        JSON.stringify({
+          trackId: currentTrack.id,
+          playedSeconds: timeInSeconds,
+        }),
+      )
+    },
+    [currentTrack],
+  )
+
   useEffect(() => {
     playedSecondsRef.current = playedSeconds
   }, [playedSeconds])
+
+  useEffect(() => {
+    const persistCurrentTime = () => {
+      if (!playerRef.current) return
+      savePlaybackSession(playerRef.current.currentTime || playedSecondsRef.current || 0)
+    }
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        persistCurrentTime()
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('pagehide', persistCurrentTime)
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('pagehide', persistCurrentTime)
+    }
+  }, [savePlaybackSession])
 
   const smoothTime = useSmoothTime(playedSeconds, playing, playbackRate)
 
@@ -381,15 +416,7 @@ export const PlayerDock: React.FC = () => {
 
     if (!player.duration) return
 
-    if (currentTrack) {
-      localStorage.setItem(
-        'enmory_playback_session',
-        JSON.stringify({
-          trackId: currentTrack.id,
-          playedSeconds: player.currentTime,
-        }),
-      )
-    }
+    savePlaybackSession(player.currentTime)
 
     dispatch(
       listeningAction.updatePlayer({
@@ -512,6 +539,39 @@ export const PlayerDock: React.FC = () => {
     )
   }
 
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentTrack?.title || 'Enmory',
+      artist: currentTrack?.description || 'Enmory',
+      album: 'Listening',
+    })
+
+    navigator.mediaSession.playbackState = playing ? 'playing' : 'paused'
+
+    navigator.mediaSession.setActionHandler('play', handlePlay)
+    navigator.mediaSession.setActionHandler('pause', handlePause)
+    navigator.mediaSession.setActionHandler('previoustrack', onPrev)
+    navigator.mediaSession.setActionHandler('nexttrack', onNext)
+    navigator.mediaSession.setActionHandler('seekbackward', () => onSeekBy(-10))
+    navigator.mediaSession.setActionHandler('seekforward', () => onSeekBy(10))
+    navigator.mediaSession.setActionHandler('seekto', (details) => {
+      if (typeof details.seekTime !== 'number' || !playerRef.current) return
+      playerRef.current.currentTime = details.seekTime
+    })
+
+    return () => {
+      navigator.mediaSession.setActionHandler('play', null)
+      navigator.mediaSession.setActionHandler('pause', null)
+      navigator.mediaSession.setActionHandler('previoustrack', null)
+      navigator.mediaSession.setActionHandler('nexttrack', null)
+      navigator.mediaSession.setActionHandler('seekbackward', null)
+      navigator.mediaSession.setActionHandler('seekforward', null)
+      navigator.mediaSession.setActionHandler('seekto', null)
+    }
+  }, [currentTrack, playing, handlePlay, handlePause, onPrev, onNext])
+
   const formatTime = (seconds: number) => {
     const s = Math.max(0, Math.floor(seconds))
     const min = Math.floor(s / 60)
@@ -603,9 +663,9 @@ export const PlayerDock: React.FC = () => {
             <Button
               type='text'
               size={'middle'}
-              title={'-5s'}
+              title={'-10s'}
               icon={<FastBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
-              onClick={() => onSeekBy(-5)}
+              onClick={() => onSeekBy(-10)}
             />
 
             <Button
@@ -693,17 +753,30 @@ export const PlayerDock: React.FC = () => {
       )}
 
       {/* Hidden ReactPlayer engine */}
-      <div style={{ display: 'none' }}>
+      <div
+        style={{
+          position: 'fixed',
+          width: 1,
+          height: 1,
+          opacity: 0,
+          pointerEvents: 'none',
+          bottom: 0,
+          left: 0,
+          zIndex: -1,
+        }}
+        aria-hidden='true'
+      >
         <ReactPlayer
           key={playerKey}
           ref={setPlayerRef}
           className='react-player'
-          style={{ width: '100%', height: 'auto', aspectRatio: '16/9' }}
+          style={{ width: 1, height: 1 }}
           src={src}
           playing={playing}
           controls={controls}
           light={light}
           loop={loop}
+          playsInline={true}
           playbackRate={playbackRate}
           volume={volume}
           muted={muted}
@@ -775,10 +848,10 @@ export const PlayerDock: React.FC = () => {
 
               <Button
                 type='text'
-                title={'-5s'}
+                title={'-10s'}
                 className={styles.pipBtnSecondary}
                 icon={<FastBackwardOutlined />}
-                onClick={() => onSeekBy(-5)}
+                onClick={() => onSeekBy(-10)}
               />
 
               <Button

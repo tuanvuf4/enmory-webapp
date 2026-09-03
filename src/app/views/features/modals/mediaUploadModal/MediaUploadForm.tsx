@@ -142,15 +142,11 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
         relation: data.relation || [],
       }
 
-      console.log(`*** dataSubmit ***`, dataSubmit)
-
       if (trackData?.id) {
         result = await tracksApi.updateTrack(String(trackData.id), dataSubmit)
       } else {
         result = await tracksApi.addTrack(dataSubmit)
       }
-
-      console.log(`*** result ***`, result)
 
       if (result.isSuccess && result.content) {
         message({ type: 'success', content: result.message })

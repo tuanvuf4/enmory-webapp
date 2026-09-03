@@ -33,6 +33,7 @@ export const PlayerDock: React.FC = () => {
   const playerRef = useRef<HTMLVideoElement | null>(null)
   const isFirstLoadRef = useRef(true)
   const shouldSeekOnReadyRef = useRef(false)
+  const lastInvalidSpotifySrcRef = useRef<string | null>(null)
 
   const [trackListOpen, setTrackListOpen] = useState(false)
   const [playerKey, setPlayerKey] = useState(0)
@@ -45,6 +46,49 @@ export const PlayerDock: React.FC = () => {
   const dispatch = useDispatch()
 
   const trackIndex = tracks.findIndex((t) => t.id === currentTrack?.id)
+
+  const normalizeMediaSrc = useCallback((rawSrc?: string) => {
+    if (!rawSrc) return rawSrc
+
+    let normalized = rawSrc.trim()
+
+    if (normalized.includes('<iframe')) {
+      const match = normalized.match(/src=["']([^"']+)["']/i)
+      if (match?.[1]) {
+        normalized = match[1]
+      }
+    }
+
+    try {
+      const parsed = new URL(normalized)
+      const host = parsed.hostname.toLowerCase()
+
+      if (host === 'open.spotify.com' || host === 'www.open.spotify.com') {
+        const segments = parsed.pathname.split('/').filter(Boolean)
+
+        if (segments[0]?.startsWith('intl-')) {
+          segments.shift()
+        }
+
+        if (segments[0] === 'embed') {
+          segments.shift()
+        }
+
+        const supportedTypes = new Set(['track', 'album', 'playlist', 'artist', 'episode', 'show'])
+
+        const type = segments[0]
+        const id = segments[1]
+
+        if (type && id && supportedTypes.has(type)) {
+          return `https://open.spotify.com/${type}/${id}`
+        }
+      }
+    } catch (e) {
+      // Keep original value for non-URL sources.
+    }
+
+    return normalized
+  }, [])
 
   // const handleToggleShowPlayer = async () => {
   //   const currentConfig = user?.configuration || appSetting.meta
@@ -206,6 +250,8 @@ export const PlayerDock: React.FC = () => {
     playedSeconds,
   } = player
 
+  const resolvedSrc = useMemo(() => normalizeMediaSrc(src), [src, normalizeMediaSrc])
+
   const setPlayerRef = useCallback((player: HTMLVideoElement) => {
     playerRef.current = player
   }, [])
@@ -351,10 +397,12 @@ export const PlayerDock: React.FC = () => {
   }, [playing, pipWindow])
 
   const load = (src?: string, startPosition?: number) => {
+    const normalizedSrc = normalizeMediaSrc(src)
+
     dispatch(
       listeningAction.updatePlayer({
         ...player,
-        src,
+        src: normalizedSrc,
         playedSeconds: startPosition !== undefined ? startPosition : 0,
         played: startPosition !== undefined && duration ? startPosition / duration : 0,
         loaded: 0,
@@ -363,6 +411,22 @@ export const PlayerDock: React.FC = () => {
       }),
     )
   }
+
+  useEffect(() => {
+    if (!src) return
+
+    const raw = src.trim()
+    const isSpotifyShortLink = /https?:\/\/(spotify\.link|spoti\.fi)\//i.test(raw)
+
+    if (isSpotifyShortLink && lastInvalidSpotifySrcRef.current !== raw) {
+      lastInvalidSpotifySrcRef.current = raw
+      message({
+        type: 'warning',
+        content:
+          'Spotify short link (spotify.link/spoti.fi) chưa được hỗ trợ trực tiếp. Hãy dùng link dạng https://open.spotify.com/track/...',
+      })
+    }
+  }, [src, message])
 
   const restoreTimeRef = useRef(0)
 
@@ -771,7 +835,7 @@ export const PlayerDock: React.FC = () => {
           ref={setPlayerRef}
           className='react-player'
           style={{ width: 1, height: 1 }}
-          src={src}
+          src={resolvedSrc}
           playing={playing}
           controls={controls}
           light={light}

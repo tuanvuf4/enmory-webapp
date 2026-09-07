@@ -33,10 +33,11 @@ export const PlayerDock: React.FC = () => {
   const playerRef = useRef<HTMLVideoElement | null>(null)
   const isFirstLoadRef = useRef(true)
   const shouldSeekOnReadyRef = useRef(false)
+  const shouldAutoPlayOnReadyRef = useRef(false)
+  const hasHandledTrackEndRef = useRef(false)
   const lastInvalidSpotifySrcRef = useRef<string | null>(null)
 
   const [trackListOpen, setTrackListOpen] = useState(false)
-  const [playerKey, setPlayerKey] = useState(0)
   const [pipWindow, setPipWindow] = useState<Window | null>(null)
 
   const { currentTrack, tracks, player } = useSelector((state) => state.listening)
@@ -363,6 +364,7 @@ export const PlayerDock: React.FC = () => {
 
   const load = (src?: string, startPosition?: number) => {
     const normalizedSrc = normalizeMediaSrc(src)
+    hasHandledTrackEndRef.current = false
 
     dispatch(
       listeningAction.updatePlayer({
@@ -430,6 +432,33 @@ export const PlayerDock: React.FC = () => {
       }
       shouldSeekOnReadyRef.current = false
     }
+
+    if (shouldAutoPlayOnReadyRef.current) {
+      dispatch(listeningAction.updatePlayer({ playing: true }))
+      shouldAutoPlayOnReadyRef.current = false
+    }
+  }
+
+  const handlePlaybackEnded = () => {
+    if (hasHandledTrackEndRef.current) return
+    hasHandledTrackEndRef.current = true
+
+    if (loop) {
+      if (playerRef.current) {
+        playerRef.current.currentTime = 0
+      }
+
+      dispatch(
+        listeningAction.updatePlayer({
+          playing: true,
+          played: 0,
+          playedSeconds: 0,
+        }),
+      )
+      return
+    }
+
+    onNext()
   }
 
   const handleDurationChange = () => {
@@ -444,6 +473,16 @@ export const PlayerDock: React.FC = () => {
     if (!player || player.seeking) return
 
     if (!player.duration) return
+
+    const remaining = player.duration - player.currentTime
+    if (remaining <= 0.15) {
+      handlePlaybackEnded()
+      return
+    }
+
+    if (remaining > 0.5) {
+      hasHandledTrackEndRef.current = false
+    }
 
     if (currentTrack) {
       localStorage.setItem(
@@ -492,18 +531,7 @@ export const PlayerDock: React.FC = () => {
   }
 
   const handleEnded = () => {
-    if (loop) {
-      dispatch(
-        listeningAction.updatePlayer({
-          playing: true,
-          played: 0,
-          playedSeconds: 0,
-        }),
-      )
-      setPlayerKey((prevKey) => prevKey + 1)
-    } else {
-      onNext()
-    }
+    handlePlaybackEnded()
   }
 
   const handleSeekMouseDown = () => {
@@ -529,6 +557,7 @@ export const PlayerDock: React.FC = () => {
   }
 
   const onPrev = () => {
+    if (!tracks.length) return
     if (playerRef.current) playerRef.current.currentTime = 0
     dispatch(
       listeningAction.resetPlayer({
@@ -542,11 +571,13 @@ export const PlayerDock: React.FC = () => {
     )
     const index = trackIndex - 1 < 0 ? tracks.length - 1 : trackIndex - 1
     const item = tracks[index]
+    shouldAutoPlayOnReadyRef.current = true
+    hasHandledTrackEndRef.current = false
     dispatch(listeningAction.setCurrentTrack(item))
-    setTimeout(() => handlePlay(), 1000)
   }
 
   const onNext = () => {
+    if (!tracks.length) return
     if (playerRef.current) playerRef.current.currentTime = 0
     dispatch(
       listeningAction.resetPlayer({
@@ -560,8 +591,9 @@ export const PlayerDock: React.FC = () => {
     )
     const index = trackIndex + 1 === tracks.length ? 0 : trackIndex + 1
     const item = tracks[index]
+    shouldAutoPlayOnReadyRef.current = true
+    hasHandledTrackEndRef.current = false
     dispatch(listeningAction.setCurrentTrack(item))
-    setTimeout(() => handlePlay(), 1000)
   }
 
   const onSeekBy = (offset: number) => {
@@ -759,7 +791,6 @@ export const PlayerDock: React.FC = () => {
       {/* Hidden ReactPlayer engine */}
       <div style={{ display: 'none' }}>
         <ReactPlayer
-          key={playerKey}
           ref={setPlayerRef}
           className='react-player'
           style={{ width: 1, height: 1 }}

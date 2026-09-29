@@ -8,11 +8,12 @@ import {
   PauseOutlined,
   PlayCircleFilled,
   ReloadOutlined,
+  SoundOutlined,
   StepBackwardOutlined,
   StepForwardOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-import { Button, Dropdown, Flex, MenuProps, Space, theme } from 'antd'
+import { Button, Dropdown, Flex, MenuProps, Space, Tag, theme } from 'antd'
 import ReactPlayer from 'react-player'
 import { createPortal } from 'react-dom'
 import styles from './player.module.scss'
@@ -290,14 +291,213 @@ export const PlayerDock: React.FC = () => {
     return segDuration > 0 ? Math.max(0, Math.min(100, (elapsed / segDuration) * 100)) : 0
   }, [transcriptSegments, activeIndex, smoothTime, player.duration])
 
+  const [forceTranscriptMode, setForceTranscriptMode] = useState(false)
+
+  const hasValidMediaUrl = useMemo(() => {
+    if (!resolvedSrc) return false
+    const trimmed = resolvedSrc.trim()
+    if (!trimmed || trimmed === 'transcript') return false
+    return (
+      trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')
+    )
+  }, [resolvedSrc])
+
+  const isTranscriptPlayback = useMemo(() => {
+    if (!hasValidMediaUrl) {
+      return transcriptSegments.length > 0
+    }
+    return forceTranscriptMode && transcriptSegments.length > 0
+  }, [hasValidMediaUrl, forceTranscriptMode, transcriptSegments.length])
+
+  const transcriptDuration = useMemo(() => {
+    if (!transcriptSegments.length) return 0
+    const lastSeg = transcriptSegments[transcriptSegments.length - 1]
+    const wordCount = lastSeg.text.trim().split(/\s+/).length
+    const estDuration = Math.max(12, Math.ceil(wordCount / 2.5))
+    return lastSeg.timeSeconds + estDuration
+  }, [transcriptSegments])
+
+  useEffect(() => {
+    if (
+      isTranscriptPlayback &&
+      transcriptDuration > 0 &&
+      Math.abs(duration - transcriptDuration) > 1
+    ) {
+      dispatch(listeningAction.updatePlayer({ duration: transcriptDuration }))
+    }
+  }, [isTranscriptPlayback, transcriptDuration, duration, dispatch])
+
+  useEffect(() => {
+    if (isTranscriptPlayback && shouldAutoPlayOnReadyRef.current) {
+      shouldAutoPlayOnReadyRef.current = false
+      dispatch(listeningAction.updatePlayer({ playing: true }))
+    }
+  }, [isTranscriptPlayback, dispatch])
+
+  // Playback timer loop for transcript mode
+  useEffect(() => {
+    if (!isTranscriptPlayback || !playing) return
+
+    const intervalMs = 100
+    const timer = setInterval(() => {
+      const current = playedSecondsRef.current
+      const targetDuration = transcriptDuration || duration || 300
+
+      if (targetDuration > 0 && current >= targetDuration - 0.15) {
+        handlePlaybackEnded()
+        return
+      }
+
+      const step = (intervalMs / 1000) * playbackRate
+      const nextTime = Math.min(targetDuration, current + step)
+      playedSecondsRef.current = nextTime
+
+      if (currentTrack) {
+        localStorage.setItem(
+          'enmory_playback_session',
+          JSON.stringify({
+            trackId: currentTrack.id,
+            playedSeconds: nextTime,
+          }),
+        )
+      }
+
+      dispatch(
+        listeningAction.updatePlayer({
+          playedSeconds: nextTime,
+          played: targetDuration > 0 ? nextTime / targetDuration : 0,
+        }),
+      )
+    }, intervalMs)
+
+    return () => clearInterval(timer)
+  }, [
+    isTranscriptPlayback,
+    playing,
+    playbackRate,
+    transcriptDuration,
+    duration,
+    currentTrack,
+    dispatch,
+  ])
+
+  // Speech synthesis speaker for transcript mode
+  const lastSpokenIndexRef = useRef<number>(-1)
+
+  const speakTranscriptSegment = useCallback(
+    (text: string, rate: number, vol: number, isMuted: boolean) => {
+      if (!('speechSynthesis' in window)) return
+      window.speechSynthesis.cancel()
+
+      const cleanText = text.replace(/\[.*?\]|\(.*?\)/g, '').trim()
+      if (!cleanText) return
+
+      const utterance = new SpeechSynthesisUtterance(cleanText)
+      utterance.lang = 'en-US'
+      utterance.rate = Math.max(0.5, Math.min(2.0, rate))
+      utterance.volume = isMuted ? 0 : vol
+
+      const voices = window.speechSynthesis.getVoices()
+      const enVoice =
+        voices.find(
+          (v) =>
+            v.lang.startsWith('en') &&
+            (v.name.includes('Natural') ||
+              v.name.includes('Google') ||
+              v.name.includes('Samantha') ||
+              v.name.includes('US') ||
+              v.name.includes('UK')),
+        ) || voices.find((v) => v.lang.startsWith('en'))
+
+      if (enVoice) {
+        utterance.voice = enVoice
+      }
+
+      window.speechSynthesis.speak(utterance)
+    },
+    [],
+  )
+
+  useEffect(() => {
+    if (!isTranscriptPlayback) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+      return
+    }
+
+    if (!playing) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+      lastSpokenIndexRef.current = -1
+      return
+    }
+
+    if (activeIndex >= 0 && activeIndex < transcriptSegments.length) {
+      if (activeIndex !== lastSpokenIndexRef.current) {
+        lastSpokenIndexRef.current = activeIndex
+        const seg = transcriptSegments[activeIndex]
+        speakTranscriptSegment(seg.text, playbackRate, volume, muted)
+      }
+    }
+  }, [
+    isTranscriptPlayback,
+    playing,
+    activeIndex,
+    transcriptSegments,
+    playbackRate,
+    volume,
+    muted,
+    speakTranscriptSegment,
+  ])
+
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
+
   useEffect(() => {
     if (seekTo === null || seekTo === undefined) return
+    if (isTranscriptPlayback) {
+      const targetDuration = transcriptDuration || duration || 0
+      playedSecondsRef.current = seekTo
+      lastSpokenIndexRef.current = -1
+      dispatch(
+        listeningAction.updatePlayer({
+          seekTo: null,
+          playedSeconds: seekTo,
+          played: targetDuration > 0 ? seekTo / targetDuration : 0,
+          playing: true,
+        }),
+      )
+      return
+    }
     if (!playerRef.current) return
     playerRef.current.currentTime = seekTo
     dispatch(listeningAction.updatePlayer({ seekTo: null, playing: true }))
-  }, [seekTo])
+  }, [seekTo, isTranscriptPlayback, transcriptDuration, duration, dispatch])
 
   const handlePlay = () => {
+    if (isTranscriptPlayback) {
+      const targetDuration = transcriptDuration || duration || 0
+      if (targetDuration > 0 && playedSecondsRef.current >= targetDuration - 0.5) {
+        playedSecondsRef.current = 0
+        lastSpokenIndexRef.current = -1
+        dispatch(
+          listeningAction.updatePlayer({
+            played: 0,
+            playedSeconds: 0,
+          }),
+        )
+      }
+      dispatch(listeningAction.updatePlayer({ playing: true }))
+      return
+    }
+
     if (playerRef.current) {
       const current = playerRef.current.currentTime
       const latestPlayedSeconds = playedSecondsRef.current
@@ -324,7 +524,15 @@ export const PlayerDock: React.FC = () => {
     dispatch(listeningAction.updatePlayer({ playing: true }))
   }
 
-  const handlePause = () => dispatch(listeningAction.updatePlayer({ playing: false }))
+  const handlePause = () => {
+    if (isTranscriptPlayback) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+      lastSpokenIndexRef.current = -1
+    }
+    dispatch(listeningAction.updatePlayer({ playing: false }))
+  }
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -549,15 +757,30 @@ export const PlayerDock: React.FC = () => {
 
   const handleSeekMouseUp = (event: React.SyntheticEvent<HTMLInputElement>) => {
     const inputTarget = event.target as HTMLInputElement
+    const val = Number.parseFloat(inputTarget.value)
     dispatch(listeningAction.updatePlayer({ seeking: false }))
+    if (isTranscriptPlayback) {
+      const targetDuration = transcriptDuration || duration || 0
+      const newTime = val * targetDuration
+      playedSecondsRef.current = newTime
+      lastSpokenIndexRef.current = -1
+      dispatch(
+        listeningAction.updatePlayer({
+          playedSeconds: newTime,
+          played: val,
+        }),
+      )
+      return
+    }
     if (playerRef.current) {
-      playerRef.current.currentTime =
-        Number.parseFloat(inputTarget.value) * playerRef.current.duration
+      playerRef.current.currentTime = val * playerRef.current.duration
     }
   }
 
   const onPrev = () => {
     if (!tracks.length) return
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+    lastSpokenIndexRef.current = -1
     if (playerRef.current) playerRef.current.currentTime = 0
     dispatch(
       listeningAction.resetPlayer({
@@ -578,6 +801,8 @@ export const PlayerDock: React.FC = () => {
 
   const onNext = () => {
     if (!tracks.length) return
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+    lastSpokenIndexRef.current = -1
     if (playerRef.current) playerRef.current.currentTime = 0
     dispatch(
       listeningAction.resetPlayer({
@@ -597,6 +822,19 @@ export const PlayerDock: React.FC = () => {
   }
 
   const onSeekBy = (offset: number) => {
+    if (isTranscriptPlayback) {
+      const targetDuration = transcriptDuration || duration || 0
+      const newTime = Math.max(0, Math.min(playedSecondsRef.current + offset, targetDuration))
+      playedSecondsRef.current = newTime
+      lastSpokenIndexRef.current = -1
+      dispatch(
+        listeningAction.updatePlayer({
+          playedSeconds: newTime,
+          played: targetDuration > 0 ? newTime / targetDuration : 0,
+        }),
+      )
+      return
+    }
     const player = playerRef.current
     if (!player) return
     player.currentTime = Math.max(0, Math.min(player.currentTime + offset, player.duration || 0))
@@ -652,6 +890,20 @@ export const PlayerDock: React.FC = () => {
         <div className={styles.dockMeta}>
           <div className={styles.dockTitle} title={currentTrack?.title}>
             {currentTrack?.title}
+            {isTranscriptPlayback && (
+              <Tag
+                color='cyan'
+                style={{
+                  marginLeft: 8,
+                  fontSize: 11,
+                  lineHeight: '18px',
+                  verticalAlign: 'middle',
+                }}
+              >
+                <SoundOutlined style={{ marginRight: 4 }} />
+                Transcript TTS
+              </Tag>
+            )}
           </div>
 
           {activeSegmentText && (
@@ -768,6 +1020,33 @@ export const PlayerDock: React.FC = () => {
               }
               title='Picture in Picture'
             />
+
+            {transcriptSegments.length > 0 && hasValidMediaUrl && (
+              <Button
+                type='text'
+                size={'middle'}
+                title={
+                  forceTranscriptMode
+                    ? 'Chuyển sang Audio gốc'
+                    : 'Chuyển sang phát bằng Transcript (TTS)'
+                }
+                icon={
+                  <SoundOutlined
+                    style={{
+                      fontSize: '20px',
+                      color: forceTranscriptMode ? token.palette?.yellow?.[0] : token.colorText,
+                    }}
+                  />
+                }
+                onClick={() => {
+                  if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel()
+                  }
+                  lastSpokenIndexRef.current = -1
+                  setForceTranscriptMode((v) => !v)
+                }}
+              />
+            )}
           </Flex>
 
           {/* seek bar */}
@@ -794,8 +1073,8 @@ export const PlayerDock: React.FC = () => {
           ref={setPlayerRef}
           className='react-player'
           style={{ width: 1, height: 1 }}
-          src={resolvedSrc}
-          playing={playing}
+          src={isTranscriptPlayback ? undefined : resolvedSrc}
+          playing={playing && !isTranscriptPlayback}
           controls={controls}
           light={light}
           loop={loop}

@@ -1,5 +1,5 @@
 import { initMediaForm, msgErrors } from '@/constant/index'
-import { UnorderedListOutlined } from '@ant-design/icons'
+import { RobotOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { theme, Input, Space, Row, Col, Button, Select, Flex } from 'antd'
@@ -13,6 +13,7 @@ import { usePrompt, useTagManagerModal } from '@/helpers/hooks'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
+import { GenerateTranscriptModal } from '../generateTranscriptModal'
 
 interface IMediaUploadFormProps {
   onConfirm?: (track: ITracks) => void
@@ -75,24 +76,54 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
     relation: yup.array().of(yup.string()).optional(),
     srcUrl: yup
       .string()
-      .required(msgErrors.required)
       .max(
         appSetting.listening.maxLengthInput,
         msgErrors.maxLength('Source URL', appSetting.listening.maxLengthInput),
-      ),
+      )
+      .test('srcUrl-or-transcript', msgErrors.required, function (val) {
+        const { transcript } = this.parent
+        if (transcript && transcript.trim()) return true
+        return Boolean(val && val.trim())
+      }),
     srcType: yup.number(),
   }) as yup.ObjectSchema<IMediaForm>
+
+  const [openGenerateModal, setOpenGenerateModal] = useState(false)
 
   const {
     control,
     handleSubmit,
     reset,
+    setValue,
+    getValues,
+    watch,
     formState: { errors },
   } = useForm<IMediaForm>({
     defaultValues: trackData || initMediaForm,
     mode: 'all',
     resolver: yupResolver(schema),
   })
+
+  const handleApplyGeneratedTranscript = (data: {
+    title: string
+    description: string
+    transcript: string
+    translation?: string
+  }) => {
+    setValue('transcript', data.transcript, { shouldValidate: true, shouldDirty: true })
+    if (data.title && !getValues('title')) {
+      setValue('title', data.title, { shouldValidate: true, shouldDirty: true })
+    }
+    if (data.description && (!getValues('description') || getValues('description') === '<p></p>')) {
+      setValue('description', data.description, { shouldValidate: true, shouldDirty: true })
+    }
+    if (data.translation) {
+      setValue('translation', data.translation, { shouldValidate: true, shouldDirty: true })
+    }
+    if (!getValues('srcUrl')) {
+      setValue('srcUrl', 'transcript', { shouldValidate: true, shouldDirty: true })
+    }
+  }
 
   // Reset form when trackData changes
   useEffect(() => {
@@ -138,6 +169,7 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
 
       const dataSubmit = {
         ...data,
+        srcUrl: data.srcUrl?.trim() || (data.transcript?.trim() ? 'transcript' : ''),
         tags: data.tags || [],
         relation: data.relation || [],
       }
@@ -179,113 +211,114 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <Space direction='vertical' size={[token.size / 2, token.size]} style={{ display: 'flex' }}>
-        {/* title */}
-        <Row gutter={[token.size / 2, token.size / 2]}>
-          <Col xs={24}>
-            Title: <span style={{ color: 'red' }}>*</span>
-          </Col>
+    <>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Space direction='vertical' size={[token.size / 2, token.size]} style={{ display: 'flex' }}>
+          {/* title */}
+          <Row gutter={[token.size / 2, token.size / 2]}>
+            <Col xs={24}>
+              Title: <span style={{ color: 'red' }}>*</span>
+            </Col>
 
-          <Col xs={24}>
-            <Controller
-              control={control}
-              name={`title`}
-              render={({ field }) => (
-                <>
-                  <Input {...field} />
+            <Col xs={24}>
+              <Controller
+                control={control}
+                name={`title`}
+                render={({ field }) => (
+                  <>
+                    <Input {...field} />
 
-                  {errors.title && (
-                    <div style={{ color: 'red', fontSize: '12px' }}>{errors.title.message}</div>
-                  )}
-                </>
-              )}
-            />
-          </Col>
-        </Row>
-
-        {/* tags */}
-        <Row gutter={[token.size / 2, token.size / 2]}>
-          <Col xs={24}>
-            <Flex align={'center'} gap={token.size / 2}>
-              <span>Tags:</span>
-              <Button
-                size={'small'}
-                icon={<UnorderedListOutlined />}
-                onClick={handleOpenTagModal}
+                    {errors.title && (
+                      <div style={{ color: 'red', fontSize: '12px' }}>{errors.title.message}</div>
+                    )}
+                  </>
+                )}
               />
-            </Flex>
-          </Col>
-          <Col xs={24}>
-            <Controller
-              control={control}
-              name={`tags`}
-              render={({ field }) => (
-                <Select
-                  mode='multiple'
-                  allowClear
-                  showSearch
-                  style={{ width: '100%' }}
-                  value={field.value || []}
-                  placeholder='Select tags'
-                  options={tagOptions}
-                  optionFilterProp='label'
-                  filterOption={(input, option) =>
-                    String(option?.label || '')
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                  onChange={field.onChange}
+            </Col>
+          </Row>
+
+          {/* tags */}
+          <Row gutter={[token.size / 2, token.size / 2]}>
+            <Col xs={24}>
+              <Flex align={'center'} gap={token.size / 2}>
+                <span>Tags:</span>
+                <Button
+                  size={'small'}
+                  icon={<UnorderedListOutlined />}
+                  onClick={handleOpenTagModal}
                 />
-              )}
-            />
-          </Col>
-        </Row>
+              </Flex>
+            </Col>
+            <Col xs={24}>
+              <Controller
+                control={control}
+                name={`tags`}
+                render={({ field }) => (
+                  <Select
+                    mode='multiple'
+                    allowClear
+                    showSearch
+                    style={{ width: '100%' }}
+                    value={field.value || []}
+                    placeholder='Select tags'
+                    options={tagOptions}
+                    optionFilterProp='label'
+                    filterOption={(input, option) =>
+                      String(option?.label || '')
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </Col>
+          </Row>
 
-        {/* relation */}
-        <Row gutter={[token.size / 2, token.size / 2]}>
-          <Col xs={24}>Relation:</Col>
-          <Col xs={24}>
-            <Controller
-              control={control}
-              name={`relation`}
-              render={({ field }) => (
-                <InputTag
-                  tags={field.value || []}
-                  onChange={(value: string[]) => {
-                    field.onChange(value)
-                  }}
-                />
-              )}
-            />
-          </Col>
-        </Row>
+          {/* relation */}
+          <Row gutter={[token.size / 2, token.size / 2]}>
+            <Col xs={24}>Relation:</Col>
+            <Col xs={24}>
+              <Controller
+                control={control}
+                name={`relation`}
+                render={({ field }) => (
+                  <InputTag
+                    tags={field.value || []}
+                    onChange={(value: string[]) => {
+                      field.onChange(value)
+                    }}
+                  />
+                )}
+              />
+            </Col>
+          </Row>
 
-        {/* description */}
-        <Row gutter={[token.size / 2, token.size / 2]}>
-          <Col xs={24}>Description:</Col>
+          {/* description */}
+          <Row gutter={[token.size / 2, token.size / 2]}>
+            <Col xs={24}>Description:</Col>
 
-          <Col xs={24}>
-            <Controller
-              control={control}
-              name={`description`}
-              render={({ field }) => (
-                <>
-                  <TextEditor content={field.value} onChange={field.onChange} />
+            <Col xs={24}>
+              <Controller
+                control={control}
+                name={`description`}
+                render={({ field }) => (
+                  <>
+                    <TextEditor content={field.value} onChange={field.onChange} />
 
-                  {errors.description && (
-                    <div style={{ color: 'red', fontSize: '12px' }}>
-                      {errors.description.message}
-                    </div>
-                  )}
-                </>
-              )}
-            />
-          </Col>
-        </Row>
+                    {errors.description && (
+                      <div style={{ color: 'red', fontSize: '12px' }}>
+                        {errors.description.message}
+                      </div>
+                    )}
+                  </>
+                )}
+              />
+            </Col>
+          </Row>
 
-        <Row gutter={[token.size / 2, token.size / 2]}>
-          {/* <Col xs={4}>
+          <Row gutter={[token.size / 2, token.size / 2]}>
+            {/* <Col xs={4}>
             <Row gutter={[token.size / 2, token.size / 2]}>
               <Col xs={24}>Type:</Col>
 
@@ -316,70 +349,94 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
               </Col>
             </Row>
           </Col> */}
-          <Col xs={24}>
-            <Row gutter={[token.size / 2, token.size / 2]}>
-              <Col xs={24}>
-                Source URL:<span style={{ color: 'red' }}>*</span>{' '}
-                {errors.srcUrl && (
-                  <span style={{ color: 'red', fontSize: '12px' }}>{errors.srcUrl.message}</span>
-                )}
-              </Col>
-
-              <Col xs={24}>
-                <Controller
-                  control={control}
-                  name={`srcUrl`}
-                  render={({ field }) => (
-                    <TextArea
-                      autoSize={{ minRows: 2, maxRows: 6 }}
-                      placeholder='Source URL'
-                      {...field}
-                    />
+            <Col xs={24}>
+              <Row gutter={[token.size / 2, token.size / 2]}>
+                <Col xs={24}>
+                  Source URL:
+                  {!watch('transcript')?.trim() && <span style={{ color: 'red' }}>*</span>}{' '}
+                  {errors.srcUrl && (
+                    <span style={{ color: 'red', fontSize: '12px' }}>{errors.srcUrl.message}</span>
                   )}
-                />
-              </Col>
-            </Row>
-          </Col>
-        </Row>
+                </Col>
 
-        <Row gutter={[token.size / 2, token.size / 2]}>
-          <Col xs={24}>
-            Transcript:{' '}
-            {errors.transcript && (
-              <span style={{ color: 'red', fontSize: '12px' }}>{errors.transcript.message}</span>
-            )}
-          </Col>
+                <Col xs={24}>
+                  <Controller
+                    control={control}
+                    name={`srcUrl`}
+                    render={({ field }) => (
+                      <TextArea
+                        autoSize={{ minRows: 2, maxRows: 6 }}
+                        placeholder='Source URL (hoặc để trống nếu tạo bài nghe từ Transcript)'
+                        {...field}
+                      />
+                    )}
+                  />
+                </Col>
+              </Row>
+            </Col>
+          </Row>
 
-          <Col xs={24}>
-            <Controller
-              control={control}
-              name={`transcript`}
-              render={({ field }) => (
-                <TextArea
-                  autoSize={{ minRows: 4, maxRows: 12 }}
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-          </Col>
-        </Row>
+          <Row gutter={[token.size / 2, token.size / 2]}>
+            <Col xs={24}>
+              <Flex justify='space-between' align='center' style={{ width: '100%' }}>
+                <span>
+                  Transcript:{' '}
+                  {errors.transcript && (
+                    <span style={{ color: 'red', fontSize: '12px' }}>
+                      {errors.transcript.message}
+                    </span>
+                  )}
+                </span>
+                <Button
+                  type='primary'
+                  size='small'
+                  icon={<RobotOutlined />}
+                  onClick={() => setOpenGenerateModal(true)}
+                >
+                  Tự động tạo transcript
+                </Button>
+              </Flex>
+            </Col>
 
-        {/* button */}
-        <Row gutter={[token.size / 2, token.size / 2]}>
-          <Col xs={24}>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <Button htmlType='button' onClick={handleCancel} disabled={loading}>
-                Cancel
-              </Button>
+            <Col xs={24}>
+              <Controller
+                control={control}
+                name={`transcript`}
+                render={({ field }) => (
+                  <TextArea
+                    autoSize={{ minRows: 4, maxRows: 12 }}
+                    placeholder={'0:00\nSpeaker: Dialogue here...\n\n0:25\nSpeaker: Next line...'}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </Col>
+          </Row>
 
-              <Button htmlType='submit' type='primary' loading={loading}>
-                {trackData?.id ? 'Update' : 'Save'}
-              </Button>
-            </div>
-          </Col>
-        </Row>
-      </Space>
-    </form>
+          {/* button */}
+          <Row gutter={[token.size / 2, token.size / 2]}>
+            <Col xs={24}>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <Button htmlType='button' onClick={handleCancel} disabled={loading}>
+                  Cancel
+                </Button>
+
+                <Button htmlType='submit' type='primary' loading={loading}>
+                  {trackData?.id ? 'Update' : 'Save'}
+                </Button>
+              </div>
+            </Col>
+          </Row>
+        </Space>
+      </form>
+
+      <GenerateTranscriptModal
+        open={openGenerateModal}
+        onClose={() => setOpenGenerateModal(false)}
+        initialDescription={watch('description')}
+        onApply={handleApplyGeneratedTranscript}
+      />
+    </>
   )
 }

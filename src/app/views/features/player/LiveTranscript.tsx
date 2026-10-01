@@ -115,7 +115,9 @@ export const LiveTranscript: React.FC = () => {
                 </span>
               </div>
             }
-            title={loopSegment ? 'Đang bật lặp câu (Nhấp để tắt)' : 'Lặp câu hiện tại (Nhấp để bật)'}
+            title={
+              loopSegment ? 'Đang bật lặp câu (Nhấp để tắt)' : 'Lặp câu hiện tại (Nhấp để bật)'
+            }
             onClick={() => dispatch(listeningAction.updatePlayer({ loopSegment: !loopSegment }))}
             style={{
               background: 'transparent',

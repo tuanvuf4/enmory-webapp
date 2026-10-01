@@ -459,7 +459,13 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
               )}
 
               <div>
-                <Flex justify='space-between' align='center' wrap='wrap' gap={8} style={{ marginBottom: 6 }}>
+                <Flex
+                  justify='space-between'
+                  align='center'
+                  wrap='wrap'
+                  gap={8}
+                  style={{ marginBottom: 6 }}
+                >
                   <Text strong>Transcript preview ({segments.length} phân đoạn):</Text>
                   <Space wrap size='small'>
                     <Select

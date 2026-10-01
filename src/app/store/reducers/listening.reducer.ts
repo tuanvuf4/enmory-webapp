@@ -14,6 +14,7 @@ export interface PlayerState {
   duration: number
   playbackRate: number
   loop: boolean
+  loopSegment?: boolean
   seeking: boolean
   loadedSeconds: number
   playedSeconds: number
@@ -42,6 +43,7 @@ export const initialState: IListeningState = {
     duration: 0,
     playbackRate: 1.0,
     loop: false,
+    loopSegment: false,
     seeking: false,
     loadedSeconds: 0,
     playedSeconds: 0,

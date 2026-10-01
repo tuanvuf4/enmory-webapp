@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './player.module.scss'
 import { formatSegmentTime, getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
-import { AimOutlined } from '@ant-design/icons'
-import { Button, Tag, theme } from 'antd'
+import { AimOutlined, RetweetOutlined } from '@ant-design/icons'
+import { Button, Space, Tag, theme } from 'antd'
 import { KaraokeText } from './KaraokeText'
 import { useSmoothTime } from './useSmoothTime'
 import { useSelector } from '@/core/hooks'
@@ -18,7 +18,7 @@ export const LiveTranscript: React.FC = () => {
 
   const transcript = currentTrack?.transcript || ''
 
-  const { playedSeconds, duration, playing, playbackRate = 1 } = player
+  const { playedSeconds, duration, playing, playbackRate = 1, loopSegment } = player
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const activeRef = useRef<HTMLDivElement | null>(null)
@@ -87,15 +87,52 @@ export const LiveTranscript: React.FC = () => {
           </span>
         </h3>
 
-        <Button
-          type={'text'}
-          variant={'text'}
-          icon={<AimOutlined />}
-          title={'Sync'}
-          onClick={handleSync}
-          style={{ background: 'transparent' }}
-          color={autoFollow ? 'primary' : 'gold'}
-        />
+        <Space size='small' align='center'>
+          <Button
+            type={'text'}
+            variant={'text'}
+            icon={
+              <div
+                style={{
+                  position: 'relative',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <RetweetOutlined style={{ fontSize: '16px' }} />
+                <span
+                  style={{
+                    position: 'absolute',
+                    fontSize: '8px',
+                    fontWeight: 'bold',
+                    top: '-3px',
+                    right: '-4px',
+                    lineHeight: 1,
+                  }}
+                >
+                  1
+                </span>
+              </div>
+            }
+            title={loopSegment ? 'Đang bật lặp câu (Nhấp để tắt)' : 'Lặp câu hiện tại (Nhấp để bật)'}
+            onClick={() => dispatch(listeningAction.updatePlayer({ loopSegment: !loopSegment }))}
+            style={{
+              background: 'transparent',
+              color: loopSegment ? token.palette?.yellow?.[0] : token.colorTextSecondary,
+            }}
+          />
+
+          <Button
+            type={'text'}
+            variant={'text'}
+            icon={<AimOutlined />}
+            title={'Sync'}
+            onClick={handleSync}
+            style={{ background: 'transparent' }}
+            color={autoFollow ? 'primary' : 'gold'}
+          />
+        </Space>
       </div>
 
       <div ref={containerRef} className={styles.liveTranscriptFull} onScroll={handleScroll}>
@@ -124,6 +161,19 @@ export const LiveTranscript: React.FC = () => {
               >
                 {formatSegmentTime(seg.timeSeconds)}
               </Tag>
+              {isActive && loopSegment && (
+                <Tag
+                  color='gold'
+                  style={{
+                    fontSize: 10,
+                    lineHeight: '18px',
+                    verticalAlign: 'middle',
+                    marginLeft: 4,
+                  }}
+                >
+                  Lặp câu
+                </Tag>
+              )}
               <p>
                 {isActive ? (
                   <KaraokeText text={seg.text} progress={activeSegmentProgress} />

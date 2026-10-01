@@ -8,6 +8,7 @@ import {
   PauseOutlined,
   PlayCircleFilled,
   ReloadOutlined,
+  RetweetOutlined,
   SoundOutlined,
   StepBackwardOutlined,
   StepForwardOutlined,
@@ -246,6 +247,7 @@ export const PlayerDock: React.FC = () => {
     volume,
     muted,
     loop,
+    loopSegment,
     played,
     duration,
     playbackRate,
@@ -335,6 +337,131 @@ export const PlayerDock: React.FC = () => {
     }
   }, [isTranscriptPlayback, dispatch])
 
+  // Selected voice for OpenAI TTS (per track or default to multi-voice auto)
+  const currentVoice = useMemo<TOpenAIVoice>(() => {
+    return (currentTrack?.voice as TOpenAIVoice) || 'auto'
+  }, [currentTrack?.voice])
+
+  const loopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearLoopTimer = useCallback(() => {
+    if (loopTimerRef.current) {
+      clearTimeout(loopTimerRef.current)
+      loopTimerRef.current = null
+    }
+  }, [])
+
+  // Keep refs for callbacks so closures never get stale
+  const loopSegmentRef = useRef(loopSegment)
+  useEffect(() => {
+    loopSegmentRef.current = loopSegment
+    if (!loopSegment) {
+      clearLoopTimer()
+    }
+  }, [loopSegment, clearLoopTimer])
+
+  const playingRef = useRef(playing)
+  useEffect(() => {
+    playingRef.current = playing
+    if (!playing) {
+      clearLoopTimer()
+    }
+  }, [playing, clearLoopTimer])
+
+  const activeIndexRef = useRef(activeIndex)
+  useEffect(() => {
+    activeIndexRef.current = activeIndex
+  }, [activeIndex])
+
+  const isTranscriptPlaybackRef = useRef(isTranscriptPlayback)
+  useEffect(() => {
+    isTranscriptPlaybackRef.current = isTranscriptPlayback
+    if (!isTranscriptPlayback) {
+      clearLoopTimer()
+    }
+  }, [isTranscriptPlayback, clearLoopTimer])
+
+  const playbackRateRef = useRef(playbackRate)
+  useEffect(() => {
+    playbackRateRef.current = playbackRate
+  }, [playbackRate])
+
+  const volumeRef = useRef(volume)
+  useEffect(() => {
+    volumeRef.current = volume
+  }, [volume])
+
+  const mutedRef = useRef(muted)
+  useEffect(() => {
+    mutedRef.current = muted
+  }, [muted])
+
+  const currentVoiceRef = useRef(currentVoice)
+  useEffect(() => {
+    currentVoiceRef.current = currentVoice
+  }, [currentVoice])
+
+  // OpenAI TTS speaker for transcript mode / AI generated tracks
+  const lastSpokenIndexRef = useRef<number>(-1)
+
+  const speakTranscriptSegment = useCallback(
+    (
+      text: string,
+      rate: number,
+      vol: number,
+      isMuted: boolean,
+      voice: TOpenAIVoice,
+      segIndex: number,
+    ) => {
+      clearLoopTimer()
+      ttsService.play(text, {
+        voice,
+        playbackRate: rate,
+        volume: vol,
+        muted: isMuted,
+        onEnded: () => {
+          if (!playingRef.current || !isTranscriptPlaybackRef.current) return
+
+          // If loopSegment is active, repeat the same segment
+          if (loopSegmentRef.current) {
+            const segs = transcriptSegments
+            if (segIndex >= 0 && segIndex < segs.length) {
+              const seg = segs[segIndex]
+              const startTime = seg.timeSeconds
+              const targetDuration = transcriptDuration || duration || 0
+
+              // Reset progress back to start of segment for visual sync
+              playedSecondsRef.current = startTime
+              dispatch(
+                listeningAction.updatePlayer({
+                  playedSeconds: startTime,
+                  played: targetDuration > 0 ? startTime / targetDuration : 0,
+                }),
+              )
+
+              // Small natural pause (500ms) before repeating the sentence
+              loopTimerRef.current = setTimeout(() => {
+                if (!playingRef.current || !isTranscriptPlaybackRef.current) return
+                if (!loopSegmentRef.current) return
+                if (lastSpokenIndexRef.current !== segIndex) return
+
+                speakTranscriptSegment(
+                  seg.text,
+                  playbackRateRef.current,
+                  volumeRef.current,
+                  mutedRef.current,
+                  currentVoiceRef.current,
+                  segIndex,
+                )
+              }, 500)
+            }
+          }
+        },
+      })
+    },
+    [clearLoopTimer, transcriptSegments, transcriptDuration, duration, dispatch],
+  )
+
   // Playback timer loop for transcript mode
   useEffect(() => {
     if (!isTranscriptPlayback || !playing) return
@@ -344,9 +471,47 @@ export const PlayerDock: React.FC = () => {
       const current = playedSecondsRef.current
       const targetDuration = transcriptDuration || duration || 300
 
+      // Segment loop check for transcript mode
+      if (loopSegment && transcriptSegments.length > 0 && activeIndex >= 0) {
+        const seg = transcriptSegments[activeIndex]
+        const startTime = seg.timeSeconds
+        const endTime =
+          activeIndex < transcriptSegments.length - 1
+            ? transcriptSegments[activeIndex + 1].timeSeconds
+            : targetDuration || startTime + 5
+
+        const threshold = Math.min(0.25, Math.max(0.05, (endTime - startTime) * 0.1))
+
+        // If time reaches near the end of the segment
+        if (current >= endTime - threshold) {
+          // If audio is still speaking, keep current clamped inside the segment so it doesn't spill over
+          if (ttsService.getIsSpeaking()) {
+            playedSecondsRef.current = Math.max(startTime, endTime - threshold)
+            return
+          }
+
+          // If audio finished, reset playhead to startTime
+          playedSecondsRef.current = startTime
+          dispatch(
+            listeningAction.updatePlayer({
+              playedSeconds: startTime,
+              played: targetDuration > 0 ? startTime / targetDuration : 0,
+            }),
+          )
+
+          // If a loop replay isn't already scheduled, trigger replay
+          if (!loopTimerRef.current) {
+            speakTranscriptSegment(seg.text, playbackRate, volume, muted, currentVoice, activeIndex)
+          }
+          return
+        }
+      }
+
       if (targetDuration > 0 && current >= targetDuration - 0.15) {
-        handlePlaybackEnded()
-        return
+        if (!loopSegment) {
+          handlePlaybackEnded()
+          return
+        }
       }
 
       const step = (intervalMs / 1000) * playbackRate
@@ -380,44 +545,40 @@ export const PlayerDock: React.FC = () => {
     duration,
     currentTrack,
     dispatch,
+    loopSegment,
+    transcriptSegments,
+    activeIndex,
+    volume,
+    muted,
+    currentVoice,
+    speakTranscriptSegment,
   ])
-
-  // Selected voice for OpenAI TTS (per track or default to multi-voice auto)
-  const currentVoice = useMemo<TOpenAIVoice>(() => {
-    return (currentTrack?.voice as TOpenAIVoice) || 'auto'
-  }, [currentTrack?.voice])
-
-  // OpenAI TTS speaker for transcript mode / AI generated tracks
-  const lastSpokenIndexRef = useRef<number>(-1)
-
-  const speakTranscriptSegment = useCallback(
-    (text: string, rate: number, vol: number, isMuted: boolean, voice: TOpenAIVoice) => {
-      ttsService.play(text, {
-        voice,
-        playbackRate: rate,
-        volume: vol,
-        muted: isMuted,
-      })
-    },
-    [],
-  )
 
   useEffect(() => {
     if (!isTranscriptPlayback) {
+      clearLoopTimer()
       ttsService.stop()
       return
     }
 
+    if (playerRef.current) {
+      try {
+        playerRef.current.pause()
+      } catch (e) {}
+    }
+
     if (!playing) {
+      clearLoopTimer()
       ttsService.pause()
       return
     }
 
     if (activeIndex >= 0 && activeIndex < transcriptSegments.length) {
       if (activeIndex !== lastSpokenIndexRef.current) {
+        clearLoopTimer()
         lastSpokenIndexRef.current = activeIndex
         const seg = transcriptSegments[activeIndex]
-        speakTranscriptSegment(seg.text, playbackRate, volume, muted, currentVoice)
+        speakTranscriptSegment(seg.text, playbackRate, volume, muted, currentVoice, activeIndex)
 
         // Prefetch next segment into memory for instant zero-latency transition
         if (activeIndex + 1 < transcriptSegments.length) {
@@ -441,6 +602,7 @@ export const PlayerDock: React.FC = () => {
     muted,
     currentVoice,
     speakTranscriptSegment,
+    clearLoopTimer,
   ])
 
   useEffect(() => {
@@ -467,6 +629,8 @@ export const PlayerDock: React.FC = () => {
       const targetDuration = transcriptDuration || duration || 0
       playedSecondsRef.current = seekTo
       lastSpokenIndexRef.current = -1
+      clearLoopTimer()
+      ttsService.stop()
       dispatch(
         listeningAction.updatePlayer({
           seekTo: null,
@@ -480,7 +644,7 @@ export const PlayerDock: React.FC = () => {
     if (!playerRef.current) return
     playerRef.current.currentTime = seekTo
     dispatch(listeningAction.updatePlayer({ seekTo: null, playing: true }))
-  }, [seekTo, isTranscriptPlayback, transcriptDuration, duration, dispatch])
+  }, [seekTo, isTranscriptPlayback, transcriptDuration, duration, dispatch, clearLoopTimer])
 
   const handlePlay = () => {
     if (isTranscriptPlayback) {
@@ -526,11 +690,12 @@ export const PlayerDock: React.FC = () => {
   }
 
   const handlePause = () => {
+    clearLoopTimer()
     if (isTranscriptPlayback) {
+      ttsService.pause()
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel()
       }
-      lastSpokenIndexRef.current = -1
     }
     dispatch(listeningAction.updatePlayer({ playing: false }))
   }
@@ -556,6 +721,11 @@ export const PlayerDock: React.FC = () => {
           handlePlay()
         }
       }
+
+      if (event.code === 'KeyL' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault()
+        handleToggleLoopSegment()
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -569,7 +739,7 @@ export const PlayerDock: React.FC = () => {
         pipWindow.removeEventListener('keydown', handleKeyDown)
       }
     }
-  }, [playing, pipWindow])
+  }, [playing, pipWindow, loopSegment])
 
   const load = (src?: string, startPosition?: number) => {
     const normalizedSrc = normalizeMediaSrc(src)
@@ -607,6 +777,13 @@ export const PlayerDock: React.FC = () => {
   const restoreTimeRef = useRef(0)
 
   useEffect(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
+    clearLoopTimer()
+    ttsService.stop()
+    lastSpokenIndexRef.current = -1
+
     if (currentTrack) {
       if (isFirstLoadRef.current) {
         isFirstLoadRef.current = false
@@ -693,6 +870,29 @@ export const PlayerDock: React.FC = () => {
       hasHandledTrackEndRef.current = false
     }
 
+    // Segment loop check for media playback
+    if (loopSegment && transcriptSegments.length > 0 && activeIndex >= 0) {
+      const seg = transcriptSegments[activeIndex]
+      const startTime = seg.timeSeconds
+      const endTime =
+        activeIndex < transcriptSegments.length - 1
+          ? transcriptSegments[activeIndex + 1].timeSeconds
+          : player.duration || startTime + 5
+
+      const threshold = Math.min(0.25, Math.max(0.05, (endTime - startTime) * 0.15))
+      if (player.currentTime >= endTime - threshold && player.currentTime >= startTime + 0.1) {
+        player.currentTime = startTime
+        playedSecondsRef.current = startTime
+        dispatch(
+          listeningAction.updatePlayer({
+            playedSeconds: startTime,
+            played: player.duration > 0 ? startTime / player.duration : 0,
+          }),
+        )
+        return
+      }
+    }
+
     if (currentTrack) {
       localStorage.setItem(
         'enmory_playback_session',
@@ -713,6 +913,36 @@ export const PlayerDock: React.FC = () => {
 
   const handleToggleLoop = () => {
     dispatch(listeningAction.updatePlayer({ loop: !player.loop }))
+  }
+
+  const handleToggleLoopSegment = () => {
+    const nextVal = !loopSegment
+    dispatch(listeningAction.updatePlayer({ loopSegment: nextVal }))
+    if (!nextVal) {
+      clearLoopTimer()
+    } else if (
+      isTranscriptPlayback &&
+      playing &&
+      activeIndex >= 0 &&
+      activeIndex < transcriptSegments.length
+    ) {
+      // If loop is turned on and audio has already finished, immediately replay current segment
+      if (!ttsService.getIsSpeaking()) {
+        clearLoopTimer()
+        const seg = transcriptSegments[activeIndex]
+        const startTime = seg.timeSeconds
+        const targetDuration = transcriptDuration || duration || 0
+        playedSecondsRef.current = startTime
+        dispatch(
+          listeningAction.updatePlayer({
+            playedSeconds: startTime,
+            played: targetDuration > 0 ? startTime / targetDuration : 0,
+            playing: true,
+          }),
+        )
+        speakTranscriptSegment(seg.text, playbackRate, volume, muted, currentVoice, activeIndex)
+      }
+    }
   }
 
   const handleRateChange = () => {
@@ -765,6 +995,7 @@ export const PlayerDock: React.FC = () => {
       const newTime = val * targetDuration
       playedSecondsRef.current = newTime
       lastSpokenIndexRef.current = -1
+      clearLoopTimer()
       ttsService.stop()
       dispatch(
         listeningAction.updatePlayer({
@@ -781,6 +1012,7 @@ export const PlayerDock: React.FC = () => {
 
   const onPrev = () => {
     if (!tracks.length) return
+    clearLoopTimer()
     ttsService.stop()
     lastSpokenIndexRef.current = -1
     if (playerRef.current) playerRef.current.currentTime = 0
@@ -803,6 +1035,7 @@ export const PlayerDock: React.FC = () => {
 
   const onNext = () => {
     if (!tracks.length) return
+    clearLoopTimer()
     ttsService.stop()
     lastSpokenIndexRef.current = -1
     if (playerRef.current) playerRef.current.currentTime = 0
@@ -829,6 +1062,7 @@ export const PlayerDock: React.FC = () => {
       const newTime = Math.max(0, Math.min(playedSecondsRef.current + offset, targetDuration))
       playedSecondsRef.current = newTime
       lastSpokenIndexRef.current = -1
+      clearLoopTimer()
       ttsService.stop()
       dispatch(
         listeningAction.updatePlayer({
@@ -960,8 +1194,52 @@ export const PlayerDock: React.FC = () => {
               onClick={() => setTrackListOpen((v) => !v)}
             />
 
+            <Button
+              type={'text'}
+              size={'middle'}
+              title={
+                loopSegment ? 'Đang bật lặp câu (Nhấp để tắt)' : 'Lặp câu hiện tại (Nhấp để bật)'
+              }
+              icon={
+                <div
+                  style={{
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <RetweetOutlined style={{ fontSize: '20px' }} />
+                  <span
+                    style={{
+                      position: 'absolute',
+                      fontSize: '9px',
+                      fontWeight: 'bold',
+                      top: '-4px',
+                      right: '-5px',
+                      lineHeight: 1,
+                    }}
+                  >
+                    1
+                  </span>
+                </div>
+              }
+              style={{
+                background: 'transparent',
+                boxShadow: 'none',
+                color: loopSegment ? token.palette?.yellow?.[0] : token.colorText,
+              }}
+              onClick={handleToggleLoopSegment}
+            />
+
             <Dropdown menu={speedMenuProps} trigger={['click']} placement='bottomLeft'>
-              <Button type='text' title={'Rate'} size={'middle'} className={appStyle.fromXs}>
+              <Button
+                type='text'
+                title={'Rate'}
+                size={'middle'}
+                className={appStyle.fromXs}
+                style={{ lineHeight: '40px' }}
+              >
                 {playbackRate}x
               </Button>
             </Dropdown>
@@ -1099,7 +1377,7 @@ export const PlayerDock: React.FC = () => {
           loop={loop}
           playbackRate={playbackRate}
           volume={volume}
-          muted={muted}
+          muted={isTranscriptPlayback ? true : muted}
           config={{
             youtube: {
               color: 'white',
@@ -1203,6 +1481,42 @@ export const PlayerDock: React.FC = () => {
                 className={styles.pipBtnSecondary}
                 icon={<StepForwardOutlined />}
                 onClick={onNext}
+              />
+
+              <Button
+                type='text'
+                title={
+                  loopSegment ? 'Đang bật lặp câu (Nhấp để tắt)' : 'Lặp câu hiện tại (Nhấp để bật)'
+                }
+                className={styles.pipBtnSecondary}
+                style={{
+                  color: loopSegment ? '#fab005 !important' : '#8ea5b0 !important',
+                }}
+                icon={
+                  <div
+                    style={{
+                      position: 'relative',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <RetweetOutlined style={{ fontSize: '18px' }} />
+                    <span
+                      style={{
+                        position: 'absolute',
+                        fontSize: '8px',
+                        fontWeight: 'bold',
+                        top: '-4px',
+                        right: '-5px',
+                        lineHeight: 1,
+                      }}
+                    >
+                      1
+                    </span>
+                  </div>
+                }
+                onClick={handleToggleLoopSegment}
               />
             </div>
           </div>,

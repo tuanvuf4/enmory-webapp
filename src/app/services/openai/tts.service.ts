@@ -208,10 +208,12 @@ export const getSpeechAudioUrl = async (
 export class OpenAITTSPlayer {
   private currentAudio: HTMLAudioElement | null = null
   private isSpeaking = false
+  private playRequestId = 0
 
   /**
    * Plays a text segment using OpenAI TTS.
-   * If an error occurs (such as missing API key or offline network), smoothly falls back to Web Speech API.
+   * Uses monotonic request IDs so that rapid segment transitions or seeks
+   * never result in multiple audio elements playing simultaneously.
    */
   async play(
     rawText: string,
@@ -224,7 +226,13 @@ export class OpenAITTSPlayer {
       onError?: (err: any) => void
     } = {},
   ): Promise<HTMLAudioElement | null> {
-    this.stop()
+    const requestId = ++this.playRequestId
+    this.stopAudioOnly()
+
+    // Ensure any residual browser Web Speech audio is cancelled
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
 
     const { speaker, text: speechText } = parseSpeakerAndText(rawText)
     if (!speechText) return null
@@ -238,6 +246,11 @@ export class OpenAITTSPlayer {
         speed,
       })
 
+      // If a newer play() or stop() request occurred while awaiting fetch, discard this one
+      if (requestId !== this.playRequestId) {
+        return null
+      }
+
       if (!audioUrl) return null
 
       const audio = new Audio(audioUrl)
@@ -245,20 +258,18 @@ export class OpenAITTSPlayer {
       audio.volume = options.muted ? 0 : Math.max(0, Math.min(1, options.volume ?? 1))
 
       audio.onended = () => {
-        this.isSpeaking = false
-        options.onEnded?.()
+        if (requestId === this.playRequestId) {
+          this.isSpeaking = false
+          options.onEnded?.()
+        }
       }
 
       audio.onerror = (e) => {
-        console.warn('Audio playback error, fallback to Web Speech:', e)
-        this.isSpeaking = false
-        this.fallbackWebSpeech(
-          speechText,
-          options.playbackRate || 1.0,
-          options.volume ?? 1,
-          options.muted ?? false,
-          options.onEnded,
-        )
+        if (requestId === this.playRequestId) {
+          console.warn('Audio playback error:', e)
+          this.isSpeaking = false
+          options.onError?.(e)
+        }
       }
 
       this.currentAudio = audio
@@ -266,16 +277,14 @@ export class OpenAITTSPlayer {
 
       await audio.play()
       return audio
-    } catch (err) {
-      console.warn('OpenAI TTS request failed, fallback to Web Speech API:', err)
-      this.fallbackWebSpeech(
-        speechText,
-        options.playbackRate || 1.0,
-        options.volume ?? 1,
-        options.muted ?? false,
-        options.onEnded,
-      )
-      options.onError?.(err)
+    } catch (err: any) {
+      if (requestId === this.playRequestId) {
+        this.isSpeaking = false
+        if (err?.name !== 'AbortError') {
+          console.warn('OpenAI TTS request failed:', err)
+          options.onError?.(err)
+        }
+      }
       return null
     }
   }
@@ -306,28 +315,36 @@ export class OpenAITTSPlayer {
     if (this.currentAudio && !this.currentAudio.paused) {
       this.currentAudio.pause()
     }
-    if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
-      window.speechSynthesis.pause()
+    this.isSpeaking = false
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
     }
   }
 
   resume() {
-    if (this.currentAudio && this.currentAudio.paused) {
-      this.currentAudio.play().catch(() => {})
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
     }
-    if ('speechSynthesis' in window && window.speechSynthesis.paused) {
-      window.speechSynthesis.resume()
+    if (this.currentAudio && this.currentAudio.paused) {
+      this.isSpeaking = true
+      this.currentAudio.play().catch(() => {})
     }
   }
 
-  stop() {
+  private stopAudioOnly() {
     this.isSpeaking = false
     if (this.currentAudio) {
       this.currentAudio.pause()
       this.currentAudio.currentTime = 0
+      this.currentAudio.src = ''
       this.currentAudio = null
     }
-    if ('speechSynthesis' in window) {
+  }
+
+  stop() {
+    this.playRequestId++
+    this.stopAudioOnly()
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel()
     }
   }
@@ -348,46 +365,12 @@ export class OpenAITTSPlayer {
     return this.isSpeaking
   }
 
-  private fallbackWebSpeech(
-    text: string,
-    rate: number,
-    vol: number,
-    isMuted: boolean,
-    onEnded?: () => void,
-  ) {
-    if (!('speechSynthesis' in window)) {
-      onEnded?.()
-      return
-    }
-    window.speechSynthesis.cancel()
+  getDuration() {
+    return this.currentAudio?.duration || 0
+  }
 
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-US'
-    utterance.rate = Math.max(0.5, Math.min(2.0, rate))
-    utterance.volume = isMuted ? 0 : vol
-
-    const voices = window.speechSynthesis.getVoices()
-    const enVoice =
-      voices.find(
-        (v) =>
-          v.lang.startsWith('en') &&
-          (v.name.includes('Natural') ||
-            v.name.includes('Google') ||
-            v.name.includes('Samantha') ||
-            v.name.includes('US') ||
-            v.name.includes('UK')),
-      ) || voices.find((v) => v.lang.startsWith('en'))
-
-    if (enVoice) {
-      utterance.voice = enVoice
-    }
-
-    if (onEnded) {
-      utterance.onend = () => onEnded()
-      utterance.onerror = () => onEnded()
-    }
-
-    window.speechSynthesis.speak(utterance)
+  getCurrentTime() {
+    return this.currentAudio?.currentTime || 0
   }
 }
 

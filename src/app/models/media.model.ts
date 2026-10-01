@@ -10,6 +10,7 @@ export interface IMediaForm {
   relation?: string[]
   srcUrl?: string
   srcType?: TSourceTypes
+  voice?: string
 }
 
 export interface ITracks extends IMediaForm {

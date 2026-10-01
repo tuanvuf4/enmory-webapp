@@ -48,12 +48,10 @@ export const KaraokeText: React.FC<IProps> = ({ text, progress }) => {
           wordProgress = range > 0 ? ((progress - startPercent) / range) * 100 : 0
         }
 
-        const isWordPlayed = wordProgress > 0
-
         return (
           <span
             key={idx}
-            className={`${styles.karaokeWord} ${isWordPlayed ? styles.boldWord : ''}`}
+            className={styles.karaokeWord}
             style={{ '--word-progress': `${wordProgress}%` } as React.CSSProperties}
           >
             {part.text}

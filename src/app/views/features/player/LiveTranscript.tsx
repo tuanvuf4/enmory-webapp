@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './player.module.scss'
 import { formatSegmentTime, getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import { AimOutlined } from '@ant-design/icons'
-import { Button, theme } from 'antd'
+import { Button, Tag, theme } from 'antd'
 import { KaraokeText } from './KaraokeText'
 import { useSmoothTime } from './useSmoothTime'
 import { useSelector } from '@/core/hooks'
@@ -113,7 +113,17 @@ export const LiveTranscript: React.FC = () => {
                 dispatch(listeningAction.updatePlayer({ seekTo: seg.timeSeconds, playing: true }))
               }
             >
-              <span className={styles.transcriptTime}>{formatSegmentTime(seg.timeSeconds)}</span>
+              <Tag
+                color='cyan'
+                style={{
+                  fontSize: 11,
+                  lineHeight: '18px',
+                  verticalAlign: 'middle',
+                  cursor: 'pointer',
+                }}
+              >
+                {formatSegmentTime(seg.timeSeconds)}
+              </Tag>
               <p>
                 {isActive ? (
                   <KaraokeText text={seg.text} progress={activeSegmentProgress} />

@@ -15,4 +15,5 @@ export const initMediaForm: IMediaForm = {
   relation: [],
   srcUrl: '',
   srcType: TSourceTypes.LINK,
+  voice: 'auto',
 }

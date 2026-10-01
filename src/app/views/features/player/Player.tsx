@@ -4,6 +4,7 @@ import { TrackList } from './TrackList'
 import { Tags } from '@/views/components'
 import appStyle from '@/style/appStyle.module.scss'
 import styles from './player.module.scss'
+import { LiveTranscript } from './LiveTranscript'
 
 export const Player: React.FC = () => {
   const { token } = theme.useToken()
@@ -12,6 +13,8 @@ export const Player: React.FC = () => {
 
   return (
     <Flex wrap={true} style={{ background: token.colorBgContainer }}>
+      <TrackList />
+
       <Space direction={'vertical'} size={token.size} className={styles.description}>
         <h3 style={{ color: token.colorPrimary, margin: 0 }}>
           {tracks.findIndex((t) => t.id === currentTrack?.id) !== -1
@@ -33,9 +36,9 @@ export const Player: React.FC = () => {
         {currentTrack?.relation && currentTrack?.relation?.length > 0 && (
           <Tags label={'Relation'} tags={currentTrack?.relation} />
         )}
-      </Space>
 
-      <TrackList />
+        <LiveTranscript />
+      </Space>
     </Flex>
   )
 }

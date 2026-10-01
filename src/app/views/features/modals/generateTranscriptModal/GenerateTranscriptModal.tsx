@@ -11,6 +11,7 @@ import {
   Flex,
   Collapse,
   Spin,
+  Select,
   theme,
 } from 'antd'
 import {
@@ -28,6 +29,7 @@ import {
   transcriptService,
   IGenerateTranscriptResponse,
 } from '@/services/openai/transcript.service'
+import { ttsService, TOpenAIVoice, OPENAI_VOICES } from '@/services/openai/tts.service'
 import { parseTranscript, formatSegmentTime } from '../../player/transcriptUtils'
 import { usePrompt } from '@/helpers/hooks'
 
@@ -43,6 +45,7 @@ export interface IGenerateTranscriptModalProps {
     description: string
     transcript: string
     translation?: string
+    voice?: TOpenAIVoice
   }) => void
 }
 
@@ -65,6 +68,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
   const [result, setResult] = useState<IGenerateTranscriptResponse | null>(null)
 
   // Preview TTS player state
+  const [selectedVoice, setSelectedVoice] = useState<TOpenAIVoice>('auto')
   const [isPlayingPreview, setIsPlayingPreview] = useState(false)
   const [previewSegmentIndex, setPreviewSegmentIndex] = useState<number>(-1)
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -94,9 +98,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
   }, [])
 
   const stopPreview = () => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-    }
+    ttsService.stop()
     if (previewTimerRef.current) {
       clearTimeout(previewTimerRef.current)
       previewTimerRef.current = null
@@ -105,7 +107,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
     setPreviewSegmentIndex(-1)
   }
 
-  // Play preview of generated transcript using Web Speech API
+  // Play preview of generated transcript using OpenAI TTS
   const handleTogglePlayPreview = () => {
     if (isPlayingPreview) {
       stopPreview()
@@ -120,11 +122,6 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
       return
     }
 
-    if (!('speechSynthesis' in window)) {
-      message({ type: 'error', content: 'Trình duyệt của bạn không hỗ trợ Web Speech API.' })
-      return
-    }
-
     setIsPlayingPreview(true)
     let currentIdx = 0
 
@@ -136,43 +133,34 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
 
       setPreviewSegmentIndex(currentIdx)
       const seg = segments[currentIdx]
-      const utterance = new SpeechSynthesisUtterance(seg.text)
-      utterance.lang = 'en-US'
-      utterance.rate = 1.0
 
-      const voices = window.speechSynthesis.getVoices()
-      const enVoice =
-        voices.find(
-          (v) =>
-            v.lang.startsWith('en') &&
-            (v.name.includes('Natural') ||
-              v.name.includes('Google') ||
-              v.name.includes('Samantha') ||
-              v.name.includes('US')),
-        ) || voices.find((v) => v.lang.startsWith('en'))
-
-      if (enVoice) {
-        utterance.voice = enVoice
+      // Prefetch next segment into cache
+      if (currentIdx + 1 < segments.length) {
+        ttsService.prefetch(segments[currentIdx + 1].text, { voice: selectedVoice })
       }
 
-      utterance.onend = () => {
-        currentIdx++
-        if (currentIdx < segments.length) {
-          // Pause slightly between segments
-          previewTimerRef.current = setTimeout(speakNext, 500)
-        } else {
-          stopPreview()
-        }
-      }
-
-      utterance.onerror = () => {
-        stopPreview()
-      }
-
-      window.speechSynthesis.speak(utterance)
+      ttsService.play(seg.text, {
+        voice: selectedVoice,
+        onEnded: () => {
+          currentIdx++
+          if (currentIdx < segments.length) {
+            previewTimerRef.current = setTimeout(speakNext, 400)
+          } else {
+            stopPreview()
+          }
+        },
+        onError: () => {
+          currentIdx++
+          if (currentIdx < segments.length) {
+            previewTimerRef.current = setTimeout(speakNext, 400)
+          } else {
+            stopPreview()
+          }
+        },
+      })
     }
 
-    window.speechSynthesis.cancel()
+    ttsService.stop()
     speakNext()
   }
 
@@ -252,6 +240,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
       description: result.description || description,
       transcript: result.transcript,
       translation: result.translation,
+      voice: selectedVoice,
     })
 
     stopPreview()
@@ -288,14 +277,30 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
             Đóng
           </Button>
 
-          <Space>
+          <Space wrap align='center'>
             {result && (
-              <Button
-                icon={isPlayingPreview ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                onClick={handleTogglePlayPreview}
-              >
-                {isPlayingPreview ? 'Dừng nghe thử' : 'Nghe thử Audio (TTS)'}
-              </Button>
+              <>
+                <Select
+                  value={selectedVoice}
+                  onChange={(val) => {
+                    setSelectedVoice(val)
+                    if (isPlayingPreview) {
+                      stopPreview()
+                    }
+                  }}
+                  style={{ width: 230 }}
+                  options={OPENAI_VOICES.map((v) => ({
+                    value: v.value,
+                    label: v.label,
+                  }))}
+                />
+                <Button
+                  icon={isPlayingPreview ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                  onClick={handleTogglePlayPreview}
+                >
+                  {isPlayingPreview ? 'Dừng phát' : 'Nghe thử OpenAI TTS'}
+                </Button>
+              </>
             )}
 
             <Button
@@ -454,15 +459,30 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
               )}
 
               <div>
-                <Flex justify='space-between' align='center' style={{ marginBottom: 4 }}>
-                  <Text strong>Transcript preview ({segments.length} segments):</Text>
-                  <Button
-                    size='small'
-                    icon={isPlayingPreview ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                    onClick={handleTogglePlayPreview}
-                  >
-                    {isPlayingPreview ? 'Dừng phát' : 'Nghe thử TTS'}
-                  </Button>
+                <Flex justify='space-between' align='center' wrap='wrap' gap={8} style={{ marginBottom: 6 }}>
+                  <Text strong>Transcript preview ({segments.length} phân đoạn):</Text>
+                  <Space wrap size='small'>
+                    <Select
+                      size='small'
+                      value={selectedVoice}
+                      onChange={(val) => {
+                        setSelectedVoice(val)
+                        if (isPlayingPreview) stopPreview()
+                      }}
+                      style={{ width: 220 }}
+                      options={OPENAI_VOICES.map((v) => ({
+                        value: v.value,
+                        label: v.label,
+                      }))}
+                    />
+                    <Button
+                      size='small'
+                      icon={isPlayingPreview ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                      onClick={handleTogglePlayPreview}
+                    >
+                      {isPlayingPreview ? 'Dừng phát' : 'Nghe thử OpenAI TTS'}
+                    </Button>
+                  </Space>
                 </Flex>
 
                 <div

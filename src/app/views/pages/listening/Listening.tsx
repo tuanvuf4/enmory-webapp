@@ -1,5 +1,5 @@
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { LiveTranscript, Player } from '@/views/features'
+import { Player } from '@/views/features'
 import { tracksApi } from '@/services/firebase'
 import { useEffect } from 'react'
 import { listeningAction } from '@/store/reducers/listening.reducer'
@@ -49,8 +49,6 @@ export const Listening = () => {
 
         <Space direction={'vertical'} size={token.size} style={{ width: '100%' }}>
           <Player />
-
-          <LiveTranscript />
         </Space>
       </div>
     </>

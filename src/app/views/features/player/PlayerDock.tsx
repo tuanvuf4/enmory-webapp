@@ -27,6 +27,7 @@ import { tracksApi } from '@/services/firebase'
 import { TrackList } from './TrackList'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { usePrompt } from '@/helpers/hooks'
+import { ttsService, TOpenAIVoice, OPENAI_VOICES } from '@/services/openai/tts.service'
 
 export const PlayerDock: React.FC = () => {
   const { message } = usePrompt()
@@ -381,56 +382,34 @@ export const PlayerDock: React.FC = () => {
     dispatch,
   ])
 
-  // Speech synthesis speaker for transcript mode
+  // Selected voice for OpenAI TTS (per track or default to multi-voice auto)
+  const currentVoice = useMemo<TOpenAIVoice>(() => {
+    return (currentTrack?.voice as TOpenAIVoice) || 'auto'
+  }, [currentTrack?.voice])
+
+  // OpenAI TTS speaker for transcript mode / AI generated tracks
   const lastSpokenIndexRef = useRef<number>(-1)
 
   const speakTranscriptSegment = useCallback(
-    (text: string, rate: number, vol: number, isMuted: boolean) => {
-      if (!('speechSynthesis' in window)) return
-      window.speechSynthesis.cancel()
-
-      const cleanText = text.replace(/\[.*?\]|\(.*?\)/g, '').trim()
-      if (!cleanText) return
-
-      const utterance = new SpeechSynthesisUtterance(cleanText)
-      utterance.lang = 'en-US'
-      utterance.rate = Math.max(0.5, Math.min(2.0, rate))
-      utterance.volume = isMuted ? 0 : vol
-
-      const voices = window.speechSynthesis.getVoices()
-      const enVoice =
-        voices.find(
-          (v) =>
-            v.lang.startsWith('en') &&
-            (v.name.includes('Natural') ||
-              v.name.includes('Google') ||
-              v.name.includes('Samantha') ||
-              v.name.includes('US') ||
-              v.name.includes('UK')),
-        ) || voices.find((v) => v.lang.startsWith('en'))
-
-      if (enVoice) {
-        utterance.voice = enVoice
-      }
-
-      window.speechSynthesis.speak(utterance)
+    (text: string, rate: number, vol: number, isMuted: boolean, voice: TOpenAIVoice) => {
+      ttsService.play(text, {
+        voice,
+        playbackRate: rate,
+        volume: vol,
+        muted: isMuted,
+      })
     },
     [],
   )
 
   useEffect(() => {
     if (!isTranscriptPlayback) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel()
-      }
+      ttsService.stop()
       return
     }
 
     if (!playing) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel()
-      }
-      lastSpokenIndexRef.current = -1
+      ttsService.pause()
       return
     }
 
@@ -438,7 +417,18 @@ export const PlayerDock: React.FC = () => {
       if (activeIndex !== lastSpokenIndexRef.current) {
         lastSpokenIndexRef.current = activeIndex
         const seg = transcriptSegments[activeIndex]
-        speakTranscriptSegment(seg.text, playbackRate, volume, muted)
+        speakTranscriptSegment(seg.text, playbackRate, volume, muted, currentVoice)
+
+        // Prefetch next segment into memory for instant zero-latency transition
+        if (activeIndex + 1 < transcriptSegments.length) {
+          const nextSeg = transcriptSegments[activeIndex + 1]
+          ttsService.prefetch(nextSeg.text, {
+            voice: currentVoice,
+            playbackRate,
+          })
+        }
+      } else {
+        ttsService.resume()
       }
     }
   }, [
@@ -449,14 +439,25 @@ export const PlayerDock: React.FC = () => {
     playbackRate,
     volume,
     muted,
+    currentVoice,
     speakTranscriptSegment,
   ])
 
   useEffect(() => {
+    if (isTranscriptPlayback) {
+      ttsService.setVolume(volume, muted)
+    }
+  }, [volume, muted, isTranscriptPlayback])
+
+  useEffect(() => {
+    if (isTranscriptPlayback) {
+      ttsService.setPlaybackRate(playbackRate)
+    }
+  }, [playbackRate, isTranscriptPlayback])
+
+  useEffect(() => {
     return () => {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel()
-      }
+      ttsService.stop()
     }
   }, [])
 
@@ -764,6 +765,7 @@ export const PlayerDock: React.FC = () => {
       const newTime = val * targetDuration
       playedSecondsRef.current = newTime
       lastSpokenIndexRef.current = -1
+      ttsService.stop()
       dispatch(
         listeningAction.updatePlayer({
           playedSeconds: newTime,
@@ -779,7 +781,7 @@ export const PlayerDock: React.FC = () => {
 
   const onPrev = () => {
     if (!tracks.length) return
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+    ttsService.stop()
     lastSpokenIndexRef.current = -1
     if (playerRef.current) playerRef.current.currentTime = 0
     dispatch(
@@ -801,7 +803,7 @@ export const PlayerDock: React.FC = () => {
 
   const onNext = () => {
     if (!tracks.length) return
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+    ttsService.stop()
     lastSpokenIndexRef.current = -1
     if (playerRef.current) playerRef.current.currentTime = 0
     dispatch(
@@ -827,6 +829,7 @@ export const PlayerDock: React.FC = () => {
       const newTime = Math.max(0, Math.min(playedSecondsRef.current + offset, targetDuration))
       playedSecondsRef.current = newTime
       lastSpokenIndexRef.current = -1
+      ttsService.stop()
       dispatch(
         listeningAction.updatePlayer({
           playedSeconds: newTime,
@@ -891,18 +894,41 @@ export const PlayerDock: React.FC = () => {
           <div className={styles.dockTitle} title={currentTrack?.title}>
             {currentTrack?.title}
             {isTranscriptPlayback && (
-              <Tag
-                color='cyan'
-                style={{
-                  marginLeft: 8,
-                  fontSize: 11,
-                  lineHeight: '18px',
-                  verticalAlign: 'middle',
+              <Dropdown
+                menu={{
+                  items: OPENAI_VOICES.map((v) => ({
+                    key: v.value,
+                    label: v.label,
+                    onClick: () => {
+                      if (currentTrack) {
+                        dispatch(listeningAction.updateTrack({ ...currentTrack, voice: v.value }))
+                        ttsService.stop()
+                        lastSpokenIndexRef.current = -1
+                      }
+                    },
+                  })),
+                  selectable: true,
+                  selectedKeys: [currentVoice],
                 }}
+                trigger={['click']}
               >
-                <SoundOutlined style={{ marginRight: 4 }} />
-                Transcript TTS
-              </Tag>
+                <Tag
+                  color='cyan'
+                  style={{
+                    marginLeft: 8,
+                    fontSize: 11,
+                    lineHeight: '18px',
+                    verticalAlign: 'middle',
+                    cursor: 'pointer',
+                  }}
+                  title='Nhấp để đổi giọng đọc tự nhiên OpenAI'
+                >
+                  <SoundOutlined style={{ marginRight: 4 }} />
+                  OpenAI TTS:{' '}
+                  {OPENAI_VOICES.find((v) => v.value === currentVoice)?.label.split(' ')[0] ||
+                    'Auto'}
+                </Tag>
+              </Dropdown>
             )}
           </div>
 
@@ -1025,11 +1051,6 @@ export const PlayerDock: React.FC = () => {
               <Button
                 type='text'
                 size={'middle'}
-                title={
-                  forceTranscriptMode
-                    ? 'Chuyển sang Audio gốc'
-                    : 'Chuyển sang phát bằng Transcript (TTS)'
-                }
                 icon={
                   <SoundOutlined
                     style={{
@@ -1039,9 +1060,7 @@ export const PlayerDock: React.FC = () => {
                   />
                 }
                 onClick={() => {
-                  if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel()
-                  }
+                  ttsService.stop()
                   lastSpokenIndexRef.current = -1
                   setForceTranscriptMode((v) => !v)
                 }}

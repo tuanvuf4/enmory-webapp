@@ -14,6 +14,7 @@ import { useSelector, useDispatch } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { GenerateTranscriptModal } from '../generateTranscriptModal'
+import { OPENAI_VOICES } from '@/services/openai/tts.service'
 
 interface IMediaUploadFormProps {
   onConfirm?: (track: ITracks) => void
@@ -74,18 +75,18 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
       ),
     tags: yup.array().of(yup.string()).optional(),
     relation: yup.array().of(yup.string()).optional(),
-    srcUrl: yup
-      .string()
-      .max(
-        appSetting.listening.maxLengthInput,
-        msgErrors.maxLength('Source URL', appSetting.listening.maxLengthInput),
-      )
-      .test('srcUrl-or-transcript', msgErrors.required, function (val) {
-        const { transcript } = this.parent
-        if (transcript && transcript.trim()) return true
-        return Boolean(val && val.trim())
-      }),
+    srcUrl: yup.string(),
+    // .max(
+    //   appSetting.listening.maxLengthInput,
+    //   msgErrors.maxLength('Source URL', appSetting.listening.maxLengthInput),
+    // )
+    // .test('srcUrl-or-transcript', msgErrors.required, function (val) {
+    //   const { transcript } = this.parent
+    //   if (transcript && transcript.trim()) return true
+    //   return Boolean(val && val.trim())
+    // }),
     srcType: yup.number(),
+    voice: yup.string().optional(),
   }) as yup.ObjectSchema<IMediaForm>
 
   const [openGenerateModal, setOpenGenerateModal] = useState(false)
@@ -109,6 +110,7 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
     description: string
     transcript: string
     translation?: string
+    voice?: string
   }) => {
     setValue('transcript', data.transcript, { shouldValidate: true, shouldDirty: true })
     if (data.title && !getValues('title')) {
@@ -123,6 +125,9 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
     if (!getValues('srcUrl')) {
       setValue('srcUrl', 'transcript', { shouldValidate: true, shouldDirty: true })
     }
+    if (data.voice) {
+      setValue('voice', data.voice, { shouldValidate: true, shouldDirty: true })
+    }
   }
 
   // Reset form when trackData changes
@@ -135,8 +140,9 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
         translation: trackData.translation,
         tags: trackData.tags || [],
         relation: trackData.relation || [],
-        srcUrl: trackData.srcUrl,
+        srcUrl: trackData.srcUrl || '',
         srcType: trackData.srcType,
+        voice: trackData.voice || 'auto',
       })
     } else {
       reset(initMediaForm)
@@ -169,9 +175,10 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
 
       const dataSubmit = {
         ...data,
-        srcUrl: data.srcUrl?.trim() || (data.transcript?.trim() ? 'transcript' : ''),
+        srcUrl: data.srcUrl?.trim() || '',
         tags: data.tags || [],
         relation: data.relation || [],
+        voice: data.voice || 'auto',
       }
 
       if (trackData?.id) {
@@ -353,7 +360,6 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
               <Row gutter={[token.size / 2, token.size / 2]}>
                 <Col xs={24}>
                   Source URL:
-                  {!watch('transcript')?.trim() && <span style={{ color: 'red' }}>*</span>}{' '}
                   {errors.srcUrl && (
                     <span style={{ color: 'red', fontSize: '12px' }}>{errors.srcUrl.message}</span>
                   )}
@@ -413,6 +419,31 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
               />
             </Col>
           </Row>
+
+          {(!watch('srcUrl') || watch('srcUrl') === 'transcript') && (
+            <Row gutter={[token.size / 2, token.size / 2]}>
+              <Col xs={24}>
+                <Flex justify='space-between' align='center' wrap='wrap' gap={8}>
+                  <span>Giọng đọc OpenAI TTS (cho bài nghe AI / Transcript):</span>
+                  <Controller
+                    control={control}
+                    name='voice'
+                    render={({ field }) => (
+                      <Select
+                        {...field}
+                        value={field.value || 'auto'}
+                        style={{ minWidth: 260 }}
+                        options={OPENAI_VOICES.map((v) => ({
+                          value: v.value,
+                          label: v.label,
+                        }))}
+                      />
+                    )}
+                  />
+                </Flex>
+              </Col>
+            </Row>
+          )}
 
           {/* button */}
           <Row gutter={[token.size / 2, token.size / 2]}>

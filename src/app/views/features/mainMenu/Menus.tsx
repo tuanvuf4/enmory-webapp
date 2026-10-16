@@ -43,12 +43,7 @@ export const menus: MenuProps['items'] = [
   {
     key: '12',
     icon: <ReadOutlined className='icon' />,
-    label: 'article',
-  },
-  {
-    key: '13',
-    icon: <ReadOutlined className='icon' />,
-    label: 'posts',
+    label: 'blog',
   },
   // {
   //   key: '6',
@@ -160,10 +155,6 @@ export const keyPaths = [
   },
   {
     key: '12',
-    path: '/article',
-  },
-  {
-    key: '13',
-    path: '/posts',
+    path: '/blog',
   },
 ]

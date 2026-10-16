@@ -19,7 +19,7 @@ import { MainMenu } from '../mainMenu/MainMenu'
 import { menu, addNewType } from './Menu'
 import { useExampleModal, useItemModal, useMediaUploadModal } from '@/helpers/hooks'
 import { exampleAction } from '@/store/reducers/example.reducer'
-import { useArticleModal } from '@/helpers/hooks/useArticleModal'
+import { useBlogModal } from '@/helpers/hooks/useBlogModal'
 import { Toolbar } from '../toolbar'
 import { CSSProperties } from 'react'
 import { initExampleData } from '@/constant/example'
@@ -41,7 +41,7 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
 
   const { openItemModal } = useItemModal()
   const { openExampleModal } = useExampleModal()
-  const { openArticleModal } = useArticleModal()
+  const { openBlogModal } = useBlogModal()
   const { openMediaUploadModal } = useMediaUploadModal()
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
@@ -82,8 +82,8 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
       openExampleModal('add', initExampleData)
     }
 
-    if (e.key === 'ADD_POST') {
-      openArticleModal('add')
+    if (e.key === 'ADD_POST' || e.key === 'ADD_BLOG') {
+      openBlogModal('add')
     }
 
     if (e.key === 'ADD_MEDIA') {

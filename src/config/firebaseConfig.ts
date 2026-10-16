@@ -14,7 +14,9 @@ export const dbCollections = {
   examples: 'examples',
   iotd: 'iotd',
   articles: 'articles',
+  blogs: 'articles',
   article_categories: 'article_categories',
+  blog_categories: 'article_categories',
   tracks: 'tracks',
 }
 

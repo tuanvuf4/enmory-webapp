@@ -36,8 +36,8 @@ export const addNewType: MenuProps['items'] = [
     icon: <PlusOutlined />,
   },
   {
-    key: 'ADD_POST',
-    label: 'Post',
+    key: 'ADD_BLOG',
+    label: 'Blog',
     icon: <PlusOutlined />,
   },
   {

@@ -7,8 +7,8 @@ import { useForm, Controller } from 'react-hook-form'
 import { appSetting } from '@/config/appConfig'
 import { IMediaForm, ITracks } from '@/models/media.model'
 import { tracksApi } from '@/services/firebase'
-import { useState, useEffect, useMemo } from 'react'
-import { TextEditor, InputTag } from '@/views/components'
+import { useState, useEffect } from 'react'
+import { TextEditor, InputTag, TagSelect } from '@/views/components'
 import { usePrompt, useTagManagerModal } from '@/helpers/hooks'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
@@ -33,17 +33,7 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
   const { openTagManagerModal } = useTagManagerModal()
   const dispatch = useDispatch()
 
-  const { tags: allTags } = useSelector((state) => state.setting)
   const { currentTrack, tracks } = useSelector((state) => state.listening)
-
-  const tagOptions = useMemo(
-    () =>
-      (allTags || [])
-        .map((tag) => String(tag.value))
-        .filter(Boolean)
-        .map((tag) => ({ label: tag, value: tag })),
-    [allTags],
-  )
 
   const { TextArea } = Input
 
@@ -213,8 +203,27 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
     onCancel?.()
   }
 
+  const handleTagUpdated = (previousValue: string, nextValue: string) => {
+    const currentTags = getValues('tags') || []
+    const nextTags = Array.from(
+      new Set(currentTags.map((tag) => (tag === previousValue ? nextValue : tag))),
+    )
+    setValue('tags', nextTags)
+  }
+
+  const handleTagDeleted = (deletedValue: string) => {
+    const currentTags = getValues('tags') || []
+    setValue(
+      'tags',
+      currentTags.filter((tag) => tag !== deletedValue),
+    )
+  }
+
   const handleOpenTagModal = () => {
-    openTagManagerModal()
+    openTagManagerModal({
+      onTagUpdated: handleTagUpdated,
+      onTagDeleted: handleTagDeleted,
+    })
   }
 
   return (
@@ -261,21 +270,12 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
                 control={control}
                 name={`tags`}
                 render={({ field }) => (
-                  <Select
-                    mode='multiple'
-                    allowClear
-                    showSearch
+                  <TagSelect
                     style={{ width: '100%' }}
                     value={field.value || []}
-                    placeholder='Select tags'
-                    options={tagOptions}
-                    optionFilterProp='label'
-                    filterOption={(input, option) =>
-                      String(option?.label || '')
-                        .toLowerCase()
-                        .includes(input.toLowerCase())
-                    }
                     onChange={field.onChange}
+                    onTagUpdated={handleTagUpdated}
+                    onTagDeleted={handleTagDeleted}
                   />
                 )}
               />

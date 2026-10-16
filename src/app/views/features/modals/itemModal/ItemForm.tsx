@@ -12,13 +12,14 @@ import { InputTag, Level, ReviewableTextArea } from '@/views/components'
 import { Reference, IReferenceItem } from '@/views/features/references/References'
 import { theme, Row, Space, Col, Select, Checkbox, Button, Flex, Tag } from 'antd'
 import clsx from 'clsx'
-import { useEffect, Suspense, useState, useMemo } from 'react'
+import { useEffect, Suspense, useState } from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
 import { initItem } from './data'
 import { MeaningItemForm } from './MeaningItemForm'
 import styles from './itemModal.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
-import { usePrompt, useTagManagerModal } from '@/helpers/hooks'
+import { usePrompt } from '@/helpers/hooks'
+import { TagSelect } from '@/views/components'
 import { exampleApi, itemApi, tagApi } from '@/services/firebase'
 import { Timestamp } from 'firebase/firestore'
 import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
@@ -26,7 +27,6 @@ import { useModal } from '@/context/modal.context'
 import { useQueryClient } from '@tanstack/react-query'
 import { getMeaningsWithExamples } from '@/helpers/item'
 import { validateAndCreateRelatedItems } from './itemValidation'
-import { UnorderedListOutlined } from '@ant-design/icons'
 import { geminiDictionaryService, resolveGeminiApiKey, formatHtmlList } from '@/services/gemini'
 
 interface ItemFormProps {
@@ -38,24 +38,14 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeReferenceId, setActiveReferenceId] = useState<number | null>(null)
   const isAutofilling = activeReferenceId !== null
-  const { openTagManagerModal } = useTagManagerModal()
 
   const { notification, confirm } = usePrompt()
 
   const dispatch = useDispatch()
 
   const { user } = useSelector((state) => state.auth)
-  const { categories, tags: allTags } = useSelector((state) => state.setting)
+  const { categories } = useSelector((state) => state.setting)
   const { list } = useSelector((state) => state.studySet)
-
-  const tagOptions = useMemo(
-    () =>
-      (allTags || [])
-        .map((tag) => String(tag.value))
-        .filter(Boolean)
-        .map((tag) => ({ label: tag, value: tag })),
-    [allTags],
-  )
 
   // React Query mutations
   const { isPending: isCreating, mutateAsync: createMutation } = useCreateItem()
@@ -461,13 +451,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
   const handleCancel = () => closeModal()
 
-  const handleOpenTagModal = () => {
-    openTagManagerModal({
-      onTagUpdated: handleTagUpdated,
-      onTagDeleted: handleTagDeleted,
-    })
-  }
-
   const handleTagUpdated = (previousValue: string, nextValue: string) => {
     const currentTags = getValues('tags') || []
     const nextTags = Array.from(
@@ -694,11 +677,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
               <Col md={4} xs={6}>
                 <Flex align={'center'} gap={token.size / 2}>
                   <span>Tags:</span>
-                  <Button
-                    size={'small'}
-                    icon={<UnorderedListOutlined />}
-                    onClick={handleOpenTagModal}
-                  />
                 </Flex>
               </Col>
 
@@ -707,21 +685,12 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                   control={control}
                   name={`tags`}
                   render={({ field }) => (
-                    <Select
-                      mode='multiple'
-                      allowClear
-                      showSearch
+                    <TagSelect
                       style={{ width: '100%' }}
                       value={field.value || []}
-                      placeholder='Select tags'
-                      options={tagOptions}
-                      optionFilterProp='label'
-                      filterOption={(input, option) =>
-                        String(option?.label || '')
-                          .toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
                       onChange={field.onChange}
+                      onTagUpdated={handleTagUpdated}
+                      onTagDeleted={handleTagDeleted}
                     />
                   )}
                 />

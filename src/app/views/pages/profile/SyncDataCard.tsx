@@ -12,7 +12,7 @@ import {
 import { useManualSync } from '@/services/localDb'
 import moment from 'moment'
 
-const { Text, Paragraph } = Typography
+const { Text } = Typography
 
 export const SyncDataCard: React.FC = () => {
   const { token } = theme.useToken()
@@ -55,13 +55,6 @@ export const SyncDataCard: React.FC = () => {
         marginTop: token.size,
       }}
     >
-      <Paragraph style={{ color: token.colorTextSecondary, marginBottom: token.size }}>
-        Synchronize your cloud data to your device's local database (IndexedDB). This overcomes
-        Firebase's search limitations by enabling <strong>instant dynamic search</strong>,{' '}
-        <strong>substring matching</strong>, full-text search across definitions & examples, and
-        zero-latency pagination on both desktop and mobile phones.
-      </Paragraph>
-
       <Row
         gutter={[token.size, token.size]}
         style={{

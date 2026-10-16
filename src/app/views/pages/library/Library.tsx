@@ -148,11 +148,6 @@ export const Library: React.FC = () => {
                 <Typography.Title level={4} style={{ margin: 0 }}>
                   No Local Data Found
                 </Typography.Title>
-                <Typography.Paragraph type='secondary' style={{ maxWidth: 440, margin: 0 }}>
-                  Your library is configured to search and load from your device's local database.
-                  Please sync with the cloud to download your vocabulary items and enable instant
-                  dynamic search.
-                </Typography.Paragraph>
                 <Button
                   type='primary'
                   size='large'

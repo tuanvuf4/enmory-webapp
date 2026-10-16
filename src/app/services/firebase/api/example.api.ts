@@ -4,7 +4,12 @@ import { IExampleQuery } from '@/models/example.model'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { removeLineBreaks } from '@/core/utils'
-import { localDb, queryLocalExamples, getRandomLocalExamples, invalidateSearchIndex } from '@/services/localDb'
+import {
+  localDb,
+  queryLocalExamples,
+  getRandomLocalExamples,
+  invalidateSearchIndex,
+} from '@/services/localDb'
 import {
   collection,
   doc,

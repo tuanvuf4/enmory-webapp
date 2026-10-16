@@ -112,10 +112,7 @@ export const syncService = {
       })
 
       options?.onProgress?.('Fetching all examples from cloud...')
-      const examplesQuery = query(
-        collection(db, dbCollections.examples),
-        where('uid', '==', uid),
-      )
+      const examplesQuery = query(collection(db, dbCollections.examples), where('uid', '==', uid))
       const examplesSnapshot = await getDocs(examplesQuery)
       const allExamples: IExample[] = []
       examplesSnapshot.forEach((docSnap) => {
@@ -123,19 +120,25 @@ export const syncService = {
       })
 
       options?.onProgress?.('Saving to local database...')
-      await localDb.transaction('rw', localDb.items, localDb.examples, localDb.syncMeta, async () => {
-        await localDb.items.clear()
-        await localDb.examples.clear()
+      await localDb.transaction(
+        'rw',
+        localDb.items,
+        localDb.examples,
+        localDb.syncMeta,
+        async () => {
+          await localDb.items.clear()
+          await localDb.examples.clear()
 
-        if (allItems.length > 0) {
-          await localDb.items.bulkPut(allItems)
-        }
-        if (allExamples.length > 0) {
-          await localDb.examples.bulkPut(allExamples)
-        }
+          if (allItems.length > 0) {
+            await localDb.items.bulkPut(allItems)
+          }
+          if (allExamples.length > 0) {
+            await localDb.examples.bulkPut(allExamples)
+          }
 
-        await localDb.syncMeta.put({ key: `${SYNC_META_PREFIX}${uid}`, value: now })
-      })
+          await localDb.syncMeta.put({ key: `${SYNC_META_PREFIX}${uid}`, value: now })
+        },
+      )
 
       localStorage.setItem(`${SYNC_META_PREFIX}${uid}`, now.toString())
       updatedItems = allItems.length
@@ -204,22 +207,28 @@ export const syncService = {
       })
 
       options?.onProgress?.('Updating local database...')
-      await localDb.transaction('rw', localDb.items, localDb.examples, localDb.syncMeta, async () => {
-        if (itemsToPut.length > 0) {
-          await localDb.items.bulkPut(itemsToPut)
-        }
-        if (itemIdsToDelete.length > 0) {
-          await localDb.items.bulkDelete(itemIdsToDelete)
-        }
-        if (examplesToPut.length > 0) {
-          await localDb.examples.bulkPut(examplesToPut)
-        }
-        if (exampleIdsToDelete.length > 0) {
-          await localDb.examples.bulkDelete(exampleIdsToDelete)
-        }
+      await localDb.transaction(
+        'rw',
+        localDb.items,
+        localDb.examples,
+        localDb.syncMeta,
+        async () => {
+          if (itemsToPut.length > 0) {
+            await localDb.items.bulkPut(itemsToPut)
+          }
+          if (itemIdsToDelete.length > 0) {
+            await localDb.items.bulkDelete(itemIdsToDelete)
+          }
+          if (examplesToPut.length > 0) {
+            await localDb.examples.bulkPut(examplesToPut)
+          }
+          if (exampleIdsToDelete.length > 0) {
+            await localDb.examples.bulkDelete(exampleIdsToDelete)
+          }
 
-        await localDb.syncMeta.put({ key: `${SYNC_META_PREFIX}${uid}`, value: now })
-      })
+          await localDb.syncMeta.put({ key: `${SYNC_META_PREFIX}${uid}`, value: now })
+        },
+      )
 
       localStorage.setItem(`${SYNC_META_PREFIX}${uid}`, now.toString())
       updatedItems = itemsToPut.length
@@ -244,4 +253,3 @@ export const syncService = {
     }
   },
 }
-

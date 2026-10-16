@@ -229,7 +229,7 @@ export const queryLocalItems = async (
       if (typeof valA === 'string' && typeof valB === 'string') {
         return isDesc ? valB.localeCompare(valA) : valA.localeCompare(valB)
       }
-      return isDesc ? (valB > valA ? 1 : -1) : (valA > valB ? 1 : -1)
+      return isDesc ? (valB > valA ? 1 : -1) : valA > valB ? 1 : -1
     })
   }
 
@@ -289,7 +289,7 @@ export const queryLocalExamples = async (
     if (typeof valA === 'string' && typeof valB === 'string') {
       return isDesc ? valB.localeCompare(valA) : valA.localeCompare(valB)
     }
-    return isDesc ? (valB > valA ? 1 : -1) : (valA > valB ? 1 : -1)
+    return isDesc ? (valB > valA ? 1 : -1) : valA > valB ? 1 : -1
   })
 
   const size = querySearch.size || 10
@@ -333,4 +333,3 @@ export const getRandomLocalExamples = async (
     statusCode: 200,
   }
 }
-

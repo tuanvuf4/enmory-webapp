@@ -22,4 +22,3 @@ export class EnmoryDatabase extends Dexie {
 }
 
 export const localDb = new EnmoryDatabase()
-

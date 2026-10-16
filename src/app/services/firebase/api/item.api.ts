@@ -22,7 +22,12 @@ import { toWildString } from '@/helpers/item'
 import { commonApi } from './common.api'
 import { categories, types } from '@/constant/index'
 import { shuffleArray } from '@/helpers/mics'
-import { localDb, queryLocalItems, invalidateSearchIndex, populateItemExamples } from '@/services/localDb'
+import {
+  localDb,
+  queryLocalItems,
+  invalidateSearchIndex,
+  populateItemExamples,
+} from '@/services/localDb'
 
 export interface IItemRequestParams {
   keyword: string
@@ -47,8 +52,6 @@ const normalizeLowercaseTags = (tags: string[] = []) => {
   const normalized = normalizeTags(tags).map((tag) => tag.toLowerCase())
   return Array.from(new Set(normalized))
 }
-
-
 
 /**
  * Helper function to fetch examples by their IDs from the local database
@@ -176,13 +179,11 @@ const getItemById = async (id: string): Promise<IHttpResponse<IItem>> => {
 const getEligibleItemsInCategory = async (catId: number): Promise<IItem[]> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
-    const allLocalItems = await localDb.items
-      .where('catId')
-      .equals(catId)
-      .toArray()
+    const allLocalItems = await localDb.items.where('catId').equals(catId).toArray()
 
     const userItems = allLocalItems.filter(
-      (item) => !item.is_deleted && (!currentUser?.uid || !item.uid || item.uid === currentUser.uid),
+      (item) =>
+        !item.is_deleted && (!currentUser?.uid || !item.uid || item.uid === currentUser.uid),
     )
 
     return userItems.filter((item) => {

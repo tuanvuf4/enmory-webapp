@@ -154,4 +154,3 @@ export const SyncDataCard: React.FC = () => {
     </Card>
   )
 }
-

@@ -612,7 +612,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                     <Tag
                       ref={(node) => {
                         if (node) {
-                          node.style.setProperty('background-color', token.colorPrimary, 'important')
+                          node.style.setProperty(
+                            'background-color',
+                            token.colorPrimary,
+                            'important',
+                          )
                           node.style.setProperty('border-color', token.colorPrimary, 'important')
                           node.style.setProperty('color', '#fff', 'important')
                         }

@@ -132,7 +132,16 @@ export const Library: React.FC = () => {
         </Space>
 
         {!isLoading && listItem.length === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '60px 20px',
+              textAlign: 'center',
+            }}
+          >
             {lastSyncTime === null ? (
               <Space direction='vertical' size='middle' align='center'>
                 <DatabaseOutlined style={{ fontSize: 48, color: token.colorPrimary }} />
@@ -141,7 +150,8 @@ export const Library: React.FC = () => {
                 </Typography.Title>
                 <Typography.Paragraph type='secondary' style={{ maxWidth: 440, margin: 0 }}>
                   Your library is configured to search and load from your device's local database.
-                  Please sync with the cloud to download your vocabulary items and enable instant dynamic search.
+                  Please sync with the cloud to download your vocabulary items and enable instant
+                  dynamic search.
                 </Typography.Paragraph>
                 <Button
                   type='primary'

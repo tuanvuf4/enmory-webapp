@@ -62,7 +62,10 @@ export const formatHtmlList = (content: string | undefined): string => {
 
   // If contains semicolons with multiple items
   if (trimmed.includes(';')) {
-    const parts = trimmed.split(';').map((s) => s.trim()).filter(Boolean)
+    const parts = trimmed
+      .split(';')
+      .map((s) => s.trim())
+      .filter(Boolean)
     if (parts.length > 1) {
       return `<ul>${parts.map((item) => `<li>${item}</li>`).join('')}</ul>`
     }
@@ -70,7 +73,10 @@ export const formatHtmlList = (content: string | undefined): string => {
 
   // If comma separated with 2 or more phrases (e.g. "pure serendipity, stroke of serendipity")
   if (trimmed.includes(',')) {
-    const parts = trimmed.split(',').map((s) => s.trim()).filter(Boolean)
+    const parts = trimmed
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
     if (parts.length >= 2 && parts.some((p) => p.includes(' '))) {
       return `<ul>${parts.map((item) => `<li>${item}</li>`).join('')}</ul>`
     }
@@ -84,17 +90,17 @@ export const getSourceContext = (source: string = 'Oxford'): string => {
     case 'cambridge':
       return "Cambridge Advanced Learner's Dictionary (dictionary.cambridge.org)"
     case 'merriam':
-      return "Merriam-Webster Dictionary (merriam-webster.com)"
+      return 'Merriam-Webster Dictionary (merriam-webster.com)'
     case 'longman':
-      return "Longman Dictionary of Contemporary English (ldoceonline.com)"
+      return 'Longman Dictionary of Contemporary English (ldoceonline.com)'
     case 'vocabulary':
-      return "Vocabulary.com dictionary"
+      return 'Vocabulary.com dictionary'
     case 'thesaurus':
-      return "Thesaurus.com / dictionary"
+      return 'Thesaurus.com / dictionary'
     case 'tracau':
-      return "Tracau English-Vietnamese dictionary (tracau.vn)"
+      return 'Tracau English-Vietnamese dictionary (tracau.vn)'
     case 'translate':
-      return "Google Translate / English-Vietnamese learner dictionary"
+      return 'Google Translate / English-Vietnamese learner dictionary'
     case 'oxford':
     default:
       return "Oxford Advanced Learner's Dictionary (OALD) (oxfordlearnersdictionaries.com)"
@@ -229,7 +235,11 @@ Return ONLY valid JSON matching this schema:
                 const us = (m.pronunciation?.us || '').trim()
                 const common = (m.pronunciation?.common || '').trim()
 
-                const cleanIpa = (val: string) => val.replace(/^\/+|\/+$/g, '').trim().toLowerCase()
+                const cleanIpa = (val: string) =>
+                  val
+                    .replace(/^\/+|\/+$/g, '')
+                    .trim()
+                    .toLowerCase()
                 const isSame = uk && us && cleanIpa(uk) === cleanIpa(us)
 
                 const finalUs = us || uk || ''
@@ -255,7 +265,10 @@ Return ONLY valid JSON matching this schema:
           }
         } catch (err: any) {
           lastError = err
-          console.warn(`Model ${model} failed or is busy, attempting next model:`, err?.message || err)
+          console.warn(
+            `Model ${model} failed or is busy, attempting next model:`,
+            err?.message || err,
+          )
         }
       }
 
@@ -284,4 +297,3 @@ Return ONLY valid JSON matching this schema:
 }
 
 export const geminiOxfordService = geminiDictionaryService
-

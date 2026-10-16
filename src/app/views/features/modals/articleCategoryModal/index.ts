@@ -1,1 +1,0 @@
-export { ArticleCategoryForm } from './articleCategoryForm'

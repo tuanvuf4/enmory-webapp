@@ -9,6 +9,8 @@ import { apiAuth } from '@/services/firebase'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
 
+import { SyncDataCard } from './SyncDataCard'
+
 const Profile = () => {
   const { message } = usePrompt()
   const { token } = theme.useToken()
@@ -109,6 +111,10 @@ const Profile = () => {
                 </Space>
               )}
             </Space>
+          </Col>
+
+          <Col xs={24} md={24}>
+            <SyncDataCard />
           </Col>
         </Row>
 

@@ -4,6 +4,8 @@ import { IItem, IExample } from '@/models/item.model'
 import { itemApi, IItemRequestParams } from '@/services/firebase/api/item.api'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import { tagApi } from '@/services/firebase/api/tag.api'
+import { localDb, queryLocalItems } from '@/services/localDb'
+import { firebaseAuthService } from '@/services/firebase/authService'
 import _ from 'lodash'
 import { useState, useEffect } from 'react'
 import { BaseOptionType } from 'antd/es/select'
@@ -34,9 +36,34 @@ export const useAutoComplete = (
     if (!keyword) return setOptions([])
 
     if (keyword && keyword.length >= 2) {
-      handleSession = setTimeout(() => {
+      handleSession = setTimeout(async () => {
         setIsSearching(true)
         if (type === 'item') {
+          try {
+            const user = firebaseAuthService.getCurrentUser()
+            if (user?.uid) {
+              const localCount = await localDb.items.where('uid').equals(user.uid).count()
+              if (localCount > 0) {
+                const res = await queryLocalItems({ ...payload, exact }, user.uid)
+                if (res.content && res.content.length > 0) {
+                  setOptions(
+                    res.content.slice(0, appSetting.numberItemOfAutoComplete).map((item) => ({
+                      id: item.id,
+                      label: item.origin,
+                      value: item.origin,
+                    })),
+                  )
+                } else {
+                  setOptions([])
+                }
+                setIsSearching(false)
+                return
+              }
+            }
+          } catch (e) {
+            console.warn('Local autocomplete search error, falling back to Firestore:', e)
+          }
+
           itemApi
             .getItemAutoComplete({ ...payload, exact })
             .then((response: IHttpResponse<IItem[]>) => {

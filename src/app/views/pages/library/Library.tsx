@@ -1,6 +1,6 @@
 import appStyle from '@/style/appStyle.module.scss'
 import { EViewMode } from '@/models/app.model'
-import { theme, Row, Col, Flex, Space } from 'antd'
+import { theme, Row, Col, Flex, Space, Button, Typography } from 'antd'
 import { useEffect } from 'react'
 import { useSelector } from '@/core/hooks'
 import { Pagination } from '@/views/components'
@@ -11,6 +11,8 @@ import { useSearchParams } from 'react-router-dom'
 import { appSetting } from '@/config/appConfig'
 import { useItems } from '@/core/hooks/useItems'
 import { Loading, Widget } from '@/views/features'
+import { useManualSync } from '@/services/localDb'
+import { CloudSyncOutlined, DatabaseOutlined } from '@ant-design/icons'
 
 export const Library: React.FC = () => {
   const { token } = theme.useToken()
@@ -18,6 +20,7 @@ export const Library: React.FC = () => {
   const { viewMode } = useSelector((state) => state.setting)
 
   const { notification } = usePrompt()
+  const { lastSyncTime, isSyncing, syncNow } = useManualSync()
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -129,7 +132,32 @@ export const Library: React.FC = () => {
         </Space>
 
         {!isLoading && listItem.length === 0 && (
-          <NotFound classNames={{ container: 'justify-center' }} showButton={false} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center' }}>
+            {lastSyncTime === null ? (
+              <Space direction='vertical' size='middle' align='center'>
+                <DatabaseOutlined style={{ fontSize: 48, color: token.colorPrimary }} />
+                <Typography.Title level={4} style={{ margin: 0 }}>
+                  No Local Data Found
+                </Typography.Title>
+                <Typography.Paragraph type='secondary' style={{ maxWidth: 440, margin: 0 }}>
+                  Your library is configured to search and load from your device's local database.
+                  Please sync with the cloud to download your vocabulary items and enable instant dynamic search.
+                </Typography.Paragraph>
+                <Button
+                  type='primary'
+                  size='large'
+                  icon={<CloudSyncOutlined spin={isSyncing} />}
+                  loading={isSyncing}
+                  onClick={() => syncNow(false)}
+                  style={{ marginTop: 8 }}
+                >
+                  Sync from Cloud
+                </Button>
+              </Space>
+            ) : (
+              <NotFound classNames={{ container: 'justify-center' }} showButton={false} />
+            )}
+          </div>
         )}
       </div>
     </>

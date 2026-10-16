@@ -10,26 +10,19 @@ import {
   where,
   getDocs,
   doc,
-  getDoc,
   addDoc,
   updateDoc,
   Timestamp,
-  limit,
   QueryConstraint,
-  orderBy,
-  documentId,
-  startAt,
-  endAt,
-  startAfter,
   QueryDocumentSnapshot,
   DocumentData,
-  getCountFromServer,
 } from 'firebase/firestore'
 import { IExample } from '@/models/item.model'
 import { toWildString } from '@/helpers/item'
 import { commonApi } from './common.api'
 import { categories, types } from '@/constant/index'
 import { shuffleArray } from '@/helpers/mics'
+import { localDb, queryLocalItems, invalidateSearchIndex, populateItemExamples } from '@/services/localDb'
 
 export interface IItemRequestParams {
   keyword: string
@@ -55,95 +48,10 @@ const normalizeLowercaseTags = (tags: string[] = []) => {
   return Array.from(new Set(normalized))
 }
 
-/**
- * Helper function to build Firestore query constraints
- */
-const buildQueryConstraints = (params: IItemRequestParams): QueryConstraint[] => {
-  const constraints: QueryConstraint[] = []
-  const currentUser = firebaseAuthService.getCurrentUser()
 
-  // Filter by current user
-  if (currentUser) {
-    constraints.push(where('uid', '==', currentUser.uid))
-  }
-
-  // Filter by category (0 means ALL, so skip filter)
-  if (params.cat) {
-    constraints.push(where('catId', '==', params.cat))
-  }
-
-  // Filter by archive status
-  if (params.archive) {
-    constraints.push(where('archive', '==', params.archive))
-  }
-
-  // Filter by favorite status
-  if (params.favorite) {
-    constraints.push(where('favorite', '==', params.favorite))
-  }
-
-  const filterTags = normalizeLowercaseTags(params.tags || [])
-  if (filterTags.length > 0) {
-    constraints.push(where('tags_lowercase', 'array-contains-any', filterTags.slice(0, 10)))
-  }
-
-  // Filter by deleted status
-  constraints.push(where('is_deleted', '==', false))
-
-  const orderByField = params.orderBy || 'created_date'
-  const orderDirection = params.order === 'DESC' ? 'desc' : 'asc'
-
-  if (params.keyword) {
-    const keyword = params.keyword.toLowerCase()
-
-    if (params.exact) {
-      constraints.push(where('origin_lowercase', '==', params.keyword.toLowerCase()))
-      constraints.push(orderBy(orderByField, orderDirection))
-    } else {
-      constraints.push(orderBy('origin_lowercase', 'asc'))
-      constraints.push(startAt(keyword))
-      constraints.push(endAt(keyword + '\uf8ff'))
-    }
-  } else {
-    constraints.push(orderBy(orderByField, orderDirection))
-  }
-
-  return constraints
-}
 
 /**
- * Helper function to build Firestore query constraints for autocomplete
- * Autocomplete has simpler filtering - no exact keyword match, different ordering
- */
-const buildQueryConstraintsForAutocomplete = (params: IItemRequestParams): QueryConstraint[] => {
-  const constraints: QueryConstraint[] = []
-  const currentUser = firebaseAuthService.getCurrentUser()
-
-  // Filter by current user
-  if (currentUser) {
-    constraints.push(where('uid', '==', currentUser.uid))
-  }
-
-  // Filter by deleted status
-  constraints.push(where('is_deleted', '==', false))
-
-  // For autocomplete, always order by 'origin_lowercase' for better search results
-  constraints.push(orderBy('origin_lowercase', 'asc'))
-
-  // Use startAt/endAt for keyword prefix search on 'origin_lowercase' field
-  // This works because we're ordering by 'origin_lowercase' and can use range queries
-  if (params.keyword) {
-    const keyword = params.keyword.toLowerCase()
-    constraints.push(startAt(keyword))
-    constraints.push(endAt(keyword + '\uf8ff'))
-  }
-
-  return constraints
-}
-
-/**
- * Helper function to fetch examples by their IDs from the examples collection
- * Handles batch fetching since Firestore 'in' query supports up to 10 items at a time
+ * Helper function to fetch examples by their IDs from the local database
  */
 const getExamplesByIds = async (exampleIds: string[]): Promise<IExample[]> => {
   if (!exampleIds || exampleIds.length === 0) {
@@ -158,27 +66,10 @@ const getExamplesByIds = async (exampleIds: string[]): Promise<IExample[]> => {
   }
 
   try {
-    // Firestore 'in' query supports up to 10 items at a time
-    const batchSize = 10
-    const batches: string[][] = []
-
-    for (let i = 0; i < validIds.length; i += batchSize) {
-      batches.push(validIds.slice(i, i + batchSize))
-    }
-
-    const examplePromises = batches.map(async (batch) => {
-      const examplesQuery = query(collection(db, 'examples'), where(documentId(), 'in', batch))
-      const snapshot = await getDocs(examplesQuery)
-      return snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as IExample[]
-    })
-
-    const results = await Promise.all(examplePromises)
-    return results.flat()
+    const examples = await localDb.examples.where('id').anyOf(validIds).toArray()
+    return examples.filter((ex: any) => !ex.is_deleted)
   } catch (error) {
-    console.error('Error fetching examples:', error)
+    console.error('Error fetching examples from localDb:', error)
     return []
   }
 }
@@ -188,86 +79,26 @@ const getExamplesByIds = async (exampleIds: string[]): Promise<IExample[]> => {
  */
 const getItems = async (
   params: IItemRequestParams,
-  lastDoc?: QueryDocumentSnapshot<DocumentData>,
+  _lastDoc?: QueryDocumentSnapshot<DocumentData>,
 ): Promise<IHttpResponse<IItem[]> & { lastDoc?: QueryDocumentSnapshot<DocumentData> }> => {
   try {
-    let constraints = buildQueryConstraints(params)
-
-    if (lastDoc && (!params.keyword || params.exact)) {
-      constraints.push(startAfter(lastDoc))
-    }
-
-    // Add limit last
-    constraints.push(limit(params.size + 1))
-
-    const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
-    const snapshot = await getDocs(itemsQuery)
-
-    // We fetched one extra to optimize pagination, slice to get actual page items
-    const itemDocs = snapshot.docs.slice(0, params.size)
-
-    // Process items and fetch examples
-    const itemsPromises = itemDocs.map(async (doc) => {
-      const itemData = doc.data()
-      const meanings = itemData.meanings || []
-
-      // Fetch examples for each meaning
-      const meaningsWithExamples = await Promise.all(
-        meanings.map(async (meaning: any) => {
-          const exampleIds = meaning.examples || []
-
-          if (!Array.isArray(exampleIds)) {
-            console.warn('Example IDs is not an array:', exampleIds)
-            return {
-              ...meaning,
-              examples: [],
-            }
-          }
-
-          return {
-            ...meaning,
-            examples: await getExamplesByIds(exampleIds),
-          }
-        }),
-      )
-
+    const currentUser = firebaseAuthService.getCurrentUser()
+    if (!currentUser?.uid) {
       return {
-        ...itemData,
-        id: doc.id,
-        meanings: meaningsWithExamples,
-      } as IItem
-    })
-
-    const items: IItem[] = await Promise.all(itemsPromises)
-
-    // Get last document for next page cursor
-    const newLastDoc = itemDocs.length > 0 ? itemDocs[itemDocs.length - 1] : undefined
-
-    // Get total count using efficient count query (server-side)
-    let total = 0
-    try {
-      const countConstraints = buildQueryConstraints(params)
-      const countQuery = query(collection(db, dbCollections.items), ...countConstraints)
-      const countSnapshot = await getCountFromServer(countQuery)
-      total = countSnapshot.data().count
-    } catch (error) {
-      console.warn('Error getting total count:', error)
-      // If count fails, continue without total count
+        isSuccess: true,
+        message: 'No authenticated user',
+        content: [],
+        paging: {
+          page: params.page || 0,
+          size: params.size || 20,
+          total: 0,
+          totalPage: 1,
+        },
+        statusCode: 200,
+      }
     }
 
-    return {
-      isSuccess: true,
-      message: 'Items fetched successfully',
-      content: items,
-      lastDoc: newLastDoc,
-      paging: {
-        page: params.page,
-        size: params.size,
-        total: total,
-        totalPage: total > 0 ? Math.ceil(total / params.size) : 0,
-      },
-      statusCode: 200,
-    }
+    return await queryLocalItems(params, currentUser.uid)
   } catch (error) {
     console.error('Error fetching items:', error)
     throw error
@@ -279,34 +110,28 @@ const getItems = async (
  */
 const getItemAutoComplete = async (params: IItemRequestParams): Promise<IHttpResponse<IItem[]>> => {
   try {
-    const constraints = buildQueryConstraintsForAutocomplete(params)
-    constraints.push(limit(params.size)) // Limit for autocomplete
+    const currentUser = firebaseAuthService.getCurrentUser()
+    if (!currentUser?.uid) {
+      return {
+        isSuccess: true,
+        message: 'No authenticated user',
+        content: [],
+        paging: { page: 0, size: params.size || 10, total: 0, totalPage: 1 },
+        statusCode: 200,
+      }
+    }
 
-    const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
-    const snapshot = await getDocs(itemsQuery)
-
-    let items = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as unknown as IItem[]
-
-    // Note: Keyword filtering is now done server-side via startAt/endAt
-    // No need for additional client-side filtering
-
+    // Strict local-only: query from localDb
+    const localResult = await queryLocalItems(params, currentUser.uid)
     return {
       isSuccess: true,
-      message: 'Autocomplete items fetched successfully',
-      content: items,
-      paging: {
-        page: 1,
-        size: 20,
-        total: items.length,
-        totalPage: 1,
-      },
+      message: 'Autocomplete items fetched from local database',
+      content: localResult.content,
+      paging: localResult.paging,
       statusCode: 200,
     }
   } catch (error) {
-    console.error('Error fetching autocomplete items:', error)
+    console.error('Error fetching autocomplete items from localDb:', error)
     throw error
   }
 }
@@ -316,87 +141,72 @@ const getItemAutoComplete = async (params: IItemRequestParams): Promise<IHttpRes
  */
 const getItemById = async (id: string): Promise<IHttpResponse<IItem>> => {
   try {
-    const itemDocRef = doc(db, dbCollections.items, id)
-    const itemDoc = await getDoc(itemDocRef)
-
-    if (!itemDoc.exists()) {
+    if (!id) {
       return {
         isSuccess: false,
-        message: 'Item not found',
+        message: 'Invalid item ID',
         content: null,
+        statusCode: 400,
+      }
+    }
+
+    const localItem = await localDb.items.get(id)
+    if (localItem && !localItem.is_deleted) {
+      const [populated] = await populateItemExamples([localItem])
+      return {
+        isSuccess: true,
+        message: 'Item fetched from local database',
+        content: populated,
         statusCode: 200,
       }
     }
 
-    const itemData = itemDoc.data()
-    const meanings = itemData.meanings || []
-
-    // Fetch examples for each meaning
-    const meaningsWithExamples = await Promise.all(
-      meanings.map(async (meaning: any) => {
-        const exampleIds = meaning.examples || []
-        const examples = await getExamplesByIds(exampleIds)
-        return {
-          ...meaning,
-          examples: examples,
-        }
-      }),
-    )
-
-    const item = {
-      id: itemDoc.id,
-      ...itemData,
-      meanings: meaningsWithExamples,
-    } as unknown as IItem
-
     return {
-      isSuccess: true,
-      message: 'Item fetched successfully',
-      content: { ...item },
-      statusCode: 200,
+      isSuccess: false,
+      message: 'Item not found in local database',
+      content: null,
+      statusCode: 404,
     }
   } catch (error) {
-    console.error('Error fetching item:', error)
+    console.error('Error fetching item from localDb:', error)
     throw error
   }
 }
 
-const getItemsInCategory = async (catId: number, size: number): Promise<IItem[]> => {
-  commonApi.checkAuth()
+const getEligibleItemsInCategory = async (catId: number): Promise<IItem[]> => {
+  try {
+    const currentUser = firebaseAuthService.getCurrentUser()
+    const allLocalItems = await localDb.items
+      .where('catId')
+      .equals(catId)
+      .toArray()
 
-  const currentUser = commonApi.getCurrentUser()
+    const userItems = allLocalItems.filter(
+      (item) => !item.is_deleted && (!currentUser?.uid || !item.uid || item.uid === currentUser.uid),
+    )
 
-  const constraints: QueryConstraint[] = [
-    where('catId', '==', catId),
-    where('uid', '==', currentUser?.uid),
-    where('is_deleted', '==', false),
-    where('randomIndex', '>=', Math.random()),
-    limit(size),
-  ]
-
-  const itemsQuery = query(collection(db, dbCollections.items), ...constraints)
-  const snapshot = await getDocs(itemsQuery)
-
-  const items = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as unknown as IItem[]
-
-  // Filter items that have meanings with definition or translation
-  const itemsWithMeanings = items.filter((item) => {
-    const meanings = item.meanings || []
-    return meanings.some((meaning: any) => {
-      return (
-        (meaning.definition && meaning.definition.trim() !== '') ||
-        (meaning.translation && meaning.translation.trim() !== '')
-      )
+    return userItems.filter((item) => {
+      const meanings = item.meanings || []
+      return meanings.some((meaning: any) => {
+        return (
+          (meaning.definition && meaning.definition.trim() !== '') ||
+          (meaning.translation && meaning.translation.trim() !== '')
+        )
+      })
     })
-  })
-  return await Promise.all(itemsWithMeanings)
+  } catch (err) {
+    console.error('Error fetching items for category from localDb:', err)
+    return []
+  }
+}
+
+const getItemsInCategory = async (catId: number, size: number): Promise<IItem[]> => {
+  const eligible = await getEligibleItemsInCategory(catId)
+  return shuffleArray([...eligible]).slice(0, size)
 }
 
 /**
- * Get study set items
+ * Get study set items loaded from local database
  */
 const getStudySet = async (
   studySets: GetStudySetByCatId[],
@@ -414,30 +224,44 @@ const getStudySet = async (
     }
 
     const allItems: IItem[] = []
+    const allCategoryItemsMap = new Map<number, IItem[]>()
 
-    // First, fetch all items for all categories
+    // Fetch all eligible items for each requested category from localDb
     for (const studySet of studySets) {
       if (studySet.size === 0 || !studySet.size) {
         continue
       }
-      const itemsWithMeanings = await getItemsInCategory(studySet.id, studySet.size)
+      const eligibleItems = await getEligibleItemsInCategory(studySet.id)
+      allCategoryItemsMap.set(studySet.id, eligibleItems)
 
-      allItems.push(...itemsWithMeanings)
+      const selected = shuffleArray([...eligibleItems]).slice(0, studySet.size)
+      allItems.push(...selected)
     }
 
-    // Fetch examples for all items
+    if (allItems.length === 0) {
+      const totalCount = await localDb.items.count()
+      const message =
+        totalCount === 0
+          ? 'Local database is empty. Please sync your data from the Profile page first.'
+          : 'No eligible items found for study set in your local database.'
+      return {
+        isSuccess: false,
+        message,
+        content: [],
+        statusCode: 404,
+      }
+    }
+
+    // Populate examples for all items from localDb
     const itemsWithExamples = await Promise.all(
       allItems.map(async (item) => {
         const meanings = item.meanings || []
 
-        // Fetch examples for each meaning
         const meaningsWithExamples = await Promise.all(
           meanings.map(async (meaning: any) => {
             const exampleIds = meaning.examples || []
 
-            // Check if exampleIds is actually an array of strings
-            if (!Array.isArray(exampleIds)) {
-              console.warn('Example IDs is not an array:', exampleIds)
+            if (!Array.isArray(exampleIds) || exampleIds.length === 0) {
               return {
                 ...meaning,
                 examples: [],
@@ -461,7 +285,7 @@ const getStudySet = async (
 
     // Generate quiz data for each item
     const itemsWithQuiz: IItemQuiz[] = itemsWithExamples.map((item) => {
-      // Randomly decide quiz type (50% chance for each type)
+      // Randomly decide quiz type (50% chance for each type if catId === 1)
       const useFillInBlank = item.catId === 1 && Math.random() < 0.5
 
       // Get random meaning from meanings array
@@ -476,18 +300,15 @@ const getStudySet = async (
       // Get hint: if word (catId=1) show type, otherwise show category
       let hint = ''
       if (item.catId === 1) {
-        // Word category - show type (NOUN, VERB, etc.)
         const typeLabels = types.filter(
           (type) => type.id !== 0 && type.id == selectedMeaning?.typeId,
         )
-        hint = typeLabels[0].label.origin || ''
+        hint = typeLabels[0]?.label?.origin || ''
       } else {
-        // Other categories - show category name
         const restCategoryLabels = categories.filter(
           (cat) => cat.id !== 0 && cat.id !== 1 && cat.id === item.catId,
         )
-
-        hint = restCategoryLabels[0].label
+        hint = restCategoryLabels[0]?.label || ''
       }
 
       // For fill in the blank
@@ -499,15 +320,15 @@ const getStudySet = async (
             question: toWildString(item.origin || ''),
             answer: item.origin,
             type: EQuiz.FILL_IN_BLANK,
-            hint: `(${hint.toLowerCase()})`,
+            hint: hint ? `(${hint.toLowerCase()})` : '',
             result: false,
           },
         } as unknown as IItemQuiz
       }
 
-      // For multiple choice
-      // Generate 3 random wrong answers from other items in the same category
-      const wrongAnswers = allItems
+      const pool =
+        (item.catId !== undefined ? allCategoryItemsMap.get(item.catId) : undefined) || allItems
+      const wrongAnswers = pool
         .filter((otherItem) => otherItem.id !== item.id && otherItem.catId === item.catId)
         .sort(() => Math.random() - 0.5)
         .slice(0, 3)
@@ -519,7 +340,7 @@ const getStudySet = async (
           label: item.origin,
           value: false,
           typeId: selectedMeaning?.typeId || 0,
-          key: selectedMeaning.translation,
+          key: selectedMeaning?.translation || '',
         },
         ...wrongAnswers.map((wrongItem) => {
           const randomMeaningIndex =
@@ -533,7 +354,7 @@ const getStudySet = async (
             label: wrongItem.origin,
             value: false,
             typeId: selected?.typeId || 0,
-            key: selected?.translation,
+            key: selected?.translation || '',
           }
         }),
       ]
@@ -548,7 +369,7 @@ const getStudySet = async (
           question: '',
           answer: shuffledAnswers,
           type: EQuiz.MULTI_CHOICE,
-          hint: `(${hint.toLowerCase()})`,
+          hint: hint ? `(${hint.toLowerCase()})` : '',
           result: false,
         },
       } as unknown as IItemQuiz
@@ -561,7 +382,7 @@ const getStudySet = async (
       statusCode: 200,
     }
   } catch (error) {
-    console.error('Error fetching study set:', error)
+    console.error('Error fetching study set from localDb:', error)
     return {
       isSuccess: false,
       message: error instanceof Error ? error.message : 'Failed to fetch study set',
@@ -598,14 +419,23 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
 
     const itemsRef = collection(db, dbCollections.items)
     const docRef = await addDoc(itemsRef, newItem)
+    const createdItem = {
+      id: docRef.id,
+      ...newItem,
+    } as unknown as IItem
+
+    // Modify local DB as well
+    try {
+      await localDb.items.put(createdItem)
+      invalidateSearchIndex()
+    } catch (localErr) {
+      console.warn('Failed to save created item to localDb:', localErr)
+    }
 
     return {
       isSuccess: true,
       message: 'Item created successfully',
-      content: {
-        id: docRef.id,
-        ...newItem,
-      } as unknown as IItem,
+      content: createdItem,
       statusCode: 200,
     }
   } catch (error) {
@@ -651,6 +481,16 @@ const createItems = async (items: IItem[]): Promise<IHttpResponse<IItem>> => {
       } as unknown as IItem)
     }
 
+    // Modify local DB as well
+    try {
+      if (createdItems.length > 0) {
+        await localDb.items.bulkPut(createdItems)
+        invalidateSearchIndex()
+      }
+    } catch (localErr) {
+      console.warn('Failed to bulk-save created items to localDb:', localErr)
+    }
+
     return {
       isSuccess: true,
       message: 'Items created successfully',
@@ -673,11 +513,14 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
       throw new Error('User not authenticated')
     }
 
-    const itemDocRef = doc(db, dbCollections.items, id)
-    const updateData: Partial<IItem> & { last_update: number; origin_lowercase?: string } = {
+    const now = Timestamp.now().toMillis()
+    const updateData: any = {
       ...item,
-      last_update: Timestamp.now().toMillis(),
+      last_update: now,
     }
+
+    // Clean up temporary UI quiz property if passed from studySet
+    delete updateData.quiz
 
     if (item.origin !== undefined) {
       updateData.origin_lowercase = item.origin.toLowerCase()
@@ -689,14 +532,30 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
       updateData.tags_lowercase = normalizeLowercaseTags(normalizedTags)
     }
 
-    await updateDoc(itemDocRef, updateData)
+    // 1. Update local DB immediately
+    let updatedItem: IItem
+    try {
+      const existing = await localDb.items.get(id)
+      if (existing) {
+        updatedItem = { ...existing, ...updateData, id }
+      } else {
+        updatedItem = { ...updateData, id } as IItem
+      }
+      await localDb.items.put(updatedItem)
+      invalidateSearchIndex()
+    } catch (localErr) {
+      console.warn('Failed to update item in localDb:', localErr)
+      updatedItem = { ...updateData, id } as IItem
+    }
 
-    // Fetch updated item
-    const updatedDoc = await getDoc(itemDocRef)
-    const updatedItem = {
-      id: updatedDoc.id,
-      ...updatedDoc.data(),
-    } as unknown as IItem
+    // 2. Update Firebase DB in parallel
+    try {
+      const itemDocRef = doc(db, dbCollections.items, id)
+      const { id: _docId, ...firestorePayload } = updateData
+      await updateDoc(itemDocRef, firestorePayload)
+    } catch (firebaseErr) {
+      console.error('Failed to update item in Firestore:', firebaseErr)
+    }
 
     return {
       isSuccess: true,
@@ -721,10 +580,20 @@ const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
     }
 
     const itemDocRef = doc(db, dbCollections.items, id)
+    const now = Timestamp.now().toMillis()
     await updateDoc(itemDocRef, {
       is_deleted: true,
-      deleted_date: Timestamp.now().toMillis(),
+      deleted_date: now,
+      last_update: now,
     })
+
+    // Modify local DB as well
+    try {
+      await localDb.items.delete(id)
+      invalidateSearchIndex()
+    } catch (localErr) {
+      console.warn('Failed to delete item from localDb:', localErr)
+    }
 
     return {
       isSuccess: true,
@@ -973,5 +842,6 @@ export const itemApi = {
   getNewAddedItemByPeriod,
   getItemsByLevel,
   getOverviewItems,
+  getItemsInCategory,
   getExamplesByIds,
 }

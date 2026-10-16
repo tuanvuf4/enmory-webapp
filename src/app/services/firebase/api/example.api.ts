@@ -4,22 +4,15 @@ import { IExampleQuery } from '@/models/example.model'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { removeLineBreaks } from '@/core/utils'
+import { localDb, queryLocalExamples, getRandomLocalExamples, invalidateSearchIndex } from '@/services/localDb'
 import {
   collection,
-  query,
-  where,
-  getDocs,
   doc,
   getDoc,
   addDoc,
   updateDoc,
   deleteDoc,
   Timestamp,
-  limit,
-  QueryConstraint,
-  startAt,
-  endAt,
-  orderBy,
 } from 'firebase/firestore'
 
 /**
@@ -49,6 +42,14 @@ const createExample = async (body: IExample): Promise<IHttpResponse<IExample>> =
     const docRef = await addDoc(collection(db, dbCollections.examples), exampleData)
     const newExample = { ...exampleData, id: docRef.id }
 
+    // Modify local DB as well
+    try {
+      await localDb.examples.put(newExample)
+      invalidateSearchIndex()
+    } catch (localErr) {
+      console.warn('Failed to save example to localDb:', localErr)
+    }
+
     return {
       isSuccess: true,
       message: 'Example created successfully',
@@ -62,96 +63,65 @@ const createExample = async (body: IExample): Promise<IHttpResponse<IExample>> =
 }
 
 /**
- * Get example by ID
+ * Get example by ID (Strict Local-Only)
  */
 const getExampleById = async (id: string | number): Promise<IHttpResponse<IExample>> => {
   try {
-    const exampleDocRef = doc(db, dbCollections.examples, String(id))
-    const exampleDoc = await getDoc(exampleDocRef)
-
-    if (!exampleDoc.exists()) {
-      throw new Error('Example not found')
+    if (!id) {
+      throw new Error('Example ID is required')
     }
 
-    const example = {
-      id: exampleDoc.id,
-      ...exampleDoc.data(),
-    } as IExample
+    const localExample = await localDb.examples.get(String(id))
+    if (localExample) {
+      return {
+        isSuccess: true,
+        message: 'Example fetched from local database',
+        content: localExample,
+        statusCode: 200,
+      }
+    }
 
     return {
-      isSuccess: true,
-      message: 'Example fetched successfully',
-      content: example,
-      statusCode: 200,
+      isSuccess: false,
+      message: 'Example not found in local database',
+      content: null as any,
+      statusCode: 404,
     }
   } catch (error) {
-    console.error('Error fetching example:', error)
+    console.error('Error fetching example from localDb:', error)
     throw error
   }
 }
 
 /**
- * Get examples with query
+ * Get examples with query (Strict Local-Only)
  */
 const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IExample[]>> => {
   try {
-    const constraints: QueryConstraint[] = []
     const currentUser = firebaseAuthService.getCurrentUser()
-
-    if (currentUser) {
-      constraints.push(where('uid', '==', currentUser.uid))
+    if (!currentUser?.uid) {
+      return {
+        isSuccess: true,
+        message: 'No authenticated user',
+        content: [],
+        statusCode: 200,
+      }
     }
 
-    const orderByField = querySearch.orderBy || 'created_date'
-    const orderDirection = querySearch.order === 'DESC' ? 'desc' : 'asc'
-
-    if (querySearch.keyword) {
-      const keyword = querySearch.keyword.trim().toLowerCase()
-
-      constraints.push(orderBy('origin_lowercase', 'asc'))
-      constraints.push(startAt(keyword))
-      constraints.push(endAt(keyword + '\uf8ff'))
-    } else {
-      constraints.push(orderBy(orderByField, orderDirection))
-    }
-
-    constraints.push(limit(querySearch.size || 10))
-
-    const examplesQuery = query(collection(db, dbCollections.examples), ...constraints)
-    const snapshot = await getDocs(examplesQuery)
-
-    let examples = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as IExample[]
-
-    return {
-      isSuccess: true,
-      message: 'Examples fetched successfully',
-      content: examples,
-      // paging: {
-      //   page: querySearch.page || 1,
-      //   size: querySearch.size || 10,
-      //   total: examples.length,
-      //   totalPage: Math.ceil(examples.length / (querySearch.size || 10)),
-      // },
-      statusCode: 200,
-    }
+    return await queryLocalExamples(querySearch, currentUser.uid)
   } catch (error) {
-    console.error('Error fetching examples:', error)
+    console.error('Error fetching examples from localDb:', error)
     throw error
   }
 }
 
 /**
- * Get random examples
- * Note: This function expects documents to have a 'randomIndex' field (0-1)
- * for efficient random sampling. Add this field when creating examples.
+ * Get random examples (Strict Local-Only)
  */
 const getRandomExamples = async (size: number): Promise<IHttpResponse<IExample[]>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
-    if (!currentUser) {
+    if (!currentUser?.uid) {
       return {
         isSuccess: false,
         message: 'User not authenticated',
@@ -160,31 +130,9 @@ const getRandomExamples = async (size: number): Promise<IHttpResponse<IExample[]
       }
     }
 
-    const randomStart = Math.random()
-
-    // First query: get documents >= randomStart
-    const constraints: QueryConstraint[] = [
-      where('uid', '==', currentUser.uid),
-      where('randomIndex', '>=', randomStart),
-      limit(size),
-    ]
-
-    const queryRandom = query(collection(db, dbCollections.examples), ...constraints)
-    const snapshot = await getDocs(queryRandom)
-
-    const examples = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as IExample[]
-
-    return {
-      isSuccess: true,
-      message: 'Random examples fetched successfully',
-      content: examples,
-      statusCode: 200,
-    }
+    return await getRandomLocalExamples(size, currentUser.uid)
   } catch (error) {
-    console.error('Error fetching random examples:', error)
+    console.error('Error fetching random examples from localDb:', error)
     return {
       isSuccess: false,
       message: error instanceof Error ? error.message : 'Failed to fetch random examples',
@@ -227,6 +175,14 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
       ...updatedDoc.data(),
     } as IExample
 
+    // Modify local DB as well
+    try {
+      await localDb.examples.put(updatedExample)
+      invalidateSearchIndex()
+    } catch (localErr) {
+      console.warn('Failed to update example in localDb:', localErr)
+    }
+
     return {
       isSuccess: true,
       message: 'Example updated successfully',
@@ -246,6 +202,14 @@ const deleteExample = async (id: string): Promise<IHttpResponse<IExample>> => {
   try {
     const exampleDocRef = doc(db, dbCollections.examples, String(id))
     await deleteDoc(exampleDocRef)
+
+    // Modify local DB as well
+    try {
+      await localDb.examples.delete(String(id))
+      invalidateSearchIndex()
+    } catch (localErr) {
+      console.warn('Failed to delete example from localDb:', localErr)
+    }
 
     return {
       isSuccess: true,

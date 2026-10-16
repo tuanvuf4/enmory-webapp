@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { itemApi, IItemRequestParams } from '@/services/firebase/api/item.api'
 import { IItem } from '@/models/item.model'
-import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore'
+import { localDb, invalidateSearchIndex } from '@/services/localDb'
 
 // Query keys
 export const itemKeys = {
@@ -12,85 +12,15 @@ export const itemKeys = {
   detail: (id: string) => [...itemKeys.details(), id] as const,
 }
 
-// Store for lastDoc cursors (page -> lastDoc mapping)
-const lastDocStore = new Map<string, Map<number, QueryDocumentSnapshot<DocumentData>>>()
-
-// Function to clear lastDoc store for a specific query config
-export const clearLastDocStore = (queryConfigKey?: string) => {
-  if (queryConfigKey) {
-    lastDocStore.delete(queryConfigKey)
-  } else {
-    lastDocStore.clear()
-  }
-}
+// Legacy helper for clearing query cursor caches if any
+export const clearLastDocStore = (_queryConfigKey?: string) => {}
 
 // Fetch items list
 export const useItems = (params: IItemRequestParams) => {
-  // Create a unique key for this query configuration (excluding page)
-  const queryConfigKey = JSON.stringify({
-    keyword: params.keyword,
-    tags: params.tags,
-    cat: params.cat,
-    archive: params.archive,
-    favorite: params.favorite,
-    orderBy: params.orderBy,
-    order: params.order,
-  })
-
   return useQuery({
     queryKey: itemKeys.list(params),
     queryFn: async () => {
-      // Get or create the page map for this query config
-      if (!lastDocStore.has(queryConfigKey)) {
-        lastDocStore.set(queryConfigKey, new Map())
-      }
-      const pageMap = lastDocStore.get(queryConfigKey)!
-
-      const ensureCursorForPage = async (targetPage: number) => {
-        if (targetPage <= 0) return
-
-        // Cursor needed for page N is the lastDoc of page N-1
-        if (pageMap.get(targetPage - 1)) return
-
-        pageMap.clear()
-
-        let previousLastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined
-
-        for (let i = 0; i < targetPage; i++) {
-          const warmupResponse = await itemApi.getItems(
-            {
-              ...params,
-              page: i,
-            },
-            previousLastDoc,
-          )
-
-          if (!warmupResponse.lastDoc) {
-            break
-          }
-
-          pageMap.set(i, warmupResponse.lastDoc)
-          previousLastDoc = warmupResponse.lastDoc
-        }
-      }
-
-      // For page 0, no cursor needed
-      // For page N, we need to navigate through all previous pages to get the correct cursor
-      let lastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined
-
-      if (params.page > 0) {
-        await ensureCursorForPage(params.page)
-        lastDoc = pageMap.get(params.page - 1)
-      }
-
-      const response = await itemApi.getItems(params, lastDoc)
-
-      // Store the lastDoc for this page for future navigation
-      if (response.lastDoc) {
-        pageMap.set(params.page, response.lastDoc)
-      }
-
-      return response
+      return await itemApi.getItems(params)
     },
     refetchOnWindowFocus: false,
   })
@@ -129,7 +59,11 @@ export const useCreateItem = () => {
 
       return { previousData }
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      if (response?.content && response.content.id) {
+        localDb.items.put(response.content)
+        invalidateSearchIndex()
+      }
       // Invalidate all item lists to refetch with new item
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
     },
@@ -169,7 +103,11 @@ export const useUpdateItem = () => {
 
       return { previousDetail }
     },
-    onSuccess: (_response, variables) => {
+    onSuccess: (response, variables) => {
+      if (response?.content && response.content.id) {
+        localDb.items.put(response.content)
+        invalidateSearchIndex()
+      }
       // Invalidate lists and detail to refetch
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
       queryClient.invalidateQueries({ queryKey: itemKeys.detail(variables.id) })
@@ -191,7 +129,9 @@ export const useDeleteItem = () => {
     mutationFn: async (id: string) => {
       return await itemApi.deleteItem(id)
     },
-    onSuccess: () => {
+    onSuccess: (_response, id) => {
+      localDb.items.delete(id)
+      invalidateSearchIndex()
       // Clear all lastDoc cursors since data has changed
       clearLastDocStore()
       // Invalidate all item lists to refetch

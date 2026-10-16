@@ -134,4 +134,3 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
 }
 
 export const ArticleCategoryList = BlogCategoryList
-

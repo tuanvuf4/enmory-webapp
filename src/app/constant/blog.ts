@@ -10,4 +10,3 @@ export const initialBlog: IBlogItem = {
 }
 
 export const initialArticle = initialBlog
-

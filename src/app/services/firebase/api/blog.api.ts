@@ -192,7 +192,10 @@ export const blogApi = {
         last_update: Timestamp.now().toMillis(),
       }
 
-      const docRef = await addDoc(collection(db, dbCollections.blogs || dbCollections.articles), blogData)
+      const docRef = await addDoc(
+        collection(db, dbCollections.blogs || dbCollections.articles),
+        blogData,
+      )
 
       return {
         isSuccess: true,
@@ -374,4 +377,3 @@ export const blogApi = {
 }
 
 export const articleApi = blogApi
-

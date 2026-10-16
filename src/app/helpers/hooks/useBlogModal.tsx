@@ -36,4 +36,3 @@ export const useBlogModal = () => {
 }
 
 export const useArticleModal = useBlogModal
-

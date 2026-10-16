@@ -9,8 +9,7 @@ import {
 export const blogCategoryKeys = {
   all: ['blog_categories'] as const,
   lists: () => [...blogCategoryKeys.all, 'list'] as const,
-  list: (filters: IBlogCategoryRequestParams) =>
-    [...blogCategoryKeys.lists(), filters] as const,
+  list: (filters: IBlogCategoryRequestParams) => [...blogCategoryKeys.lists(), filters] as const,
   details: () => [...blogCategoryKeys.all, 'detail'] as const,
   detail: (id: string) => [...blogCategoryKeys.details(), id] as const,
 }
@@ -119,4 +118,3 @@ export const useDeleteBlogCategory = () => {
 }
 
 export const useDeleteArticleCategory = useDeleteBlogCategory
-

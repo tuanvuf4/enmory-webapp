@@ -175,4 +175,3 @@ export const useBlogsCount = (categoryId?: string) => {
 }
 
 export const useArticlesCount = useBlogsCount
-

@@ -100,11 +100,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
             rules={{ required: 'Please enter blog title' }}
             render={({ field }) => (
               <>
-                <Input
-                  {...field}
-                  placeholder='Blog title'
-                  status={errors.title ? 'error' : ''}
-                />
+                <Input {...field} placeholder='Blog title' status={errors.title ? 'error' : ''} />
                 {errors.title && (
                   <div style={{ color: token.colorError, fontSize: 12, marginTop: 4 }}>
                     {errors.title.message}
@@ -171,4 +167,3 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
 }
 
 export const ArticleForm = BlogForm
-

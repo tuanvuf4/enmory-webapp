@@ -89,7 +89,10 @@ export const blogCategoriesApi = {
 
       const constraints: QueryConstraint[] = buildQueryConstraints(params)
 
-      const q = query(collection(db, dbCollections.blog_categories || dbCollections.article_categories), ...constraints)
+      const q = query(
+        collection(db, dbCollections.blog_categories || dbCollections.article_categories),
+        ...constraints,
+      )
       const querySnapshot = await getDocs(q)
 
       const categories = querySnapshot.docs.map((docSnap) => {
@@ -183,9 +186,7 @@ export const blogCategoriesApi = {
   /**
    * Create a new blog category
    */
-  async createCategory(
-    data: IBlogCategory,
-  ): Promise<IBlogCategoryResponse<IBlogCategory>> {
+  async createCategory(data: IBlogCategory): Promise<IBlogCategoryResponse<IBlogCategory>> {
     try {
       const currentUser = firebaseAuthService.getCurrentUser()
 
@@ -205,7 +206,10 @@ export const blogCategoriesApi = {
         last_update: Timestamp.now().toMillis(),
       }
 
-      const docRef = await addDoc(collection(db, dbCollections.blog_categories || dbCollections.article_categories), categoryData)
+      const docRef = await addDoc(
+        collection(db, dbCollections.blog_categories || dbCollections.article_categories),
+        categoryData,
+      )
 
       return {
         isSuccess: true,
@@ -317,4 +321,3 @@ export const blogCategoriesApi = {
 }
 
 export const articleCategoriesApi = blogCategoriesApi
-

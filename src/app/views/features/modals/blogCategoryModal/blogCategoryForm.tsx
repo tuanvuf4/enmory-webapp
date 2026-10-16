@@ -1,7 +1,4 @@
-import {
-  useCreateBlogCategory,
-  useUpdateBlogCategory,
-} from '@/core/hooks/useBlogCategories'
+import { useCreateBlogCategory, useUpdateBlogCategory } from '@/core/hooks/useBlogCategories'
 import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
 import { theme, Input, Button, Flex, ColorPicker, InputNumber, Select } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
@@ -193,4 +190,3 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
 }
 
 export const ArticleCategoryForm = BlogCategoryForm
-

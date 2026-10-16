@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Radio } from 'antd'
+import { Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Tag } from 'antd'
 import { BlogItem } from '@/views/components/blogItem/BlogItem'
 import { useBlogs, useBlogsCount, useBlogCategories } from '@/core/hooks'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
@@ -11,6 +11,8 @@ import { NotFound, BlogCategoryList } from '@/views/components'
 import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
 import { Widget } from '@/views/features'
 import { usePrompt } from '@/helpers/hooks'
+
+const { CheckableTag } = Tag
 
 const PAGE_SIZE = 10
 
@@ -71,9 +73,9 @@ export const Blog = () => {
     setShowCategoryModal(false)
   }
 
-  const onChangeRadio = (e: any) => {
+  const handleSelectCategory = (categoryId?: string) => {
     setPage(0)
-    setSelectedCategory(e.target.value === 'all' ? undefined : e.target.value)
+    setSelectedCategory(categoryId)
   }
 
   return (
@@ -97,27 +99,39 @@ export const Blog = () => {
             >
               Add
             </Button>
+          </Flex>
+
+          <Flex gap={token.size / 2} wrap={'wrap'} align={'center'}>
+            <CheckableTag
+              key='all'
+              checked={!selectedCategory}
+              onChange={() => handleSelectCategory(undefined)}
+            >
+              All
+            </CheckableTag>
+
+            {categories.map((cat) => (
+              <CheckableTag
+                key={cat.id}
+                checked={selectedCategory === cat.id}
+                onChange={(checked) => handleSelectCategory(checked ? cat.id : undefined)}
+                style={
+                  selectedCategory === cat.id && cat.color
+                    ? { backgroundColor: cat.color, borderColor: cat.color, color: '#fff' }
+                    : undefined
+                }
+              >
+                {cat.name}
+              </CheckableTag>
+            ))}
 
             <Button
               variant={'outlined'}
               type={'default'}
               icon={<UnorderedListOutlined />}
               onClick={handleOpenCategoryModal}
-            >
-              Categories
-            </Button>
+            />
           </Flex>
-
-          <Radio.Group
-            options={[
-              { label: 'All', value: 'all' },
-              ...categories.map((cat) => ({ label: cat.name, value: cat.id })),
-            ]}
-            onChange={onChangeRadio}
-            value={selectedCategory || 'all'}
-            optionType='button'
-            buttonStyle='solid'
-          />
         </Flex>
 
         <Spin spinning={isLoadingBlogs}>

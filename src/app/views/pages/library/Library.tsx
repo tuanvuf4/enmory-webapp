@@ -98,7 +98,7 @@ export const Library: React.FC = () => {
               {listItem.length > 0 &&
                 listItem.map((item, idx) => {
                   return (
-                    <Col xs={24} sm={12} md={12} lg={8} xl={6} key={idx}>
+                    <Col xs={24} sm={12} md={12} lg={8} xl={8} key={idx}>
                       <Widget>
                         <Item data={item} action active />
                       </Widget>

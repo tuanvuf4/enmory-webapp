@@ -4,12 +4,21 @@ import React from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import { useSelector } from '@/core/hooks'
 
-interface IPros {
-  style: React.CSSProperties
-  origin: string
+export interface IReferenceItem {
+  id: number
+  src: string
+  url: string
+  target: string
 }
 
-export const Reference: React.FC<IPros> = ({ origin, style }) => {
+interface IPros {
+  style?: React.CSSProperties
+  origin: string
+  onSelect?: (reference: IReferenceItem) => void
+  loadingId?: number | null
+}
+
+export const Reference: React.FC<IPros> = ({ origin, style, onSelect, loadingId }) => {
   const { token } = theme.useToken()
   const { user } = useSelector((state) => state.auth)
 
@@ -33,8 +42,19 @@ export const Reference: React.FC<IPros> = ({ origin, style }) => {
               key={key}
               className={appStyle.referenceBtn}
               type='text'
-              onClick={() => {
-                window.open(reference.url + origin, reference.target)
+              loading={loadingId === reference.id}
+              disabled={!!loadingId && loadingId !== reference.id}
+              title={
+                onSelect
+                  ? `Click to auto-fill with ${reference.src} (Ctrl+Click to open link)`
+                  : `Open ${reference.src}`
+              }
+              onClick={(e) => {
+                if (e.ctrlKey || e.metaKey || !onSelect) {
+                  window.open(reference.url + origin, reference.target)
+                  return
+                }
+                onSelect(reference)
               }}
             >
               {reference.src}

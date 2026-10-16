@@ -240,7 +240,7 @@ export const Item: React.FC<IProps> = ({
 
       {data && (
         <>
-          <div className={styles.contentItem}>
+          <Flex gap={token.size / 2} vertical>
             <div className={styles.title}>
               <h2 className={styles.origin} onClick={() => speakWord(data.origin, 'en-US')}>
                 {isDefect(data) && <span className={styles.warnTitle}>{data.origin}</span>}
@@ -368,7 +368,7 @@ export const Item: React.FC<IProps> = ({
                   origin={data.origin}
                 />
               ))}
-          </div>
+          </Flex>
 
           {/* <div className={styles.date}>
             <span>{moment(data.created_date).format(appSetting.dateTimeFormat)}</span>

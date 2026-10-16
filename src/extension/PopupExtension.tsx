@@ -45,6 +45,10 @@ export const PopupExtension = () => {
     if (openaiApiKey) {
       chromeStorage.set({ openaiApiKey })
     }
+    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
+    if (geminiApiKey) {
+      chromeStorage.set({ geminiApiKey })
+    }
   }, [])
 
   // React to login/logout: the page switches automatically based on auth state

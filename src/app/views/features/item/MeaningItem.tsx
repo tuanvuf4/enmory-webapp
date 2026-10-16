@@ -127,17 +127,21 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin })
         )}
 
         {meaning.collocations && (
-          <div className={styles.list}>
+          <>
             <h5 className={'italic font-bold m-0'}>Collocations:</h5>
-            <div dangerouslySetInnerHTML={{ __html: meaning.collocations }} />
-          </div>
+            <div className={styles.list}>
+              <div dangerouslySetInnerHTML={{ __html: meaning.collocations }} />
+            </div>
+          </>
         )}
 
         {meaning.grammar && (
-          <div className={styles.list}>
+          <>
             <h5 className={'italic font-bold m-0'}>Grammar:</h5>
-            <div dangerouslySetInnerHTML={{ __html: meaning.grammar }} />
-          </div>
+            <div className={styles.list}>
+              <div dangerouslySetInnerHTML={{ __html: meaning.grammar }} />
+            </div>
+          </>
         )}
 
         {meaning.synonyms.length > 0 && (

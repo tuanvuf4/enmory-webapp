@@ -4,13 +4,13 @@ import appStyle from '@/style/appStyle.module.scss'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { isGroupWord } from '@/helpers/validate'
-import { ECategory, IItem, IExample, IMeaning } from '@/models/item.model'
+import { ECategory, EType, IItem, IExample, IMeaning } from '@/models/item.model'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { InputTag, Level, ReviewableTextArea } from '@/views/components'
-import { Reference } from '@/views/features/references/References'
-import { theme, Row, Space, Col, Select, Checkbox, Button, Flex } from 'antd'
+import { Reference, IReferenceItem } from '@/views/features/references/References'
+import { theme, Row, Space, Col, Select, Checkbox, Button, Flex, Tag } from 'antd'
 import clsx from 'clsx'
 import { useEffect, Suspense, useState, useMemo } from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
@@ -27,6 +27,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { getMeaningsWithExamples } from '@/helpers/item'
 import { validateAndCreateRelatedItems } from './itemValidation'
 import { UnorderedListOutlined } from '@ant-design/icons'
+import { geminiDictionaryService, resolveGeminiApiKey, formatHtmlList } from '@/services/gemini'
 
 interface ItemFormProps {
   item: IItem
@@ -35,9 +36,11 @@ interface ItemFormProps {
 export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const { token } = theme.useToken()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [activeReferenceId, setActiveReferenceId] = useState<number | null>(null)
+  const isAutofilling = activeReferenceId !== null
   const { openTagManagerModal } = useTagManagerModal()
 
-  const { notification } = usePrompt()
+  const { notification, confirm } = usePrompt()
 
   const dispatch = useDispatch()
 
@@ -330,6 +333,132 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
     }
   }
 
+  const handleReferenceSelect = async (reference: IReferenceItem) => {
+    const currentOrigin = getValues('origin')?.trim()
+    if (!currentOrigin) {
+      notification({
+        type: 'warning',
+        message: 'Please enter an Origin word or phrase first.',
+      })
+      return
+    }
+
+    const apiKey = resolveGeminiApiKey()
+    if (!apiKey) {
+      const inputKey = window.prompt(
+        'Gemini API key is not configured. Enter your Gemini API key (it will be saved to your browser):',
+      )
+      if (!inputKey || !inputKey.trim()) {
+        notification({
+          type: 'warning',
+          message: 'Gemini API key is required to auto-fill dictionary data.',
+        })
+        return
+      }
+      localStorage.setItem('gemini_api_key', inputKey.trim())
+    }
+
+    const currentMeanings = getValues('meanings') || []
+    const hasMeaningContent = currentMeanings.some(
+      (m) => (m.definition && m.definition.trim()) || (m.translation && m.translation.trim()),
+    )
+
+    if (hasMeaningContent) {
+      confirm({
+        title: `Replace existing meanings with ${reference.src}?`,
+        content: `This will replace the current meanings with data from ${reference.src}.`,
+        okText: 'Replace',
+        onOk: () => runAutofill(currentOrigin, reference),
+      })
+      return
+    }
+
+    await runAutofill(currentOrigin, reference)
+  }
+
+  const runAutofill = async (originWord: string, reference: IReferenceItem) => {
+    setActiveReferenceId(reference.id)
+    try {
+      const resp = await geminiDictionaryService.fetchFromReference(originWord, reference.src)
+      if (!resp.isSuccess || !resp.content) {
+        notification({
+          type: 'error',
+          message: resp.message || `Failed to fetch dictionary data from ${reference.src}.`,
+        })
+        return
+      }
+
+      const data = resp.content
+      const formattedMeanings: IMeaning[] = (data.meanings || []).map((m, index) => {
+        const rawUk = (m.pronunciation?.uk || '').trim()
+        const rawUs = (m.pronunciation?.us || '').trim()
+        const rawCommon = (m.pronunciation?.common || '').trim()
+
+        const cleanIpa = (val: string) =>
+          val
+            .replace(/^\/+|\/+$/g, '')
+            .trim()
+            .toLowerCase()
+        const isSamePronunciation = rawUk && rawUs && cleanIpa(rawUk) === cleanIpa(rawUs)
+
+        const finalUs = rawUs || rawUk || ''
+        const finalUk = isSamePronunciation ? '' : rawUk
+        const finalCommon = rawCommon || finalUs
+
+        return {
+          typeId: m.typeId || EType.NOUN,
+          common: index === 0,
+          enable: true,
+          definition: m.definition || '',
+          translation: m.translation || '',
+          note: '',
+          grammar: '',
+          collocations: formatHtmlList(m.collocations || ''),
+          synonyms: m.synonyms || [],
+          antonyms: m.antonyms || [],
+          pronunciation: {
+            uk: finalUk,
+            us: finalUs,
+            common: finalCommon,
+          },
+          examples: (m.examples || []).map((ex) => ({
+            origin: ex.origin || '',
+            translation: ex.translation || '',
+            note: '',
+            created_date: Timestamp.now().toMillis(),
+            last_update: Timestamp.now().toMillis(),
+          })),
+        }
+      })
+
+      reset({
+        ...getValues(),
+        origin: originWord,
+        catId: data.catId ?? getValues('catId'),
+        level: data.level ?? getValues('level'),
+        forms: getValues('forms') || [],
+        word_family: data.word_family || [],
+        relation: getValues('relation') || [],
+        meanings: formattedMeanings,
+      })
+
+      await trigger()
+
+      notification({
+        type: 'success',
+        message: `Loaded ${reference.src} dictionary data for "${originWord}"!`,
+      })
+    } catch (error: any) {
+      console.error('Auto-fill error:', error)
+      notification({
+        type: 'error',
+        message: error?.message || `Error occurred during ${reference.src} auto-fill.`,
+      })
+    } finally {
+      setActiveReferenceId(null)
+    }
+  }
+
   const handleCancel = () => closeModal()
 
   const handleOpenTagModal = () => {
@@ -472,7 +601,38 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                   }}
                 />
 
-                {origin && <Reference style={{ marginTop: token.size / 2 }} origin={origin} />}
+                {origin && (
+                  <Flex
+                    align={'center'}
+                    justify={'flex-start'}
+                    wrap={'wrap'}
+                    gap={token.size * 0.25}
+                    style={{ marginTop: token.size / 2 }}
+                  >
+                    <Tag
+                      ref={(node) => {
+                        if (node) {
+                          node.style.setProperty('background-color', token.colorPrimary, 'important')
+                          node.style.setProperty('border-color', token.colorPrimary, 'important')
+                          node.style.setProperty('color', '#fff', 'important')
+                        }
+                      }}
+                      style={{
+                        backgroundColor: token.colorPrimary,
+                        borderColor: token.colorPrimary,
+                        color: '#fff',
+                      }}
+                    >
+                      Auto-Fill
+                    </Tag>
+
+                    <Reference
+                      origin={origin}
+                      onSelect={handleReferenceSelect}
+                      loadingId={activeReferenceId}
+                    />
+                  </Flex>
+                )}
               </Col>
             </Row>
 
@@ -652,7 +812,14 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
               <Button
                 loading={isSubmitting || isCreating || isUpdating}
-                disabled={!isValid || isSubmitting || isCreating || isUpdating || isSearching}
+                disabled={
+                  !isValid ||
+                  isSubmitting ||
+                  isCreating ||
+                  isUpdating ||
+                  isSearching ||
+                  isAutofilling
+                }
                 type={'primary'}
                 onClick={() => handleSubmit(onSubmit)()}
               >

@@ -10,12 +10,13 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
   addDoc,
   deleteDoc,
   doc,
   limit,
 } from 'firebase/firestore'
-import { ECategory, EType, IOption, IIotd, IIotdRequest } from '@/models/item.model'
+import { ECategory, EType, IOption, IIotd, IIotdDoc, IIotdRequest, IItem } from '@/models/item.model'
 import { categories, types } from '@/constant/item'
 import { itemApi } from '@/services/firebase/api/item.api'
 
@@ -159,15 +160,14 @@ const createIotdByCatId = async ({
     const enrichedItem =
       enrichedItemResp.isSuccess && enrichedItemResp.content ? enrichedItemResp.content : randomItem
 
-    // Create new IOTD document
-    const newIotd = {
+    // Create new IOTD document - saving only itemId and metadata (not full item)
+    const newIotd: IIotdDoc = {
       itemId: enrichedItem.id || randomItem.id,
       uid: userId,
       catId: catId,
       first_of_date: startOfDay,
       last_of_date: endOfDay,
       created_date: Date.now(),
-      item: enrichedItem,
     }
 
     const docRef = await addDoc(collection(db, dbCollections.iotd), newIotd)
@@ -233,10 +233,26 @@ const getIotdByCatId = async ({
       const iotdDoc = snapshot.docs[0]
       const iotdData = iotdDoc.data()
 
-      // Fetch the actual item
-      // Enrich item with meaning examples
+      // Fetch the actual item (hydrated dynamically with latest item data)
+      let item: IItem | null = null
       const { isSuccess, content } = await itemApi.getItemById(iotdData.itemId)
-      const item = isSuccess ? content : null
+      if (isSuccess && content) {
+        item = content
+      } else {
+        try {
+          const itemDoc = await getDoc(doc(db, dbCollections.items, iotdData.itemId))
+          if (itemDoc.exists()) {
+            item = { id: itemDoc.id, ...itemDoc.data() } as IItem
+          }
+        } catch (e) {
+          console.warn('[IOTD] Failed to fetch item from Firestore:', e)
+        }
+      }
+
+      // Backward-compatibility fallback for legacy documents that stored item in Firestore
+      if (!item && (iotdData as any).item) {
+        item = (iotdData as any).item
+      }
 
       return {
         isSuccess: true,
@@ -244,7 +260,7 @@ const getIotdByCatId = async ({
         content: {
           id: iotdDoc.id,
           ...iotdData,
-          item: item || {},
+          item: item || ({} as IItem),
         } as IIotd,
         statusCode: 200,
       }

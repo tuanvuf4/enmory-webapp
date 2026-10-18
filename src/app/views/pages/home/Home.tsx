@@ -1,5 +1,5 @@
 import appStyle from '@/style/appStyle.module.scss'
-import { usePrefetchAllIotd, useSelector } from '@/core/hooks'
+import { useItem, usePrefetchAllIotd, useSelector } from '@/core/hooks'
 import { Example } from '@/views/features/example/Example'
 import { StudySet } from '@/views/features/studySet/StudySet'
 import { Checklist } from '@/views/features/checklist'
@@ -7,8 +7,39 @@ import { Widget } from '@/views/features/widget/Widget'
 import { theme, Space, Row, Col, Skeleton } from 'antd'
 import { Item } from '@/views/features/item/Item'
 import { ExampleMode } from '@/models/example.model'
+import { IIotdDoc } from '@/models/item.model'
 import { Link } from 'react-router-dom'
 import { ExampleForm } from '@/views/features/example/ExampleForm'
+
+interface IIotdItemCardProps {
+  iotd?: IIotdDoc | null
+  title?: string
+  isLoadingPrefetch?: boolean
+}
+
+const IotdItemCard: React.FC<IIotdItemCardProps> = ({ iotd, title, isLoadingPrefetch }) => {
+  const itemId = iotd?.itemId || (iotd as any)?.item?.id
+  const { data: item, isLoading } = useItem(itemId || '', !!itemId)
+
+  if (!itemId) return null
+
+  if (isLoading || isLoadingPrefetch) {
+    return (
+      <Widget title={title}>
+        <Skeleton />
+      </Widget>
+    )
+  }
+
+  const displayItem = item || (iotd as any)?.item
+  if (!displayItem || !displayItem.origin) return null
+
+  return (
+    <Widget title={title}>
+      <Item reload data={displayItem} />
+    </Widget>
+  )
+}
 
 const Home = () => {
   const { token } = theme.useToken()
@@ -16,12 +47,12 @@ const Home = () => {
   const { isAuth } = useSelector((state) => state.auth)
   const iotdState = useSelector((state) => state.iotd) || {}
   const {
-    word = {} as any,
-    phrase = {} as any,
-    idiom = {} as any,
-    slang = {} as any,
-    collocation = {} as any,
-    sentence = {} as any,
+    word = null,
+    phrase = null,
+    idiom = null,
+    slang = null,
+    collocation = null,
+    sentence = null,
   } = iotdState
 
   const { isLoading, isError } = usePrefetchAllIotd(isAuth)
@@ -53,41 +84,16 @@ const Home = () => {
 
             <Col xs={24} sm={10} md={10}>
               <Space direction='vertical' size={token.size * 1.5}>
-                {word?.item && word.item.origin && (
-                  <Widget title={'Items of the day'}>
-                    {isLoading && !isError ? <Skeleton /> : <Item reload data={word.item} />}
-                  </Widget>
-                )}
-
-                {phrase?.item && phrase.item.origin && (
-                  <Widget>
-                    {isLoading && !isError ? <Skeleton /> : <Item reload data={phrase.item} />}
-                  </Widget>
-                )}
-
-                {collocation?.item && collocation.item.origin && (
-                  <Widget>
-                    {isLoading && !isError ? <Skeleton /> : <Item reload data={collocation.item} />}
-                  </Widget>
-                )}
-
-                {sentence?.item && sentence.item.origin && (
-                  <Widget>
-                    {isLoading && !isError ? <Skeleton /> : <Item reload data={sentence.item} />}
-                  </Widget>
-                )}
-
-                {idiom?.item && idiom.item.origin && (
-                  <Widget>
-                    {isLoading && !isError ? <Skeleton /> : <Item reload data={idiom.item} />}
-                  </Widget>
-                )}
-
-                {slang?.item && slang.item.origin && (
-                  <Widget>
-                    {isLoading && !isError ? <Skeleton /> : <Item reload data={slang.item} />}
-                  </Widget>
-                )}
+                <IotdItemCard
+                  iotd={word}
+                  title={'Items of the day'}
+                  isLoadingPrefetch={isLoading && !isError}
+                />
+                <IotdItemCard iotd={phrase} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={collocation} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={sentence} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={idiom} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={slang} isLoadingPrefetch={isLoading && !isError} />
               </Space>
             </Col>
           </Row>

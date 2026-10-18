@@ -1,14 +1,14 @@
-import { IItem, IIotd, ECategory } from '@/app/models/item.model'
+import { IItem, IIotd, IIotdDoc, ECategory } from '@/app/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { actionAsyncApp } from '../asyncActions'
 
 export interface IIotdState {
-  word: IIotd | null
-  phrase: IIotd | null
-  idiom: IIotd | null
-  slang: IIotd | null
-  collocation: IIotd | null
-  sentence: IIotd | null
+  word: IIotdDoc | null
+  phrase: IIotdDoc | null
+  idiom: IIotdDoc | null
+  slang: IIotdDoc | null
+  collocation: IIotdDoc | null
+  sentence: IIotdDoc | null
 }
 
 export const initialState: IIotdState = {
@@ -24,15 +24,11 @@ export const iotdReducer = createSlice({
   name: 'iotd',
   initialState,
   reducers: {
-    update(state: IIotdState, action: PayloadAction<IItem>) {
-      for (const key in state) {
-        if (Object.prototype.hasOwnProperty.call(state, key)) {
-          const iotd = state[key as keyof typeof state]
-          if (iotd?.item?.id === action.payload.id) {
-            state[key as keyof typeof state] = { ...iotd, item: action.payload } as IIotd
-          }
-        }
-      }
+    /**
+     * Backward-compatible no-op: item data is resolved dynamically by itemId from React Query / localDb
+     */
+    update(_state: IIotdState, _action: PayloadAction<IItem>) {
+      // Dynamic hydration handles freshness automatically
     },
     clearIotd(state: IIotdState, action: PayloadAction<ECategory>) {
       switch (action.payload) {
@@ -65,35 +61,47 @@ export const iotdReducer = createSlice({
           break
       }
     },
-    setIotd(state: IIotdState, action: PayloadAction<IIotd>) {
-      const iotd = action.payload
-      switch (iotd.item.catId) {
+    setIotd(state: IIotdState, action: PayloadAction<IIotdDoc | IIotd>) {
+      const payload = action.payload
+      const targetCatId = payload.catId ?? (payload as any).item?.catId
+      const targetItemId = payload.itemId ?? (payload as any).item?.id
+      const iotdDoc: IIotdDoc = {
+        id: payload.id,
+        itemId: targetItemId,
+        uid: payload.uid,
+        catId: targetCatId,
+        first_of_date: payload.first_of_date,
+        last_of_date: payload.last_of_date,
+        created_date: payload.created_date,
+      }
+
+      switch (targetCatId) {
         case ECategory.WORD:
-          state.word = iotd
+          state.word = iotdDoc
           break
 
         case ECategory.PHRASE:
-          state.phrase = iotd
+          state.phrase = iotdDoc
           break
 
         case ECategory.IDIOM:
-          state.idiom = iotd
+          state.idiom = iotdDoc
           break
 
         case ECategory.SLANG:
-          state.slang = iotd
+          state.slang = iotdDoc
           break
 
         case ECategory.COLLOCATION:
-          state.collocation = iotd
+          state.collocation = iotdDoc
           break
 
         case ECategory.SENTENCE:
-          state.sentence = iotd
+          state.sentence = iotdDoc
           break
 
         default:
-          state.word = iotd
+          state.word = iotdDoc
           break
       }
     },
@@ -105,33 +113,45 @@ export const iotdReducer = createSlice({
     builder.addCase(actionAsyncApp.fetchIotd.fulfilled, (state, action) => {
       if (action.payload.isSuccess && action.payload.content) {
         const iotd = action.payload.content
-        switch (iotd.item?.catId) {
+        const targetCatId = iotd.catId ?? iotd.item?.catId
+        const targetItemId = iotd.itemId ?? iotd.item?.id
+        const iotdDoc: IIotdDoc = {
+          id: iotd.id,
+          itemId: targetItemId,
+          uid: iotd.uid,
+          catId: targetCatId,
+          first_of_date: iotd.first_of_date,
+          last_of_date: iotd.last_of_date,
+          created_date: iotd.created_date,
+        }
+
+        switch (targetCatId) {
           case ECategory.WORD:
-            state.word = iotd
+            state.word = iotdDoc
             break
 
           case ECategory.PHRASE:
-            state.phrase = iotd
+            state.phrase = iotdDoc
             break
 
           case ECategory.IDIOM:
-            state.idiom = iotd
+            state.idiom = iotdDoc
             break
 
           case ECategory.SLANG:
-            state.slang = iotd
+            state.slang = iotdDoc
             break
 
           case ECategory.COLLOCATION:
-            state.collocation = iotd
+            state.collocation = iotdDoc
             break
 
           case ECategory.SENTENCE:
-            state.sentence = iotd
+            state.sentence = iotdDoc
             break
 
           default:
-            state.word = iotd
+            state.word = iotdDoc
             break
         }
       }

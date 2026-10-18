@@ -1,4 +1,4 @@
-import { ECategory, IIotd } from '../models'
+import { ECategory, IIotd, IIotdDoc } from '../models'
 
 /**
  * Get today's date string in YYYY-MM-DD format
@@ -9,7 +9,7 @@ export const getTodayDateString = (): string => {
 }
 
 // Check if IOTD is from today
-export const isIotdFromToday = (iotd: IIotd | null): boolean => {
+export const isIotdFromToday = (iotd: IIotdDoc | IIotd | null): boolean => {
   if (!iotd || !iotd.first_of_date) return false
 
   // Get current time
@@ -32,7 +32,7 @@ export const isIotdFromToday = (iotd: IIotd | null): boolean => {
 }
 
 // Helper to get IOTD from Redux by category
-export const getIotdFromRedux = (state: any, catId: number): IIotd | null => {
+export const getIotdFromRedux = (state: any, catId: number): IIotdDoc | null => {
   switch (catId) {
     case ECategory.WORD:
       return state.iotd.word

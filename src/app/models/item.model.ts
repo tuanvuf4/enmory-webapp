@@ -105,14 +105,18 @@ export interface IItem {
   meanings?: IMeaning[]
 }
 
-export interface IIotd {
-  id: string
+export interface IIotdDoc {
+  id?: string
   itemId: string
   uid: string
   catId: number
   first_of_date: number
   last_of_date: number
   created_date?: number
+}
+
+export interface IIotd extends IIotdDoc {
+  id: string
   item: IItem
 }
 

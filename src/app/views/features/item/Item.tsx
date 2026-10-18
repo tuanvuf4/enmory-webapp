@@ -1,4 +1,4 @@
-import { itemKeys, useDeleteItem, useDispatch, useSelector } from '@/core/hooks'
+import { itemKeys, useDeleteItem, useDispatch, useSelector, useChecklist } from '@/core/hooks'
 import { useItemModal, usePrompt } from '@/helpers/hooks'
 import { getCategory, isDefect } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
@@ -61,6 +61,7 @@ export const Item: React.FC<IProps> = ({
   const { mutate: mutateDeleteItem } = useDeleteItem()
 
   const { confirm, notification, message } = usePrompt()
+  const { addItem } = useChecklist()
 
   const { viewMode } = useSelector((state) => state.setting)
 
@@ -102,6 +103,22 @@ export const Item: React.FC<IProps> = ({
         await favorite(data)
         onFavorite?.()
         break
+
+      case '8': {
+        try {
+          const res = await addItem(data)
+          notification({
+            type: res.isSuccess ? 'success' : 'info',
+            message: res.message,
+          })
+        } catch (error: any) {
+          notification({
+            type: 'error',
+            message: error?.message || 'Failed to add item to checklist',
+          })
+        }
+        break
+      }
 
       default:
         if (onViewSuccess) onViewSuccess()

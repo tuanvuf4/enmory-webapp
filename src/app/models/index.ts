@@ -1,6 +1,7 @@
 export * from './app.model'
 export * from './blog.model'
 export * from './breadcrumb.model'
+export * from './checklist.model'
 export * from './dictation.model'
 export * from './example.model'
 export * from './formSearch.model'

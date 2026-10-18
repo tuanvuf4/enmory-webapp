@@ -30,7 +30,11 @@ export const usePrompt = () => {
     notificationRef.open({
       type,
       duration: 2.5,
-      message: <h4 style={{ color: token.colorText }}>{message}</h4>,
+      message: <h4 style={{ color: token.colorText, margin: 0 }}>{message}</h4>,
+      showProgress: true,
+      onClick: () => {
+        notificationRef.destroy()
+      },
       ...props,
     })
   }
@@ -39,7 +43,10 @@ export const usePrompt = () => {
     messageRef.open({
       type,
       duration: 5,
-      content: <h4 style={{ color: token.colorText }}>{content}</h4>,
+      content: <h4 style={{ color: token.colorText, margin: 0 }}>{content}</h4>,
+      onClick: () => {
+        messageRef.destroy()
+      },
       ...props,
     })
   }

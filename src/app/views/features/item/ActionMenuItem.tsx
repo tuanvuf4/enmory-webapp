@@ -8,6 +8,7 @@ import {
   ReadOutlined,
   StarFilled,
   SyncOutlined,
+  CheckSquareOutlined,
 } from '@ant-design/icons'
 import { ItemType } from 'antd/es/menu/interface'
 import { IItem } from '@/models/item.model'
@@ -66,6 +67,10 @@ export const getActionMenuItem = (data: IItem | undefined): ItemType[] => {
       label: (
         <ActionItem label={`${data?.archive ? 'Unarchive' : 'Archive'}`} icon={<ReadOutlined />} />
       ),
+    },
+    {
+      key: 8,
+      label: <ActionItem label='Add to checklist' icon={<CheckSquareOutlined />} />,
     },
     {
       key: 3,

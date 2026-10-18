@@ -2,6 +2,7 @@ import appStyle from '@/style/appStyle.module.scss'
 import { usePrefetchAllIotd, useSelector } from '@/core/hooks'
 import { Example } from '@/views/features/example/Example'
 import { StudySet } from '@/views/features/studySet/StudySet'
+import { Checklist } from '@/views/features/checklist'
 import { Widget } from '@/views/features/widget/Widget'
 import { theme, Space, Row, Col, Skeleton } from 'antd'
 import { Item } from '@/views/features/item/Item'
@@ -34,6 +35,10 @@ const Home = () => {
               <Space direction='vertical' size={token.size * 1.5} style={{ width: '100%' }}>
                 <Widget title={`Study Set`}>
                   <StudySet />
+                </Widget>
+
+                <Widget title={'Checklist'}>
+                  <Checklist />
                 </Widget>
 
                 <Widget title={'Translator'}>

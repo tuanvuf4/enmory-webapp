@@ -17,6 +17,7 @@ export const dbCollections = {
   article_categories: 'article_categories',
   blog_categories: 'article_categories',
   tracks: 'tracks',
+  checklists: 'checklists',
 }
 
 // Get Firebase services

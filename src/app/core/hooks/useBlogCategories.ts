@@ -19,14 +19,19 @@ export const articleCategoryKeys = blogCategoryKeys
 /**
  * Fetch all blog categories
  */
-export const useBlogCategories = (params: IBlogCategoryRequestParams) => {
+export const useBlogCategories = (params: IBlogCategoryRequestParams = {}) => {
   return useQuery({
     queryKey: blogCategoryKeys.list(params),
     queryFn: async () => {
       const response = await blogCategoriesApi.getCategories(params)
+      if (!response.isSuccess) {
+        throw new Error(response.message || 'Failed to fetch blog categories')
+      }
       return response.content || []
     },
     refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
 }
 
@@ -40,9 +45,13 @@ export const useBlogCategory = (id: string, enabled = true) => {
     queryKey: blogCategoryKeys.detail(id),
     queryFn: async () => {
       const response = await blogCategoriesApi.getCategoryById(id)
+      if (!response.isSuccess) {
+        throw new Error(response.message || 'Failed to fetch blog category')
+      }
       return response.content
     },
     enabled: enabled && !!id,
+    retry: 2,
   })
 }
 
@@ -110,8 +119,9 @@ export const useDeleteBlogCategory = () => {
       return response
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      queryClient.refetchQueries({
         queryKey: blogCategoryKeys.lists(),
+        type: 'active',
       })
     },
   })

@@ -18,8 +18,8 @@ interface ITagRow {
   value: string
 }
 
-interface ITagManagerFormProps {
-  onClose: () => void
+export interface ITagManagerFormProps {
+  onClose?: () => void
   onTagUpdated?: (previousValue: string, nextValue: string) => void
   onTagDeleted?: (deletedValue: string) => void
 }
@@ -69,7 +69,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
     setTagKeyword('')
     setEditingTagId('')
     setEditingTagValue('')
-    onClose()
+    onClose?.()
   }
 
   const handleCreateTag = async () => {
@@ -162,6 +162,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
       title: 'Tag',
       key: 'value',
       dataIndex: 'value',
+      width: '85%',
       render: (_, record) => {
         const isEditing = editingTagId === record.id
 
@@ -171,7 +172,17 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
           <Input
             value={editingTagValue}
             onChange={(e) => setEditingTagValue(e.target.value)}
-            onPressEnter={() => handleSaveTag(record)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                e.stopPropagation()
+                handleSaveTag(record)
+              } else if (e.key === 'Escape') {
+                e.preventDefault()
+                e.stopPropagation()
+                handleCancelEdit()
+              }
+            }}
             autoFocus
           />
         )
@@ -180,7 +191,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
     {
       title: 'Actions',
       key: 'actions',
-      width: 150,
+      width: '15%',
       align: 'center',
       render: (_, record) => {
         const isEditing = editingTagId === record.id
@@ -190,6 +201,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
             <Space size='small'>
               <Button
                 type='text'
+                htmlType='button'
                 size='small'
                 icon={<CheckOutlined />}
                 onClick={() => handleSaveTag(record)}
@@ -198,6 +210,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
               />
               <Button
                 type='text'
+                htmlType='button'
                 size='small'
                 icon={<CloseOutlined />}
                 onClick={handleCancelEdit}
@@ -211,6 +224,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
           <Space size='small'>
             <Button
               type='text'
+              htmlType='button'
               size='small'
               icon={<EditOutlined />}
               onClick={() => handleStartEdit(record)}
@@ -218,13 +232,20 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
             />
 
             <Popconfirm
-              title='Delete tag'
+              title='Delete'
               description='Are you sure you want to delete this tag?'
               onConfirm={() => handleDeleteTag(record)}
               okText='Yes'
               cancelText='No'
             >
-              <Button type='text' size='small' icon={<DeleteOutlined />} danger title='Delete' />
+              <Button
+                type='text'
+                htmlType='button'
+                size='small'
+                icon={<DeleteOutlined />}
+                danger
+                title='Delete'
+              />
             </Popconfirm>
           </Space>
         )
@@ -233,17 +254,24 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
   ]
 
   return (
-    <Flex vertical gap={token.size} style={{ marginTop: token.size }}>
+    <Flex vertical gap={token.size} style={{ marginTop: onClose ? token.size : 0, width: '100%' }}>
       <Flex align='center' gap={token.size / 2}>
         <Input
           placeholder='Search and add new tag...'
           value={tagKeyword}
           onChange={(e) => setTagKeyword(e.target.value)}
-          onPressEnter={handleCreateTag}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              e.stopPropagation()
+              handleCreateTag()
+            }
+          }}
           allowClear
         />
         <Button
           type='primary'
+          htmlType='button'
           icon={<PlusOutlined />}
           onClick={handleCreateTag}
           loading={tagSubmitting}
@@ -261,15 +289,23 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
           columns={tagColumns}
           dataSource={filteredTagRows}
           rowKey='id'
-          pagination={false}
+          pagination={
+            filteredTagRows.length > 10
+              ? { pageSize: 10, size: 'small', showTotal: (total) => `Total ${total} tags` }
+              : false
+          }
           size='small'
           loading={tagSubmitting}
         />
       </div>
 
-      <Flex justify='flex-end' gap={token.size / 2}>
-        <Button onClick={closeAndReset}>Close</Button>
-      </Flex>
+      {onClose && (
+        <Flex justify='flex-end' gap={token.size / 2}>
+          <Button htmlType='button' onClick={closeAndReset}>
+            Close
+          </Button>
+        </Flex>
+      )}
     </Flex>
   )
 }

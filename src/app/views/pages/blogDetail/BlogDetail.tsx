@@ -10,6 +10,7 @@ import { EditOutlined } from '@ant-design/icons'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
 import clsx from 'clsx'
 import { Widget } from '@/views/features/widget/Widget'
+import { Tags } from '@/views/components'
 
 export const BlogDetail: React.FC = () => {
   const params = useParams<{ id: string }>()
@@ -50,6 +51,28 @@ export const BlogDetail: React.FC = () => {
             </Flex>
 
             <Widget>
+              {((blog.tags && blog.tags.length > 0) ||
+                (blog.relation && blog.relation.length > 0)) && (
+                <div
+                  style={{
+                    marginBottom: token.size,
+                    borderBottom: `1px solid ${token.colorBorder}`,
+                    paddingTop: token.size,
+                    paddingBottom: token.size,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: token.size / 2,
+                  }}
+                >
+                  {blog.tags && blog.tags.length > 0 && (
+                    <Tags label={'Tags'} tags={blog.tags} searchBy={'tags'} />
+                  )}
+                  {blog.relation && blog.relation.length > 0 && (
+                    <Tags label={'Relation'} tags={blog.relation} />
+                  )}
+                </div>
+              )}
+
               <div
                 className={clsx(appStyle.blog, appStyle.article)}
                 dangerouslySetInnerHTML={{ __html: blog.description || '' }}

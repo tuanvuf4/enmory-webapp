@@ -6,8 +6,9 @@ import { BlogItem } from '@/views/components/blogItem/BlogItem'
 import { useBlogs, useBlogsCount, useBlogCategories } from '@/core/hooks'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
 import { useBlogCategoryModal } from '@/helpers/hooks/useBlogCategoryModal'
-import { PlusOutlined, UnorderedListOutlined } from '@ant-design/icons'
-import { NotFound, BlogCategoryList } from '@/views/components'
+import { PlusOutlined } from '@ant-design/icons'
+import { NotFound } from '@/views/components'
+import { BlogCategoryList } from '@/views/components/blogCategoryList/blogCategoryList'
 import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
 import { Widget } from '@/views/features'
 import { usePrompt } from '@/helpers/hooks'
@@ -42,7 +43,7 @@ export const Blog = () => {
   const { data: totalCount = 0 } = useBlogsCount(selectedCategory)
 
   const { data: cats = [], isLoading: isLoadingCategories } = useBlogCategories({
-    orderBy: 'order',
+    orderBy: 'created_date',
     order: 'ASC',
   })
 
@@ -56,10 +57,6 @@ export const Blog = () => {
       })
     }
   }, [blogsError])
-
-  const handleOpenCategoryModal = () => {
-    setShowCategoryModal(true)
-  }
 
   const handleAddCategory = () => {
     openBlogCategoryModal('add', {} as IBlogCategory)
@@ -94,11 +91,11 @@ export const Blog = () => {
                   description: '',
                   title: '',
                   category_id: selectedCategory,
+                  relation: [],
+                  tags: [],
                 })
               }
-            >
-              Add
-            </Button>
+            />
           </Flex>
 
           <Flex gap={token.size / 2} wrap={'wrap'} align={'center'}>
@@ -124,13 +121,6 @@ export const Blog = () => {
                 {cat.name}
               </CheckableTag>
             ))}
-
-            <Button
-              variant={'outlined'}
-              type={'default'}
-              icon={<UnorderedListOutlined />}
-              onClick={handleOpenCategoryModal}
-            />
           </Flex>
         </Flex>
 
@@ -168,6 +158,8 @@ export const Blog = () => {
                       description={blog.description}
                       created_date={blog.created_date}
                       category_id={blog.category_id}
+                      relation={blog.relation}
+                      tags={blog.tags}
                     />
                   </Widget>
                 </Col>
@@ -188,6 +180,8 @@ export const Blog = () => {
                         description: '',
                         title: '',
                         category_id: selectedCategory,
+                        relation: [],
+                        tags: [],
                       })
                     }
                   >

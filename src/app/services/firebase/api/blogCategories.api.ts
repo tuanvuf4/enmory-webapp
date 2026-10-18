@@ -10,7 +10,6 @@ import {
   deleteDoc,
   Timestamp,
   QueryConstraint,
-  orderBy,
   doc,
   getDoc,
 } from 'firebase/firestore'
@@ -19,10 +18,7 @@ export interface IBlogCategory {
   id?: string
   uid?: string
   name: string
-  description?: string
-  category_type?: 'blog' | 'posts' | 'articles' | string
   color?: string
-  order?: number
   created_date?: number
   last_update?: number
 }
@@ -39,7 +35,7 @@ export interface IBlogCategoryResponse<T> {
 export type IArticleCategoryResponse<T> = IBlogCategoryResponse<T>
 
 export interface IBlogCategoryRequestParams {
-  orderBy?: 'created_date' | 'name' | 'order'
+  orderBy?: 'created_date' | 'name'
   order?: 'ASC' | 'DESC'
 }
 
@@ -48,19 +44,13 @@ export type IArticleCategoryRequestParams = IBlogCategoryRequestParams
 /**
  * Helper function to build Firestore query constraints for blog categories
  */
-const buildQueryConstraints = (params: IBlogCategoryRequestParams): QueryConstraint[] => {
+const buildQueryConstraints = (uid?: string): QueryConstraint[] => {
   const constraints: QueryConstraint[] = []
-  const currentUser = firebaseAuthService.getCurrentUser()
 
   // Filter by current user
-  if (currentUser) {
-    constraints.push(where('uid', '==', currentUser.uid))
+  if (uid) {
+    constraints.push(where('uid', '==', uid))
   }
-
-  // Order by
-  const orderByField = params.orderBy || 'created_date'
-  const orderDirection = params.order === 'DESC' ? 'desc' : 'asc'
-  constraints.push(orderBy(orderByField, orderDirection))
 
   return constraints
 }
@@ -73,10 +63,13 @@ export const blogCategoriesApi = {
    * Fetch blog categories list
    */
   async getCategories(
-    params: IBlogCategoryRequestParams,
+    params: IBlogCategoryRequestParams = {},
   ): Promise<IBlogCategoryResponse<IBlogCategory[]>> {
     try {
-      const currentUser = firebaseAuthService.getCurrentUser()
+      let currentUser = firebaseAuthService.getCurrentUser()
+      if (!currentUser) {
+        currentUser = await firebaseAuthService.waitForUser()
+      }
 
       if (!currentUser) {
         return {
@@ -87,7 +80,7 @@ export const blogCategoriesApi = {
         }
       }
 
-      const constraints: QueryConstraint[] = buildQueryConstraints(params)
+      const constraints: QueryConstraint[] = buildQueryConstraints(currentUser.uid)
 
       const q = query(
         collection(db, dbCollections.blog_categories || dbCollections.article_categories),
@@ -101,13 +94,30 @@ export const blogCategoriesApi = {
           id: docSnap.id,
           uid: data.uid,
           name: data.name,
-          description: data.description,
-          category_type: data.category_type,
           color: data.color,
-          order: data.order,
           created_date: data.created_date,
           last_update: data.last_update,
         } as IBlogCategory
+      })
+
+      // Sort in-memory to avoid Firestore composite index requirement and handle missing created_date
+      const orderByField = params.orderBy || 'created_date'
+      const orderDirection = params.order === 'DESC' ? 'desc' : 'asc'
+
+      categories.sort((a, b) => {
+        if (orderByField === 'name') {
+          const nameA = (a.name || '').toLowerCase()
+          const nameB = (b.name || '').toLowerCase()
+          const comp = nameA.localeCompare(nameB)
+          return orderDirection === 'desc' ? -comp : comp
+        }
+
+        const timeA = a.created_date || 0
+        const timeB = b.created_date || 0
+        if (timeA !== timeB) {
+          return orderDirection === 'desc' ? timeB - timeA : timeA - timeB
+        }
+        return (a.name || '').localeCompare(b.name || '')
       })
 
       return {
@@ -159,9 +169,7 @@ export const blogCategoriesApi = {
         id: docSnap.id,
         uid: data.uid,
         name: data.name,
-        description: data.description,
         color: data.color,
-        order: data.order,
         created_date: data.created_date,
         last_update: data.last_update,
       }
@@ -188,7 +196,10 @@ export const blogCategoriesApi = {
    */
   async createCategory(data: IBlogCategory): Promise<IBlogCategoryResponse<IBlogCategory>> {
     try {
-      const currentUser = firebaseAuthService.getCurrentUser()
+      let currentUser = firebaseAuthService.getCurrentUser()
+      if (!currentUser) {
+        currentUser = await firebaseAuthService.waitForUser()
+      }
 
       if (!currentUser) {
         return {
@@ -199,11 +210,13 @@ export const blogCategoriesApi = {
         }
       }
 
-      const categoryData: IBlogCategory = {
-        ...data,
+      const now = Timestamp.now().toMillis()
+      const categoryData: Record<string, any> = {
         uid: currentUser.uid,
-        created_date: Timestamp.now().toMillis(),
-        last_update: Timestamp.now().toMillis(),
+        name: data.name || '',
+        color: data.color ?? '',
+        created_date: data.created_date || now,
+        last_update: now,
       }
 
       const docRef = await addDoc(
@@ -239,7 +252,10 @@ export const blogCategoriesApi = {
     data: IBlogCategory,
   ): Promise<IBlogCategoryResponse<IBlogCategory>> {
     try {
-      const currentUser = firebaseAuthService.getCurrentUser()
+      let currentUser = firebaseAuthService.getCurrentUser()
+      if (!currentUser) {
+        currentUser = await firebaseAuthService.waitForUser()
+      }
 
       if (!currentUser) {
         return {
@@ -250,14 +266,11 @@ export const blogCategoriesApi = {
         }
       }
 
-      const categoryData = {
-        name: data.name,
-        description: data.description,
-        category_type: data.category_type,
-        color: data.color,
-        order: data.order,
+      const categoryData: Record<string, any> = {
         last_update: Timestamp.now().toMillis(),
       }
+      if (data.name !== undefined) categoryData.name = data.name
+      if (data.color !== undefined) categoryData.color = data.color
 
       const docRef = doc(db, dbCollections.blog_categories || dbCollections.article_categories, id)
       await updateDoc(docRef, categoryData)
@@ -288,7 +301,10 @@ export const blogCategoriesApi = {
    */
   async deleteCategory(id: string): Promise<IBlogCategoryResponse<null>> {
     try {
-      const currentUser = firebaseAuthService.getCurrentUser()
+      let currentUser = firebaseAuthService.getCurrentUser()
+      if (!currentUser) {
+        currentUser = await firebaseAuthService.waitForUser()
+      }
 
       if (!currentUser) {
         return {

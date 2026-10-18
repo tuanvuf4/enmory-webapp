@@ -9,6 +9,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
+import { TagManagerForm, BlogCategoryManagerForm } from '@/views/components'
 
 const Setting = () => {
   const { token } = theme.useToken()
@@ -584,6 +585,32 @@ const Setting = () => {
                         />
                       </Col>
                     </Row>
+                  </Col>
+                </Row>
+
+                <Row align={'top'} gutter={[token.size, token.size]}>
+                  <Col xs={24} md={8}>
+                    <h3>Item Tags</h3>
+                    <p style={{ color: token.colorTextSecondary }}>
+                      Manage tags used for items.
+                    </p>
+                  </Col>
+
+                  <Col xs={24} md={16}>
+                    <TagManagerForm />
+                  </Col>
+                </Row>
+
+                <Row align={'top'} gutter={[token.size, token.size]}>
+                  <Col xs={24} md={8}>
+                    <h3>Blog Categories</h3>
+                    <p style={{ color: token.colorTextSecondary }}>
+                      Manage categories for blog posts.
+                    </p>
+                  </Col>
+
+                  <Col xs={24} md={16}>
+                    <BlogCategoryManagerForm />
                   </Col>
                 </Row>
 

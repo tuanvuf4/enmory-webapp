@@ -6,7 +6,15 @@ import { Button, Flex } from 'antd'
 import { EditOutlined } from '@ant-design/icons'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
 
-export const BlogItem = ({ id, title, description, created_date, category_id }: IBlogItem) => {
+export const BlogItem = ({
+  id,
+  title,
+  description,
+  created_date,
+  category_id,
+  relation,
+  tags,
+}: IBlogItem) => {
   const navigate = useNavigate()
   const { openBlogModal } = useBlogModal()
 
@@ -18,10 +26,9 @@ export const BlogItem = ({ id, title, description, created_date, category_id }: 
         </h2>
         <Button
           variant={'text'}
-          type={'text'}
           icon={<EditOutlined />}
           onClick={() => {
-            openBlogModal('edit', { id, title, description, created_date, category_id })
+            openBlogModal('edit', { id, title, description, created_date, category_id, relation, tags })
           }}
         />
       </Flex>
@@ -33,7 +40,7 @@ export const BlogItem = ({ id, title, description, created_date, category_id }: 
       </div>
 
       <div
-        className={'text-base mt-4 mb-4'}
+        className={'mt-4 mb-4'}
         dangerouslySetInnerHTML={{
           __html: description.length > 200 ? `${description.substring(0, 200)}...` : description,
         }}

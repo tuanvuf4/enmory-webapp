@@ -132,6 +132,8 @@ export const blogApi = {
             title: data.title,
             description: data.description,
             category_id: data.category_id,
+            relation: data.relation || [],
+            tags: data.tags || [],
             created_date: data.created_date,
             last_update: data.last_update,
           } as IBlogItem
@@ -187,6 +189,8 @@ export const blogApi = {
 
       const blogData: IBlogItem = {
         ...data,
+        relation: data.relation || [],
+        tags: data.tags || [],
         uid: currentUser.uid,
         created_date: Timestamp.now().toMillis(),
         last_update: Timestamp.now().toMillis(),
@@ -293,6 +297,8 @@ export const blogApi = {
         title: (data as any).title,
         description: (data as any).description,
         category_id: (data as any).category_id,
+        relation: (data as any).relation || [],
+        tags: (data as any).tags || [],
         created_date: (data as any).created_date,
         last_update: (data as any).last_update,
       }
@@ -341,6 +347,8 @@ export const blogApi = {
         title: data.title,
         description: data.description,
         category_id: data.category_id || null,
+        relation: data.relation || [],
+        tags: data.tags || [],
         last_update: Timestamp.now().toMillis(),
       }
 

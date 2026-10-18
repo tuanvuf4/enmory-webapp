@@ -367,6 +367,30 @@ export class FirebaseAuthService {
   }
 
   /**
+   * Wait for auth state to be resolved
+   * @returns Current user or null once auth state is initialized
+   */
+  async waitForUser(): Promise<User | null> {
+    if (this.auth.currentUser) {
+      return this.auth.currentUser
+    }
+    if (typeof (this.auth as any).authStateReady === 'function') {
+      try {
+        await (this.auth as any).authStateReady()
+        return this.auth.currentUser
+      } catch (err) {
+        console.warn('authStateReady error:', err)
+      }
+    }
+    return new Promise((resolve) => {
+      const unsubscribe = onAuthStateChanged(this.auth, (user) => {
+        unsubscribe()
+        resolve(user)
+      })
+    })
+  }
+
+  /**
    * Link email/password credentials to the current signed-in user
    * @param email User email
    * @param password User password

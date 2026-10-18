@@ -85,7 +85,12 @@ export const signOutUser = createAsyncThunk('auth/signOut', async (_, { rejectWi
 
 export const checkAuthState = createAsyncThunk('auth/checkAuthState', async (_, {}) => {
   try {
-    const authUser = firebaseAuthService.getCurrentAuthUser()
+    let authUser = firebaseAuthService.getCurrentAuthUser()
+
+    if (!authUser) {
+      await firebaseAuthService.waitForUser()
+      authUser = firebaseAuthService.getCurrentAuthUser()
+    }
 
     if (authUser) {
       const userProfile = await firebaseAuthService.getUserProfile(authUser.uid)

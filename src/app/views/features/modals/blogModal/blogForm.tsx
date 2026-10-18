@@ -1,12 +1,21 @@
-import { useCreateBlog, useUpdateBlog, useBlogCategories } from '@/core/hooks'
+import {
+  useCreateBlog,
+  useUpdateBlog,
+  useBlogCategories,
+  useCreateBlogCategory,
+  useUpdateBlogCategory,
+  useDeleteBlogCategory,
+  blogCategoryKeys,
+} from '@/core/hooks'
 import { blogKeys } from '@/core/hooks/useBlogs'
 import { IBlogItem } from '@/models/blog.model'
-import { TextEditor } from '@/views/components'
-import { theme, Input, Button, Flex, Select } from 'antd'
+import { TextEditor, InputTag, TagSelect } from '@/views/components'
+import { theme, Input, Button, Flex, Row, Col } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import './blogForm.module.scss'
 import { usePrompt } from '@/helpers/hooks'
+import { useEffect } from 'react'
 
 export interface BlogFormProps {
   data?: IBlogItem
@@ -23,8 +32,12 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
   const { mutate: createBlog, isPending: isCreating } = useCreateBlog()
   const { mutate: updateBlog, isPending: isUpdating } = useUpdateBlog()
 
+  const { mutateAsync: createCategoryMutation } = useCreateBlogCategory()
+  const { mutateAsync: updateCategoryMutation } = useUpdateBlogCategory()
+  const { mutateAsync: deleteCategoryMutation } = useDeleteBlogCategory()
+
   const { data: cats = [] } = useBlogCategories({
-    orderBy: 'order',
+    orderBy: 'created_date',
     order: 'ASC',
   })
 
@@ -37,20 +50,58 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
     control,
     handleSubmit,
     reset,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<IBlogItem>({
     defaultValues: {
       title: data?.title || '',
       description: data?.description || '',
       category_id: data?.category_id || categories[0]?.id || '',
+      relation: data?.relation || [],
+      tags: data?.tags || [],
     },
   })
 
+  useEffect(() => {
+    if (data) {
+      reset({
+        title: data.title || '',
+        description: data.description || '',
+        category_id: data.category_id || categories[0]?.id || '',
+        relation: data.relation || [],
+        tags: data.tags || [],
+      })
+    }
+  }, [data, categories, reset])
+
+  const handleTagUpdated = (previousValue: string, nextValue: string) => {
+    const currentTags = getValues('tags') || []
+    const nextTags = Array.from(
+      new Set(currentTags.map((tag) => (tag === previousValue ? nextValue : tag))),
+    )
+    setValue('tags', nextTags)
+  }
+
+  const handleTagDeleted = (deletedValue: string) => {
+    const currentTags = getValues('tags') || []
+    setValue(
+      'tags',
+      currentTags.filter((tag) => tag !== deletedValue),
+    )
+  }
+
   const onSubmit = (values: IBlogItem) => {
+    const dataSubmit: IBlogItem = {
+      ...values,
+      relation: values.relation || [],
+      tags: values.tags || [],
+    }
+
     if (isEditing && data?.id) {
       // Update mode
       updateBlog(
-        { id: data.id, data: values },
+        { id: data.id, data: dataSubmit },
         {
           onSuccess: () => {
             reset()
@@ -70,7 +121,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
       )
     } else {
       // Create mode
-      createBlog(values, {
+      createBlog(dataSubmit, {
         onSuccess: () => {
           reset()
           onSuccess?.()
@@ -111,27 +162,91 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
           />
         </div>
 
-        <div style={{ marginBottom: token.size, flex: '0 0 150px' }}>
+        <div style={{ marginBottom: token.size, flex: '0 0 250px' }}>
           <label style={{ display: 'block', marginBottom: token.size / 2 }}>Category</label>
 
           <Controller
             control={control}
             name='category_id'
             render={({ field }) => (
-              <Select
-                {...field}
+              <TagSelect
+                mode={undefined}
                 style={{ width: '100%' }}
-                placeholder='Select a category (optional)'
+                placeholder='Select a category'
+                itemLabel='category'
                 allowClear
                 options={categories.map((cat) => ({
+                  id: cat.id,
                   label: cat.name,
                   value: cat.id,
                 }))}
+                value={field.value}
+                onChange={(val) => field.onChange(val || '')}
+                onCreateItem={async (name) => {
+                  const res = await createCategoryMutation({ name })
+                  queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
+                  return res?.id
+                }}
+                onUpdateItem={async (id, newName) => {
+                  await updateCategoryMutation({ id, data: { name: newName } })
+                  queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
+                }}
+                onDeleteItem={async (id) => {
+                  const res = await deleteCategoryMutation(id)
+                  if (res && !res.isSuccess) {
+                    throw new Error(res.message || 'Failed to delete category')
+                  }
+                  if (field.value === id) {
+                    field.onChange('')
+                  }
+                  queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
+                }}
               />
             )}
           />
         </div>
       </Flex>
+
+      {/* tags */}
+      <Row gutter={[token.size / 2, token.size / 2]} style={{ marginBottom: token.size }}>
+        <Col xs={24}>
+          <label style={{ display: 'block', marginBottom: token.size / 2 }}>Tags:</label>
+
+          <Controller
+            control={control}
+            name='tags'
+            render={({ field }) => (
+              <TagSelect
+                style={{ width: '100%' }}
+                value={field.value || []}
+                onChange={field.onChange}
+                onTagUpdated={handleTagUpdated}
+                onTagDeleted={handleTagDeleted}
+              />
+            )}
+          />
+        </Col>
+      </Row>
+
+      {/* relation */}
+      <Row gutter={[token.size / 2, token.size / 2]} style={{ marginBottom: token.size }}>
+        <Col xs={24}>
+          <label style={{ display: 'block', marginBottom: token.size / 2 }}>Relation:</label>
+
+          <Controller
+            control={control}
+            name='relation'
+            render={({ field }) => (
+              <InputTag
+                tags={field.value || []}
+                onChange={(value: string[]) => {
+                  field.onChange(value)
+                }}
+              />
+            )}
+          />
+        </Col>
+      </Row>
 
       <div style={{ marginBottom: token.size }}>
         <label style={{ display: 'block', marginBottom: token.size / 2 }}>

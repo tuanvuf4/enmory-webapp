@@ -1,6 +1,6 @@
 import { useModal } from '@/context/modal.context'
 import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
-import { BlogCategoryForm } from '@/views/features/modals'
+import { BlogCategoryForm } from '@/views/features/modals/blogCategoryModal/blogCategoryForm'
 
 export const useBlogCategoryModal = () => {
   const { openModal, closeModal } = useModal()

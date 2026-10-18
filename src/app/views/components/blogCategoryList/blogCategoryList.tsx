@@ -39,30 +39,14 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      width: '30%',
+      width: '70%',
       render: (text: string) => text,
-    },
-    {
-      title: 'Description',
-      dataIndex: 'description',
-      key: 'description',
-      width: '20%',
-      ellipsis: true,
-      render: (text: string) => text || '-',
-    },
-    {
-      title: 'Type',
-      dataIndex: 'category_type',
-      key: 'category_type',
-      width: '15%',
-      ellipsis: true,
-      render: (text: string) => text?.charAt(0).toUpperCase() + text?.slice(1) || '-',
     },
     {
       title: 'Color',
       dataIndex: 'color',
       key: 'color',
-      width: '10%',
+      width: '15%',
       render: (color: string) => (
         <div
           style={{
@@ -78,14 +62,6 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
       ),
     },
     {
-      title: 'Order',
-      dataIndex: 'order',
-      key: 'order',
-      width: '10%',
-      align: 'center',
-      render: (order: number) => order ?? '-',
-    },
-    {
       title: 'Actions',
       key: 'actions',
       width: '15%',
@@ -95,6 +71,7 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
           <Button
             type='text'
             size='small'
+            htmlType='button'
             icon={<EditOutlined />}
             onClick={() => onEdit?.(record)}
             title='Edit'
@@ -106,7 +83,14 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
             okText='Yes'
             cancelText='No'
           >
-            <Button type='text' size='small' icon={<DeleteOutlined />} danger title='Delete' />
+            <Button
+              type='text'
+              size='small'
+              htmlType='button'
+              icon={<DeleteOutlined />}
+              danger
+              title='Delete'
+            />
           </Popconfirm>
         </Space>
       ),
@@ -118,14 +102,19 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
   }
 
   return (
-    <div style={{ overflow: 'auto' }}>
+    <div style={{ overflow: 'auto', width: '100%' }}>
       <Table
         columns={columns}
-        style={{ marginTop: token.size * 2, minWidth: 650 }}
+        style={{ marginTop: token.size, width: '100%' }}
+        // scroll={{ x: 600 }}
         dataSource={categories}
         rowKey='id'
         loading={isLoading || isDeleting}
-        pagination={false}
+        pagination={
+          categories.length > 5
+            ? { pageSize: 5, size: 'small', showTotal: (total) => `Total ${total} categories` }
+            : false
+        }
         size='small'
         bordered
       />

@@ -1,16 +1,18 @@
 import { useCreateBlogCategory, useUpdateBlogCategory } from '@/core/hooks/useBlogCategories'
 import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
-import { theme, Input, Button, Flex, ColorPicker, InputNumber, Select } from 'antd'
+import { theme, Input, Button, Flex, ColorPicker } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import type { Color } from 'antd/es/color-picker'
 import './blogCategoryForm.module.scss'
 import { usePrompt } from '@/helpers/hooks'
+import React, { useEffect } from 'react'
 
 export interface BlogCategoryFormProps {
   data?: IBlogCategory
   onCancel?: () => void
   onClose?: () => void
   onSuccess?: () => void
+  isInline?: boolean
 }
 
 export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
@@ -18,6 +20,7 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
   onCancel,
   onClose,
   onSuccess,
+  isInline = false,
 }) => {
   const { message } = usePrompt()
   const { token } = theme.useToken()
@@ -28,21 +31,6 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
   const isEditing = !!data?.id
   const isPending = isCreating || isUpdating
 
-  const categoryTypeOptions = [
-    {
-      label: 'Blog',
-      value: 'blog',
-    },
-    {
-      label: 'Posts',
-      value: 'posts',
-    },
-    {
-      label: 'Articles',
-      value: 'articles',
-    },
-  ]
-
   const {
     control,
     handleSubmit,
@@ -51,12 +39,16 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
   } = useForm<IBlogCategory>({
     defaultValues: {
       name: data?.name || '',
-      description: data?.description || '',
-      category_type: data?.category_type || 'blog',
       color: data?.color || '',
-      order: data?.order || 0,
     },
   })
+
+  useEffect(() => {
+    reset({
+      name: data?.name || '',
+      color: data?.color || '',
+    })
+  }, [data, reset])
 
   const onSubmit = (values: IBlogCategory) => {
     if (isEditing && data?.id) {
@@ -93,8 +85,35 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
     }
   }
 
+  const handleFormSubmit = (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    handleSubmit(onSubmit)(e)
+  }
+
+  const Container = isInline ? 'div' : 'form'
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <Container
+      onSubmit={isInline ? undefined : handleFormSubmit}
+      onClick={isInline ? (e: any) => e.stopPropagation() : undefined}
+      onKeyDown={
+        isInline
+          ? (e: any) => {
+              if (e.key === 'Enter') {
+                if ((e.target as HTMLElement).tagName?.toLowerCase() === 'textarea') {
+                  return
+                }
+                e.preventDefault()
+                e.stopPropagation()
+                handleFormSubmit()
+              }
+            }
+          : undefined
+      }
+    >
       {/* Name Field */}
       <div style={{ marginBottom: token.size }}>
         <label style={{ display: 'block', marginBottom: token.size / 2 }}>
@@ -117,44 +136,9 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
         />
       </div>
 
-      {/* Description Field */}
-      <div style={{ marginBottom: token.size }}>
-        <label style={{ display: 'block', marginBottom: token.size / 2 }}>Description</label>
-        <Controller
-          control={control}
-          name='description'
-          render={({ field }) => (
-            <Input.TextArea
-              {...field}
-              placeholder='Category description'
-              rows={3}
-              status={errors.description ? 'error' : ''}
-            />
-          )}
-        />
-      </div>
-
-      {/* Type Field */}
-      <div style={{ marginBottom: token.size }}>
-        <label style={{ display: 'block', marginBottom: token.size / 2 }}>Type:</label>
-
-        <Controller
-          control={control}
-          name='category_type'
-          render={({ field }) => (
-            <Select
-              {...field}
-              style={{ width: '100%' }}
-              placeholder='Select a category type'
-              allowClear
-              options={categoryTypeOptions}
-            />
-          )}
-        />
-      </div>
 
       {/* Color Field */}
-      <div style={{ marginBottom: token.size }}>
+      <div style={{ marginBottom: token.size * 2 }}>
         <label style={{ display: 'block', marginBottom: token.size / 2 }}>Color</label>
         <Controller
           control={control}
@@ -168,24 +152,21 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
         />
       </div>
 
-      {/* Order Field */}
-      <div style={{ marginBottom: token.size * 2 }}>
-        <label style={{ display: 'block', marginBottom: token.size / 2 }}>Display Order</label>
-        <Controller
-          control={control}
-          name='order'
-          render={({ field }) => <InputNumber {...field} min={0} style={{ width: '100%' }} />}
-        />
-      </div>
-
       {/* Buttons */}
       <Flex justify='flex-end' gap={token.size}>
-        <Button onClick={onCancel}>Cancel</Button>
-        <Button type='primary' htmlType='submit' loading={isPending}>
+        <Button htmlType='button' onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button
+          type='primary'
+          htmlType={isInline ? 'button' : 'submit'}
+          onClick={isInline ? () => handleFormSubmit() : undefined}
+          loading={isPending}
+        >
           {isEditing ? 'Update' : 'Create'}
         </Button>
       </Flex>
-    </form>
+    </Container>
   )
 }
 

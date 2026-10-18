@@ -6,6 +6,8 @@ export interface IBlogItem {
   keywords?: string[]
   description: string
   category_id?: string
+  relation?: string[]
+  tags?: string[]
   created_date?: number
   last_update?: number
 }

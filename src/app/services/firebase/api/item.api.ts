@@ -9,7 +9,9 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
   doc,
+  documentId,
   addDoc,
   updateDoc,
   Timestamp,
@@ -26,6 +28,7 @@ import { localDb, queryLocalItems, invalidateSearchIndex } from '@/services/loca
 import {
   sanitizeItemForFirestore,
   extractExamplesFromItems,
+  hydrateItemsWithExamples,
 } from '@/services/firebase/dbIntegration'
 
 export interface IItemRequestParams {
@@ -53,7 +56,8 @@ const normalizeLowercaseTags = (tags: string[] = []) => {
 }
 
 /**
- * Helper function to fetch examples by their IDs from the local database
+ * Helper function to fetch examples by their IDs from the local database,
+ * falling back to Firestore examples collection if missing.
  */
 const getExamplesByIds = async (exampleIds: string[]): Promise<IExample[]> => {
   if (!exampleIds || exampleIds.length === 0) {
@@ -69,9 +73,38 @@ const getExamplesByIds = async (exampleIds: string[]): Promise<IExample[]> => {
 
   try {
     const examples = await localDb.examples.where('id').anyOf(validIds).toArray()
+    const foundIds = new Set(examples.map((ex) => ex.id))
+    const missingIds = validIds.filter((id) => !foundIds.has(id))
+
+    if (missingIds.length > 0) {
+      const newlyFetched: IExample[] = []
+      for (let i = 0; i < missingIds.length; i += 30) {
+        const chunk = missingIds.slice(i, i + 30)
+        try {
+          const exSnapshot = await getDocs(
+            query(collection(db, dbCollections.examples), where(documentId(), 'in', chunk)),
+          )
+          exSnapshot.forEach((docSnap) => {
+            const exData = { id: docSnap.id, ...docSnap.data() } as IExample
+            examples.push(exData)
+            newlyFetched.push(exData)
+          })
+        } catch (cloudErr) {
+          console.warn('Error fetching missing examples from Firestore chunk:', cloudErr)
+        }
+      }
+      if (newlyFetched.length > 0) {
+        try {
+          await localDb.examples.bulkPut(newlyFetched)
+        } catch (cacheErr) {
+          console.warn('Failed to cache fetched examples into localDb:', cacheErr)
+        }
+      }
+    }
+
     return examples.filter((ex: any) => !ex.is_deleted)
   } catch (error) {
-    console.error('Error fetching examples from localDb:', error)
+    console.error('Error fetching examples:', error)
     return []
   }
 }
@@ -139,7 +172,7 @@ const getItemAutoComplete = async (params: IItemRequestParams): Promise<IHttpRes
 }
 
 /**
- * Get single item by ID
+ * Get single item by ID with Firestore fallback and dynamic example hydration
  */
 const getItemById = async (id: string): Promise<IHttpResponse<IItem>> => {
   try {
@@ -152,25 +185,60 @@ const getItemById = async (id: string): Promise<IHttpResponse<IItem>> => {
       }
     }
 
+    let item: IItem | null = null
+
+    // 1. Try localDb first
     const localItem = await localDb.items.get(id)
     if (localItem && !localItem.is_deleted) {
       delete (localItem as any).quiz
+      item = localItem
+    } else {
+      // 2. Fallback to Firestore if not present in localDb (e.g. cross-device, fresh session)
+      try {
+        const itemDoc = await getDoc(doc(db, dbCollections.items, id))
+        if (itemDoc.exists()) {
+          const data = itemDoc.data()
+          if (!data.is_deleted) {
+            item = { id: itemDoc.id, ...data } as IItem
+            delete (item as any).quiz
+            await localDb.items.put(item)
+          }
+        }
+      } catch (firestoreErr) {
+        console.warn('Fallback to Firestore for getItemById failed:', firestoreErr)
+      }
+    }
+
+    if (!item) {
       return {
-        isSuccess: true,
-        message: 'Item fetched from local database',
-        content: localItem,
-        statusCode: 200,
+        isSuccess: false,
+        message: 'Item not found in local database or cloud',
+        content: null,
+        statusCode: 404,
+      }
+    }
+
+    // 3. Hydrate any string example IDs or stubs in meanings
+    const hydratedList = await hydrateItemsWithExamples([item])
+    const hydratedItem = hydratedList[0] || item
+
+    // Cache updated hydrated item in localDb if meanings changed
+    if (JSON.stringify(hydratedItem.meanings) !== JSON.stringify(item.meanings)) {
+      try {
+        await localDb.items.put(hydratedItem)
+      } catch (updateErr) {
+        console.warn('Failed to update hydrated item in localDb:', updateErr)
       }
     }
 
     return {
-      isSuccess: false,
-      message: 'Item not found in local database',
-      content: null,
-      statusCode: 404,
+      isSuccess: true,
+      message: 'Item fetched successfully',
+      content: hydratedItem,
+      statusCode: 200,
     }
   } catch (error) {
-    console.error('Error fetching item from localDb:', error)
+    console.error('Error fetching item:', error)
     throw error
   }
 }

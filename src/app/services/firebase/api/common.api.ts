@@ -85,10 +85,31 @@ const getRandomItemByCategory = async (catId: number): Promise<any | null> => {
       return null
     }
 
-    // Get random item from results
-    const items = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-    const randomIndex = Math.floor(Math.random() * items.length)
-    return items[randomIndex]
+    // Get candidate items from results, filtering for valid meanings
+    const allItems = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as IItem))
+    const eligibleItems = allItems.filter((item) => {
+      const meanings = item.meanings || []
+      return (
+        meanings.length > 0 &&
+        meanings.some(
+          (m) =>
+            (m.definition && m.definition.trim() !== '') ||
+            (m.translation && m.translation.trim() !== ''),
+        )
+      )
+    })
+
+    const itemsToPick = eligibleItems.length > 0 ? eligibleItems : allItems
+    if (itemsToPick.length === 0) return null
+
+    // Prefer items that also have examples if available
+    const itemsWithExamples = itemsToPick.filter((item) =>
+      (item.meanings || []).some((m) => m.examples && m.examples.length > 0),
+    )
+    const finalCandidatePool = itemsWithExamples.length > 0 ? itemsWithExamples : itemsToPick
+
+    const randomIndex = Math.floor(Math.random() * finalCandidatePool.length)
+    return finalCandidatePool[randomIndex]
   } catch (error) {
     console.error('[IOTD] Error fetching random item:', error)
     return error

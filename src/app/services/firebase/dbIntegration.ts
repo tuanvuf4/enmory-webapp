@@ -57,11 +57,14 @@ export const extractExamplesFromItems = (items: IItem[]): IExample[] => {
       for (const example of (meaning.examples || []) as unknown[]) {
         if (typeof example === 'object' && example !== null) {
           const ex = example as IExample
-          if (ex.id) {
-            examplesById.set(ex.id, ex)
-          } else if (ex.origin) {
-            const fallbackKey = `${item.id || ''}_${ex.origin}`
-            examplesById.set(fallbackKey, { ...ex, id: fallbackKey })
+          // Only extract if example has non-empty origin to avoid overwriting valid examples with stubs
+          if (ex.origin && ex.origin.trim()) {
+            if (ex.id) {
+              examplesById.set(ex.id, ex)
+            } else {
+              const fallbackKey = `${item.id || ''}_${ex.origin}`
+              examplesById.set(fallbackKey, { ...ex, id: fallbackKey })
+            }
           }
         }
       }
@@ -76,14 +79,19 @@ export const extractExamplesFromItems = (items: IItem[]): IExample[] => {
  * 1. Meanings and embedded examples are clean and conform to IMeaning / IExample.
  * 2. Examples are kept as full IExample objects (NOT string IDs).
  * 3. No undefined properties exist.
+ * 4. CRITICAL: Only updates meanings if `meanings` was explicitly provided in the payload!
+ *    Partial updates (favorite, level, archive, etc.) MUST NOT overwrite meanings with [].
  */
 export const sanitizeItemForFirestore = (item: Partial<IItem>): any => {
   const { id: _docId, quiz: _quiz, ...rest } = item as any
   delete rest.quiz
 
-  const cleanItem = {
+  const cleanItem: any = {
     ...rest,
-    meanings: (rest.meanings || []).map((meaning: IMeaning) => ({
+  }
+
+  if (rest.meanings !== undefined) {
+    cleanItem.meanings = (rest.meanings || []).map((meaning: IMeaning) => ({
       ...meaning,
       examples: ((meaning.examples || []) as unknown[]).map((ex: any) => {
         if (typeof ex === 'string') {
@@ -105,10 +113,140 @@ export const sanitizeItemForFirestore = (item: Partial<IItem>): any => {
           randomIndex: ex.randomIndex ?? Math.random(),
         }
       }),
-    })),
+    }))
   }
 
   return removeUndefinedFields(cleanItem)
+}
+
+/**
+ * Hydrates items that contain string example IDs or empty example stubs.
+ * Resolves example data first from localDb.examples, then from Firestore 'examples' collection.
+ * Automatically caches any fetched examples to localDb.examples for future lookups.
+ */
+export const hydrateItemsWithExamples = async (items: IItem[]): Promise<IItem[]> => {
+  if (!items || items.length === 0) return items
+
+  const unresolvedIdSet = new Set<string>()
+
+  for (const item of items) {
+    for (const meaning of item.meanings || []) {
+      for (const ex of (meaning.examples || []) as unknown[]) {
+        if (typeof ex === 'string' && ex.trim()) {
+          unresolvedIdSet.add(ex.trim())
+        } else if (typeof ex === 'object' && ex !== null) {
+          const exampleObj = ex as IExample
+          if (exampleObj.id && (!exampleObj.origin || !exampleObj.origin.trim())) {
+            unresolvedIdSet.add(exampleObj.id)
+          }
+        }
+      }
+    }
+  }
+
+  const unresolvedIds = Array.from(unresolvedIdSet)
+  if (unresolvedIds.length === 0) {
+    return items
+  }
+
+  const examplesMap = new Map<string, IExample>()
+
+  // 1. Try localDb.examples first
+  try {
+    const localFound = await localDb.examples.bulkGet(unresolvedIds)
+    localFound.forEach((ex) => {
+      if (ex && ex.id && ex.origin && ex.origin.trim()) {
+        examplesMap.set(ex.id, ex)
+      }
+    })
+  } catch (localErr) {
+    console.warn('Error fetching examples from localDb:', localErr)
+  }
+
+  // 2. Fetch missing from Firestore examples collection in chunks of 30
+  const missingFromLocal = unresolvedIds.filter((id) => !examplesMap.has(id))
+  if (missingFromLocal.length > 0) {
+    const newlyFetchedExamples: IExample[] = []
+    for (let i = 0; i < missingFromLocal.length; i += FIRESTORE_IN_QUERY_LIMIT) {
+      const chunk = missingFromLocal.slice(i, i + FIRESTORE_IN_QUERY_LIMIT)
+      try {
+        const exSnapshot = await getDocs(
+          query(collection(db, dbCollections.examples), where(documentId(), 'in', chunk)),
+        )
+        exSnapshot.forEach((docSnap) => {
+          const exData = { id: docSnap.id, ...docSnap.data() } as IExample
+          examplesMap.set(docSnap.id, exData)
+          newlyFetchedExamples.push(exData)
+        })
+      } catch (cloudErr) {
+        console.warn('Error fetching missing examples from Firestore chunk:', cloudErr)
+      }
+    }
+
+    // Cache any newly fetched examples into localDb.examples
+    if (newlyFetchedExamples.length > 0) {
+      try {
+        await localDb.examples.bulkPut(newlyFetchedExamples)
+      } catch (cacheErr) {
+        console.warn('Failed to cache fetched examples into localDb:', cacheErr)
+      }
+    }
+  }
+
+  // 3. Map items and replace unresolved examples
+  return items.map((item) => {
+    const { quiz: _quiz, ...cleanItem } = item as any
+    const populatedMeanings = (cleanItem.meanings || []).map((meaning: IMeaning) => {
+      const resolvedExamples = ((meaning.examples || []) as unknown[]).map((ex: any) => {
+        if (typeof ex === 'string') {
+          const found = examplesMap.get(ex.trim())
+          if (found) {
+            return {
+              id: found.id || ex.trim(),
+              uid: found.uid || cleanItem.uid || '',
+              origin: found.origin || '',
+              translation: found.translation || '',
+              note: found.note || '',
+              created_date: found.created_date || Date.now(),
+              last_update: found.last_update || Date.now(),
+              randomIndex: found.randomIndex ?? Math.random(),
+            } as IExample
+          }
+          return {
+            id: ex.trim(),
+            origin: '',
+            translation: '',
+            note: '',
+          } as IExample
+        }
+
+        if (typeof ex === 'object' && ex !== null) {
+          if (ex.id && (!ex.origin || !ex.origin.trim())) {
+            const found = examplesMap.get(ex.id)
+            if (found && found.origin) {
+              return {
+                ...ex,
+                ...found,
+              } as IExample
+            }
+          }
+          return ex as IExample
+        }
+
+        return ex
+      })
+
+      return {
+        ...meaning,
+        examples: resolvedExamples,
+      }
+    })
+
+    return {
+      ...cleanItem,
+      meanings: populatedMeanings,
+    }
+  })
 }
 
 /**

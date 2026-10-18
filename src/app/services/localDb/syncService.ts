@@ -4,7 +4,10 @@ import { firebaseAuthService } from '@/services/firebase/authService'
 import { localDb } from './db'
 import { IItem } from '@/models/item.model'
 import { invalidateSearchIndex } from './searchEngine'
-import { extractExamplesFromItems, normalizeItemExamples } from '@/services/firebase/dbIntegration'
+import {
+  extractExamplesFromItems,
+  hydrateItemsWithExamples,
+} from '@/services/firebase/dbIntegration'
 
 const SYNC_META_PREFIX = 'last_sync_time_'
 
@@ -111,7 +114,7 @@ export const syncService = {
       itemsSnapshot.forEach((docSnap) => {
         cloudItems.push({ id: docSnap.id, ...docSnap.data() } as IItem)
       })
-      const allItems = normalizeItemExamples(cloudItems)
+      const allItems = await hydrateItemsWithExamples(cloudItems)
       const allExamples = extractExamplesFromItems(allItems)
 
       options?.onProgress?.('Saving to local database...')
@@ -164,7 +167,7 @@ export const syncService = {
         }
       })
 
-      const itemsToPut = normalizeItemExamples(cloudItemsToPut)
+      const itemsToPut = await hydrateItemsWithExamples(cloudItemsToPut)
       const examplesToPut = extractExamplesFromItems(itemsToPut)
 
       // Also check if any items were soft-deleted with deleted_date > lastSyncTime

@@ -93,17 +93,26 @@ export const populateItemExamples = async (items: IItem[]): Promise<IItem[]> => 
     for (const meaning of item.meanings || []) {
       for (const example of (meaning.examples || []) as unknown[]) {
         if (typeof example === 'string' && example.trim()) {
-          exampleIdSet.add(example)
+          exampleIdSet.add(example.trim())
+        } else if (typeof example === 'object' && example !== null) {
+          const ex = example as IExample
+          if (ex.id && (!ex.origin || !ex.origin.trim())) {
+            exampleIdSet.add(ex.id)
+          }
         }
       }
     }
   }
 
   const exampleIds = Array.from(exampleIdSet)
+  if (exampleIds.length === 0) return items
+
   const foundExamples = await localDb.examples.bulkGet(exampleIds)
   const exampleMap = new Map<string, IExample>()
   foundExamples.forEach((example) => {
-    if (example?.id) exampleMap.set(example.id, example)
+    if (example?.id && example.origin && example.origin.trim()) {
+      exampleMap.set(example.id, example)
+    }
   })
 
   return items.map((item) => {
@@ -113,10 +122,18 @@ export const populateItemExamples = async (items: IItem[]): Promise<IItem[]> => 
       if (!meaning.examples || meaning.examples.length === 0) return meaning
       const resolvedExamples = (meaning.examples as unknown[]).flatMap((example) => {
         if (typeof example === 'string') {
-          const resolvedExample = exampleMap.get(example)
+          const resolvedExample = exampleMap.get(example.trim())
           return resolvedExample ? [resolvedExample] : []
         }
-        return [example as IExample]
+        if (typeof example === 'object' && example !== null) {
+          const ex = example as IExample
+          if (ex.id && (!ex.origin || !ex.origin.trim())) {
+            const resolvedExample = exampleMap.get(ex.id)
+            if (resolvedExample) return [resolvedExample]
+          }
+          return [ex]
+        }
+        return []
       })
       return { ...meaning, examples: resolvedExamples }
     })
@@ -233,11 +250,12 @@ export const queryLocalItems = async (
   const page = Math.min(params.page || 0, Math.max(0, totalPage - 1))
 
   const pagedItems = filtered.slice(page * size, (page + 1) * size)
+  const populatedItems = await populateItemExamples(pagedItems)
 
   return {
     isSuccess: true,
     message: 'Items fetched from local database',
-    content: pagedItems,
+    content: populatedItems,
     paging: {
       page,
       size,

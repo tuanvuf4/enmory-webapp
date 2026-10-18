@@ -31,18 +31,13 @@ export const addNewType: MenuProps['items'] = [
     icon: <PlusOutlined />,
   },
   {
-    key: 'ADD_EXAMPLE',
-    label: 'Example',
+    key: 'ADD_MEDIA',
+    label: 'Media',
     icon: <PlusOutlined />,
   },
   {
     key: 'ADD_BLOG',
     label: 'Blog',
-    icon: <PlusOutlined />,
-  },
-  {
-    key: 'ADD_MEDIA',
-    label: 'Media',
     icon: <PlusOutlined />,
   },
 ]

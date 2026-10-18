@@ -17,12 +17,11 @@ import { useNavigate, Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
 import { MainMenu } from '../mainMenu/MainMenu'
 import { menu, addNewType } from './Menu'
-import { useExampleModal, useItemModal, useMediaUploadModal } from '@/helpers/hooks'
+import { useItemModal, useMediaUploadModal } from '@/helpers/hooks'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
 import { Toolbar } from '../toolbar'
 import { CSSProperties } from 'react'
-import { initExampleData } from '@/constant/example'
 
 interface IAppHeader {
   styles?: CSSProperties
@@ -40,7 +39,6 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
   const navigate = useNavigate()
 
   const { openItemModal } = useItemModal()
-  const { openExampleModal } = useExampleModal()
   const { openBlogModal } = useBlogModal()
   const { openMediaUploadModal } = useMediaUploadModal()
 
@@ -76,10 +74,6 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
   const handleAddMenuClick: MenuProps['onClick'] = (e) => {
     if (e.key === 'ADD_ITEM') {
       openItemModal('add')
-    }
-
-    if (e.key === 'ADD_EXAMPLE') {
-      openExampleModal('add', initExampleData)
     }
 
     if (e.key === 'ADD_POST' || e.key === 'ADD_BLOG') {

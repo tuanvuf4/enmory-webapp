@@ -14,7 +14,6 @@ import {
   addDoc,
   deleteDoc,
   doc,
-  limit,
 } from 'firebase/firestore'
 import { ECategory, EType, IOption, IIotd, IIotdDoc, IIotdRequest, IItem } from '@/models/item.model'
 import { categories, types } from '@/constant/item'
@@ -61,7 +60,10 @@ const getTodayRange = () => {
 /**
  * Get a random item from items collection by category
  */
-const getRandomItemByCategory = async (catId: number): Promise<any | null> => {
+const getRandomItemByCategory = async (
+  catId: number,
+  excludeItemId?: string,
+): Promise<any | null> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) {
@@ -106,66 +108,56 @@ const getRandomItemByCategory = async (catId: number): Promise<any | null> => {
     const itemsWithExamples = itemsToPick.filter((item) =>
       (item.meanings || []).some((m) => m.examples && m.examples.length > 0),
     )
-    const finalCandidatePool = itemsWithExamples.length > 0 ? itemsWithExamples : itemsToPick
+    const candidatePool = itemsWithExamples.length > 0 ? itemsWithExamples : itemsToPick
 
-    const randomIndex = Math.floor(Math.random() * finalCandidatePool.length)
-    return finalCandidatePool[randomIndex]
+    // Exclude previous item ID if alternative candidates are available
+    const finalCandidates =
+      excludeItemId && candidatePool.length > 1
+        ? candidatePool.filter((item) => item.id !== excludeItemId)
+        : candidatePool
+
+    const randomIndex = Math.floor(Math.random() * finalCandidates.length)
+    return finalCandidates[randomIndex]
   } catch (error) {
     console.error('[IOTD] Error fetching random item:', error)
-    return error
+    return null
   }
 }
 
-/**
- * Delete IOTDs that are not from today
- */
-const cleanupOldIotds = async (catId: number, force = false) => {
-  try {
-    const currentUser = firebaseAuthService.getCurrentUser()
-    if (!currentUser) return
-
-    const { startOfDay } = getTodayRange()
-
-    // Query IOTDs for this category and user that are not from today
-    const forceIotdQuery = query(
-      collection(db, dbCollections.iotd),
-      where('uid', '==', currentUser.uid),
-      where('catId', '==', catId),
-    )
-
-    const oldIotdsQuery = query(
-      collection(db, dbCollections.iotd),
-      where('uid', '==', currentUser.uid),
-      where('catId', '==', catId),
-      where('last_of_date', '<', startOfDay),
-    )
-
-    const snapshot = await getDocs(force ? forceIotdQuery : oldIotdsQuery)
-
-    // Delete old IOTDs
-    const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref))
-    await Promise.all(deletePromises)
-  } catch (error) {
-    console.error('Error cleaning up old IOTDs:', error)
-  }
-}
 
 /**
- * Create a new Item of the Day for a specific category
- * Gets a random item and creates a new IOTD document
+ * Create a new Item of the Day for a specific category.
+ * RULE: If a category item already exists in Firestore, removes the old one before adding.
  */
 const createIotdByCatId = async ({
   catId,
   userId,
+  previousItemId,
 }: {
   catId: number
   userId: string
+  previousItemId?: string
 }): Promise<IHttpResponse<IIotd>> => {
   try {
     const { startOfDay, endOfDay } = getTodayRange()
 
-    // Get random item
-    const randomItem = await getRandomItemByCategory(catId)
+    // 1. Remove ANY existing IOTD documents for this category and user before adding the new one
+    const existingIotdQuery = query(
+      collection(db, dbCollections.iotd),
+      where('uid', '==', userId),
+      where('catId', '==', catId),
+    )
+    const existingSnapshot = await getDocs(existingIotdQuery)
+    const existingItemIds = existingSnapshot.docs.map((d) => d.data()?.itemId).filter(Boolean)
+    const excludedId = previousItemId || existingItemIds[0]
+
+    if (!existingSnapshot.empty) {
+      const deletePromises = existingSnapshot.docs.map((docSnap) => deleteDoc(docSnap.ref))
+      await Promise.all(deletePromises)
+    }
+
+    // 2. Get random item, avoiding the previous item if alternatives exist
+    const randomItem = await getRandomItemByCategory(catId, excludedId)
 
     if (!randomItem) {
       return {
@@ -176,12 +168,12 @@ const createIotdByCatId = async ({
       }
     }
 
-    // Enrich item with meaning examples
+    // 3. Enrich item with meaning examples
     const enrichedItemResp = await itemApi.getItemById(randomItem.id)
     const enrichedItem =
       enrichedItemResp.isSuccess && enrichedItemResp.content ? enrichedItemResp.content : randomItem
 
-    // Create new IOTD document - saving only itemId and metadata (not full item)
+    // 4. Create new IOTD document - saving only itemId and metadata (not full item)
     const newIotd: IIotdDoc = {
       itemId: enrichedItem.id || randomItem.id,
       uid: userId,
@@ -218,7 +210,7 @@ const createIotdByCatId = async ({
  */
 const getIotdByCatId = async ({
   catId,
-  generate = true,
+  generate = false,
 }: IIotdRequest): Promise<IHttpResponse<IIotd>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
@@ -233,26 +225,34 @@ const getIotdByCatId = async ({
 
     const { startOfDay, endOfDay } = getTodayRange()
 
-    await cleanupOldIotds(catId, generate)
+    // If explicit regeneration is requested, remove old and generate new
+    if (generate) {
+      return await createIotdByCatId({ catId, userId: currentUser.uid })
+    }
 
-    // Query for today's IOTD
-    // Firestore allows range comparisons on a single field per query.
-    // Use only 'first_of_date' for the day's window to avoid invalid multi-field range filters.
+    // Query for existing IOTD documents for this category and user
     const iotdQuery = query(
       collection(db, dbCollections.iotd),
       where('uid', '==', currentUser.uid),
       where('catId', '==', catId),
-      where('first_of_date', '>=', startOfDay),
-      where('first_of_date', '<=', endOfDay),
-      limit(1),
     )
 
     const snapshot = await getDocs(iotdQuery)
 
-    // If today's IOTD exists, return it
-    if (!snapshot.empty) {
-      const iotdDoc = snapshot.docs[0]
-      const iotdData = iotdDoc.data()
+    // Check if an IOTD exists for today
+    const todayDoc = snapshot.docs.find((docSnap) => {
+      const data = docSnap.data()
+      return data.first_of_date >= startOfDay && data.first_of_date <= endOfDay
+    })
+
+    if (todayDoc) {
+      // Remove any stale / older duplicate IOTDs for this category so only today's document remains
+      const staleDocs = snapshot.docs.filter((docSnap) => docSnap.id !== todayDoc.id)
+      if (staleDocs.length > 0) {
+        await Promise.all(staleDocs.map((docSnap) => deleteDoc(docSnap.ref)))
+      }
+
+      const iotdData = todayDoc.data()
 
       // Fetch the actual item (hydrated dynamically with latest item data)
       let item: IItem | null = null
@@ -279,7 +279,7 @@ const getIotdByCatId = async ({
         isSuccess: true,
         message: 'IOTD fetched successfully',
         content: {
-          id: iotdDoc.id,
+          id: todayDoc.id,
           ...iotdData,
           item: item || ({} as IItem),
         } as IIotd,
@@ -287,8 +287,7 @@ const getIotdByCatId = async ({
       }
     }
 
-    // If no IOTD exists for today, create a new one regardless of `generate`.
-    // `generate=true` still forces cleanup of all existing IOTDs earlier.
+    // If no IOTD exists for today, create a new one (which cleans up any old one before adding)
     return await createIotdByCatId({ catId, userId: currentUser.uid })
   } catch (error) {
     return {

@@ -79,9 +79,7 @@
 }
 
 .exampleSelectedEx {
-  border-bottom: 1px solid var(--ant-color-primary-border);
-  border-top: 1px solid var(--ant-color-primary-border);
-  background: var(--ant-color-primary-bg);
+  margin-bottom: $size * 1;
 }
 
 .textarea {

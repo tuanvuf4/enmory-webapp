@@ -41,7 +41,6 @@ const createExample = async (body: IExample): Promise<IHttpResponse<IExample>> =
       created_date: Timestamp.now().toMillis(),
       last_update: Timestamp.now().toMillis(),
       randomIndex: Math.random(), // For efficient random queries
-      origin_lowercase: origin.toLowerCase(), // For case-insensitive search
     }
 
     const docRef = await addDoc(collection(db, dbCollections.examples), exampleData)
@@ -165,7 +164,6 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
     if (body.origin !== undefined) {
       const origin = removeLineBreaks(body.origin)
       updateData.origin = origin
-      updateData.origin_lowercase = origin.toLowerCase()
     }
 
     if (body.translation !== undefined) {

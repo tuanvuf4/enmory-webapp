@@ -179,7 +179,6 @@ export const Item: React.FC<IProps> = ({
     const response = await itemApi.updateItem(data.id || '', {
       ...initItem,
       origin: '*',
-      origin_lowercase: '*',
       created_date: now,
       last_update: now,
     })

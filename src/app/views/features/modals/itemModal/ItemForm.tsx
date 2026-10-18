@@ -20,12 +20,13 @@ import styles from './itemModal.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { usePrompt } from '@/helpers/hooks'
 import { TagSelect } from '@/views/components'
-import { exampleApi, itemApi, tagApi } from '@/services/firebase'
-import { Timestamp } from 'firebase/firestore'
+import { itemApi, tagApi } from '@/services/firebase'
+import { collection, doc, Timestamp } from 'firebase/firestore'
+import { db, dbCollections } from '@/config/firebaseConfig'
+import { removeLineBreaks } from '@/core/utils'
 import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
 import { useModal } from '@/context/modal.context'
 import { useQueryClient } from '@tanstack/react-query'
-import { getMeaningsWithExamples } from '@/helpers/item'
 import { validateAndCreateRelatedItems } from './itemValidation'
 import { geminiDictionaryService, resolveGeminiApiKey, formatHtmlList } from '@/services/gemini'
 
@@ -78,11 +79,22 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
   const { closeModal } = useModal()
 
-  const createExample = async (meanings: IMeaning) => {
-    const examplePromises = meanings.examples.map(async (example) => ({
-      ...(await exampleApi.createExample(example as IExample)).content,
-    }))
-    return await Promise.all(examplePromises)
+  const createExample = async (meanings: IMeaning): Promise<IExample[]> => {
+    const now = Timestamp.now().toMillis()
+    return (meanings.examples || []).map((example) => {
+      const origin = removeLineBreaks(example.origin || '')
+      const translation = removeLineBreaks(example.translation || '')
+      return {
+        id: example.id || doc(collection(db, dbCollections.examples)).id,
+        uid: example.uid || user?.uid || '',
+        origin,
+        translation,
+        note: example.note || '',
+        created_date: example.created_date || now,
+        last_update: now,
+        randomIndex: example.randomIndex ?? Math.random(),
+      }
+    })
   }
 
   const normalizeUniqueWords = (words: string[] = []) => {
@@ -223,27 +235,28 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         return
       }
 
-      const meanings: Promise<IMeaning>[] =
+      const meanings: IMeaning[] =
         data.meanings && data.meanings.length > 0
-          ? data.meanings.map(async (meaning) => ({
-              ...meaning,
-              itemId: data.id || '',
-              uid: user?.uid || '',
-              created_date: Timestamp.now().toMillis(),
-              last_update: Timestamp.now().toMillis(),
-              note: meaning.note || '',
-              collocations: meaning.collocations || '',
-              grammar: meaning.grammar || '',
-              definition: meaning.definition || '',
-              translation: meaning.translation || '',
-              pronunciation: meaning.pronunciation || { common: '', uk: '', us: '' },
-              common: meaning.common || false,
-              enable: meaning.enable || false,
-              antonyms: meaning.antonyms || [],
-              synonyms: meaning.synonyms || [],
-              examples:
-                ((await createExample(meaning)).map((example) => example.id) as string[]) ?? [],
-            }))
+          ? await Promise.all(
+              data.meanings.map(async (meaning) => ({
+                ...meaning,
+                itemId: data.id || '',
+                uid: user?.uid || '',
+                created_date: meaning.created_date || Timestamp.now().toMillis(),
+                last_update: Timestamp.now().toMillis(),
+                note: meaning.note || '',
+                collocations: meaning.collocations || '',
+                grammar: meaning.grammar || '',
+                definition: meaning.definition || '',
+                translation: meaning.translation || '',
+                pronunciation: meaning.pronunciation || { common: '', uk: '', us: '' },
+                common: meaning.common || false,
+                enable: meaning.enable || false,
+                antonyms: meaning.antonyms || [],
+                synonyms: meaning.synonyms || [],
+                examples: await createExample(meaning),
+              })),
+            )
           : []
 
       const dataSubmit: IItem = {
@@ -253,7 +266,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         forms: data.forms || [],
         word_family: data.word_family || [],
         relation: data.relation || [],
-        meanings: [...(await Promise.all(meanings))],
+        meanings,
       }
       if (item?.id) {
         try {
@@ -272,12 +285,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
               })
             }
 
-            const meaningsWithExamples = await getMeaningsWithExamples(content.meanings || [])
-
-            const itemUpdated = {
-              ...content,
-              meanings: meaningsWithExamples,
-            }
+            const itemUpdated = content
             // update item in study set
             if (itemUpdated && list.find((item) => item.id === itemUpdated.id)) {
               dispatch(studySetAction.update(itemUpdated))

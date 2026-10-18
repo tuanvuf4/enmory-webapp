@@ -14,8 +14,8 @@ export class EnmoryDatabase extends Dexie {
   constructor() {
     super('EnmoryLocalDB')
     this.version(1).stores({
-      items: 'id, uid, catId, origin_lowercase, level, created_date, last_update, *tags_lowercase',
-      examples: 'id, uid, origin_lowercase, created_date, last_update',
+      items: 'id, uid, catId, level, created_date, last_update, *tags_lowercase',
+      examples: 'id, uid, created_date, last_update',
       syncMeta: 'key',
     })
   }

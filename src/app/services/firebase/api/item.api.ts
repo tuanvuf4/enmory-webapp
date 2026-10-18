@@ -28,6 +28,10 @@ import {
   invalidateSearchIndex,
   populateItemExamples,
 } from '@/services/localDb'
+import {
+  sanitizeItemForFirestore,
+  extractExamplesFromItems,
+} from '@/services/firebase/dbIntegration'
 
 export interface IItemRequestParams {
   keyword: string
@@ -254,35 +258,7 @@ const getStudySet = async (
     }
 
     // Populate examples for all items from localDb
-    const itemsWithExamples = await Promise.all(
-      allItems.map(async (item) => {
-        const meanings = item.meanings || []
-
-        const meaningsWithExamples = await Promise.all(
-          meanings.map(async (meaning: any) => {
-            const exampleIds = meaning.examples || []
-
-            if (!Array.isArray(exampleIds) || exampleIds.length === 0) {
-              return {
-                ...meaning,
-                examples: [],
-              }
-            }
-
-            const examples = await getExamplesByIds(exampleIds)
-            return {
-              ...meaning,
-              examples: examples,
-            }
-          }),
-        )
-
-        return {
-          ...item,
-          meanings: meaningsWithExamples,
-        }
-      }),
-    )
+    const itemsWithExamples = await populateItemExamples(allItems)
 
     // Generate quiz data for each item
     const itemsWithQuiz: IItemQuiz[] = itemsWithExamples.map((item) => {
@@ -415,11 +391,10 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
       last_update: now,
       is_deleted: false,
       randomIndex: Math.random(), // For efficient random queries
-      origin_lowercase: item.origin?.toLowerCase() || '', // For case-insensitive search
     }
 
     const itemsRef = collection(db, dbCollections.items)
-    const docRef = await addDoc(itemsRef, newItem)
+    const docRef = await addDoc(itemsRef, sanitizeItemForFirestore(newItem))
     const createdItem = {
       id: docRef.id,
       ...newItem,
@@ -428,6 +403,10 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
     // Modify local DB as well
     try {
       await localDb.items.put(createdItem)
+      const itemExamples = extractExamplesFromItems([createdItem])
+      if (itemExamples.length > 0) {
+        await localDb.examples.bulkPut(itemExamples)
+      }
       invalidateSearchIndex()
     } catch (localErr) {
       console.warn('Failed to save created item to localDb:', localErr)
@@ -470,11 +449,10 @@ const createItems = async (items: IItem[]): Promise<IHttpResponse<IItem>> => {
         last_update: now,
         is_deleted: false,
         randomIndex: Math.random(), // For efficient random queries
-        origin_lowercase: item.origin?.toLowerCase() || '', // For case-insensitive search
       }
 
       const itemsRef = collection(db, dbCollections.items)
-      const docRef = await addDoc(itemsRef, newItem)
+      const docRef = await addDoc(itemsRef, sanitizeItemForFirestore(newItem))
 
       createdItems.push({
         id: docRef.id,
@@ -486,6 +464,10 @@ const createItems = async (items: IItem[]): Promise<IHttpResponse<IItem>> => {
     try {
       if (createdItems.length > 0) {
         await localDb.items.bulkPut(createdItems)
+        const itemExamples = extractExamplesFromItems(createdItems)
+        if (itemExamples.length > 0) {
+          await localDb.examples.bulkPut(itemExamples)
+        }
         invalidateSearchIndex()
       }
     } catch (localErr) {
@@ -523,10 +505,6 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
     // Clean up temporary UI quiz property if passed from studySet
     delete updateData.quiz
 
-    if (item.origin !== undefined) {
-      updateData.origin_lowercase = item.origin.toLowerCase()
-    }
-
     if (item.tags !== undefined) {
       const normalizedTags = normalizeTags(item.tags)
       updateData.tags = normalizedTags
@@ -543,6 +521,10 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
         updatedItem = { ...updateData, id } as IItem
       }
       await localDb.items.put(updatedItem)
+      const itemExamples = extractExamplesFromItems([updatedItem])
+      if (itemExamples.length > 0) {
+        await localDb.examples.bulkPut(itemExamples)
+      }
       invalidateSearchIndex()
     } catch (localErr) {
       console.warn('Failed to update item in localDb:', localErr)
@@ -553,7 +535,7 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
     try {
       const itemDocRef = doc(db, dbCollections.items, id)
       const { id: _docId, ...firestorePayload } = updateData
-      await updateDoc(itemDocRef, firestorePayload)
+      await updateDoc(itemDocRef, sanitizeItemForFirestore(firestorePayload))
     } catch (firebaseErr) {
       console.error('Failed to update item in Firestore:', firebaseErr)
     }

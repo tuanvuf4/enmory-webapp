@@ -32,7 +32,6 @@ export const meaningItem: IMeaning = {
 export const initItem: IItem = {
   catId: ECategory.WORD,
   origin: '',
-  origin_lowercase: '',
   tags: [],
   archive: false,
   favorite: false,

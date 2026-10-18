@@ -19,138 +19,98 @@ const Setting = () => {
 
   const dispatch = useDispatch()
   const [isLoading, setIsLoading] = useState(false)
-  const [isMigrating, setIsMigrating] = useState(false)
-  const [migrationStatus, setMigrationStatus] = useState<string>('')
-
-  const handleMigrateKeywords = async () => {
-    setIsMigrating(true)
-    setMigrationStatus('Starting migration...')
-    try {
-      const currentUser = user
-      if (!currentUser) {
-        throw new Error('You must be logged in to migrate data.')
-      }
-
-      const { collection, getDocs, writeBatch } = await import('firebase/firestore')
-      const { db } = await import('@/config/firebaseConfig')
-      const { extractKeywords } = await import('@/helpers/item')
-
-      // 1. Migrate items
-      setMigrationStatus('Migrating items...')
-      const itemsSnapshot = await getDocs(collection(db, 'items'))
-      let itemsBatch = writeBatch(db)
-      let itemsCount = 0
-      let itemsProcessed = 0
-
-      for (const document of itemsSnapshot.docs) {
-        const itemData = document.data()
-        const text = itemData.origin || ''
-        const keywords = extractKeywords(text)
-        const lowercase = text.toLowerCase()
-
-        itemsBatch.update(document.ref, {
-          keywords,
-          origin_lowercase: lowercase,
-        })
-        itemsCount++
-        itemsProcessed++
-
-        if (itemsProcessed === 400) {
-          await itemsBatch.commit()
-          itemsBatch = writeBatch(db)
-          itemsProcessed = 0
-        }
-      }
-      if (itemsProcessed > 0) {
-        await itemsBatch.commit()
-      }
-      setMigrationStatus(`Successfully migrated ${itemsCount} items.`)
-
-      // 2. Migrate examples
-      setMigrationStatus('Migrating examples...')
-      const examplesSnapshot = await getDocs(collection(db, 'examples'))
-      let examplesBatch = writeBatch(db)
-      let examplesCount = 0
-      let examplesProcessed = 0
-
-      for (const document of examplesSnapshot.docs) {
-        const exampleData = document.data()
-        const text = exampleData.origin || ''
-        const keywords = extractKeywords(text)
-        const lowercase = text.toLowerCase()
-
-        examplesBatch.update(document.ref, {
-          keywords,
-          origin_lowercase: lowercase,
-        })
-        examplesCount++
-        examplesProcessed++
-
-        if (examplesProcessed === 400) {
-          await examplesBatch.commit()
-          examplesBatch = writeBatch(db)
-          examplesProcessed = 0
-        }
-      }
-      if (examplesProcessed > 0) {
-        await examplesBatch.commit()
-      }
-      setMigrationStatus(`Successfully migrated ${examplesCount} examples.`)
-
-      // 3. Migrate articles
-      setMigrationStatus('Migrating articles...')
-      const articlesSnapshot = await getDocs(collection(db, 'articles'))
-      let articlesBatch = writeBatch(db)
-      let articlesCount = 0
-      let articlesProcessed = 0
-
-      for (const document of articlesSnapshot.docs) {
-        const articleData = document.data()
-        const text = articleData.title || ''
-        const keywords = extractKeywords(text)
-        const lowercase = text.toLowerCase()
-
-        articlesBatch.update(document.ref, {
-          keywords,
-          title_lowercase: lowercase,
-        })
-        articlesCount++
-        articlesProcessed++
-
-        if (articlesProcessed === 400) {
-          await articlesBatch.commit()
-          articlesBatch = writeBatch(db)
-          articlesProcessed = 0
-        }
-      }
-      if (articlesProcessed > 0) {
-        await articlesBatch.commit()
-      }
-
-      message({
-        type: 'success',
-        content: `Migration complete! Updated ${itemsCount} items, ${examplesCount} examples, ${articlesCount} articles.`,
-      })
-      setMigrationStatus(
-        `Migration complete! Updated ${itemsCount} items, ${examplesCount} examples, ${articlesCount} articles.`,
-      )
-    } catch (error) {
-      console.error('Migration error:', error)
-      message({
-        type: 'error',
-        content: error instanceof Error ? error.message : 'Migration failed',
-      })
-      setMigrationStatus('Migration failed. Check console for details.')
-    } finally {
-      setIsMigrating(false)
-    }
-  }
 
   const [isDeduplicating, setIsDeduplicating] = useState(false)
   const [deduplicateStatus, setDeduplicateStatus] = useState<string>('')
   const [deletedExamples, setDeletedExamples] = useState<
     { id: string; origin: string; translation: string }[]
   >([])
+
+  const [isIntegrating, setIsIntegrating] = useState(false)
+  const [integrationStatus, setIntegrationStatus] = useState<string>('')
+
+  const [isRemovingLegacyFields, setIsRemovingLegacyFields] = useState(false)
+  const [removeLegacyFieldsStatus, setRemoveLegacyFieldsStatus] = useState<string>('')
+
+  const handleRemoveLegacyFields = async () => {
+    setIsRemovingLegacyFields(true)
+    setRemoveLegacyFieldsStatus('Starting legacy fields (keywords & origin_lowercase) removal...')
+    try {
+      const currentUser = user
+      if (!currentUser) {
+        throw new Error('You must be logged in to modify data.')
+      }
+
+      const { removeLegacyFieldsFromFirebaseDb } = await import('@/services/firebase/dbIntegration')
+      const result = await removeLegacyFieldsFromFirebaseDb({
+        uid: currentUser.uid,
+        onProgress: (status) => setRemoveLegacyFieldsStatus(status),
+      })
+
+      if (result.isSuccess) {
+        message({
+          type: 'success',
+          content: result.message,
+        })
+        setRemoveLegacyFieldsStatus(result.message)
+      } else {
+        message({
+          type: 'error',
+          content: result.message,
+        })
+        setRemoveLegacyFieldsStatus(result.message)
+      }
+    } catch (error) {
+      console.error('Remove legacy fields error:', error)
+      message({
+        type: 'error',
+        content: error instanceof Error ? error.message : 'Failed to remove legacy fields',
+      })
+      setRemoveLegacyFieldsStatus('Failed to remove legacy fields. Check console for details.')
+    } finally {
+      setIsRemovingLegacyFields(false)
+    }
+  }
+
+  const handleIntegrateExamples = async () => {
+    setIsIntegrating(true)
+    setIntegrationStatus('Starting Firebase DB integration...')
+    try {
+      const currentUser = user
+      if (!currentUser) {
+        throw new Error('You must be logged in to migrate data.')
+      }
+
+      const { integrateFirebaseDbExamples } = await import('@/services/firebase/dbIntegration')
+      const result = await integrateFirebaseDbExamples({
+        uid: currentUser.uid,
+        onProgress: (status) => setIntegrationStatus(status),
+      })
+
+      if (result.isSuccess) {
+        message({
+          type: 'success',
+          content: result.message,
+        })
+        setIntegrationStatus(result.message)
+      } else {
+        message({
+          type: 'error',
+          content: result.message,
+        })
+        setIntegrationStatus(result.message)
+      }
+    } catch (error) {
+      console.error('Integration error:', error)
+      message({
+        type: 'error',
+        content: error instanceof Error ? error.message : 'Integration failed',
+      })
+      setIntegrationStatus('Integration failed. Check console for details.')
+    } finally {
+      setIsIntegrating(false)
+    }
+  }
 
   const handleDeduplicateExamples = async () => {
     setIsDeduplicating(true)
@@ -644,21 +604,39 @@ const Setting = () => {
                       <Col xs={24} md={16}>
                         <Space direction='vertical' style={{ width: '100%' }} size={token.size / 2}>
                           <Button
-                            type='dashed'
-                            danger
-                            onClick={handleMigrateKeywords}
-                            loading={isMigrating}
+                            type='primary'
+                            onClick={handleIntegrateExamples}
+                            loading={isIntegrating}
                           >
-                            Migrate Keywords Array (items, examples, articles)
+                            Integrate Examples into Items (Firebase DB)
                           </Button>
-                          {migrationStatus && (
+                          {integrationStatus && (
                             <div
                               style={{
                                 fontSize: '13px',
                                 color: token.colorTextDescription,
                               }}
                             >
-                              {migrationStatus}
+                              {integrationStatus}
+                            </div>
+                          )}
+
+                          <Button
+                            type='default'
+                            danger
+                            onClick={handleRemoveLegacyFields}
+                            loading={isRemovingLegacyFields}
+                          >
+                            Remove Legacy Fields (keywords & origin_lowercase) (Firebase DB)
+                          </Button>
+                          {removeLegacyFieldsStatus && (
+                            <div
+                              style={{
+                                fontSize: '13px',
+                                color: token.colorTextDescription,
+                              }}
+                            >
+                              {removeLegacyFieldsStatus}
                             </div>
                           )}
 

@@ -86,46 +86,39 @@ export const invalidateSearchIndex = () => {
   cachedIndexItemCount = 0
 }
 
-/**
- * Populate examples in item meanings from localDb.examples if examples are stored as ID strings.
- */
 export const populateItemExamples = async (items: IItem[]): Promise<IItem[]> => {
-  // Collect all example IDs that are strings
   const exampleIdSet = new Set<string>()
 
   for (const item of items) {
     for (const meaning of item.meanings || []) {
-      for (const ex of meaning.examples || []) {
-        if (typeof ex === 'string' && ex.trim()) {
-          exampleIdSet.add(ex)
+      for (const example of (meaning.examples || []) as unknown[]) {
+        if (typeof example === 'string' && example.trim()) {
+          exampleIdSet.add(example)
         }
       }
     }
   }
 
-  if (exampleIdSet.size === 0) return items
-
-  // Lookup examples in Dexie
   const exampleIds = Array.from(exampleIdSet)
   const foundExamples = await localDb.examples.bulkGet(exampleIds)
   const exampleMap = new Map<string, IExample>()
-  foundExamples.forEach((ex) => {
-    if (ex && ex.id) exampleMap.set(ex.id, ex)
+  foundExamples.forEach((example) => {
+    if (example?.id) exampleMap.set(example.id, example)
   })
 
-  // Replace ID strings with IExample objects if found
   return items.map((item) => {
     if (!item.meanings || item.meanings.length === 0) return item
 
     const populatedMeanings = item.meanings.map((meaning) => {
       if (!meaning.examples || meaning.examples.length === 0) return meaning
-      const resolvedExamples = (meaning.examples as any[]).map((ex) => {
-        if (typeof ex === 'string') {
-          return exampleMap.get(ex) || ex
+      const resolvedExamples = (meaning.examples as unknown[]).flatMap((example) => {
+        if (typeof example === 'string') {
+          const resolvedExample = exampleMap.get(example)
+          return resolvedExample ? [resolvedExample] : []
         }
-        return ex
+        return [example as IExample]
       })
-      return { ...meaning, examples: resolvedExamples as IExample[] }
+      return { ...meaning, examples: resolvedExamples }
     })
 
     return { ...item, meanings: populatedMeanings }

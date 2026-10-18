@@ -133,7 +133,6 @@ const createRelatedItem = async (
     const newItem: IItem = {
       ...initItem,
       origin: itemName,
-      origin_lowercase: itemName.toLowerCase(),
       catId: getDefaultCategoryFromOrigin(itemName),
       uid: uid || '',
       created_date: Timestamp.now().toMillis(),

@@ -1,5 +1,4 @@
-import { IItem, EType, ECategory, IMeaning } from '@/models/item.model'
-import { itemApi } from '@/services/firebase'
+import { IItem, EType, ECategory } from '@/models/item.model'
 import { compact } from 'lodash'
 
 export const enumValues = <T extends Record<string, unknown>>(value: T) => {
@@ -103,24 +102,4 @@ export const toWildString = (value: string, wildcard = '_') => {
 
 export const getRandomNumber = (max: number, min: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-export const getMeaningsWithExamples = async (meanings: IMeaning[]) => {
-  return await Promise.all(
-    meanings.map(async (meaning: any) => {
-      const exampleIds = meaning.examples || []
-      const examples = await itemApi.getExamplesByIds(exampleIds)
-      return {
-        ...meaning,
-        examples: examples,
-      }
-    }),
-  )
-}
-
-export const extractKeywords = (text: string): string[] => {
-  if (!text) return []
-  const cleanText = text.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'’]/g, ' ')
-  const words = cleanText.split(/\s+/)
-  return Array.from(new Set(words.filter((word) => word.trim().length > 0)))
 }

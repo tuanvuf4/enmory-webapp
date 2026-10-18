@@ -35,8 +35,6 @@ export interface IExample {
   last_update?: number
   note: string
   randomIndex?: number
-  origin_lowercase?: string
-  keywords?: string[]
 }
 
 export interface IType {
@@ -76,7 +74,7 @@ export interface IMeaning {
   antonyms: string[]
   created_date?: number
   last_update?: number
-  examples: IExample[] | string[]
+  examples: IExample[]
 }
 
 export interface IItem {
@@ -84,8 +82,6 @@ export interface IItem {
   uid?: string
   catId?: ECategory
   origin: string
-  origin_lowercase?: string
-  keywords?: string[]
   tags: string[]
   tags_lowercase?: string[]
   favorite?: boolean

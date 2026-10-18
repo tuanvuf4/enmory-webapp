@@ -174,12 +174,7 @@ export const StudySet: React.FC = () => {
       ...rest,
       level: level,
       count: rest.count && rest.count >= 0 ? rest.count + 1 : 1,
-      meanings: item?.meanings?.map((meaning) => ({
-        ...meaning,
-        examples: (meaning.examples || []).map((example) =>
-          typeof example === 'string' ? example : example.id || '',
-        ),
-      })),
+      meanings: item?.meanings,
     })
   }
 

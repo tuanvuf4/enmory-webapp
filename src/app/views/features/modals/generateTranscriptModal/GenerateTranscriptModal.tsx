@@ -26,9 +26,10 @@ import {
 } from '@ant-design/icons'
 import {
   DEFAULT_TRANSCRIPT_DESCRIPTION,
-  transcriptService,
+  geminiTranscriptService as transcriptService,
   IGenerateTranscriptResponse,
-} from '@/services/openai/transcript.service'
+  resolveGeminiApiKey,
+} from '@/services/gemini'
 import { ttsService, TOpenAIVoice, OPENAI_VOICES } from '@/services/openai/tts.service'
 import { parseTranscript, formatSegmentTime } from '../../player/transcriptUtils'
 import { usePrompt } from '@/helpers/hooks'
@@ -164,12 +165,32 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
     speakNext()
   }
 
+  const ensureApiKey = (): boolean => {
+    const apiKey = resolveGeminiApiKey()
+    if (!apiKey) {
+      const inputKey = window.prompt(
+        'Gemini API key chưa được cấu hình. Vui lòng nhập Gemini API key (sẽ được lưu vào trình duyệt của bạn):',
+      )
+      if (!inputKey || !inputKey.trim()) {
+        message({
+          type: 'warning',
+          content: 'Cần có Gemini API key để tạo transcript.',
+        })
+        return false
+      }
+      localStorage.setItem('gemini_api_key', inputKey.trim())
+    }
+    return true
+  }
+
   // One-click Auto Generation: 1. Generate prompt from description -> 2. Generate transcript
   const handleAutoGenerate = async () => {
+    if (!ensureApiKey()) return
+
     try {
       setLoading(true)
       stopPreview()
-      setStatusText('Bước 1/2: Đang sử dụng OpenAI tạo prompt chuyên biệt từ description...')
+      setStatusText('Bước 1/2: Đang sử dụng Gemini tạo prompt chuyên biệt từ description...')
 
       // Step 1: Create prompt from description
       const prompt = await transcriptService.generatePromptFromDescription(description)
@@ -185,7 +206,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
       console.error(error)
       message({
         type: 'error',
-        content: error?.message || 'Không thể tạo transcript. Vui lòng kiểm tra API key.',
+        content: error?.message || 'Không thể tạo transcript. Vui lòng kiểm tra Gemini API key.',
       })
     } finally {
       setLoading(false)
@@ -195,9 +216,11 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
 
   // Step 1 only: generate prompt
   const handleGeneratePromptOnly = async () => {
+    if (!ensureApiKey()) return
+
     try {
       setLoading(true)
-      setStatusText('Đang sử dụng OpenAI tạo prompt từ description...')
+      setStatusText('Đang sử dụng Gemini tạo prompt từ description...')
       const prompt = await transcriptService.generatePromptFromDescription(description)
       setGeneratedPrompt(prompt)
       message({ type: 'success', content: 'Tạo prompt thành công! Bạn có thể chỉnh sửa bên dưới.' })
@@ -211,6 +234,8 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
 
   // Step 2: generate transcript from existing prompt
   const handleGenerateTranscriptFromPrompt = async () => {
+    if (!ensureApiKey()) return
+
     if (!generatedPrompt.trim()) {
       message({ type: 'warning', content: 'Vui lòng tạo hoặc nhập prompt trước.' })
       return
@@ -257,7 +282,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
       title={
         <Flex align='center' gap={8}>
           <RobotOutlined style={{ color: token.colorPrimary, fontSize: 20 }} />
-          <span>Tự động tạo Transcript bài nghe bằng AI (OpenAI)</span>
+          <span>Tự động tạo Transcript bài nghe bằng AI (Google Gemini)</span>
         </Flex>
       }
       open={open}
@@ -298,7 +323,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
                   icon={isPlayingPreview ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
                   onClick={handleTogglePlayPreview}
                 >
-                  {isPlayingPreview ? 'Dừng phát' : 'Nghe thử OpenAI TTS'}
+                  {isPlayingPreview ? 'Dừng phát' : 'Nghe thử TTS'}
                 </Button>
               </>
             )}
@@ -340,7 +365,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
             disabled={loading}
           />
           <Text type='secondary' style={{ fontSize: 12 }}>
-            OpenAI sẽ phân tích mô tả này để tạo prompt chuyên nghiệp, sau đó viết kịch bản hội
+            Google Gemini sẽ phân tích mô tả này để tạo prompt chuyên nghiệp, sau đó viết kịch bản hội
             thoại 5-10 phút kèm mốc thời gian (timestamps M:SS).
           </Text>
         </div>
@@ -363,7 +388,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
             onClick={handleGeneratePromptOnly}
             size='middle'
           >
-            Chỉ tạo Prompt bằng OpenAI
+            Chỉ tạo Prompt bằng Gemini
           </Button>
         </Flex>
 
@@ -396,7 +421,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
                   >
                     <span>
                       <RobotOutlined style={{ marginRight: 6, color: token.colorPrimary }} />
-                      <strong>Prompt do OpenAI tạo dựa trên Description</strong>
+                      <strong>Prompt do Gemini tạo dựa trên Description</strong>
                     </span>
                     <Tag color='processing'>Prompt Ready</Tag>
                   </Flex>
@@ -407,7 +432,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
                       rows={6}
                       value={generatedPrompt}
                       onChange={(e) => setGeneratedPrompt(e.target.value)}
-                      placeholder='Prompt do OpenAI tạo...'
+                      placeholder='Prompt do Gemini tạo...'
                     />
                     <Flex justify='flex-end'>
                       <Button
@@ -486,7 +511,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
                       icon={isPlayingPreview ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
                       onClick={handleTogglePlayPreview}
                     >
-                      {isPlayingPreview ? 'Dừng phát' : 'Nghe thử OpenAI TTS'}
+                      {isPlayingPreview ? 'Dừng phát' : 'Nghe thử TTS'}
                     </Button>
                   </Space>
                 </Flex>

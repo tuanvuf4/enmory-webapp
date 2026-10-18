@@ -1,5 +1,5 @@
 import { initMediaForm, msgErrors } from '@/constant/index'
-import { RobotOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { RobotOutlined } from '@ant-design/icons'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { theme, Input, Space, Row, Col, Button, Select, Flex } from 'antd'
@@ -9,7 +9,7 @@ import { IMediaForm, ITracks } from '@/models/media.model'
 import { tracksApi } from '@/services/firebase'
 import { useState, useEffect } from 'react'
 import { TextEditor, InputTag, TagSelect } from '@/views/components'
-import { usePrompt, useTagManagerModal } from '@/helpers/hooks'
+import { usePrompt } from '@/helpers/hooks'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -30,7 +30,6 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
   const { message } = usePrompt()
   const { token } = theme.useToken()
   const [loading, setLoading] = useState(false)
-  const { openTagManagerModal } = useTagManagerModal()
   const dispatch = useDispatch()
 
   const { currentTrack, tracks } = useSelector((state) => state.listening)
@@ -113,7 +112,7 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
       setValue('translation', data.translation, { shouldValidate: true, shouldDirty: true })
     }
     if (!getValues('srcUrl')) {
-      setValue('srcUrl', 'transcript', { shouldValidate: true, shouldDirty: true })
+      setValue('srcUrl', '', { shouldValidate: true, shouldDirty: true })
     }
     if (data.voice) {
       setValue('voice', data.voice, { shouldValidate: true, shouldDirty: true })
@@ -219,13 +218,6 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
     )
   }
 
-  const handleOpenTagModal = () => {
-    openTagManagerModal({
-      onTagUpdated: handleTagUpdated,
-      onTagDeleted: handleTagDeleted,
-    })
-  }
-
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -258,11 +250,6 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
             <Col xs={24}>
               <Flex align={'center'} gap={token.size / 2}>
                 <span>Tags:</span>
-                <Button
-                  size={'small'}
-                  icon={<UnorderedListOutlined />}
-                  onClick={handleOpenTagModal}
-                />
               </Flex>
             </Col>
             <Col xs={24}>

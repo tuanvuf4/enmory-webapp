@@ -1,4 +1,10 @@
-import { PlusOutlined, DeleteOutlined, CheckOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons'
+import {
+  PlusOutlined,
+  DeleteOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  EditOutlined,
+} from '@ant-design/icons'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { usePrompt } from '@/helpers/hooks'
 import { tagApi } from '@/services/firebase'
@@ -7,8 +13,7 @@ import { Button, Divider, Flex, Input, Select, theme } from 'antd'
 import type { InputRef, SelectProps } from 'antd'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
-export interface ITagSelectProps
-  extends Omit<SelectProps<any>, 'onChange' | 'value'> {
+export interface ITagSelectProps extends Omit<SelectProps<any>, 'onChange' | 'value'> {
   mode?: 'multiple' | 'tags' | undefined
   value?: string[] | string
   onChange?: (values: any) => void
@@ -59,7 +64,9 @@ export const TagSelect: React.FC<ITagSelectProps> = ({
     return []
   }, [value])
 
-  const [localCreatedOptions, setLocalCreatedOptions] = useState<{ label: string; value: string }[]>([])
+  const [localCreatedOptions, setLocalCreatedOptions] = useState<
+    { label: string; value: string }[]
+  >([])
   const [searchKeyword, setSearchKeyword] = useState('')
   const [newTagName, setNewTagName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -184,10 +191,7 @@ export const TagSelect: React.FC<ITagSelectProps> = ({
         }
 
         if (newKey) {
-          setLocalCreatedOptions((prev) => [
-            ...prev,
-            { label: itemName, value: newKey as string },
-          ])
+          setLocalCreatedOptions((prev) => [...prev, { label: itemName, value: newKey as string }])
         }
 
         message({
@@ -351,8 +355,12 @@ export const TagSelect: React.FC<ITagSelectProps> = ({
     const existing = mergedOptions.find(
       (opt) =>
         String(opt.value) !== itemKey &&
-        (String(opt.label || '').trim().toLowerCase() === nextValue.toLowerCase() ||
-          String(opt.value || '').trim().toLowerCase() === nextValue.toLowerCase()),
+        (String(opt.label || '')
+          .trim()
+          .toLowerCase() === nextValue.toLowerCase() ||
+          String(opt.value || '')
+            .trim()
+            .toLowerCase() === nextValue.toLowerCase()),
     )
     if (existing) {
       message({ type: 'warning', content: `${capitalizedItemLabel} "${nextValue}" already exists` })

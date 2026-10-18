@@ -15,7 +15,15 @@ import {
   deleteDoc,
   doc,
 } from 'firebase/firestore'
-import { ECategory, EType, IOption, IIotd, IIotdDoc, IIotdRequest, IItem } from '@/models/item.model'
+import {
+  ECategory,
+  EType,
+  IOption,
+  IIotd,
+  IIotdDoc,
+  IIotdRequest,
+  IItem,
+} from '@/models/item.model'
 import { categories, types } from '@/constant/item'
 import { itemApi } from '@/services/firebase/api/item.api'
 
@@ -88,7 +96,7 @@ const getRandomItemByCategory = async (
     }
 
     // Get candidate items from results, filtering for valid meanings
-    const allItems = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as IItem))
+    const allItems = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as IItem)
     const eligibleItems = allItems.filter((item) => {
       const meanings = item.meanings || []
       return (
@@ -123,7 +131,6 @@ const getRandomItemByCategory = async (
     return null
   }
 }
-
 
 /**
  * Create a new Item of the Day for a specific category.

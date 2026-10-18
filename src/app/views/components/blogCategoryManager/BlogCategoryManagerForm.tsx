@@ -59,12 +59,7 @@ export const BlogCategoryManagerForm: React.FC<BlogCategoryManagerFormProps> = (
   }
 
   return (
-    <Flex
-      vertical
-      gap={token.size}
-      style={{ width: '100%' }}
-      onClick={(e) => e.stopPropagation()}
-    >
+    <Flex vertical gap={token.size} style={{ width: '100%' }} onClick={(e) => e.stopPropagation()}>
       {/* Top search & add toolbar */}
       <Flex align='center' gap={token.size / 2} wrap='wrap'>
         <Input
@@ -88,11 +83,7 @@ export const BlogCategoryManagerForm: React.FC<BlogCategoryManagerFormProps> = (
       {isFormVisible && (
         <Card
           size='small'
-          title={
-            editingCategory
-              ? `Edit Category: ${editingCategory.name}`
-              : 'Add New Category'
-          }
+          title={editingCategory ? `Edit Category: ${editingCategory.name}` : 'Add New Category'}
           extra={
             <Button
               type='text'
@@ -125,11 +116,7 @@ export const BlogCategoryManagerForm: React.FC<BlogCategoryManagerFormProps> = (
       </Flex>
 
       {/* Category List Table */}
-      <BlogCategoryList
-        categories={filteredCategories}
-        isLoading={isLoading}
-        onEdit={handleEdit}
-      />
+      <BlogCategoryList categories={filteredCategories} isLoading={isLoading} onEdit={handleEdit} />
 
       {onClose && (
         <Flex justify='flex-end' gap={token.size / 2}>

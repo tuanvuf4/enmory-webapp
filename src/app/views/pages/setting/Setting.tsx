@@ -591,9 +591,7 @@ const Setting = () => {
                 <Row align={'top'} gutter={[token.size, token.size]}>
                   <Col xs={24} md={8}>
                     <h3>Item Tags</h3>
-                    <p style={{ color: token.colorTextSecondary }}>
-                      Manage tags used for items.
-                    </p>
+                    <p style={{ color: token.colorTextSecondary }}>Manage tags used for items.</p>
                   </Col>
 
                   <Col xs={24} md={16}>

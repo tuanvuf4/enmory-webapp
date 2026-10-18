@@ -24,10 +24,7 @@ export const checklistApi = {
     const { user, error } = requireAuth()
     if (error || !user) return []
 
-    const q = query(
-      collection(db, dbCollections.checklists),
-      where('uid', '==', user.uid)
-    )
+    const q = query(collection(db, dbCollections.checklists), where('uid', '==', user.uid))
 
     const snapshot = await getDocs(q)
     const checklistDocs = snapshot.docs.map((docSnap) => ({
@@ -94,7 +91,7 @@ export const checklistApi = {
           isCompleted: !!entry.isCompleted,
           added_date: entry.added_date || Date.now(),
         }
-      })
+      }),
     )
 
     return hydratedList
@@ -113,7 +110,7 @@ export const checklistApi = {
     const checkQuery = query(
       collection(db, dbCollections.checklists),
       where('uid', '==', user.uid),
-      where('itemId', '==', item.id)
+      where('itemId', '==', item.id),
     )
     const existing = await getDocs(checkQuery)
     if (!existing.empty) {

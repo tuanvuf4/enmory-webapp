@@ -28,7 +28,15 @@ export const BlogItem = ({
           variant={'text'}
           icon={<EditOutlined />}
           onClick={() => {
-            openBlogModal('edit', { id, title, description, created_date, category_id, relation, tags })
+            openBlogModal('edit', {
+              id,
+              title,
+              description,
+              created_date,
+              category_id,
+              relation,
+              tags,
+            })
           }}
         />
       </Flex>

@@ -20,7 +20,13 @@ export const useChecklist = () => {
   })
 
   const toggleMutation = useMutation({
-    mutationFn: async ({ checklistId, isCompleted }: { checklistId: string; isCompleted: boolean }) => {
+    mutationFn: async ({
+      checklistId,
+      isCompleted,
+    }: {
+      checklistId: string
+      isCompleted: boolean
+    }) => {
       return await checklistApi.toggleComplete(checklistId, isCompleted)
     },
     onMutate: async ({ checklistId, isCompleted }) => {
@@ -31,8 +37,8 @@ export const useChecklist = () => {
         queryClient.setQueryData<IChecklistItem[]>(
           checklistKeys.list(),
           previous.map((item) =>
-            item.checklistId === checklistId ? { ...item, isCompleted } : item
-          )
+            item.checklistId === checklistId ? { ...item, isCompleted } : item,
+          ),
         )
       }
 
@@ -59,7 +65,7 @@ export const useChecklist = () => {
       if (previous) {
         queryClient.setQueryData<IChecklistItem[]>(
           checklistKeys.list(),
-          previous.filter((item) => item.checklistId !== checklistId)
+          previous.filter((item) => item.checklistId !== checklistId),
         )
       }
 
@@ -97,4 +103,3 @@ export const useChecklist = () => {
     addItem: (item: IItem) => addMutation.mutateAsync(item),
   }
 }
-

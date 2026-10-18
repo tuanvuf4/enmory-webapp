@@ -136,7 +136,6 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
         />
       </div>
 
-
       {/* Color Field */}
       <div style={{ marginBottom: token.size * 2 }}>
         <label style={{ display: 'block', marginBottom: token.size / 2 }}>Color</label>

@@ -68,7 +68,7 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
   const getRandomExamples = useCallback(
     async (number = size, force = false) => {
       // Check if examples already existed in Redux
-      if (!force) return
+      if (examples.length > 0 && !force) return
 
       try {
         setLoading(true)

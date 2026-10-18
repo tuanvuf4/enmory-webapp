@@ -23,6 +23,7 @@ import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore'
 import { dbCollections, app as firebaseApp } from '@/config/firebaseConfig'
 import { IUserConfig } from '@/models/user.model'
 import { appSetting } from '@/config/appConfig'
+import { IHttpResponse } from '@/models/http.model'
 
 export interface IAuthUser {
   uid: string
@@ -486,3 +487,37 @@ export class FirebaseAuthService {
 
 // Export singleton instance
 export const firebaseAuthService = new FirebaseAuthService()
+
+/**
+ * Ensures user is authenticated and returns the user object,
+ * or returns an unauthorized IHttpResponse (401).
+ * Reusable replacement for the repeated lines 127-135 pattern.
+ */
+export const requireAuth = <T = any>(
+  defaultContent: T | null = null,
+): { user: User; error: null } | { user: null; error: IHttpResponse<T> } => {
+  const user = firebaseAuthService.getCurrentUser()
+  if (!user?.uid) {
+    return {
+      user: null,
+      error: {
+        isSuccess: false,
+        message: 'User not authenticated',
+        content: defaultContent,
+        statusCode: 401,
+      },
+    }
+  }
+  return { user, error: null }
+}
+
+/**
+ * Asserts user is authenticated and returns User, otherwise throws an Error.
+ */
+export const getRequiredCurrentUser = (): User => {
+  const user = firebaseAuthService.getCurrentUser()
+  if (!user?.uid) {
+    throw new Error('User not authenticated')
+  }
+  return user
+}

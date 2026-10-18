@@ -225,7 +225,7 @@ export const integrateFirebaseDbExamples = async (options?: {
 
       try {
         const exSnapshot = await getDocs(
-          query(collection(db, dbCollections.examples), where(documentId(), 'in', chunk)),
+          query(collection(db, 'examples'), where(documentId(), 'in', chunk)),
         )
         exSnapshot.forEach((docSnap) => {
           examplesMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as IExample)
@@ -481,48 +481,6 @@ export const removeLegacyFieldsFromFirebaseDb = async (options?: {
       }
     }
 
-    // 2. Process standalone examples collection (if any exist)
-    try {
-      options?.onProgress?.('Checking standalone examples collection for legacy fields...')
-      let examplesQuery = query(collection(db, dbCollections.examples))
-      if (options?.uid) {
-        examplesQuery = query(
-          collection(db, dbCollections.examples),
-          where('uid', '==', options.uid),
-        )
-      }
-      const examplesSnapshot = await getDocs(examplesQuery)
-      for (const exDoc of examplesSnapshot.docs) {
-        const exData = exDoc.data()
-        const hasExKeywords = 'keywords' in exData
-        const hasExOriginLower = 'origin_lowercase' in exData
-
-        if (hasExKeywords || hasExOriginLower) {
-          const exPayload: any = {
-            last_update: Date.now(),
-          }
-          if (hasExKeywords) {
-            exPayload.keywords = deleteField()
-          }
-          if (hasExOriginLower) {
-            exPayload.origin_lowercase = deleteField()
-          }
-
-          currentBatch.update(exDoc.ref, exPayload)
-          batchCount++
-          result.examplesUpdated++
-
-          if (batchCount >= FIRESTORE_BATCH_WRITE_LIMIT) {
-            await currentBatch.commit()
-            currentBatch = writeBatch(db)
-            batchCount = 0
-          }
-        }
-      }
-    } catch (exErr) {
-      console.warn('Checking standalone examples collection failed:', exErr)
-    }
-
     if (batchCount > 0) {
       options?.onProgress?.('Finalizing updates in Firestore...')
       await currentBatch.commit()
@@ -612,7 +570,12 @@ export const removeLegacyFieldsFromFirebaseDb = async (options?: {
     }
 
     result.isSuccess = true
-    result.message = `Successfully removed legacy fields (keywords & origin_lowercase) from ${result.itemsUpdated} items and ${result.examplesUpdated} standalone examples in Firebase DB.`
+    if (result.itemsUpdated === 0 && result.examplesUpdated === 0) {
+      result.message =
+        'No legacy fields (keywords & origin_lowercase) found. Firebase DB is already clean!'
+    } else {
+      result.message = `Successfully removed legacy fields (keywords & origin_lowercase) from ${result.itemsUpdated} items and ${result.examplesUpdated} standalone examples in Firebase DB.`
+    }
     options?.onProgress?.(result.message)
     return result
   } catch (error: any) {

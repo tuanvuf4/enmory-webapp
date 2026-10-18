@@ -33,9 +33,37 @@ export const useAutoComplete = (
       size: appSetting.numberItemOfAutoComplete * 2,
     }
 
-    if (!keyword) return setOptions([])
+    if (!keyword) {
+      setOptions([])
+      setIsSearching(false)
+      return
+    }
 
-    if (keyword && keyword.length >= 2) {
+    if (type === 'tag') {
+      handleSession = setTimeout(() => {
+        setIsSearching(true)
+        tagApi
+          .getTags(keyword || '')
+          .then((response) => {
+            if (response.content && response.content.length > 0) {
+              setOptions(
+                response.content.map((tag) => ({
+                  id: tag.id,
+                  label: tag.value,
+                  value: tag.value,
+                })),
+              )
+            } else setOptions([])
+          })
+          .catch((err) => {
+            console.error('Error fetching tags:', err)
+            setOptions([])
+          })
+          .finally(() => {
+            setIsSearching(false)
+          })
+      }, timeout)
+    } else if (keyword.length >= 2) {
       handleSession = setTimeout(async () => {
         setIsSearching(true)
         if (type === 'item') {
@@ -77,12 +105,14 @@ export const useAutoComplete = (
                 )
               } else setOptions([])
             })
+            .catch((err) => {
+              console.error('Error fetching item autocomplete:', err)
+              setOptions([])
+            })
             .finally(() => {
               setIsSearching(false)
             })
-        }
-
-        if (type === 'example') {
+        } else if (type === 'example') {
           exampleApi
             .getExamples(payload)
             .then((response: IHttpResponse<IExample[]>) => {
@@ -98,35 +128,19 @@ export const useAutoComplete = (
                 )
               } else setOptions([])
             })
+            .catch((err) => {
+              console.error('Error fetching example autocomplete:', err)
+              setOptions([])
+            })
             .finally(() => {
               setIsSearching(false)
             })
         }
       }, timeout)
+    } else {
+      setOptions([])
+      setIsSearching(false)
     }
-
-    handleSession = setTimeout(() => {
-      setIsSearching(true)
-
-      if (type === 'tag') {
-        tagApi
-          .getTags(keyword || '')
-          .then((response) => {
-            if (response.content && response.content.length > 0) {
-              setOptions(
-                response.content.map((tag) => ({
-                  id: tag.id,
-                  label: tag.value,
-                  value: tag.value,
-                })),
-              )
-            } else setOptions([])
-          })
-          .finally(() => {
-            setIsSearching(false)
-          })
-      }
-    }, timeout)
 
     return () => {
       clearTimeout(handleSession)

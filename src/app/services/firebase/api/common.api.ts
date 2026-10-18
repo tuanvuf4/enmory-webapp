@@ -1,6 +1,10 @@
 import { IHttpResponse } from '@/models/http.model'
 import { db, dbCollections } from '@/config/firebaseConfig'
-import { firebaseAuthService } from '@/services/firebase/authService'
+import {
+  firebaseAuthService,
+  requireAuth,
+  getRequiredCurrentUser,
+} from '@/services/firebase/authService'
 import {
   collection,
   query,
@@ -280,21 +284,14 @@ const deleteIotd = async (id: string): Promise<IHttpResponse<null>> => {
 }
 
 const checkAuth = () => {
-  const isAuth = firebaseAuthService.isAuthenticated()
-
-  if (!isAuth) {
-    return {
-      isSuccess: false,
-      message: 'User not authenticated',
-      content: [],
-      statusCode: 401,
-    }
-  }
+  return requireAuth().error
 }
 
 const getCurrentUser = () => {
   return firebaseAuthService.getCurrentUser()
 }
+
+export { requireAuth, getRequiredCurrentUser }
 
 export const commonApi = {
   getCategories,
@@ -304,4 +301,6 @@ export const commonApi = {
   deleteIotd,
   checkAuth,
   getCurrentUser,
+  requireAuth,
+  getRequiredCurrentUser,
 }

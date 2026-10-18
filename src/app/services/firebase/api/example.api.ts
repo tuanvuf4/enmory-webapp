@@ -2,7 +2,7 @@ import { IHttpResponse } from '@/models/http.model'
 import { IExample } from '@/models/item.model'
 import { IExampleQuery } from '@/models/example.model'
 import { db, dbCollections } from '@/config/firebaseConfig'
-import { firebaseAuthService } from '@/services/firebase/authService'
+import { requireAuth, getRequiredCurrentUser } from '@/services/firebase/authService'
 import { removeLineBreaks } from '@/core/utils'
 import {
   localDb,
@@ -10,49 +10,33 @@ import {
   getRandomLocalExamples,
   invalidateSearchIndex,
 } from '@/services/localDb'
-import {
-  collection,
-  doc,
-  getDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  Timestamp,
-} from 'firebase/firestore'
+import { collection, doc } from 'firebase/firestore'
 
 /**
- * Create a new example
+ * Create a new example (Strict Local-Only)
  */
 const createExample = async (body: IExample): Promise<IHttpResponse<IExample>> => {
   try {
-    const currentUser = firebaseAuthService.getCurrentUser()
-    if (!currentUser) {
-      throw new Error('User not authenticated')
-    }
+    const currentUser = getRequiredCurrentUser()
 
     const origin = removeLineBreaks(body.origin)
     const translation = removeLineBreaks(body.translation)
+    const now = Date.now()
+    const id = body.id || doc(collection(db, dbCollections.items)).id
 
-    const exampleData: IExample = {
+    const newExample: IExample = {
       ...body,
+      id,
       origin,
       translation,
       uid: currentUser.uid,
-      created_date: Timestamp.now().toMillis(),
-      last_update: Timestamp.now().toMillis(),
-      randomIndex: Math.random(), // For efficient random queries
+      created_date: body.created_date || now,
+      last_update: now,
+      randomIndex: body.randomIndex ?? Math.random(),
     }
 
-    const docRef = await addDoc(collection(db, dbCollections.examples), exampleData)
-    const newExample = { ...exampleData, id: docRef.id }
-
-    // Modify local DB as well
-    try {
-      await localDb.examples.put(newExample)
-      invalidateSearchIndex()
-    } catch (localErr) {
-      console.warn('Failed to save example to localDb:', localErr)
-    }
+    await localDb.examples.put(newExample)
+    invalidateSearchIndex()
 
     return {
       isSuccess: true,
@@ -102,17 +86,10 @@ const getExampleById = async (id: string | number): Promise<IHttpResponse<IExamp
  */
 const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IExample[]>> => {
   try {
-    const currentUser = firebaseAuthService.getCurrentUser()
-    if (!currentUser?.uid) {
-      return {
-        isSuccess: true,
-        message: 'No authenticated user',
-        content: [],
-        statusCode: 200,
-      }
-    }
+    const { user, error } = requireAuth<IExample[]>([])
+    if (error) return error
 
-    return await queryLocalExamples(querySearch, currentUser.uid)
+    return await queryLocalExamples(querySearch, user.uid)
   } catch (error) {
     console.error('Error fetching examples from localDb:', error)
     throw error
@@ -124,17 +101,10 @@ const getExamples = async (querySearch: IExampleQuery): Promise<IHttpResponse<IE
  */
 const getRandomExamples = async (size: number): Promise<IHttpResponse<IExample[]>> => {
   try {
-    const currentUser = firebaseAuthService.getCurrentUser()
-    if (!currentUser?.uid) {
-      return {
-        isSuccess: false,
-        message: 'User not authenticated',
-        content: [],
-        statusCode: 401,
-      }
-    }
+    const { user, error } = requireAuth<IExample[]>([])
+    if (error) return error
 
-    return await getRandomLocalExamples(size, currentUser.uid)
+    return await getRandomLocalExamples(size, user.uid)
   } catch (error) {
     console.error('Error fetching random examples from localDb:', error)
     return {
@@ -147,7 +117,7 @@ const getRandomExamples = async (size: number): Promise<IHttpResponse<IExample[]
 }
 
 /**
- * Update example
+ * Update example (Strict Local-Only)
  */
 const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IExample>> => {
   try {
@@ -155,36 +125,29 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
       throw new Error('Example ID is required')
     }
 
-    const exampleDocRef = doc(db, dbCollections.examples, String(body.id))
-    const updateData: any = {
+    const existing = await localDb.examples.get(String(body.id))
+    const now = Date.now()
+    const updateData: Partial<IExample> = {
       ...body,
-      last_update: Timestamp.now().toMillis(),
+      last_update: now,
     }
 
     if (body.origin !== undefined) {
-      const origin = removeLineBreaks(body.origin)
-      updateData.origin = origin
+      updateData.origin = removeLineBreaks(body.origin)
     }
 
     if (body.translation !== undefined) {
       updateData.translation = removeLineBreaks(body.translation)
     }
 
-    await updateDoc(exampleDocRef, updateData)
-
-    const updatedDoc = await getDoc(exampleDocRef)
     const updatedExample = {
-      id: updatedDoc.id,
-      ...updatedDoc.data(),
+      ...(existing || {}),
+      ...updateData,
+      id: String(body.id),
     } as IExample
 
-    // Modify local DB as well
-    try {
-      await localDb.examples.put(updatedExample)
-      invalidateSearchIndex()
-    } catch (localErr) {
-      console.warn('Failed to update example in localDb:', localErr)
-    }
+    await localDb.examples.put(updatedExample)
+    invalidateSearchIndex()
 
     return {
       isSuccess: true,
@@ -199,20 +162,12 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
 }
 
 /**
- * Delete example
+ * Delete example (Strict Local-Only)
  */
 const deleteExample = async (id: string): Promise<IHttpResponse<IExample>> => {
   try {
-    const exampleDocRef = doc(db, dbCollections.examples, String(id))
-    await deleteDoc(exampleDocRef)
-
-    // Modify local DB as well
-    try {
-      await localDb.examples.delete(String(id))
-      invalidateSearchIndex()
-    } catch (localErr) {
-      console.warn('Failed to delete example from localDb:', localErr)
-    }
+    await localDb.examples.delete(String(id))
+    invalidateSearchIndex()
 
     return {
       isSuccess: true,

@@ -85,7 +85,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
       const origin = removeLineBreaks(example.origin || '')
       const translation = removeLineBreaks(example.translation || '')
       return {
-        id: example.id || doc(collection(db, dbCollections.examples)).id,
+        id: example.id || doc(collection(db, dbCollections.items)).id,
         uid: example.uid || user?.uid || '',
         origin,
         translation,

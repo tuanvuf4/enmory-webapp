@@ -365,8 +365,8 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
             disabled={loading}
           />
           <Text type='secondary' style={{ fontSize: 12 }}>
-            Google Gemini sẽ phân tích mô tả này để tạo prompt chuyên nghiệp, sau đó viết kịch bản hội
-            thoại 5-10 phút kèm mốc thời gian (timestamps M:SS).
+            Google Gemini sẽ phân tích mô tả này để tạo prompt chuyên nghiệp, sau đó viết kịch bản
+            hội thoại 5-10 phút kèm mốc thời gian (timestamps M:SS).
           </Text>
         </div>
 

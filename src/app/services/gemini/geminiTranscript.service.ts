@@ -125,7 +125,10 @@ You MUST return a JSON object with this exact schema:
         })
 
         const rawText = response.text?.trim() || '{}'
-        const cleanJson = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim()
+        const cleanJson = rawText
+          .replace(/^```json\s*/i, '')
+          .replace(/```\s*$/i, '')
+          .trim()
         const parsed = JSON.parse(cleanJson)
 
         return {
@@ -189,4 +192,3 @@ You MUST return a JSON object with this exact schema:
 }
 
 export const transcriptService = geminiTranscriptService
-

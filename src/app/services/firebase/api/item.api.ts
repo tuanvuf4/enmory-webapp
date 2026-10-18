@@ -22,12 +22,7 @@ import { toWildString } from '@/helpers/item'
 import { commonApi } from './common.api'
 import { categories, types } from '@/constant/index'
 import { shuffleArray } from '@/helpers/mics'
-import {
-  localDb,
-  queryLocalItems,
-  invalidateSearchIndex,
-  populateItemExamples,
-} from '@/services/localDb'
+import { localDb, queryLocalItems, invalidateSearchIndex } from '@/services/localDb'
 import {
   sanitizeItemForFirestore,
   extractExamplesFromItems,
@@ -159,11 +154,11 @@ const getItemById = async (id: string): Promise<IHttpResponse<IItem>> => {
 
     const localItem = await localDb.items.get(id)
     if (localItem && !localItem.is_deleted) {
-      const [populated] = await populateItemExamples([localItem])
+      delete (localItem as any).quiz
       return {
         isSuccess: true,
         message: 'Item fetched from local database',
-        content: populated,
+        content: localItem,
         statusCode: 200,
       }
     }
@@ -257,11 +252,8 @@ const getStudySet = async (
       }
     }
 
-    // Populate examples for all items from localDb
-    const itemsWithExamples = await populateItemExamples(allItems)
-
-    // Generate quiz data for each item
-    const itemsWithQuiz: IItemQuiz[] = itemsWithExamples.map((item) => {
+    // Generate quiz data for each item (examples are already embedded in items)
+    const itemsWithQuiz: IItemQuiz[] = allItems.map((item) => {
       // Randomly decide quiz type (50% chance for each type if catId === 1)
       const useFillInBlank = item.catId === 1 && Math.random() < 0.5
 
@@ -392,6 +384,7 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
       is_deleted: false,
       randomIndex: Math.random(), // For efficient random queries
     }
+    delete (newItem as any).quiz
 
     const itemsRef = collection(db, dbCollections.items)
     const docRef = await addDoc(itemsRef, sanitizeItemForFirestore(newItem))
@@ -399,6 +392,7 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
       id: docRef.id,
       ...newItem,
     } as unknown as IItem
+    delete (createdItem as any).quiz
 
     // Modify local DB as well
     try {
@@ -450,14 +444,17 @@ const createItems = async (items: IItem[]): Promise<IHttpResponse<IItem>> => {
         is_deleted: false,
         randomIndex: Math.random(), // For efficient random queries
       }
+      delete (newItem as any).quiz
 
       const itemsRef = collection(db, dbCollections.items)
       const docRef = await addDoc(itemsRef, sanitizeItemForFirestore(newItem))
 
-      createdItems.push({
+      const created = {
         id: docRef.id,
         ...newItem,
-      } as unknown as IItem)
+      } as unknown as IItem
+      delete (created as any).quiz
+      createdItems.push(created)
     }
 
     // Modify local DB as well
@@ -516,10 +513,12 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
     try {
       const existing = await localDb.items.get(id)
       if (existing) {
+        delete (existing as any).quiz
         updatedItem = { ...existing, ...updateData, id }
       } else {
         updatedItem = { ...updateData, id } as IItem
       }
+      delete (updatedItem as any).quiz
       await localDb.items.put(updatedItem)
       const itemExamples = extractExamplesFromItems([updatedItem])
       if (itemExamples.length > 0) {
@@ -529,12 +528,14 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
     } catch (localErr) {
       console.warn('Failed to update item in localDb:', localErr)
       updatedItem = { ...updateData, id } as IItem
+      delete (updatedItem as any).quiz
     }
 
     // 2. Update Firebase DB in parallel
     try {
       const itemDocRef = doc(db, dbCollections.items, id)
-      const { id: _docId, ...firestorePayload } = updateData
+      const { id: _docId, quiz: _quiz, ...firestorePayload } = updateData
+      delete firestorePayload.quiz
       await updateDoc(itemDocRef, sanitizeItemForFirestore(firestorePayload))
     } catch (firebaseErr) {
       console.error('Failed to update item in Firestore:', firebaseErr)

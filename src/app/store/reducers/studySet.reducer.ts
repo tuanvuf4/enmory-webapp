@@ -42,9 +42,14 @@ export const studySetReducer = createSlice({
       }
     },
     update(state: IStudySet, action: PayloadAction<Partial<IItemQuiz>>) {
-      state.list = state.list.map((item) =>
-        item.id === action.payload.id ? { ...item, ...action.payload } : { ...item },
-      )
+      state.list = state.list.map((item) => {
+        if (item.id !== action.payload.id) return item
+        return {
+          ...item,
+          ...action.payload,
+          quiz: action.payload.quiz ? { ...item.quiz, ...action.payload.quiz } : item.quiz,
+        }
+      })
     },
     updateQuiz(
       state: IStudySet,

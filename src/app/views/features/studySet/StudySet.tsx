@@ -135,13 +135,15 @@ export const StudySet: React.FC = () => {
   const onSubmit = async (type: EQuiz) => {
     dispatch(studySetAction.isSubmitAnswer(true))
 
+    const currentLevel = typeof item?.level === 'number' ? item.level : EItemLevel.ZERO
+
     if (type === EQuiz.FILL_IN_BLANK) {
       if (
         respond &&
         (item?.quiz.answer as string).trim().toLowerCase() ===
           (respond as string).trim().toLowerCase()
       ) {
-        await updateItemStatus(item as IItemQuiz, (item?.level as number) + 1, true)
+        await updateItemStatus(item as IItemQuiz, currentLevel + 1, true)
       } else {
         await updateItemStatus(item as IItemQuiz, EItemLevel.ZERO, false)
       }
@@ -149,32 +151,34 @@ export const StudySet: React.FC = () => {
 
     if (type === EQuiz.MULTI_CHOICE) {
       if (item?.id === respond) {
-        await updateItemStatus(item as IItemQuiz, (item?.level as number) + 1, true)
+        await updateItemStatus(item as IItemQuiz, currentLevel + 1, true)
       } else {
-        await updateItemStatus(item as IItemQuiz, (item?.level as number) - 1, false)
+        await updateItemStatus(item as IItemQuiz, currentLevel - 1, false)
       }
     }
   }
 
   const updateItemStatus = async (item: IItemQuiz, level: number, result: boolean) => {
-    const { quiz, ...rest } = item
-    if (level < EItemLevel.ZERO) level = EItemLevel.ZERO
-    if (level > EItemLevel.FIVE) level = EItemLevel.FIVE
+    let nextLevel = level
+    if (nextLevel < EItemLevel.ZERO) nextLevel = EItemLevel.ZERO
+    if (nextLevel > EItemLevel.FIVE) nextLevel = EItemLevel.FIVE
 
+    const nextCount = typeof item.count === 'number' && item.count >= 0 ? item.count + 1 : 1
+
+    // Update quiz result and learning stats exclusively in Redux
     dispatch(
       studySetAction.update({
         id: item.id,
-        level: level,
-        count: rest.count && rest.count >= 0 ? rest.count + 1 : 1,
-        quiz: { ...item.quiz, result: result },
+        level: nextLevel,
+        count: nextCount,
+        quiz: { ...item.quiz, result },
       }),
     )
 
+    // Persist only learning stats to DB - never write quiz UI state to local or Firebase DB
     await itemApi.updateItem(item.id ?? '', {
-      ...rest,
-      level: level,
-      count: rest.count && rest.count >= 0 ? rest.count + 1 : 1,
-      meanings: item?.meanings,
+      level: nextLevel,
+      count: nextCount,
     })
   }
 

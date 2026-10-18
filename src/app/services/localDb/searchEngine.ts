@@ -233,12 +233,11 @@ export const queryLocalItems = async (
   const page = Math.min(params.page || 0, Math.max(0, totalPage - 1))
 
   const pagedItems = filtered.slice(page * size, (page + 1) * size)
-  const populatedItems = await populateItemExamples(pagedItems)
 
   return {
     isSuccess: true,
     message: 'Items fetched from local database',
-    content: populatedItems,
+    content: pagedItems,
     paging: {
       page,
       size,

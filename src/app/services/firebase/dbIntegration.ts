@@ -78,7 +78,8 @@ export const extractExamplesFromItems = (items: IItem[]): IExample[] => {
  * 3. No undefined properties exist.
  */
 export const sanitizeItemForFirestore = (item: Partial<IItem>): any => {
-  const { id: _docId, ...rest } = item as any
+  const { id: _docId, quiz: _quiz, ...rest } = item as any
+  delete rest.quiz
 
   const cleanItem = {
     ...rest,
@@ -112,25 +113,29 @@ export const sanitizeItemForFirestore = (item: Partial<IItem>): any => {
 
 /**
  * Normalizes item examples in memory (defensive fallback for any unmigrated string IDs).
+ * Also defensively ensures no quiz property is persisted to localDb.
  */
 export const normalizeItemExamples = (items: IItem[]): IItem[] => {
-  return items.map((item) => ({
-    ...item,
-    meanings: (item.meanings || []).map((meaning) => ({
-      ...meaning,
-      examples: ((meaning.examples || []) as unknown[]).map((ex: any) => {
-        if (typeof ex === 'string') {
-          return {
-            id: ex,
-            origin: '',
-            translation: '',
-            note: '',
-          } as IExample
-        }
-        return ex as IExample
-      }),
-    })),
-  }))
+  return items.map((item) => {
+    const { quiz: _quiz, ...cleanItem } = item as any
+    return {
+      ...cleanItem,
+      meanings: (cleanItem.meanings || []).map((meaning: IMeaning) => ({
+        ...meaning,
+        examples: ((meaning.examples || []) as unknown[]).map((ex: any) => {
+          if (typeof ex === 'string') {
+            return {
+              id: ex,
+              origin: '',
+              translation: '',
+              note: '',
+            } as IExample
+          }
+          return ex as IExample
+        }),
+      })),
+    }
+  })
 }
 
 /**

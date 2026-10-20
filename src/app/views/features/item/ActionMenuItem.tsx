@@ -37,7 +37,7 @@ export const ActionItem: React.FC<IActionItem> = (props) => {
   )
 }
 
-export const getActionMenuItem = (data: IItem | undefined): ItemType[] => {
+export const getActionMenuItem = (data: IItem | undefined, isInChecklist = false): ItemType[] => {
   return [
     {
       key: 0,
@@ -70,7 +70,12 @@ export const getActionMenuItem = (data: IItem | undefined): ItemType[] => {
     },
     {
       key: 8,
-      label: <ActionItem label='Add to checklist' icon={<CheckSquareOutlined />} />,
+      label: (
+        <ActionItem
+          label={isInChecklist ? 'Remove from checklist' : 'Add to checklist'}
+          icon={<CheckSquareOutlined style={{ color: isInChecklist ? '#52c41a' : undefined }} />}
+        />
+      ),
     },
     {
       key: 3,

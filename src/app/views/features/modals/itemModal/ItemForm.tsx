@@ -10,7 +10,7 @@ import { settingAction } from '@/store/reducers/setting.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { InputTag, Level, ReviewableTextArea } from '@/views/components'
 import { Reference, IReferenceItem } from '@/views/features/references/References'
-import { theme, Row, Space, Col, Select, Checkbox, Button, Flex, Tag } from 'antd'
+import { theme, Row, Space, Col, Select, Checkbox, Button, Flex } from 'antd'
 import clsx from 'clsx'
 import { useEffect, Suspense, useState } from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
@@ -600,28 +600,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                     gap={token.size * 0.25}
                     style={{ marginTop: token.size / 2 }}
                   >
-                    <Tag
-                      ref={(node) => {
-                        if (node) {
-                          node.style.setProperty(
-                            'background-color',
-                            token.colorPrimary,
-                            'important',
-                          )
-                          node.style.setProperty('border-color', token.colorPrimary, 'important')
-                          node.style.setProperty('color', '#fff', 'important')
-                        }
-                      }}
-                      style={{
-                        backgroundColor: token.colorPrimary,
-                        borderColor: token.colorPrimary,
-                        color: '#fff',
-                      }}
-                    >
-                      Auto-Fill
-                    </Tag>
-
                     <Reference
+                      autoFill={true}
                       origin={origin}
                       onSelect={handleReferenceSelect}
                       loadingId={activeReferenceId}

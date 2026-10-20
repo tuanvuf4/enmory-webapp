@@ -62,12 +62,27 @@ const Home = () => {
       {isAuth && (
         <div className={appStyle.container}>
           <Row justify={'start'} align={'top'} gutter={token.size * 1.5}>
-            <Col xs={24} sm={14} md={14}>
+            <Col xs={24} sm={12} md={12}>
               <Space direction='vertical' size={token.size * 1.5} style={{ width: '100%' }}>
                 <Widget title={'Checklist'}>
                   <Checklist />
                 </Widget>
 
+                <IotdItemCard
+                  iotd={word}
+                  title={'Items of the day'}
+                  isLoadingPrefetch={isLoading && !isError}
+                />
+                <IotdItemCard iotd={phrase} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={collocation} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={sentence} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={idiom} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={slang} isLoadingPrefetch={isLoading && !isError} />
+              </Space>
+            </Col>
+
+            <Col xs={24} sm={12} md={12}>
+              <Space direction='vertical' size={token.size * 1.5} style={{ width: '100%' }}>
                 <Widget title={`Study Set`}>
                   <StudySet />
                 </Widget>
@@ -79,21 +94,6 @@ const Home = () => {
                 <Widget title={'Examples'}>
                   <Example />
                 </Widget>
-              </Space>
-            </Col>
-
-            <Col xs={24} sm={10} md={10}>
-              <Space direction='vertical' size={token.size * 1.5}>
-                <IotdItemCard
-                  iotd={word}
-                  title={'Items of the day'}
-                  isLoadingPrefetch={isLoading && !isError}
-                />
-                <IotdItemCard iotd={phrase} isLoadingPrefetch={isLoading && !isError} />
-                <IotdItemCard iotd={collocation} isLoadingPrefetch={isLoading && !isError} />
-                <IotdItemCard iotd={sentence} isLoadingPrefetch={isLoading && !isError} />
-                <IotdItemCard iotd={idiom} isLoadingPrefetch={isLoading && !isError} />
-                <IotdItemCard iotd={slang} isLoadingPrefetch={isLoading && !isError} />
               </Space>
             </Col>
           </Row>

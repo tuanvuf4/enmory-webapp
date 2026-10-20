@@ -61,7 +61,8 @@ export const Item: React.FC<IProps> = ({
   const { mutate: mutateDeleteItem } = useDeleteItem()
 
   const { confirm, notification, message } = usePrompt()
-  const { addItem } = useChecklist()
+  const { isItemInChecklist, toggleChecklist } = useChecklist()
+  const isInChecklist = isItemInChecklist(data?.id)
 
   const { viewMode } = useSelector((state) => state.setting)
 
@@ -106,7 +107,7 @@ export const Item: React.FC<IProps> = ({
 
       case '8': {
         try {
-          const res = await addItem(data)
+          const res = await toggleChecklist(data)
           notification({
             type: res.isSuccess ? 'success' : 'info',
             message: res.message,
@@ -114,7 +115,7 @@ export const Item: React.FC<IProps> = ({
         } catch (error: any) {
           notification({
             type: 'error',
-            message: error?.message || 'Failed to add item to checklist',
+            message: error?.message || 'Failed to update checklist',
           })
         }
         break
@@ -126,7 +127,7 @@ export const Item: React.FC<IProps> = ({
     }
   }
 
-  const getActionMenus = (menus = getActionMenuItem(data)) => {
+  const getActionMenus = (menus = getActionMenuItem(data, isInChecklist)) => {
     return menus
       .map((menu) => {
         if (!onViewSuccess && !action && menu?.key === 0) return false
@@ -138,7 +139,7 @@ export const Item: React.FC<IProps> = ({
   }
 
   const menuProps = {
-    items: getActionMenus(getActionMenuItem(data)),
+    items: getActionMenus(),
     onClick: handleMenuClick,
   }
 

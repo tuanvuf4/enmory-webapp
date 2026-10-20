@@ -43,7 +43,7 @@ export const studySetReducer = createSlice({
     },
     update(state: IStudySet, action: PayloadAction<Partial<IItemQuiz>>) {
       state.list = state.list.map((item) => {
-        if (item.id !== action.payload.id) return item
+        if (String(item.id) !== String(action.payload.id)) return item
         return {
           ...item,
           ...action.payload,
@@ -55,6 +55,7 @@ export const studySetReducer = createSlice({
       state: IStudySet,
       action: PayloadAction<Partial<IQuiz<string | Partial<IOption<string, boolean>>[]>>>,
     ) {
+      if (!state.list[state.status.currentIndex]) return
       state.list[state.status.currentIndex] = {
         ...state.list[state.status.currentIndex],
         quiz: {
@@ -63,48 +64,16 @@ export const studySetReducer = createSlice({
         },
       }
     },
-    updateQuizAnswer(state: IStudySet) {
-      state.list[state.status.currentIndex] = {
-        ...state.list[state.status.currentIndex],
-        quiz: {
-          ...state.list[state.status.currentIndex].quiz,
-          answer: [
-            ...(
-              state.list[state.status.currentIndex].quiz.answer as Partial<
-                IOption<string, boolean>
-              >[]
-            ).map((item) => {
-              if (item.id === 2673) {
-                return {
-                  ...item,
-                  label: '<ul><li>tấm thảm</li><li>tấm thảm</li></ul>',
-                }
-              }
-              return item
-            }),
-          ],
-        },
-      }
-    },
     onSelectAnswer(state: IStudySet, action: PayloadAction<Partial<IOption<string, boolean>>>) {
-      state.list[state.status.currentIndex] = {
-        ...state.list[state.status.currentIndex],
-        quiz: {
-          ...state.list[state.status.currentIndex].quiz,
-          answer: [
-            ...(
-              state.list[state.status.currentIndex].quiz.answer as Partial<
-                IOption<string, boolean>
-              >[]
-            ).map((item) => {
-              if (item.id === action.payload.id) {
-                return { ...action.payload }
-              }
-              return { ...item, value: false }
-            }),
-          ],
-        },
-      }
+      const currentItem = state.list[state.status.currentIndex]
+      if (!currentItem?.quiz || !Array.isArray(currentItem.quiz.answer)) return
+
+      currentItem.quiz.answer = currentItem.quiz.answer.map((item) => {
+        if (String(item.id) === String(action.payload.id)) {
+          return { ...item, ...action.payload, value: true }
+        }
+        return { ...item, value: false }
+      })
     },
     updateUserRespond(state: IStudySet, action: PayloadAction<string | number | null>) {
       state.respond = action.payload

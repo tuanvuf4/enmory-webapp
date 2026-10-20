@@ -14,6 +14,7 @@ import {
   documentId,
   addDoc,
   updateDoc,
+  deleteDoc,
   Timestamp,
   QueryConstraint,
   QueryDocumentSnapshot,
@@ -246,7 +247,15 @@ const getItemById = async (id: string): Promise<IHttpResponse<IItem>> => {
 const getEligibleItemsInCategory = async (catId: number): Promise<IItem[]> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
-    const allLocalItems = await localDb.items.where('catId').equals(catId).toArray()
+    const numericCatId = Number(catId)
+
+    // Load items strictly from local database
+    let allLocalItems = await localDb.items.where('catId').equals(numericCatId).toArray()
+    if (allLocalItems.length === 0) {
+      allLocalItems = await localDb.items
+        .filter((item) => Number(item.catId) === numericCatId)
+        .toArray()
+    }
 
     const userItems = allLocalItems.filter(
       (item) =>
@@ -366,9 +375,20 @@ const getStudySet = async (
       const pool =
         (item.catId !== undefined ? allCategoryItemsMap.get(item.catId) : undefined) || allItems
       const wrongAnswers = pool
-        .filter((otherItem) => otherItem.id !== item.id && otherItem.catId === item.catId)
+        .filter(
+          (otherItem) => otherItem.id !== item.id && Number(otherItem.catId) === Number(item.catId),
+        )
         .sort(() => Math.random() - 0.5)
         .slice(0, 3)
+
+      if (wrongAnswers.length < 3) {
+        const remaining = 3 - wrongAnswers.length
+        const extraWrong = allItems
+          .filter((other) => other.id !== item.id && !wrongAnswers.some((w) => w.id === other.id))
+          .sort(() => Math.random() - 0.5)
+          .slice(0, remaining)
+        wrongAnswers.push(...extraWrong)
+      }
 
       // Create answer options
       const answers: IAnswer<string, boolean>[] = [
@@ -638,6 +658,21 @@ const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
       deleted_date: now,
       last_update: now,
     })
+
+    // Also remove item from checklist in Firebase DB if present
+    try {
+      const checklistQuery = query(
+        collection(db, dbCollections.checklists),
+        where('uid', '==', currentUser.uid),
+        where('itemId', '==', id),
+      )
+      const checklistSnap = await getDocs(checklistQuery)
+      checklistSnap.forEach((docSnap) => {
+        deleteDoc(docSnap.ref).catch(() => {})
+      })
+    } catch (checklistErr) {
+      console.warn('Failed to clean up checklist entry for deleted item:', checklistErr)
+    }
 
     // Modify local DB as well
     try {

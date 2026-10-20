@@ -83,6 +83,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 240px;
+
+  > * {
+    margin: 0;
+  }
+
+  ul {
+    padding-left: 20px;
+    li {
+      display: list-item;
+      list-style-type: disc;
+    }
+  }
 }
 
 .actions {

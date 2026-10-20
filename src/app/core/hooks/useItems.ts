@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { itemApi, IItemRequestParams } from '@/services/firebase/api/item.api'
 import { IItem } from '@/models/item.model'
 import { localDb, invalidateSearchIndex } from '@/services/localDb'
+import { checklistKeys } from './useChecklist'
 
 // Query keys
 export const itemKeys = {
@@ -111,6 +112,8 @@ export const useUpdateItem = () => {
       // Invalidate lists and detail to refetch
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
       queryClient.invalidateQueries({ queryKey: itemKeys.detail(variables.id) })
+      // Invalidate checklist as well so updated item properties appear
+      queryClient.invalidateQueries({ queryKey: checklistKeys.all })
     },
     onError: (_err, variables, context: any) => {
       // Rollback on error
@@ -136,6 +139,8 @@ export const useDeleteItem = () => {
       clearLastDocStore()
       // Invalidate all item lists to refetch
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+      // Invalidate checklist as well
+      queryClient.invalidateQueries({ queryKey: checklistKeys.all })
     },
   })
 }

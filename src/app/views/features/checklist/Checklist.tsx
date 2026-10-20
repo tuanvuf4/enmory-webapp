@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { theme, Progress, Checkbox, Button, Empty, Spin, Segmented, Tooltip } from 'antd'
-import { DeleteOutlined, EyeOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EyeOutlined, SoundOutlined } from '@ant-design/icons'
 import { useChecklist } from '@/core/hooks'
 import { IChecklistItem } from '@/models/checklist.model'
 import { useItemModal, usePrompt } from '@/helpers/hooks'
+import { speakWord } from '@/helpers/mics'
 import styles from './checklist.module.scss'
 
 type FilterType = 'all' | 'active' | 'completed'
@@ -100,6 +101,8 @@ export const Checklist: React.FC = () => {
         <div className='flex flex-col gap-2'>
           {filteredItems.map((item: IChecklistItem) => {
             const id = item.checklistId || item.id || ''
+            const quickMeaning =
+              item.meanings?.[0]?.translation || item.meanings?.[0]?.definition || ''
 
             return (
               <div
@@ -120,9 +123,27 @@ export const Checklist: React.FC = () => {
                       />
                     </div>
 
+                    <SoundOutlined
+                      className={styles.soundIcon}
+                      style={{ color: token.colorPrimary }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        speakWord(item.origin)
+                      }}
+                    />
+
                     <span className={styles.wordOrigin} style={{ color: token.colorText }}>
                       {item.origin}
                     </span>
+
+                    {quickMeaning && (
+                      <div
+                        className={styles.quickMeaning}
+                        style={{ color: token.colorTextSecondary }}
+                        title={quickMeaning}
+                        dangerouslySetInnerHTML={{ __html: quickMeaning }}
+                      ></div>
+                    )}
                   </div>
 
                   <div className={styles.actions} onClick={(e) => e.stopPropagation()}>

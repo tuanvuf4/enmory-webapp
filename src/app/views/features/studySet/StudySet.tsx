@@ -7,7 +7,7 @@ import { GetStudySetByCatId } from '@/models/studySet.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { IStudySetStatus, studySetAction } from '@/store/reducers/studySet.reducer'
 import { theme, InputRef, Button, Input, Flex } from 'antd'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Item } from '../item/Item'
 import { EItemLevel } from '../modals/itemModal/data'
 import styles from './studySet.module.scss'
@@ -15,55 +15,80 @@ import appStyle from '@/style/appStyle.module.scss'
 import clsx from 'clsx'
 import { useItemModal, usePrompt } from '@/helpers/hooks'
 import { NotFound } from '@/views/components'
+import { categories as defaultCategories } from '@/constant/item'
 
 export const StudySet: React.FC = () => {
   const { token } = theme.useToken()
 
-  const [item, setItem] = useState<IItemQuiz>()
   const [loading, setLoading] = useState(false)
   const inputEl = useRef<InputRef | null>(null)
 
   const { notification } = usePrompt()
-
   const { openItemModal } = useItemModal()
-
   const dispatch = useDispatch()
 
   const { list, status, respond, isSubmit } = useSelector((state) => state.studySet)
-
   const { user } = useSelector((state) => state.auth)
   const configuration = user?.configuration
   const { categories } = useSelector((state) => state.setting)
 
   const { inProgress, isDone, currentIndex } = status
 
-  const getStudySetSizeByCategory = (category: ECategory) => {
-    if (category === ECategory.WORD) return configuration?.numberOfWordsInStudySet
+  // Derive current item synchronously from Redux to prevent 1-render lag and stale state
+  const currentItem = list[currentIndex] as IItemQuiz | undefined
 
-    if (category === ECategory.PHRASE) return configuration?.numberOfPhraseInStudySet
+  const getStudySetSizeByCategory = useCallback(
+    (category: ECategory) => {
+      let size: number | undefined
 
-    if (category === ECategory.IDIOM) return configuration?.numberOfIdiomInStudySet
+      switch (category) {
+        case ECategory.WORD:
+          size = configuration?.numberOfWordsInStudySet
+          break
+        case ECategory.PHRASE:
+          size = configuration?.numberOfPhraseInStudySet
+          break
+        case ECategory.IDIOM:
+          size = configuration?.numberOfIdiomInStudySet
+          break
+        case ECategory.SLANG:
+          size = configuration?.numberOfSlangInStudySet
+          break
+        case ECategory.COLLOCATION:
+          size = configuration?.numberOfCollocationsInStudySet
+          break
+        case ECategory.SENTENCE:
+          size = configuration?.numberOfSentencesInStudySet
+          break
+        default:
+          break
+      }
 
-    if (category === ECategory.SLANG) return configuration?.numberOfSlangInStudySet
+      return typeof size === 'number' && size > 0 ? size : appSetting.meta.numberOfWordsInStudySet
+    },
+    [configuration],
+  )
 
-    if (category === ECategory.COLLOCATION) return configuration?.numberOfCollocationsInStudySet
-
-    if (category === ECategory.SENTENCE) return configuration?.numberOfSentencesInStudySet
-
-    return appSetting.meta.numberOfWordsInStudySet
-  }
+  // Use resolved categories with fallback to defaultCategories if setting hasn't loaded
+  const resolvedCategories = categories && categories.length > 0 ? categories : defaultCategories
 
   // Prepare study set params
-  const studySetParams = categories
+  const studySetParams = resolvedCategories
     .filter((cat) => cat.id !== 0)
     .map((cat) => ({
       id: cat.id,
       size: getStudySetSizeByCategory(cat.value),
     })) as GetStudySetByCatId[]
 
+  const reset = useCallback(() => {
+    dispatch(studySetAction.isSubmitAnswer(false))
+    dispatch(studySetAction.updateUserRespond(null))
+  }, [dispatch])
+
   const createStudySet = async (params: Partial<IStudySetStatus>) => {
     try {
       setLoading(true)
+      reset()
 
       const response = await itemApi.getStudySet(studySetParams)
 
@@ -109,12 +134,15 @@ export const StudySet: React.FC = () => {
     }
   }
 
-  const onNext = () => {
+  const onNext = useCallback(() => {
     const studySet = document.getElementById('studySet')
-    studySet?.focus()
     reset()
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    if (currentIndex + 1 === list.length) {
+    if (studySet) {
+      studySet.focus()
+      const rect = studySet.getBoundingClientRect()
+      window.scrollTo({ top: rect.top + window.scrollY - 140, behavior: 'smooth' })
+    }
+    if (currentIndex + 1 >= list.length) {
       dispatch(
         studySetAction.updateProgress({
           currentIndex: 0,
@@ -130,72 +158,81 @@ export const StudySet: React.FC = () => {
         }),
       )
     }
-  }
+  }, [currentIndex, list.length, dispatch, reset])
 
-  const onSubmit = async (type: EQuiz) => {
-    dispatch(studySetAction.isSubmitAnswer(true))
-
-    const currentLevel = typeof item?.level === 'number' ? item.level : EItemLevel.ZERO
-
-    if (type === EQuiz.FILL_IN_BLANK) {
-      if (
-        respond &&
-        (item?.quiz.answer as string).trim().toLowerCase() ===
-          (respond as string).trim().toLowerCase()
-      ) {
-        await updateItemStatus(item as IItemQuiz, currentLevel + 1, true)
-      } else {
-        await updateItemStatus(item as IItemQuiz, EItemLevel.ZERO, false)
-      }
-    }
-
-    if (type === EQuiz.MULTI_CHOICE) {
-      if (item?.id === respond) {
-        await updateItemStatus(item as IItemQuiz, currentLevel + 1, true)
-      } else {
-        await updateItemStatus(item as IItemQuiz, currentLevel - 1, false)
-      }
-    }
-  }
-
-  const updateItemStatus = async (item: IItemQuiz, level: number, result: boolean) => {
+  const updateItemStatus = async (targetItem: IItemQuiz, level: number, result: boolean) => {
     let nextLevel = level
     if (nextLevel < EItemLevel.ZERO) nextLevel = EItemLevel.ZERO
     if (nextLevel > EItemLevel.FIVE) nextLevel = EItemLevel.FIVE
 
-    const nextCount = typeof item.count === 'number' && item.count >= 0 ? item.count + 1 : 1
+    const nextCount =
+      typeof targetItem.count === 'number' && targetItem.count >= 0 ? targetItem.count + 1 : 1
 
-    // Update quiz result and learning stats exclusively in Redux
+    // Update quiz result and learning stats in Redux
     dispatch(
       studySetAction.update({
-        id: item.id,
+        id: targetItem.id,
         level: nextLevel,
         count: nextCount,
-        quiz: { ...item.quiz, result },
+        quiz: { ...targetItem.quiz, result },
       }),
     )
 
-    // Persist only learning stats to DB - never write quiz UI state to local or Firebase DB
-    await itemApi.updateItem(item.id ?? '', {
-      level: nextLevel,
-      count: nextCount,
-    })
+    // Persist learning stats to DB
+    if (targetItem.id) {
+      try {
+        await itemApi.updateItem(targetItem.id, {
+          level: nextLevel,
+          count: nextCount,
+        })
+      } catch (err) {
+        console.warn('Failed to persist item stats:', err)
+      }
+    }
   }
 
-  const onSelectMultiChoice = (answer: IOption<string, boolean>) => {
-    dispatch(studySetAction.updateUserRespond(answer.id))
-    dispatch(
-      studySetAction.onSelectAnswer({
-        ...answer,
-        value: true,
-      }),
-    )
+  const onSubmit = async (type?: EQuiz) => {
+    if (isSubmit || !currentItem) return
+    const quizType = type ?? currentItem.quiz.type
+
+    dispatch(studySetAction.isSubmitAnswer(true))
+
+    const currentLevel = typeof currentItem.level === 'number' ? currentItem.level : EItemLevel.ZERO
+
+    if (quizType === EQuiz.FILL_IN_BLANK) {
+      const expected = String(currentItem.quiz.answer || '')
+        .trim()
+        .toLowerCase()
+      const actual = String(respond || '')
+        .trim()
+        .toLowerCase()
+      const isCorrect = actual.length > 0 && actual === expected
+
+      await updateItemStatus(currentItem, isCorrect ? currentLevel + 1 : EItemLevel.ZERO, isCorrect)
+    }
+
+    if (quizType === EQuiz.MULTI_CHOICE) {
+      const isCorrect = String(currentItem.id) === String(respond)
+      await updateItemStatus(
+        currentItem,
+        isCorrect ? currentLevel + 1 : currentLevel - 1,
+        isCorrect,
+      )
+    }
   }
 
-  const reset = () => {
-    dispatch(studySetAction.isSubmitAnswer(false))
-    dispatch(studySetAction.updateUserRespond(null))
-  }
+  const onSelectMultiChoice = useCallback(
+    (answer: IOption<string, boolean>) => {
+      dispatch(studySetAction.updateUserRespond(answer.id))
+      dispatch(
+        studySetAction.onSelectAnswer({
+          ...answer,
+          value: true,
+        }),
+      )
+    },
+    [dispatch],
+  )
 
   const onReload = async () => {
     reset()
@@ -217,67 +254,80 @@ export const StudySet: React.FC = () => {
     }
   }
 
-  const getClassValidate = (ans: IOption<string, boolean>, item: IItemQuiz, isSubmit: boolean) => {
-    if (isSubmit && ans.value && ans.id === item.id) return styles.correct
-    if (isSubmit && ans.value && ans.id !== item.id) return clsx(styles.active, styles.incorrect)
-    if (isSubmit && ans.value) return clsx(styles.active, styles.correct)
-    if (
-      isSubmit &&
-      ans.id === item.id &&
-      Array.isArray(item?.quiz.answer) &&
-      item.quiz.answer.findIndex((ans) => ans.value) === -1
-    )
-      return styles.incorrect
-    if (isSubmit && !ans.value && ans.id === item.id) return styles.correct
-    if (ans.value) return styles.active
+  const getClassValidate = (ans: IOption<string, boolean>, item: IItemQuiz, submitted: boolean) => {
+    if (!submitted) {
+      return ans.value ? styles.active : undefined
+    }
+
+    // After submit:
+    const isThisCorrect = String(ans.id) === String(item.id)
+    const isThisSelected = !!ans.value
+
+    if (isThisCorrect) {
+      return styles.correct
+    }
+    if (isThisSelected) {
+      return clsx(styles.active, styles.incorrect)
+    }
+    return undefined
   }
 
-  const onKeyBoardPress = (e: KeyboardEvent) => {
-    const studySet = document.getElementById('studySet')
-    if (!studySet?.contains(e.target as Node)) {
-      return
-    }
-
-    if (isDone && !inProgress && e.code === 'Enter') {
-      createStudySet({
-        currentIndex: 0,
-        isDone: false,
-        inProgress: true,
-      })
-    }
-
-    if (!isDone) {
-      if (item?.quiz.type === EQuiz.FILL_IN_BLANK) {
-        if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
-          inputEl.current?.focus()
-        }
-
-        if (e.code === 'Enter') {
-          isSubmit ? onNext() : onSubmit(EQuiz.FILL_IN_BLANK)
-        }
+  const onKeyBoardPress = useCallback(
+    (e: KeyboardEvent) => {
+      const studySet = document.getElementById('studySet')
+      // Only process when inside studySet or general body focus
+      if (!studySet?.contains(e.target as Node) && e.target !== document.body) {
+        return
       }
 
-      if (item?.quiz.type === EQuiz.MULTI_CHOICE) {
-        const index = (
-          list[status.currentIndex].quiz.answer as Partial<IOption<string, boolean>>[]
-        ).findIndex((item) => item.value)
+      if (isDone && !inProgress && e.code === 'Enter') {
+        createStudySet({
+          currentIndex: 0,
+          isDone: false,
+          inProgress: true,
+        })
+        return
+      }
 
-        if (!isSubmit) {
-          if (e.code === 'ArrowUp' && index > 0) {
-            onSelectMultiChoice(item?.quiz.answer[index - 1] as IOption<string, boolean>)
+      if (inProgress && currentItem) {
+        if (currentItem.quiz.type === EQuiz.FILL_IN_BLANK) {
+          if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+            inputEl.current?.focus()
           }
 
-          if (e.code === 'ArrowDown' && index < 3) {
-            onSelectMultiChoice(item?.quiz.answer[index + 1] as IOption<string, boolean>)
+          if (e.code === 'Enter') {
+            isSubmit ? onNext() : onSubmit(EQuiz.FILL_IN_BLANK)
           }
         }
 
-        if (e.code === 'Enter') {
-          isSubmit ? onNext() : onSubmit(EQuiz.MULTI_CHOICE)
+        if (currentItem.quiz.type === EQuiz.MULTI_CHOICE) {
+          const answers = (currentItem.quiz.answer as Partial<IOption<string, boolean>>[]) || []
+          const index = answers.findIndex((ans) => ans.value)
+
+          if (!isSubmit && answers.length > 0) {
+            if (e.code === 'ArrowUp') {
+              const nextIndex = index <= 0 ? answers.length - 1 : index - 1
+              if (answers[nextIndex]) {
+                onSelectMultiChoice(answers[nextIndex] as IOption<string, boolean>)
+              }
+            }
+
+            if (e.code === 'ArrowDown') {
+              const nextIndex = index === -1 || index >= answers.length - 1 ? 0 : index + 1
+              if (answers[nextIndex]) {
+                onSelectMultiChoice(answers[nextIndex] as IOption<string, boolean>)
+              }
+            }
+          }
+
+          if (e.code === 'Enter') {
+            isSubmit ? onNext() : onSubmit(EQuiz.MULTI_CHOICE)
+          }
         }
       }
-    }
-  }
+    },
+    [isDone, inProgress, currentItem, isSubmit, onNext, onSubmit, onSelectMultiChoice],
+  )
 
   const disableWindowScroll = (e: KeyboardEvent) => {
     const studySet = document.getElementById('studySet')
@@ -289,16 +339,16 @@ export const StudySet: React.FC = () => {
   }
 
   const getInputPlaceholder = (value: string, placeholder: string) => {
+    const cleanPlaceholder = (placeholder || '').replace(/\s+/g, '')
+
     if (!value) {
       return (
         <div className={styles.fibQuestion}>
-          {placeholder.split('').map((char, key) => {
-            return (
-              <span key={key} className={styles.fibInput}>
-                {char}
-              </span>
-            )
-          })}
+          {cleanPlaceholder.split('').map((char, key) => (
+            <span key={key} className={styles.fibInput}>
+              {char}
+            </span>
+          ))}
         </div>
       )
     }
@@ -307,50 +357,56 @@ export const StudySet: React.FC = () => {
 
     return (
       <div className={styles.fibQuestion}>
-        {placeholder.split('').map((char, key) => {
+        {cleanPlaceholder.split('').map((char, key) => {
           if (valueArray[key]) {
             return (
               <span key={key} className={clsx(styles.fibInput, styles.fibInputActive)}>
                 {valueArray[key]}
               </span>
             )
-          } else {
-            return (
-              <span key={key} className={styles.fibInput}>
-                {char}
-              </span>
-            )
           }
+          return (
+            <span key={key} className={styles.fibInput}>
+              {char}
+            </span>
+          )
         })}
       </div>
     )
   }
 
-  // const onEdit = async (id: string) => {
-  //   try {
-  //     const { content } = await itemApi.getItemById(id)
-  //   } catch (error) {
-  //     notification({ type: 'error', message: JSON.stringify(error) })
-  //   }
-  // }
-
   useEffect(() => {
     window.addEventListener('keydown', onKeyBoardPress)
-
     return () => {
       window.removeEventListener('keydown', onKeyBoardPress)
     }
-  }, [list, isSubmit, item, currentIndex, respond])
+  }, [onKeyBoardPress])
 
   useEffect(() => {
     window.addEventListener('keydown', disableWindowScroll)
-
     return () => {
       window.removeEventListener('keydown', disableWindowScroll)
     }
   }, [])
 
-  useEffect(() => setItem(list[currentIndex]), [list, currentIndex])
+  // Auto-focus input on Fill in blank questions
+  useEffect(() => {
+    if (currentItem?.quiz.type === EQuiz.FILL_IN_BLANK && !isSubmit) {
+      const timer = setTimeout(() => {
+        inputEl.current?.focus()
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [currentIndex, isSubmit, currentItem?.quiz.type])
+
+  const isFibCorrect =
+    isSubmit &&
+    String(currentItem?.quiz.answer || '')
+      .trim()
+      .toLowerCase() ===
+      String(respond || '')
+        .trim()
+        .toLowerCase()
 
   return (
     <div className={styles.studySet} id='studySet' tabIndex={0}>
@@ -378,63 +434,74 @@ export const StudySet: React.FC = () => {
         {isDone && !inProgress && (
           <div className={styles.result}>
             <h2>
-              Result: {list.filter((item) => item.quiz.result).length}/{list.length}
+              Result: {list.filter((it) => it.quiz?.result).length}/{list.length}
             </h2>
           </div>
         )}
 
-        {inProgress && list.length === 0 && <NotFound />}
+        {inProgress && list.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            <NotFound />
+            <div style={{ marginTop: 16 }}>
+              <Button type='primary' onClick={() => onReload()}>
+                Try Again
+              </Button>
+            </div>
+          </div>
+        )}
 
-        {inProgress && list.length > 0 && (
+        {inProgress && currentItem && (
           <>
             <h4
               dangerouslySetInnerHTML={{
-                __html: item?.quiz.title ? item?.quiz.title.replaceAll(/\n/g, '<br />') : '',
+                __html: currentItem.quiz?.title
+                  ? currentItem.quiz.title.replaceAll(/\n/g, '<br />')
+                  : '',
               }}
             />
 
-            {item?.quiz.type === EQuiz.FILL_IN_BLANK && (
-              <>{getInputPlaceholder(respond as string, item?.quiz.question.replaceAll(' ', ''))}</>
+            {currentItem.quiz?.type === EQuiz.FILL_IN_BLANK && (
+              <>
+                {getInputPlaceholder((respond as string) || '', currentItem.quiz?.question || '')}
+              </>
             )}
 
-            {item?.quiz.type === EQuiz.MULTI_CHOICE && (
+            {currentItem.quiz?.type === EQuiz.MULTI_CHOICE && currentItem.quiz?.question && (
               <h3
                 dangerouslySetInnerHTML={{
-                  __html: item?.quiz.question.replaceAll(/\n/g, '<br />'),
+                  __html: currentItem.quiz.question.replaceAll(/\n/g, '<br />'),
                 }}
               />
             )}
 
-            {item?.quiz.hint && (
+            {currentItem.quiz?.hint && (
               <h5
-                dangerouslySetInnerHTML={{ __html: item?.quiz.hint.replaceAll(/\n/g, '<br />') }}
+                dangerouslySetInnerHTML={{
+                  __html: currentItem.quiz.hint.replaceAll(/\n/g, '<br />'),
+                }}
               />
             )}
           </>
         )}
 
-        {!isDone && item?.quiz.type === EQuiz.MULTI_CHOICE && (
+        {!isDone && currentItem?.quiz?.type === EQuiz.MULTI_CHOICE && (
           <div className={styles.mtc}>
             <ul>
-              {(item?.quiz.answer as IAnswer<string, boolean>[]).map((ans, key) => {
-                return (
+              {Array.isArray(currentItem.quiz.answer) &&
+                (currentItem.quiz.answer as IAnswer<string, boolean>[]).map((ans, key) => (
                   <li
                     className={clsx(
-                      getClassValidate(
-                        ans as IOption<string, boolean>,
-                        item as IItemQuiz,
-                        isSubmit,
-                      ),
+                      getClassValidate(ans as IOption<string, boolean>, currentItem, isSubmit),
                     )}
                     key={key}
                     onClick={() => {
                       isSubmit
-                        ? onSearch(ans.id)
+                        ? onSearch(String(ans.id))
                         : onSelectMultiChoice(ans as IOption<string, boolean>)
                     }}
                   >
                     <Flex align={'center'} gap={token.size / 2}>
-                      {isSubmit && item.catId === ECategory.WORD && ans.typeId && (
+                      {isSubmit && currentItem.catId === ECategory.WORD && ans.typeId && (
                         <span className={'text-sm'}>
                           {`(${getType(ans.typeId).origin.toLowerCase()})`}
                         </span>
@@ -447,31 +514,30 @@ export const StudySet: React.FC = () => {
                     </Flex>
 
                     <div>
-                      <i dangerouslySetInnerHTML={{ __html: `${isSubmit ? `${ans.key}` : ''}` }} />
+                      <i
+                        dangerouslySetInnerHTML={{
+                          __html: `${isSubmit ? `${ans.key || ''}` : ''}`,
+                        }}
+                      />
                     </div>
                   </li>
-                )
-              })}
+                ))}
             </ul>
           </div>
         )}
 
-        {!isDone && item?.quiz.type === EQuiz.FILL_IN_BLANK && (
+        {!isDone && currentItem?.quiz?.type === EQuiz.FILL_IN_BLANK && (
           <div className={styles.fib}>
             <div className={styles.fibWrapper}>
               <Input
-                value={respond as string}
-                className={clsx(
-                  item?.quiz.answer === respond && isSubmit ? styles.correct : '',
-                  item?.quiz.answer !== respond && isSubmit ? styles.incorrect : '',
-                )}
-                // onInput={(e) => {
-                //   const input = e.target as HTMLInputElement
-                //   input.value = input.value.toLowerCase()
-                //   if (isSubmit) return
-                // }}
+                value={(respond as string) || ''}
+                className={clsx(isSubmit && (isFibCorrect ? styles.correct : styles.incorrect))}
                 ref={inputEl}
-                maxLength={item?.quiz.answer.length}
+                maxLength={
+                  typeof currentItem.quiz?.answer === 'string'
+                    ? currentItem.quiz.answer.length
+                    : undefined
+                }
                 onChange={(e) =>
                   dispatch(studySetAction.updateUserRespond(e.target.value.toLowerCase()))
                 }
@@ -479,6 +545,15 @@ export const StudySet: React.FC = () => {
                 readOnly={isSubmit}
               />
             </div>
+
+            {isSubmit && !isFibCorrect && (
+              <div style={{ marginTop: 8, fontSize: 13, color: token.colorTextSecondary }}>
+                Correct answer:{' '}
+                <b style={{ color: token.colorSuccess }}>
+                  {String(currentItem.quiz?.answer || '')}
+                </b>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -504,26 +579,22 @@ export const StudySet: React.FC = () => {
         {inProgress && list.length > 0 && (
           <div className={styles.btnAction}>
             {!isSubmit && (
-              <Button type='primary' onClick={() => onSubmit(item?.quiz.type as EQuiz)}>
+              <Button type='primary' onClick={() => onSubmit(currentItem?.quiz?.type as EQuiz)}>
                 Submit
               </Button>
             )}
 
-            {!isDone && isSubmit && currentIndex + 1 <= list.length && (
-              <Button
-                variant={!isDone && isSubmit ? 'outlined' : 'filled'}
-                color={'primary'}
-                onClick={() => onNext()}
-              >
-                {isDone ? 'Finish' : 'Next'}
+            {isSubmit && (
+              <Button variant='outlined' color='primary' onClick={() => onNext()}>
+                {currentIndex + 1 >= list.length ? 'Finish' : 'Next'}
               </Button>
             )}
           </div>
         )}
 
-        {isSubmit && (
+        {isSubmit && currentItem && (
           <div className={clsx(styles.resultReference, appStyle.boxItem)}>
-            <Item data={item as IItem} />
+            <Item data={currentItem as IItem} />
           </div>
         )}
       </div>

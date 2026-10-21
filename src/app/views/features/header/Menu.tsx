@@ -1,10 +1,11 @@
 import { MenuProps } from 'antd'
 import {
+  CodeOutlined,
   PlusOutlined,
   PoweroffOutlined,
   SettingOutlined,
   UserOutlined,
-} from '@ant-design/icons/lib/icons'
+} from '@ant-design/icons'
 
 export const menu: MenuProps['items'] = [
   {
@@ -17,6 +18,15 @@ export const menu: MenuProps['items'] = [
     label: 'Setting',
     icon: <SettingOutlined />,
   },
+  ...(import.meta.env.DEV
+    ? [
+        {
+          key: 'developer',
+          label: 'Developer',
+          icon: <CodeOutlined />,
+        },
+      ]
+    : []),
   {
     key: 'logout',
     label: 'Log Out',

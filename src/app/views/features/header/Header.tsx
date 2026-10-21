@@ -52,6 +52,10 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
         navigate('/setting')
         break
 
+      case 'developer':
+        navigate('/developer')
+        break
+
       case 'logout':
         // Call complete logout (Firebase + auth state + redirect)
         await logout()

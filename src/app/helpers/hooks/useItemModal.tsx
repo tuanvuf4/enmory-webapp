@@ -15,13 +15,7 @@ const ViewItemModalContent: React.FC<IViewItemModalContentProps> = ({ initialDat
   const { data: item } = useItem(itemId, !!itemId)
   const currentItem = item || initialData
 
-  return (
-    <Item
-      data={currentItem}
-      active={false}
-      onDeleteSuccess={onClose}
-    />
-  )
+  return <Item data={currentItem} active={false} onDeleteSuccess={onClose} />
 }
 
 export const useItemModal = () => {

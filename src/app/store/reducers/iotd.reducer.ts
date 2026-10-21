@@ -24,7 +24,7 @@ export const iotdReducer = createSlice({
   name: 'iotd',
   initialState,
   reducers: {
-        update(state: IIotdState, action: PayloadAction<IItem>) {
+    update(state: IIotdState, action: PayloadAction<IItem>) {
       const updatedItem = action.payload
       if (!updatedItem || !updatedItem.id) return
 

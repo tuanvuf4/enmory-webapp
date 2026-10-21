@@ -1,4 +1,11 @@
-import { itemKeys, useDeleteItem, useDispatch, useSelector, useChecklist, checklistKeys } from '@/core/hooks'
+import {
+  itemKeys,
+  useDeleteItem,
+  useDispatch,
+  useSelector,
+  useChecklist,
+  checklistKeys,
+} from '@/core/hooks'
 import { localDb, invalidateSearchIndex } from '@/services/localDb'
 import { useItemModal, usePrompt } from '@/helpers/hooks'
 import { getCategory, isDefect } from '@/helpers/item'

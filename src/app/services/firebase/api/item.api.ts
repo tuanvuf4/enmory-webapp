@@ -253,10 +253,7 @@ const getEligibleItemsInCategory = async (catId: number): Promise<IItem[]> => {
 
     const userItems = allLocalItems.filter(
       (item) =>
-        item.catId === catId &&
-        !item.is_deleted &&
-        currentUser &&
-        item.uid === currentUser.uid
+        item.catId === catId && !item.is_deleted && currentUser && item.uid === currentUser.uid,
     )
 
     // console.log(`*** allLocalItems *** `, allLocalItems)
@@ -443,7 +440,7 @@ const getStudySet = async (
 
     const shuffledItemsWithQuiz = shuffleArray(itemsWithQuiz)
 
-    console.log(`*** shuffledItemsWithQuiz *** `, shuffledItemsWithQuiz);
+    console.log(`*** shuffledItemsWithQuiz *** `, shuffledItemsWithQuiz)
 
     return {
       isSuccess: true,

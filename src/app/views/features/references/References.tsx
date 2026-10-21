@@ -19,12 +19,7 @@ interface IPros {
   autoFill?: boolean
 }
 
-export const Reference: React.FC<IPros> = ({
-  origin,
-  style,
-  onSelect,
-  loadingId,
-}) => {
+export const Reference: React.FC<IPros> = ({ origin, style, onSelect, loadingId }) => {
   const { token } = theme.useToken()
   const { user } = useSelector((state) => state.auth)
 

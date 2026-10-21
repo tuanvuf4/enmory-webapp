@@ -1,8 +1,28 @@
 import { useModal } from '@/context/modal.context'
+import { useItem } from '@/core/hooks'
 import { IItem } from '@/models/item.model'
 import { Item } from '@/views/features'
 import { initItem, ItemForm } from '@/views/features/modals/itemModal'
 import { FormProvider, useForm } from 'react-hook-form'
+
+interface IViewItemModalContentProps {
+  initialData: IItem
+  onClose?: () => void
+}
+
+const ViewItemModalContent: React.FC<IViewItemModalContentProps> = ({ initialData, onClose }) => {
+  const itemId = initialData?.id || ''
+  const { data: item } = useItem(itemId, !!itemId)
+  const currentItem = item || initialData
+
+  return (
+    <Item
+      data={currentItem}
+      active={false}
+      onDeleteSuccess={onClose}
+    />
+  )
+}
 
 export const useItemModal = () => {
   const { openModal, closeModal } = useModal()
@@ -29,7 +49,7 @@ export const useItemModal = () => {
         width: 800,
         footer: null,
         closable: false,
-        content: <Item data={data} active={false} />,
+        content: <ViewItemModalContent initialData={data} onClose={closeModal} />,
       })
     }
 

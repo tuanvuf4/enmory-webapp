@@ -32,7 +32,11 @@ const IotdItemCard: React.FC<IIotdItemCardProps> = ({ iotd, title, isLoadingPref
   }
 
   const displayItem = item || (iotd as any)?.item
-  if (!displayItem || !displayItem.origin) return null
+  if (!displayItem || !displayItem.origin || displayItem.is_deleted) return null
+
+  if (iotd?.catId && displayItem?.catId && Number(iotd.catId) !== Number(displayItem.catId)) {
+    return null
+  }
 
   return (
     <Widget title={title}>

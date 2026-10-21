@@ -101,6 +101,8 @@ export const getSourceContext = (source: string = 'Oxford'): string => {
       return 'Tracau English-Vietnamese dictionary (tracau.vn)'
     case 'translate':
       return 'Google Translate / English-Vietnamese learner dictionary'
+    case 'google':
+      return 'Google Dictionary (powered by Oxford Languages) and Google Translate (English to Vietnamese)'
     case 'oxford':
     default:
       return "Oxford Advanced Learner's Dictionary (OALD) (oxfordlearnersdictionaries.com)"
@@ -110,7 +112,7 @@ export const getSourceContext = (source: string = 'Oxford'): string => {
 export const geminiDictionaryService = {
   fetchFromReference: async (
     wordOrPhrase: string,
-    sourceName: string = 'Oxford',
+    sourceName: string = 'Google',
   ): Promise<IHttpResponse<IOxfordAutofillData>> => {
     try {
       const apiKey = resolveGeminiApiKey()
@@ -273,17 +275,17 @@ Return ONLY valid JSON matching this schema:
       }
 
       if (!parsed) {
-        throw lastError || new Error('Failed to generate Oxford dictionary data.')
+        throw lastError || new Error(`Failed to generate dictionary data from ${sourceName}.`)
       }
 
       return {
         isSuccess: true,
         content: parsed,
-        message: 'Successfully fetched Oxford data.',
+        message: `Successfully fetched ${sourceName} data.`,
         statusCode: 200,
       }
     } catch (error: any) {
-      console.error('Gemini Oxford service error:', error)
+      console.error(`Gemini ${sourceName} dictionary service error:`, error)
       return {
         isSuccess: false,
         content: null,
@@ -292,6 +294,8 @@ Return ONLY valid JSON matching this schema:
       }
     }
   },
+  fetchFromGoogle: (wordOrPhrase: string) =>
+    geminiDictionaryService.fetchFromReference(wordOrPhrase, 'Google'),
   fetchFromOxford: (wordOrPhrase: string) =>
     geminiDictionaryService.fetchFromReference(wordOrPhrase, 'Oxford'),
 }

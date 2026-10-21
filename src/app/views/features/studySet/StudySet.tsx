@@ -1,6 +1,8 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { appSetting } from '@/config/appConfig'
-import { useDispatch, useSelector } from '@/core/hooks'
+import { useDispatch, useSelector, itemKeys } from '@/core/hooks'
+import { useQueryClient } from '@tanstack/react-query'
+import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { getType } from '@/helpers/item'
 import { IItemQuiz, ECategory, EQuiz, IOption, IAnswer, IItem } from '@/models/item.model'
 import { GetStudySetByCatId } from '@/models/studySet.model'
@@ -26,6 +28,7 @@ export const StudySet: React.FC = () => {
   const { notification } = usePrompt()
   const { openItemModal } = useItemModal()
   const dispatch = useDispatch()
+  const queryClient = useQueryClient()
 
   const { list, status, respond, isSubmit } = useSelector((state) => state.studySet)
   const { user } = useSelector((state) => state.auth)
@@ -39,32 +42,42 @@ export const StudySet: React.FC = () => {
 
   const getStudySetSizeByCategory = useCallback(
     (category: ECategory) => {
-      let size: number | undefined
-
       switch (category) {
         case ECategory.WORD:
-          size = configuration?.numberOfWordsInStudySet
-          break
-        case ECategory.PHRASE:
-          size = configuration?.numberOfPhraseInStudySet
-          break
-        case ECategory.IDIOM:
-          size = configuration?.numberOfIdiomInStudySet
-          break
-        case ECategory.SLANG:
-          size = configuration?.numberOfSlangInStudySet
-          break
-        case ECategory.COLLOCATION:
-          size = configuration?.numberOfCollocationsInStudySet
-          break
-        case ECategory.SENTENCE:
-          size = configuration?.numberOfSentencesInStudySet
-          break
-        default:
-          break
-      }
+          return (
+            user?.configuration?.numberOfWordsInStudySet || configuration?.numberOfWordsInStudySet
+          )
 
-      return typeof size === 'number' && size > 0 ? size : appSetting.meta.numberOfWordsInStudySet
+        case ECategory.PHRASE:
+          return (
+            user?.configuration?.numberOfPhraseInStudySet || configuration?.numberOfPhraseInStudySet
+          )
+
+        case ECategory.IDIOM:
+          return (
+            user?.configuration?.numberOfIdiomInStudySet || configuration?.numberOfIdiomInStudySet
+          )
+
+        case ECategory.SLANG:
+          return (
+            user?.configuration?.numberOfSlangInStudySet || configuration?.numberOfSlangInStudySet
+          )
+
+        case ECategory.COLLOCATION:
+          return (
+            user?.configuration?.numberOfCollocationsInStudySet ||
+            configuration?.numberOfCollocationsInStudySet
+          )
+
+        case ECategory.SENTENCE:
+          return (
+            user?.configuration?.numberOfSentencesInStudySet ||
+            configuration?.numberOfSentencesInStudySet
+          )
+
+        default:
+          return appSetting.meta.numberOfWordsInStudySet
+      }
     },
     [configuration],
   )
@@ -181,10 +194,16 @@ export const StudySet: React.FC = () => {
     // Persist learning stats to DB
     if (targetItem.id) {
       try {
-        await itemApi.updateItem(targetItem.id, {
+        const res = await itemApi.updateItem(targetItem.id, {
           level: nextLevel,
           count: nextCount,
         })
+        if (res.isSuccess && res.content) {
+          queryClient.setQueryData(itemKeys.detail(targetItem.id), res.content)
+          await queryClient.invalidateQueries({ queryKey: itemKeys.detail(targetItem.id) })
+          await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+          dispatch(iotdAction.update(res.content))
+        }
       } catch (err) {
         console.warn('Failed to persist item stats:', err)
       }

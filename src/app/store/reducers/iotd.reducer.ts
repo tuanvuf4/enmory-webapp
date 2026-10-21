@@ -24,11 +24,37 @@ export const iotdReducer = createSlice({
   name: 'iotd',
   initialState,
   reducers: {
-    /**
-     * Backward-compatible no-op: item data is resolved dynamically by itemId from React Query / localDb
-     */
-    update(_state: IIotdState, _action: PayloadAction<IItem>) {
-      // Dynamic hydration handles freshness automatically
+        update(state: IIotdState, action: PayloadAction<IItem>) {
+      const updatedItem = action.payload
+      if (!updatedItem || !updatedItem.id) return
+
+      const categoryKeys: (keyof IIotdState)[] = [
+        'word',
+        'phrase',
+        'idiom',
+        'slang',
+        'collocation',
+        'sentence',
+      ]
+
+      for (const key of categoryKeys) {
+        const iotd = state[key]
+        if (iotd) {
+          const currentItemId = iotd.itemId || (iotd as any).item?.id
+          if (currentItemId === updatedItem.id) {
+            if (
+              updatedItem.is_deleted ||
+              (updatedItem.catId && iotd.catId && Number(updatedItem.catId) !== Number(iotd.catId))
+            ) {
+              state[key] = null
+            } else {
+              iotd.item = updatedItem
+              iotd.itemId = updatedItem.id
+              if (updatedItem.catId) iotd.catId = updatedItem.catId
+            }
+          }
+        }
+      }
     },
     clearIotd(state: IIotdState, action: PayloadAction<ECategory>) {
       switch (action.payload) {
@@ -73,6 +99,7 @@ export const iotdReducer = createSlice({
         first_of_date: payload.first_of_date,
         last_of_date: payload.last_of_date,
         created_date: payload.created_date,
+        item: (payload as any).item,
       }
 
       switch (targetCatId) {
@@ -123,6 +150,7 @@ export const iotdReducer = createSlice({
           first_of_date: iotd.first_of_date,
           last_of_date: iotd.last_of_date,
           created_date: iotd.created_date,
+          item: iotd.item,
         }
 
         switch (targetCatId) {

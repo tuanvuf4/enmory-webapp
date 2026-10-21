@@ -3,6 +3,8 @@ import { itemApi, IItemRequestParams } from '@/services/firebase/api/item.api'
 import { IItem } from '@/models/item.model'
 import { localDb, invalidateSearchIndex } from '@/services/localDb'
 import { checklistKeys } from './useChecklist'
+import { useDispatch } from './redux'
+import { iotdAction } from '@/store/reducers/iotd.reducer'
 
 // Query keys
 export const itemKeys = {
@@ -104,16 +106,17 @@ export const useUpdateItem = () => {
 
       return { previousDetail }
     },
-    onSuccess: (response, variables) => {
+    onSuccess: async (response, variables) => {
       if (response?.content && response.content.id) {
-        localDb.items.put(response.content)
+        await localDb.items.put(response.content)
         invalidateSearchIndex()
+        queryClient.setQueryData(itemKeys.detail(variables.id), response.content)
       }
       // Invalidate lists and detail to refetch
-      queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
-      queryClient.invalidateQueries({ queryKey: itemKeys.detail(variables.id) })
+      await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+      await queryClient.invalidateQueries({ queryKey: itemKeys.detail(variables.id) })
       // Invalidate checklist as well so updated item properties appear
-      queryClient.invalidateQueries({ queryKey: checklistKeys.all })
+      await queryClient.invalidateQueries({ queryKey: checklistKeys.all })
     },
     onError: (_err, variables, context: any) => {
       // Rollback on error
@@ -127,20 +130,24 @@ export const useUpdateItem = () => {
 // Delete item mutation
 export const useDeleteItem = () => {
   const queryClient = useQueryClient()
+  const dispatch = useDispatch()
 
   return useMutation({
     mutationFn: async (id: string) => {
       return await itemApi.deleteItem(id)
     },
-    onSuccess: (_response, id) => {
-      localDb.items.delete(id)
+    onSuccess: async (_response, id) => {
+      await localDb.items.delete(id)
       invalidateSearchIndex()
       // Clear all lastDoc cursors since data has changed
       clearLastDocStore()
       // Invalidate all item lists to refetch
-      queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+      await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+      queryClient.removeQueries({ queryKey: itemKeys.detail(id) })
+      await queryClient.invalidateQueries({ queryKey: itemKeys.detail(id) })
       // Invalidate checklist as well
-      queryClient.invalidateQueries({ queryKey: checklistKeys.all })
+      await queryClient.invalidateQueries({ queryKey: checklistKeys.all })
+      dispatch(iotdAction.update({ id, is_deleted: true } as IItem))
     },
   })
 }

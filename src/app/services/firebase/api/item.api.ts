@@ -247,22 +247,22 @@ const getItemById = async (id: string): Promise<IHttpResponse<IItem>> => {
 const getEligibleItemsInCategory = async (catId: number): Promise<IItem[]> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
-    const numericCatId = Number(catId)
 
     // Load items strictly from local database
-    let allLocalItems = await localDb.items.where('catId').equals(numericCatId).toArray()
-    if (allLocalItems.length === 0) {
-      allLocalItems = await localDb.items
-        .filter((item) => Number(item.catId) === numericCatId)
-        .toArray()
-    }
+    let allLocalItems = await localDb.items.where('catId').equals(catId).toArray()
 
     const userItems = allLocalItems.filter(
       (item) =>
-        !item.is_deleted && (!currentUser?.uid || !item.uid || item.uid === currentUser.uid),
+        item.catId === catId &&
+        !item.is_deleted &&
+        currentUser &&
+        item.uid === currentUser.uid
     )
 
-    return userItems.filter((item) => {
+    // console.log(`*** allLocalItems *** `, allLocalItems)
+    // console.log(`*** userItems *** `, userItems)
+
+    const eligible = userItems.filter((item) => {
       const meanings = item.meanings || []
       return meanings.some((meaning: any) => {
         return (
@@ -271,6 +271,14 @@ const getEligibleItemsInCategory = async (catId: number): Promise<IItem[]> => {
         )
       })
     })
+
+    // Filter items that have examples
+    const itemsWithExamples = eligible.filter((item) => {
+      const meanings = item.meanings || []
+      return meanings.some((meaning: any) => meaning.examples && meaning.examples.length > 0)
+    })
+
+    return itemsWithExamples.length > 0 ? itemsWithExamples : eligible
   } catch (err) {
     console.error('Error fetching items for category from localDb:', err)
     return []
@@ -308,11 +316,10 @@ const getStudySet = async (
       if (studySet.size === 0 || !studySet.size) {
         continue
       }
-      const eligibleItems = await getEligibleItemsInCategory(studySet.id)
+      const eligibleItems = await getItemsInCategory(studySet.id, studySet.size)
       allCategoryItemsMap.set(studySet.id, eligibleItems)
 
-      const selected = shuffleArray([...eligibleItems]).slice(0, studySet.size)
-      allItems.push(...selected)
+      allItems.push(...eligibleItems)
     }
 
     if (allItems.length === 0) {
@@ -330,7 +337,9 @@ const getStudySet = async (
     }
 
     // Generate quiz data for each item (examples are already embedded in items)
-    const itemsWithQuiz: IItemQuiz[] = allItems.map((item) => {
+    const hydratedAllItems = await hydrateItemsWithExamples(allItems)
+
+    const itemsWithQuiz: IItemQuiz[] = hydratedAllItems.map((item) => {
       // Randomly decide quiz type (50% chance for each type if catId === 1)
       const useFillInBlank = item.catId === 1 && Math.random() < 0.5
 
@@ -432,10 +441,14 @@ const getStudySet = async (
       } as unknown as IItemQuiz
     })
 
+    const shuffledItemsWithQuiz = shuffleArray(itemsWithQuiz)
+
+    console.log(`*** shuffledItemsWithQuiz *** `, shuffledItemsWithQuiz);
+
     return {
       isSuccess: true,
       message: 'Study set fetched successfully',
-      content: shuffleArray(itemsWithQuiz),
+      content: shuffledItemsWithQuiz,
       statusCode: 200,
     }
   } catch (error) {

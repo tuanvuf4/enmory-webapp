@@ -15,9 +15,17 @@ export function lazyLoadRoutes(componentName: string) {
   )
 }
 
+const devRoutes: RouteObject[] = import.meta.env.DEV
+  ? [
+      { path: '/local-db', element: lazyLoadRoutes('localDb') },
+      { path: '/local_db', element: lazyLoadRoutes('localDb') },
+    ]
+  : []
+
 export const publicRoute: RouteObject[] = [
   { path: '/about', element: lazyLoadRoutes('about') },
   { path: '/page_not_found', element: lazyLoadRoutes('pageNotFound') },
+  ...devRoutes,
 ]
 
 export const authRouterPath: RouteObject[] = [

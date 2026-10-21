@@ -7,6 +7,8 @@ import { authAction } from '@/store/reducers/auth.reducer'
 import { theme, CheckboxOptionType, Row, Col, Space, Select, Checkbox, Button, Table } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { DatabaseOutlined } from '@ant-design/icons'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
 import { TagManagerForm, BlogCategoryManagerForm } from '@/views/components'
@@ -14,6 +16,7 @@ import { TagManagerForm, BlogCategoryManagerForm } from '@/views/components'
 const Setting = () => {
   const { token } = theme.useToken()
   const { message } = usePrompt()
+  const navigate = useNavigate()
 
   // User info comes from Firebase auth state
   const { user } = useSelector((state) => state.auth)
@@ -628,6 +631,13 @@ const Setting = () => {
 
                       <Col xs={24} md={16}>
                         <Space direction='vertical' style={{ width: '100%' }} size={token.size / 2}>
+                          <Button
+                            type='default'
+                            icon={<DatabaseOutlined />}
+                            onClick={() => navigate('/local-db')}
+                          >
+                            View Local Database (JSON)
+                          </Button>
                           <Button
                             type='primary'
                             onClick={handleIntegrateExamples}

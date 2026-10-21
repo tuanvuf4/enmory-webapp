@@ -113,6 +113,7 @@ export interface IIotdDoc {
   first_of_date: number
   last_of_date: number
   created_date?: number
+  item?: IItem
 }
 
 export interface IIotd extends IIotdDoc {

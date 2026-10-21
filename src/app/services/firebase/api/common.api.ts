@@ -282,6 +282,11 @@ const getIotdByCatId = async ({
         item = (iotdData as any).item
       }
 
+      if (!item || item.is_deleted || (item.catId && Number(item.catId) !== Number(catId))) {
+        await deleteDoc(todayDoc.ref)
+        return await createIotdByCatId({ catId, userId: currentUser.uid })
+      }
+
       return {
         isSuccess: true,
         message: 'IOTD fetched successfully',

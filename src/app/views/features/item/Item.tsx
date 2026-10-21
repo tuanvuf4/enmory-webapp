@@ -1,4 +1,5 @@
-import { itemKeys, useDeleteItem, useDispatch, useSelector, useChecklist } from '@/core/hooks'
+import { itemKeys, useDeleteItem, useDispatch, useSelector, useChecklist, checklistKeys } from '@/core/hooks'
+import { localDb, invalidateSearchIndex } from '@/services/localDb'
 import { useItemModal, usePrompt } from '@/helpers/hooks'
 import { getCategory, isDefect } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
@@ -28,7 +29,7 @@ interface IProps {
   reload?: boolean
   data: IItem
   onDeleteSuccess?: () => void
-  onEditSuccess?: () => void
+  onEditSuccess?: (data?: IItem) => void
   onViewSuccess?: () => void
   onArchive?: () => void
   onFavorite?: () => void
@@ -144,9 +145,17 @@ export const Item: React.FC<IProps> = ({
   }
 
   const onUpdateItemSuccess = async ({ isSuccess, content }: IHttpResponse<IItem>) => {
-    if (isSuccess && content) {
+    if (isSuccess && content && content.id) {
+      await localDb.items.put(content)
+      invalidateSearchIndex()
+
+      queryClient.setQueryData(itemKeys.detail(content.id), content)
+      await queryClient.invalidateQueries({ queryKey: itemKeys.detail(content.id) })
+      await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+      await queryClient.invalidateQueries({ queryKey: checklistKeys.all })
+
       // update item in study set
-      if (content && list.find((item) => item.id === content.id)) {
+      if (list.find((item) => item.id === content.id)) {
         dispatch(studySetAction.update(content))
       }
       // update iotd item
@@ -161,7 +170,7 @@ export const Item: React.FC<IProps> = ({
       const { isSuccess, content } = await itemApi.getItemById(id)
       if (isSuccess && content) {
         openItemModal('edit', content as IItem)
-        onEditSuccess?.()
+        onEditSuccess?.(content as IItem)
       }
     } catch (error) {
       notification({ type: 'error', message: JSON.stringify(error) })

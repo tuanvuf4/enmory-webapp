@@ -79,12 +79,11 @@ const getRandomItemByCategory = async (
       return null
     }
 
-    // Query items by category and user, excluding deleted and archived items
+    // Query items by category and user, excluding archived items
     const itemsQuery = query(
       collection(db, dbCollections.items),
       where('uid', '==', currentUser.uid),
       where('catId', '==', catId),
-      where('is_deleted', '==', false),
       where('archive', '==', false),
     )
 
@@ -282,7 +281,7 @@ const getIotdByCatId = async ({
         item = (iotdData as any).item
       }
 
-      if (!item || item.is_deleted || (item.catId && Number(item.catId) !== Number(catId))) {
+      if (!item || (item.catId && Number(item.catId) !== Number(catId))) {
         await deleteDoc(todayDoc.ref)
         return await createIotdByCatId({ catId, userId: currentUser.uid })
       }

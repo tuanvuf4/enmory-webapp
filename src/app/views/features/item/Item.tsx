@@ -1,3 +1,4 @@
+import { isItemDue, getDueDurationText } from '@/services/srs/srs.service'
 import {
   itemKeys,
   useDeleteItem,
@@ -13,8 +14,14 @@ import { EViewMode } from '@/models/app.model'
 import { ECategory, IItem } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { Level, Tags } from '@/views/components'
-import { MoreOutlined, ReloadOutlined, HeartFilled, BookOutlined } from '@ant-design/icons'
-import { Button, Dropdown, Flex, MenuProps, Skeleton, theme } from 'antd'
+import {
+  MoreOutlined,
+  ReloadOutlined,
+  HeartFilled,
+  BookOutlined,
+  ClockCircleOutlined,
+} from '@ant-design/icons'
+import { Button, Dropdown, Flex, MenuProps, Skeleton, theme, Tag, Tooltip } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import clsx from 'clsx'
 import React, { useEffect, useState } from 'react'
@@ -350,8 +357,29 @@ export const Item: React.FC<IProps> = ({
                 </div>
 
                 {data.catId && (
-                  <div className={styles.level}>
+                  <div className={styles.level} style={{ display: 'flex', alignItems: 'center' }}>
                     <Level level={data.level as number} />
+                    {isItemDue(data) && !data.archive && (
+                      <Tooltip title={`Đến chu kỳ ôn tập SRS: ${getDueDurationText(data)}`}>
+                        <Tag
+                          color='warning'
+                          icon={<ClockCircleOutlined />}
+                          style={{ marginLeft: 6, cursor: 'default' }}
+                        >
+                          {getDueDurationText(data)}
+                        </Tag>
+                      </Tooltip>
+                    )}
+                    {!isItemDue(data) && !!data.next_review_date && !data.archive && (
+                      <Tooltip title={`Chu kỳ ôn tập SRS tiếp theo: ${getDueDurationText(data)}`}>
+                        <Tag
+                          color='default'
+                          style={{ marginLeft: 6, fontSize: 11, cursor: 'default' }}
+                        >
+                          {getDueDurationText(data)}
+                        </Tag>
+                      </Tooltip>
+                    )}
                   </div>
                 )}
 

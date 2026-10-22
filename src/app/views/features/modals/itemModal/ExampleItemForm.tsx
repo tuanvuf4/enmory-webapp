@@ -1,10 +1,8 @@
 import appStyle from '@/style/appStyle.module.scss'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
-import { useAutoComplete, usePrompt } from '@/helpers/hooks'
+import { usePrompt } from '@/helpers/hooks'
 import { IItem } from '@/models/item.model'
-import { exampleApi } from '@/services/firebase/api/example.api'
-import { theme, Space, Col, Row, Button, AutoComplete } from 'antd'
-import { useState } from 'react'
+import { theme, Space, Col, Row, Button } from 'antd'
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
 import { exampleItem } from './data'
 import TextArea from 'antd/es/input/TextArea'
@@ -17,51 +15,17 @@ interface IProps {
 export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
   const { token } = theme.useToken()
 
-  const [currentSearch, setCurrentSearch] = useState<string>('')
-  const [activeFieldIndex, setActiveFieldIndex] = useState<number | null>(null)
-
   const { confirm } = usePrompt()
 
-  const { options } = useAutoComplete(
-    {
-      keyword: currentSearch || '',
-    },
-    'example',
-  )
-
-  const { control, setValue } = useFormContext<IItem>()
+  const { control } = useFormContext<IItem>()
 
   const { fields, remove, prepend } = useFieldArray({
     control,
     name: `meanings.${nestIndex}.examples`,
   })
 
-  const onSearch = (searchText: string, fieldIndex: number) => {
-    setCurrentSearch(searchText)
-    setActiveFieldIndex(fieldIndex)
-  }
-
   const addExample = (): void => {
     prepend({ ...exampleItem })
-  }
-
-  const onSelect = (idxNested: number, idxExp: number, value: string, option?: any) => {
-    const exampleId = option?.id || value
-    exampleApi.getExampleById(exampleId).then(({ isSuccess, content }) => {
-      if (isSuccess && content) {
-        setValue(
-          `meanings.${idxNested}.examples.${idxExp}.origin`,
-          removeLineBreaks(content.origin),
-        )
-        setValue(
-          `meanings.${idxNested}.examples.${idxExp}.translation`,
-          removeLineBreaks(content.translation),
-        )
-        setValue(`meanings.${idxNested}.examples.${idxExp}.id`, content.id)
-        setCurrentSearch('')
-        setActiveFieldIndex(null)
-      }
-    })
   }
 
   return (
@@ -122,30 +86,14 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                           control={control}
                           name={`meanings.${nestIndex}.examples.${key}.origin`}
                           render={({ field }) => (
-                            <AutoComplete
-                              value={field.value}
-                              options={activeFieldIndex === key ? options : []}
-                              onSearch={(text) => onSearch(text, key)}
-                              onSelect={(value, option) => onSelect(nestIndex, key, value, option)}
-                              onChange={(text) => {
-                                field.onChange(text)
-                                onSearch(text, key)
-                              }}
-                              onFocus={() => {
-                                setActiveFieldIndex(key)
-                                setCurrentSearch(field.value || '')
-                              }}
+                            <TextArea
+                              placeholder='Origin:'
+                              autoSize={{ minRows: 1, maxRows: 4 }}
+                              {...field}
                               onBlur={() => {
                                 field.onChange(removeLineBreaks(field.value))
                               }}
-                              placeholder='Origin:'
-                              className={'w-full'}
-                            >
-                              <TextArea
-                                autoSize={{ minRows: 1, maxRows: 4 }}
-                                placeholder='Origin:'
-                              />
-                            </AutoComplete>
+                            />
                           )}
                         />
                       </Col>

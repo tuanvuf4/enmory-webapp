@@ -43,8 +43,9 @@ export const iotdReducer = createSlice({
           const currentItemId = iotd.itemId || (iotd as any).item?.id
           if (currentItemId === updatedItem.id) {
             if (
-              updatedItem.is_deleted ||
-              (updatedItem.catId && iotd.catId && Number(updatedItem.catId) !== Number(iotd.catId))
+              updatedItem.catId &&
+              iotd.catId &&
+              Number(updatedItem.catId) !== Number(iotd.catId)
             ) {
               state[key] = null
             } else {
@@ -52,6 +53,29 @@ export const iotdReducer = createSlice({
               iotd.itemId = updatedItem.id
               if (updatedItem.catId) iotd.catId = updatedItem.catId
             }
+          }
+        }
+      }
+    },
+    removeItem(state: IIotdState, action: PayloadAction<string>) {
+      const id = action.payload
+      if (!id) return
+
+      const categoryKeys: (keyof IIotdState)[] = [
+        'word',
+        'phrase',
+        'idiom',
+        'slang',
+        'collocation',
+        'sentence',
+      ]
+
+      for (const key of categoryKeys) {
+        const iotd = state[key]
+        if (iotd) {
+          const currentItemId = iotd.itemId || (iotd as any).item?.id
+          if (currentItemId === id) {
+            state[key] = null
           }
         }
       }

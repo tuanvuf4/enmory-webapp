@@ -77,6 +77,21 @@ export const getArrayUniqueItem = <T>(origin: T[]) => {
   return compact(combine)
 }
 
+/**
+ * Check if an item has at least one valid meaning (non-empty definition or translation).
+ */
+export const hasValidMeaning = (item?: IItem | null): boolean => {
+  if (!item || !Array.isArray(item.meanings) || item.meanings.length === 0) {
+    return false
+  }
+  return item.meanings.some((meaning) => {
+    const hasDef = typeof meaning.definition === 'string' && meaning.definition.trim().length > 0
+    const hasTrans =
+      typeof meaning.translation === 'string' && meaning.translation.trim().length > 0
+    return hasDef || hasTrans
+  })
+}
+
 export const isDefect = (item: IItem) => {
   const conditions =
     !item.meanings ||

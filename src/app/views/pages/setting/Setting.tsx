@@ -237,6 +237,28 @@ const Setting = () => {
                           }}
                         />
                       </Col>
+
+                      <Col xs={12} md={12}>
+                        <h4>Number Of Listening Sentences:</h4>
+                      </Col>
+
+                      <Col xs={12} md={12}>
+                        <Controller
+                          control={control}
+                          name={`numberOfListeningSentences`}
+                          render={({ field: { onChange, value } }) => {
+                            return (
+                              <Select
+                                style={{ minWidth: 60 }}
+                                value={value}
+                                defaultValue={appSetting.meta.numberOfListeningSentences}
+                                onChange={onChange}
+                                options={appSetting.rdOptions}
+                              />
+                            )
+                          }}
+                        />
+                      </Col>
                     </Row>
                   </Col>
                 </Row>

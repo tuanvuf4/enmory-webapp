@@ -10,11 +10,11 @@ const srcExtDir = path.join(rootDir, 'src', 'extension')
 
 mkdirSync(publicExtDir, { recursive: true })
 
-const key = String(process.env.VITE_OPENAI_API_KEY || '').trim()
+const key = String(process.env.VITE_GEMINI_API_KEY || '').trim()
 
 writeFileSync(
   path.join(publicExtDir, 'extension-config.js'),
-  `self.__ENMORY_EXTENSION_CONFIG__ = ${JSON.stringify({ openaiApiKey: key })};\n`,
+  `self.__ENMORY_EXTENSION_CONFIG__ = ${JSON.stringify({ geminiApiKey: key })};\n`,
 )
 
 for (const file of ['background.js', 'content.js', 'manifest.json']) {

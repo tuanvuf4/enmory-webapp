@@ -5,6 +5,7 @@ export interface IStudySetStatus {
   currentIndex: number
   inProgress: boolean
   isDone: boolean
+  mode?: 'due' | 'custom' | 'checklist'
 }
 
 export interface IStudySet {

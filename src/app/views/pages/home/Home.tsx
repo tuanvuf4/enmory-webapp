@@ -3,6 +3,7 @@ import { useItem, usePrefetchAllIotd, useSelector } from '@/core/hooks'
 import { Example } from '@/views/features/example/Example'
 import { StudySet } from '@/views/features/studySet/StudySet'
 import { Checklist } from '@/views/features/checklist'
+import { SentenceListening } from '@/views/features/sentenceListening'
 import { Widget } from '@/views/features/widget/Widget'
 import { theme, Space, Row, Col, Skeleton } from 'antd'
 import { Item } from '@/views/features/item/Item'
@@ -32,7 +33,7 @@ const IotdItemCard: React.FC<IIotdItemCardProps> = ({ iotd, title, isLoadingPref
   }
 
   const displayItem = item || (iotd as any)?.item
-  if (!displayItem || !displayItem.origin || displayItem.is_deleted) return null
+  if (!displayItem || !displayItem.origin) return null
 
   if (iotd?.catId && displayItem?.catId && Number(iotd.catId) !== Number(displayItem.catId)) {
     return null
@@ -70,6 +71,10 @@ const Home = () => {
               <Space direction='vertical' size={token.size * 1.5} style={{ width: '100%' }}>
                 <Widget title={'Checklist'}>
                   <Checklist />
+                </Widget>
+
+                <Widget title={'Sentence Listening'}>
+                  <SentenceListening />
                 </Widget>
 
                 <IotdItemCard

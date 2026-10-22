@@ -4,19 +4,19 @@ import {
   IReviewSentenceResponse,
   IReviewSuggestion,
   reviewSentenceService,
-} from '@/services/openai/reviewSentence.service'
+} from '@/services/gemini'
 import './reviewableTextArea.scss'
 
 /**
  * ReviewableTextArea - A web app component that wraps Ant Design TextArea with grammar/spelling review functionality
  *
  * This component is completely separate from the Chrome extension review logic and uses the web app's
- * reviewSentenceService which calls OpenAI API directly from the browser with the build-time injected API key.
+ * reviewSentenceService which calls Google Gemini API.
  *
  * Features:
  * - Shows a review badge button (R) in the top-right corner when text is present
  * - Badge states: R (idle), ... (loading), ✓ (clean), ! (error), or number (suggestions count)
- * - Clicking badge triggers grammar/spelling review via OpenAI
+ * - Clicking badge triggers grammar/spelling review via Google Gemini
  * - Displays suggestion panel with clickable corrections
  * - Auto-closes panel when clicking outside
  * - Resets review state when text changes

@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { IExample, IItem, IMeaning } from '@/models/item.model'
-import { localDb } from '@/services/localDb/db'
+import { localDb, invalidateSearchIndex } from '@/services/localDb'
 
 const FIRESTORE_IN_QUERY_LIMIT = 30
 const FIRESTORE_BATCH_WRITE_LIMIT = 400
@@ -47,7 +47,7 @@ export const removeUndefinedFields = <T>(obj: T): T => {
 
 /**
  * Extract all IExample objects from a list of IItem objects.
- * Used for syncing to localDb.examples without querying Firestore examples collection.
+ * Used for extracting examples embedded in items without querying any examples collection.
  */
 export const extractExamplesFromItems = (items: IItem[]): IExample[] => {
   const examplesById = new Map<string, IExample>()
@@ -121,131 +121,16 @@ export const sanitizeItemForFirestore = (item: Partial<IItem>): any => {
 
 /**
  * Hydrates items that contain string example IDs or empty example stubs.
- * Resolves example data first from localDb.examples, then from Firestore 'examples' collection.
- * Automatically caches any fetched examples to localDb.examples for future lookups.
+ * Ensures items have valid structure without querying Firestore or localDb examples.
  */
 export const hydrateItemsWithExamples = async (items: IItem[]): Promise<IItem[]> => {
   if (!items || items.length === 0) return items
 
-  const unresolvedIdSet = new Set<string>()
-
-  for (const item of items) {
-    for (const meaning of item.meanings || []) {
-      for (const ex of (meaning.examples || []) as unknown[]) {
-        if (typeof ex === 'string' && ex.trim()) {
-          unresolvedIdSet.add(ex.trim())
-        } else if (typeof ex === 'object' && ex !== null) {
-          const exampleObj = ex as IExample
-          if (exampleObj.id && (!exampleObj.origin || !exampleObj.origin.trim())) {
-            unresolvedIdSet.add(exampleObj.id)
-          }
-        }
-      }
-    }
-  }
-
-  const unresolvedIds = Array.from(unresolvedIdSet)
-  if (unresolvedIds.length === 0) {
-    return items
-  }
-
-  const examplesMap = new Map<string, IExample>()
-
-  // 1. Try localDb.examples first
-  try {
-    const localFound = await localDb.examples.bulkGet(unresolvedIds)
-    localFound.forEach((ex) => {
-      if (ex && ex.id && ex.origin && ex.origin.trim()) {
-        examplesMap.set(ex.id, ex)
-      }
-    })
-  } catch (localErr) {
-    console.warn('Error fetching examples from localDb:', localErr)
-  }
-
-  // 2. Fetch missing from Firestore examples collection in chunks of 30
-  const missingFromLocal = unresolvedIds.filter((id) => !examplesMap.has(id))
-  if (missingFromLocal.length > 0) {
-    const newlyFetchedExamples: IExample[] = []
-    for (let i = 0; i < missingFromLocal.length; i += FIRESTORE_IN_QUERY_LIMIT) {
-      const chunk = missingFromLocal.slice(i, i + FIRESTORE_IN_QUERY_LIMIT)
-      try {
-        const exSnapshot = await getDocs(
-          query(collection(db, dbCollections.examples), where(documentId(), 'in', chunk)),
-        )
-        exSnapshot.forEach((docSnap) => {
-          const exData = { id: docSnap.id, ...docSnap.data() } as IExample
-          examplesMap.set(docSnap.id, exData)
-          newlyFetchedExamples.push(exData)
-        })
-      } catch (cloudErr) {
-        console.warn('Error fetching missing examples from Firestore chunk:', cloudErr)
-      }
-    }
-
-    // Cache any newly fetched examples into localDb.examples
-    if (newlyFetchedExamples.length > 0) {
-      try {
-        await localDb.examples.bulkPut(newlyFetchedExamples)
-      } catch (cacheErr) {
-        console.warn('Failed to cache fetched examples into localDb:', cacheErr)
-      }
-    }
-  }
-
-  // 3. Map items and replace unresolved examples
+  // Examples are already embedded directly in items.
+  // Return items with quiz removed without querying any examples table/collection.
   return items.map((item) => {
     const { quiz: _quiz, ...cleanItem } = item as any
-    const populatedMeanings = (cleanItem.meanings || []).map((meaning: IMeaning) => {
-      const resolvedExamples = ((meaning.examples || []) as unknown[]).map((ex: any) => {
-        if (typeof ex === 'string') {
-          const found = examplesMap.get(ex.trim())
-          if (found) {
-            return {
-              id: found.id || ex.trim(),
-              uid: found.uid || cleanItem.uid || '',
-              origin: found.origin || '',
-              translation: found.translation || '',
-              note: found.note || '',
-              created_date: found.created_date || Date.now(),
-              last_update: found.last_update || Date.now(),
-              randomIndex: found.randomIndex ?? Math.random(),
-            } as IExample
-          }
-          return {
-            id: ex.trim(),
-            origin: '',
-            translation: '',
-            note: '',
-          } as IExample
-        }
-
-        if (typeof ex === 'object' && ex !== null) {
-          if (ex.id && (!ex.origin || !ex.origin.trim())) {
-            const found = examplesMap.get(ex.id)
-            if (found && found.origin) {
-              return {
-                ...ex,
-                ...found,
-              } as IExample
-            }
-          }
-          return ex as IExample
-        }
-
-        return ex
-      })
-
-      return {
-        ...meaning,
-        examples: resolvedExamples,
-      }
-    })
-
-    return {
-      ...cleanItem,
-      meanings: populatedMeanings,
-    }
+    return cleanItem as IItem
   })
 }
 
@@ -378,16 +263,23 @@ export const integrateFirebaseDbExamples = async (options?: {
       }
     }
 
-    // Fallback: check localDb for any missing example IDs
-    const missingIds = allExampleIds.filter((id) => !examplesMap.has(id))
-    if (missingIds.length > 0) {
+    // Fallback: check localDb.items for any missing example IDs
+    const missingIds = new Set(allExampleIds.filter((id) => !examplesMap.has(id)))
+    if (missingIds.size > 0) {
       try {
-        const localFound = await localDb.examples.bulkGet(missingIds)
-        localFound.forEach((ex) => {
-          if (ex && ex.id) examplesMap.set(ex.id, ex)
-        })
+        const localItems = await localDb.items.toArray()
+        for (const it of localItems) {
+          for (const m of it.meanings || []) {
+            for (const ex of (m.examples || []) as any[]) {
+              if (ex && typeof ex === 'object' && ex.id && missingIds.has(ex.id)) {
+                examplesMap.set(ex.id, ex as IExample)
+                missingIds.delete(ex.id)
+              }
+            }
+          }
+        }
       } catch (localErr) {
-        console.warn('Fallback to localDb failed:', localErr)
+        console.warn('Fallback to localDb.items failed:', localErr)
       }
     }
 
@@ -687,27 +579,6 @@ export const removeLegacyFieldsFromFirebaseDb = async (options?: {
       if (localToUpdate.length > 0) {
         await localDb.items.bulkPut(localToUpdate)
       }
-
-      const allLocalEx = await localDb.examples.toArray()
-      const localExToUpdate: IExample[] = []
-      for (const ex of allLocalEx) {
-        let exChanged = false
-        const cleanEx: any = { ...ex }
-        if ('keywords' in cleanEx) {
-          delete cleanEx.keywords
-          exChanged = true
-        }
-        if ('origin_lowercase' in cleanEx) {
-          delete cleanEx.origin_lowercase
-          exChanged = true
-        }
-        if (exChanged) {
-          localExToUpdate.push(cleanEx)
-        }
-      }
-      if (localExToUpdate.length > 0) {
-        await localDb.examples.bulkPut(localExToUpdate)
-      }
     } catch (localErr) {
       console.warn('Failed to clean up legacy fields in localDb:', localErr)
     }
@@ -733,3 +604,157 @@ export const removeLegacyFieldsFromFirebaseDb = async (options?: {
 export const removeKeywordsFromFirebaseDb = removeLegacyFieldsFromFirebaseDb
 /** @deprecated Use removeLegacyFieldsFromFirebaseDb instead */
 export const removeOriginLowercaseFromFirebaseDb = removeLegacyFieldsFromFirebaseDb
+
+export interface IPurgeDeletedItemsResult {
+  isSuccess: boolean
+  totalScanned: number
+  itemsDeleted: number
+  errors: string[]
+  message: string
+  deletedItems: Array<{ id: string; origin: string; uid?: string; deleted_date?: number }>
+}
+
+/**
+ * Permanently deletes (purges) all items marked with is_deleted = true from Firebase Firestore.
+ * Also cleans up local IndexedDB cache and any orphaned checklist entries for those items.
+ */
+export const purgeDeletedItemsFromFirebaseDb = async (options?: {
+  uid?: string
+  onProgress?: (message: string, current?: number, total?: number) => void
+}): Promise<IPurgeDeletedItemsResult> => {
+  const result: IPurgeDeletedItemsResult = {
+    isSuccess: false,
+    totalScanned: 0,
+    itemsDeleted: 0,
+    errors: [],
+    message: '',
+    deletedItems: [],
+  }
+
+  try {
+    options?.onProgress?.('Fetching soft-deleted items from Firestore (is_deleted = true)...')
+
+    // Query Firestore for documents where is_deleted == true
+    const deletedQuery = query(collection(db, dbCollections.items), where('is_deleted', '==', true))
+
+    const snapshot = await getDocs(deletedQuery)
+    result.totalScanned = snapshot.size
+
+    // Filter by uid if specified
+    const docsToDelete = snapshot.docs.filter((docSnap) => {
+      if (!options?.uid) return true
+      return docSnap.data().uid === options.uid
+    })
+
+    if (docsToDelete.length === 0) {
+      result.isSuccess = true
+      result.message = options?.uid
+        ? 'No items with is_deleted = true found for the current user in Firestore.'
+        : 'No items with is_deleted = true found in Firestore.'
+      options?.onProgress?.(result.message)
+      return result
+    }
+
+    options?.onProgress?.(
+      `Found ${docsToDelete.length} soft-deleted items. Permanently deleting documents from Firestore...`,
+      0,
+      docsToDelete.length,
+    )
+
+    const deletedIds: string[] = []
+    const deletedDetails: Array<{
+      id: string
+      origin: string
+      uid?: string
+      deleted_date?: number
+    }> = []
+
+    let currentBatch = writeBatch(db)
+    let batchCount = 0
+    let processedCount = 0
+
+    for (const docSnap of docsToDelete) {
+      const data = docSnap.data()
+      deletedIds.push(docSnap.id)
+      deletedDetails.push({
+        id: docSnap.id,
+        origin: data.origin || '(no origin)',
+        uid: data.uid || '',
+        deleted_date: data.deleted_date || data.last_update,
+      })
+
+      currentBatch.delete(docSnap.ref)
+      batchCount++
+      processedCount++
+      result.itemsDeleted++
+
+      if (batchCount >= FIRESTORE_BATCH_WRITE_LIMIT) {
+        options?.onProgress?.(
+          `Deleting from Firestore: ${processedCount}/${docsToDelete.length}...`,
+          processedCount,
+          docsToDelete.length,
+        )
+        await currentBatch.commit()
+        currentBatch = writeBatch(db)
+        batchCount = 0
+      }
+    }
+
+    if (batchCount > 0) {
+      await currentBatch.commit()
+    }
+
+    result.deletedItems = deletedDetails
+
+    // Clean up local IndexedDB if any of these deleted items are still cached
+    try {
+      if (deletedIds.length > 0) {
+        await localDb.items.bulkDelete(deletedIds)
+        invalidateSearchIndex()
+      }
+    } catch (localErr) {
+      console.warn('Failed to clean up purged items in localDb:', localErr)
+    }
+
+    // Clean up any checklist entries referencing these purged item IDs
+    try {
+      options?.onProgress?.('Cleaning up corresponding checklist entries...')
+      for (let i = 0; i < deletedIds.length; i += FIRESTORE_IN_QUERY_LIMIT) {
+        const chunk = deletedIds.slice(i, i + FIRESTORE_IN_QUERY_LIMIT)
+        const clQuery = query(
+          collection(db, dbCollections.checklists),
+          where('itemId', 'in', chunk),
+        )
+        const clSnapshot = await getDocs(clQuery)
+        if (!clSnapshot.empty) {
+          let clBatch = writeBatch(db)
+          let clCount = 0
+          for (const clDoc of clSnapshot.docs) {
+            clBatch.delete(clDoc.ref)
+            clCount++
+            if (clCount >= FIRESTORE_BATCH_WRITE_LIMIT) {
+              await clBatch.commit()
+              clBatch = writeBatch(db)
+              clCount = 0
+            }
+          }
+          if (clCount > 0) {
+            await clBatch.commit()
+          }
+        }
+      }
+    } catch (clErr) {
+      console.warn('Failed to clean up checklist references for purged items:', clErr)
+    }
+
+    result.isSuccess = true
+    result.message = `Successfully permanently deleted ${result.itemsDeleted} items (is_deleted = true) from Firebase Firestore.`
+    options?.onProgress?.(result.message)
+    return result
+  } catch (error: any) {
+    console.error('Failed to purge deleted items from Firebase DB:', error)
+    result.errors.push(error.message || String(error))
+    result.message = error.message || 'Failed to purge soft-deleted items'
+    return result
+  }
+}

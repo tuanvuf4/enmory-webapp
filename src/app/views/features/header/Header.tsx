@@ -194,6 +194,7 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
               >
                 <Button
                   type='text'
+                  aria-label='Toggle theme'
                   style={{
                     display: 'flex',
                     alignItems: 'center',

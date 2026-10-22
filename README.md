@@ -7,7 +7,7 @@ A comprehensive vocabulary learning application built with React, TypeScript, an
 - Node.js (v18 or higher)
 - npm or yarn
 - Firebase account
-- OpenAI API key (for review features)
+- Google Gemini API key (for AI & TTS features)
 
 ## Setup
 
@@ -34,7 +34,7 @@ A comprehensive vocabulary learning application built with React, TypeScript, an
 
    Then edit `.env` and fill in your actual values:
 
-   - `VITE_OPENAI_API_KEY`: Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+   - `VITE_GEMINI_API_KEY: Get your API key from Google AI Studio (https://aistudio.google.com)
    - `VITE_FIREBASE_*`: Your Firebase project credentials
    - `VITE_GOOGLE_CLIENT_ID`: Google OAuth client ID
    - Other configuration values as needed
@@ -71,15 +71,15 @@ Builds the extension version using `.env.ext` configuration.
 
 **Important:** Never commit actual `.env` files to git. They contain sensitive API keys.
 
-## OpenAI API Key Configuration
+## Google Gemini API Key Configuration
 
-The app uses OpenAI for grammar and spelling review features:
+The app uses Google Gemini for grammar and spelling review features:
 
-1. **Local Development**: API key is loaded from `.env` file via `VITE_OPENAI_API_KEY`
+1. **Local Development**: API key is loaded from `.env` file via `VITE_GEMINI_API_KEY`
 2. **Web Build**: API key is injected at build time from `.env.web`
 3. **Extension Build**: API key is injected into `extension-config.js` during build from `.env.ext`
 
-All API keys are accessed through `import.meta.env.VITE_OPENAI_API_KEY` in the code.
+All API keys are accessed through `import.meta.env.VITE_GEMINI_API_KEY` in the code.
 
 ## Project Structure
 
@@ -87,7 +87,7 @@ All API keys are accessed through `import.meta.env.VITE_OPENAI_API_KEY` in the c
 src/
   ├── app/              # Main application code
   │   ├── views/        # React components
-  │   ├── services/     # API services (OpenAI, Firebase, etc.)
+  │   ├── services/     # API services (Gemini, Firebase, etc.)
   │   ├── store/        # Redux store
   │   └── ...
   ├── extension/        # Chrome extension specific code
@@ -97,7 +97,8 @@ src/
 ## Features
 
 - Vocabulary management with meanings and examples
-- Grammar and spelling review (powered by OpenAI)
+- Grammar and spelling review (powered by Google Gemini)
+- Voice audio playback (powered exclusively by Google Gemini TTS)
 - Article reading with IOTD (Item of the Day)
 - User authentication via Google/Firebase
 - Chrome extension for external website integration
@@ -106,7 +107,7 @@ src/
 
 The app includes two separate review systems:
 
-1. **Web App Review**: Uses `ReviewableTextArea` component with OpenAI integration
+1. **Web App Review**: Uses `ReviewableTextArea` component with Google Gemini integration
 2. **Extension Review**: Injects review UI into external website textareas
 
 See [docs/REVIEW_ARCHITECTURE.md](docs/REVIEW_ARCHITECTURE.md) for detailed architecture.

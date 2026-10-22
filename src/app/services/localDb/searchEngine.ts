@@ -87,59 +87,8 @@ export const invalidateSearchIndex = () => {
 }
 
 export const populateItemExamples = async (items: IItem[]): Promise<IItem[]> => {
-  const exampleIdSet = new Set<string>()
-
-  for (const item of items) {
-    for (const meaning of item.meanings || []) {
-      for (const example of (meaning.examples || []) as unknown[]) {
-        if (typeof example === 'string' && example.trim()) {
-          exampleIdSet.add(example.trim())
-        } else if (typeof example === 'object' && example !== null) {
-          const ex = example as IExample
-          if (ex.id && (!ex.origin || !ex.origin.trim())) {
-            exampleIdSet.add(ex.id)
-          }
-        }
-      }
-    }
-  }
-
-  const exampleIds = Array.from(exampleIdSet)
-  if (exampleIds.length === 0) return items
-
-  const foundExamples = await localDb.examples.bulkGet(exampleIds)
-  const exampleMap = new Map<string, IExample>()
-  foundExamples.forEach((example) => {
-    if (example?.id && example.origin && example.origin.trim()) {
-      exampleMap.set(example.id, example)
-    }
-  })
-
-  return items.map((item) => {
-    if (!item.meanings || item.meanings.length === 0) return item
-
-    const populatedMeanings = item.meanings.map((meaning) => {
-      if (!meaning.examples || meaning.examples.length === 0) return meaning
-      const resolvedExamples = (meaning.examples as unknown[]).flatMap((example) => {
-        if (typeof example === 'string') {
-          const resolvedExample = exampleMap.get(example.trim())
-          return resolvedExample ? [resolvedExample] : []
-        }
-        if (typeof example === 'object' && example !== null) {
-          const ex = example as IExample
-          if (ex.id && (!ex.origin || !ex.origin.trim())) {
-            const resolvedExample = exampleMap.get(ex.id)
-            if (resolvedExample) return [resolvedExample]
-          }
-          return [ex]
-        }
-        return []
-      })
-      return { ...meaning, examples: resolvedExamples }
-    })
-
-    return { ...item, meanings: populatedMeanings }
-  })
+  // Examples are already embedded in items; return items directly without querying localDb.examples
+  return items
 }
 
 /**
@@ -155,7 +104,7 @@ export const queryLocalItems = async (
     query = localDb.items.where('uid').equals(uid)
   }
 
-  const rawItems = await query.filter((item) => !item.is_deleted).toArray()
+  const rawItems = await query.toArray()
 
   // 2. Apply structured filters (cat, archive, favorite, tags)
   let filtered = rawItems
@@ -267,18 +216,45 @@ export const queryLocalItems = async (
 }
 
 /**
- * Executes a dynamic local search and filter query against IndexedDB for examples.
+ * Extracts all embedded examples from local items in IndexedDB.
+ */
+export const extractAllLocalExamples = async (uid?: string): Promise<IExample[]> => {
+  let query = localDb.items.toCollection()
+  if (uid) {
+    query = localDb.items.where('uid').equals(uid)
+  }
+
+  const items = await query.toArray()
+  const examplesMap = new Map<string, IExample>()
+
+  for (const item of items) {
+    for (const meaning of item.meanings || []) {
+      for (const ex of (meaning.examples || []) as any[]) {
+        if (ex && typeof ex === 'object' && ex.origin && ex.origin.trim()) {
+          const key = ex.id || `${item.id || ''}_${ex.origin.trim()}`
+          if (!examplesMap.has(key)) {
+            examplesMap.set(key, {
+              ...ex,
+              id: ex.id || key,
+              uid: ex.uid || item.uid,
+            } as IExample)
+          }
+        }
+      }
+    }
+  }
+
+  return Array.from(examplesMap.values())
+}
+
+/**
+ * Executes a dynamic local search and filter query for examples derived from items.
  */
 export const queryLocalExamples = async (
   querySearch: IExampleQuery,
   uid?: string,
 ): Promise<IHttpResponse<IExample[]>> => {
-  let collection = localDb.examples.toCollection()
-  if (uid) {
-    collection = localDb.examples.where('uid').equals(uid)
-  }
-
-  let examples = await collection.toArray()
+  let examples = await extractAllLocalExamples(uid)
 
   if (querySearch.keyword && querySearch.keyword.trim()) {
     const kw = querySearch.keyword.trim().toLowerCase()
@@ -308,7 +284,7 @@ export const queryLocalExamples = async (
 
   return {
     isSuccess: true,
-    message: 'Examples fetched from local database',
+    message: 'Examples fetched from local items',
     content: paged,
     paging: {
       page,
@@ -321,24 +297,19 @@ export const queryLocalExamples = async (
 }
 
 /**
- * Retrieves random examples from local database.
+ * Retrieves random examples derived from local items.
  */
 export const getRandomLocalExamples = async (
   size: number,
   uid?: string,
 ): Promise<IHttpResponse<IExample[]>> => {
-  let collection = localDb.examples.toCollection()
-  if (uid) {
-    collection = localDb.examples.where('uid').equals(uid)
-  }
-
-  const examples = await collection.toArray()
+  const examples = await extractAllLocalExamples(uid)
   const shuffled = [...examples].sort(() => Math.random() - 0.5)
   const selected = shuffled.slice(0, size)
 
   return {
     isSuccess: true,
-    message: 'Random examples fetched from local database',
+    message: 'Random examples fetched from local items',
     content: selected,
     statusCode: 200,
   }

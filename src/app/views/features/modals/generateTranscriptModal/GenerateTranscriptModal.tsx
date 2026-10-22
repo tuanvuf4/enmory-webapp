@@ -30,7 +30,14 @@ import {
   IGenerateTranscriptResponse,
   resolveGeminiApiKey,
 } from '@/services/gemini'
-import { ttsService, TOpenAIVoice, OPENAI_VOICES } from '@/services/openai/tts.service'
+import {
+  geminiTtsService as ttsService,
+  TGeminiVoice,
+  GEMINI_VOICES,
+  GEMINI_TRANSCRIPT_MODELS,
+  TGeminiTranscriptModel,
+  DEFAULT_GEMINI_MODEL,
+} from '@/services/gemini'
 import { parseTranscript, formatSegmentTime } from '../../player/transcriptUtils'
 import { usePrompt } from '@/helpers/hooks'
 
@@ -46,7 +53,7 @@ export interface IGenerateTranscriptModalProps {
     description: string
     transcript: string
     translation?: string
-    voice?: TOpenAIVoice
+    voice?: TGeminiVoice
   }) => void
 }
 
@@ -66,10 +73,11 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
   const [loading, setLoading] = useState(false)
   const [statusText, setStatusText] = useState<string>('')
   const [generatedPrompt, setGeneratedPrompt] = useState<string>('')
+  const [selectedModel, setSelectedModel] = useState<TGeminiTranscriptModel>(DEFAULT_GEMINI_MODEL)
   const [result, setResult] = useState<IGenerateTranscriptResponse | null>(null)
 
   // Preview TTS player state
-  const [selectedVoice, setSelectedVoice] = useState<TOpenAIVoice>('auto')
+  const [selectedVoice, setSelectedVoice] = useState<TGeminiVoice>('auto')
   const [isPlayingPreview, setIsPlayingPreview] = useState(false)
   const [previewSegmentIndex, setPreviewSegmentIndex] = useState<number>(-1)
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -108,7 +116,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
     setPreviewSegmentIndex(-1)
   }
 
-  // Play preview of generated transcript using OpenAI TTS
+  // Play preview of generated transcript using Gemini TTS
   const handleTogglePlayPreview = () => {
     if (isPlayingPreview) {
       stopPreview()
@@ -193,12 +201,15 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
       setStatusText('Bước 1/2: Đang sử dụng Gemini tạo prompt chuyên biệt từ description...')
 
       // Step 1: Create prompt from description
-      const prompt = await transcriptService.generatePromptFromDescription(description)
+      const prompt = await transcriptService.generatePromptFromDescription(
+        description,
+        selectedModel,
+      )
       setGeneratedPrompt(prompt)
 
       // Step 2: Generate transcript based on prompt
       setStatusText('Bước 2/2: Đang tạo bài nghe tiếng Anh 5-10 phút (kèm timestamps M:SS)...')
-      const genResult = await transcriptService.generateTranscriptFromPrompt(prompt)
+      const genResult = await transcriptService.generateTranscriptFromPrompt(prompt, selectedModel)
 
       setResult(genResult)
       message({ type: 'success', content: 'Đã tạo transcript bài nghe thành công!' })
@@ -221,7 +232,10 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
     try {
       setLoading(true)
       setStatusText('Đang sử dụng Gemini tạo prompt từ description...')
-      const prompt = await transcriptService.generatePromptFromDescription(description)
+      const prompt = await transcriptService.generatePromptFromDescription(
+        description,
+        selectedModel,
+      )
       setGeneratedPrompt(prompt)
       message({ type: 'success', content: 'Tạo prompt thành công! Bạn có thể chỉnh sửa bên dưới.' })
     } catch (error: any) {
@@ -245,7 +259,10 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
       setLoading(true)
       stopPreview()
       setStatusText('Đang tạo bài nghe tiếng Anh 5-10 phút từ prompt...')
-      const genResult = await transcriptService.generateTranscriptFromPrompt(generatedPrompt)
+      const genResult = await transcriptService.generateTranscriptFromPrompt(
+        generatedPrompt,
+        selectedModel,
+      )
       setResult(genResult)
       message({ type: 'success', content: 'Tạo transcript thành công!' })
     } catch (error: any) {
@@ -314,7 +331,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
                     }
                   }}
                   style={{ width: 230 }}
-                  options={OPENAI_VOICES.map((v) => ({
+                  options={GEMINI_VOICES.map((v) => ({
                     value: v.value,
                     label: v.label,
                   }))}
@@ -371,7 +388,17 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
         </div>
 
         {/* Action Buttons */}
-        <Flex gap={8} wrap='wrap'>
+        <Flex gap={8} wrap='wrap' align='center'>
+          <Select
+            value={selectedModel}
+            onChange={setSelectedModel}
+            style={{ minWidth: 210 }}
+            options={GEMINI_TRANSCRIPT_MODELS.map((m) => ({
+              value: m.value,
+              label: `⚡ ${m.label}`,
+            }))}
+            disabled={loading}
+          />
           <Button
             type='primary'
             icon={<ThunderboltOutlined />}
@@ -501,7 +528,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
                         if (isPlayingPreview) stopPreview()
                       }}
                       style={{ width: 220 }}
-                      options={OPENAI_VOICES.map((v) => ({
+                      options={GEMINI_VOICES.map((v) => ({
                         value: v.value,
                         label: v.label,
                       }))}

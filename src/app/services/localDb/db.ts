@@ -18,6 +18,9 @@ export class EnmoryDatabase extends Dexie {
       examples: 'id, uid, created_date, last_update',
       syncMeta: 'key',
     })
+    this.version(2).stores({
+      items: 'id, uid, catId, level, created_date, last_update, next_review_date, *tags_lowercase',
+    })
   }
 }
 

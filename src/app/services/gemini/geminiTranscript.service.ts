@@ -1,6 +1,14 @@
 import { GoogleGenAI } from '@google/genai'
 import { IHttpResponse } from '@/models/http.model'
 import { resolveGeminiApiKey } from './geminiDictionary.service'
+import {
+  type TGeminiTranscriptModel,
+  GEMINI_TRANSCRIPT_MODELS,
+  CANDIDATE_GEMINI_MODELS,
+} from './geminiModels'
+
+export type { TGeminiTranscriptModel }
+export { GEMINI_TRANSCRIPT_MODELS, CANDIDATE_GEMINI_MODELS }
 
 export const DEFAULT_TRANSCRIPT_DESCRIPTION =
   'Thực hành luyện nghe tiếng Anh, tạo bài nghe khoảng 5-10 phút chủ đề giao tiếp trong cuộc sống, công việc xoay quanh của lập trình viên frontend trong môi trường công việc, giao tiếp với đồng nghiệp, daily meeting, họp với khách hàng và với team'
@@ -12,13 +20,6 @@ export interface IGenerateTranscriptResponse {
   translation?: string
   generatedPrompt?: string
 }
-
-export const CANDIDATE_GEMINI_MODELS = [
-  'gemini-3.8-flash',
-  'gemini-3.5-flash',
-  'gemini-3.5-flash-lite',
-  'gemini-flash-latest',
-]
 
 const getGeminiClient = () => {
   const apiKey = resolveGeminiApiKey()
@@ -35,7 +36,10 @@ export const geminiTranscriptService = {
   /**
    * Step 1: Use Gemini to create an optimized generation prompt based on the user's description.
    */
-  generatePromptFromDescription: async (description: string): Promise<string> => {
+  generatePromptFromDescription: async (
+    description: string,
+    preferredModel?: TGeminiTranscriptModel,
+  ): Promise<string> => {
     const ai = getGeminiClient()
 
     const promptGeneratorInstruction = `You are an expert English language educator and AI prompt engineer.
@@ -56,8 +60,11 @@ The prompt you generate should instruct the AI model to:
 Return ONLY the generated prompt text, ready to be sent to an AI model. Do not include markdown meta-commentary.`
 
     let lastError: any = null
+    const modelCandidates = preferredModel
+      ? [preferredModel, ...CANDIDATE_GEMINI_MODELS.filter((m) => m !== preferredModel)]
+      : CANDIDATE_GEMINI_MODELS
 
-    for (const model of CANDIDATE_GEMINI_MODELS) {
+    for (const model of modelCandidates) {
       try {
         const response = await ai.models.generateContent({
           model,
@@ -89,6 +96,7 @@ Return ONLY the generated prompt text, ready to be sent to an AI model. Do not i
    */
   generateTranscriptFromPrompt: async (
     generatedPrompt: string,
+    preferredModel?: TGeminiTranscriptModel,
   ): Promise<IGenerateTranscriptResponse> => {
     const ai = getGeminiClient()
 
@@ -112,7 +120,11 @@ You MUST return a JSON object with this exact schema:
 
     let lastError: any = null
 
-    for (const model of CANDIDATE_GEMINI_MODELS) {
+    const modelCandidates = preferredModel
+      ? [preferredModel, ...CANDIDATE_GEMINI_MODELS.filter((m) => m !== preferredModel)]
+      : CANDIDATE_GEMINI_MODELS
+
+    for (const model of modelCandidates) {
       try {
         const response = await ai.models.generateContent({
           model,
@@ -158,17 +170,24 @@ You MUST return a JSON object with this exact schema:
   generateTranscript: async (
     description?: string,
     onProgress?: (step: 'prompt' | 'transcript') => void,
+    preferredModel?: TGeminiTranscriptModel,
   ): Promise<IHttpResponse<IGenerateTranscriptResponse>> => {
     try {
       const desc = description?.trim() || DEFAULT_TRANSCRIPT_DESCRIPTION
 
       // Step 1: Create prompt from description
       onProgress?.('prompt')
-      const prompt = await geminiTranscriptService.generatePromptFromDescription(desc)
+      const prompt = await geminiTranscriptService.generatePromptFromDescription(
+        desc,
+        preferredModel,
+      )
 
       // Step 2: Generate transcript from prompt
       onProgress?.('transcript')
-      const result = await geminiTranscriptService.generateTranscriptFromPrompt(prompt)
+      const result = await geminiTranscriptService.generateTranscriptFromPrompt(
+        prompt,
+        preferredModel,
+      )
 
       return {
         isSuccess: true,

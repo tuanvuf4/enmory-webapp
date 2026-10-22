@@ -11,25 +11,25 @@ import {
   getDocs,
   getDoc,
   doc,
-  documentId,
   addDoc,
   updateDoc,
   deleteDoc,
   Timestamp,
-  QueryConstraint,
   QueryDocumentSnapshot,
   DocumentData,
 } from 'firebase/firestore'
 import { IExample } from '@/models/item.model'
-import { toWildString } from '@/helpers/item'
+import { toWildString, hasValidMeaning } from '@/helpers/item'
 import { commonApi } from './common.api'
 import { categories, types } from '@/constant/index'
 import { shuffleArray } from '@/helpers/mics'
-import { localDb, queryLocalItems, invalidateSearchIndex } from '@/services/localDb'
+import { getDueItemsFromLocalDb } from '@/services/srs/srs.service'
+import { checklistApi } from './checklist.api'
+import { localDb, queryLocalItems, invalidateSearchIndex, statsService } from '@/services/localDb'
 import {
   sanitizeItemForFirestore,
-  extractExamplesFromItems,
   hydrateItemsWithExamples,
+  purgeDeletedItemsFromFirebaseDb,
 } from '@/services/firebase/dbIntegration'
 
 export interface IItemRequestParams {
@@ -61,51 +61,28 @@ const normalizeLowercaseTags = (tags: string[] = []) => {
  * falling back to Firestore examples collection if missing.
  */
 const getExamplesByIds = async (exampleIds: string[]): Promise<IExample[]> => {
-  if (!exampleIds || exampleIds.length === 0) {
-    return []
-  }
-
-  // Filter out any non-string values and ensure we have valid IDs
-  const validIds = exampleIds.filter((id) => id && typeof id === 'string')
-
-  if (validIds.length === 0) {
-    return []
-  }
+  if (!exampleIds || exampleIds.length === 0) return []
+  const targetIds = new Set(exampleIds.filter((id) => Boolean(id) && typeof id === 'string'))
+  if (targetIds.size === 0) return []
 
   try {
-    const examples = await localDb.examples.where('id').anyOf(validIds).toArray()
-    const foundIds = new Set(examples.map((ex) => ex.id))
-    const missingIds = validIds.filter((id) => !foundIds.has(id))
-
-    if (missingIds.length > 0) {
-      const newlyFetched: IExample[] = []
-      for (let i = 0; i < missingIds.length; i += 30) {
-        const chunk = missingIds.slice(i, i + 30)
-        try {
-          const exSnapshot = await getDocs(
-            query(collection(db, dbCollections.examples), where(documentId(), 'in', chunk)),
-          )
-          exSnapshot.forEach((docSnap) => {
-            const exData = { id: docSnap.id, ...docSnap.data() } as IExample
-            examples.push(exData)
-            newlyFetched.push(exData)
-          })
-        } catch (cloudErr) {
-          console.warn('Error fetching missing examples from Firestore chunk:', cloudErr)
+    const items = await localDb.items.toArray()
+    const found: IExample[] = []
+    for (const item of items) {
+      for (const meaning of item.meanings || []) {
+        for (const ex of (meaning.examples || []) as any[]) {
+          if (ex && typeof ex === 'object' && ex.id && targetIds.has(ex.id)) {
+            found.push(ex as IExample)
+            targetIds.delete(ex.id)
+            if (targetIds.size === 0) break
+          }
         }
       }
-      if (newlyFetched.length > 0) {
-        try {
-          await localDb.examples.bulkPut(newlyFetched)
-        } catch (cacheErr) {
-          console.warn('Failed to cache fetched examples into localDb:', cacheErr)
-        }
-      }
+      if (targetIds.size === 0) break
     }
-
-    return examples.filter((ex: any) => !ex.is_deleted)
+    return found
   } catch (error) {
-    console.error('Error fetching examples:', error)
+    console.error('Error finding examples in local items:', error)
     return []
   }
 }
@@ -190,7 +167,7 @@ const getItemById = async (id: string): Promise<IHttpResponse<IItem>> => {
 
     // 1. Try localDb first
     const localItem = await localDb.items.get(id)
-    if (localItem && !localItem.is_deleted) {
+    if (localItem) {
       delete (localItem as any).quiz
       item = localItem
     } else {
@@ -199,11 +176,9 @@ const getItemById = async (id: string): Promise<IHttpResponse<IItem>> => {
         const itemDoc = await getDoc(doc(db, dbCollections.items, id))
         if (itemDoc.exists()) {
           const data = itemDoc.data()
-          if (!data.is_deleted) {
-            item = { id: itemDoc.id, ...data } as IItem
-            delete (item as any).quiz
-            await localDb.items.put(item)
-          }
+          item = { id: itemDoc.id, ...data } as IItem
+          delete (item as any).quiz
+          await localDb.items.put(item)
         }
       } catch (firestoreErr) {
         console.warn('Fallback to Firestore for getItemById failed:', firestoreErr)
@@ -219,23 +194,10 @@ const getItemById = async (id: string): Promise<IHttpResponse<IItem>> => {
       }
     }
 
-    // 3. Hydrate any string example IDs or stubs in meanings
-    const hydratedList = await hydrateItemsWithExamples([item])
-    const hydratedItem = hydratedList[0] || item
-
-    // Cache updated hydrated item in localDb if meanings changed
-    if (JSON.stringify(hydratedItem.meanings) !== JSON.stringify(item.meanings)) {
-      try {
-        await localDb.items.put(hydratedItem)
-      } catch (updateErr) {
-        console.warn('Failed to update hydrated item in localDb:', updateErr)
-      }
-    }
-
     return {
       isSuccess: true,
       message: 'Item fetched successfully',
-      content: hydratedItem,
+      content: item,
       statusCode: 200,
     }
   } catch (error) {
@@ -252,26 +214,22 @@ const getEligibleItemsInCategory = async (catId: number): Promise<IItem[]> => {
     let allLocalItems = await localDb.items.where('catId').equals(catId).toArray()
 
     const userItems = allLocalItems.filter(
-      (item) =>
-        item.catId === catId && !item.is_deleted && currentUser && item.uid === currentUser.uid,
+      (item) => item.catId === catId && currentUser && item.uid === currentUser.uid,
     )
 
     // console.log(`*** allLocalItems *** `, allLocalItems)
     // console.log(`*** userItems *** `, userItems)
 
-    const eligible = userItems.filter((item) => {
-      const meanings = item.meanings || []
-      return meanings.some((meaning: any) => {
-        return (
-          (meaning.definition && meaning.definition.trim() !== '') ||
-          (meaning.translation && meaning.translation.trim() !== '')
-        )
-      })
-    })
+    const eligible = userItems.filter(hasValidMeaning)
 
     // Filter items that have examples
     const itemsWithExamples = eligible.filter((item) => {
-      const meanings = item.meanings || []
+      const meanings = (item.meanings || []).filter((m) => {
+        const def = m?.definition && typeof m.definition === 'string' ? m.definition.trim() : ''
+        const trans =
+          m?.translation && typeof m.translation === 'string' ? m.translation.trim() : ''
+        return def.length > 0 || trans.length > 0
+      })
       return meanings.some((meaning: any) => meaning.examples && meaning.examples.length > 0)
     })
 
@@ -290,6 +248,235 @@ const getItemsInCategory = async (catId: number, size: number): Promise<IItem[]>
 /**
  * Get study set items loaded from local database
  */
+/**
+ * Reusable helper to generate quiz questions for a list of items.
+ */
+export const generateQuizzesForItems = async (
+  items: IItem[],
+  poolItems: IItem[] = [],
+  categoryItemsMap?: Map<number, IItem[]>,
+): Promise<IItemQuiz[]> => {
+  const validItems = items.filter(hasValidMeaning)
+  const hydratedAllItems = await hydrateItemsWithExamples(validItems)
+
+  return hydratedAllItems.map((item) => {
+    // Randomly decide quiz type (50% chance for each type if catId === 1)
+    const useFillInBlank = item.catId === 1 && Math.random() < 0.5
+
+    // Get random meaning from meanings array
+    const meanings = (item.meanings || []).filter((m) => {
+      const def = m?.definition && typeof m.definition === 'string' ? m.definition.trim() : ''
+      const trans = m?.translation && typeof m.translation === 'string' ? m.translation.trim() : ''
+      return def.length > 0 || trans.length > 0
+    })
+    const randomMeaningIndex = meanings.length > 0 ? Math.floor(Math.random() * meanings.length) : 0
+    const selectedMeaning = meanings[randomMeaningIndex]
+
+    // Get definition/translation from meaning
+    const definition =
+      selectedMeaning?.definition?.trim() || selectedMeaning?.translation?.trim() || ''
+
+    // Get hint: if word (catId=1) show type, otherwise show category
+    let hint = ''
+    if (item.catId === 1) {
+      const typeLabels = types.filter((type) => type.id !== 0 && type.id == selectedMeaning?.typeId)
+      hint = typeLabels[0]?.label?.origin || ''
+    } else {
+      const restCategoryLabels = categories.filter(
+        (cat) => cat.id !== 0 && cat.id !== 1 && cat.id === item.catId,
+      )
+      hint = restCategoryLabels[0]?.label || ''
+    }
+
+    // For fill in the blank
+    if (useFillInBlank) {
+      return {
+        ...item,
+        quiz: {
+          title: definition,
+          question: toWildString(item.origin || ''),
+          answer: item.origin,
+          type: EQuiz.FILL_IN_BLANK,
+          hint: hint ? `(${hint.toLowerCase()})` : '',
+          result: false,
+        },
+      } as unknown as IItemQuiz
+    }
+
+    const pool =
+      (item.catId !== undefined ? categoryItemsMap?.get(item.catId) : undefined) ||
+      (poolItems.length > 0 ? poolItems : items)
+    const wrongAnswers = pool
+      .filter(
+        (otherItem) =>
+          otherItem.id !== item.id &&
+          Number(otherItem.catId) === Number(item.catId) &&
+          hasValidMeaning(otherItem),
+      )
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3)
+
+    if (wrongAnswers.length < 3) {
+      const remaining = 3 - wrongAnswers.length
+      const extraWrong = pool
+        .filter(
+          (other) =>
+            other.id !== item.id &&
+            hasValidMeaning(other) &&
+            !wrongAnswers.some((w) => w.id === other.id),
+        )
+        .sort(() => Math.random() - 0.5)
+        .slice(0, remaining)
+      wrongAnswers.push(...extraWrong)
+    }
+
+    // Create answer options
+    const answers: IAnswer<string, boolean>[] = [
+      {
+        id: item.id as string,
+        label: item.origin,
+        value: false,
+        typeId: selectedMeaning?.typeId || 0,
+        key: selectedMeaning?.translation || '',
+      },
+      ...wrongAnswers.map((wrongItem) => {
+        const randomMeaningIndex =
+          wrongItem.meanings && wrongItem.meanings?.length > 0
+            ? Math.floor(Math.random() * wrongItem.meanings.length)
+            : 0
+        const selected = wrongItem?.meanings?.[randomMeaningIndex]
+
+        return {
+          id: wrongItem.id as string,
+          label: wrongItem.origin,
+          value: false,
+          typeId: selected?.typeId || 0,
+          key: selected?.translation || '',
+        }
+      }),
+    ]
+
+    // Shuffle answers
+    const shuffledAnswers = answers.sort(() => Math.random() - 0.5)
+
+    return {
+      ...item,
+      quiz: {
+        title: definition,
+        question: '',
+        answer: shuffledAnswers,
+        type: EQuiz.MULTI_CHOICE,
+        hint: hint ? `(${hint.toLowerCase()})` : '',
+        result: false,
+      },
+    } as unknown as IItemQuiz
+  })
+}
+
+/**
+ * Get study set specifically for items due under Spaced Repetition (SRS).
+ */
+const getDueStudySet = async (limit = 15): Promise<IHttpResponse<IItemQuiz[]>> => {
+  try {
+    commonApi.checkAuth()
+    const currentUser = firebaseAuthService.getCurrentUser()
+    if (!currentUser) {
+      throw new Error('User not authenticated')
+    }
+
+    const dueItems = await getDueItemsFromLocalDb(currentUser.uid)
+
+    if (dueItems.length === 0) {
+      return {
+        isSuccess: false,
+        message: 'Hoan hô! Bạn không có từ nào cần ôn tập hôm nay.',
+        content: [],
+        statusCode: 404,
+      }
+    }
+
+    const selectedDue = dueItems.slice(0, limit)
+    const allLocalItems = await localDb.items.toArray()
+    const pool = allLocalItems.filter(
+      (item) => item.uid === currentUser.uid && !item.archive && hasValidMeaning(item),
+    )
+
+    const itemsWithQuiz = await generateQuizzesForItems(selectedDue, pool)
+    const shuffledItemsWithQuiz = shuffleArray(itemsWithQuiz)
+
+    return {
+      isSuccess: true,
+      message: 'Due study set fetched successfully',
+      content: shuffledItemsWithQuiz,
+      statusCode: 200,
+    }
+  } catch (error) {
+    console.error('Error fetching due study set from localDb:', error)
+    return {
+      isSuccess: false,
+      message: error instanceof Error ? error.message : 'Failed to fetch due study set',
+      content: [],
+      statusCode: 500,
+    }
+  }
+}
+
+/**
+ * Get study set specifically for checklist items.
+ */
+const getChecklistStudySet = async (customItems?: IItem[]): Promise<IHttpResponse<IItemQuiz[]>> => {
+  try {
+    commonApi.checkAuth()
+    const currentUser = firebaseAuthService.getCurrentUser()
+    if (!currentUser) {
+      throw new Error('User not authenticated')
+    }
+
+    let itemsToStudy = customItems ? customItems.filter(hasValidMeaning) : []
+    if (!itemsToStudy || itemsToStudy.length === 0) {
+      const checklist = await checklistApi.getChecklist()
+      const validChecklist = checklist.filter(hasValidMeaning)
+      const toLearn = validChecklist.filter((item) => !item.isCompleted)
+      itemsToStudy = toLearn.length > 0 ? toLearn : validChecklist
+    }
+
+    if (!itemsToStudy || itemsToStudy.length === 0) {
+      return {
+        isSuccess: false,
+        message: 'Không có từ nào có định nghĩa hoặc nghĩa trong Checklist để luyện tập.',
+        content: [],
+        statusCode: 404,
+      }
+    }
+
+    const allLocalItems = await localDb.items.toArray()
+    const pool = allLocalItems.filter(
+      (item) => item.uid === currentUser.uid && !item.archive && hasValidMeaning(item),
+    )
+
+    const itemsWithQuiz = await generateQuizzesForItems(
+      itemsToStudy,
+      pool.length > 0 ? pool : itemsToStudy,
+    )
+    const shuffledItemsWithQuiz = shuffleArray(itemsWithQuiz)
+
+    return {
+      isSuccess: true,
+      message: 'Checklist study set fetched successfully',
+      content: shuffledItemsWithQuiz,
+      statusCode: 200,
+    }
+  } catch (error) {
+    console.error('Error fetching checklist study set:', error)
+    return {
+      isSuccess: false,
+      message: error instanceof Error ? error.message : 'Failed to fetch checklist study set',
+      content: [],
+      statusCode: 500,
+    }
+  }
+}
+
 const getStudySet = async (
   studySets: GetStudySetByCatId[],
 ): Promise<IHttpResponse<IItemQuiz[]>> => {
@@ -333,111 +520,8 @@ const getStudySet = async (
       }
     }
 
-    // Generate quiz data for each item (examples are already embedded in items)
-    const hydratedAllItems = await hydrateItemsWithExamples(allItems)
-
-    const itemsWithQuiz: IItemQuiz[] = hydratedAllItems.map((item) => {
-      // Randomly decide quiz type (50% chance for each type if catId === 1)
-      const useFillInBlank = item.catId === 1 && Math.random() < 0.5
-
-      // Get random meaning from meanings array
-      const meanings = item.meanings || []
-      const randomMeaningIndex =
-        meanings.length > 0 ? Math.floor(Math.random() * meanings.length) : 0
-      const selectedMeaning = meanings[randomMeaningIndex]
-
-      // Get definition/translation from meaning
-      const definition = selectedMeaning?.definition || selectedMeaning?.translation || ''
-
-      // Get hint: if word (catId=1) show type, otherwise show category
-      let hint = ''
-      if (item.catId === 1) {
-        const typeLabels = types.filter(
-          (type) => type.id !== 0 && type.id == selectedMeaning?.typeId,
-        )
-        hint = typeLabels[0]?.label?.origin || ''
-      } else {
-        const restCategoryLabels = categories.filter(
-          (cat) => cat.id !== 0 && cat.id !== 1 && cat.id === item.catId,
-        )
-        hint = restCategoryLabels[0]?.label || ''
-      }
-
-      // For fill in the blank
-      if (useFillInBlank) {
-        return {
-          ...item,
-          quiz: {
-            title: definition,
-            question: toWildString(item.origin || ''),
-            answer: item.origin,
-            type: EQuiz.FILL_IN_BLANK,
-            hint: hint ? `(${hint.toLowerCase()})` : '',
-            result: false,
-          },
-        } as unknown as IItemQuiz
-      }
-
-      const pool =
-        (item.catId !== undefined ? allCategoryItemsMap.get(item.catId) : undefined) || allItems
-      const wrongAnswers = pool
-        .filter(
-          (otherItem) => otherItem.id !== item.id && Number(otherItem.catId) === Number(item.catId),
-        )
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3)
-
-      if (wrongAnswers.length < 3) {
-        const remaining = 3 - wrongAnswers.length
-        const extraWrong = allItems
-          .filter((other) => other.id !== item.id && !wrongAnswers.some((w) => w.id === other.id))
-          .sort(() => Math.random() - 0.5)
-          .slice(0, remaining)
-        wrongAnswers.push(...extraWrong)
-      }
-
-      // Create answer options
-      const answers: IAnswer<string, boolean>[] = [
-        {
-          id: item.id as string,
-          label: item.origin,
-          value: false,
-          typeId: selectedMeaning?.typeId || 0,
-          key: selectedMeaning?.translation || '',
-        },
-        ...wrongAnswers.map((wrongItem) => {
-          const randomMeaningIndex =
-            wrongItem.meanings && wrongItem.meanings?.length > 0
-              ? Math.floor(Math.random() * wrongItem.meanings.length)
-              : 0
-          const selected = wrongItem?.meanings?.[randomMeaningIndex]
-
-          return {
-            id: wrongItem.id as string,
-            label: wrongItem.origin,
-            value: false,
-            typeId: selected?.typeId || 0,
-            key: selected?.translation || '',
-          }
-        }),
-      ]
-
-      // Shuffle answers
-      const shuffledAnswers = answers.sort(() => Math.random() - 0.5)
-
-      return {
-        ...item,
-        quiz: {
-          title: definition,
-          question: '',
-          answer: shuffledAnswers,
-          type: EQuiz.MULTI_CHOICE,
-          hint: hint ? `(${hint.toLowerCase()})` : '',
-          result: false,
-        },
-      } as unknown as IItemQuiz
-    })
-
+    // Generate quiz data using shared helper
+    const itemsWithQuiz = await generateQuizzesForItems(allItems, allItems, allCategoryItemsMap)
     const shuffledItemsWithQuiz = shuffleArray(itemsWithQuiz)
 
     console.log(`*** shuffledItemsWithQuiz *** `, shuffledItemsWithQuiz)
@@ -479,7 +563,6 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
       uid: currentUser.uid,
       created_date: now,
       last_update: now,
-      is_deleted: false,
       randomIndex: Math.random(), // For efficient random queries
     }
     delete (newItem as any).quiz
@@ -495,10 +578,6 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
     // Modify local DB as well
     try {
       await localDb.items.put(createdItem)
-      const itemExamples = extractExamplesFromItems([createdItem])
-      if (itemExamples.length > 0) {
-        await localDb.examples.bulkPut(itemExamples)
-      }
       invalidateSearchIndex()
     } catch (localErr) {
       console.warn('Failed to save created item to localDb:', localErr)
@@ -539,7 +618,6 @@ const createItems = async (items: IItem[]): Promise<IHttpResponse<IItem>> => {
         uid: currentUser.uid,
         created_date: now,
         last_update: now,
-        is_deleted: false,
         randomIndex: Math.random(), // For efficient random queries
       }
       delete (newItem as any).quiz
@@ -559,10 +637,6 @@ const createItems = async (items: IItem[]): Promise<IHttpResponse<IItem>> => {
     try {
       if (createdItems.length > 0) {
         await localDb.items.bulkPut(createdItems)
-        const itemExamples = extractExamplesFromItems(createdItems)
-        if (itemExamples.length > 0) {
-          await localDb.examples.bulkPut(itemExamples)
-        }
         invalidateSearchIndex()
       }
     } catch (localErr) {
@@ -618,10 +692,6 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
       }
       delete (updatedItem as any).quiz
       await localDb.items.put(updatedItem)
-      const itemExamples = extractExamplesFromItems([updatedItem])
-      if (itemExamples.length > 0) {
-        await localDb.examples.bulkPut(itemExamples)
-      }
       invalidateSearchIndex()
     } catch (localErr) {
       console.warn('Failed to update item in localDb:', localErr)
@@ -652,7 +722,7 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
 }
 
 /**
- * Delete an item (soft delete)
+ * Delete an item directly from Firestore and local database
  */
 const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
   try {
@@ -662,12 +732,7 @@ const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
     }
 
     const itemDocRef = doc(db, dbCollections.items, id)
-    const now = Timestamp.now().toMillis()
-    await updateDoc(itemDocRef, {
-      is_deleted: true,
-      deleted_date: now,
-      last_update: now,
-    })
+    await deleteDoc(itemDocRef)
 
     // Also remove item from checklist in Firebase DB if present
     try {
@@ -708,224 +773,9 @@ const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
  * Get new added items by period for chart data
  * Groups items by category and time period
  */
-const getNewAddedItemByPeriod = async (
-  periods: Array<{ id: number; label: string; from: number; to: number }>,
-): Promise<IHttpResponse<Array<{ id: number; label: string; data: number[] }>>> => {
-  try {
-    const currentUser = firebaseAuthService.getCurrentUser()
-    if (!currentUser) {
-      throw new Error('User not authenticated')
-    }
-
-    // Define all categories
-    const categories = [
-      { id: 1, label: 'Word' },
-      { id: 2, label: 'Phrase' },
-      { id: 3, label: 'Idiom' },
-      { id: 4, label: 'Slang' },
-      { id: 5, label: 'Collocation' },
-      { id: 6, label: 'Sentence' },
-    ]
-
-    // Initialize result structure
-    const chartData = categories.map((cat) => ({
-      id: cat.id,
-      label: cat.label,
-      data: new Array(periods.length).fill(0),
-    }))
-
-    // Fetch all non-deleted items for the user
-    const itemsRef = collection(db, dbCollections.items)
-    const constraints: QueryConstraint[] = [
-      where('uid', '==', currentUser.uid),
-      where('is_deleted', '==', false),
-    ]
-
-    const q = query(itemsRef, ...constraints)
-    const querySnapshot = await getDocs(q)
-
-    // Get all items
-    const allItems = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }))
-
-    // Process each period
-    periods.forEach((period, periodIndex) => {
-      // Filter items for this period
-      const periodItems = allItems.filter((item: any) => {
-        const itemDate = item.created_date || 0
-        return (
-          itemDate >= period.from && itemDate <= period.to && item.archive === false // Only count enabled items
-        )
-      })
-
-      // Count by category
-      periodItems.forEach((item: any) => {
-        const catId = item.catId
-        const categoryIndex = chartData.findIndex((cat) => cat.id === catId)
-        if (categoryIndex !== -1) {
-          chartData[categoryIndex].data[periodIndex]++
-        }
-      })
-    })
-
-    return {
-      isSuccess: true,
-      message: 'Chart data fetched successfully',
-      content: chartData,
-      statusCode: 200,
-    }
-  } catch (error) {
-    console.error('Error fetching chart data:', error)
-    return {
-      isSuccess: false,
-      message: error instanceof Error ? error.message : 'Failed to fetch chart data',
-      content: [],
-      statusCode: 500,
-    }
-  }
-}
-
-/**
- * Get items grouped by level for progress chart
- * Returns count of items at each level (0-5) for each category
- */
-const getItemsByLevel = async (): Promise<
-  IHttpResponse<Array<{ id: number; label: string; data: number[] }>>
-> => {
-  try {
-    const currentUser = firebaseAuthService.getCurrentUser()
-    if (!currentUser) {
-      throw new Error('User not authenticated')
-    }
-
-    // Define all categories
-    const categories = [
-      { id: 1, label: 'Word' },
-      { id: 2, label: 'Phrase' },
-      { id: 3, label: 'Idiom' },
-      { id: 4, label: 'Slang' },
-      { id: 5, label: 'Collocation' },
-      { id: 6, label: 'Sentence' },
-    ]
-
-    // Initialize result structure - 6 levels (0-5)
-    const chartData = categories.map((cat) => ({
-      id: cat.id,
-      label: cat.label,
-      data: new Array(6).fill(0),
-    }))
-
-    // Fetch all non-deleted, enabled items for the user
-    const itemsRef = collection(db, dbCollections.items)
-    const constraints: QueryConstraint[] = [
-      where('uid', '==', currentUser.uid),
-      where('is_deleted', '==', false),
-      where('archive', '==', false), // Only count enabled items
-    ]
-
-    const q = query(itemsRef, ...constraints)
-    const querySnapshot = await getDocs(q)
-
-    // Count items by category and level
-    querySnapshot.docs.forEach((doc) => {
-      const itemData = doc.data()
-      const catId = itemData.catId
-      const level = itemData.level || 0
-
-      // Find the category in chartData
-      const categoryIndex = chartData.findIndex((cat) => cat.id === catId)
-      if (categoryIndex !== -1 && level >= 0 && level <= 5) {
-        chartData[categoryIndex].data[level]++
-      }
-    })
-
-    return {
-      isSuccess: true,
-      message: 'Progress chart data fetched successfully',
-      content: chartData,
-      statusCode: 200,
-    }
-  } catch (error) {
-    console.error('Error fetching progress chart data:', error)
-    return {
-      isSuccess: false,
-      message: error instanceof Error ? error.message : 'Failed to fetch progress chart data',
-      content: [],
-      statusCode: 500,
-    }
-  }
-}
-
-/**
- * Get overview of items grouped by category
- * Returns count of items for each category
- */
-const getOverviewItems = async (): Promise<
-  IHttpResponse<Array<{ id: number; label: string; total: number }>>
-> => {
-  try {
-    const currentUser = firebaseAuthService.getCurrentUser()
-    if (!currentUser) {
-      throw new Error('User not authenticated')
-    }
-
-    // Define all categories
-    const categories = [
-      { id: 1, label: 'Word' },
-      { id: 2, label: 'Phrase' },
-      { id: 3, label: 'Idiom' },
-      { id: 4, label: 'Slang' },
-      { id: 5, label: 'Collocation' },
-      { id: 6, label: 'Sentence' },
-    ]
-
-    // Initialize result structure
-    const overviewData = categories.map((cat) => ({
-      id: cat.id,
-      label: cat.label,
-      total: 0,
-    }))
-
-    // Fetch all non-deleted, enabled items for the user
-    const itemsRef = collection(db, dbCollections.items)
-    const constraints: QueryConstraint[] = [
-      where('uid', '==', currentUser.uid),
-      where('is_deleted', '==', false),
-      where('archive', '==', false), // Only count enabled items
-    ]
-
-    const q = query(itemsRef, ...constraints)
-    const querySnapshot = await getDocs(q)
-
-    // Count items by category
-    querySnapshot.docs.forEach((doc) => {
-      const itemData = doc.data()
-      const catId = itemData.catId
-
-      const categoryIndex = overviewData.findIndex((cat) => cat.id === catId)
-      if (categoryIndex !== -1) {
-        overviewData[categoryIndex].total++
-      }
-    })
-
-    return {
-      isSuccess: true,
-      message: 'Overview data fetched successfully',
-      content: overviewData,
-      statusCode: 200,
-    }
-  } catch (error) {
-    console.error('Error fetching overview data:', error)
-    return {
-      isSuccess: false,
-      message: error instanceof Error ? error.message : 'Failed to fetch overview data',
-      content: [],
-      statusCode: 500,
-    }
-  }
-}
+const getNewAddedItemByPeriod = statsService.getNewAddedItemByPeriod
+const getItemsByLevel = statsService.getItemsByLevel
+const getOverviewItems = statsService.getOverviewItems
 
 export const itemApi = {
   getItems,
@@ -936,9 +786,16 @@ export const itemApi = {
   updateItem,
   deleteItem,
   getStudySet,
+  getDueStudySet,
+  getChecklistStudySet,
   getNewAddedItemByPeriod,
   getItemsByLevel,
   getOverviewItems,
+  getSummaryStats: statsService.getSummaryStats,
+  getMonthlyGrowthStats: statsService.getMonthlyGrowthStats,
+  getPartOfSpeechStats: statsService.getPartOfSpeechStats,
+  getTopTagsStats: statsService.getTopTagsStats,
   getItemsInCategory,
   getExamplesByIds,
+  purgeDeletedItems: purgeDeletedItemsFromFirebaseDb,
 }

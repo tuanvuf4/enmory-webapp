@@ -1,3 +1,5 @@
+import { geminiTtsService } from '@/services/gemini'
+
 export function shuffleArray<T>(array: T[]): T[] {
   let currentIndex = array.length
 
@@ -14,17 +16,44 @@ export function shuffleArray<T>(array: T[]): T[] {
   return array
 }
 
-/*
- * lang: 'en-GB' | 'en-US' | 'fr-FR' | ...
+/**
+ * Pronounces a word using Google Gemini TTS.
  */
-export const speakWord = (origin: string, lang = 'en-GB', rate = 0.8) => {
-  if ('speechSynthesis' in window && origin) {
-    window.speechSynthesis.cancel() // Cancel any ongoing speech
+export const speakWord = (origin: string, _lang = 'en-GB', _rate = 0.8) => {
+  if (!origin) return
+  geminiTtsService
+    .playSpeech(origin, {
+      voice: 'Aoede',
+      playbackRate: 1.0,
+    })
+    .catch((err) => {
+      console.warn('Gemini TTS speakWord error:', err)
+    })
+}
 
-    const utterance = new SpeechSynthesisUtterance(origin)
-    utterance.pitch = 1.8
-    utterance.lang = lang
-    utterance.rate = rate
-    window.speechSynthesis.speak(utterance)
-  }
+export interface ISpeakSentenceOptions {
+  lang?: string
+  rate?: number
+  pitch?: number
+  onStart?: () => void
+  onEnd?: () => void
+  onError?: (err: any) => void
+}
+
+/**
+ * Speaks a sentence using Google Gemini TTS.
+ */
+export const speakSentence = (text: string, options?: ISpeakSentenceOptions) => {
+  if (!text) return
+  geminiTtsService
+    .playSpeech(text, {
+      voice: 'Aoede',
+      playbackRate: options?.rate ?? 1.0,
+      onStart: options?.onStart,
+      onEnd: options?.onEnd,
+      onError: options?.onError,
+    })
+    .catch((err) => {
+      options?.onError?.(err)
+    })
 }

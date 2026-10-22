@@ -90,7 +90,6 @@ export interface IItem {
   created_date?: number
   deleted_date?: number
   randomIndex?: number
-  is_deleted?: boolean
   archive: boolean
   user?: {
     firstName: string
@@ -103,6 +102,10 @@ export interface IItem {
   word_family: string[]
   relation: string[]
   meanings?: IMeaning[]
+  next_review_date?: number
+  last_reviewed?: number
+  interval_days?: number
+  ease_factor?: number
 }
 
 export interface IIotdDoc {

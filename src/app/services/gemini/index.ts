@@ -1,2 +1,5 @@
+export * from './geminiModels'
 export * from './geminiDictionary.service'
 export * from './geminiTranscript.service'
+export * from './geminiTts.service'
+export * from './geminiReviewSentence.service'

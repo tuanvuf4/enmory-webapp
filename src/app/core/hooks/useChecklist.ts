@@ -122,6 +122,76 @@ export const useChecklist = () => {
     },
   })
 
+  const clearCompletedMutation = useMutation({
+    mutationFn: async () => {
+      return await checklistApi.clearCompleted()
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: checklistKeys.list() })
+      const previous = queryClient.getQueryData<IChecklistItem[]>(checklistKeys.list())
+      if (previous) {
+        queryClient.setQueryData<IChecklistItem[]>(
+          checklistKeys.list(),
+          previous.filter((item) => !item.isCompleted),
+        )
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(checklistKeys.list(), context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: checklistKeys.list() })
+    },
+  })
+
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      return await checklistApi.clearAll()
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: checklistKeys.list() })
+      const previous = queryClient.getQueryData<IChecklistItem[]>(checklistKeys.list())
+      queryClient.setQueryData<IChecklistItem[]>(checklistKeys.list(), [])
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(checklistKeys.list(), context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: checklistKeys.list() })
+    },
+  })
+
+  const setAllCompletionMutation = useMutation({
+    mutationFn: async (isCompleted: boolean) => {
+      return await checklistApi.setAllCompletion(isCompleted)
+    },
+    onMutate: async (isCompleted: boolean) => {
+      await queryClient.cancelQueries({ queryKey: checklistKeys.list() })
+      const previous = queryClient.getQueryData<IChecklistItem[]>(checklistKeys.list())
+      if (previous) {
+        queryClient.setQueryData<IChecklistItem[]>(
+          checklistKeys.list(),
+          previous.map((item) => ({ ...item, isCompleted })),
+        )
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(checklistKeys.list(), context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: checklistKeys.list() })
+    },
+  })
+
   const checklist = query.data || []
 
   const checklistItemMap = useMemo(() => {
@@ -175,6 +245,12 @@ export const useChecklist = () => {
     removeItem: (checklistId: string) => removeMutation.mutateAsync(checklistId),
     removeItemByItemId: (itemId: string) => removeByItemIdMutation.mutateAsync(itemId),
     addItem: (item: IItem) => addMutation.mutateAsync(item),
+    clearCompleted: () => clearCompletedMutation.mutateAsync(),
+    isClearingCompleted: clearCompletedMutation.isPending,
+    clearAll: () => clearAllMutation.mutateAsync(),
+    isClearingAll: clearAllMutation.isPending,
+    setAllCompletion: (isCompleted: boolean) => setAllCompletionMutation.mutateAsync(isCompleted),
+    isSettingAllCompletion: setAllCompletionMutation.isPending,
     isItemInChecklist,
     toggleChecklist,
   }

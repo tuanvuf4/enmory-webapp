@@ -4,10 +4,7 @@ import { firebaseAuthService } from '@/services/firebase/authService'
 import { localDb } from './db'
 import { IItem } from '@/models/item.model'
 import { invalidateSearchIndex } from './searchEngine'
-import {
-  extractExamplesFromItems,
-  hydrateItemsWithExamples,
-} from '@/services/firebase/dbIntegration'
+import { hydrateItemsWithExamples } from '@/services/firebase/dbIntegration'
 
 const SYNC_META_PREFIX = 'last_sync_time_'
 
@@ -66,9 +63,8 @@ export const syncService = {
    * Clear all local data for the user.
    */
   async clearLocalData(uid: string): Promise<void> {
-    await localDb.transaction('rw', localDb.items, localDb.examples, localDb.syncMeta, async () => {
+    await localDb.transaction('rw', localDb.items, localDb.syncMeta, async () => {
       await localDb.items.clear()
-      await localDb.examples.clear()
       await localDb.syncMeta.delete(`${SYNC_META_PREFIX}${uid}`)
     })
     localStorage.removeItem(`${SYNC_META_PREFIX}${uid}`)
@@ -104,43 +100,36 @@ export const syncService = {
       // ==========================================
       options?.onProgress?.('Fetching all active items from cloud...')
 
-      const itemsQuery = query(
-        collection(db, dbCollections.items),
-        where('uid', '==', uid),
-        where('is_deleted', '==', false),
-      )
+      const itemsQuery = query(collection(db, dbCollections.items), where('uid', '==', uid))
       const itemsSnapshot = await getDocs(itemsQuery)
       const cloudItems: IItem[] = []
       itemsSnapshot.forEach((docSnap) => {
-        cloudItems.push({ id: docSnap.id, ...docSnap.data() } as IItem)
+        const data = docSnap.data()
+        if (!(data as any).is_deleted) {
+          cloudItems.push({ id: docSnap.id, ...data } as IItem)
+        }
       })
       const allItems = await hydrateItemsWithExamples(cloudItems)
-      const allExamples = extractExamplesFromItems(allItems)
+      const totalExamplesCount = allItems.reduce(
+        (sum, item) =>
+          sum + (item.meanings || []).reduce((mSum, m) => mSum + (m.examples || []).length, 0),
+        0,
+      )
 
       options?.onProgress?.('Saving to local database...')
-      await localDb.transaction(
-        'rw',
-        localDb.items,
-        localDb.examples,
-        localDb.syncMeta,
-        async () => {
-          await localDb.items.clear()
-          await localDb.examples.clear()
+      await localDb.transaction('rw', localDb.items, localDb.syncMeta, async () => {
+        await localDb.items.clear()
 
-          if (allItems.length > 0) {
-            await localDb.items.bulkPut(allItems)
-          }
-          if (allExamples.length > 0) {
-            await localDb.examples.bulkPut(allExamples)
-          }
+        if (allItems.length > 0) {
+          await localDb.items.bulkPut(allItems)
+        }
 
-          await localDb.syncMeta.put({ key: `${SYNC_META_PREFIX}${uid}`, value: now })
-        },
-      )
+        await localDb.syncMeta.put({ key: `${SYNC_META_PREFIX}${uid}`, value: now })
+      })
 
       localStorage.setItem(`${SYNC_META_PREFIX}${uid}`, now.toString())
       updatedItems = allItems.length
-      updatedExamples = allExamples.length
+      updatedExamples = totalExamplesCount
     } else {
       // ==========================================
       // 2. INCREMENTAL DELTA SYNC
@@ -159,16 +148,20 @@ export const syncService = {
       const itemIdsToDelete: string[] = []
 
       deltaItemsSnapshot.forEach((docSnap) => {
-        const item = { id: docSnap.id, ...docSnap.data() } as IItem
-        if (item.is_deleted) {
+        const data = docSnap.data()
+        if ((data as any).is_deleted) {
           itemIdsToDelete.push(docSnap.id)
         } else {
-          cloudItemsToPut.push(item)
+          cloudItemsToPut.push({ id: docSnap.id, ...data } as IItem)
         }
       })
 
       const itemsToPut = await hydrateItemsWithExamples(cloudItemsToPut)
-      const examplesToPut = extractExamplesFromItems(itemsToPut)
+      const examplesToPutCount = itemsToPut.reduce(
+        (sum, item) =>
+          sum + (item.meanings || []).reduce((mSum, m) => mSum + (m.examples || []).length, 0),
+        0,
+      )
 
       // Also check if any items were soft-deleted with deleted_date > lastSyncTime
       try {
@@ -188,35 +181,31 @@ export const syncService = {
       }
 
       options?.onProgress?.('Updating local database...')
-      await localDb.transaction(
-        'rw',
-        localDb.items,
-        localDb.examples,
-        localDb.syncMeta,
-        async () => {
-          if (itemsToPut.length > 0) {
-            await localDb.items.bulkPut(itemsToPut)
-          }
-          if (itemIdsToDelete.length > 0) {
-            await localDb.items.bulkDelete(itemIdsToDelete)
-          }
-          if (examplesToPut.length > 0) {
-            await localDb.examples.bulkPut(examplesToPut)
-          }
-          await localDb.syncMeta.put({ key: `${SYNC_META_PREFIX}${uid}`, value: now })
-        },
-      )
+      await localDb.transaction('rw', localDb.items, localDb.syncMeta, async () => {
+        if (itemsToPut.length > 0) {
+          await localDb.items.bulkPut(itemsToPut)
+        }
+        if (itemIdsToDelete.length > 0) {
+          await localDb.items.bulkDelete(itemIdsToDelete)
+        }
+        await localDb.syncMeta.put({ key: `${SYNC_META_PREFIX}${uid}`, value: now })
+      })
 
       localStorage.setItem(`${SYNC_META_PREFIX}${uid}`, now.toString())
       updatedItems = itemsToPut.length
       deletedItems = itemIdsToDelete.length
-      updatedExamples = examplesToPut.length
+      updatedExamples = examplesToPutCount
     }
 
     invalidateSearchIndex()
 
     const totalItems = await localDb.items.count()
-    const totalExamples = await localDb.examples.count()
+    const allLocalItems = await localDb.items.toArray()
+    const totalExamples = allLocalItems.reduce(
+      (sum, item) =>
+        sum + (item.meanings || []).reduce((mSum, m) => mSum + (m.examples || []).length, 0),
+      0,
+    )
 
     return {
       isSuccess: true,

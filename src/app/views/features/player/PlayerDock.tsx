@@ -28,7 +28,7 @@ import { tracksApi } from '@/services/firebase'
 import { TrackList } from './TrackList'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { usePrompt } from '@/helpers/hooks'
-import { ttsService, TOpenAIVoice, OPENAI_VOICES } from '@/services/openai/tts.service'
+import { geminiTtsService as ttsService, TGeminiVoice, GEMINI_VOICES } from '@/services/gemini'
 
 export const PlayerDock: React.FC = () => {
   const { message } = usePrompt()
@@ -337,9 +337,9 @@ export const PlayerDock: React.FC = () => {
     }
   }, [isTranscriptPlayback, dispatch])
 
-  // Selected voice for OpenAI TTS (per track or default to multi-voice auto)
-  const currentVoice = useMemo<TOpenAIVoice>(() => {
-    return (currentTrack?.voice as TOpenAIVoice) || 'auto'
+  // Selected voice for Gemini TTS (per track or default to multi-voice auto)
+  const currentVoice = useMemo<TGeminiVoice>(() => {
+    return (currentTrack?.voice as TGeminiVoice) || 'auto'
   }, [currentTrack?.voice])
 
   const loopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -401,7 +401,7 @@ export const PlayerDock: React.FC = () => {
     currentVoiceRef.current = currentVoice
   }, [currentVoice])
 
-  // OpenAI TTS speaker for transcript mode / AI generated tracks
+  // Gemini TTS speaker for transcript mode / AI generated tracks
   const lastSpokenIndexRef = useRef<number>(-1)
 
   const speakTranscriptSegment = useCallback(
@@ -410,7 +410,7 @@ export const PlayerDock: React.FC = () => {
       rate: number,
       vol: number,
       isMuted: boolean,
-      voice: TOpenAIVoice,
+      voice: TGeminiVoice,
       segIndex: number,
     ) => {
       clearLoopTimer()
@@ -694,7 +694,7 @@ export const PlayerDock: React.FC = () => {
     if (isTranscriptPlayback) {
       ttsService.pause()
       if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel()
+        // no-op
       }
     }
     dispatch(listeningAction.updatePlayer({ playing: false }))
@@ -778,7 +778,7 @@ export const PlayerDock: React.FC = () => {
 
   useEffect(() => {
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
+      // no-op
     }
     clearLoopTimer()
     ttsService.stop()
@@ -1130,7 +1130,7 @@ export const PlayerDock: React.FC = () => {
             {isTranscriptPlayback && (
               <Dropdown
                 menu={{
-                  items: OPENAI_VOICES.map((v) => ({
+                  items: GEMINI_VOICES.map((v) => ({
                     key: v.value,
                     label: v.label,
                     onClick: () => {
@@ -1155,11 +1155,11 @@ export const PlayerDock: React.FC = () => {
                     verticalAlign: 'middle',
                     cursor: 'pointer',
                   }}
-                  title='Nhấp để đổi giọng đọc tự nhiên OpenAI'
+                  title='Nhấp để đổi giọng đọc tự nhiên Gemini TTS'
                 >
                   <SoundOutlined style={{ marginRight: 4 }} />
-                  OpenAI TTS:{' '}
-                  {OPENAI_VOICES.find((v) => v.value === currentVoice)?.label.split(' ')[0] ||
+                  Gemini TTS:{' '}
+                  {GEMINI_VOICES.find((v) => v.value === currentVoice)?.label.split(' ')[0] ||
                     'Auto'}
                 </Tag>
               </Dropdown>

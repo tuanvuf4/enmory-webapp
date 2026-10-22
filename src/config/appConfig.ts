@@ -143,6 +143,7 @@ export const appSetting = {
     numberOfCollocationsInStudySet: 3,
     numberOfSentencesInStudySet: 3,
     numberOfExampleReview: 10,
+    numberOfListeningSentences: 10,
     community: true,
     showPlayer: true,
     references: [],

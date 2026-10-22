@@ -14,7 +14,7 @@ import { useSelector, useDispatch } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { GenerateTranscriptModal } from '../generateTranscriptModal'
-import { OPENAI_VOICES } from '@/services/openai/tts.service'
+import { GEMINI_VOICES } from '@/services/gemini'
 
 interface IMediaUploadFormProps {
   onConfirm?: (track: ITracks) => void
@@ -411,7 +411,7 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
             <Row gutter={[token.size / 2, token.size / 2]}>
               <Col xs={24}>
                 <Flex justify='space-between' align='center' wrap='wrap' gap={8}>
-                  <span>Giọng đọc OpenAI TTS (cho bài nghe AI / Transcript):</span>
+                  <span>Giọng đọc Gemini TTS (cho bài nghe AI / Transcript):</span>
                   <Controller
                     control={control}
                     name='voice'
@@ -420,7 +420,7 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
                         {...field}
                         value={field.value || 'auto'}
                         style={{ minWidth: 260 }}
-                        options={OPENAI_VOICES.map((v) => ({
+                        options={GEMINI_VOICES.map((v) => ({
                           value: v.value,
                           label: v.label,
                         }))}

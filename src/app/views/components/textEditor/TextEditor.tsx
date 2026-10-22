@@ -26,7 +26,7 @@ import {
   IReviewSentenceResponse,
   IReviewSuggestion,
   reviewSentenceService,
-} from '@/services/openai/reviewSentence.service'
+} from '@/services/gemini'
 
 import './textEditor.scss'
 import '../reviewableTextArea/ReviewableTextArea'

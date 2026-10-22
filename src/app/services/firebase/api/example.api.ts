@@ -35,7 +35,6 @@ const createExample = async (body: IExample): Promise<IHttpResponse<IExample>> =
       randomIndex: body.randomIndex ?? Math.random(),
     }
 
-    await localDb.examples.put(newExample)
     invalidateSearchIndex()
 
     return {
@@ -59,19 +58,26 @@ const getExampleById = async (id: string | number): Promise<IHttpResponse<IExamp
       throw new Error('Example ID is required')
     }
 
-    const localExample = await localDb.examples.get(String(id))
-    if (localExample) {
-      return {
-        isSuccess: true,
-        message: 'Example fetched from local database',
-        content: localExample,
-        statusCode: 200,
+    const targetId = String(id)
+    const items = await localDb.items.toArray()
+    for (const item of items) {
+      for (const m of item.meanings || []) {
+        for (const ex of (m.examples || []) as any[]) {
+          if (ex && typeof ex === 'object' && String(ex.id) === targetId) {
+            return {
+              isSuccess: true,
+              message: 'Example fetched from local items',
+              content: ex as IExample,
+              statusCode: 200,
+            }
+          }
+        }
       }
     }
 
     return {
       isSuccess: false,
-      message: 'Example not found in local database',
+      message: 'Example not found in local items',
       content: null as any,
       statusCode: 404,
     }
@@ -125,7 +131,7 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
       throw new Error('Example ID is required')
     }
 
-    const existing = await localDb.examples.get(String(body.id))
+    const targetId = String(body.id)
     const now = Date.now()
     const updateData: Partial<IExample> = {
       ...body,
@@ -140,19 +146,37 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
       updateData.translation = removeLineBreaks(body.translation)
     }
 
-    const updatedExample = {
-      ...(existing || {}),
-      ...updateData,
-      id: String(body.id),
-    } as IExample
+    let updatedExample: IExample | null = null
+    const items = await localDb.items.toArray()
+    for (const item of items) {
+      let changed = false
+      const newMeanings = (item.meanings || []).map((m) => {
+        const newExamples = (m.examples || []).map((ex: any) => {
+          if (ex && typeof ex === 'object' && String(ex.id) === targetId) {
+            changed = true
+            updatedExample = {
+              ...ex,
+              ...updateData,
+              id: targetId,
+            } as IExample
+            return updatedExample
+          }
+          return ex
+        })
+        return { ...m, examples: newExamples }
+      })
 
-    await localDb.examples.put(updatedExample)
+      if (changed && item.id) {
+        await localDb.items.put({ ...item, meanings: newMeanings })
+        break
+      }
+    }
     invalidateSearchIndex()
 
     return {
       isSuccess: true,
-      message: 'Example updated successfully',
-      content: updatedExample,
+      message: 'Example updated successfully in items',
+      content: updatedExample || ({ ...body, id: targetId } as IExample),
       statusCode: 200,
     }
   } catch (error) {
@@ -166,12 +190,28 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
  */
 const deleteExample = async (id: string): Promise<IHttpResponse<IExample>> => {
   try {
-    await localDb.examples.delete(String(id))
+    const targetId = String(id)
+    const items = await localDb.items.toArray()
+    for (const item of items) {
+      let changed = false
+      const newMeanings = (item.meanings || []).map((m) => {
+        const remaining = (m.examples || []).filter((ex: any) => String(ex?.id) !== targetId)
+        if (remaining.length !== (m.examples || []).length) {
+          changed = true
+          return { ...m, examples: remaining }
+        }
+        return m
+      })
+      if (changed && item.id) {
+        await localDb.items.put({ ...item, meanings: newMeanings })
+        break
+      }
+    }
     invalidateSearchIndex()
 
     return {
       isSuccess: true,
-      message: 'Example deleted successfully',
+      message: 'Example deleted successfully from items',
       content: {} as IExample,
       statusCode: 200,
     }

@@ -41,10 +41,6 @@ export const PopupExtension = () => {
   }, [types, dispatch])
 
   useEffect(() => {
-    const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY
-    if (openaiApiKey) {
-      chromeStorage.set({ openaiApiKey })
-    }
     const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
     if (geminiApiKey) {
       chromeStorage.set({ geminiApiKey })

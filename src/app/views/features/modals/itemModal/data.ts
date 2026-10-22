@@ -38,7 +38,6 @@ export const initItem: IItem = {
   count: 0,
   created_date: Timestamp.now().toMillis(),
   last_update: Timestamp.now().toMillis(),
-  is_deleted: false,
   deleted_date: 0,
   randomIndex: Math.random(),
   level: 0,

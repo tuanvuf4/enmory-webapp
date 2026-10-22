@@ -67,12 +67,10 @@ export const checklistApi = {
         const itemsSnapshot = await getDocs(itemsQuery)
         itemsSnapshot.forEach((docSnap) => {
           const data = docSnap.data()
-          if (!data.is_deleted) {
-            itemsMap.set(docSnap.id, {
-              id: docSnap.id,
-              ...data,
-            } as IItem)
-          }
+          itemsMap.set(docSnap.id, {
+            id: docSnap.id,
+            ...data,
+          } as IItem)
         })
       } catch (err) {
         console.error('Error fetching checklist items from Firebase DB:', err)
@@ -195,5 +193,78 @@ export const checklistApi = {
     const snapshot = await getDocs(q)
     const deletePromises = snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref))
     await Promise.all(deletePromises)
+  },
+
+  /**
+   * Clear all completed items from checklist for current user
+   */
+  async clearCompleted(): Promise<{ isSuccess: boolean; count: number; message: string }> {
+    const { user, error } = requireAuth()
+    if (error || !user) {
+      return { isSuccess: false, count: 0, message: 'User not authenticated' }
+    }
+
+    const q = query(
+      collection(db, dbCollections.checklists),
+      where('uid', '==', user.uid),
+      where('isCompleted', '==', true),
+    )
+    const snapshot = await getDocs(q)
+    if (snapshot.empty) {
+      return { isSuccess: true, count: 0, message: 'No completed items to clear' }
+    }
+
+    const deletePromises = snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref))
+    await Promise.all(deletePromises)
+    return {
+      isSuccess: true,
+      count: snapshot.docs.length,
+      message: `Cleared ${snapshot.docs.length} completed item(s)`,
+    }
+  },
+
+  /**
+   * Clear all items from checklist for current user
+   */
+  async clearAll(): Promise<{ isSuccess: boolean; count: number; message: string }> {
+    const { user, error } = requireAuth()
+    if (error || !user) {
+      return { isSuccess: false, count: 0, message: 'User not authenticated' }
+    }
+
+    const q = query(collection(db, dbCollections.checklists), where('uid', '==', user.uid))
+    const snapshot = await getDocs(q)
+    if (snapshot.empty) {
+      return { isSuccess: true, count: 0, message: 'Checklist is already empty' }
+    }
+
+    const deletePromises = snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref))
+    await Promise.all(deletePromises)
+    return {
+      isSuccess: true,
+      count: snapshot.docs.length,
+      message: `Cleared all ${snapshot.docs.length} item(s) from checklist`,
+    }
+  },
+
+  /**
+   * Set completion status for all items in checklist
+   */
+  async setAllCompletion(isCompleted: boolean): Promise<{ isSuccess: boolean; count: number }> {
+    const { user, error } = requireAuth()
+    if (error || !user) {
+      return { isSuccess: false, count: 0 }
+    }
+
+    const q = query(collection(db, dbCollections.checklists), where('uid', '==', user.uid))
+    const snapshot = await getDocs(q)
+    const updatePromises = snapshot.docs.map((docSnap) =>
+      updateDoc(docSnap.ref, {
+        isCompleted,
+        last_update: Date.now(),
+      }),
+    )
+    await Promise.all(updatePromises)
+    return { isSuccess: true, count: snapshot.docs.length }
   },
 }

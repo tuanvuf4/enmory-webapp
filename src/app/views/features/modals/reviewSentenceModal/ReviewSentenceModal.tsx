@@ -1,4 +1,4 @@
-import { IReviewSentenceResponse } from '@/services/openai/reviewSentence.service'
+import { IReviewSentenceResponse } from '@/services/gemini'
 import { Modal, Card, Empty, Tag, Space, Button, Spin } from 'antd'
 import { CheckCircleOutlined, CloseCircleOutlined, CopyOutlined } from '@ant-design/icons'
 import styles from './reviewSentenceModal.module.scss'

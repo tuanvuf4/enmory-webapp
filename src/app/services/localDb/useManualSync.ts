@@ -17,7 +17,18 @@ export const useManualSync = () => {
 
   // Live counts from Dexie IndexedDB
   const localItemCount = useLiveQuery(() => localDb.items.count(), [], 0)
-  const localExampleCount = useLiveQuery(() => localDb.examples.count(), [], 0)
+  const localExampleCount = useLiveQuery(
+    async () => {
+      const items = await localDb.items.toArray()
+      return items.reduce(
+        (acc, item) =>
+          acc + (item.meanings || []).reduce((mAcc, m) => mAcc + (m.examples || []).length, 0),
+        0,
+      )
+    },
+    [],
+    0,
+  )
 
   // Load last sync time
   const refreshLastSyncTime = useCallback(async () => {

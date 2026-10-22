@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai'
 import { ECategory, EType } from '@/models/item.model'
 import { IHttpResponse } from '@/models/http.model'
+import { GEMINI_MODELS } from './geminiModels'
 
 export interface IDictionaryAutofillData {
   catId: ECategory
@@ -207,17 +208,10 @@ Return ONLY valid JSON matching this schema:
   ]
 }`
 
-      const CANDIDATE_MODELS = [
-        'gemini-3.8-flash',
-        'gemini-3.5-flash',
-        'gemini-3.5-flash-lite',
-        'gemini-flash-latest',
-      ]
-
       let lastError: any = null
       let parsed: IOxfordAutofillData | null = null
 
-      for (const model of CANDIDATE_MODELS) {
+      for (const model of GEMINI_MODELS) {
         try {
           const response = await ai.models.generateContent({
             model,

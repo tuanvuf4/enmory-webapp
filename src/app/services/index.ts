@@ -38,7 +38,6 @@ export const itemDefault: IItem = {
   tags: [],
   favorite: false,
   archive: false,
-  is_deleted: false,
   level: 0,
   count: 0,
   meanings: [],

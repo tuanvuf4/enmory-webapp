@@ -129,13 +129,7 @@ const Profile = () => {
                 <AddedItemChart />
               </Col>
 
-              <Col
-                xs={24}
-                md={{
-                  span: 7,
-                  offset: 2,
-                }}
-              >
+              <Col xs={24} md={9}>
                 <OverviewChart />
               </Col>
 

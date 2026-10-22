@@ -147,7 +147,7 @@ export const useDeleteItem = () => {
       await queryClient.invalidateQueries({ queryKey: itemKeys.detail(id) })
       // Invalidate checklist as well
       await queryClient.invalidateQueries({ queryKey: checklistKeys.all })
-      dispatch(iotdAction.update({ id, is_deleted: true } as IItem))
+      dispatch(iotdAction.removeItem(id))
     },
   })
 }

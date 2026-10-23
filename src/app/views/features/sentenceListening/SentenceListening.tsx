@@ -13,6 +13,7 @@ import {
   Popover,
   Switch,
   Input,
+  Flex,
 } from 'antd'
 import {
   EyeOutlined,
@@ -474,8 +475,8 @@ export const SentenceListening: React.FC = () => {
             {currentItem?.sourceType === 'sentence'
               ? 'Sentence'
               : currentItem?.sourceItemOrigin
-                ? `Example (${currentItem.sourceItemOrigin})`
-                : 'Example'}
+                ? `${currentItem.sourceItemOrigin}`
+                : ''}
           </Tag>
 
           <span className='text-xs font-semibold' style={{ color: token.colorTextSecondary }}>
@@ -608,7 +609,6 @@ export const SentenceListening: React.FC = () => {
                   setUserDictationInput(e.target.value)
                   if (dictationResult) setDictationResult(null)
                 }}
-                disabled={isPlaying}
               />
             </div>
 
@@ -620,7 +620,7 @@ export const SentenceListening: React.FC = () => {
                 onClick={handleCheckDictation}
                 disabled={!userDictationInput.trim()}
               >
-                Kiểm tra câu gõ
+                Kiểm tra
               </Button>
               {userDictationInput && (
                 <Button
@@ -631,7 +631,7 @@ export const SentenceListening: React.FC = () => {
                     setDictationResult(null)
                   }}
                 >
-                  Xóa gõ lại
+                  Xóa
                 </Button>
               )}
             </div>
@@ -692,24 +692,26 @@ export const SentenceListening: React.FC = () => {
         )}
 
         {/* Button 1: Audio Playback with Gemini AI */}
-        <Button
-          type='primary'
-          className={styles.actionBtn}
-          icon={<CustomerServiceOutlined />}
-          onClick={() => handlePlayAudio()}
-          loading={isPlaying}
-        >
-          {isPlaying ? 'Đang đọc...' : `Nghe (${geminiVoice})`}
-        </Button>
+        <Flex vertical align='center' justify='center' gap={token.sizeXS}>
+          <Button
+            type='primary'
+            className={styles.actionBtn}
+            icon={<CustomerServiceOutlined />}
+            onClick={() => handlePlayAudio()}
+            loading={isPlaying}
+          >
+            {isPlaying ? 'Đang đọc...' : ``}
+          </Button>
 
-        {/* Button 2: Reveal Answer */}
-        <Button
-          className={styles.actionBtn}
-          icon={isRevealed ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-          onClick={handleToggleReveal}
-        >
-          {isRevealed ? 'Ẩn đáp án' : 'Hiện đáp án'}
-        </Button>
+          {/* Button 2: Reveal Answer */}
+          <Button
+            className={styles.actionBtn}
+            icon={isRevealed ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+            onClick={handleToggleReveal}
+          >
+            {isRevealed ? 'Ẩn đáp án' : 'Hiện đáp án'}
+          </Button>
+        </Flex>
 
         {/* Button 3: Next Sentence */}
         <Button
@@ -718,7 +720,7 @@ export const SentenceListening: React.FC = () => {
           icon={isLastSentence ? <CheckCircleOutlined /> : <RightOutlined />}
           onClick={handleNext}
         >
-          {isLastSentence ? 'Hoàn thành' : 'Câu tiếp theo'}
+          {isLastSentence ? 'Hoàn thành' : ''}
         </Button>
       </div>
 

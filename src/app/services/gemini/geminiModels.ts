@@ -46,11 +46,6 @@ export interface IGeminiModelOption {
 
 export const GEMINI_MODEL_OPTIONS: IGeminiModelOption[] = [
   {
-    value: 'gemini-3.5-flash-lite',
-    label: 'Gemini 3.5 Flash Lite (Tiết kiệm token)',
-    desc: 'Tối ưu chi phí và token, phản hồi siêu nhanh cho tra cứu từ vựng và review câu',
-  },
-  {
     value: 'gemini-3.5-flash',
     label: 'Gemini 3.5 Flash (Tiêu chuẩn)',
     desc: 'Cân bằng giữa tốc độ và độ chính xác',
@@ -78,14 +73,20 @@ export const GEMINI_MODEL_OPTIONS: IGeminiModelOption[] = [
 export const GEMINI_TRANSCRIPT_MODELS = GEMINI_MODEL_OPTIONS
 
 /**
- * Danh sách TTS Models ưu tiên model thấp/flash trước pro
+ * Danh sách Gemini TTS Models chuẩn hóa chuyên biệt cho tạo âm thanh (speech/audio):
+ * 1. gemini-3.8-flash-lite-tts : Nhẹ nhất, tốc độ cao nhất, hạn mức request cao, tối ưu tránh 429
+ * 2. gemini-3.8-flash-tts      : Chất lượng tiêu chuẩn cao
+ * 3. gemini-3.1-flash-tts-preview : Phiên bản preview fallback
+ * 4. gemini-2.5-flash-preview-tts : Phiên bản flash TTS fallback
+ *
+ * Lưu ý: Đã loại bỏ các model non-TTS (như 3.5-flash, 3.8-flash) và model pro (2.5-pro-preview-tts
+ * có giới hạn quota = 0 trên free tier gây lỗi 429 RESOURCE_EXHAUSTED).
  */
 export const GEMINI_TTS_MODELS = [
-  'gemini-3.5-flash',
+  'gemini-3.8-flash-lite-tts',
+  'gemini-3.8-flash-tts',
+  'gemini-3.1-flash-tts-preview',
   'gemini-2.5-flash-preview-tts',
-  'gemini-3.8-flash',
-  'gemini-2.0-flash',
-  'gemini-2.5-pro-preview-tts',
 ] as const
 
 export type TGeminiTtsModel = (typeof GEMINI_TTS_MODELS)[number]

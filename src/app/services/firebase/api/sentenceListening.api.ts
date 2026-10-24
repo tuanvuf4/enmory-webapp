@@ -156,6 +156,97 @@ const getListeningSentences = async (
   }
 }
 
+export interface ISentenceListeningSession {
+  items: ISentenceListeningItem[]
+  currentIndex: number
+  isCompleted: boolean
+  sourceFilter: 'all' | 'sentence' | 'example'
+  updatedAt: number
+}
+
+const getSessionKey = (uid?: string) => `sentence_listening_session_${uid || 'default'}`
+
+/**
+ * Retrieve the currently saved listening session from localDb.
+ */
+const getStoredSession = async (uid?: string): Promise<ISentenceListeningSession | null> => {
+  try {
+    const key = getSessionKey(uid)
+    const record = await localDb.syncMeta.get(key)
+    if (
+      record &&
+      record.value &&
+      Array.isArray(record.value.items) &&
+      record.value.items.length > 0
+    ) {
+      return record.value as ISentenceListeningSession
+    }
+    return null
+  } catch (err) {
+    console.warn('Failed to read sentence listening session from localDb:', err)
+    return null
+  }
+}
+
+/**
+ * Persist an active listening session to localDb so it remains across page reloads.
+ */
+const saveSession = async (session: ISentenceListeningSession, uid?: string): Promise<void> => {
+  try {
+    const key = getSessionKey(uid)
+    await localDb.syncMeta.put({
+      key,
+      value: {
+        ...session,
+        updatedAt: Date.now(),
+      },
+    })
+  } catch (err) {
+    console.warn('Failed to save sentence listening session to localDb:', err)
+  }
+}
+
+/**
+ * Update the user's progress (current index and completion state) in localDb.
+ */
+const updateSessionProgress = async (
+  progress: { currentIndex: number; isCompleted?: boolean },
+  uid?: string,
+): Promise<void> => {
+  try {
+    const current = await getStoredSession(uid)
+    if (current) {
+      await saveSession(
+        {
+          ...current,
+          currentIndex: progress.currentIndex,
+          isCompleted:
+            progress.isCompleted !== undefined ? progress.isCompleted : current.isCompleted,
+        },
+        uid,
+      )
+    }
+  } catch (err) {
+    console.warn('Failed to update session progress in localDb:', err)
+  }
+}
+
+/**
+ * Clear the saved listening session from localDb.
+ */
+const clearSession = async (uid?: string): Promise<void> => {
+  try {
+    const key = getSessionKey(uid)
+    await localDb.syncMeta.delete(key)
+  } catch (err) {
+    console.warn('Failed to clear sentence listening session from localDb:', err)
+  }
+}
+
 export const sentenceListeningApi = {
   getListeningSentences,
+  getStoredSession,
+  saveSession,
+  updateSessionProgress,
+  clearSession,
 }

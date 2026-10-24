@@ -1,7 +1,9 @@
 import { GoogleGenAI } from '@google/genai'
+import OpenAI from 'openai'
 import { ECategory, EType } from '@/models/item.model'
 import { IHttpResponse } from '@/models/http.model'
 import { GEMINI_MODELS } from './geminiModels'
+import { resolveOpenAiApiKey } from '../openai/tts.service'
 
 export interface IDictionaryAutofillData {
   catId: ECategory
@@ -110,19 +112,80 @@ export const getSourceContext = (source: string = 'Oxford'): string => {
   }
 }
 
+const normalizeDictionaryData = (data: IOxfordAutofillData): IOxfordAutofillData => {
+  if (data.meanings && Array.isArray(data.meanings)) {
+    data.meanings = data.meanings.map((m) => {
+      const uk = (m.pronunciation?.uk || '').trim()
+      const us = (m.pronunciation?.us || '').trim()
+      const common = (m.pronunciation?.common || '').trim()
+
+      const cleanIpa = (val: string) =>
+        val
+          .replace(/^\/+|\/+$/g, '')
+          .trim()
+          .toLowerCase()
+      const isSame = uk && us && cleanIpa(uk) === cleanIpa(us)
+
+      const finalUs = us || uk || ''
+      const finalUk = isSame ? '' : uk
+      const finalCommon = common || finalUs
+
+      return {
+        ...m,
+        grammar: '',
+        collocations: formatHtmlList(m.collocations),
+        pronunciation: {
+          uk: finalUk,
+          us: finalUs,
+          common: finalCommon,
+        },
+      }
+    })
+  }
+  data.forms = data.forms || []
+  data.relation = data.relation || []
+  return data
+}
+
+const safeParseJson = (text: string): IOxfordAutofillData | null => {
+  if (!text) return null
+  const trimmed = text.trim()
+  try {
+    return JSON.parse(trimmed)
+  } catch {
+    try {
+      const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+      if (match && match[1]) {
+        return JSON.parse(match[1].trim())
+      }
+      const first = trimmed.indexOf('{')
+      const last = trimmed.lastIndexOf('}')
+      if (first !== -1 && last !== -1 && last > first) {
+        return JSON.parse(trimmed.slice(first, last + 1))
+      }
+    } catch (e) {
+      console.warn('[Dictionary] safeParseJson extraction failed:', e)
+    }
+  }
+  return null
+}
+
 export const geminiDictionaryService = {
   fetchFromReference: async (
     wordOrPhrase: string,
     sourceName: string = 'Google',
+    sentenceContext?: string,
   ): Promise<IHttpResponse<IOxfordAutofillData>> => {
     try {
-      const apiKey = resolveGeminiApiKey()
-      if (!apiKey) {
+      const geminiApiKey = resolveGeminiApiKey()
+      const openAiApiKey = resolveOpenAiApiKey()
+
+      if (!geminiApiKey && !openAiApiKey) {
         return {
           isSuccess: false,
           content: null,
           message:
-            'Gemini API key is not configured. Please add VITE_GEMINI_API_KEY in your .env or save it in localStorage ("gemini_api_key").',
+            'Chưa cấu hình API key cho Gemini hoặc OpenAI. Vui lòng thêm VITE_GEMINI_API_KEY hoặc VITE_OPENAI_API_KEY trong file .env hoặc lưu vào localStorage ("gemini_api_key").',
           statusCode: 400,
         }
       }
@@ -132,17 +195,21 @@ export const geminiDictionaryService = {
         return {
           isSuccess: false,
           content: null,
-          message: 'Please provide a valid word or phrase to look up.',
+          message: 'Vui lòng cung cấp từ hoặc cụm từ hợp lệ.',
           statusCode: 400,
         }
       }
 
-      const ai = new GoogleGenAI({ apiKey })
       const sourceContext = getSourceContext(sourceName)
+
+      const contextHint = sentenceContext
+        ? `\nSentence context where this word appears: "${sentenceContext}"\n(CRITICAL: Prioritize the exact meaning, part of speech, and Vietnamese translation that fits this specific sentence context, while still returning standard dictionary details).`
+        : ''
 
       const prompt = `You are a professional lexicographer with deep knowledge of ${sourceContext}.
 
-Given the English word or phrase: "${trimmed}"
+Given the English word or phrase: "${trimmed}"${contextHint}
+(If the word is an inflected form like past tense, plural, or participle, identify its base lemma and provide clear meanings).
 
 Extract and format accurate dictionary data following ${sourceContext} conventions:
 1. Category (catId):
@@ -160,20 +227,19 @@ Extract and format accurate dictionary data following ${sourceContext} conventio
 3. Word Family: Derived or related words sharing the morphological base (noun, verb, adj, adv).
 
 4. Meanings:
-   - Provide up to 3 most important/common Oxford dictionary senses.
+   - Provide up to 3 most important/common dictionary senses (with the context-fitting meaning as the first meaning).
    - For each meaning:
      - typeId: Part of speech (1=NOUN, 2=VERB, 3=ADJECTIVE, 4=ADVERB, 5=PREPOSITION, 6=CONJUNCTION, 7=PRONOUN, 8=ARTICLE, 9=DETERMINER, 10=INTERJECTION).
      - pronunciation:
-       - uk: British English (BrE) IPA from Oxford (e.g. "/ˌser.ənˈdɪp.ə.ti/")
-       - us: North American English (NAmE) IPA from Oxford
+       - uk: British English (BrE) IPA
+       - us: North American English (NAmE) IPA
        - common: Standard IPA
-       - NOTE: If the UK and US pronunciations are the same, prefer US (fill "us" and leave "uk" as empty string "").
-     - definition: Clear, learner-friendly English definition in Oxford style.
+     - definition: Clear, learner-friendly English definition.
      - translation: Accurate and natural Vietnamese translation of this specific meaning.
-     - collocations: Frequent Oxford collocations for this meaning. Since this field is rendered in a rich text editor, if there are multiple words or phrases, format them as an HTML unordered list with <ul> and <li> tags (e.g. "<ul><li>collocation 1</li><li>collocation 2</li></ul>").
+     - collocations: Frequent collocations formatted as an HTML unordered list with <ul> and <li> tags.
      - synonyms: Array of up to 5 synonyms.
      - antonyms: Array of up to 5 antonyms (if any).
-     - examples: 1-2 practical Oxford example sentences with:
+     - examples: 1-2 practical example sentences with:
        - origin: English sentence
        - translation: Natural Vietnamese translation
 
@@ -190,7 +256,7 @@ Return ONLY valid JSON matching this schema:
       "definition": "...",
       "translation": "...",
       "grammar": "",
-      "collocations": "<ul><li>first collocation</li><li>second collocation</li></ul>",
+      "collocations": "<ul><li>first collocation</li></ul>",
       "synonyms": ["..."],
       "antonyms": ["..."],
       "pronunciation": {
@@ -211,65 +277,80 @@ Return ONLY valid JSON matching this schema:
       let lastError: any = null
       let parsed: IOxfordAutofillData | null = null
 
-      for (const model of GEMINI_MODELS) {
+      // 1. Try Gemini models first if key available
+      if (geminiApiKey) {
         try {
-          const response = await ai.models.generateContent({
-            model,
-            contents: prompt,
-            config: {
-              responseMimeType: 'application/json',
-              temperature: 0.2,
-            },
+          const ai = new GoogleGenAI({ apiKey: geminiApiKey })
+
+          for (const model of GEMINI_MODELS) {
+            try {
+              const response = await ai.models.generateContent({
+                model,
+                contents: prompt,
+                config: {
+                  responseMimeType: 'application/json',
+                  temperature: 0.2,
+                },
+              })
+
+              const text = response.text || ''
+              if (text) {
+                const raw = safeParseJson(text)
+                if (raw) {
+                  parsed = normalizeDictionaryData(raw)
+                  break
+                }
+              }
+            } catch (err: any) {
+              lastError = err
+              console.warn(
+                `[Dictionary] Gemini model ${model} failed, trying next...`,
+                err?.message || err,
+              )
+            }
+          }
+        } catch (geminiInitErr: any) {
+          lastError = geminiInitErr
+          console.warn('[Dictionary] Gemini initialization failed:', geminiInitErr?.message)
+        }
+      }
+
+      // 2. Fallback to OpenAI if Gemini failed and OpenAI key exists
+      if (!parsed && openAiApiKey) {
+        try {
+          console.info('[Dictionary] Gemini unavailable, falling back to OpenAI gpt-4o-mini...')
+          const openai = new OpenAI({ apiKey: openAiApiKey, dangerouslyAllowBrowser: true })
+          const completion = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `You are a professional lexicographer with deep knowledge of ${sourceContext}.`,
+              },
+              { role: 'user', content: prompt },
+            ],
+            response_format: { type: 'json_object' },
+            temperature: 0.2,
           })
 
-          const text = response.text || ''
-          if (text) {
-            const data: IOxfordAutofillData = JSON.parse(text)
-            if (data.meanings && Array.isArray(data.meanings)) {
-              data.meanings = data.meanings.map((m) => {
-                const uk = (m.pronunciation?.uk || '').trim()
-                const us = (m.pronunciation?.us || '').trim()
-                const common = (m.pronunciation?.common || '').trim()
-
-                const cleanIpa = (val: string) =>
-                  val
-                    .replace(/^\/+|\/+$/g, '')
-                    .trim()
-                    .toLowerCase()
-                const isSame = uk && us && cleanIpa(uk) === cleanIpa(us)
-
-                const finalUs = us || uk || ''
-                const finalUk = isSame ? '' : uk
-                const finalCommon = common || finalUs
-
-                return {
-                  ...m,
-                  grammar: '',
-                  collocations: formatHtmlList(m.collocations),
-                  pronunciation: {
-                    uk: finalUk,
-                    us: finalUs,
-                    common: finalCommon,
-                  },
-                }
-              })
+          const openAiText = completion.choices[0]?.message?.content || ''
+          if (openAiText) {
+            const raw = safeParseJson(openAiText)
+            if (raw) {
+              parsed = normalizeDictionaryData(raw)
             }
-            data.forms = []
-            data.relation = []
-            parsed = data
-            break
           }
-        } catch (err: any) {
-          lastError = err
+        } catch (openAiErr: any) {
           console.warn(
-            `Model ${model} failed or is busy, attempting next model:`,
-            err?.message || err,
+            '[Dictionary] OpenAI dictionary lookup fallback also failed:',
+            openAiErr?.message || openAiErr,
           )
+          lastError = openAiErr
         }
       }
 
       if (!parsed) {
-        throw lastError || new Error(`Failed to generate dictionary data from ${sourceName}.`)
+        throw lastError || new Error(`Không thể tra nghĩa từ điển cho "${trimmed}".`)
       }
 
       return {
@@ -279,19 +360,19 @@ Return ONLY valid JSON matching this schema:
         statusCode: 200,
       }
     } catch (error: any) {
-      console.error(`Gemini ${sourceName} dictionary service error:`, error)
+      console.error(`Gemini/OpenAI ${sourceName} dictionary service error:`, error)
       return {
         isSuccess: false,
         content: null,
-        message: error?.message || 'Failed to auto-fill data using Gemini.',
+        message: error?.message || 'Failed to auto-fill data using AI dictionary.',
         statusCode: 500,
       }
     }
   },
-  fetchFromGoogle: (wordOrPhrase: string) =>
-    geminiDictionaryService.fetchFromReference(wordOrPhrase, 'Google'),
-  fetchFromOxford: (wordOrPhrase: string) =>
-    geminiDictionaryService.fetchFromReference(wordOrPhrase, 'Oxford'),
+  fetchFromGoogle: (wordOrPhrase: string, sentenceContext?: string) =>
+    geminiDictionaryService.fetchFromReference(wordOrPhrase, 'Google', sentenceContext),
+  fetchFromOxford: (wordOrPhrase: string, sentenceContext?: string) =>
+    geminiDictionaryService.fetchFromReference(wordOrPhrase, 'Oxford', sentenceContext),
 }
 
 export const geminiOxfordService = geminiDictionaryService

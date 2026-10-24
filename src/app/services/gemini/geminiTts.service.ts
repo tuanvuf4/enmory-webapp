@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai'
 import {
   generateOpenAiSpeech,
+  generateOpenAiSpeechBlob,
   mapGeminiVoiceToOpenAi,
   OPENAI_VOICES,
   resolveOpenAiApiKey,
@@ -8,6 +9,7 @@ import {
 } from '../openai/tts.service'
 import { resolveGeminiApiKey } from './geminiDictionary.service'
 import { GEMINI_TTS_MODELS } from './geminiModels'
+import { localDb } from '../localDb/db'
 
 export type TGeminiVoice = 'auto' | 'Aoede' | 'Puck' | 'Kore' | 'Charon' | 'Fenrir'
 
@@ -347,12 +349,25 @@ export class GeminiTTSPlayer {
     const resolvedVoice = voice === 'auto' ? 'Aoede' : voice
     const cacheKey = `${resolvedVoice}_${cleanText}`
 
+    // 1. In-memory URL cache check
     if (audioCache.has(cacheKey)) {
       return audioCache.get(cacheKey)!
     }
 
     if (ongoingRequests.has(cacheKey)) {
       return ongoingRequests.get(cacheKey)!
+    }
+
+    // 2. Persistent Dexie IndexedDB cache check (Instant, offline & preserves API quota)
+    try {
+      const persisted = await localDb.audioCache.get(cacheKey)
+      if (persisted && persisted.blob) {
+        const objectUrl = URL.createObjectURL(persisted.blob)
+        audioCache.set(cacheKey, objectUrl)
+        return objectUrl
+      }
+    } catch (dbReadErr) {
+      console.warn('[TTS] Error reading from localDb.audioCache:', dbReadErr)
     }
 
     const geminiApiKey = resolveGeminiApiKey()
@@ -372,7 +387,11 @@ export class GeminiTTSPlayer {
         // execute OpenAI TTS fallback directly to prevent stutter/playback stalls.
         if (isGeminiCoolingDown && openAiApiKey) {
           try {
-            const objectUrl = await generateOpenAiSpeech(cleanText, resolvedVoice)
+            const openAiBlob = await generateOpenAiSpeechBlob(cleanText, resolvedVoice)
+            localDb.audioCache
+              .put({ key: cacheKey, blob: openAiBlob, created_at: Date.now() })
+              .catch((e) => console.warn('[TTS] Failed to persist OpenAI blob:', e))
+            const objectUrl = URL.createObjectURL(openAiBlob)
             audioCache.set(cacheKey, objectUrl)
             return objectUrl
           } catch (openAiCooldownErr) {
@@ -412,6 +431,9 @@ export class GeminiTTSPlayer {
 
               if (audioPart && audioPart.inlineData?.data) {
                 const wavBlob = geminiAudioToWavBlob(audioPart.inlineData.data)
+                localDb.audioCache
+                  .put({ key: cacheKey, blob: wavBlob, created_at: Date.now() })
+                  .catch((e) => console.warn('[TTS] Failed to persist Gemini wavBlob:', e))
                 const objectUrl = URL.createObjectURL(wavBlob)
                 audioCache.set(cacheKey, objectUrl)
                 return objectUrl
@@ -447,7 +469,11 @@ export class GeminiTTSPlayer {
             console.info(
               `[TTS] Gemini TTS ${geminiApiKey ? 'encountered errors' : 'not configured'}. Falling back to OpenAI TTS ('tts-1')...`,
             )
-            const objectUrl = await generateOpenAiSpeech(cleanText, resolvedVoice)
+            const openAiBlob = await generateOpenAiSpeechBlob(cleanText, resolvedVoice)
+            localDb.audioCache
+              .put({ key: cacheKey, blob: openAiBlob, created_at: Date.now() })
+              .catch((e) => console.warn('[TTS] Failed to persist OpenAI blob:', e))
+            const objectUrl = URL.createObjectURL(openAiBlob)
             audioCache.set(cacheKey, objectUrl)
             return objectUrl
           } catch (openAiErr: any) {

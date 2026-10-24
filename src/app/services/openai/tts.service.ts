@@ -93,13 +93,13 @@ function getOpenAiClient(apiKey: string): OpenAI {
 }
 
 /**
- * Generates speech using OpenAI TTS ('tts-1') and returns a playable Blob Object URL.
+ * Generates speech using OpenAI TTS ('tts-1') and returns the raw audio Blob.
  */
-export const generateOpenAiSpeech = async (
+export const generateOpenAiSpeechBlob = async (
   text: string,
   voice: TOpenAiVoice | string = 'alloy',
   speed = 1.0,
-): Promise<string> => {
+): Promise<Blob> => {
   const apiKey = resolveOpenAiApiKey()
   if (!apiKey) {
     throw new Error('OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY in .env')
@@ -120,11 +120,20 @@ export const generateOpenAiSpeech = async (
     speed: Math.max(0.25, Math.min(4.0, speed)),
   })
 
-  const blob =
-    typeof response.blob === 'function'
-      ? await response.blob()
-      : new Blob([await response.arrayBuffer()], { type: 'audio/mpeg' })
+  return typeof response.blob === 'function'
+    ? await response.blob()
+    : new Blob([await response.arrayBuffer()], { type: 'audio/mpeg' })
+}
 
+/**
+ * Generates speech using OpenAI TTS ('tts-1') and returns a playable Blob Object URL.
+ */
+export const generateOpenAiSpeech = async (
+  text: string,
+  voice: TOpenAiVoice | string = 'alloy',
+  speed = 1.0,
+): Promise<string> => {
+  const blob = await generateOpenAiSpeechBlob(text, voice, speed)
   return URL.createObjectURL(blob)
 }
 

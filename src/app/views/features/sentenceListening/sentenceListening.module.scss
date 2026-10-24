@@ -3,6 +3,11 @@
   flex-direction: column;
   gap: 14px;
   width: 100%;
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+  }
 }
 
 .header {
@@ -170,6 +175,98 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  cursor: pointer;
+}
+
+.diffExtraTag {
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+.interactiveWord {
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0 3px;
+  transition: all 0.15s ease;
+  margin: 0 1px;
+
+  &:hover {
+    background-color: rgba(99, 102, 241, 0.15);
+    color: var(--ant-color-primary);
+  }
+}
+
+.hintBox {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeIn 0.2s ease-in-out;
+  width: 100%;
+}
+
+.hintTagsContainer {
+  padding: 10px 14px;
+  border-radius: 8px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeIn 0.25s ease-in-out;
+  margin-top: 10px;
+}
+
+.hintTagsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hintTagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.hintWordTag {
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.5;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.hintWordTagUnrevealed {
+  border-style: dashed;
+}
+
+.popoverWordContent {
+  min-width: 220px;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
 }
 
 .actionsRow {

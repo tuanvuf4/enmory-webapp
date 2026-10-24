@@ -6,10 +6,32 @@ export interface ISyncMeta {
   value: any
 }
 
+export interface ICachedAudio {
+  key: string // e.g. `${resolvedVoice}_${cleanText}`
+  blob: Blob
+  created_at: number
+}
+
+export interface IListeningHistoryItem {
+  id?: number
+  uid?: string
+  date: string // YYYY-MM-DD
+  timestamp: number
+  sentenceId: string
+  sentenceOrigin: string
+  userText?: string
+  accuracy: number
+  isPerfect: boolean
+  sourceType: string
+  voice?: string
+}
+
 export class EnmoryDatabase extends Dexie {
   items!: Table<IItem, string>
   examples!: Table<IExample, string>
   syncMeta!: Table<ISyncMeta, string>
+  audioCache!: Table<ICachedAudio, string>
+  listeningHistory!: Table<IListeningHistoryItem, number>
 
   constructor() {
     super('EnmoryLocalDB')
@@ -20,6 +42,10 @@ export class EnmoryDatabase extends Dexie {
     })
     this.version(2).stores({
       items: 'id, uid, catId, level, created_date, last_update, next_review_date, *tags_lowercase',
+    })
+    this.version(3).stores({
+      audioCache: 'key, created_at',
+      listeningHistory: '++id, date, timestamp, accuracy',
     })
   }
 }

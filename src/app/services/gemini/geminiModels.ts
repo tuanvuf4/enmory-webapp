@@ -10,11 +10,14 @@
  */
 
 export const GEMINI_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-1.5-flash',
+  'gemini-2.5-flash',
+  'gemini-flash-latest',
   'gemini-3.5-flash-lite',
   'gemini-3.5-flash',
-  'gemini-2.5-flash',
   'gemini-3.8-flash',
-  'gemini-flash-latest',
 ] as const
 
 export type TGeminiModel = (typeof GEMINI_MODELS)[number]
@@ -46,19 +49,19 @@ export interface IGeminiModelOption {
 
 export const GEMINI_MODEL_OPTIONS: IGeminiModelOption[] = [
   {
-    value: 'gemini-3.5-flash',
-    label: 'Gemini 3.5 Flash (Tiêu chuẩn)',
-    desc: 'Cân bằng giữa tốc độ và độ chính xác',
+    value: 'gemini-2.0-flash',
+    label: 'Gemini 2.0 Flash (Khuyên dùng)',
+    desc: 'Tốc độ phản hồi cực nhanh, tối ưu chi phí token',
+  },
+  {
+    value: 'gemini-1.5-flash',
+    label: 'Gemini 1.5 Flash (Tiêu chuẩn)',
+    desc: 'Độ ổn định cao cho tra cứu và xử lý ngôn ngữ',
   },
   {
     value: 'gemini-2.5-flash',
     label: 'Gemini 2.5 Flash',
-    desc: 'Phiên bản gọn nhẹ fallback',
-  },
-  {
-    value: 'gemini-3.8-flash',
-    label: 'Gemini 3.8 Flash (High)',
-    desc: 'Năng lực xử lý cao cho các tác vụ phức tạp',
+    desc: 'Phiên bản gọn nhẹ cân bằng tốc độ và chất lượng',
   },
   {
     value: 'gemini-flash-latest',

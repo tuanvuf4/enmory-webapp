@@ -13,13 +13,14 @@ import {
   Tag,
 } from 'antd'
 import {
-  DeleteOutlined, ThunderboltFilled,
+  DeleteOutlined,
+  ThunderboltFilled,
   ClearOutlined,
   MoreOutlined,
   CheckSquareOutlined,
   UndoOutlined,
   PlayCircleOutlined,
-  EditOutlined
+  EditOutlined,
 } from '@ant-design/icons'
 import { useChecklist, useDispatch } from '@/core/hooks'
 import { IChecklistItem } from '@/models/checklist.model'

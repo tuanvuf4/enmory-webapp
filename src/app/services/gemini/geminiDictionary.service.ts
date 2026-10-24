@@ -291,10 +291,7 @@ Return ONLY valid JSON matching this schema:
         try {
           const ai = new GoogleGenAI({ apiKey: geminiApiKey })
           const targetModel = preferredModel || DEFAULT_AUTOFILL_MODEL
-          const modelCandidates = [
-            targetModel,
-            ...GEMINI_MODELS.filter((m) => m !== targetModel),
-          ]
+          const modelCandidates = [targetModel, ...GEMINI_MODELS.filter((m) => m !== targetModel)]
 
           for (const model of modelCandidates) {
             try {

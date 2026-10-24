@@ -1,5 +1,5 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit'
-import { PersistConfig, createMigrate, persistReducer } from 'redux-persist'
+import { PersistConfig, createMigrate, createTransform, persistReducer } from 'redux-persist'
 import autoMergeLevel2 from 'redux-persist/es/stateReconciler/autoMergeLevel2'
 import localStorage from 'redux-persist/lib/storage'
 import { authReducer, IAuthState, initialState as initialAuthState } from './reducers/auth.reducer'
@@ -43,12 +43,41 @@ const initialState: IAppState = {
   listening: initialListeningState,
 }
 
+const listeningTransform = createTransform(
+  (inboundState: any) => {
+    if (!inboundState) return inboundState
+    return {
+      ...inboundState,
+      player: {
+        ...inboundState.player,
+        playing: false,
+        seeking: false,
+        seekTo: null,
+      },
+    }
+  },
+  (outboundState: any) => {
+    if (!outboundState) return outboundState
+    return {
+      ...outboundState,
+      player: {
+        ...outboundState.player,
+        playing: false,
+        seeking: false,
+        seekTo: null,
+      },
+    }
+  },
+  { whitelist: ['listening'] },
+)
+
 const persistConfig: PersistConfig<IAppState> = {
   version: 6,
   key: 'root',
   storage: localStorage,
   blacklist: [],
   stateReconciler: autoMergeLevel2,
+  transforms: [listeningTransform],
   // transforms: [{ in: (es) => es, out: (es) => es }],
   migrate: createMigrate({
     2: () => ({

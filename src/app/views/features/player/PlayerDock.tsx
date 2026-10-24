@@ -122,6 +122,16 @@ export const PlayerDock: React.FC = () => {
     return () => unsubscribe()
   }, [])
 
+  useEffect(() => {
+    dispatch(
+      listeningAction.updatePlayer({
+        playing: false,
+        seeking: false,
+        seekTo: null,
+      }),
+    )
+  }, [])
+
   const fetchTracks = async () => {
     try {
       const response = await tracksApi.getTracks({
@@ -363,7 +373,7 @@ export const PlayerDock: React.FC = () => {
   const playingRef = useRef(playing)
   useEffect(() => {
     playingRef.current = playing
-    if (!playing) {
+    if (!playing || isFirstLoadRef.current) {
       clearLoopTimer()
     }
   }, [playing, clearLoopTimer])
@@ -464,7 +474,7 @@ export const PlayerDock: React.FC = () => {
 
   // Playback timer loop for transcript mode
   useEffect(() => {
-    if (!isTranscriptPlayback || !playing) return
+    if (!isTranscriptPlayback || !playing || isFirstLoadRef.current) return
 
     const intervalMs = 100
     const timer = setInterval(() => {
@@ -567,7 +577,7 @@ export const PlayerDock: React.FC = () => {
       } catch (e) {}
     }
 
-    if (!playing) {
+    if (!playing || isFirstLoadRef.current) {
       clearLoopTimer()
       ttsService.pause()
       return
@@ -646,7 +656,24 @@ export const PlayerDock: React.FC = () => {
     dispatch(listeningAction.updatePlayer({ seekTo: null, playing: true }))
   }, [seekTo, isTranscriptPlayback, transcriptDuration, duration, dispatch, clearLoopTimer])
 
+  const handlePlayerEnginePlay = () => {
+    if (isFirstLoadRef.current) {
+      if (playerRef.current && typeof playerRef.current.pause === 'function') {
+        try {
+          playerRef.current.pause()
+        } catch (e) {}
+      }
+      return
+    }
+    dispatch(listeningAction.updatePlayer({ playing: true }))
+  }
+
+  const handlePlayerEnginePause = () => {
+    dispatch(listeningAction.updatePlayer({ playing: false }))
+  }
+
   const handlePlay = () => {
+    isFirstLoadRef.current = false
     if (isTranscriptPlayback) {
       const targetDuration = transcriptDuration || duration || 0
       if (targetDuration > 0 && playedSecondsRef.current >= targetDuration - 0.5) {
@@ -786,7 +813,7 @@ export const PlayerDock: React.FC = () => {
 
     if (currentTrack) {
       if (isFirstLoadRef.current) {
-        isFirstLoadRef.current = false
+        // First load initialization
 
         let savedTime = 0
         try {
@@ -804,10 +831,13 @@ export const PlayerDock: React.FC = () => {
         restoreTimeRef.current = savedTime
         shouldSeekOnReadyRef.current = savedTime > 0
         load(currentTrack.srcUrl, savedTime)
+        isFirstLoadRef.current = false
       } else {
         shouldSeekOnReadyRef.current = false
         load(currentTrack.srcUrl, 0)
       }
+    } else {
+      isFirstLoadRef.current = false
     }
   }, [currentTrack])
 
@@ -1371,7 +1401,7 @@ export const PlayerDock: React.FC = () => {
           className='react-player'
           style={{ width: 1, height: 1 }}
           src={isTranscriptPlayback ? undefined : resolvedSrc}
-          playing={playing && !isTranscriptPlayback}
+          playing={!isFirstLoadRef.current && playing && !isTranscriptPlayback}
           controls={controls}
           light={light}
           loop={loop}
@@ -1404,8 +1434,8 @@ export const PlayerDock: React.FC = () => {
           // onLoadStart={() => console.log('onLoadStart')}
           onReady={handleReady}
           // onStart={(e) => console.log('onStart', e)}
-          onPlay={handlePlay}
-          onPause={handlePause}
+          onPlay={handlePlayerEnginePlay}
+          onPause={handlePlayerEnginePause}
           onRateChange={handleRateChange}
           // onSeeking={(e) => console.log('onSeeking', e)}
           // onSeeked={(e) => console.log('onSeeked', e)}

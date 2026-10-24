@@ -601,7 +601,7 @@ export const StudySet: React.FC = () => {
               size='small'
               onClick={onResetToInitial}
             >
-              Back to Start
+              Back
             </Button>
 
             <Tag
@@ -698,15 +698,7 @@ export const StudySet: React.FC = () => {
             />
 
             {studyMode === 'due' && (
-              <Card
-                size='small'
-                style={{
-                  border: `1px solid ${dueCount > 0 ? token.colorWarningBorder : token.colorSuccessBorder}`,
-                  backgroundColor: dueCount > 0 ? token.colorWarningBg : token.colorSuccessBg,
-                  borderRadius: 12,
-                  textAlign: 'left',
-                }}
-              >
+              <Card size='small'>
                 {dueCount > 0 ? (
                   <Space direction='vertical' size='middle' style={{ width: '100%' }}>
                     <Flex justify='space-between' align='center' wrap='wrap' gap={8}>
@@ -871,11 +863,11 @@ export const StudySet: React.FC = () => {
               %)
             </h2>
             {studyMode === 'due' && (
-              <p style={{ color: token.colorTextSecondary, marginTop: 8 }}>
+              <h3 style={{ color: token.colorTextSecondary, marginTop: 8 }}>
                 {dueCount > 0
                   ? `Còn lại ${dueCount} từ cần ôn tập trong ngày hôm nay.`
                   : '🎉 Tuyệt vời! Bạn đã hoàn thành tất cả từ cần ôn hôm nay!'}
-              </p>
+              </h3>
             )}
             {(status.mode === 'checklist' || studyMode === 'checklist') && (
               <p style={{ color: token.colorTextSecondary, marginTop: 8 }}>
@@ -896,7 +888,7 @@ export const StudySet: React.FC = () => {
                   Try Again
                 </Button>
                 <Button icon={<RollbackOutlined />} onClick={onResetToInitial}>
-                  Back to Start
+                  Back
                 </Button>
               </Space>
             </div>
@@ -1040,7 +1032,7 @@ export const StudySet: React.FC = () => {
                     ? `Tiếp tục ôn (${Math.min(dueCount, 15)} từ còn lại)`
                     : (status.mode === 'checklist' || studyMode === 'checklist') &&
                         checklistToLearnCount > 0
-                      ? `Tiếp tục ôn Checklist (${checklistToLearnCount} từ chưa nhớ)`
+                      ? `Ôn lại`
                       : 'Luyện tập lại'
                   : studyMode === 'due'
                     ? `Ôn tập ngay (${Math.min(dueCount, 15)} từ)`
@@ -1051,7 +1043,7 @@ export const StudySet: React.FC = () => {
             )}
             {isDone && (
               <Button icon={<RollbackOutlined />} onClick={onResetToInitial}>
-                Back to Start
+                Back
               </Button>
             )}
           </div>

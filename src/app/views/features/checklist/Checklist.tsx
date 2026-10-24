@@ -13,20 +13,17 @@ import {
   Tag,
 } from 'antd'
 import {
-  DeleteOutlined,
-  EyeOutlined,
-  SoundOutlined,
-  ThunderboltFilled,
+  DeleteOutlined, ThunderboltFilled,
   ClearOutlined,
   MoreOutlined,
   CheckSquareOutlined,
   UndoOutlined,
   PlayCircleOutlined,
+  EditOutlined
 } from '@ant-design/icons'
 import { useChecklist, useDispatch } from '@/core/hooks'
 import { IChecklistItem } from '@/models/checklist.model'
 import { useItemModal, usePrompt } from '@/helpers/hooks'
-import { speakWord } from '@/helpers/mics'
 import { getCategory, hasValidMeaning } from '@/helpers/item'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
@@ -381,66 +378,63 @@ export const Checklist: React.FC = () => {
                       />
                     </div>
 
-                    <SoundOutlined
-                      className={styles.soundIcon}
-                      style={{ color: token.colorPrimary }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        speakWord(item.origin)
-                      }}
-                    />
+                    <div>
+                      <div>
+                        <span className={styles.wordOrigin} style={{ color: token.colorText }}>
+                          {item.origin}
+                        </span>
 
-                    <span className={styles.wordOrigin} style={{ color: token.colorText }}>
-                      {item.origin}
-                    </span>
+                        {categoryLabel && (
+                          <Tag
+                            className={styles.categoryTag}
+                            color='default'
+                            style={{
+                              backgroundColor: token.colorFillAlter,
+                              borderColor: token.colorBorderSecondary,
+                              color: token.colorTextTertiary,
+                              marginLeft: 4,
+                            }}
+                          >
+                            {categoryLabel}
+                          </Tag>
+                        )}
+                      </div>
+                      <div>
+                        {!hasMeaning && (
+                          <Tooltip title='This word does not have a definition or Vietnamese meaning, it will not appear in practice exercises.'>
+                            <Tag
+                              color='warning'
+                              style={{
+                                margin: 0,
+                                fontSize: 11,
+                                padding: '0 4px',
+                                lineHeight: '18px',
+                              }}
+                            >
+                              No Meaning
+                            </Tag>
+                          </Tooltip>
+                        )}
 
-                    {categoryLabel && (
-                      <Tag
-                        className={styles.categoryTag}
-                        color='default'
-                        style={{
-                          backgroundColor: token.colorFillAlter,
-                          borderColor: token.colorBorderSecondary,
-                          color: token.colorTextTertiary,
-                        }}
-                      >
-                        {categoryLabel}
-                      </Tag>
-                    )}
-
-                    {!hasMeaning && (
-                      <Tooltip title='Từ này chưa có định nghĩa hoặc nghĩa tiếng Việt, sẽ không xuất hiện trong bài luyện tập.'>
-                        <Tag
-                          color='warning'
-                          style={{
-                            margin: 0,
-                            fontSize: 11,
-                            padding: '0 4px',
-                            lineHeight: '18px',
-                          }}
-                        >
-                          Chưa có nghĩa
-                        </Tag>
-                      </Tooltip>
-                    )}
-
-                    {hasMeaning && quickMeaning && (
-                      <div
-                        className={styles.quickMeaning}
-                        style={{ color: token.colorTextSecondary }}
-                        title={quickMeaning}
-                        dangerouslySetInnerHTML={{ __html: quickMeaning }}
-                      ></div>
-                    )}
+                        {hasMeaning && quickMeaning && (
+                          <div
+                            className={styles.quickMeaning}
+                            style={{ color: token.colorTextSecondary }}
+                            title={quickMeaning}
+                            dangerouslySetInnerHTML={{ __html: quickMeaning }}
+                          />
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
-                    <Tooltip title='View'>
+                    <Tooltip title='Edit'>
                       <Button
                         type='text'
                         size='small'
-                        icon={<EyeOutlined />}
-                        onClick={() => openItemModal('view', item)}
+                        icon={<EditOutlined style={{ color: token.palette?.gold?.[7] }} />}
+                        onClick={() => openItemModal('edit', item)}
                       />
                     </Tooltip>
 

@@ -31,10 +31,11 @@ import {
   SearchOutlined,
   PlusOutlined,
   RollbackOutlined,
+  EditOutlined,
 } from '@ant-design/icons'
 import { useSelector, itemKeys, useChecklist } from '@/core/hooks'
 import { useQueryClient } from '@tanstack/react-query'
-import { usePrompt } from '@/helpers/hooks'
+import { usePrompt, useItemModal } from '@/helpers/hooks'
 import { ISentenceListeningItem } from '@/models/sentenceListening.model'
 import { IItem, ECategory, EType } from '@/models/item.model'
 import { initItem, meaningItem } from '@/views/features/modals/itemModal'
@@ -59,6 +60,7 @@ export const SentenceListening: React.FC = () => {
   const { token } = theme.useToken()
   const { user } = useSelector((state) => state.auth)
   const { message } = usePrompt()
+  const { openItemModal } = useItemModal()
   const queryClient = useQueryClient()
 
   // Desired sentences count from user configuration (defaults to 10)
@@ -104,6 +106,8 @@ export const SentenceListening: React.FC = () => {
     typeId?: EType
     itemId?: string
     fromAi?: boolean
+    note?: string
+    grammar?: string
   } | null>(null)
   const [isLookingUpAi, setIsLookingUpAi] = useState<boolean>(false)
   const [isSavingToLibrary, setIsSavingToLibrary] = useState<boolean>(false)
@@ -134,6 +138,7 @@ export const SentenceListening: React.FC = () => {
     removeItemByItemId,
   } = useChecklist()
   const [isTogglingChecklist, setIsTogglingChecklist] = useState<boolean>(false)
+  const [isLoadingEditItem, setIsLoadingEditItem] = useState<boolean>(false)
 
   // Match sentence with checklist entry by itemId or trimmed origin text
   const getChecklistEntry = useCallback(
@@ -421,6 +426,8 @@ export const SentenceListening: React.FC = () => {
           typeId: m?.typeId,
           itemId: matched.id,
           fromAi: false,
+          note: m?.note,
+          grammar: m?.grammar,
         })
       }
     } catch (err) {
@@ -463,6 +470,8 @@ export const SentenceListening: React.FC = () => {
           typeId: m?.typeId,
           itemId: prev?.itemId,
           fromAi: true,
+          note: m?.note || '',
+          grammar: m?.grammar || '',
         }))
         message({ type: 'success', content: `Đã tra nghĩa AI cho "${lookupWord}"` })
       } else {
@@ -498,6 +507,8 @@ export const SentenceListening: React.FC = () => {
             typeId: lookupData.typeId ?? EType.NOUN,
             definition: lookupData.definition || '',
             translation: lookupData.translation || '',
+            note: lookupData.note || '',
+            grammar: lookupData.grammar || '',
             pronunciation: {
               us: lookupData.phonetic || '',
               uk: '',
@@ -656,6 +667,146 @@ export const SentenceListening: React.FC = () => {
     ],
   )
 
+  // Edit sentence/item via ItemModal
+  const handleEditItem = useCallback(
+    async (sentenceToEdit?: ISentenceListeningItem) => {
+      const sentence = sentenceToEdit || currentItem
+      if (!sentence) return
+
+      // Stop speech if currently playing
+      geminiTtsService.stop()
+      setIsPlaying(false)
+
+      setIsLoadingEditItem(true)
+      try {
+        let targetItem: IItem | null | undefined = null
+
+        // 1. Try finding by itemId directly
+        if (sentence.itemId) {
+          const res = await itemApi.getItemById(sentence.itemId)
+          if (res.isSuccess && res.content) {
+            targetItem = res.content
+          }
+        }
+
+        // 2. Fallback: Try finding by sourceItemOrigin or origin in localDb.items
+        if (!targetItem) {
+          const searchOrigins = [sentence.sourceItemOrigin, sentence.origin].filter(
+            Boolean,
+          ) as string[]
+
+          for (const originStr of searchOrigins) {
+            try {
+              const found = await localDb.items
+                .filter((i) => i.origin?.trim().toLowerCase() === originStr.trim().toLowerCase())
+                .first()
+              if (found?.id) {
+                const res = await itemApi.getItemById(found.id)
+                if (res.isSuccess && res.content) {
+                  targetItem = res.content
+                  break
+                }
+              }
+            } catch (err) {
+              console.warn('Error fetching item by origin fallback:', err)
+            }
+          }
+        }
+
+        // 3. If item exists in Library, open ItemModal in edit mode
+        if (targetItem) {
+          openItemModal('edit', targetItem)
+          return
+        }
+
+        // 4. If item doesn't exist yet, construct a new Sentence item and open in add mode
+        const newSentenceItem: IItem = {
+          ...initItem,
+          origin: sentence.origin.trim(),
+          catId: ECategory.SENTENCE,
+          level: 1,
+          meanings: [
+            {
+              ...meaningItem,
+              typeId: EType.ALL,
+              translation: sentence.translation || '',
+              definition: sentence.translation || '',
+            },
+          ],
+        }
+        openItemModal('add', newSentenceItem)
+      } catch (err: any) {
+        console.error('Error opening item modal for edit:', err)
+        message({ type: 'error', content: err?.message || 'Không thể mở modal chỉnh sửa item' })
+      } finally {
+        setIsLoadingEditItem(false)
+      }
+    },
+    [currentItem, openItemModal, message],
+  )
+
+  // Synchronize item updates into active listening items
+  useEffect(() => {
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (
+        event?.type === 'updated' &&
+        event.query.queryKey[0] === 'items' &&
+        event.query.queryKey[1] === 'detail'
+      ) {
+        const updatedItem = event.query.state.data as IItem | undefined
+        if (!updatedItem || !updatedItem.id) return
+
+        setItems((prevItems) => {
+          let hasChange = false
+          const newItems = prevItems.map((item) => {
+            if (item.itemId !== updatedItem.id) return item
+
+            if (item.sourceType === 'sentence') {
+              const meaning = updatedItem.meanings?.[0]
+              const translation = meaning?.translation || meaning?.definition || ''
+              hasChange = true
+              return {
+                ...item,
+                origin: updatedItem.origin || item.origin,
+                translation: translation || item.translation,
+                sourceItemOrigin: updatedItem.origin,
+              }
+            }
+
+            if (item.sourceType === 'example') {
+              if (item.sourceItemOrigin !== updatedItem.origin) {
+                hasChange = true
+                return {
+                  ...item,
+                  sourceItemOrigin: updatedItem.origin,
+                }
+              }
+            }
+            return item
+          })
+
+          if (hasChange) {
+            sentenceListeningApi
+              .saveSession(
+                {
+                  items: newItems,
+                  currentIndex,
+                  isCompleted,
+                  sourceFilter,
+                  updatedAt: Date.now(),
+                },
+                user?.uid,
+              )
+              .catch(console.warn)
+            return newItems
+          }
+          return prevItems
+        })
+      }
+    })
+    return () => unsubscribe()
+  }, [queryClient, currentIndex, isCompleted, sourceFilter, user?.uid])
+
   // Toggle Dictation Mode
   const handleToggleDictationMode = (enabled: boolean) => {
     setIsDictationMode(enabled)
@@ -791,6 +942,22 @@ export const SentenceListening: React.FC = () => {
           >
             {lookupData.definition}
           </div>
+        )}
+
+        {lookupData.grammar && (
+          <div
+            className='text-xs'
+            style={{ color: token.colorTextSecondary, maxHeight: 60, overflowY: 'auto' }}
+            dangerouslySetInnerHTML={{ __html: lookupData.grammar }}
+          />
+        )}
+
+        {lookupData.note && (
+          <div
+            className='text-xs italic'
+            style={{ color: token.colorTextSecondary, maxHeight: 60, overflowY: 'auto' }}
+            dangerouslySetInnerHTML={{ __html: lookupData.note }}
+          />
         )}
 
         <div
@@ -995,6 +1162,14 @@ export const SentenceListening: React.FC = () => {
                   )}
                 </div>
                 <div className='flex items-center gap-1'>
+                  <Tooltip title='Edit'>
+                    <Button
+                      type='text'
+                      size='small'
+                      icon={<EditOutlined style={{ fontSize: 14 }} />}
+                      onClick={() => handleEditItem(item)}
+                    />
+                  </Tooltip>
                   <Tooltip
                     title={inChecklist ? 'Đã trong Checklist (Bấm để xóa)' : 'Thêm vào Checklist'}
                   >
@@ -1041,6 +1216,10 @@ export const SentenceListening: React.FC = () => {
       {/* Top Header / Stats & Quick Controls */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
+          <div className='text-xs font-semibold' style={{ color: token.colorTextSecondary }}>
+            Câu {currentIndex + 1} / {total}
+          </div>
+
           <Tag
             color={currentItem?.sourceType === 'sentence' ? 'blue' : 'purple'}
             className={styles.counterBadge}
@@ -1052,24 +1231,43 @@ export const SentenceListening: React.FC = () => {
                 : ''}
           </Tag>
 
-          <span className='text-xs font-semibold' style={{ color: token.colorTextSecondary }}>
-            Câu {currentIndex + 1} / {total}
-          </span>
-
           {repeatCount > 1 && (
             <Tag color='cyan' className='text-xs'>
               {repeatCount}x Replay
             </Tag>
           )}
-
-          {isDictationMode && (
-            <Tag color='gold' className='text-xs'>
-              ✍️ Dictation
-            </Tag>
-          )}
         </div>
 
         <div className={styles.headerRight}>
+          <Tooltip title='Edit'>
+            <Button
+              type='text'
+              size='small'
+              loading={isLoadingEditItem}
+              icon={<EditOutlined style={{ fontSize: 16 }} />}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleEditItem()
+              }}
+            />
+          </Tooltip>
+          {/* Card Top Action: Add / Remove from Checklist */}
+          <Button
+            type='text'
+            size='small'
+            loading={isTogglingChecklist}
+            icon={
+              <CheckSquareOutlined
+                style={{
+                  color: isCurrentInChecklist ? token.colorSuccess : undefined,
+                }}
+              />
+            }
+            onClick={(e) => {
+              e.stopPropagation()
+              handleToggleChecklist()
+            }}
+          />
           {/* Refresh Random Batch */}
           <Button
             type='text'
@@ -1077,7 +1275,6 @@ export const SentenceListening: React.FC = () => {
             icon={<ReloadOutlined />}
             onClick={() => loadSentences(true)}
           />
-
           {/* Settings Popover */}
           <Popover
             content={settingsContent}
@@ -1108,33 +1305,6 @@ export const SentenceListening: React.FC = () => {
           boxShadow: token.boxShadowTertiary,
         }}
       >
-        {/* Card Top Action: Add / Remove from Checklist */}
-        <div className={styles.cardBoxTopActions}>
-          <Tooltip
-            title={
-              isCurrentInChecklist ? 'Đã có trong Checklist (Bấm để xóa)' : 'Thêm câu vào Checklist'
-            }
-          >
-            <Button
-              type='text'
-              size='small'
-              loading={isTogglingChecklist}
-              icon={
-                <CheckSquareOutlined
-                  style={{
-                    color: isCurrentInChecklist ? token.colorSuccess : undefined,
-                    fontSize: 16,
-                  }}
-                />
-              }
-              onClick={(e) => {
-                e.stopPropagation()
-                handleToggleChecklist()
-              }}
-            />
-          </Tooltip>
-        </div>
-
         {/* English Sentence Display (with 1.5 Interactive Word Lookup when revealed) */}
         <div
           className={`${styles.sentenceDisplay} ${isRevealed ? styles.revealed : styles.blurred}`}
@@ -1483,8 +1653,7 @@ export const SentenceListening: React.FC = () => {
 
       {/* Keyboard Shortcuts Hint (1.2) */}
       <div className={styles.shortcutsHint} style={{ color: token.colorTextQuaternary }}>
-        Phím tắt: <b>[Enter]</b> Nghe lại • <b>[Shift+Enter]</b> Kiểm tra • <b>[Ctrl+Enter]</b> Câu
-        tiếp theo
+        <b>[Enter]</b> Nghe lại • <b>[Shift+Enter]</b> Kiểm tra • <b>[Ctrl+Enter]</b> Câu tiếp theo
       </div>
     </div>
   )

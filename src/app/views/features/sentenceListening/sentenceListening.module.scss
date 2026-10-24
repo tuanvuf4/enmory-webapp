@@ -18,23 +18,18 @@
   gap: 8px;
 }
 
-.headerLeft {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
 .headerRight {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
   flex-wrap: wrap;
 }
 
 .counterBadge {
   font-weight: 600;
   font-size: 13px;
+  margin-inline-end: 0;
+  margin-top: 8px;
 }
 
 .progressBar {
@@ -53,16 +48,6 @@
   min-height: 130px;
   transition: all 0.25s ease-in-out;
   overflow: hidden;
-}
-
-.cardBoxTopActions {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  z-index: 2;
 }
 
 .sentenceDisplay {

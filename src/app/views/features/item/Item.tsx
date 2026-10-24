@@ -288,9 +288,18 @@ export const Item: React.FC<IProps> = ({
               </h2>
 
               <Flex align={'center'} gap={token.size / 8}>
+                {isItemDue(data) && !data.archive && (
+                  <Tooltip title={`Đã đến chu kỳ ôn tập: ${getDueDurationText(data)}`}>
+                    <Button
+                      type='text'
+                      size='small'
+                      icon={<ClockCircleOutlined style={{ color: 'darkorange' }} />}
+                      style={{ cursor: 'default' }}
+                    />
+                  </Tooltip>
+                )}
                 {reload && (
                   <Button
-                    size='small'
                     type={'text'}
                     icon={<ReloadOutlined spin={spin} />}
                     title={'Reload'}
@@ -359,17 +368,6 @@ export const Item: React.FC<IProps> = ({
                 {data.catId && (
                   <div className={styles.level} style={{ display: 'flex', alignItems: 'center' }}>
                     <Level level={data.level as number} />
-                    {isItemDue(data) && !data.archive && (
-                      <Tooltip title={`Đến chu kỳ ôn tập SRS: ${getDueDurationText(data)}`}>
-                        <Tag
-                          color='warning'
-                          icon={<ClockCircleOutlined />}
-                          style={{ marginLeft: 6, cursor: 'default' }}
-                        >
-                          {getDueDurationText(data)}
-                        </Tag>
-                      </Tooltip>
-                    )}
                     {!isItemDue(data) && !!data.next_review_date && !data.archive && (
                       <Tooltip title={`Chu kỳ ôn tập SRS tiếp theo: ${getDueDurationText(data)}`}>
                         <Tag

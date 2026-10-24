@@ -28,7 +28,13 @@ import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
 import { useModal } from '@/context/modal.context'
 import { useQueryClient } from '@tanstack/react-query'
 import { validateAndCreateRelatedItems } from './itemValidation'
-import { geminiDictionaryService, resolveGeminiApiKey, formatHtmlList } from '@/services/gemini'
+import {
+  geminiDictionaryService,
+  resolveGeminiApiKey,
+  formatHtmlList,
+  IDictionaryAutofillData,
+} from '@/services/gemini'
+import { ThunderboltOutlined } from '@ant-design/icons'
 
 interface ItemFormProps {
   item: IItem
@@ -330,7 +336,97 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
     }
   }
 
-  const handleAutoFill = async () => {
+  const applyAutofillData = async (originWord: string, data: IDictionaryAutofillData) => {
+    const formattedMeanings: IMeaning[] = (data.meanings || []).map((m, index) => {
+      const rawUk = (m.pronunciation?.uk || '').trim()
+      const rawUs = (m.pronunciation?.us || '').trim()
+      const rawCommon = (m.pronunciation?.common || '').trim()
+
+      const cleanIpa = (val: string) =>
+        val
+          .replace(/^\/+|\/+$/g, '')
+          .trim()
+          .toLowerCase()
+      const isSamePronunciation = rawUk && rawUs && cleanIpa(rawUk) === cleanIpa(rawUs)
+
+      const finalUs = rawUs || rawUk || ''
+      const finalUk = isSamePronunciation ? '' : rawUk
+      const finalCommon = rawCommon || finalUs
+
+      return {
+        typeId: m.typeId || EType.NOUN,
+        common: index === 0,
+        enable: true,
+        definition: m.definition || '',
+        translation: m.translation || '',
+        note: formatHtmlList(m.note || '', false),
+        grammar: formatHtmlList(m.grammar || '', true),
+        collocations: formatHtmlList(m.collocations || ''),
+        synonyms: m.synonyms || [],
+        antonyms: m.antonyms || [],
+        pronunciation: {
+          uk: finalUk,
+          us: finalUs,
+          common: finalCommon,
+        },
+        examples: (m.examples || []).map((ex) => ({
+          origin: ex.origin || '',
+          translation: ex.translation || '',
+          note: '',
+          created_date: Timestamp.now().toMillis(),
+          last_update: Timestamp.now().toMillis(),
+        })),
+      }
+    })
+
+    reset({
+      ...getValues(),
+      origin: originWord,
+      catId: data.catId ?? getValues('catId'),
+      level: data.level ?? getValues('level'),
+      forms: getValues('forms') || [],
+      word_family: data.word_family || [],
+      relation: getValues('relation') || [],
+      meanings: formattedMeanings,
+    })
+
+    await trigger()
+  }
+
+  const runAutofill = async (originWord: string, sourceName: string = 'Google') => {
+    setIsAutofilling(true)
+    try {
+      const resp = await geminiDictionaryService.fetchFromReference(
+        originWord,
+        sourceName,
+        undefined,
+      )
+      if (!resp.isSuccess || !resp.content) {
+        notification({
+          type: 'error',
+          message: resp.message || `Failed to fetch dictionary data from ${sourceName}.`,
+        })
+        return
+      }
+
+      await applyAutofillData(originWord, resp.content)
+
+      notification({
+        type: 'success',
+        message: `Loaded ${sourceName} dictionary data for "${originWord}"!`,
+      })
+    } catch (error: any) {
+      console.error('Auto-fill error:', error)
+      notification({
+        type: 'error',
+        message: error?.message || `Error occurred during ${sourceName} auto-fill.`,
+      })
+    } finally {
+      setIsAutofilling(false)
+    }
+  }
+
+  const handleAutoFill = async (sourceName: string = 'Google') => {
     const currentOrigin = (getValues('origin') || '').trim()
     if (!currentOrigin) {
       notification({
@@ -362,98 +458,15 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
     if (hasMeaningContent) {
       confirm({
-        title: 'Replace existing meanings with Google data?',
-        content: 'This will replace the current meanings with data from Google.',
+        title: `Replace existing meanings with ${sourceName} data?`,
+        content: `This will replace the current meanings with data from ${sourceName}.`,
         okText: 'Replace',
-        onOk: () => runAutofill(currentOrigin),
+        onOk: () => runAutofill(currentOrigin, sourceName),
       })
       return
     }
 
-    await runAutofill(currentOrigin)
-  }
-
-  const runAutofill = async (originWord: string) => {
-    setIsAutofilling(true)
-    try {
-      const resp = await geminiDictionaryService.fetchFromGoogle(originWord)
-      if (!resp.isSuccess || !resp.content) {
-        notification({
-          type: 'error',
-          message: resp.message || 'Failed to fetch dictionary data from Google.',
-        })
-        return
-      }
-
-      const data = resp.content
-      const formattedMeanings: IMeaning[] = (data.meanings || []).map((m, index) => {
-        const rawUk = (m.pronunciation?.uk || '').trim()
-        const rawUs = (m.pronunciation?.us || '').trim()
-        const rawCommon = (m.pronunciation?.common || '').trim()
-
-        const cleanIpa = (val: string) =>
-          val
-            .replace(/^\/+|\/+$/g, '')
-            .trim()
-            .toLowerCase()
-        const isSamePronunciation = rawUk && rawUs && cleanIpa(rawUk) === cleanIpa(rawUs)
-
-        const finalUs = rawUs || rawUk || ''
-        const finalUk = isSamePronunciation ? '' : rawUk
-        const finalCommon = rawCommon || finalUs
-
-        return {
-          typeId: m.typeId || EType.NOUN,
-          common: index === 0,
-          enable: true,
-          definition: m.definition || '',
-          translation: m.translation || '',
-          note: '',
-          grammar: '',
-          collocations: formatHtmlList(m.collocations || ''),
-          synonyms: m.synonyms || [],
-          antonyms: m.antonyms || [],
-          pronunciation: {
-            uk: finalUk,
-            us: finalUs,
-            common: finalCommon,
-          },
-          examples: (m.examples || []).map((ex) => ({
-            origin: ex.origin || '',
-            translation: ex.translation || '',
-            note: '',
-            created_date: Timestamp.now().toMillis(),
-            last_update: Timestamp.now().toMillis(),
-          })),
-        }
-      })
-
-      reset({
-        ...getValues(),
-        origin: originWord,
-        catId: data.catId ?? getValues('catId'),
-        level: data.level ?? getValues('level'),
-        forms: getValues('forms') || [],
-        word_family: data.word_family || [],
-        relation: getValues('relation') || [],
-        meanings: formattedMeanings,
-      })
-
-      await trigger()
-
-      notification({
-        type: 'success',
-        message: `Loaded Google dictionary data for "${originWord}"!`,
-      })
-    } catch (error: any) {
-      console.error('Auto-fill error:', error)
-      notification({
-        type: 'error',
-        message: error?.message || 'Error occurred during Google auto-fill.',
-      })
-    } finally {
-      setIsAutofilling(false)
-    }
+    await runAutofill(currentOrigin, sourceName)
   }
 
   const handleCancel = () => closeModal()
@@ -531,8 +544,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
               </Col>
 
               <Col md={20} xs={24}>
-                <Flex align={'flex-start'} gap={token.size / 2}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                <Flex align={'flex-start'} gap={token.size / 2} wrap='wrap'>
+                  <div style={{ flex: '1 1 240px', minWidth: 200 }}>
                     <Controller
                       control={control}
                       name={`origin`}
@@ -596,15 +609,18 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                     />
                   </div>
 
-                  <Button
-                    htmlType='button'
-                    type='primary'
-                    loading={isAutofilling}
-                    disabled={!origin?.trim() || isAutofilling}
-                    onClick={handleAutoFill}
-                  >
-                    Auto Fill
-                  </Button>
+                  <Space.Compact style={{ flexShrink: 0 }}>
+                    <Button
+                      htmlType='button'
+                      type='primary'
+                      loading={isAutofilling}
+                      icon={<ThunderboltOutlined />}
+                      disabled={!origin?.trim() || isAutofilling}
+                      onClick={() => handleAutoFill('Google')}
+                    >
+                      Auto Fill
+                    </Button>
+                  </Space.Compact>
                 </Flex>
 
                 {origin && (
@@ -615,7 +631,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                     gap={token.size * 0.25}
                     style={{ marginTop: token.size / 2 }}
                   >
-                    <Reference origin={origin} />
+                    <Reference origin={origin} onSelect={(ref) => handleAutoFill(ref.src)} />
                   </Flex>
                 )}
               </Col>

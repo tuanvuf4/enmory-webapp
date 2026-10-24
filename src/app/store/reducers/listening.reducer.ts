@@ -92,9 +92,16 @@ export const listeningReducer = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase('persist/REHYDRATE', (state) => {
+    builder.addCase('persist/REHYDRATE', (state, action: any) => {
+      if (action?.payload?.listening?.player) {
+        action.payload.listening.player.playing = false
+        action.payload.listening.player.seeking = false
+        action.payload.listening.player.seekTo = null
+      }
       if (state?.player) {
         state.player.playing = false
+        state.player.seeking = false
+        state.player.seekTo = null
       }
     })
   },

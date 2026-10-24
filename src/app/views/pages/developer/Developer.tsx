@@ -47,6 +47,7 @@ import { extractExamplesFromItems } from '@/services/firebase/dbIntegration'
 import { IItem, IExample, IMeaning, ECategory } from '@/models/item.model'
 import { ISyncMeta } from '@/services/localDb/db'
 import { getCategory, getType } from '@/helpers/item'
+import styles from './developer.module.scss'
 
 const { Text, Paragraph } = Typography
 
@@ -389,6 +390,7 @@ export const Developer: React.FC = () => {
             {(record.meanings || []).map((m, idx) => (
               <div
                 key={idx}
+                className={styles.noTextEditor}
                 style={{
                   marginTop: 6,
                   paddingLeft: 8,
@@ -399,9 +401,12 @@ export const Developer: React.FC = () => {
                   {getMeaningTypeLabel(m) ? (
                     <Tag color='purple'>{getMeaningTypeLabel(m)}</Tag>
                   ) : null}
-                  {m.definition && <Text strong>{m.definition}</Text>}
-                  {m.translation && <Text type='secondary'>({m.translation})</Text>}
+
+                  {m.definition && <div dangerouslySetInnerHTML={{ __html: m.definition }} />}
+
+                  {m.translation && <div dangerouslySetInnerHTML={{ __html: m.translation }} />}
                 </Space>
+
                 {m.examples && m.examples.length > 0 && (
                   <div style={{ marginTop: 4, paddingLeft: 8 }}>
                     <Text type='secondary' style={{ fontSize: 12 }}>
@@ -1071,7 +1076,7 @@ export const Developer: React.FC = () => {
                         title={
                           <Space>
                             <DatabaseOutlined style={{ color: token.colorPrimary }} />
-                            <span>Bảng Items</span>
+                            <span>Table Items</span>
                             <Tag color='blue'>{filteredItems.length} từ vựng</Tag>
                           </Space>
                         }

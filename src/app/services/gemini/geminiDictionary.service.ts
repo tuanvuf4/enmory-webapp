@@ -2,7 +2,7 @@ import { GoogleGenAI } from '@google/genai'
 import OpenAI from 'openai'
 import { ECategory, EType } from '@/models/item.model'
 import { IHttpResponse } from '@/models/http.model'
-import { GEMINI_MODELS } from './geminiModels'
+import { DEFAULT_AUTOFILL_MODEL, GEMINI_MODELS, TGeminiModel } from './geminiModels'
 import { resolveOpenAiApiKey } from '../openai/tts.service'
 
 export interface IDictionaryAutofillData {
@@ -15,6 +15,7 @@ export interface IDictionaryAutofillData {
     typeId: EType
     definition: string
     translation: string
+    note: string
     grammar: string
     collocations: string
     synonyms: string[]
@@ -43,13 +44,16 @@ export const resolveGeminiApiKey = (): string => {
   ).trim()
 }
 
-export const formatHtmlList = (content: string | undefined): string => {
+export const formatHtmlList = (
+  content: string | undefined,
+  allowCommaSplit: boolean = true,
+): string => {
   if (!content) return ''
   const trimmed = content.trim()
   if (!trimmed) return ''
 
-  // If already contains HTML list tags, return as is
-  if (/<\/?(ul|ol|li)\b/i.test(trimmed)) {
+  // If already contains HTML list tags or container tags, return as is
+  if (/<\/?(ul|ol|li|p|div)\b/i.test(trimmed)) {
     return trimmed
   }
 
@@ -75,7 +79,7 @@ export const formatHtmlList = (content: string | undefined): string => {
   }
 
   // If comma separated with 2 or more phrases (e.g. "pure serendipity, stroke of serendipity")
-  if (trimmed.includes(',')) {
+  if (allowCommaSplit && trimmed.includes(',')) {
     const parts = trimmed
       .split(',')
       .map((s) => s.trim())
@@ -132,7 +136,8 @@ const normalizeDictionaryData = (data: IOxfordAutofillData): IOxfordAutofillData
 
       return {
         ...m,
-        grammar: '',
+        note: formatHtmlList(m.note || '', false),
+        grammar: formatHtmlList(m.grammar || '', true),
         collocations: formatHtmlList(m.collocations),
         pronunciation: {
           uk: finalUk,
@@ -175,6 +180,7 @@ export const geminiDictionaryService = {
     wordOrPhrase: string,
     sourceName: string = 'Google',
     sentenceContext?: string,
+    preferredModel: TGeminiModel = 'gemini-3.8-flash',
   ): Promise<IHttpResponse<IOxfordAutofillData>> => {
     try {
       const geminiApiKey = resolveGeminiApiKey()
@@ -236,6 +242,8 @@ Extract and format accurate dictionary data following ${sourceContext} conventio
        - common: Standard IPA
      - definition: Clear, learner-friendly English definition.
      - translation: Accurate and natural Vietnamese translation of this specific meaning.
+     - note: Important usage notes, register labels (formal, informal, spoken/written, literary, British/American differences), common pitfalls, or helpful learner tips in clear Vietnamese or English. Format as an HTML unordered list with <ul> and <li> tags if multiple notes (e.g. "<ul><li>Thường dùng trong ngữ cảnh trang trọng</li></ul>") or clean HTML string, or empty string if none.
+     - grammar: Grammatical patterns, structures, syntactic behavior, or complementation patterns for this sense (e.g., [C, U] for nouns; [transitive, intransitive], [verb + object + to-infinitive], [verb + preposition], [adjective + that-clause], etc.). Format as an HTML unordered list with <ul> and <li> tags if multiple patterns (e.g. "<ul><li>[transitive, intransitive]</li><li>verb + noun</li></ul>") or clean HTML string, or empty string if not applicable.
      - collocations: Frequent collocations formatted as an HTML unordered list with <ul> and <li> tags.
      - synonyms: Array of up to 5 synonyms.
      - antonyms: Array of up to 5 antonyms (if any).
@@ -255,7 +263,8 @@ Return ONLY valid JSON matching this schema:
       "typeId": 1,
       "definition": "...",
       "translation": "...",
-      "grammar": "",
+      "note": "<ul><li>...</li></ul>",
+      "grammar": "<ul><li>...</li></ul>",
       "collocations": "<ul><li>first collocation</li></ul>",
       "synonyms": ["..."],
       "antonyms": ["..."],
@@ -281,8 +290,13 @@ Return ONLY valid JSON matching this schema:
       if (geminiApiKey) {
         try {
           const ai = new GoogleGenAI({ apiKey: geminiApiKey })
+          const targetModel = preferredModel || DEFAULT_AUTOFILL_MODEL
+          const modelCandidates = [
+            targetModel,
+            ...GEMINI_MODELS.filter((m) => m !== targetModel),
+          ]
 
-          for (const model of GEMINI_MODELS) {
+          for (const model of modelCandidates) {
             try {
               const response = await ai.models.generateContent({
                 model,
@@ -304,7 +318,7 @@ Return ONLY valid JSON matching this schema:
             } catch (err: any) {
               lastError = err
               console.warn(
-                `[Dictionary] Gemini model ${model} failed, trying next...`,
+                `[Dictionary] Gemini model ${model} failed, trying next candidate...`,
                 err?.message || err,
               )
             }
@@ -369,10 +383,28 @@ Return ONLY valid JSON matching this schema:
       }
     }
   },
-  fetchFromGoogle: (wordOrPhrase: string, sentenceContext?: string) =>
-    geminiDictionaryService.fetchFromReference(wordOrPhrase, 'Google', sentenceContext),
-  fetchFromOxford: (wordOrPhrase: string, sentenceContext?: string) =>
-    geminiDictionaryService.fetchFromReference(wordOrPhrase, 'Oxford', sentenceContext),
+  fetchFromGoogle: (
+    wordOrPhrase: string,
+    sentenceContext?: string,
+    preferredModel?: TGeminiModel,
+  ) =>
+    geminiDictionaryService.fetchFromReference(
+      wordOrPhrase,
+      'Google',
+      sentenceContext,
+      preferredModel,
+    ),
+  fetchFromOxford: (
+    wordOrPhrase: string,
+    sentenceContext?: string,
+    preferredModel?: TGeminiModel,
+  ) =>
+    geminiDictionaryService.fetchFromReference(
+      wordOrPhrase,
+      'Oxford',
+      sentenceContext,
+      preferredModel,
+    ),
 }
 
 export const geminiOxfordService = geminiDictionaryService

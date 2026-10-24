@@ -2,6 +2,7 @@ import {
   collection,
   deleteField,
   documentId,
+  doc,
   getDocs,
   query,
   where,
@@ -685,6 +686,19 @@ export const purgeDeletedItemsFromFirebaseDb = async (options?: {
 
       currentBatch.delete(docSnap.ref)
       batchCount++
+
+      const itemUid = data.uid || options?.uid || ''
+      if (itemUid) {
+        const deletedRecordRef = doc(db, dbCollections.deleted_records, `${itemUid}_${docSnap.id}`)
+        currentBatch.set(deletedRecordRef, {
+          uid: itemUid,
+          recordId: docSnap.id,
+          collectionName: dbCollections.items,
+          deleted_at: Date.now(),
+        })
+        batchCount++
+      }
+
       processedCount++
       result.itemsDeleted++
 

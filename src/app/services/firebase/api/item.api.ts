@@ -14,6 +14,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  writeBatch,
   Timestamp,
   QueryDocumentSnapshot,
   DocumentData,
@@ -720,7 +721,8 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
 }
 
 /**
- * Delete an item directly from Firestore and local database
+ * Delete an item directly from Firestore and local database,
+ * recording deletion into deleted_records collection for multi-device sync
  */
 const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
   try {
@@ -730,7 +732,18 @@ const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
     }
 
     const itemDocRef = doc(db, dbCollections.items, id)
-    await deleteDoc(itemDocRef)
+    const deletedRecordRef = doc(db, dbCollections.deleted_records, `${currentUser.uid}_${id}`)
+
+    // Execute atomic batch: delete item from items & record deletion into deleted_records
+    const batch = writeBatch(db)
+    batch.delete(itemDocRef)
+    batch.set(deletedRecordRef, {
+      uid: currentUser.uid,
+      recordId: id,
+      collectionName: dbCollections.items,
+      deleted_at: Date.now(),
+    })
+    await batch.commit()
 
     // Also remove item from checklist in Firebase DB if present
     try {

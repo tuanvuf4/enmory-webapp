@@ -80,7 +80,7 @@ export const SyncDataCard: React.FC = () => {
       title={
         <Space align='center'>
           <DatabaseOutlined style={{ color: token.colorPrimary, fontSize: 18 }} />
-          <span>Database Synchronization</span>
+          <span>Database Sync</span>
         </Space>
       }
       extra={getSyncTag()}

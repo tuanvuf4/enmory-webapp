@@ -1,4 +1,11 @@
-import { collection, getDocs, getCountFromServer, query, where } from 'firebase/firestore'
+import {
+  collection,
+  getDocs,
+  getCountFromServer,
+  query,
+  where,
+  writeBatch,
+} from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { localDb } from './db'
@@ -202,7 +209,59 @@ export const syncService = {
         0,
       )
 
-      // Also check if any items were soft-deleted with deleted_date > lastSyncTime
+      // Query deleted_records collection for items deleted on other devices (Approach 2)
+      options?.onProgress?.('Checking for deleted items from cloud...')
+      try {
+        let deletedDocs: Array<{ recordId: string; collectionName?: string }> = []
+        try {
+          // Attempt optimized indexed query (uid == uid && deleted_at > lastSyncTime)
+          const deletedRecordsQuery = query(
+            collection(db, dbCollections.deleted_records),
+            where('uid', '==', uid),
+            where('deleted_at', '>', lastSyncTime),
+          )
+          const deletedRecordsSnapshot = await getDocs(deletedRecordsQuery)
+          deletedDocs = deletedRecordsSnapshot.docs.map((docSnap) => {
+            const data = docSnap.data()
+            return {
+              recordId: (data.recordId as string) || docSnap.id,
+              collectionName: data.collectionName as string | undefined,
+            }
+          })
+        } catch (indexErr) {
+          console.warn(
+            'Indexed query on deleted_records failed (composite index pending), falling back to client filter:',
+            indexErr,
+          )
+          // Fallback query by uid only (never requires a composite index)
+          const fallbackQuery = query(
+            collection(db, dbCollections.deleted_records),
+            where('uid', '==', uid),
+          )
+          const fallbackSnapshot = await getDocs(fallbackQuery)
+          deletedDocs = fallbackSnapshot.docs
+            .filter((docSnap) => (docSnap.data().deleted_at || 0) > lastSyncTime)
+            .map((docSnap) => {
+              const data = docSnap.data()
+              return {
+                recordId: (data.recordId as string) || docSnap.id,
+                collectionName: data.collectionName as string | undefined,
+              }
+            })
+        }
+
+        deletedDocs.forEach(({ recordId, collectionName }) => {
+          if (!collectionName || collectionName === dbCollections.items) {
+            if (!itemIdsToDelete.includes(recordId)) {
+              itemIdsToDelete.push(recordId)
+            }
+          }
+        })
+      } catch (deletedErr) {
+        console.warn('Failed to fetch deleted_records from cloud:', deletedErr)
+      }
+
+      // Also check if any items were soft-deleted with deleted_date > lastSyncTime (backward compatibility)
       try {
         const deletedItemsQuery = query(
           collection(db, dbCollections.items),
@@ -258,6 +317,43 @@ export const syncService = {
       totalExamples,
       timestamp: now,
       isFullSync,
+    }
+  },
+
+  /**
+   * Optional maintenance: purge records older than specified days (default: 30) from deleted_records collection.
+   */
+  async cleanupOldDeletedRecords(daysToKeep = 30): Promise<number> {
+    const currentUser = firebaseAuthService.getCurrentUser()
+    if (!currentUser) return 0
+
+    try {
+      const cutoffTime = Date.now() - daysToKeep * 24 * 60 * 60 * 1000
+      const oldQuery = query(
+        collection(db, dbCollections.deleted_records),
+        where('uid', '==', currentUser.uid),
+        where('deleted_at', '<', cutoffTime),
+      )
+      const snap = await getDocs(oldQuery)
+      if (snap.empty) return 0
+
+      let batch = writeBatch(db)
+      let count = 0
+      for (const d of snap.docs) {
+        batch.delete(d.ref)
+        count++
+        if (count % 400 === 0) {
+          await batch.commit()
+          batch = writeBatch(db)
+        }
+      }
+      if (count % 400 !== 0) {
+        await batch.commit()
+      }
+      return count
+    } catch (err) {
+      console.warn('Failed to cleanup old deleted_records:', err)
+      return 0
     }
   },
 }

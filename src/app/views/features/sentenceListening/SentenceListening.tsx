@@ -1114,8 +1114,8 @@ export const SentenceListening: React.FC = () => {
       <div className={styles.completedState}>
         <Result
           status='success'
-          title='Hoàn thành bài luyện nghe!'
-          subTitle={`Bạn đã nghe xong tất cả ${total} câu trong phiên này.`}
+          title='Completed!'
+          subTitle={`You have completed ${total} sentences in this session.`}
           extra={[
             <Button
               type='primary'
@@ -1123,10 +1123,10 @@ export const SentenceListening: React.FC = () => {
               icon={<ReloadOutlined />}
               onClick={() => loadSentences(true)}
             >
-              Luyện tập lượt mới
+              Restart
             </Button>,
             <Button key='back' icon={<RollbackOutlined />} onClick={handleBackToStart}>
-              Quay lại ban đầu
+              Back
             </Button>,
           ]}
         />
@@ -1144,21 +1144,24 @@ export const SentenceListening: React.FC = () => {
                 }}
               >
                 <div className='flex items-center gap-2 overflow-hidden text-ellipsis'>
-                  <Tag color={item.sourceType === 'sentence' ? 'blue' : 'purple'}>#{idx + 1}</Tag>
-                  {inChecklist && (
-                    <Tooltip title='Có trong Checklist'>
-                      <CheckSquareOutlined style={{ color: token.colorSuccess, fontSize: 13 }} />
-                    </Tooltip>
-                  )}
+                  <Button
+                    type='text'
+                    size='small'
+                    icon={<SoundOutlined />}
+                    onClick={() => handlePlayAudio(item.origin)}
+                  />
+
                   <span className='font-medium' style={{ color: token.colorText }}>
                     {item.origin}
                   </span>
+
                   {item.translation && (
                     <span className='text-xs italic' style={{ color: token.colorTextSecondary }}>
                       ({item.translation})
                     </span>
                   )}
                 </div>
+
                 <div className='flex items-center gap-1'>
                   <Tooltip title='Edit'>
                     <Button
@@ -1185,12 +1188,6 @@ export const SentenceListening: React.FC = () => {
                       onClick={() => handleToggleChecklist(item)}
                     />
                   </Tooltip>
-                  <Button
-                    type='text'
-                    size='small'
-                    icon={<SoundOutlined />}
-                    onClick={() => handlePlayAudio(item.origin)}
-                  />
                 </div>
               </div>
             )
@@ -1651,7 +1648,7 @@ export const SentenceListening: React.FC = () => {
 
       {/* Keyboard Shortcuts Hint (1.2) */}
       <div className={styles.shortcutsHint} style={{ color: token.colorTextQuaternary }}>
-        <b>[Enter]</b> Nghe lại • <b>[Shift+Enter]</b> Kiểm tra • <b>[Ctrl+Enter]</b> Câu tiếp theo
+        <b>[Enter]</b> Listen • <b>[Shift+Enter]</b> Check • <b>[Ctrl+Enter]</b> Next
       </div>
     </div>
   )

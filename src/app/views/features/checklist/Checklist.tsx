@@ -393,7 +393,7 @@ export const Checklist: React.FC = () => {
                               backgroundColor: token.colorFillAlter,
                               borderColor: token.colorBorderSecondary,
                               color: token.colorTextTertiary,
-                              marginLeft: 4,
+                              marginLeft: 8,
                             }}
                           >
                             {categoryLabel}

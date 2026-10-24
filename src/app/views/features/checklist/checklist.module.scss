@@ -79,11 +79,7 @@
 
 .quickMeaning {
   font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 240px;
-
+  
   > * {
     margin: 0;
   }

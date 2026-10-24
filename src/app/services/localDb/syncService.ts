@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, getDocs, getCountFromServer, query, where } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { localDb } from './db'
@@ -21,6 +21,44 @@ export interface ISyncResult {
 }
 
 export const syncService = {
+  /**
+   * Get total count of active items on Firebase Firestore for a user.
+   */
+  async getServerItemCount(uid: string): Promise<number> {
+    if (!uid) return 0
+    try {
+      const itemsRef = collection(db, dbCollections.items)
+      const baseQuery = query(itemsRef, where('uid', '==', uid))
+
+      const totalSnap = await getCountFromServer(baseQuery)
+      const totalCount = totalSnap.data().count
+
+      // Attempt to subtract soft-deleted items (is_deleted == true) if any
+      try {
+        const deletedQuery = query(
+          itemsRef,
+          where('uid', '==', uid),
+          where('is_deleted', '==', true),
+        )
+        const deletedSnap = await getCountFromServer(deletedQuery)
+        const deletedCount = deletedSnap.data().count
+        return Math.max(0, totalCount - deletedCount)
+      } catch {
+        return totalCount
+      }
+    } catch (err) {
+      console.warn('getCountFromServer failed, falling back to getDocs:', err)
+      const itemsQuery = query(collection(db, dbCollections.items), where('uid', '==', uid))
+      const snapshot = await getDocs(itemsQuery)
+      let count = 0
+      snapshot.forEach((docSnap) => {
+        if (!docSnap.data().is_deleted) {
+          count++
+        }
+      })
+      return count
+    }
+  },
   /**
    * Get the last sync timestamp for the given user ID.
    */

@@ -113,8 +113,8 @@ export const queryLocalItems = async (
     filtered = filtered.filter((item) => item.catId === params.cat)
   }
 
-  if (params.archive !== undefined) {
-    filtered = filtered.filter((item) => !!item.archive === params.archive)
+  if (params.archive) {
+    filtered = filtered.filter((item) => !!item.archive)
   }
 
   if (params.favorite !== undefined && params.favorite) {

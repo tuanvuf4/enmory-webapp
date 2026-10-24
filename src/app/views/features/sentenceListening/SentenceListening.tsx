@@ -49,6 +49,7 @@ import { getType } from '@/helpers/item'
 import { evaluateDictation, cleanPunctuation, IDictationResult } from './dictationUtil'
 import styles from './sentenceListening.module.scss'
 import { shuffleArray } from '@/helpers/index'
+import appStyle from '@/style/appStyle.module.scss'
 
 type TSourceFilter = 'all' | 'sentence' | 'example'
 
@@ -855,7 +856,7 @@ export const SentenceListening: React.FC = () => {
   const renderWordPopoverContent = () => {
     if (!lookupData) return null
     return (
-      <div className={styles.popoverWordContent}>
+      <div className={`${styles.popoverWordContent} ${appStyle.blog}`}>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <span className='font-bold text-base' style={{ color: token.colorPrimary }}>
@@ -887,9 +888,7 @@ export const SentenceListening: React.FC = () => {
               className='text-sm flex items-center justify-between'
               style={{ color: token.colorText }}
             >
-              <div>
-                👉 <b>{lookupData.translation}</b>
-              </div>
+              <div dangerouslySetInnerHTML={{ __html: lookupData.translation }} />
               {lookupData.fromAi ? (
                 <Tag color='green' style={{ fontSize: 10, margin: 0, padding: '0 4px' }}>
                   AI
@@ -939,9 +938,8 @@ export const SentenceListening: React.FC = () => {
           <div
             className='text-xs'
             style={{ color: token.colorTextSecondary, maxHeight: 60, overflowY: 'auto' }}
-          >
-            {lookupData.definition}
-          </div>
+            dangerouslySetInnerHTML={{ __html: lookupData.definition }}
+          />
         )}
 
         {lookupData.grammar && (

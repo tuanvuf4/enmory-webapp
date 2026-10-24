@@ -14,21 +14,11 @@ export const useManualSync = () => {
   const [isSyncing, setIsSyncing] = useState(false)
   const [progressText, setProgressText] = useState('')
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null)
+  const [serverItemCount, setServerItemCount] = useState<number | null>(null)
+  const [isLoadingServerCount, setIsLoadingServerCount] = useState<boolean>(false)
 
   // Live counts from Dexie IndexedDB
   const localItemCount = useLiveQuery(() => localDb.items.count(), [], 0)
-  const localExampleCount = useLiveQuery(
-    async () => {
-      const items = await localDb.items.toArray()
-      return items.reduce(
-        (acc, item) =>
-          acc + (item.meanings || []).reduce((mAcc, m) => mAcc + (m.examples || []).length, 0),
-        0,
-      )
-    },
-    [],
-    0,
-  )
 
   // Load last sync time
   const refreshLastSyncTime = useCallback(async () => {
@@ -40,9 +30,30 @@ export const useManualSync = () => {
     }
   }, [user?.uid])
 
+  // Count items from server
+  const refreshServerItemCount = useCallback(async () => {
+    if (!user?.uid) {
+      setServerItemCount(null)
+      setIsLoadingServerCount(false)
+      return
+    }
+
+    setIsLoadingServerCount(true)
+    try {
+      const count = await syncService.getServerItemCount(user.uid)
+      setServerItemCount(count)
+    } catch (err) {
+      console.warn('Failed to fetch server item count:', err)
+      setServerItemCount(null)
+    } finally {
+      setIsLoadingServerCount(false)
+    }
+  }, [user?.uid])
+
   useEffect(() => {
     refreshLastSyncTime()
-  }, [refreshLastSyncTime])
+    refreshServerItemCount()
+  }, [refreshLastSyncTime, refreshServerItemCount])
 
   const syncNow = async (forceFull = false): Promise<ISyncResult | null> => {
     if (!user?.uid) {
@@ -60,6 +71,7 @@ export const useManualSync = () => {
       })
 
       await refreshLastSyncTime()
+      await refreshServerItemCount()
 
       // Refresh react-query caches so the UI reflects newly synced data
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
@@ -98,7 +110,9 @@ export const useManualSync = () => {
     progressText,
     lastSyncTime,
     localItemCount: localItemCount ?? 0,
-    localExampleCount: localExampleCount ?? 0,
+    serverItemCount,
+    isLoadingServerCount,
+    refreshServerItemCount,
     syncNow,
     clearLocalData,
     refreshLastSyncTime,

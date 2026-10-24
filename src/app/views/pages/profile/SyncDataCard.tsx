@@ -1,5 +1,17 @@
 import React from 'react'
-import { Card, Button, Space, Typography, Tag, Row, Col, Popconfirm, theme } from 'antd'
+import {
+  Card,
+  Button,
+  Space,
+  Typography,
+  Tag,
+  Row,
+  Col,
+  Popconfirm,
+  Alert,
+  Tooltip,
+  theme,
+} from 'antd'
 import {
   CloudSyncOutlined,
   SyncOutlined,
@@ -8,6 +20,7 @@ import {
   ExclamationCircleOutlined,
   DatabaseOutlined,
   MobileOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons'
 import { useManualSync } from '@/services/localDb'
 import moment from 'moment'
@@ -21,34 +34,56 @@ export const SyncDataCard: React.FC = () => {
     progressText,
     lastSyncTime,
     localItemCount,
-    localExampleCount,
+    serverItemCount,
+    isLoadingServerCount,
+    refreshServerItemCount,
     syncNow,
     clearLocalData,
   } = useManualSync()
+
+  const hasDiff =
+    serverItemCount !== null && !isLoadingServerCount && serverItemCount !== localItemCount
+
+  const diffCount = serverItemCount !== null ? serverItemCount - localItemCount : 0
+
+  const getSyncTag = () => {
+    if (isSyncing) {
+      return (
+        <Tag color='processing' icon={<SyncOutlined spin />}>
+          Syncing...
+        </Tag>
+      )
+    }
+    if (hasDiff) {
+      return (
+        <Tag color='warning' icon={<ExclamationCircleOutlined />}>
+          Sync Recommended
+        </Tag>
+      )
+    }
+    if (lastSyncTime) {
+      return (
+        <Tag color='success' icon={<CheckCircleOutlined />}>
+          Synced
+        </Tag>
+      )
+    }
+    return (
+      <Tag color='warning' icon={<ExclamationCircleOutlined />}>
+        Not Synced
+      </Tag>
+    )
+  }
 
   return (
     <Card
       title={
         <Space align='center'>
           <DatabaseOutlined style={{ color: token.colorPrimary, fontSize: 18 }} />
-          <span>Local Database & Search Synchronization</span>
+          <span>Database Synchronization</span>
         </Space>
       }
-      extra={
-        isSyncing ? (
-          <Tag color='processing' icon={<SyncOutlined spin />}>
-            Syncing...
-          </Tag>
-        ) : lastSyncTime ? (
-          <Tag color='success' icon={<CheckCircleOutlined />}>
-            Synced
-          </Tag>
-        ) : (
-          <Tag color='warning' icon={<ExclamationCircleOutlined />}>
-            Not Synced
-          </Tag>
-        )
-      }
+      extra={getSyncTag()}
       style={{
         width: '100%',
         borderRadius: token.borderRadiusLG,
@@ -74,11 +109,50 @@ export const SyncDataCard: React.FC = () => {
         </Col>
 
         <Col xs={24} sm={8}>
-          <Text type='secondary'>Examples in Local DB:</Text>
-          <div style={{ marginTop: 4 }}>
-            <Tag color='purple' style={{ fontSize: 14, padding: '2px 10px' }}>
-              {localExampleCount} examples
-            </Tag>
+          <Space align='center' size={4}>
+            <Text type='secondary'>Items on Server:</Text>
+            <Tooltip title='Refresh server count'>
+              <Button
+                type='text'
+                size='small'
+                shape='circle'
+                icon={<ReloadOutlined spin={isLoadingServerCount} style={{ fontSize: 11 }} />}
+                onClick={refreshServerItemCount}
+                disabled={isLoadingServerCount || isSyncing}
+                style={{
+                  width: 20,
+                  height: 20,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              />
+            </Tooltip>
+          </Space>
+          <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+            {isLoadingServerCount ? (
+              <Tag color='default' style={{ fontSize: 14, padding: '2px 10px' }}>
+                <SyncOutlined spin /> Checking...
+              </Tag>
+            ) : serverItemCount !== null ? (
+              <>
+                <Tag
+                  color={serverItemCount === localItemCount ? 'green' : 'orange'}
+                  style={{ fontSize: 14, padding: '2px 10px' }}
+                >
+                  {serverItemCount} items
+                </Tag>
+                {hasDiff && (
+                  <Tag color={diffCount > 0 ? 'warning' : 'default'} style={{ fontSize: 12 }}>
+                    {diffCount > 0 ? `+${diffCount} new` : `${diffCount}`}
+                  </Tag>
+                )}
+              </>
+            ) : (
+              <Tag color='error' style={{ fontSize: 14, padding: '2px 10px' }}>
+                Unavailable
+              </Tag>
+            )}
           </div>
         </Col>
 
@@ -93,6 +167,29 @@ export const SyncDataCard: React.FC = () => {
           </div>
         </Col>
       </Row>
+
+      {hasDiff && !isSyncing && (
+        <Alert
+          type='warning'
+          showIcon
+          style={{ marginBottom: token.size }}
+          message={
+            <span>
+              {diffCount > 0 ? (
+                <>
+                  Server has <strong>{diffCount}</strong> item(s) not synced to this device.
+                </>
+              ) : (
+                <>
+                  Local database has <strong>{Math.abs(diffCount)}</strong> item(s) difference compared
+                  to server.
+                </>
+              )}{' '}
+              Sync is recommended to keep your data up to date.
+            </span>
+          }
+        />
+      )}
 
       {isSyncing && progressText && (
         <div style={{ marginBottom: token.size }}>
@@ -111,7 +208,7 @@ export const SyncDataCard: React.FC = () => {
             loading={isSyncing}
             onClick={() => syncNow(false)}
           >
-            Sync Data
+            Sync {diffCount > 0 ? `(${diffCount} new)` : ''}
           </Button>
 
           <Button
@@ -120,7 +217,7 @@ export const SyncDataCard: React.FC = () => {
             loading={isSyncing}
             onClick={() => syncNow(true)}
           >
-            Full Re-sync
+            Full Sync
           </Button>
         </Space>
 

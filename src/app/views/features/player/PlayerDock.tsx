@@ -588,7 +588,7 @@ export const PlayerDock: React.FC = () => {
     if (playerRef.current) {
       try {
         if (typeof (playerRef.current as any).pause === 'function') {
-          (playerRef.current as any).pause()
+          ;(playerRef.current as any).pause()
         } else if (typeof (playerRef.current as any).getInternalPlayer === 'function') {
           const internal = (playerRef.current as any).getInternalPlayer()
           if (internal && typeof internal.pause === 'function') {
@@ -676,7 +676,7 @@ export const PlayerDock: React.FC = () => {
     }
     if (!playerRef.current) return
     if (typeof (playerRef.current as any).seekTo === 'function') {
-      (playerRef.current as any).seekTo(seekTo, 'seconds')
+      ;(playerRef.current as any).seekTo(seekTo, 'seconds')
     } else if ('currentTime' in playerRef.current) {
       playerRef.current.currentTime = seekTo
     }
@@ -688,7 +688,7 @@ export const PlayerDock: React.FC = () => {
       if (playerRef.current) {
         try {
           if (typeof (playerRef.current as any).pause === 'function') {
-            (playerRef.current as any).pause()
+            ;(playerRef.current as any).pause()
           } else if (typeof (playerRef.current as any).getInternalPlayer === 'function') {
             const internal = (playerRef.current as any).getInternalPlayer()
             if (internal && typeof internal.pause === 'function') {
@@ -739,7 +739,7 @@ export const PlayerDock: React.FC = () => {
 
       if (hasDuration && current >= duration - 1) {
         if (typeof (playerRef.current as any).seekTo === 'function') {
-          (playerRef.current as any).seekTo(0, 'seconds')
+          ;(playerRef.current as any).seekTo(0, 'seconds')
         } else if ('currentTime' in playerRef.current) {
           playerRef.current.currentTime = 0
         }
@@ -756,7 +756,7 @@ export const PlayerDock: React.FC = () => {
         !isAtEnd
       ) {
         if (typeof (playerRef.current as any).seekTo === 'function') {
-          (playerRef.current as any).seekTo(latestPlayedSeconds, 'seconds')
+          ;(playerRef.current as any).seekTo(latestPlayedSeconds, 'seconds')
         } else if ('currentTime' in playerRef.current) {
           playerRef.current.currentTime = latestPlayedSeconds
         }
@@ -892,7 +892,7 @@ export const PlayerDock: React.FC = () => {
     if (shouldSeekOnReadyRef.current) {
       if (playerRef.current) {
         if (typeof (playerRef.current as any).seekTo === 'function') {
-          (playerRef.current as any).seekTo(restoreTimeRef.current, 'seconds')
+          ;(playerRef.current as any).seekTo(restoreTimeRef.current, 'seconds')
         } else if ('currentTime' in playerRef.current) {
           playerRef.current.currentTime = restoreTimeRef.current
         }
@@ -918,7 +918,7 @@ export const PlayerDock: React.FC = () => {
     if (loop) {
       if (playerRef.current) {
         if (typeof (playerRef.current as any).seekTo === 'function') {
-          (playerRef.current as any).seekTo(0, 'seconds')
+          ;(playerRef.current as any).seekTo(0, 'seconds')
         } else if ('currentTime' in playerRef.current) {
           playerRef.current.currentTime = 0
         }
@@ -1111,7 +1111,7 @@ export const PlayerDock: React.FC = () => {
     lastSpokenIndexRef.current = -1
     if (playerRef.current) {
       if (typeof (playerRef.current as any).seekTo === 'function') {
-        (playerRef.current as any).seekTo(0, 'seconds')
+        ;(playerRef.current as any).seekTo(0, 'seconds')
       } else if ('currentTime' in playerRef.current) {
         playerRef.current.currentTime = 0
       }
@@ -1142,7 +1142,7 @@ export const PlayerDock: React.FC = () => {
     lastSpokenIndexRef.current = -1
     if (playerRef.current) {
       if (typeof (playerRef.current as any).seekTo === 'function') {
-        (playerRef.current as any).seekTo(0, 'seconds')
+        ;(playerRef.current as any).seekTo(0, 'seconds')
       } else if ('currentTime' in playerRef.current) {
         playerRef.current.currentTime = 0
       }
@@ -1479,7 +1479,12 @@ export const PlayerDock: React.FC = () => {
           className='react-player'
           style={{ width: 1, height: 1 }}
           src={isTranscriptPlayback ? undefined : resolvedSrc}
-          playing={!isFirstLoadRef.current && hasUserStartedPlaybackRef.current && playing && !isTranscriptPlayback}
+          playing={
+            !isFirstLoadRef.current &&
+            hasUserStartedPlaybackRef.current &&
+            playing &&
+            !isTranscriptPlayback
+          }
           controls={controls}
           light={light}
           loop={loop}

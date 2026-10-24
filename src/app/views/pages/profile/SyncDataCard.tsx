@@ -181,8 +181,8 @@ export const SyncDataCard: React.FC = () => {
                 </>
               ) : (
                 <>
-                  Local database has <strong>{Math.abs(diffCount)}</strong> item(s) difference compared
-                  to server.
+                  Local database has <strong>{Math.abs(diffCount)}</strong> item(s) difference
+                  compared to server.
                 </>
               )}{' '}
               Sync is recommended to keep your data up to date.

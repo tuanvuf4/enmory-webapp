@@ -240,9 +240,8 @@ export const syncService = {
 
     const totalItems = await localDb.items.where('uid').equals(uid).count()
 
-    console.log(`*** totalItems *** `, totalItems);
-    
-    
+    console.log(`*** totalItems *** `, totalItems)
+
     const allLocalItems = await localDb.items.where('uid').equals(uid).toArray()
     const totalExamples = allLocalItems.reduce(
       (sum, item) =>

@@ -631,7 +631,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                     gap={token.size * 0.25}
                     style={{ marginTop: token.size / 2 }}
                   >
-                    <Reference origin={origin} onSelect={(ref) => handleAutoFill(ref.src)} />
+                    <Reference origin={origin} />
                   </Flex>
                 )}
               </Col>

@@ -395,7 +395,7 @@ export const Item: React.FC<IProps> = ({
               </h5>
             )}
 
-            <Reference origin={data.origin} style={{}} />
+            <Reference origin={data.origin} />
 
             {data.tags && data.tags.filter((word) => word).length > 0 && data.tags.length > 0 && (
               <Tags label={'Tags'} tags={data.tags} searchBy={'tags'} />

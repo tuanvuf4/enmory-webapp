@@ -80,8 +80,8 @@ export const getLocalItemsForStats = async (): Promise<IItem[]> => {
 
     let items = await query.toArray()
 
-    // If query by uid returned 0 items, check if any items exist locally (offline/demo mode)
-    if (items.length === 0 && uid) {
+    // If no user is logged in (offline/demo mode) and query returned 0 items, check if any items exist locally
+    if (items.length === 0 && !uid) {
       const anyItems = await localDb.items.toArray()
       if (anyItems.length > 0) {
         items = anyItems

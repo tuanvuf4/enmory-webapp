@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDispatch } from './redux'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { authAction } from '@/store/reducers/auth.reducer'
+import { invalidateSearchIndex } from '@/services/localDb'
 
 export const useAuthLogout = () => {
   const dispatch = useDispatch()
@@ -15,6 +16,8 @@ export const useAuthLogout = () => {
 
   const logout = useCallback(async () => {
     try {
+      invalidateSearchIndex()
+
       // Sign out from Firebase
       if (firebaseAuthService.isAuthenticated()) {
         await firebaseAuthService.signOut()
@@ -27,6 +30,7 @@ export const useAuthLogout = () => {
       navigate('/login')
     } catch (error) {
       console.error('[Auth Logout] Error during logout:', error)
+      invalidateSearchIndex()
       // Still redirect to login even if logout fails
       dispatch(authAction.logOut())
       navigate('/login')

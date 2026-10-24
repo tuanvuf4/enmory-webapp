@@ -17,8 +17,12 @@ export const useManualSync = () => {
   const [serverItemCount, setServerItemCount] = useState<number | null>(null)
   const [isLoadingServerCount, setIsLoadingServerCount] = useState<boolean>(false)
 
-  // Live counts from Dexie IndexedDB
-  const localItemCount = useLiveQuery(() => localDb.items.count(), [], 0)
+  // Live counts from Dexie IndexedDB for currently logged in user
+  const localItemCount = useLiveQuery(
+    () => (user?.uid ? localDb.items.where('uid').equals(user.uid).count() : 0),
+    [user?.uid],
+    0,
+  )
 
   // Load last sync time
   const refreshLastSyncTime = useCallback(async () => {

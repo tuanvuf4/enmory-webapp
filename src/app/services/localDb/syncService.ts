@@ -102,7 +102,7 @@ export const syncService = {
    */
   async clearLocalData(uid: string): Promise<void> {
     await localDb.transaction('rw', localDb.items, localDb.syncMeta, async () => {
-      await localDb.items.clear()
+      await localDb.items.where('uid').equals(uid).delete()
       await localDb.syncMeta.delete(`${SYNC_META_PREFIX}${uid}`)
     })
     localStorage.removeItem(`${SYNC_META_PREFIX}${uid}`)
@@ -156,7 +156,8 @@ export const syncService = {
 
       options?.onProgress?.('Saving to local database...')
       await localDb.transaction('rw', localDb.items, localDb.syncMeta, async () => {
-        await localDb.items.clear()
+        // Only delete this user's existing items so other accounts' local data is preserved
+        await localDb.items.where('uid').equals(uid).delete()
 
         if (allItems.length > 0) {
           await localDb.items.bulkPut(allItems)
@@ -237,8 +238,12 @@ export const syncService = {
 
     invalidateSearchIndex()
 
-    const totalItems = await localDb.items.count()
-    const allLocalItems = await localDb.items.toArray()
+    const totalItems = await localDb.items.where('uid').equals(uid).count()
+
+    console.log(`*** totalItems *** `, totalItems);
+    
+    
+    const allLocalItems = await localDb.items.where('uid').equals(uid).toArray()
     const totalExamples = allLocalItems.reduce(
       (sum, item) =>
         sum + (item.meanings || []).reduce((mSum, m) => mSum + (m.examples || []).length, 0),

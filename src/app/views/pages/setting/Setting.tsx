@@ -23,7 +23,7 @@ const Setting = () => {
 
   const sanitizeConfig = (config?: Partial<IUserConfig> | null): IUserConfig => {
     const cleanConfig = Object.fromEntries(
-      Object.entries(config || {}).filter(([_, v]) => v !== undefined)
+      Object.entries(config || {}).filter(([_, v]) => v !== undefined),
     )
     return {
       ...appSetting.meta,

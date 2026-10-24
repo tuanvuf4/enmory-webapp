@@ -139,7 +139,6 @@ const getUserInfo = async (): Promise<IHttpResponse<IUser<string>>> => {
       } as any,
     }
 
-
     return {
       isSuccess: true,
       message: 'User info fetched successfully',

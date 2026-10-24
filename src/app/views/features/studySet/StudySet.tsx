@@ -632,9 +632,7 @@ export const StudySet: React.FC = () => {
           </Flex>
 
           <div className={styles.progress}>
-            {inProgress && (
-              <Tag>{`${currentIndex + 1}/${list.length}`}</Tag>
-            )}
+            {inProgress && <Tag>{`${currentIndex + 1}/${list.length}`}</Tag>}
             {isDone && (
               <Tag color='success' style={{ margin: 0 }}>
                 Completed

@@ -1269,7 +1269,7 @@ export const SentenceListening: React.FC = () => {
         {isDictationMode && (
           <div className={styles.dictationBox}>
             <div className={styles.dictationHeader}>
-              <span style={{ color: token.colorTextSecondary  }}>
+              <span style={{ color: token.colorTextSecondary }}>
                 ✍️ Gõ lại những gì bạn nghe được:
               </span>
               {dictationResult && (

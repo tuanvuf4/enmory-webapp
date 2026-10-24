@@ -21,7 +21,11 @@ import {
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
 import { getChartThemeOptions } from '../data'
-import { listeningStatsService, IListeningSummary, IListeningTimelineData } from '@/services/localDb'
+import {
+  listeningStatsService,
+  IListeningSummary,
+  IListeningTimelineData,
+} from '@/services/localDb'
 import { useSelector } from '@/core/hooks/redux'
 
 ChartJS.register(
@@ -40,9 +44,7 @@ interface IProps {
   title?: string
 }
 
-export const ListeningChart: React.FC<IProps> = ({
-  title = 'Sentence Listening & Dictation',
-}) => {
+export const ListeningChart: React.FC<IProps> = ({ title = 'Sentence Listening & Dictation' }) => {
   const { token } = theme.useToken()
   const themeMode = useSelector((state: any) => state?.setting?.themeMode ?? 'light')
   const isDark = themeMode === 'dark'
@@ -288,4 +290,3 @@ export const ListeningChart: React.FC<IProps> = ({
     </div>
   )
 }
-

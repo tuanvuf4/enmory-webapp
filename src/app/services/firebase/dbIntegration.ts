@@ -7,6 +7,7 @@ import {
   query,
   where,
   writeBatch,
+  Timestamp,
 } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { IExample, IItem, IMeaning } from '@/models/item.model'
@@ -694,7 +695,7 @@ export const purgeDeletedItemsFromFirebaseDb = async (options?: {
           uid: itemUid,
           recordId: docSnap.id,
           collectionName: dbCollections.items,
-          deleted_at: Date.now(),
+          deleted_at: Timestamp.now(),
         })
         batchCount++
       }

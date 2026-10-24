@@ -741,7 +741,7 @@ const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
       uid: currentUser.uid,
       recordId: id,
       collectionName: dbCollections.items,
-      deleted_at: Date.now(),
+      deleted_at: Timestamp.now(),
     })
     await batch.commit()
 

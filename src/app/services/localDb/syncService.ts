@@ -5,6 +5,7 @@ import {
   query,
   where,
   writeBatch,
+  Timestamp,
 } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
@@ -215,10 +216,11 @@ export const syncService = {
         let deletedDocs: Array<{ recordId: string; collectionName?: string }> = []
         try {
           // Attempt optimized indexed query (uid == uid && deleted_at > lastSyncTime)
+          const lastSyncTimestamp = Timestamp.fromMillis(lastSyncTime)
           const deletedRecordsQuery = query(
             collection(db, dbCollections.deleted_records),
             where('uid', '==', uid),
-            where('deleted_at', '>', lastSyncTime),
+            where('deleted_at', '>', lastSyncTimestamp),
           )
           const deletedRecordsSnapshot = await getDocs(deletedRecordsQuery)
           deletedDocs = deletedRecordsSnapshot.docs.map((docSnap) => {
@@ -240,7 +242,11 @@ export const syncService = {
           )
           const fallbackSnapshot = await getDocs(fallbackQuery)
           deletedDocs = fallbackSnapshot.docs
-            .filter((docSnap) => (docSnap.data().deleted_at || 0) > lastSyncTime)
+            .filter((docSnap) => {
+              const val = docSnap.data().deleted_at
+              const ms = val?.toMillis ? val.toMillis() : typeof val === 'number' ? val : 0
+              return ms > lastSyncTime
+            })
             .map((docSnap) => {
               const data = docSnap.data()
               return {
@@ -332,7 +338,7 @@ export const syncService = {
       const oldQuery = query(
         collection(db, dbCollections.deleted_records),
         where('uid', '==', currentUser.uid),
-        where('deleted_at', '<', cutoffTime),
+        where('deleted_at', '<', Timestamp.fromMillis(cutoffTime)),
       )
       const snap = await getDocs(oldQuery)
       if (snap.empty) return 0

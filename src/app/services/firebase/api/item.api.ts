@@ -724,11 +724,23 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
  * Delete an item directly from Firestore and local database,
  * recording deletion into deleted_records collection for multi-device sync
  */
-const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
+const deleteItem = async (id: string, itemOrigin?: string): Promise<IHttpResponse<boolean>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
     if (!currentUser) {
       throw new Error('User not authenticated')
+    }
+
+    let origin = itemOrigin || ''
+    if (!origin) {
+      try {
+        const localItem = await localDb.items.get(id)
+        if (localItem?.origin) {
+          origin = localItem.origin
+        }
+      } catch (localReadErr) {
+        console.warn('Failed to read item origin from localDb:', localReadErr)
+      }
     }
 
     const itemDocRef = doc(db, dbCollections.items, id)
@@ -740,6 +752,7 @@ const deleteItem = async (id: string): Promise<IHttpResponse<boolean>> => {
     batch.set(deletedRecordRef, {
       uid: currentUser.uid,
       recordId: id,
+      origin,
       collectionName: dbCollections.items,
       deleted_at: Timestamp.now(),
     })

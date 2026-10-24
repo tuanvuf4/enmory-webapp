@@ -694,6 +694,7 @@ export const purgeDeletedItemsFromFirebaseDb = async (options?: {
         currentBatch.set(deletedRecordRef, {
           uid: itemUid,
           recordId: docSnap.id,
+          origin: data.origin || '',
           collectionName: dbCollections.items,
           deleted_at: Timestamp.now(),
         })

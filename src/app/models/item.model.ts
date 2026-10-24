@@ -188,6 +188,7 @@ export interface IQueryPeriods {
 export interface IDeletedRecord {
   uid: string
   recordId: string
+  origin?: string
   collectionName: string
-  deleted_at: number
+  deleted_at: any
 }

@@ -24,19 +24,20 @@ import {
   CheckCircleOutlined,
   CustomerServiceOutlined,
   SettingOutlined,
-  StarOutlined,
-  StarFilled,
+  CheckSquareOutlined,
   CheckOutlined,
   SoundOutlined,
   BulbOutlined,
   SearchOutlined,
   PlusOutlined,
+  RollbackOutlined,
 } from '@ant-design/icons'
-import { useSelector, itemKeys } from '@/core/hooks'
+import { useSelector, itemKeys, useChecklist } from '@/core/hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePrompt } from '@/helpers/hooks'
 import { ISentenceListeningItem } from '@/models/sentenceListening.model'
-import { ECategory, EType } from '@/models/item.model'
+import { IItem, ECategory, EType } from '@/models/item.model'
+import { initItem, meaningItem } from '@/views/features/modals/itemModal'
 import { sentenceListeningApi } from '@/services/firebase/api/sentenceListening.api'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { geminiTtsService, GEMINI_VOICES, TGeminiVoice } from '@/services/gemini/geminiTts.service'
@@ -46,10 +47,10 @@ import { localDb, listeningStatsService, invalidateSearchIndex } from '@/service
 import { getType } from '@/helpers/item'
 import { evaluateDictation, cleanPunctuation, IDictationResult } from './dictationUtil'
 import styles from './sentenceListening.module.scss'
+import { shuffleArray } from '@/helpers/index'
 
 type TSourceFilter = 'all' | 'sentence' | 'example'
 
-const BOOKMARKS_STORAGE_KEY = 'sentence_listening_bookmarks'
 const DICTATION_MODE_STORAGE_KEY = 'sentence_listening_dictation_mode'
 const AUTOPLAY_STORAGE_KEY = 'sentence_listening_autoplay_next'
 const REPEAT_STORAGE_KEY = 'sentence_listening_repeat_count'
@@ -66,6 +67,8 @@ export const SentenceListening: React.FC = () => {
   // Core sentence states
   const [items, setItems] = useState<ISentenceListeningItem[]>([])
   const [currentIndex, setCurrentIndex] = useState<number>(0)
+  const currentItem = items[currentIndex] as ISentenceListeningItem | undefined
+  const total = items.length
   const [isRevealed, setIsRevealed] = useState<boolean>(false)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -81,13 +84,13 @@ export const SentenceListening: React.FC = () => {
   // Split sentence into individual words for interactive hint tags
   const sentenceWords = useMemo(() => {
     if (!currentItem?.origin) return []
-    return currentItem.origin.trim().split(/\s+/).filter(Boolean)
+    const words = currentItem.origin.trim().split(/\s+/).filter(Boolean)
+    return shuffleArray(words)
   }, [currentItem?.origin])
 
-  // Suggestion 1.5: Hint states (interactive word tags + translation hint)
-  const [showHintTags, setShowHintTags] = useState<boolean>(false)
+  // Suggestion 1.5: 2-step Hint states (Step 1: word tags, Step 2: sentence meaning)
+  const [hintStep, setHintStep] = useState<number>(0)
   const [revealedHintIndices, setRevealedHintIndices] = useState<Set<number>>(new Set())
-  const [showTranslationHint, setShowTranslationHint] = useState<boolean>(false)
 
   // Suggestion 1.5: Interactive word lookup popover states
   const [lookupWord, setLookupWord] = useState<string | null>(null)
@@ -123,15 +126,36 @@ export const SentenceListening: React.FC = () => {
     return localStorage.getItem(AUTOPLAY_STORAGE_KEY) === 'true'
   })
 
-  // Suggestion 5: Bookmarks (Saved IDs)
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem(BOOKMARKS_STORAGE_KEY)
-      return saved ? new Set(JSON.parse(saved)) : new Set()
-    } catch {
-      return new Set()
-    }
-  })
+  // Checklist Integration: Persisted in Firestore & localDb
+  const {
+    checklist,
+    addItem: addChecklistItem,
+    removeItem: removeChecklistItem,
+    removeItemByItemId,
+  } = useChecklist()
+  const [isTogglingChecklist, setIsTogglingChecklist] = useState<boolean>(false)
+
+  // Match sentence with checklist entry by itemId or trimmed origin text
+  const getChecklistEntry = useCallback(
+    (item?: ISentenceListeningItem) => {
+      if (!item) return undefined
+      if (item.itemId) {
+        const found = checklist.find((c) => c.itemId === item.itemId || c.id === item.itemId)
+        if (found) return found
+      }
+      const originKey = item.origin?.trim().toLowerCase()
+      if (!originKey) return undefined
+      return checklist.find((c) => c.origin?.trim().toLowerCase() === originKey)
+    },
+    [checklist],
+  )
+
+  const isSentenceInChecklist = useCallback(
+    (item?: ISentenceListeningItem) => {
+      return Boolean(getChecklistEntry(item))
+    },
+    [getChecklistEntry],
+  )
 
   // Fetch sentences: restore saved session from localDb first, only fetch new when forceNew = true
   const loadSentences = useCallback(
@@ -140,9 +164,8 @@ export const SentenceListening: React.FC = () => {
       setIsRevealed(false)
       setUserDictationInput('')
       setDictationResult(null)
-      setShowHintTags(false)
+      setHintStep(0)
       setRevealedHintIndices(new Set())
-      setShowTranslationHint(false)
       setLookupWord(null)
       setLookupData(null)
 
@@ -212,10 +235,7 @@ export const SentenceListening: React.FC = () => {
     }
   }, [loadSentences])
 
-  const total = items.length
-  const currentItem = items[currentIndex] as ISentenceListeningItem | undefined
-  const currentId = currentItem?.id || ''
-  const isCurrentBookmarked = bookmarkedIds.has(currentId)
+  const isCurrentInChecklist = isSentenceInChecklist(currentItem)
 
   // Audio Playback with Gemini TTS / OpenAI
   const handlePlayAudio = useCallback(
@@ -248,9 +268,8 @@ export const SentenceListening: React.FC = () => {
       setIsRevealed(false)
       setUserDictationInput('')
       setDictationResult(null)
-      setShowHintTags(false)
+      setHintStep(0)
       setRevealedHintIndices(new Set())
-      setShowTranslationHint(false)
       setLookupWord(null)
       setLookupData(null)
 
@@ -276,14 +295,27 @@ export const SentenceListening: React.FC = () => {
 
     if (currentIndex >= total - 1) {
       setIsCompleted(true)
-      sentenceListeningApi.updateSessionProgress(
-        { currentIndex, isCompleted: true },
-        user?.uid,
-      )
+      sentenceListeningApi.updateSessionProgress({ currentIndex, isCompleted: true }, user?.uid)
     } else {
       triggerNextSentence(currentIndex + 1)
     }
   }, [currentIndex, total, triggerNextSentence, user?.uid])
+
+  // Reset back to start of session
+  const handleBackToStart = useCallback(() => {
+    geminiTtsService.stop()
+    setIsPlaying(false)
+    setCurrentIndex(0)
+    setIsCompleted(false)
+    setIsRevealed(false)
+    setUserDictationInput('')
+    setDictationResult(null)
+    setHintStep(0)
+    setRevealedHintIndices(new Set())
+    setLookupWord(null)
+    setLookupData(null)
+    sentenceListeningApi.updateSessionProgress({ currentIndex: 0, isCompleted: false }, user?.uid)
+  }, [user?.uid])
 
   // Previous sentence
   const handlePrev = useCallback(() => {
@@ -318,59 +350,27 @@ export const SentenceListening: React.FC = () => {
     }
   }, [currentItem, userDictationInput, user?.uid, geminiVoice, message])
 
-  // Feature 1.5: Interactive Hint Logic & Word Tags
+  // Feature 1.5: 2-step Hint Logic
   const handleGiveHint = useCallback(() => {
-    if (!currentItem?.origin || sentenceWords.length === 0) return
+    if (!currentItem?.origin) return
 
-    if (!showHintTags) {
-      setShowHintTags(true)
-      // Reveal the first word as an initial starting point
-      setRevealedHintIndices(new Set([0]))
-      message({
-        type: 'info',
-        content: `💡 Gợi ý từ đầu tiên: "${sentenceWords[0]}". Nhấn vào các tag để hiện từng từ!`,
-      })
-      return
-    }
-
-    // Find next unrevealed word index in sequence
-    const nextUnrevealedIdx = sentenceWords.findIndex((_, i) => !revealedHintIndices.has(i))
-    if (nextUnrevealedIdx !== -1) {
-      setRevealedHintIndices((prev) => new Set(prev).add(nextUnrevealedIdx))
-      const nextWord = sentenceWords[nextUnrevealedIdx]
-      message({
-        type: 'info',
-        content: `💡 Gợi ý từ #${nextUnrevealedIdx + 1}: "${nextWord}"`,
-      })
-    } else {
-      message({
-        type: 'info',
-        content: 'Tất cả các từ trong câu đã được gợi ý!',
-      })
-    }
-  }, [currentItem?.origin, sentenceWords, showHintTags, revealedHintIndices, message])
-
-  const handleRevealHintWord = useCallback(
-    (idx: number) => {
-      setRevealedHintIndices((prev) => new Set(prev).add(idx))
-      const word = sentenceWords[idx]
-      if (word) {
+    if (hintStep === 0) {
+      // Bước 1: Hiện các từ trong câu dưới dạng tag
+      setHintStep(1)
+    } else if (hintStep === 1) {
+      setHintStep(2)
+      if (!currentItem.translation) {
         message({
           type: 'info',
-          content: `💡 Từ #${idx + 1}: "${word}"`,
+          content: '💡Câu này chưa có bản dịch.',
         })
       }
-    },
-    [sentenceWords, message],
-  )
+    }
+  }, [currentItem, hintStep, message])
 
-  const handleHideHintWord = useCallback((idx: number) => {
-    setRevealedHintIndices((prev) => {
-      const next = new Set(prev)
-      next.delete(idx)
-      return next
-    })
-  }, [])
+  const handleRevealHintWord = (idx: number) => {
+    setRevealedHintIndices((prev) => new Set(prev).add(idx))
+  }
 
   const handleRevealedTagClick = useCallback(
     (word: string) => {
@@ -381,17 +381,13 @@ export const SentenceListening: React.FC = () => {
           const trimmed = prev.trim()
           return trimmed ? `${trimmed} ${clean}` : clean
         })
-        message({ type: 'success', content: `Đã điền "${clean}" vào ô gõ!` })
       }
     },
     [isDictationMode, message],
   )
 
   const allWordsRevealed = useMemo(() => {
-    return (
-      sentenceWords.length > 0 &&
-      sentenceWords.every((_, i) => revealedHintIndices.has(i))
-    )
+    return sentenceWords.length > 0 && sentenceWords.every((_, i) => revealedHintIndices.has(i))
   }, [sentenceWords, revealedHintIndices])
 
   const handleToggleAllHintWords = useCallback(() => {
@@ -491,20 +487,17 @@ export const SentenceListening: React.FC = () => {
       }
 
       setIsSavingToLibrary(true)
-      const createRes = await itemApi.createItem({
+      const newItem: IItem = {
+        ...initItem,
         origin: lookupData.origin,
         catId: ECategory.WORD,
         level: 1,
         meanings: [
           {
+            ...meaningItem,
             typeId: lookupData.typeId ?? EType.NOUN,
             definition: lookupData.definition || '',
             translation: lookupData.translation || '',
-            common: true,
-            enable: true,
-            synonyms: [],
-            antonyms: [],
-            examples: [],
             pronunciation: {
               us: lookupData.phonetic || '',
               uk: '',
@@ -512,17 +505,18 @@ export const SentenceListening: React.FC = () => {
             },
           },
         ],
-      })
+      }
+      const createRes = await itemApi.createItem(newItem)
 
       if (createRes.isSuccess && createRes.content) {
-        const newItem = createRes.content
+        const createdItem = createRes.content
         // Save to IndexedDB local cache
-        await localDb.items.put(newItem)
+        await localDb.items.put(createdItem)
         invalidateSearchIndex()
         // Invalidate React Query item lists cache
         queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
 
-        setLookupData((prev) => (prev ? { ...prev, itemId: newItem.id } : prev))
+        setLookupData((prev) => (prev ? { ...prev, itemId: createdItem.id } : prev))
         message({
           type: 'success',
           content: `Đã thêm "${lookupData.origin}" vào Thư viện thành công!`,
@@ -541,25 +535,126 @@ export const SentenceListening: React.FC = () => {
     }
   }, [lookupData, queryClient, message])
 
-  // Bookmark Favorite Sentence Toggle
-  const handleToggleBookmark = useCallback(async () => {
-    if (!currentItem) return
+  // Toggle Checklist for Sentence (persisted to Firestore & localDb cache)
+  const handleToggleChecklist = useCallback(
+    async (sentenceToToggle?: ISentenceListeningItem) => {
+      const sentence = sentenceToToggle || currentItem
+      if (!sentence) return
 
-    const newBookmarks = new Set(bookmarkedIds)
-    const isAdding = !newBookmarks.has(currentId)
+      const existingEntry = getChecklistEntry(sentence)
 
-    if (isAdding) {
-      newBookmarks.add(currentId)
-      setBookmarkedIds(newBookmarks)
-      localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(Array.from(newBookmarks)))
-      message({ type: 'success', content: 'Đã đánh dấu câu yêu thích!' })
-    } else {
-      newBookmarks.delete(currentId)
-      setBookmarkedIds(newBookmarks)
-      localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(Array.from(newBookmarks)))
-      message({ type: 'info', content: 'Đã bỏ đánh dấu câu!' })
-    }
-  }, [currentItem, currentId, bookmarkedIds, message])
+      setIsTogglingChecklist(true)
+      try {
+        if (existingEntry) {
+          // Remove from checklist
+          const targetChecklistId = existingEntry.checklistId
+          const targetItemId = existingEntry.itemId || existingEntry.id
+          if (targetChecklistId) {
+            await removeChecklistItem(targetChecklistId)
+          } else if (targetItemId) {
+            await removeItemByItemId(targetItemId)
+          }
+          message({ type: 'info', content: 'Đã xóa câu khỏi Checklist!' })
+          return
+        }
+
+        // Add to checklist
+        let targetItem: IItem | undefined
+
+        // 1. Try finding existing item by itemId
+        if (sentence.itemId) {
+          try {
+            targetItem = await localDb.items.get(sentence.itemId)
+          } catch (err) {
+            console.warn('Error fetching item by itemId:', err)
+          }
+        }
+
+        // 2. Try finding existing item by origin text in localDb.items
+        if (!targetItem && sentence.origin) {
+          try {
+            targetItem = await localDb.items
+              .filter(
+                (i) => i.origin?.trim().toLowerCase() === sentence.origin.trim().toLowerCase(),
+              )
+              .first()
+          } catch (err) {
+            console.warn('Error fetching item by origin:', err)
+          }
+        }
+
+        // 3. If item doesn't exist in Library yet (e.g. from an example sentence), create it as a Sentence item
+        if (!targetItem) {
+          const newSentenceItem: IItem = {
+            ...initItem,
+            origin: sentence.origin.trim(),
+            catId: ECategory.SENTENCE,
+            level: 1,
+            meanings: [
+              {
+                ...meaningItem,
+                typeId: EType.ALL,
+                translation: sentence.translation || '',
+                definition: sentence.translation || '',
+              },
+            ],
+          }
+          const createRes = await itemApi.createItem(newSentenceItem)
+          if (createRes.isSuccess && createRes.content) {
+            targetItem = createRes.content
+            await localDb.items.put(targetItem)
+            invalidateSearchIndex()
+            queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+
+            // Link newly created itemId to items array
+            if (targetItem.id) {
+              const newId = targetItem.id
+              setItems((prev) =>
+                prev.map((it) => (it.origin === sentence.origin ? { ...it, itemId: newId } : it)),
+              )
+            }
+          } else {
+            message({
+              type: 'error',
+              content:
+                createRes.message || 'Không thể tạo câu trong Thư viện để thêm vào Checklist',
+            })
+            return
+          }
+        }
+
+        // 4. Add targetItem to Checklist
+        if (!targetItem) {
+          message({ type: 'error', content: 'Không thể thêm câu vào Checklist' })
+          return
+        }
+
+        const res = await addChecklistItem(targetItem)
+        if (res.isSuccess) {
+          message({ type: 'success', content: 'Đã thêm câu vào Checklist!' })
+        } else {
+          message({
+            type: 'error',
+            content: res.message || 'Không thể thêm câu vào Checklist',
+          })
+        }
+      } catch (err: any) {
+        console.error('Error toggling checklist:', err)
+        message({ type: 'error', content: err?.message || 'Lỗi khi cập nhật Checklist' })
+      } finally {
+        setIsTogglingChecklist(false)
+      }
+    },
+    [
+      currentItem,
+      getChecklistEntry,
+      removeChecklistItem,
+      removeItemByItemId,
+      addChecklistItem,
+      queryClient,
+      message,
+    ],
+  )
 
   // Toggle Dictation Mode
   const handleToggleDictationMode = (enabled: boolean) => {
@@ -567,9 +662,8 @@ export const SentenceListening: React.FC = () => {
     localStorage.setItem(DICTATION_MODE_STORAGE_KEY, String(enabled))
     setUserDictationInput('')
     setDictationResult(null)
-    setShowHintTags(false)
+    setHintStep(0)
     setRevealedHintIndices(new Set())
-    setShowTranslationHint(false)
   }
 
   // Feature 1.2: Keyboard shortcuts: Enter to listen, Shift+Enter to check, Ctrl+Enter to next
@@ -638,7 +732,10 @@ export const SentenceListening: React.FC = () => {
 
         {lookupData.translation ? (
           <div className='flex flex-col gap-1'>
-            <div className='text-sm flex items-center justify-between' style={{ color: token.colorText }}>
+            <div
+              className='text-sm flex items-center justify-between'
+              style={{ color: token.colorText }}
+            >
               <div>
                 👉 <b>{lookupData.translation}</b>
               </div>
@@ -696,7 +793,12 @@ export const SentenceListening: React.FC = () => {
           </div>
         )}
 
-        <div className='flex justify-between items-center pt-2 border-t border-dashed'>
+        <div
+          className='flex justify-center items-center'
+          style={{
+            border: `1px dashed ${token.colorBorderSecondary}`,
+          }}
+        >
           {lookupData.itemId ? (
             <Tag color='success' style={{ fontSize: 11, margin: 0, padding: '2px 8px' }}>
               ✓ Đã có trong Thư viện
@@ -704,13 +806,13 @@ export const SentenceListening: React.FC = () => {
           ) : (
             <Button
               size='small'
-              type='primary'
+              type='text'
               icon={<PlusOutlined />}
               onClick={handleAddWordToLibrary}
               loading={isSavingToLibrary}
-              style={{ fontSize: 12 }}
+              style={{ fontSize: 12, width: '100%' }}
             >
-              Thêm vào Thư viện
+              Add to library
             </Button>
           )}
         </div>
@@ -858,12 +960,15 @@ export const SentenceListening: React.FC = () => {
             >
               Luyện tập lượt mới
             </Button>,
+            <Button key='back' icon={<RollbackOutlined />} onClick={handleBackToStart}>
+              Quay lại ban đầu
+            </Button>,
           ]}
         />
 
         <div className={styles.completedSummaryList}>
           {items.map((item, idx) => {
-            const isBookmarked = bookmarkedIds.has(item.id)
+            const inChecklist = isSentenceInChecklist(item)
             return (
               <div
                 key={item.id || idx}
@@ -875,8 +980,10 @@ export const SentenceListening: React.FC = () => {
               >
                 <div className='flex items-center gap-2 overflow-hidden text-ellipsis'>
                   <Tag color={item.sourceType === 'sentence' ? 'blue' : 'purple'}>#{idx + 1}</Tag>
-                  {isBookmarked && (
-                    <StarFilled style={{ color: token.colorWarning, fontSize: 13 }} />
+                  {inChecklist && (
+                    <Tooltip title='Có trong Checklist'>
+                      <CheckSquareOutlined style={{ color: token.colorSuccess, fontSize: 13 }} />
+                    </Tooltip>
                   )}
                   <span className='font-medium' style={{ color: token.colorText }}>
                     {item.origin}
@@ -887,12 +994,31 @@ export const SentenceListening: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <Button
-                  type='text'
-                  size='small'
-                  icon={<SoundOutlined />}
-                  onClick={() => handlePlayAudio(item.origin)}
-                />
+                <div className='flex items-center gap-1'>
+                  <Tooltip
+                    title={inChecklist ? 'Đã trong Checklist (Bấm để xóa)' : 'Thêm vào Checklist'}
+                  >
+                    <Button
+                      type='text'
+                      size='small'
+                      icon={
+                        <CheckSquareOutlined
+                          style={{
+                            color: inChecklist ? token.colorSuccess : undefined,
+                            fontSize: 14,
+                          }}
+                        />
+                      }
+                      onClick={() => handleToggleChecklist(item)}
+                    />
+                  </Tooltip>
+                  <Button
+                    type='text'
+                    size='small'
+                    icon={<SoundOutlined />}
+                    onClick={() => handlePlayAudio(item.origin)}
+                  />
+                </div>
               </div>
             )
           })}
@@ -944,6 +1070,14 @@ export const SentenceListening: React.FC = () => {
         </div>
 
         <div className={styles.headerRight}>
+          {/* Refresh Random Batch */}
+          <Button
+            type='text'
+            size='small'
+            icon={<ReloadOutlined />}
+            onClick={() => loadSentences(true)}
+          />
+
           {/* Settings Popover */}
           <Popover
             content={settingsContent}
@@ -953,16 +1087,6 @@ export const SentenceListening: React.FC = () => {
           >
             <Button type='text' size='small' icon={<SettingOutlined />} />
           </Popover>
-
-          {/* Refresh Random Batch */}
-          <Tooltip title='Tải bộ câu mới'>
-            <Button
-              type='text'
-              size='small'
-              icon={<ReloadOutlined />}
-              onClick={() => loadSentences(true)}
-            />
-          </Tooltip>
         </div>
       </div>
 
@@ -984,26 +1108,28 @@ export const SentenceListening: React.FC = () => {
           boxShadow: token.boxShadowTertiary,
         }}
       >
-        {/* Card Top Action: Bookmark Favorite Sentence */}
+        {/* Card Top Action: Add / Remove from Checklist */}
         <div className={styles.cardBoxTopActions}>
           <Tooltip
             title={
-              isCurrentBookmarked ? 'Đã đánh dấu (Bấm để bỏ ghim)' : 'Đánh dấu câu yêu thích'
+              isCurrentInChecklist ? 'Đã có trong Checklist (Bấm để xóa)' : 'Thêm câu vào Checklist'
             }
           >
             <Button
               type='text'
               size='small'
+              loading={isTogglingChecklist}
               icon={
-                isCurrentBookmarked ? (
-                  <StarFilled style={{ color: token.colorWarning, fontSize: 16 }} />
-                ) : (
-                  <StarOutlined style={{ fontSize: 16 }} />
-                )
+                <CheckSquareOutlined
+                  style={{
+                    color: isCurrentInChecklist ? token.colorSuccess : undefined,
+                    fontSize: 16,
+                  }}
+                />
               }
               onClick={(e) => {
                 e.stopPropagation()
-                handleToggleBookmark()
+                handleToggleChecklist()
               }}
             />
           </Tooltip>
@@ -1056,13 +1182,12 @@ export const SentenceListening: React.FC = () => {
               backgroundColor: token.colorFillAlter,
               color: token.colorTextSecondary,
             }}
-          >
-            💡 {currentItem.translation}
-          </div>
+            dangerouslySetInnerHTML={{ __html: currentItem.translation }}
+          />
         )}
 
-        {/* Feature 1.5: Interactive Word Hint Tags */}
-        {showHintTags && !isRevealed && (
+        {/* Feature 1.5: Interactive 2-Step Hint */}
+        {hintStep >= 1 && !isRevealed && (
           <div
             className={styles.hintTagsContainer}
             style={{
@@ -1074,29 +1199,17 @@ export const SentenceListening: React.FC = () => {
               <div className='flex items-center gap-2'>
                 <BulbOutlined style={{ color: token.colorWarning, fontSize: 14 }} />
                 <span className='font-semibold text-xs' style={{ color: token.colorWarningText }}>
-                  Gợi ý từ trong câu (Nhấn vào tag để hiện từ):
+                  Gợi ý từ trong câu:
                 </span>
               </div>
-              <Flex gap={token.sizeXXS} align='center'>
-                <Button
-                  type='link'
-                  size='small'
-                  style={{ fontSize: 11, padding: '0 4px' }}
-                  onClick={handleToggleAllHintWords}
-                >
-                  {allWordsRevealed ? 'Ẩn tất cả' : 'Hiện tất cả'}
-                </Button>
-                {currentItem?.translation && (
-                  <Button
-                    type='link'
-                    size='small'
-                    style={{ fontSize: 11, padding: '0 4px' }}
-                    onClick={() => setShowTranslationHint((prev) => !prev)}
-                  >
-                    {showTranslationHint ? 'Ẩn dịch' : 'Nghĩa câu'}
-                  </Button>
-                )}
-              </Flex>
+              <Button
+                type='link'
+                size='small'
+                style={{ fontSize: 11, padding: '0 4px' }}
+                onClick={handleToggleAllHintWords}
+              >
+                {allWordsRevealed ? 'Hide' : 'Show'}
+              </Button>
             </div>
 
             {/* Tags Row */}
@@ -1108,58 +1221,45 @@ export const SentenceListening: React.FC = () => {
 
                 if (isWordRevealed) {
                   return (
-                    <Tooltip
+                    <Tag
                       key={idx}
-                      title={
-                        isDictationMode
-                          ? `Nhấn để điền "${clean}" vào ô gõ • Nhấn [x] để ẩn lại`
-                          : `Nhấn [x] để ẩn lại`
-                      }
+                      color='blue'
+                      className={styles.hintWordTag}
+                      onClick={() => handleRevealedTagClick(word)}
                     >
-                      <Tag
-                        color='blue'
-                        closable
-                        onClose={(e) => {
-                          e.stopPropagation()
-                          handleHideHintWord(idx)
-                        }}
-                        className={styles.hintWordTag}
-                        onClick={() => handleRevealedTagClick(word)}
-                      >
-                        <span className='font-semibold opacity-70 mr-1'>#{idx + 1}</span>
-                        <span className='font-bold'>{word}</span>
-                      </Tag>
-                    </Tooltip>
+                      <span className='font-bold'>{word}</span>
+                    </Tag>
                   )
                 }
 
                 return (
-                  <Tooltip key={idx} title={`Nhấn để mở từ #${idx + 1} (${clean.length} ký tự)`}>
-                    <Tag
-                      className={`${styles.hintWordTag} ${styles.hintWordTagUnrevealed}`}
-                      style={{
-                        backgroundColor: token.colorBgContainer,
-                        borderColor: token.colorWarningBorder,
-                        color: token.colorTextSecondary,
-                      }}
-                      onClick={() => handleRevealHintWord(idx)}
-                    >
-                      <EyeInvisibleOutlined style={{ fontSize: 11, marginRight: 4 }} />
-                      <span className='font-semibold opacity-70 mr-1'>#{idx + 1}</span>
-                      <span style={{ letterSpacing: 2 }}>{'•'.repeat(dotCount)}</span>
-                    </Tag>
-                  </Tooltip>
+                  <Tag
+                    key={idx}
+                    className={`${styles.hintWordTag} ${styles.hintWordTagUnrevealed}`}
+                    style={{
+                      backgroundColor: token.colorBgContainer,
+                      borderColor: token.colorWarningBorder,
+                      color: token.colorTextSecondary,
+                    }}
+                    onClick={() => handleRevealHintWord(idx)}
+                  >
+                    <span style={{ letterSpacing: 2 }}>{'•'.repeat(dotCount)}</span>
+                  </Tag>
                 )
               })}
             </div>
 
-            {/* Optional Translation Hint */}
-            {showTranslationHint && currentItem?.translation && (
+            {/* Bước 2: Hiện nghĩa của câu khi hintStep >= 2 */}
+            {hintStep >= 2 && currentItem?.translation && (
               <div
-                className='text-xs italic pt-1 border-t border-dashed'
+                className='text-xs italic py-2 border-t border-dashed'
                 style={{ borderColor: token.colorWarningBorder, color: token.colorTextSecondary }}
               >
-                💡 <b>Nghĩa câu:</b> {currentItem.translation}
+                💡 <b>Meaning:</b>
+                <div
+                  style={{ paddingLeft: token.sizeXS, marginTop: 2, fontStyle: 'normal' }}
+                  dangerouslySetInnerHTML={{ __html: currentItem.translation }}
+                />
               </div>
             )}
           </div>
@@ -1169,7 +1269,7 @@ export const SentenceListening: React.FC = () => {
         {isDictationMode && (
           <div className={styles.dictationBox}>
             <div className={styles.dictationHeader}>
-              <span style={{ color: token.colorTextSecondary }}>
+              <span style={{ color: token.colorTextSecondary  }}>
                 ✍️ Gõ lại những gì bạn nghe được:
               </span>
               {dictationResult && (
@@ -1231,7 +1331,7 @@ export const SentenceListening: React.FC = () => {
                   icon={<BulbOutlined />}
                   onClick={handleGiveHint}
                 >
-                  Gợi ý {revealedHintIndices.size > 0 ? `(${revealedHintIndices.size}/${sentenceWords.length})` : ''}
+                  Gợi ý {hintStep > 0 ? `(${hintStep}/2)` : ''}
                 </Button>
               </Flex>
               {userDictationInput && (
@@ -1361,19 +1461,6 @@ export const SentenceListening: React.FC = () => {
           {isPlaying ? 'Đang đọc...' : 'Nghe'}
         </Button>
 
-        {/* Button 2: Gợi ý (Word Hint Tags) */}
-        {!isRevealed && (
-          <Button
-            className={styles.actionBtn}
-            icon={<BulbOutlined />}
-            onClick={handleGiveHint}
-          >
-            {showHintTags
-              ? `Gợi ý (${revealedHintIndices.size}/${sentenceWords.length})`
-              : 'Gợi ý'}
-          </Button>
-        )}
-
         {/* Button 3: Reveal Answer */}
         <Button
           className={styles.actionBtn}
@@ -1396,7 +1483,8 @@ export const SentenceListening: React.FC = () => {
 
       {/* Keyboard Shortcuts Hint (1.2) */}
       <div className={styles.shortcutsHint} style={{ color: token.colorTextQuaternary }}>
-        Phím tắt: <b>[Enter]</b> Nghe lại • <b>[Shift+Enter]</b> Kiểm tra • <b>[Ctrl+Enter]</b> Câu tiếp theo
+        Phím tắt: <b>[Enter]</b> Nghe lại • <b>[Shift+Enter]</b> Kiểm tra • <b>[Ctrl+Enter]</b> Câu
+        tiếp theo
       </div>
     </div>
   )

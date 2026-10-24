@@ -524,8 +524,6 @@ const getStudySet = async (
     const itemsWithQuiz = await generateQuizzesForItems(allItems, allItems, allCategoryItemsMap)
     const shuffledItemsWithQuiz = shuffleArray(itemsWithQuiz)
 
-    console.log(`*** shuffledItemsWithQuiz *** `, shuffledItemsWithQuiz)
-
     return {
       isSuccess: true,
       message: 'Study set fetched successfully',

@@ -3,6 +3,8 @@ import { IUser, IUserConfig } from '@/models/user.model'
 import { db } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { collection, getDocs, doc, updateDoc, Timestamp, query } from 'firebase/firestore'
+import { appSetting } from '@/config/appConfig'
+import { removeUndefinedFields } from '@/services/firebase/dbIntegration'
 
 /**
  * Get all users (requires admin privileges)
@@ -40,15 +42,26 @@ const createUser = async (item: IUser): Promise<IHttpResponse<IUser>> => {
     }
 
     const userDocRef = doc(db, 'users', currentUser.uid)
-    const userData: Partial<IUser> = {
+    const rawConfig = (item.configuration || {}) as Record<string, any>
+    const cleanConfig = Object.fromEntries(
+      Object.entries(rawConfig).filter(([_, v]) => v !== undefined),
+    )
+    const sanitizedConfig = {
+      ...appSetting.meta,
+      ...cleanConfig,
+      numberOfListeningSentences:
+        rawConfig.numberOfListeningSentences ?? appSetting.meta.numberOfListeningSentences,
+    }
+
+    const userData: Partial<IUser> = removeUndefinedFields({
       email: item.email,
       firstName: item.firstName,
       lastName: item.lastName,
       photoURL: item.photoURL,
       createdAt: Timestamp.now().toMillis(),
       updatedAt: Timestamp.now().toMillis(),
-      configuration: item.configuration,
-    }
+      configuration: sanitizedConfig,
+    })
 
     await updateDoc(userDocRef, userData)
 
@@ -80,17 +93,27 @@ const userConfig = async (
     }
 
     const userDocRef = doc(db, 'users', currentUser.uid)
-    const configData = {
-      configuration: item,
-      last_update: Timestamp.now().toMillis(),
+    const cleanConfig = Object.fromEntries(
+      Object.entries(item || {}).filter(([_, v]) => v !== undefined),
+    )
+    const sanitizedConfig = {
+      ...appSetting.meta,
+      ...cleanConfig,
+      numberOfListeningSentences:
+        item?.numberOfListeningSentences ?? appSetting.meta.numberOfListeningSentences,
     }
+
+    const configData = removeUndefinedFields({
+      configuration: sanitizedConfig,
+      last_update: Timestamp.now().toMillis(),
+    })
 
     await updateDoc(userDocRef, configData)
 
     return {
       isSuccess: true,
       message: 'User configuration updated successfully',
-      content: item,
+      content: sanitizedConfig as unknown as IUserConfig<string>,
       statusCode: 200,
     }
   } catch (error) {
@@ -112,17 +135,27 @@ const updateUserConfig = async (
     }
 
     const userDocRef = doc(db, 'users', currentUser.uid)
-    const updateData = {
-      configuration: config,
-      updatedAt: Timestamp.now().toMillis(),
+    const cleanConfig = Object.fromEntries(
+      Object.entries(config || {}).filter(([_, v]) => v !== undefined),
+    )
+    const sanitizedConfig: IUserConfig<number[]> = {
+      ...appSetting.meta,
+      ...cleanConfig,
+      numberOfListeningSentences:
+        config?.numberOfListeningSentences ?? appSetting.meta.numberOfListeningSentences,
     }
+
+    const updateData = removeUndefinedFields({
+      configuration: sanitizedConfig,
+      updatedAt: Timestamp.now().toMillis(),
+    })
 
     await updateDoc(userDocRef, updateData)
 
     return {
       isSuccess: true,
       message: 'User configuration updated successfully',
-      content: config,
+      content: sanitizedConfig,
       statusCode: 200,
     }
   } catch (error) {

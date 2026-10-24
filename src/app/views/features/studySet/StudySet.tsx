@@ -1,5 +1,4 @@
 import {
-  ReloadOutlined,
   ClockCircleOutlined,
   AppstoreOutlined,
   UnorderedListOutlined,
@@ -7,6 +6,7 @@ import {
   CheckSquareOutlined,
   ThunderboltOutlined,
   SearchOutlined,
+  RollbackOutlined,
 } from '@ant-design/icons'
 import { appSetting } from '@/config/appConfig'
 import { useDispatch, useSelector, itemKeys, useChecklist } from '@/core/hooks'
@@ -382,6 +382,18 @@ export const StudySet: React.FC = () => {
     )
   }
 
+  const onResetToInitial = useCallback(() => {
+    reset()
+    if (status.mode) {
+      setStudyMode(status.mode)
+    }
+    dispatch(studySetAction.resetStudySet())
+    const studySet = document.getElementById('studySet')
+    if (studySet) {
+      studySet.focus()
+    }
+  }, [dispatch, reset, status.mode])
+
   const onSearch = async (id: string) => {
     try {
       const { isSuccess, content } = await itemApi.getItemById(id)
@@ -416,6 +428,11 @@ export const StudySet: React.FC = () => {
       const studySet = document.getElementById('studySet')
       // Only process when inside studySet or general body focus
       if (!studySet?.contains(e.target as Node) && e.target !== document.body) {
+        return
+      }
+
+      if ((isDone || inProgress) && e.code === 'Escape') {
+        onResetToInitial()
         return
       }
 
@@ -465,7 +482,16 @@ export const StudySet: React.FC = () => {
         }
       }
     },
-    [isDone, inProgress, currentItem, isSubmit, onNext, onSubmit, onSelectMultiChoice],
+    [
+      isDone,
+      inProgress,
+      currentItem,
+      isSubmit,
+      onNext,
+      onSubmit,
+      onSelectMultiChoice,
+      onResetToInitial,
+    ],
   )
 
   const disableWindowScroll = (e: KeyboardEvent) => {
@@ -565,11 +591,21 @@ export const StudySet: React.FC = () => {
 
   return (
     <div className={styles.studySet} id='studySet' tabIndex={0}>
-      {/* Header during quiz */}
-      {inProgress && (
+      {/* Header during quiz or when completed */}
+      {(inProgress || isDone) && (
         <div className={styles.studySetHeader}>
-          <Space>
+          <Flex gap={token.size / 4} align='center' wrap='wrap'>
+            <Button
+              icon={<RollbackOutlined />}
+              variant='outlined'
+              size='small'
+              onClick={onResetToInitial}
+            >
+              Back to Start
+            </Button>
+
             <Tag
+              style={{ marginInlineEnd: 0, paddingTop: 4, paddingBottom: 4 }}
               color={
                 status.mode === 'checklist' || studyMode === 'checklist'
                   ? 'purple'
@@ -579,25 +615,31 @@ export const StudySet: React.FC = () => {
               }
             >
               {status.mode === 'checklist' || studyMode === 'checklist'
-                ? '📋 Ôn tập Checklist'
+                ? '📋 Checklist'
                 : (status.mode ?? studyMode) === 'due'
-                  ? '🕒 SRS: Cần ôn hôm nay'
-                  : '🎲 Luyện tập tự do'}
+                  ? '🕒 SRS'
+                  : '🎲 Tự do'}
             </Tag>
-            {!isDone && (
+
+            {/* {!isDone && (
               <Button
                 icon={<ReloadOutlined spin={loading} />}
                 variant='outlined'
                 size='small'
                 onClick={() => onReload()}
-              >
-                Reload
-              </Button>
-            )}
-          </Space>
+              />
+            )} */}
+          </Flex>
 
           <div className={styles.progress}>
-            <div className={styles.progressCounter}>{`${currentIndex + 1}/${list.length}`}</div>
+            {inProgress && (
+              <Tag>{`${currentIndex + 1}/${list.length}`}</Tag>
+            )}
+            {isDone && (
+              <Tag color='success' style={{ margin: 0 }}>
+                Completed
+              </Tag>
+            )}
           </div>
         </div>
       )}
@@ -615,12 +657,7 @@ export const StudySet: React.FC = () => {
                 {
                   label: (
                     <Space>
-                      <ClockCircleOutlined
-                        style={{
-                          color: dueCount > 0 ? token.colorWarning : token.colorSuccess,
-                        }}
-                      />
-                      <span>Cần ôn hôm nay</span>
+                      <span>Today</span>
                       <Badge
                         count={dueCount}
                         overflowCount={99}
@@ -635,11 +672,6 @@ export const StudySet: React.FC = () => {
                 {
                   label: (
                     <Space>
-                      <CheckSquareOutlined
-                        style={{
-                          color: checklistToLearnCount > 0 ? token.colorSuccess : undefined,
-                        }}
-                      />
                       <span>Checklist</span>
                       <Badge
                         count={checklistToLearnCount}
@@ -659,7 +691,7 @@ export const StudySet: React.FC = () => {
                   label: (
                     <Space>
                       <AppstoreOutlined />
-                      <span>Luyện tập tự do</span>
+                      <span>Random</span>
                     </Space>
                   ),
                   value: 'custom',
@@ -861,9 +893,14 @@ export const StudySet: React.FC = () => {
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
             <NotFound />
             <div style={{ marginTop: 16 }}>
-              <Button type='primary' onClick={() => onReload()}>
-                Try Again
-              </Button>
+              <Space>
+                <Button type='primary' onClick={() => onReload()}>
+                  Try Again
+                </Button>
+                <Button icon={<RollbackOutlined />} onClick={onResetToInitial}>
+                  Back to Start
+                </Button>
+              </Space>
             </div>
           </div>
         )}
@@ -1012,6 +1049,11 @@ export const StudySet: React.FC = () => {
                     : studyMode === 'checklist'
                       ? `Ôn tập Checklist (${checklistToLearnCount > 0 ? checklistToLearnCount : checklistTotal} từ)`
                       : 'Bắt đầu luyện tập'}
+              </Button>
+            )}
+            {isDone && (
+              <Button icon={<RollbackOutlined />} onClick={onResetToInitial}>
+                Back to Start
               </Button>
             )}
           </div>

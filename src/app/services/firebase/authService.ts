@@ -446,7 +446,20 @@ export class FirebaseAuthService {
       const userDoc = await getDoc(userDocRef)
 
       if (userDoc.exists()) {
-        return userDoc.data() as IUserProfile
+        const data = userDoc.data() as IUserProfile
+        const rawConfig = (data.configuration || {}) as Record<string, any>
+        const cleanConfig = Object.fromEntries(
+          Object.entries(rawConfig).filter(([_, v]) => v !== undefined),
+        )
+        return {
+          ...data,
+          configuration: {
+            ...appSetting.meta,
+            ...cleanConfig,
+            numberOfListeningSentences:
+              rawConfig.numberOfListeningSentences ?? appSetting.meta.numberOfListeningSentences,
+          },
+        }
       }
       return null
     } catch (error) {

@@ -13,7 +13,7 @@ export interface IUserConfig<R = number[]> {
   numberOfCollocationsInStudySet: number
   numberOfSentencesInStudySet: number
   numberOfExampleReview: number
-  numberOfListeningSentences?: number
+  numberOfListeningSentences: number
   references: R
   community: boolean
   showPlayer: boolean

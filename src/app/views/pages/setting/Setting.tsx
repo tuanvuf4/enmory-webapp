@@ -21,20 +21,33 @@ const Setting = () => {
   const dispatch = useDispatch()
   const [isLoading, setIsLoading] = useState(false)
 
+  const sanitizeConfig = (config?: Partial<IUserConfig> | null): IUserConfig => {
+    const cleanConfig = Object.fromEntries(
+      Object.entries(config || {}).filter(([_, v]) => v !== undefined)
+    )
+    return {
+      ...appSetting.meta,
+      ...cleanConfig,
+      numberOfListeningSentences:
+        config?.numberOfListeningSentences ?? appSetting.meta.numberOfListeningSentences,
+    }
+  }
+
   const { control, handleSubmit, reset } = useForm<IUserConfig>({
-    defaultValues: user?.configuration || appSetting.meta,
+    defaultValues: sanitizeConfig(user?.configuration),
   })
 
   useEffect(() => {
     if (user?.configuration) {
-      reset(user.configuration)
+      reset(sanitizeConfig(user.configuration))
     }
   }, [user?.configuration, reset])
 
   const onSubmit = async (data: IUserConfig) => {
     setIsLoading(true)
     try {
-      const result = await apiUser.updateUserConfig(data)
+      const sanitizedData = sanitizeConfig(data)
+      const result = await apiUser.updateUserConfig(sanitizedData)
 
       if (result.isSuccess) {
         message({
@@ -43,7 +56,7 @@ const Setting = () => {
         })
 
         // Update user configuration in Redux store
-        dispatch(authAction.updateUserConfig(data))
+        dispatch(authAction.updateUserConfig(sanitizedData))
       } else {
         message({
           type: 'error',
@@ -250,7 +263,7 @@ const Setting = () => {
                             return (
                               <Select
                                 style={{ minWidth: 60 }}
-                                value={value}
+                                value={value ?? appSetting.meta.numberOfListeningSentences}
                                 defaultValue={appSetting.meta.numberOfListeningSentences}
                                 onChange={onChange}
                                 options={appSetting.rdOptions}

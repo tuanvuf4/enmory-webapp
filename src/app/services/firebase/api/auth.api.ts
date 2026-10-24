@@ -3,6 +3,7 @@ import { ILogin, ILoginResponse, IUser } from '@/models/user.model'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { db } from '@/config/firebaseConfig'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { appSetting } from '@/config/appConfig'
 
 /**
  * Get Google user info from Firebase Auth user
@@ -122,8 +123,22 @@ const getUserInfo = async (): Promise<IHttpResponse<IUser<string>>> => {
       throw new Error('User document not found')
     }
 
-    const userData = userDoc.data() as IUser<string>
-    userData.uid = currentUser.uid as any
+    const rawUserData = userDoc.data() as IUser<string>
+    const rawConfig = (rawUserData.configuration || {}) as Record<string, any>
+    const cleanConfig = Object.fromEntries(
+      Object.entries(rawConfig).filter(([_, v]) => v !== undefined),
+    )
+    const userData: IUser<string> = {
+      ...rawUserData,
+      uid: currentUser.uid as any,
+      configuration: {
+        ...appSetting.meta,
+        ...cleanConfig,
+        numberOfListeningSentences:
+          rawConfig.numberOfListeningSentences ?? appSetting.meta.numberOfListeningSentences,
+      } as any,
+    }
+
 
     return {
       isSuccess: true,

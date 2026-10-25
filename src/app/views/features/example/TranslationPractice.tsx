@@ -55,7 +55,10 @@ export interface ITranslationPracticeProps {
 
 const stripHtml = (html?: string): string => {
   if (!html) return ''
-  return html.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim()
+  return html
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim()
 }
 
 const getWordStatusClass = (status: TDictationWordStatus): string => {
@@ -183,19 +186,22 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
   }, [fetchRandomSentence, initialExample, history.length])
 
   // Browser TTS fallback helper
-  const speakBrowser = useCallback((text: string, onEnd?: () => void) => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = direction === 'vi-en' ? 'en-US' : 'vi-VN'
-      utterance.rate = 0.95
-      utterance.onend = () => onEnd?.()
-      utterance.onerror = () => onEnd?.()
-      window.speechSynthesis.speak(utterance)
-    } else {
-      onEnd?.()
-    }
-  }, [direction])
+  const speakBrowser = useCallback(
+    (text: string, onEnd?: () => void) => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+        const utterance = new SpeechSynthesisUtterance(text)
+        utterance.lang = direction === 'vi-en' ? 'en-US' : 'vi-VN'
+        utterance.rate = 0.95
+        utterance.onend = () => onEnd?.()
+        utterance.onerror = () => onEnd?.()
+        window.speechSynthesis.speak(utterance)
+      } else {
+        onEnd?.()
+      }
+    },
+    [direction],
+  )
 
   // Play audio of reference sentence
   const handlePlayAudio = async (textToPlay = targetText) => {
@@ -354,16 +360,14 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
       {/* 1. Header Bar: Mode badge, Direction Switch, Session counter */}
       <div className={styles.headerBar}>
         <div className={styles.modeBadge}>
-          <span>{direction === 'vi-en' ? '🇻🇳 Tiếng Việt → 🇬🇧 English' : '🇬🇧 English → 🇻🇳 Tiếng Việt'}</span>
+          <span>
+            {direction === 'vi-en' ? '🇻🇳 Tiếng Việt → 🇬🇧 English' : '🇬🇧 English → 🇻🇳 Tiếng Việt'}
+          </span>
         </div>
 
         <Space size='small'>
           <Tooltip title='Đổi chiều dịch'>
-            <Button
-              size='small'
-              icon={<SwapOutlined />}
-              onClick={handleSwitchDirection}
-            >
+            <Button size='small' icon={<SwapOutlined />} onClick={handleSwitchDirection}>
               Đổi chiều
             </Button>
           </Tooltip>
@@ -374,12 +378,7 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
 
           {onCancel && (
             <Tooltip title='Đóng'>
-              <Button
-                size='small'
-                type='text'
-                icon={<CloseOutlined />}
-                onClick={onCancel}
-              />
+              <Button size='small' type='text' icon={<CloseOutlined />} onClick={onCancel} />
             </Tooltip>
           )}
         </Space>
@@ -389,7 +388,9 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
       <div className={styles.promptCard}>
         <div className={styles.promptLabel}>
           <InfoCircleOutlined style={{ color: token.colorPrimary }} />
-          <span>{direction === 'vi-en' ? 'Câu tiếng Việt cần dịch:' : 'Original English sentence:'}</span>
+          <span>
+            {direction === 'vi-en' ? 'Câu tiếng Việt cần dịch:' : 'Original English sentence:'}
+          </span>
         </div>
 
         <p className={styles.promptText}>{sourceText}</p>
@@ -519,18 +520,10 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
 
         <div className={styles.actionGroup}>
           <Tooltip title='Quay lại câu trước'>
-            <Button
-              icon={<LeftOutlined />}
-              onClick={handlePrev}
-              disabled={currentIndex === 0}
-            />
+            <Button icon={<LeftOutlined />} onClick={handlePrev} disabled={currentIndex === 0} />
           </Tooltip>
 
-          <Button
-            icon={<RightOutlined />}
-            onClick={handleNext}
-            loading={loading}
-          >
+          <Button icon={<RightOutlined />} onClick={handleNext} loading={loading}>
             Câu tiếp
           </Button>
         </div>
@@ -674,28 +667,29 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
                 </div>
               )}
 
-              {aiReviewResult.betterAlternatives && aiReviewResult.betterAlternatives.length > 0 && (
-                <div>
-                  <Text strong style={{ fontSize: 13 }}>
-                    Các cách diễn đạt tự nhiên khác:
-                  </Text>
-                  <div className={styles.aiAlternativesList}>
-                    {aiReviewResult.betterAlternatives.map((alt, idx) => (
-                      <div key={idx} className={styles.aiAltItem}>
-                        <span>• {alt}</span>
-                        <Tooltip title='Nghe cách đọc này'>
-                          <Button
-                            type='text'
-                            size='small'
-                            icon={<SoundOutlined />}
-                            onClick={() => handlePlayAudio(alt)}
-                          />
-                        </Tooltip>
-                      </div>
-                    ))}
+              {aiReviewResult.betterAlternatives &&
+                aiReviewResult.betterAlternatives.length > 0 && (
+                  <div>
+                    <Text strong style={{ fontSize: 13 }}>
+                      Các cách diễn đạt tự nhiên khác:
+                    </Text>
+                    <div className={styles.aiAlternativesList}>
+                      {aiReviewResult.betterAlternatives.map((alt, idx) => (
+                        <div key={idx} className={styles.aiAltItem}>
+                          <span>• {alt}</span>
+                          <Tooltip title='Nghe cách đọc này'>
+                            <Button
+                              type='text'
+                              size='small'
+                              icon={<SoundOutlined />}
+                              onClick={() => handlePlayAudio(alt)}
+                            />
+                          </Tooltip>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           )}
         </div>

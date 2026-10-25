@@ -104,6 +104,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                     />
                   }
                   className={clsx(styles.autoSearchInput, appStyle.fulWidth)}
+                  filterOption={false}
                   options={options}
                   onSelect={onSelect}
                   onClear={() => {

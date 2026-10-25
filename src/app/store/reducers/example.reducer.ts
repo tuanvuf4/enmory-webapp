@@ -1,8 +1,7 @@
 import { IExample } from '@/app/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-const getPinnedStorageKey = (uid?: string) =>
-  `enmory_pinned_example_ids${uid ? `_${uid}` : ''}`
+const getPinnedStorageKey = (uid?: string) => `enmory_pinned_example_ids${uid ? `_${uid}` : ''}`
 
 const getInitialPinnedIds = (uid?: string): string[] => {
   try {
@@ -55,10 +54,7 @@ export const exampleReducer = createSlice({
     loadPinnedIds(state: IExampleState, action: PayloadAction<string | undefined>) {
       state.pinnedIds = getInitialPinnedIds(action.payload)
     },
-    togglePin(
-      state: IExampleState,
-      action: PayloadAction<{ id: string; uid?: string } | string>,
-    ) {
+    togglePin(state: IExampleState, action: PayloadAction<{ id: string; uid?: string } | string>) {
       const id = typeof action.payload === 'string' ? action.payload : action.payload.id
       const uid = typeof action.payload === 'string' ? undefined : action.payload.uid
       if (!id) return

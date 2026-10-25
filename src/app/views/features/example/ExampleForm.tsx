@@ -32,13 +32,7 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 }) => {
   // Delegate Translation practice mode to the dedicated TranslationPractice component
   if (mode === ExampleMode.Translation) {
-    return (
-      <TranslationPractice
-        initialExample={data}
-        onCancel={onCancel}
-        onSuccess={onSuccess}
-      />
-    )
+    return <TranslationPractice initialExample={data} onCancel={onCancel} onSuccess={onSuccess} />
   }
 
   const { token } = theme.useToken()
@@ -104,7 +98,10 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
       }
     } catch (error: any) {
       const errorMsg = error?.message || error || 'An error occurred'
-      notification({ type: 'error', message: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) })
+      notification({
+        type: 'error',
+        message: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),
+      })
     } finally {
       setLoading(false)
     }

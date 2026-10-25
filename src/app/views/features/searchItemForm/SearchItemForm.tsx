@@ -148,7 +148,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                       suffix={
                         isSearching ? (
                           <Loading3QuartersOutlined spin />
-                        ) : (
+                        ) : value ? (
                           <CloseCircleOutlined
                             style={{ fontSize: 16, cursor: 'pointer' }}
                             onClick={() => {
@@ -156,7 +156,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                               setUrlParams({ keyword: '' })
                             }}
                           />
-                        )
+                        ) : null
                       }
                     />
                   }
@@ -164,6 +164,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                     flex: '1 0',
                     borderRadius: '999px',
                   }}
+                  filterOption={false}
                   options={options}
                   onSelect={async (value, option) => await onSelect(value, option)}
                   onChange={(text) => onChange(text)}

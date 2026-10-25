@@ -308,6 +308,7 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
                     }
                   />
                 }
+                filterOption={false}
                 options={formattedOptions}
                 onSelect={(_, o) => onSelect(o)}
                 onChange={(text) => onChange(text)}

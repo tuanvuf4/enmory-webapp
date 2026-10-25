@@ -33,7 +33,10 @@ interface IProps {
 
 const cleanText = (html?: string): string => {
   if (!html) return ''
-  return html.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim()
+  return html
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim()
 }
 
 const getCategoryColor = (catId?: number | ECategory) => {
@@ -198,7 +201,9 @@ export const ExampleItem: React.FC<IProps> = ({
 
           {data.itemOrigin && (
             <div style={{ marginTop: -2, marginBottom: 2 }}>
-              <Tooltip title={data.itemId && onViewItem ? 'Nhấp để xem chi tiết từ vựng này' : undefined}>
+              <Tooltip
+                title={data.itemId && onViewItem ? 'Nhấp để xem chi tiết từ vựng này' : undefined}
+              >
                 <Tag
                   color={getCategoryColor(data.catId)}
                   style={{

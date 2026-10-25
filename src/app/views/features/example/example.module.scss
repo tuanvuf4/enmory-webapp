@@ -29,11 +29,6 @@
     resize: none !important;
     color: $color-text-base !important;
     background: transparent !important;
-
-    &:disabled {
-      color: transparent !important;
-      background: transparent !important;
-    }
   }
 }
 

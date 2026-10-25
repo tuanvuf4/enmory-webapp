@@ -7,10 +7,11 @@ import { SentenceListening } from '@/views/features/sentenceListening'
 import { Widget } from '@/views/features/widget/Widget'
 import { theme, Space, Row, Col, Skeleton } from 'antd'
 import { Item } from '@/views/features/item/Item'
-import { ExampleMode } from '@/models/example.model'
+
 import { IIotdDoc } from '@/models/item.model'
 import { Link } from 'react-router-dom'
-import { ExampleForm } from '@/views/features/example/ExampleForm'
+
+import { TranslationPractice } from '@/views/features/example/TranslationPractice'
 
 interface IIotdItemCardProps {
   iotd?: IIotdDoc | null
@@ -82,7 +83,7 @@ const Home = () => {
                 </Widget>
 
                 <Widget title={'Translator'}>
-                  <ExampleForm resetAfterSave={false} mode={ExampleMode.Translation} />
+                  <TranslationPractice />
                 </Widget>
 
                 <Widget title={'Examples'}>

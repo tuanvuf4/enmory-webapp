@@ -3,9 +3,7 @@ import { useCreateExample, useUpdateExample } from '@/core/hooks/useExamples'
 import { useExampleModal, usePrompt } from '@/helpers/hooks'
 import { ExampleMode } from '@/models/example.model'
 import { IExample } from '@/models/item.model'
-import { exampleApi } from '@/services/firebase/api/example.api'
 import { exampleAction } from '@/store/reducers/example.reducer'
-import { SyncOutlined } from '@ant-design/icons'
 import { Button, Col, Flex, Row, Space, theme } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import clsx from 'clsx'
@@ -15,6 +13,7 @@ import styles from './example.module.scss'
 import { initExampleData } from '@/constant/example'
 import { ReviewableTextArea } from '@/views/components'
 import { removeLineBreaks } from '@/core/utils'
+import { TranslationPractice } from './TranslationPractice'
 
 interface IProps {
   data?: IExample
@@ -31,24 +30,27 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const { token } = theme.useToken()
+  // Delegate Translation practice mode to the dedicated TranslationPractice component
+  if (mode === ExampleMode.Translation) {
+    return (
+      <TranslationPractice
+        initialExample={data}
+        onCancel={onCancel}
+        onSuccess={onSuccess}
+      />
+    )
+  }
 
+  const { token } = theme.useToken()
   const { notification } = usePrompt()
   const { closeExampleModal } = useExampleModal()
-
   const dispatch = useDispatch()
-
   const { translate } = useSelector((state) => state.example)
 
   const [loading, setLoading] = useState<boolean>(false)
-  const [isChecked, setIsChecked] = useState<boolean>(false)
-  const [answer, setAnswer] = useState<string>('')
 
   const { mutateAsync: createMutation } = useCreateExample()
   const { mutateAsync: updateMutation } = useUpdateExample()
-
-  const showTranslation =
-    mode === ExampleMode.Default || (isChecked && mode === ExampleMode.Translation)
 
   const {
     control,
@@ -56,8 +58,17 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
     reset,
     formState: { isValid },
   } = useForm<IExample>({
-    defaultValues: data || (translate as IExample),
+    defaultValues: data || (translate as IExample) || initExampleData,
   })
+
+  // Synchronize form when data changes
+  useEffect(() => {
+    if (data) {
+      reset({ ...data })
+    } else if (translate) {
+      reset({ ...translate })
+    }
+  }, [data, translate, reset])
 
   const onSubmit = async (formData: IExample) => {
     setLoading(true)
@@ -66,15 +77,14 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
 
       const updatedData = {
         ...formData,
-        origin: removeLineBreaks(formData.origin),
-        translation: removeLineBreaks(formData.translation),
-        note: formData.note || '',
+        origin: removeLineBreaks(formData.origin).trim(),
+        translation: removeLineBreaks(formData.translation).trim(),
+        note: formData.note?.trim() || '',
       }
 
       if (formData.id) {
         result = await updateMutation({ ...updatedData })
         dispatch(exampleAction.setTranslate(result))
-        // update example list in Redux store
         dispatch(exampleAction.batchUpdate(result ? [result] : []))
         notification({ type: 'success', message: 'Update example successful!' })
       } else {
@@ -83,52 +93,17 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
       }
 
       closeExampleModal()
-      setAnswer('')
       if (resetAfterSave) reset(initExampleData)
       if (result) {
         onSuccess?.(result)
       }
-    } catch (error: Error | any) {
-      notification({ type: 'error', message: JSON.stringify(error.message) })
+    } catch (error: any) {
+      const errorMsg = error?.message || error || 'An error occurred'
+      notification({ type: 'error', message: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) })
     } finally {
       setLoading(false)
     }
   }
-
-  const onReload = async () => {
-    setAnswer('')
-    reset({ ...initExampleData })
-    dispatch(exampleAction.setTranslate(null))
-    setIsChecked(false)
-    await getRandomExamples()
-  }
-
-  const getRandomExamples = async () => {
-    try {
-      setLoading(true)
-      const { isSuccess, content } = await exampleApi.getRandomExamples(1)
-      if (isSuccess && content && content[0]) {
-        const example = content[0]
-        dispatch(exampleAction.setTranslate(example))
-        reset({ ...example })
-      }
-    } catch (error) {
-      console.error('Failed to load random examples:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    // Check if translate example already exists in Redux
-    if (translate && !data) {
-      reset({ ...translate })
-      return
-    }
-    if (mode === ExampleMode.Translation) {
-      getRandomExamples()
-    }
-  }, [])
 
   return (
     <form
@@ -153,7 +128,6 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
               render={({ field: { onChange, value } }) => {
                 return (
                   <ReviewableTextArea
-                    disabled={!showTranslation && mode === ExampleMode.Translation}
                     autoSize={{ minRows: 2 }}
                     value={value}
                     placeholder='Origin'
@@ -218,27 +192,9 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
           </Col>
         </Row>
 
-        {mode === ExampleMode.Translation && (
-          <Row align={'middle'} gutter={[token.size, token.size / 2]} justify={'end'}>
-            <Col xs={24}>Your Translation:</Col>
-
-            <Col xs={24}>
-              <TextArea
-                value={answer}
-                autoSize={{ minRows: 2 }}
-                placeholder='Text here...'
-                onChange={(text) => setAnswer(text.target.value)}
-              />
-            </Col>
-          </Row>
-        )}
-
         <Row align={'middle'} gutter={[token.size, token.size / 2]}>
           <Col xs={24}>
-            <Flex
-              justify={mode === ExampleMode.Translation ? 'space-between' : 'flex-end'}
-              gap={token.size}
-            >
+            <Flex justify='flex-end' gap={token.size}>
               {onCancel && (
                 <Button
                   type='default'
@@ -249,17 +205,6 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
                   }}
                 >
                   Cancel
-                </Button>
-              )}
-
-              {mode === ExampleMode.Translation && (
-                <Button
-                  variant='outlined'
-                  style={{ minWidth: 120 }}
-                  onClick={() => (isChecked ? onReload() : setIsChecked(true))}
-                  icon={isChecked ? <SyncOutlined spin={loading} /> : null}
-                >
-                  {!isChecked ? 'Check' : 'Reload'}
                 </Button>
               )}
 

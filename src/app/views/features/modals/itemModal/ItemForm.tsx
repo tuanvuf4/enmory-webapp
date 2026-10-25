@@ -8,6 +8,7 @@ import { ECategory, EType, IItem, IExample, IMeaning } from '@/models/item.model
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
+import { exampleAction } from '@/store/reducers/example.reducer'
 import { InputTag, Level, ReviewableTextArea } from '@/views/components'
 import { Reference } from '@/views/features/references/References'
 import { theme, Row, Space, Col, Select, Checkbox, Button, Flex } from 'antd'
@@ -297,6 +298,28 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             }
             // update iotd item
             dispatch(iotdAction.update(itemUpdated))
+
+            // Sync updated item's examples to example reducer
+            if (itemUpdated && itemUpdated.meanings) {
+              const updatedItemExamples: IExample[] = []
+              for (const m of itemUpdated.meanings || []) {
+                for (const ex of (m.examples || []) as any[]) {
+                  if (ex && typeof ex === 'object' && ex.origin && ex.origin.trim()) {
+                    const normEx: IExample = {
+                      ...ex,
+                      id: ex.id || `${itemUpdated.id}_${ex.origin.trim()}`,
+                      itemId: itemUpdated.id,
+                      itemOrigin: itemUpdated.origin,
+                      catId: itemUpdated.catId,
+                    }
+                    updatedItemExamples.push(normEx)
+                  }
+                }
+              }
+              if (updatedItemExamples.length > 0) {
+                dispatch(exampleAction.batchUpdate(updatedItemExamples))
+              }
+            }
 
             closeModal()
             notification({ type: 'success', message: 'Update item successful!' })

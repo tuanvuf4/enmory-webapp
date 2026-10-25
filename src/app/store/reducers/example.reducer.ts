@@ -1,14 +1,30 @@
 import { IExample } from '@/app/models/item.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+const getPinnedStorageKey = (uid?: string) =>
+  `enmory_pinned_example_ids${uid ? `_${uid}` : ''}`
+
+const getInitialPinnedIds = (uid?: string): string[] => {
+  try {
+    const raw = localStorage.getItem(getPinnedStorageKey(uid))
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed
+    }
+  } catch {}
+  return []
+}
+
 export interface IExampleState {
   list: IExample[]
   translate: IExample | null
+  pinnedIds: string[]
 }
 
 export const initialState: IExampleState = {
   list: [],
   translate: null,
+  pinnedIds: getInitialPinnedIds(),
 }
 
 export const exampleReducer = createSlice({
@@ -35,6 +51,33 @@ export const exampleReducer = createSlice({
     },
     setTranslate(state: IExampleState, action: PayloadAction<IExample | null>) {
       state.translate = action.payload
+    },
+    loadPinnedIds(state: IExampleState, action: PayloadAction<string | undefined>) {
+      state.pinnedIds = getInitialPinnedIds(action.payload)
+    },
+    togglePin(
+      state: IExampleState,
+      action: PayloadAction<{ id: string; uid?: string } | string>,
+    ) {
+      const id = typeof action.payload === 'string' ? action.payload : action.payload.id
+      const uid = typeof action.payload === 'string' ? undefined : action.payload.uid
+      if (!id) return
+
+      if (state.pinnedIds.includes(id)) {
+        state.pinnedIds = state.pinnedIds.filter((item) => item !== id)
+      } else {
+        state.pinnedIds = [id, ...state.pinnedIds]
+      }
+
+      try {
+        localStorage.setItem(getPinnedStorageKey(uid), JSON.stringify(state.pinnedIds))
+      } catch {}
+    },
+    unpinAll(state: IExampleState, action: PayloadAction<string | undefined>) {
+      state.pinnedIds = []
+      try {
+        localStorage.setItem(getPinnedStorageKey(action.payload), JSON.stringify([]))
+      } catch {}
     },
     clear(state: IExampleState) {
       state.list = []

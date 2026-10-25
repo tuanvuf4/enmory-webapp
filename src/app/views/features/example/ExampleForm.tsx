@@ -75,17 +75,22 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
     try {
       let result: IExample | null
 
-      const updatedData = {
+      const updatedData: IExample = {
         ...formData,
         origin: removeLineBreaks(formData.origin).trim(),
         translation: removeLineBreaks(formData.translation).trim(),
         note: formData.note?.trim() || '',
+        itemId: formData.itemId || data?.itemId,
+        itemOrigin: formData.itemOrigin || data?.itemOrigin,
+        catId: formData.catId !== undefined ? formData.catId : data?.catId,
       }
 
       if (formData.id) {
         result = await updateMutation({ ...updatedData })
-        dispatch(exampleAction.setTranslate(result))
-        dispatch(exampleAction.batchUpdate(result ? [result] : []))
+        if (result) {
+          dispatch(exampleAction.setTranslate(result))
+          dispatch(exampleAction.batchUpdate([result]))
+        }
         notification({ type: 'success', message: 'Update example successful!' })
       } else {
         result = await createMutation({ ...updatedData })

@@ -129,7 +129,6 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
               <div style={{ display: 'flex', flex: '1 0' }}>
                 <AutoComplete
                   value={value}
-                  placeholder='Enter keyword...'
                   notFoundContent={
                     <NotFound
                       label={<span style={{ color: token.colorText }}>Not found</span>}
@@ -144,6 +143,8 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   children={
                     <Input
                       style={{ borderRadius: '999px', paddingLeft: token.size }}
+                      placeholder='Enter keyword...'
+                      prefix={<SearchOutlined style={{ color: token.colorTextSecondary }} />}
                       suffix={
                         isSearching ? (
                           <Loading3QuartersOutlined spin />

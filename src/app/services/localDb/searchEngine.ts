@@ -224,7 +224,11 @@ export const extractAllLocalExamples = async (uid?: string): Promise<IExample[]>
     query = localDb.items.where('uid').equals(uid)
   }
 
-  const items = await query.toArray()
+  let items = await query.toArray()
+  // Fallback to all local items if query by uid returned nothing
+  if (items.length === 0 && uid) {
+    items = await localDb.items.toArray()
+  }
   const examplesMap = new Map<string, IExample>()
 
   for (const item of items) {
@@ -237,6 +241,9 @@ export const extractAllLocalExamples = async (uid?: string): Promise<IExample[]>
               ...ex,
               id: ex.id || key,
               uid: ex.uid || item.uid,
+              itemId: item.id,
+              itemOrigin: item.origin,
+              catId: item.catId,
             } as IExample)
           }
         }
@@ -245,6 +252,34 @@ export const extractAllLocalExamples = async (uid?: string): Promise<IExample[]>
   }
 
   return Array.from(examplesMap.values())
+}
+
+/**
+ * Retrieves local examples by an array of IDs.
+ */
+export const getPinnedLocalExamples = async (
+  pinnedIds: string[],
+  uid?: string,
+): Promise<IHttpResponse<IExample[]>> => {
+  if (!pinnedIds || pinnedIds.length === 0) {
+    return {
+      isSuccess: true,
+      message: 'No pinned IDs',
+      content: [],
+      statusCode: 200,
+    }
+  }
+
+  const idSet = new Set(pinnedIds)
+  const allExamples = await extractAllLocalExamples(uid)
+  const pinnedExamples = allExamples.filter((ex) => ex.id && idSet.has(ex.id))
+
+  return {
+    isSuccess: true,
+    message: 'Pinned examples fetched',
+    content: pinnedExamples,
+    statusCode: 200,
+  }
 }
 
 /**
@@ -262,7 +297,8 @@ export const queryLocalExamples = async (
       (ex) =>
         ex.origin?.toLowerCase().includes(kw) ||
         ex.translation?.toLowerCase().includes(kw) ||
-        ex.note?.toLowerCase().includes(kw),
+        ex.note?.toLowerCase().includes(kw) ||
+        ex.itemOrigin?.toLowerCase().includes(kw),
     )
   }
 

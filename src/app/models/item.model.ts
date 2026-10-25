@@ -33,8 +33,11 @@ export interface IExample {
   translation: string
   created_date?: number
   last_update?: number
-  note: string
+  note?: string
   randomIndex?: number
+  itemId?: string
+  itemOrigin?: string
+  catId?: number | ECategory
 }
 
 export interface IType {

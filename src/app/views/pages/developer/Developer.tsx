@@ -475,6 +475,13 @@ export const Developer: React.FC = () => {
         render: (_: any, __: any, index: number) => index + 1,
       },
       {
+        title: 'Mục từ (Item)',
+        dataIndex: 'itemOrigin',
+        key: 'itemOrigin',
+        width: 140,
+        render: (text: string) => (text ? <Tag color='blue'>{text}</Tag> : '-'),
+      },
+      {
         title: 'Ví dụ (Origin)',
         dataIndex: 'origin',
         key: 'origin',

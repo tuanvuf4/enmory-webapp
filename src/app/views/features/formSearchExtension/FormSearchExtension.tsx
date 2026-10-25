@@ -95,11 +95,11 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
               <div className={styles.autoSearchInputGroup}>
                 <AutoComplete
                   value={value}
-                  placeholder='Enter keyword...'
                   notFoundContent={<NotFound showButton={false} />}
                   children={
                     <Input
                       className={styles.searchExampleInput}
+                      placeholder='Enter keyword...'
                       suffix={isSearching ? <Loading3QuartersOutlined spin /> : undefined}
                     />
                   }

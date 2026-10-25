@@ -58,8 +58,7 @@ const normalizeLowercaseTags = (tags: string[] = []) => {
 }
 
 /**
- * Helper function to fetch examples by their IDs from the local database,
- * falling back to Firestore examples collection if missing.
+ * Helper function to fetch examples by their IDs from the local database items.
  */
 const getExamplesByIds = async (exampleIds: string[]): Promise<IExample[]> => {
   if (!exampleIds || exampleIds.length === 0) return []

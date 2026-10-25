@@ -27,11 +27,5 @@ export const httpConfig = {
         upload: '/upload',
       },
     },
-    example: {
-      root: 'examples',
-      children: {
-        random: '/random',
-      },
-    },
   },
 }

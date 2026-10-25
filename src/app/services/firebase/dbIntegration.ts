@@ -1,7 +1,6 @@
 import {
   collection,
   deleteField,
-  documentId,
   doc,
   getDocs,
   query,
@@ -15,17 +14,6 @@ import { localDb, invalidateSearchIndex } from '@/services/localDb'
 
 const FIRESTORE_IN_QUERY_LIMIT = 30
 const FIRESTORE_BATCH_WRITE_LIMIT = 400
-
-export interface IIntegrationResult {
-  isSuccess: boolean
-  totalItems: number
-  itemsScanned: number
-  itemsUpdated: number
-  examplesEmbedded: number
-  alreadyIntegrated: number
-  errors: string[]
-  message: string
-}
 
 /**
  * Remove undefined values recursively from objects/arrays to satisfy Firestore rules.
@@ -163,217 +151,11 @@ export const normalizeItemExamples = (items: IItem[]): IItem[] => {
   })
 }
 
-/**
- * Integrates (migrates) examples directly into item meanings in Firebase Firestore.
- * Finds items where meanings[].examples contains string IDs, fetches the corresponding
- * example documents from Firestore's examples collection (or localDb fallback),
- * embeds them as IExample[] in each meaning, and updates the item documents in Firestore.
- */
-export const integrateFirebaseDbExamples = async (options?: {
-  uid?: string
-  onProgress?: (message: string, current?: number, total?: number) => void
-}): Promise<IIntegrationResult> => {
-  const result: IIntegrationResult = {
-    isSuccess: false,
-    totalItems: 0,
-    itemsScanned: 0,
-    itemsUpdated: 0,
-    examplesEmbedded: 0,
-    alreadyIntegrated: 0,
-    errors: [],
-    message: '',
-  }
-
-  try {
-    options?.onProgress?.('Fetching items from Firestore...')
-
-    // 1. Fetch items from Firestore
-    let itemsQuery = query(collection(db, dbCollections.items))
-    if (options?.uid) {
-      itemsQuery = query(collection(db, dbCollections.items), where('uid', '==', options.uid))
-    }
-
-    const itemsSnapshot = await getDocs(itemsQuery)
-    result.totalItems = itemsSnapshot.size
-    result.itemsScanned = itemsSnapshot.size
-
-    // 2. Scan items and collect example IDs that are strings
-    const exampleIdSet = new Set<string>()
-    const itemsToUpdate: Array<{
-      ref: any
-      itemData: any
-      stringExampleIds: string[]
-    }> = []
-
-    for (const docSnap of itemsSnapshot.docs) {
-      const data = docSnap.data()
-      const meanings = data.meanings || []
-      const itemStringExampleIds: string[] = []
-
-      for (const meaning of meanings) {
-        for (const ex of meaning.examples || []) {
-          if (typeof ex === 'string' && ex.trim()) {
-            itemStringExampleIds.push(ex.trim())
-            exampleIdSet.add(ex.trim())
-          }
-        }
-      }
-
-      if (itemStringExampleIds.length > 0) {
-        itemsToUpdate.push({
-          ref: docSnap.ref,
-          itemData: data,
-          stringExampleIds: itemStringExampleIds,
-        })
-      } else {
-        result.alreadyIntegrated++
-      }
-    }
-
-    options?.onProgress?.(
-      `Found ${itemsToUpdate.length} items needing migration with ${exampleIdSet.size} unique examples...`,
-      0,
-      itemsToUpdate.length,
-    )
-
-    if (itemsToUpdate.length === 0) {
-      result.isSuccess = true
-      result.message = `All ${result.totalItems} items already have examples integrated!`
-      options?.onProgress?.(result.message)
-      return result
-    }
-
-    // 3. Fetch all referenced examples from Firestore in batches
-    const examplesMap = new Map<string, IExample>()
-    const allExampleIds = Array.from(exampleIdSet)
-
-    for (let i = 0; i < allExampleIds.length; i += FIRESTORE_IN_QUERY_LIMIT) {
-      const chunk = allExampleIds.slice(i, i + FIRESTORE_IN_QUERY_LIMIT)
-      options?.onProgress?.(
-        `Fetching examples ${Math.min(i + chunk.length, allExampleIds.length)}/${allExampleIds.length} from Firestore...`,
-      )
-
-      try {
-        const exSnapshot = await getDocs(
-          query(collection(db, 'examples'), where(documentId(), 'in', chunk)),
-        )
-        exSnapshot.forEach((docSnap) => {
-          examplesMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as IExample)
-        })
-      } catch (err: any) {
-        result.errors.push(`Error fetching chunk ${i}: ${err.message}`)
-      }
-    }
-
-    // Fallback: check localDb.items for any missing example IDs
-    const missingIds = new Set(allExampleIds.filter((id) => !examplesMap.has(id)))
-    if (missingIds.size > 0) {
-      try {
-        const localItems = await localDb.items.toArray()
-        for (const it of localItems) {
-          for (const m of it.meanings || []) {
-            for (const ex of (m.examples || []) as any[]) {
-              if (ex && typeof ex === 'object' && ex.id && missingIds.has(ex.id)) {
-                examplesMap.set(ex.id, ex as IExample)
-                missingIds.delete(ex.id)
-              }
-            }
-          }
-        }
-      } catch (localErr) {
-        console.warn('Fallback to localDb.items failed:', localErr)
-      }
-    }
-
-    // 4. Update items in Firestore with embedded IExample[]
-    let currentBatch = writeBatch(db)
-    let batchCount = 0
-    let processedCount = 0
-
-    for (const { ref, itemData } of itemsToUpdate) {
-      const updatedMeanings = (itemData.meanings || []).map((meaning: any) => {
-        const currentExamples = meaning.examples || []
-        const embeddedExamples = currentExamples.map((ex: any) => {
-          if (typeof ex === 'string') {
-            const found = examplesMap.get(ex)
-            if (found) {
-              result.examplesEmbedded++
-              return {
-                id: found.id || ex,
-                uid: found.uid || itemData.uid || '',
-                origin: found.origin || '',
-                translation: found.translation || '',
-                note: found.note || '',
-                created_date: found.created_date || Date.now(),
-                last_update: found.last_update || Date.now(),
-                randomIndex: found.randomIndex ?? Math.random(),
-              }
-            }
-            return {
-              id: ex,
-              origin: '',
-              translation: '',
-              note: '',
-            }
-          }
-          return ex
-        })
-
-        return {
-          ...meaning,
-          examples: embeddedExamples,
-        }
-      })
-
-      const updatePayload = removeUndefinedFields({
-        meanings: updatedMeanings,
-        last_update: Date.now(),
-      })
-
-      currentBatch.update(ref, updatePayload)
-      batchCount++
-      processedCount++
-      result.itemsUpdated++
-
-      if (batchCount >= FIRESTORE_BATCH_WRITE_LIMIT) {
-        options?.onProgress?.(
-          `Writing updates to Firestore: ${processedCount}/${itemsToUpdate.length}...`,
-          processedCount,
-          itemsToUpdate.length,
-        )
-        await currentBatch.commit()
-        currentBatch = writeBatch(db)
-        batchCount = 0
-      }
-    }
-
-    if (batchCount > 0) {
-      options?.onProgress?.(
-        `Finalizing updates: ${processedCount}/${itemsToUpdate.length}...`,
-        processedCount,
-        itemsToUpdate.length,
-      )
-      await currentBatch.commit()
-    }
-
-    result.isSuccess = true
-    result.message = `Successfully integrated ${result.examplesEmbedded} examples into ${result.itemsUpdated} items in Firebase DB.`
-    options?.onProgress?.(result.message)
-    return result
-  } catch (error: any) {
-    console.error('Failed to integrate Firebase DB examples:', error)
-    result.errors.push(error.message || String(error))
-    result.message = error.message || 'Integration failed'
-    return result
-  }
-}
-
 export interface IRemoveLegacyFieldsResult {
   isSuccess: boolean
   totalItems: number
   itemsScanned: number
   itemsUpdated: number
-  examplesUpdated: number
   errors: string[]
   message: string
 }
@@ -385,8 +167,7 @@ export type IRemoveOriginLowercaseResult = IRemoveLegacyFieldsResult
  * Removes legacy search fields (`keywords` and `origin_lowercase`) from:
  * 1. Root level of items documents in Firestore.
  * 2. Meanings and embedded examples inside items documents.
- * 3. Standalone examples collection documents in Firestore.
- * 4. Local IndexedDB cache (items and examples).
+ * 3. Local IndexedDB cache (items).
  */
 export const removeLegacyFieldsFromFirebaseDb = async (options?: {
   uid?: string
@@ -397,7 +178,6 @@ export const removeLegacyFieldsFromFirebaseDb = async (options?: {
     totalItems: 0,
     itemsScanned: 0,
     itemsUpdated: 0,
-    examplesUpdated: 0,
     errors: [],
     message: '',
   }
@@ -586,11 +366,11 @@ export const removeLegacyFieldsFromFirebaseDb = async (options?: {
     }
 
     result.isSuccess = true
-    if (result.itemsUpdated === 0 && result.examplesUpdated === 0) {
+    if (result.itemsUpdated === 0) {
       result.message =
         'No legacy fields (keywords & origin_lowercase) found. Firebase DB is already clean!'
     } else {
-      result.message = `Successfully removed legacy fields (keywords & origin_lowercase) from ${result.itemsUpdated} items and ${result.examplesUpdated} standalone examples in Firebase DB.`
+      result.message = `Successfully removed legacy fields (keywords & origin_lowercase) from ${result.itemsUpdated} items in Firebase DB.`
     }
     options?.onProgress?.(result.message)
     return result

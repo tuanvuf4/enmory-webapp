@@ -30,10 +30,8 @@ import {
   DatabaseOutlined,
   CheckOutlined,
   CodeOutlined,
-  CloudUploadOutlined,
   DeleteOutlined,
   ApiOutlined,
-  ToolOutlined,
   ClearOutlined,
   ExclamationCircleOutlined,
   EyeOutlined,
@@ -80,15 +78,7 @@ export const Developer: React.FC = () => {
   const [examples, setExamples] = useState<IExample[]>([])
   const [syncMeta, setSyncMeta] = useState<ISyncMeta[]>([])
 
-  // ================= Firebase Integration State =================
-  const [isDeduplicating, setIsDeduplicating] = useState<boolean>(false)
-  const [deduplicateStatus, setDeduplicateStatus] = useState<string>('')
-  const [deletedExamples, setDeletedExamples] = useState<
-    { id: string; origin: string; translation: string }[]
-  >([])
-
-  const [isIntegrating, setIsIntegrating] = useState<boolean>(false)
-  const [integrationStatus, setIntegrationStatus] = useState<string>('')
+  // ================= Firebase Maintenance State =================
 
   const [isRemovingLegacyFields, setIsRemovingLegacyFields] = useState<boolean>(false)
   const [removeLegacyFieldsStatus, setRemoveLegacyFieldsStatus] = useState<string>('')
@@ -592,38 +582,7 @@ export const Developer: React.FC = () => {
     [],
   )
 
-  // ================= Firebase Integration Handlers =================
-  const handleIntegrateExamples = async () => {
-    setIsIntegrating(true)
-    setIntegrationStatus('Starting Firebase DB integration...')
-    try {
-      const currentUser = user
-      if (!currentUser) {
-        throw new Error('You must be logged in to migrate data.')
-      }
-
-      const { integrateFirebaseDbExamples } = await import('@/services/firebase/dbIntegration')
-      const result = await integrateFirebaseDbExamples({
-        uid: currentUser.uid,
-        onProgress: (status) => setIntegrationStatus(status),
-      })
-
-      if (result.isSuccess) {
-        message.success(result.message)
-        setIntegrationStatus(result.message)
-      } else {
-        message.error(result.message)
-        setIntegrationStatus(result.message)
-      }
-    } catch (error) {
-      console.error('Integration error:', error)
-      message.error(error instanceof Error ? error.message : 'Integration failed')
-      setIntegrationStatus('Integration failed. Check console for details.')
-    } finally {
-      setIsIntegrating(false)
-    }
-  }
-
+  // ================= Firebase Maintenance Handlers =================
   const handleRemoveLegacyFields = async () => {
     setIsRemovingLegacyFields(true)
     setRemoveLegacyFieldsStatus('Starting legacy fields (keywords & origin_lowercase) removal...')
@@ -652,158 +611,6 @@ export const Developer: React.FC = () => {
       setRemoveLegacyFieldsStatus('Failed to remove legacy fields. Check console for details.')
     } finally {
       setIsRemovingLegacyFields(false)
-    }
-  }
-
-  const handleDeduplicateExamples = async () => {
-    setIsDeduplicating(true)
-    setDeduplicateStatus('Starting deduplication...')
-    setDeletedExamples([])
-    try {
-      const currentUser = user
-      if (!currentUser) {
-        throw new Error('You must be logged in to migrate data.')
-      }
-
-      const { collection, getDocs, writeBatch } = await import('firebase/firestore')
-      const { db } = await import('@/config/firebaseConfig')
-
-      // 1. Fetch all examples and find duplicates by origin text
-      setDeduplicateStatus('Fetching examples...')
-      const examplesSnapshot = await getDocs(collection(db, 'examples'))
-
-      const examplesMap: Record<
-        string,
-        { id: string; ref: any; origin: string; translation: string }[]
-      > = {}
-      for (const document of examplesSnapshot.docs) {
-        const data = document.data()
-        const origin = (data.origin || '').trim()
-        const originLower = origin.toLowerCase()
-        if (!originLower) continue
-
-        if (!examplesMap[originLower]) {
-          examplesMap[originLower] = []
-        }
-        examplesMap[originLower].push({
-          id: document.id,
-          ref: document.ref,
-          origin: data.origin || '',
-          translation: data.translation || '',
-        })
-      }
-
-      // Identify duplicate IDs and map them to the kept ID
-      const duplicateIdMap: Record<string, string> = {}
-      const docsToDelete: any[] = []
-      const deletedList: { id: string; origin: string; translation: string }[] = []
-      let duplicateDocsCount = 0
-
-      for (const originLower in examplesMap) {
-        const group = examplesMap[originLower]
-        if (group.length > 1) {
-          const keepDoc = group[0]
-          for (let i = 1; i < group.length; i++) {
-            duplicateIdMap[group[i].id] = keepDoc.id
-            docsToDelete.push(group[i].ref)
-            deletedList.push({
-              id: group[i].id,
-              origin: group[i].origin,
-              translation: group[i].translation,
-            })
-            duplicateDocsCount++
-          }
-        }
-      }
-
-      setDeduplicateStatus(
-        `Found ${duplicateDocsCount} duplicate examples. Fetching items to update references...`,
-      )
-
-      // 2. Fetch all items to clean up their referenced example IDs
-      const itemsSnapshot = await getDocs(collection(db, 'items'))
-      let itemsBatch = writeBatch(db)
-      let itemsUpdatedCount = 0
-      let itemsProcessed = 0
-
-      for (const document of itemsSnapshot.docs) {
-        const itemData = document.data()
-        const meanings = itemData.meanings || []
-        let itemChanged = false
-
-        const updatedMeanings = meanings.map((meaning: any) => {
-          const examples = meaning.examples || []
-          if (examples.length === 0) return meaning
-
-          // Replace duplicate IDs with kept IDs and deduplicate list
-          const mappedIds = examples.map((id: string) => duplicateIdMap[id] || id)
-          const uniqueIds = Array.from(new Set(mappedIds)) as string[]
-
-          if (JSON.stringify(examples) !== JSON.stringify(uniqueIds)) {
-            itemChanged = true
-            return {
-              ...meaning,
-              examples: uniqueIds,
-            }
-          }
-          return meaning
-        })
-
-        if (itemChanged) {
-          itemsBatch.update(document.ref, { meanings: updatedMeanings })
-          itemsUpdatedCount++
-          itemsProcessed++
-
-          if (itemsProcessed === 400) {
-            await itemsBatch.commit()
-            itemsBatch = writeBatch(db)
-            itemsProcessed = 0
-          }
-        }
-      }
-
-      if (itemsProcessed > 0) {
-        await itemsBatch.commit()
-      }
-
-      // 3. Delete duplicate example documents from Firestore
-      setDeduplicateStatus(
-        `Updated ${itemsUpdatedCount} items. Deleting duplicate example documents...`,
-      )
-
-      let deleteBatch = writeBatch(db)
-      let deletedCount = 0
-      let deleteProcessed = 0
-
-      for (const docRef of docsToDelete) {
-        deleteBatch.delete(docRef)
-        deletedCount++
-        deleteProcessed++
-
-        if (deleteProcessed === 400) {
-          await deleteBatch.commit()
-          deleteBatch = writeBatch(db)
-          deleteProcessed = 0
-        }
-      }
-
-      if (deleteProcessed > 0) {
-        await deleteBatch.commit()
-      }
-
-      setDeletedExamples(deletedList)
-      message.success(
-        `Deduplication complete! Deleted ${deletedCount} duplicate examples, updated references in ${itemsUpdatedCount} items.`,
-      )
-      setDeduplicateStatus(
-        `Deduplication complete! Deleted ${deletedCount} duplicate examples, updated references in ${itemsUpdatedCount} items.`,
-      )
-    } catch (error) {
-      console.error('Deduplication error:', error)
-      message.error(error instanceof Error ? error.message : 'Deduplication failed')
-      setDeduplicateStatus('Deduplication failed. Check console for details.')
-    } finally {
-      setIsDeduplicating(false)
     }
   }
 
@@ -1401,48 +1208,7 @@ export const Developer: React.FC = () => {
                   />
                 )}
 
-                {/* 1. Integrate Examples */}
-                <Card
-                  title={
-                    <Space>
-                      <CloudUploadOutlined style={{ color: token.colorPrimary }} />
-                      <span>Integrate Examples into Items</span>
-                    </Space>
-                  }
-                  size='small'
-                >
-                  <Paragraph type='secondary'>
-                    Embeds referenced examples from the Firestore <code>examples</code> collection
-                    directly into item documents (under <code>meanings.examples</code>). This
-                    enables fully offline-capable local synchronization and avoids separate example
-                    queries.
-                  </Paragraph>
-                  <Space direction='vertical' style={{ width: '100%' }}>
-                    <Button
-                      type='primary'
-                      icon={<CloudUploadOutlined />}
-                      onClick={handleIntegrateExamples}
-                      loading={isIntegrating}
-                      disabled={!user}
-                    >
-                      Integrate Examples into Items (Firebase DB)
-                    </Button>
-                    {integrationStatus && (
-                      <Alert
-                        message={integrationStatus}
-                        type={
-                          integrationStatus.includes('failed') ||
-                          integrationStatus.includes('Error')
-                            ? 'error'
-                            : 'info'
-                        }
-                        showIcon
-                      />
-                    )}
-                  </Space>
-                </Card>
-
-                {/* 2. Remove Legacy Fields */}
+                {/* 1. Remove Legacy Fields */}
                 <Card
                   title={
                     <Space>
@@ -1478,79 +1244,7 @@ export const Developer: React.FC = () => {
                   </Space>
                 </Card>
 
-                {/* 3. Deduplicate Examples */}
-                <Card
-                  title={
-                    <Space>
-                      <ToolOutlined style={{ color: token.colorWarning }} />
-                      <span>Deduplicate Examples</span>
-                    </Space>
-                  }
-                  size='small'
-                >
-                  <Paragraph type='secondary'>
-                    Scans the Firestore <code>examples</code> collection for identical sentences
-                    (case-insensitive origin), keeps 1 canonical example, updates all item
-                    references to point to the canonical ID, and removes redundant duplicate example
-                    documents.
-                  </Paragraph>
-                  <Space direction='vertical' style={{ width: '100%' }}>
-                    <Button
-                      type='dashed'
-                      danger
-                      icon={<ToolOutlined />}
-                      onClick={handleDeduplicateExamples}
-                      loading={isDeduplicating}
-                      disabled={!user}
-                    >
-                      Deduplicate Examples (Delete duplicates, keep 1)
-                    </Button>
-                    {deduplicateStatus && (
-                      <Alert
-                        message={deduplicateStatus}
-                        type={deduplicateStatus.includes('failed') ? 'error' : 'info'}
-                        showIcon
-                      />
-                    )}
-
-                    {deletedExamples.length > 0 && (
-                      <div style={{ marginTop: 12, width: '100%' }}>
-                        <h4 style={{ marginBottom: 8, color: token.colorText }}>
-                          Deleted Duplicate Examples ({deletedExamples.length}):
-                        </h4>
-                        <Table
-                          dataSource={deletedExamples}
-                          columns={[
-                            {
-                              title: 'ID',
-                              dataIndex: 'id',
-                              key: 'id',
-                              width: '25%',
-                            },
-                            {
-                              title: 'Origin',
-                              dataIndex: 'origin',
-                              key: 'origin',
-                              width: '45%',
-                            },
-                            {
-                              title: 'Translation',
-                              dataIndex: 'translation',
-                              key: 'translation',
-                              width: '30%',
-                            },
-                          ]}
-                          rowKey='id'
-                          pagination={{ pageSize: 5 }}
-                          size='small'
-                          bordered
-                        />
-                      </div>
-                    )}
-                  </Space>
-                </Card>
-
-                {/* 4. Purge Soft-Deleted Items (is_deleted = true) */}
+                {/* 2. Purge Soft-Deleted Items (is_deleted = true) */}
                 <Card
                   title={
                     <Space>

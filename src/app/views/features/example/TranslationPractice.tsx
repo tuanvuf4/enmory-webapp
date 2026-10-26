@@ -90,7 +90,9 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
   const isCustom = Boolean(initialExample)
 
   // Local state if initialExample is provided (isolated session)
-  const [localHistory, setLocalHistory] = useState<IExample[]>(initialExample ? [initialExample] : [])
+  const [localHistory, setLocalHistory] = useState<IExample[]>(
+    initialExample ? [initialExample] : [],
+  )
   const [localIndex, setLocalIndex] = useState<number>(0)
   const [localDirection, setLocalDirection] = useState<'vi-en' | 'en-vi'>('vi-en')
 

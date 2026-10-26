@@ -20,11 +20,7 @@ import { Button, Dropdown, MenuProps, Space, Tag, Tooltip } from 'antd'
 import styles from './listening.module.scss'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
-import {
-  parseTranscript,
-  formatSegmentTime,
-  getActiveSegmentIndex,
-} from './transcriptUtils'
+import { parseTranscript, formatSegmentTime, getActiveSegmentIndex } from './transcriptUtils'
 import { KaraokeText } from './KaraokeText'
 import { useSmoothTime } from './useSmoothTime'
 
@@ -289,11 +285,7 @@ export const FocusListeningModal: React.FC = () => {
         }}
         title={isBlur ? 'Nhấp để lật mở câu này' : undefined}
       >
-        {isActive ? (
-          <KaraokeText text={seg.text} progress={activeSegmentProgress} />
-        ) : (
-          seg.text
-        )}
+        {isActive ? <KaraokeText text={seg.text} progress={activeSegmentProgress} /> : seg.text}
       </span>
     )
   }
@@ -307,7 +299,9 @@ export const FocusListeningModal: React.FC = () => {
           <Space size={6} wrap>
             <Tag color='cyan' style={{ fontSize: 12, borderRadius: 12 }}>
               <SoundOutlined style={{ marginRight: 4 }} />
-              {activeIndex >= 0 ? `${activeIndex + 1} / ${segments.length}` : `0 / ${segments.length}`}
+              {activeIndex >= 0
+                ? `${activeIndex + 1} / ${segments.length}`
+                : `0 / ${segments.length}`}
             </Tag>
             {loopSegment && (
               <Tag color='gold' style={{ fontSize: 12, borderRadius: 12 }}>
@@ -328,7 +322,13 @@ export const FocusListeningModal: React.FC = () => {
 
         <Space size='middle' align='center'>
           {/* Switch View Mode: 3-line Focus vs All scroll */}
-          <Tooltip title={viewMode === 'focus' ? 'Chuyển sang cuộn tất cả câu' : 'Chuyển sang xem 3 câu tập trung'}>
+          <Tooltip
+            title={
+              viewMode === 'focus'
+                ? 'Chuyển sang cuộn tất cả câu'
+                : 'Chuyển sang xem 3 câu tập trung'
+            }
+          >
             <Button
               type='text'
               className={styles.focusHeaderBtn}
@@ -473,7 +473,11 @@ export const FocusListeningModal: React.FC = () => {
           {/* Playback Rate Dropdown (bên trái) */}
           <Dropdown menu={speedMenu} trigger={['click']}>
             <Tooltip title='Tốc độ phát'>
-              <Button type='text' className={styles.focusCtrlBtn} style={{ fontSize: 14, fontWeight: 600 }}>
+              <Button
+                type='text'
+                className={styles.focusCtrlBtn}
+                style={{ fontSize: 14, fontWeight: 600 }}
+              >
                 {playbackRate}x
               </Button>
             </Tooltip>

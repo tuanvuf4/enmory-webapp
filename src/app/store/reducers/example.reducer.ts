@@ -61,7 +61,7 @@ export const exampleReducer = createSlice({
       if (state.translationPractice?.history?.length) {
         const updateMap = new Map(action.payload.map((ex) => [ex.id, ex]))
         state.translationPractice.history = state.translationPractice.history.map((ex) =>
-          updateMap.has(ex.id) ? { ...ex, ...updateMap.get(ex.id)! } : ex
+          updateMap.has(ex.id) ? { ...ex, ...updateMap.get(ex.id)! } : ex,
         )
       }
     },
@@ -69,12 +69,12 @@ export const exampleReducer = createSlice({
       state.list = state.list.filter((ex) => ex.id !== action.payload)
       if (state.translationPractice?.history?.length) {
         state.translationPractice.history = state.translationPractice.history.filter(
-          (ex) => ex.id !== action.payload
+          (ex) => ex.id !== action.payload,
         )
         if (state.translationPractice.currentIndex >= state.translationPractice.history.length) {
           state.translationPractice.currentIndex = Math.max(
             0,
-            state.translationPractice.history.length - 1
+            state.translationPractice.history.length - 1,
           )
         }
       }

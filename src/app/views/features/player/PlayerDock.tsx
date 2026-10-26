@@ -1277,7 +1277,14 @@ export const PlayerDock: React.FC = () => {
           </div>
 
           {activeSegmentText && (
-            <div className={`${styles.liveTranscript} ${player.transcriptDisplayMode === 'blur' ? styles.transcriptBlurred : player.transcriptDisplayMode === 'hidden' ? styles.transcriptHidden : ''}`} onClick={() => { if (player.transcriptDisplayMode !== 'visible') { dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: 'visible' })) } }}>
+            <div
+              className={`${styles.liveTranscript} ${player.transcriptDisplayMode === 'blur' ? styles.transcriptBlurred : player.transcriptDisplayMode === 'hidden' ? styles.transcriptHidden : ''}`}
+              onClick={() => {
+                if (player.transcriptDisplayMode !== 'visible') {
+                  dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: 'visible' }))
+                }
+              }}
+            >
               <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
             </div>
           )}

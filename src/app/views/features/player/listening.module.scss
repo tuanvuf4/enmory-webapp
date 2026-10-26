@@ -528,13 +528,13 @@
   color: #8ea5b0;
 }
 
-/* 3-line Focus Mode */
+/* 1-line Focus Mode */
 .focusLyricsCentral {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 36px;
+  gap: 12px;
   width: 100%;
   text-align: center;
 }
@@ -563,7 +563,7 @@
 }
 
 .focusLyricActive {
-  font-size: 34px;
+  font-size: 38px;
   font-weight: 600;
   color: #ffffff;
   line-height: 1.55;

@@ -240,9 +240,7 @@ export const FocusListeningModal: React.FC = () => {
 
   if (!isFocusMode) return null
 
-  const prevSegment = activeIndex > 0 ? segments[activeIndex - 1] : null
   const currentSegment = activeIndex >= 0 ? segments[activeIndex] : null
-  const nextSegment = activeIndex < segments.length - 1 ? segments[activeIndex + 1] : null
 
   // Dropdown menu for speed selection
   const speedMenu: MenuProps = {
@@ -321,12 +319,12 @@ export const FocusListeningModal: React.FC = () => {
         </div>
 
         <Space size='middle' align='center'>
-          {/* Switch View Mode: 3-line Focus vs All scroll */}
+          {/* Switch View Mode: 1-line Focus vs All scroll */}
           <Tooltip
             title={
               viewMode === 'focus'
                 ? 'Chuyển sang cuộn tất cả câu'
-                : 'Chuyển sang xem 3 câu tập trung'
+                : 'Chuyển sang xem 1 câu tập trung'
             }
           >
             <Button
@@ -376,26 +374,8 @@ export const FocusListeningModal: React.FC = () => {
             <p>Bài nghe này chưa có transcript có mốc thời gian.</p>
           </div>
         ) : viewMode === 'focus' ? (
-          /* Focus View Mode: 3 lines (Prev, Active with Karaoke, Next) */
+          /* Focus View Mode: 1 line (Only Active segment with Karaoke) */
           <div className={styles.focusLyricsCentral}>
-            {/* Previous line */}
-            <div
-              className={`${styles.focusLyricLine} ${styles.focusLyricPrev}`}
-              onClick={handlePrevSegment}
-              title='Nhấp để nghe lại câu trước'
-            >
-              {prevSegment ? (
-                <>
-                  <span className={styles.focusTimeTag}>
-                    {formatSegmentTime(prevSegment.timeSeconds)}
-                  </span>
-                  {renderSegmentText(prevSegment, activeIndex - 1, false)}
-                </>
-              ) : (
-                <span className={styles.focusPlaceholder}>&nbsp;</span>
-              )}
-            </div>
-
             {/* Active line with big Karaoke highlight */}
             <div className={`${styles.focusLyricLine} ${styles.focusLyricActive}`}>
               {currentSegment ? (
@@ -407,24 +387,6 @@ export const FocusListeningModal: React.FC = () => {
                 </>
               ) : (
                 <span className={styles.focusPlaceholder}>Đang chuẩn bị phát...</span>
-              )}
-            </div>
-
-            {/* Next line */}
-            <div
-              className={`${styles.focusLyricLine} ${styles.focusLyricNext}`}
-              onClick={handleNextSegment}
-              title='Nhấp để nhảy tới câu tiếp theo'
-            >
-              {nextSegment ? (
-                <>
-                  <span className={styles.focusTimeTag}>
-                    {formatSegmentTime(nextSegment.timeSeconds)}
-                  </span>
-                  {renderSegmentText(nextSegment, activeIndex + 1, false)}
-                </>
-              ) : (
-                <span className={styles.focusPlaceholder}>&nbsp;</span>
               )}
             </div>
           </div>

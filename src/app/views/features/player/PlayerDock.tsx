@@ -17,7 +17,7 @@ import {
 import { Button, Dropdown, Flex, MenuProps, Space, Tag, theme } from 'antd'
 import ReactPlayer from 'react-player'
 import { createPortal } from 'react-dom'
-import styles from './player.module.scss'
+import styles from './listening.module.scss'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { appSetting } from '@/config/appConfig'

@@ -3,7 +3,7 @@
 .vocabContainer {
   margin-top: $size * 1.5;
   border-radius: 12px;
-  border: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+  border: 1px solid var(--ant-color-border);
   background: var(--ant-color-bg-container, #ffffff);
   padding: $size * 1.25;
   transition: all 0.3s ease;
@@ -21,7 +21,7 @@
   flex-wrap: wrap;
   gap: $size * 0.75;
   padding-bottom: $size * 0.75;
-  border-bottom: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+  border-bottom: 1px solid var(--ant-color-border);
 }
 
 .titleArea {
@@ -154,7 +154,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 8px;
-    border-bottom: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+    border-bottom: 1px solid var(--ant-color-border);
     padding-bottom: 8px;
 
     .wordTitle {
@@ -250,7 +250,7 @@
     justify-content: space-between;
     gap: 8px;
     padding-top: 6px;
-    border-top: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+    border-top: 1px solid var(--ant-color-border);
   }
 }
 

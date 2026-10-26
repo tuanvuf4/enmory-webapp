@@ -35,8 +35,6 @@ import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { IHttpResponse } from '@/models/http.model'
 import { initItem } from '../modals'
-import { speakWord } from '@/helpers/index'
-
 interface IProps {
   action?: boolean
   active?: boolean
@@ -282,7 +280,7 @@ export const Item: React.FC<IProps> = ({
         <>
           <Flex gap={token.size / 2} vertical>
             <div className={styles.title}>
-              <h2 className={styles.origin} onClick={() => speakWord(data.origin, 'en-US')}>
+              <h2 className={styles.origin}>
                 {isDefect(data) && <span className={styles.warnTitle}>{data.origin}</span>}
                 {!isDefect(data) && <span>{data.origin}</span>}
               </h2>

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import styles from './player.module.scss'
+import styles from './listening.module.scss'
 
 interface IProps {
   text: string

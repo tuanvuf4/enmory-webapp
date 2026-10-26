@@ -254,3 +254,10 @@ input[type='range']:active::-moz-range-thumb {
 a.ck.ck-button:not(.ck-disabled):hover {
   background: transparent !important;
 }
+
+:where(.css-dev-only-do-not-override-1ih6taz).ant-tabs-top > .ant-tabs-nav::before,
+:where(.css-dev-only-do-not-override-1ih6taz).ant-tabs-bottom > .ant-tabs-nav::before,
+:where(.css-dev-only-do-not-override-1ih6taz).ant-tabs-top > div > .ant-tabs-nav::before,
+:where(.css-dev-only-do-not-override-1ih6taz).ant-tabs-bottom > div > .ant-tabs-nav::before {
+  border-bottom-color: var(--ant-color-border) !important;
+}

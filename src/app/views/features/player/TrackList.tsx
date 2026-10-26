@@ -8,7 +8,7 @@ import {
 import { Button, Flex, theme } from 'antd'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
-import styles from './player.module.scss'
+import styles from './listening.module.scss'
 
 import { usePlayer } from '@/helpers/hooks'
 import { useState } from 'react'

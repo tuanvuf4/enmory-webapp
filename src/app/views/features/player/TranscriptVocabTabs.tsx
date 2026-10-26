@@ -6,7 +6,6 @@ import {
   Button,
   Space,
   Input,
-  Select,
   Popover,
   Spin,
   Empty,
@@ -25,7 +24,12 @@ import {
   BookOutlined,
   CheckOutlined,
   ThunderboltOutlined,
+  EyeOutlined,
 } from '@ant-design/icons'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { localDb } from '@/services/localDb'
+import { itemApi } from '@/services/firebase/api/item.api'
+import { IItem, ECategory, EType } from '@/models/item.model'
 import { useDispatch } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { IMediaForm, ITracks } from '@/models/media.model'
@@ -40,15 +44,9 @@ import {
   geminiVocabClassifierService,
   getTranscriptHash,
 } from '@/services/gemini/geminiVocabClassifier.service'
-import {
-  GEMINI_MODEL_OPTIONS,
-  DEFAULT_GEMINI_MODEL,
-  TGeminiModel,
-} from '@/services/gemini/geminiModels'
 import { tracksApi } from '@/services/firebase/api/tracks.api'
 import { usePrompt, useItemModal } from '@/helpers/hooks'
 import { initItem } from '@/views/features/modals/itemModal/data'
-import { ECategory, EType } from '@/models/item.model'
 import { parseTranscript } from './transcriptUtils'
 import styles from './transcriptVocabTabs.module.scss'
 
@@ -104,13 +102,35 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
   const [activeTab, setActiveTab] = useState<string>('all')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
-  const [selectedModel, setSelectedModel] = useState<TGeminiModel>(DEFAULT_GEMINI_MODEL)
   const [loading, setLoading] = useState<boolean>(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [speakingId, setSpeakingId] = useState<string | null>(null)
 
   const [classificationData, setClassificationData] =
     useState<ITranscriptClassificationData | null>(null)
+
+  // Real-time query of user's vocabulary items from Dexie localDb
+  const localItems = useLiveQuery(async () => {
+    try {
+      return await localDb.items.toArray()
+    } catch (err) {
+      console.warn('Error reading localDb.items in TranscriptVocabTabs:', err)
+      return []
+    }
+  }, [])
+
+  // Create a map of existing items by lowercased origin for fast O(1) lookups
+  const existingItemsMap = useMemo(() => {
+    const map = new Map<string, IItem>()
+    if (localItems && localItems.length > 0) {
+      for (const it of localItems) {
+        if (it.origin) {
+          map.set(it.origin.trim().toLowerCase(), it)
+        }
+      }
+    }
+    return map
+  }, [localItems])
 
   // Parse transcript segments for timestamp seeking
   const segments = useMemo(() => parseTranscript(transcript || ''), [transcript])
@@ -129,7 +149,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
       return
     }
 
-    // 1. Check if track already has vocabClassification in memory/model
+    // 1. Check if track already has vocabClassification in memory/model (stored from Firestore)
     if (track?.vocabClassification && track.vocabClassification.length > 0) {
       setClassificationData({
         trackId: track.id,
@@ -164,11 +184,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
 
     try {
       setLoading(true)
-      const res = await geminiVocabClassifierService.classifyTranscript(
-        transcript,
-        track?.id,
-        selectedModel,
-      )
+      const res = await geminiVocabClassifierService.classifyTranscript(transcript, track?.id)
 
       if (res.isSuccess && res.content) {
         setClassificationData(res.content)
@@ -311,6 +327,37 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
     })
   }
 
+  // View existing item in vocabulary modal
+  const handleViewVocabulary = async (item: IClassifiedVocabItem) => {
+    const cleanText = item.text.trim().toLowerCase()
+    let target = existingItemsMap.get(cleanText)
+
+    if (!target) {
+      try {
+        const res = await itemApi.getItems({
+          keyword: item.text.trim(),
+          page: 0,
+          size: 1,
+          exact: true,
+        })
+        if (res.isSuccess && res.content && res.content.length > 0) {
+          target = res.content[0]
+        }
+      } catch (err) {
+        console.warn('Error fetching item by origin:', err)
+      }
+    }
+
+    if (target) {
+      openItemModal('view', target)
+    } else {
+      message({
+        type: 'warning',
+        content: `Không tìm thấy thông tin từ vựng "${item.text}".`,
+      })
+    }
+  }
+
   // Seek audio to where the phrase appears in the transcript
   const handleSeekToAudio = (item: IClassifiedVocabItem) => {
     if (!segments || segments.length === 0) return
@@ -420,6 +467,10 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
     const levelColor = CEFR_LEVEL_COLORS[item.level] || token.colorPrimary
     const catColor = CATEGORY_COLORS[item.category] || 'default'
 
+    const cleanText = item.text.trim().toLowerCase()
+    const existingItem = existingItemsMap.get(cleanText)
+    const isSaved = !!existingItem
+
     return (
       <div className={styles.popoverContent}>
         {/* Header: Word title, Speaker, Level & Category badges */}
@@ -443,6 +494,11 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
           </div>
 
           <div className={styles.badges}>
+            {isSaved && (
+              <Tag color='success' icon={<CheckOutlined />}>
+                Đã có
+              </Tag>
+            )}
             <Tag color={levelColor} className={styles.levelTag}>
               {item.level}
             </Tag>
@@ -507,17 +563,31 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
             </Tooltip>
           </Space>
 
-          <Button
-            type='primary'
-            size='small'
-            icon={<PlusCircleOutlined />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleAddToVocabulary(item)
-            }}
-          >
-            Lưu vào bộ từ
-          </Button>
+          {isSaved ? (
+            <Button
+              type='primary'
+              size='small'
+              icon={<EyeOutlined />}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleViewVocabulary(item)
+              }}
+            >
+              Xem từ vựng
+            </Button>
+          ) : (
+            <Button
+              type='primary'
+              size='small'
+              icon={<PlusCircleOutlined />}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleAddToVocabulary(item)
+              }}
+            >
+              Lưu lại từ vựng
+            </Button>
+          )}
         </div>
       </div>
     )
@@ -527,6 +597,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
   const renderVocabChip = (item: IClassifiedVocabItem) => {
     const levelColor = CEFR_LEVEL_COLORS[item.level] || token.colorPrimary
     const catColor = CATEGORY_COLORS[item.category] || 'default'
+    const isSaved = existingItemsMap.has(item.text.trim().toLowerCase())
 
     return (
       <Popover
@@ -538,7 +609,15 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
         mouseLeaveDelay={0.15}
         overlayStyle={{ maxWidth: '92vw' }}
       >
-        <div className={styles.vocabChip}>
+        <div
+          className={styles.vocabChip}
+          style={isSaved ? { borderColor: token.colorSuccess } : undefined}
+        >
+          {isSaved && (
+            <Tooltip title='Đã lưu trong bộ từ vựng'>
+              <CheckOutlined style={{ color: token.colorSuccess, fontSize: 11 }} />
+            </Tooltip>
+          )}
           <span className={styles.chipText}>{item.text}</span>
           {item.type && <span className={styles.chipType}>({item.type})</span>}
           <Tag
@@ -633,7 +712,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
         <div className={styles.titleArea}>
           <h4>
             <BookOutlined style={{ color: token.colorPrimary }} />
-            Từ vựng & Cụm từ Transcript (CEFR A1 → C2)
+            Từ vựng (A1 → C2)
           </h4>
           {classificationData && (
             <Tag
@@ -647,15 +726,6 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
         </div>
 
         <div className={styles.headerActions}>
-          <Select
-            size='small'
-            value={selectedModel}
-            onChange={(val) => setSelectedModel(val)}
-            options={GEMINI_MODEL_OPTIONS}
-            style={{ width: 175 }}
-            popupMatchSelectWidth={false}
-          />
-
           <Button
             size='small'
             type={classificationData ? 'default' : 'primary'}
@@ -663,7 +733,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
             loading={loading}
             onClick={handleClassify}
           >
-            {classificationData ? 'Phân loại lại' : 'Phân loại bằng Gemini'}
+            {classificationData ? 'Phân loại' : 'Phân loại'}
           </Button>
         </div>
       </div>
@@ -685,10 +755,6 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
             <RobotOutlined />
           </div>
           <h5>Chưa phân loại từ vựng cho bài nghe này</h5>
-          <p>
-            Sử dụng mô hình AI Gemini để tự động bóc tách từ vựng, cụm từ (phrases), collocations
-            theo các thang đo độ khó CEFR từ A1 đến C2 kèm phiên âm, nghĩa tiếng Việt và ngữ cảnh.
-          </p>
           <Button
             type='primary'
             size='middle'
@@ -696,7 +762,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
             onClick={handleClassify}
             disabled={!transcript?.trim()}
           >
-            Phân loại từ vựng ngay
+            Phân loại từ vựng
           </Button>
         </div>
       )}
@@ -704,21 +770,8 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
       {/* Classified Content: Tabs & Items */}
       {!loading && classificationData && (
         <>
-          {/* Summary Quote */}
-          {classificationData.summary && (
-            <div className={styles.summaryBanner}>
-              <RobotOutlined style={{ color: token.colorPrimary, marginTop: 2 }} />
-              <div>{classificationData.summary}</div>
-            </div>
-          )}
-
           {/* Level Tabs Component: A1 -> C2 */}
-          <Tabs
-            activeKey={activeTab}
-            onChange={(key) => setActiveTab(key)}
-            items={tabItems}
-            style={{ marginTop: 8 }}
-          />
+          <Tabs activeKey={activeTab} onChange={(key) => setActiveTab(key)} items={tabItems} />
 
           {/* Filter Bar: Category & Search */}
           <div className={styles.filterBar}>

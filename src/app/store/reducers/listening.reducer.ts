@@ -1,6 +1,8 @@
 import { IMediaForm, ITracks } from '@/models/media.model'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+export type TTranscriptDisplayMode = 'visible' | 'blur' | 'hidden'
+
 export interface PlayerState {
   src?: string
   pip: boolean
@@ -19,6 +21,8 @@ export interface PlayerState {
   loadedSeconds: number
   playedSeconds: number
   seekTo: number | null
+  isFocusMode?: boolean
+  transcriptDisplayMode?: TTranscriptDisplayMode
 }
 
 export interface IListeningState {
@@ -48,6 +52,8 @@ export const initialState: IListeningState = {
     loadedSeconds: 0,
     playedSeconds: 0,
     seekTo: null,
+    isFocusMode: false,
+    transcriptDisplayMode: 'visible',
   },
 }
 
@@ -97,11 +103,13 @@ export const listeningReducer = createSlice({
         action.payload.listening.player.playing = false
         action.payload.listening.player.seeking = false
         action.payload.listening.player.seekTo = null
+        action.payload.listening.player.isFocusMode = false
       }
       if (state?.player) {
         state.player.playing = false
         state.player.seeking = false
         state.player.seekTo = null
+        state.player.isFocusMode = false
       }
     })
   },

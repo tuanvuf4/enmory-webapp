@@ -43,6 +43,8 @@ import {
   TDictationWordStatus,
 } from '../sentenceListening/dictationUtil'
 import { shuffleArray } from '@/helpers/mics'
+import { useDispatch, useSelector } from '@/core/hooks'
+import { exampleAction } from '@/store/reducers/example.reducer'
 import styles from './translationPractice.module.scss'
 
 const { Text } = Typography
@@ -82,17 +84,37 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
   onSuccess,
 }) => {
   const { token } = theme.useToken()
+  const dispatch = useDispatch()
 
-  // Direction: 'vi-en' (Translate to English) or 'en-vi' (Translate to Vietnamese)
-  const [direction, setDirection] = useState<'vi-en' | 'en-vi'>('vi-en')
+  const reduxPractice = useSelector((state) => state.example?.translationPractice)
+  const isCustom = Boolean(initialExample)
 
-  // History & navigation
-  const [history, setHistory] = useState<IExample[]>(initialExample ? [initialExample] : [])
-  const [currentIndex, setCurrentIndex] = useState<number>(0)
+  // Local state if initialExample is provided (isolated session)
+  const [localHistory, setLocalHistory] = useState<IExample[]>(initialExample ? [initialExample] : [])
+  const [localIndex, setLocalIndex] = useState<number>(0)
+  const [localDirection, setLocalDirection] = useState<'vi-en' | 'en-vi'>('vi-en')
+
+  // Redux state if no initialExample (persistent session)
+  const history = useMemo(() => {
+    return isCustom ? localHistory : (reduxPractice?.history ?? [])
+  }, [isCustom, localHistory, reduxPractice?.history])
+
+  const currentIndex = isCustom ? localIndex : (reduxPractice?.currentIndex ?? 0)
+  const direction = isCustom ? localDirection : (reduxPractice?.direction ?? 'vi-en')
+
   const [loading, setLoading] = useState<boolean>(false)
 
-  // Current item
-  const currentExample = history[currentIndex] || null
+  // Bounds-safe index and current item
+  const safeCurrentIndex =
+    history.length > 0 ? Math.min(Math.max(0, currentIndex), history.length - 1) : 0
+  const currentExample = history[safeCurrentIndex] || null
+
+  // Ensure Redux index stays within valid bounds
+  useEffect(() => {
+    if (!isCustom && history.length > 0 && currentIndex !== safeCurrentIndex) {
+      dispatch(exampleAction.setPracticeIndex(safeCurrentIndex))
+    }
+  }, [isCustom, history.length, currentIndex, safeCurrentIndex, dispatch])
 
   // User input & evaluation states
   const [userAnswer, setUserAnswer] = useState<string>('')
@@ -161,11 +183,15 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
       const { isSuccess, content } = await exampleApi.getRandomExamples(1)
       if (isSuccess && content && content[0]) {
         const newEx = content[0]
-        setHistory((prev) => {
-          const next = [...prev, newEx]
-          setCurrentIndex(next.length - 1)
-          return next
-        })
+        if (isCustom) {
+          setLocalHistory((prev) => {
+            const next = [...prev, newEx]
+            setLocalIndex(next.length - 1)
+            return next
+          })
+        } else {
+          dispatch(exampleAction.addPracticeExample(newEx))
+        }
         resetExerciseState()
       } else {
         message.warning('Không tìm thấy câu ví dụ nào.')
@@ -176,9 +202,9 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
     } finally {
       setLoading(false)
     }
-  }, [resetExerciseState])
+  }, [dispatch, isCustom, resetExerciseState])
 
-  // Load initial example or fetch random on mount
+  // Load initial example or fetch random on mount only if history is empty
   useEffect(() => {
     if (!initialExample && history.length === 0) {
       fetchRandomSentence()
@@ -307,16 +333,26 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
 
   // Navigate to previous question in session
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1)
+    if (safeCurrentIndex > 0) {
+      const nextIndex = safeCurrentIndex - 1
+      if (isCustom) {
+        setLocalIndex(nextIndex)
+      } else {
+        dispatch(exampleAction.setPracticeIndex(nextIndex))
+      }
       resetExerciseState()
     }
   }
 
   // Navigate to next or fetch new
   const handleNext = () => {
-    if (currentIndex < history.length - 1) {
-      setCurrentIndex((prev) => prev + 1)
+    if (safeCurrentIndex < history.length - 1) {
+      const nextIndex = safeCurrentIndex + 1
+      if (isCustom) {
+        setLocalIndex(nextIndex)
+      } else {
+        dispatch(exampleAction.setPracticeIndex(nextIndex))
+      }
       resetExerciseState()
     } else {
       fetchRandomSentence()
@@ -325,7 +361,12 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
 
   // Switch direction
   const handleSwitchDirection = () => {
-    setDirection((prev) => (prev === 'vi-en' ? 'en-vi' : 'vi-en'))
+    const nextDir = direction === 'vi-en' ? 'en-vi' : 'vi-en'
+    if (isCustom) {
+      setLocalDirection(nextDir)
+    } else {
+      dispatch(exampleAction.setPracticeDirection(nextDir))
+    }
     resetExerciseState()
   }
 
@@ -357,7 +398,7 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
 
   return (
     <div className={styles.container}>
-      {/* 1. Header Bar: Mode badge, Direction Switch, Session counter */}
+      {/* 1. Header Bar: Mode badge, Direction Switch, Reload button, Session counter */}
       <div className={styles.headerBar}>
         <div className={styles.modeBadge}>
           <span>
@@ -372,8 +413,17 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
             </Button>
           </Tooltip>
 
+          <Tooltip title='Tải câu mới'>
+            <Button
+              size='small'
+              icon={<SyncOutlined spin={loading} />}
+              onClick={fetchRandomSentence}
+              loading={loading}
+            />
+          </Tooltip>
+
           <span style={{ fontSize: 12, opacity: 0.65 }}>
-            Câu {currentIndex + 1}/{history.length}
+            Câu {safeCurrentIndex + 1}/{history.length}
           </span>
 
           {onCancel && (
@@ -457,7 +507,7 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
           }}
         />
         <div className={styles.shortcutTip}>
-          Mẹo: Nhấn <b>Ctrl + Enter</b> để kiểm tra nhanh
+          Tip: Press <b>Ctrl + Enter</b> to check
         </div>
       </div>
 
@@ -470,61 +520,51 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
             icon={<CheckOutlined />}
             style={{ minWidth: 100 }}
           >
-            Kiểm tra
+            Check
           </Button>
 
-          <Tooltip title='Nhờ AI Gemini chấm điểm ngữ pháp & độ tự nhiên'>
-            <Button
-              icon={<ThunderboltOutlined style={{ color: '#722ed1' }} />}
-              onClick={handleAiReview}
-              loading={isAiReviewing}
-            >
-              AI Review
-            </Button>
-          </Tooltip>
-
-          <Tooltip
-            title={
-              hintLevel === 0
-                ? 'Hiện từ gợi ý'
-                : hintLevel === 1
-                  ? 'Gợi ý chữ cái đầu'
-                  : 'Tắt gợi ý'
-            }
+          <Button
+            icon={<ThunderboltOutlined style={{ color: '#722ed1' }} />}
+            onClick={handleAiReview}
+            loading={isAiReviewing}
           >
-            <Button
-              icon={<BulbOutlined />}
-              onClick={handleToggleHint}
-              type={hintLevel > 0 ? 'dashed' : 'default'}
-              style={{ color: hintLevel > 0 ? '#faad14' : undefined }}
-            >
-              {hintLevel === 0 ? 'Gợi ý' : `Gợi ý (${hintLevel}/2)`}
-            </Button>
-          </Tooltip>
+            Review
+          </Button>
+
+          <Button
+            icon={<BulbOutlined />}
+            onClick={handleToggleHint}
+            type={hintLevel > 0 ? 'dashed' : 'default'}
+            style={{ color: hintLevel > 0 ? '#faad14' : undefined }}
+          >
+            {hintLevel === 0 ? 'Hint' : `Hint (${hintLevel}/2)`}
+          </Button>
 
           {userAnswer && (
-            <Tooltip title='Xóa câu trả lời'>
-              <Button
-                icon={<ClearOutlined />}
-                onClick={() => {
-                  setUserAnswer('')
-                  setIsChecked(false)
-                  setDictationResult(null)
-                  setAiReviewResult(null)
-                  setIsAiReviewing(false)
-                }}
-              />
-            </Tooltip>
+            <Button
+              icon={<ClearOutlined />}
+              onClick={() => {
+                setUserAnswer('')
+                setIsChecked(false)
+                setDictationResult(null)
+                setAiReviewResult(null)
+                setIsAiReviewing(false)
+              }}
+            />
           )}
         </div>
 
         <div className={styles.actionGroup}>
           <Tooltip title='Quay lại câu trước'>
-            <Button icon={<LeftOutlined />} onClick={handlePrev} disabled={currentIndex === 0} />
+            <Button
+              icon={<LeftOutlined />}
+              onClick={handlePrev}
+              disabled={safeCurrentIndex === 0}
+            />
           </Tooltip>
 
           <Button icon={<RightOutlined />} onClick={handleNext} loading={loading}>
-            Câu tiếp
+            Next
           </Button>
         </div>
       </div>

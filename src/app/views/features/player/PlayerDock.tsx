@@ -13,7 +13,9 @@ import {
   StepBackwardOutlined,
   StepForwardOutlined,
   UnorderedListOutlined,
+  FullscreenOutlined,
 } from '@ant-design/icons'
+import { FocusListeningModal } from './FocusListeningModal'
 import { Button, Dropdown, Flex, MenuProps, Space, Tag, theme } from 'antd'
 import ReactPlayer from 'react-player'
 import { createPortal } from 'react-dom'
@@ -1275,7 +1277,7 @@ export const PlayerDock: React.FC = () => {
           </div>
 
           {activeSegmentText && (
-            <div className={styles.liveTranscript}>
+            <div className={`${styles.liveTranscript} ${player.transcriptDisplayMode === 'blur' ? styles.transcriptBlurred : player.transcriptDisplayMode === 'hidden' ? styles.transcriptHidden : ''}`} onClick={() => { if (player.transcriptDisplayMode !== 'visible') { dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: 'visible' })) } }}>
               <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
             </div>
           )}
@@ -1431,6 +1433,15 @@ export const PlayerDock: React.FC = () => {
                 </svg>
               }
               title='Picture in Picture'
+            />
+
+            <Button
+              type='text'
+              size={'middle'}
+              onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
+              className={appStyle.fromXs}
+              icon={<FullscreenOutlined style={{ fontSize: '20px', color: token.colorText }} />}
+              title='Toàn màn hình Focus Karaoke'
             />
 
             {transcriptSegments.length > 0 && hasValidMediaUrl && (
@@ -1635,6 +1646,9 @@ export const PlayerDock: React.FC = () => {
           </div>,
           pipWindow.document.body,
         )}
+
+      {/* Focus Fullscreen Karaoke Modal */}
+      <FocusListeningModal />
     </div>
   )
 }

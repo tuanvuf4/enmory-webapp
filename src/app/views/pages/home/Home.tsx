@@ -97,16 +97,18 @@ const Home = () => {
             </Col>
 
             <Col xs={24} sm={24} md={24} lg={6}>
-              <IotdItemCard
-                iotd={word}
-                title={'Items of the day'}
-                isLoadingPrefetch={isLoading && !isError}
-              />
-              <IotdItemCard iotd={phrase} isLoadingPrefetch={isLoading && !isError} />
-              <IotdItemCard iotd={collocation} isLoadingPrefetch={isLoading && !isError} />
-              <IotdItemCard iotd={sentence} isLoadingPrefetch={isLoading && !isError} />
-              <IotdItemCard iotd={idiom} isLoadingPrefetch={isLoading && !isError} />
-              <IotdItemCard iotd={slang} isLoadingPrefetch={isLoading && !isError} />
+              <Space direction='vertical' size={token.size * 1.5} style={{ width: '100%' }}>
+                <IotdItemCard
+                  iotd={word}
+                  title={'Items of the day'}
+                  isLoadingPrefetch={isLoading && !isError}
+                />
+                <IotdItemCard iotd={phrase} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={collocation} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={sentence} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={idiom} isLoadingPrefetch={isLoading && !isError} />
+                <IotdItemCard iotd={slang} isLoadingPrefetch={isLoading && !isError} />
+              </Space>
             </Col>
           </Row>
         </div>

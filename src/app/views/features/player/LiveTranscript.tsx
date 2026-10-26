@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './listening.module.scss'
 import { formatSegmentTime, getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
-import { AimOutlined, RetweetOutlined } from '@ant-design/icons'
-import { Button, Space, Tag, theme } from 'antd'
+import {
+  AimOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
+  FullscreenOutlined,
+  RetweetOutlined,
+} from '@ant-design/icons'
+import { Button, Space, Tag, Tooltip, theme } from 'antd'
 import { KaraokeText } from './KaraokeText'
 import { useSmoothTime } from './useSmoothTime'
 import { useSelector } from '@/core/hooks'
@@ -18,7 +24,14 @@ export const LiveTranscript: React.FC = () => {
 
   const transcript = currentTrack?.transcript || ''
 
-  const { playedSeconds, duration, playing, playbackRate = 1, loopSegment } = player
+  const {
+    playedSeconds,
+    duration,
+    playing,
+    playbackRate = 1,
+    loopSegment,
+    transcriptDisplayMode = 'visible',
+  } = player
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const activeRef = useRef<HTMLDivElement | null>(null)
@@ -26,6 +39,7 @@ export const LiveTranscript: React.FC = () => {
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [autoFollow, setAutoFollow] = useState(true)
+  const [revealedSegments, setRevealedSegments] = useState<Record<number, boolean>>({})
 
   const smoothTime = useSmoothTime(playedSeconds, playing, playbackRate)
 
@@ -44,6 +58,11 @@ export const LiveTranscript: React.FC = () => {
     const elapsed = smoothTime - startTime
     return segDuration > 0 ? Math.max(0, Math.min(100, (elapsed / segDuration) * 100)) : 0
   }, [segments, activeIndex, smoothTime, duration])
+
+  // Reset revealed segments when track changes or display mode changes
+  useEffect(() => {
+    setRevealedSegments({})
+  }, [currentTrack?.id, transcriptDisplayMode])
 
   // Detect manual scroll — pause auto-follow while user is scrolling
   const handleScroll = useCallback(() => {
@@ -68,6 +87,18 @@ export const LiveTranscript: React.FC = () => {
     activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
+  // Toggle display mode directly: visible <-> blur
+  const handleToggleDisplayMode = () => {
+    const nextMode = transcriptDisplayMode === 'visible' ? 'blur' : 'visible'
+    dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: nextMode }))
+  }
+
+  const handleToggleReveal = (index: number, e: React.MouseEvent) => {
+    if (transcriptDisplayMode === 'visible') return
+    e.stopPropagation()
+    setRevealedSegments((prev) => ({ ...prev, [index]: !prev[index] }))
+  }
+
   // Fallback: raw HTML when no timestamp segments are detected
   if (!segments.length) {
     return <div className={styles.transcript} dangerouslySetInnerHTML={{ __html: transcript }} />
@@ -88,6 +119,49 @@ export const LiveTranscript: React.FC = () => {
         </h3>
 
         <Space size='small' align='center'>
+          {/* Transcript Blur/Visible Button */}
+          <Tooltip
+            title={
+              transcriptDisplayMode === 'visible'
+                ? 'Nhấp để làm mờ chữ (Luyện nghe)'
+                : 'Đang làm mờ chữ. Nhấp để hiện lại'
+            }
+          >
+            <Button
+              type={'text'}
+              variant={'text'}
+              icon={
+                transcriptDisplayMode === 'visible' ? (
+                  <EyeOutlined style={{ fontSize: '16px' }} />
+                ) : (
+                  <EyeInvisibleOutlined style={{ fontSize: '16px', color: '#fab005' }} />
+                )
+              }
+              onClick={handleToggleDisplayMode}
+              style={{ background: 'transparent' }}
+            />
+          </Tooltip>
+
+          {/* Badge indicator when text is blurred */}
+          {transcriptDisplayMode === 'blur' && (
+            <Tag
+              color='gold'
+              style={{
+                fontSize: 10,
+                lineHeight: '18px',
+                cursor: 'pointer',
+                margin: 0,
+                padding: '0 6px',
+                borderRadius: 8,
+              }}
+              onClick={handleToggleDisplayMode}
+              title='Đang làm mờ chữ. Nhấp để hiện lại'
+            >
+              Mờ chữ
+            </Tag>
+          )}
+
+          {/* Loop Segment Button */}
           <Button
             type={'text'}
             variant={'text'}
@@ -125,15 +199,27 @@ export const LiveTranscript: React.FC = () => {
             }}
           />
 
+          {/* Sync Button */}
           <Button
             type={'text'}
             variant={'text'}
             icon={<AimOutlined />}
-            title={'Sync'}
+            title={'Sync câu hiện tại'}
             onClick={handleSync}
             style={{ background: 'transparent' }}
             color={autoFollow ? 'primary' : 'gold'}
           />
+
+          {/* Fullscreen Focus Mode Button */}
+          <Tooltip title='Toàn màn hình Focus Karaoke'>
+            <Button
+              type={'text'}
+              variant={'text'}
+              icon={<FullscreenOutlined style={{ fontSize: '16px' }} />}
+              onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
+              style={{ background: 'transparent' }}
+            />
+          </Tooltip>
         </Space>
       </div>
 
@@ -141,6 +227,9 @@ export const LiveTranscript: React.FC = () => {
         {segments.map((seg, i) => {
           const isActive = i === activeIndex
           const isPlayed = i < activeIndex
+          const isRevealed = revealedSegments[i]
+          const isBlur = transcriptDisplayMode === 'blur' && !isRevealed
+
           return (
             <div
               key={i}
@@ -176,7 +265,30 @@ export const LiveTranscript: React.FC = () => {
                   Lặp câu
                 </Tag>
               )}
-              <p>
+              {isRevealed && transcriptDisplayMode === 'blur' && (
+                <Tag
+                  color='purple'
+                  style={{
+                    fontSize: 10,
+                    lineHeight: '18px',
+                    verticalAlign: 'middle',
+                    marginLeft: 4,
+                  }}
+                >
+                  Đã mở
+                </Tag>
+              )}
+              <p
+                className={`${isBlur ? styles.transcriptBlurred : ''} ${
+                  isRevealed ? styles.transcriptRevealed : ''
+                }`}
+                onClick={(e) => {
+                  if (isBlur) {
+                    handleToggleReveal(i, e)
+                  }
+                }}
+                title={isBlur ? 'Nhấp vào để hé mở câu này' : undefined}
+              >
                 {isActive ? (
                   <KaraokeText text={seg.text} progress={activeSegmentProgress} />
                 ) : (

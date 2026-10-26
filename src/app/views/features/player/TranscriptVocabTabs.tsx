@@ -655,7 +655,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
         key: 'all',
         label: (
           <span>
-            Tất cả{' '}
+            All{' '}
             <Badge
               count={allItems.length}
               overflowCount={999}
@@ -781,18 +781,18 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
                 value={selectedCategory}
                 onChange={(val) => setSelectedCategory(val as string)}
                 options={[
-                  { label: `Tất cả (${categoryCounts.all})`, value: 'all' },
-                  { label: `Từ đơn (${categoryCounts.word})`, value: 'word' },
-                  { label: `Cụm từ (${categoryCounts.phrase})`, value: 'phrase' },
-                  { label: `Collocation (${categoryCounts.collocation})`, value: 'collocation' },
-                  { label: `Thành ngữ (${categoryCounts.idiom})`, value: 'idiom' },
+                  { label: `All (${categoryCounts.all})`, value: 'all' },
+                  { label: `Single Words (${categoryCounts.word})`, value: 'word' },
+                  { label: `Phrases (${categoryCounts.phrase})`, value: 'phrase' },
+                  { label: `Collocations (${categoryCounts.collocation})`, value: 'collocation' },
+                  { label: `Idioms (${categoryCounts.idiom})`, value: 'idiom' },
                 ]}
               />
             </div>
 
             <Input
               size='small'
-              placeholder='Tìm từ vựng, nghĩa tiếng Việt...'
+              placeholder='Search vocabulary, meaning...'
               prefix={<SearchOutlined style={{ color: token.colorTextQuaternary }} />}
               allowClear
               value={searchQuery}
@@ -811,8 +811,8 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
                 searchQuery
-                  ? `Không tìm thấy từ vựng nào khớp với "${searchQuery}"`
-                  : `Chưa có từ vựng hoặc cụm từ nào ở cấp độ ${activeTab.toUpperCase()}`
+                  ? `No vocabulary found matching "${searchQuery}"`
+                  : `No vocabulary or phrases available at level ${activeTab.toUpperCase()}`
               }
               style={{ margin: '20px 0' }}
             />

@@ -16,4 +16,5 @@ export const initMediaForm: IMediaForm = {
   srcUrl: '',
   srcType: TSourceTypes.LINK,
   voice: 'auto',
+  vocabClassification: [],
 }

@@ -5,6 +5,7 @@ import { Tags } from '@/views/components'
 import appStyle from '@/style/appStyle.module.scss'
 import styles from './player.module.scss'
 import { LiveTranscript } from './LiveTranscript'
+import { TranscriptVocabTabs } from './TranscriptVocabTabs'
 
 export const Player: React.FC = () => {
   const { token } = theme.useToken()
@@ -36,6 +37,9 @@ export const Player: React.FC = () => {
             {currentTrack?.relation && currentTrack?.relation?.length > 0 && (
               <Tags label={'Relation'} tags={currentTrack?.relation} />
             )}
+
+            {/* Classification of transcript into words, phrases, collocations by difficulty A1 -> C2 */}
+            <TranscriptVocabTabs track={currentTrack} transcript={currentTrack?.transcript || ''} />
           </Space>
         </Col>
 

@@ -1,4 +1,5 @@
 import { TSourceTypes } from '../constant'
+import { IClassifiedVocabItem } from './vocabClassification.model'
 
 export interface IMediaForm {
   id?: number
@@ -11,6 +12,7 @@ export interface IMediaForm {
   srcUrl?: string
   srcType?: TSourceTypes
   voice?: string
+  vocabClassification?: IClassifiedVocabItem[]
 }
 
 export interface ITracks extends IMediaForm {

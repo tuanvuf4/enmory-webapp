@@ -45,6 +45,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const { token } = theme.useToken()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAutofilling, setIsAutofilling] = useState(false)
+  const [isLoadingItem, setIsLoadingItem] = useState(false)
+  const [currentItem, setCurrentItem] = useState<IItem>(item)
 
   const { notification, confirm } = usePrompt()
 
@@ -84,6 +86,16 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   )
 
   const { closeModal } = useModal()
+
+  useEffect(() => {
+    setCurrentItem(item)
+  }, [item])
+
+  useEffect(() => {
+    if (origin && !isSearching) {
+      trigger('origin')
+    }
+  }, [options, isSearching, origin, trigger])
 
   const createExample = async (meanings: IMeaning): Promise<IExample[]> => {
     const now = Timestamp.now().toMillis()
@@ -274,10 +286,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         relation: data.relation || [],
         meanings,
       }
-      if (item?.id) {
+      const targetId = currentItem?.id || item?.id
+      if (targetId) {
         try {
           const { isSuccess, content } = await updateMutation({
-            id: String(item?.id),
+            id: String(targetId),
             data: dataSubmit,
           })
 
@@ -492,6 +505,113 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
     await runAutofill(currentOrigin, sourceName)
   }
 
+  const handleLoadExistingItem = async () => {
+    if (isLoadingItem) return
+    const currentOrigin = (getValues('origin') || origin || '').trim()
+    if (!currentOrigin) return
+
+    setIsLoadingItem(true)
+    try {
+      let existingItem: IItem | null = null
+
+      const matchedOpt =
+        options.find((opt) => opt.value === currentOrigin) ||
+        options.find(
+          (opt) => opt.origin && opt.origin.toLowerCase() === currentOrigin.toLowerCase(),
+        )
+
+      const existingId = matchedOpt?.id ? String(matchedOpt.id) : undefined
+
+      if (existingId) {
+        try {
+          const resp = await itemApi.getItemById(existingId)
+          if (resp.isSuccess && resp.content) {
+            existingItem = resp.content
+          }
+        } catch (err) {
+          console.warn('Failed to get item by ID, falling back to query:', err)
+        }
+      }
+
+      if (!existingItem) {
+        try {
+          const resp = await itemApi.getItems({
+            keyword: currentOrigin,
+            page: 0,
+            size: 1,
+            exact: true,
+          })
+          if (resp.isSuccess && resp.content && resp.content.length > 0) {
+            existingItem = resp.content[0]
+          }
+        } catch (err) {
+          console.warn('Failed to get items by query:', err)
+        }
+      }
+
+      if (!existingItem && matchedOpt && (matchedOpt as any).item) {
+        existingItem = (matchedOpt as any).item
+      }
+
+      if (!existingItem) {
+        notification({
+          type: 'error',
+          message: 'Could not find details for the existing item.',
+        })
+        return
+      }
+
+      const formattedMeanings: IMeaning[] = (existingItem.meanings || []).map((m) => ({
+        ...m,
+        typeId: m.typeId ?? EType.NOUN,
+        common: m.common ?? false,
+        enable: m.enable ?? true,
+        definition: m.definition || '',
+        translation: m.translation || '',
+        note: m.note || '',
+        grammar: m.grammar || '',
+        collocations: m.collocations || '',
+        pronunciation: m.pronunciation || { uk: '', us: '', common: '' },
+        synonyms: m.synonyms || [],
+        antonyms: m.antonyms || [],
+        examples: m.examples || [],
+      }))
+
+      const filledItem: IItem = {
+        ...initItem,
+        ...existingItem,
+        catId: existingItem.catId ?? getValues('catId') ?? ECategory.WORD,
+        origin: existingItem.origin || currentOrigin,
+        tags: existingItem.tags || [],
+        archive: existingItem.archive ?? false,
+        favorite: existingItem.favorite ?? false,
+        level: existingItem.level ?? 0,
+        forms: existingItem.forms || [],
+        word_family: existingItem.word_family || [],
+        relation: existingItem.relation || [],
+        collocations: existingItem.collocations || [],
+        meanings: formattedMeanings,
+      }
+
+      setCurrentItem(filledItem)
+      reset(filledItem)
+      await trigger()
+
+      notification({
+        type: 'success',
+        message: `Loaded details for "${filledItem.origin}"!`,
+      })
+    } catch (error: any) {
+      console.error('Failed to load existing item:', error)
+      notification({
+        type: 'error',
+        message: error?.message || 'Failed to load existing item.',
+      })
+    } finally {
+      setIsLoadingItem(false)
+    }
+  }
+
   const handleCancel = () => closeModal()
 
   const handleTagUpdated = (previousValue: string, nextValue: string) => {
@@ -580,11 +700,21 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                         validate: {
                           existed: (value) => {
                             if (!value) return true
-                            if (value.trim() === item.origin.trim()) return true
+                            const currentOrigin = (currentItem?.origin || item.origin || '').trim()
+                            if (
+                              currentOrigin &&
+                              value.trim().toLowerCase() === currentOrigin.toLowerCase()
+                            ) {
+                              return true
+                            }
 
                             const existsInOptions =
-                              options.findIndex((opt) => opt.value === value) > -1 &&
-                              item.origin !== value
+                              options.findIndex(
+                                (opt) =>
+                                  opt.value === value ||
+                                  (opt.origin &&
+                                    opt.origin.toLowerCase() === value.trim().toLowerCase()),
+                              ) > -1 && currentOrigin.toLowerCase() !== value.trim().toLowerCase()
 
                             if (!existsInOptions) return true
 
@@ -622,9 +752,23 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                             )}
 
                             {invalid && errors.origin?.type === 'existed' && (
-                              <p className={clsx(appStyle.errorMsg, appStyle.textLeft)}>
-                                {errors.origin?.message as string}
-                              </p>
+                              <Flex
+                                align='center'
+                                gap={token.size / 2}
+                                className={clsx(appStyle.errorMsg, appStyle.textLeft)}
+                              >
+                                <span>{errors.origin?.message as string}</span>
+                                <Button
+                                  type='primary'
+                                  size='small'
+                                  loading={isLoadingItem}
+                                  disabled={isLoadingItem}
+                                  onClick={handleLoadExistingItem}
+                                  htmlType='button'
+                                >
+                                  Load
+                                </Button>
+                              </Flex>
                             )}
                           </>
                         )
@@ -804,7 +948,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
             <Suspense fallback={<div>Loading...</div>}>
               <MeaningItemForm
-                loading={!isValid || isSubmitting || isCreating || isUpdating}
+                loading={!isValid || isSubmitting || isCreating || isUpdating || isLoadingItem}
                 origin={origin}
                 catType={catType as ECategory}
                 onSubmit={() => handleSubmit(onSubmit)()}
@@ -828,7 +972,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                   isCreating ||
                   isUpdating ||
                   isSearching ||
-                  isAutofilling
+                  isAutofilling ||
+                  isLoadingItem
                 }
                 type={'primary'}
                 onClick={() => handleSubmit(onSubmit)()}

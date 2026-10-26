@@ -1,8 +1,8 @@
 import { initMediaForm, msgErrors } from '@/constant/index'
-import { RobotOutlined } from '@ant-design/icons'
+import { RobotOutlined, CheckCircleOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { theme, Input, Space, Row, Col, Button, Select, Flex } from 'antd'
+import { theme, Input, Space, Row, Col, Button, Select, Flex, Switch, Tag, Spin } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { appSetting } from '@/config/appConfig'
 import { IMediaForm, ITracks } from '@/models/media.model'
@@ -14,7 +14,8 @@ import { useSelector, useDispatch } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { GenerateTranscriptModal } from '../generateTranscriptModal'
-import { GEMINI_VOICES } from '@/services/gemini'
+import { GEMINI_VOICES, geminiVocabClassifierService } from '@/services/gemini'
+import { IClassifiedVocabItem } from '@/models/vocabClassification.model'
 
 interface IMediaUploadFormProps {
   onConfirm?: (track: ITracks) => void
@@ -30,6 +31,8 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
   const { message } = usePrompt()
   const { token } = theme.useToken()
   const [loading, setLoading] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<string>('')
+  const [autoClassifyVocab, setAutoClassifyVocab] = useState<boolean>(true)
   const dispatch = useDispatch()
 
   const { currentTrack, tracks } = useSelector((state) => state.listening)
@@ -65,17 +68,9 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
     tags: yup.array().of(yup.string()).optional(),
     relation: yup.array().of(yup.string()).optional(),
     srcUrl: yup.string(),
-    // .max(
-    //   appSetting.listening.maxLengthInput,
-    //   msgErrors.maxLength('Source URL', appSetting.listening.maxLengthInput),
-    // )
-    // .test('srcUrl-or-transcript', msgErrors.required, function (val) {
-    //   const { transcript } = this.parent
-    //   if (transcript && transcript.trim()) return true
-    //   return Boolean(val && val.trim())
-    // }),
     srcType: yup.number(),
     voice: yup.string().optional(),
+    vocabClassification: yup.array().optional(),
   }) as yup.ObjectSchema<IMediaForm>
 
   const [openGenerateModal, setOpenGenerateModal] = useState(false)
@@ -132,43 +127,55 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
         srcUrl: trackData.srcUrl || '',
         srcType: trackData.srcType,
         voice: trackData.voice || 'auto',
+        vocabClassification: trackData.vocabClassification || [],
       })
     } else {
       reset(initMediaForm)
     }
   }, [trackData, reset])
 
-  // const srcOptions: { id: number; value: TSourceTypes; label: string }[] = [
-  //   {
-  //     id: 1,
-  //     value: TSourceTypes.IFRAME,
-  //     label: 'Iframe',
-  //   },
-  //   {
-  //     id: 2,
-  //     value: TSourceTypes.EMBED,
-  //     label: 'Embed',
-  //   },
-  //   {
-  //     id: 3,
-  //     value: TSourceTypes.LINK,
-  //     label: 'Link',
-  //   },
-  // ]
-
   const onSubmit = async (data: IMediaForm) => {
     try {
       setLoading(true)
+      setSaveStatus('Đang chuẩn bị lưu bài nghe...')
 
-      let result: any
+      let classifiedVocab: IClassifiedVocabItem[] = trackData?.vocabClassification || []
+      const currentTranscript = (data.transcript || '').trim()
+      const originalTranscript = (trackData?.transcript || '').trim()
+      const transcriptChanged = currentTranscript !== originalTranscript
 
-      const dataSubmit = {
+      // Run Gemini vocabulary classification on save if enabled and transcript exists
+      if (
+        currentTranscript &&
+        autoClassifyVocab &&
+        (!classifiedVocab.length || transcriptChanged)
+      ) {
+        try {
+          setSaveStatus('Đang phân loại từ vựng (A1 → C2)...')
+          const classifyRes = await geminiVocabClassifierService.classifyTranscript(
+            currentTranscript,
+            trackData?.id,
+          )
+          if (classifyRes.isSuccess && classifyRes.content?.items?.length) {
+            classifiedVocab = classifyRes.content.items
+          }
+        } catch (classifyErr) {
+          console.warn('[MediaUploadForm] Auto classification failed on save:', classifyErr)
+        }
+      }
+
+      setSaveStatus('Đang lưu bài nghe và dữ liệu từ vựng lên Firestore...')
+
+      const dataSubmit: any = {
         ...data,
         srcUrl: data.srcUrl?.trim() || '',
         tags: data.tags || [],
         relation: data.relation || [],
         voice: data.voice || 'auto',
+        vocabClassification: classifiedVocab,
       }
+
+      let result: any
 
       if (trackData?.id) {
         result = await tracksApi.updateTrack(String(trackData.id), dataSubmit)
@@ -177,7 +184,22 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
       }
 
       if (result.isSuccess && result.content) {
-        message({ type: 'success', content: result.message })
+        // Cache locally for instant offline/fast access
+        if (classifiedVocab.length > 0) {
+          geminiVocabClassifierService.setCached(String(result.content.id), {
+            trackId: result.content.id,
+            items: classifiedVocab,
+            summary: `Đã phân loại ${classifiedVocab.length} từ vựng, cụm từ & collocation theo chuẩn CEFR.`,
+            updatedAt: Date.now(),
+          })
+        }
+
+        const successMsg =
+          classifiedVocab.length > 0
+            ? `${result.message || 'Đã lưu bài nghe thành công!'} (Đã phân loại & lưu ${classifiedVocab.length} từ vựng lên Firestore)`
+            : result.message || 'Đã lưu bài nghe thành công!'
+
+        message({ type: 'success', content: successMsg })
         if (trackData?.id) {
           dispatch(listeningAction.updateTrack(result.content))
         } else {
@@ -194,6 +216,7 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
       message({ type: 'error', content: error.message || 'Error saving track' })
     } finally {
       setLoading(false)
+      setSaveStatus('')
     }
   }
 
@@ -312,37 +335,6 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
           </Row>
 
           <Row gutter={[token.size / 2, token.size / 2]}>
-            {/* <Col xs={4}>
-            <Row gutter={[token.size / 2, token.size / 2]}>
-              <Col xs={24}>Type:</Col>
-
-              <Col xs={24}>
-                <Controller
-                  control={control}
-                  name={`srcType`}
-                  render={({ field }) => (
-                    <>
-                      <Select
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        options={srcOptions}
-                        placeholder='Source'
-                        optionLabelProp='label'
-                        style={{ width: '100%', height: '100%' }}
-                      />
-
-                      {errors.srcType && (
-                        <div style={{ color: 'red', fontSize: '12px' }}>
-                          {errors.srcType.message}
-                        </div>
-                      )}
-                    </>
-                  )}
-                />
-              </Col>
-            </Row>
-          </Col> */}
             <Col xs={24}>
               <Row gutter={[token.size / 2, token.size / 2]}>
                 <Col xs={24}>
@@ -369,6 +361,7 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
             </Col>
           </Row>
 
+          {/* Transcript section */}
           <Row gutter={[token.size / 2, token.size / 2]}>
             <Col xs={24}>
               <Flex justify='space-between' align='center' style={{ width: '100%' }}>
@@ -407,6 +400,53 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
             </Col>
           </Row>
 
+          {/* AI Vocabulary Classification on Save */}
+          {watch('transcript')?.trim() && (
+            <Row gutter={[token.size / 2, token.size / 2]}>
+              <Col xs={24}>
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    background: token.colorFillQuaternary,
+                    borderRadius: 8,
+                    border: `1px solid ${token.colorBorderSecondary}`,
+                  }}
+                >
+                  <Flex justify='space-between' align='center' wrap='wrap' gap={8}>
+                    <Flex align='center' gap={8}>
+                      <RobotOutlined style={{ color: token.colorPrimary, fontSize: 18 }} />
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 13 }}>
+                          Tự động phân loại từ vựng (A1 → C2)
+                        </div>
+                        <div style={{ fontSize: 12, color: token.colorTextSecondary }}>
+                          Trích xuất từ vựng từ transcript và phân loại theo chuẩn CEFR. (Chỉ lưu
+                          khi bạn nhấn nút Save/Update)
+                        </div>
+                      </div>
+                    </Flex>
+                    <Switch
+                      checked={autoClassifyVocab}
+                      onChange={(checked) => setAutoClassifyVocab(checked)}
+                    />
+                  </Flex>
+                  {trackData?.vocabClassification && trackData.vocabClassification.length > 0 && (
+                    <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Tag color='success' icon={<CheckCircleOutlined />}>
+                        Đã có {trackData.vocabClassification.length} mục từ vựng lưu trên Firestore
+                      </Tag>
+                      {autoClassifyVocab && (
+                        <span style={{ fontSize: 11, color: token.colorTextTertiary }}>
+                          (Sẽ giữ nguyên từ vựng đã lưu trừ khi bạn sửa nội dung transcript)
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Col>
+            </Row>
+          )}
+
           {(!watch('srcUrl') || watch('srcUrl') === 'transcript') && (
             <Row gutter={[token.size / 2, token.size / 2]}>
               <Col xs={24}>
@@ -435,15 +475,39 @@ export const MediaUploadForm: React.FC<IMediaUploadFormProps> = ({
           {/* button */}
           <Row gutter={[token.size / 2, token.size / 2]}>
             <Col xs={24}>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <Button htmlType='button' onClick={handleCancel} disabled={loading}>
-                  Cancel
-                </Button>
+              <Flex justify='space-between' align='center' wrap='wrap' gap={8}>
+                <div>
+                  {saveStatus && (
+                    <Flex
+                      align='center'
+                      gap={6}
+                      style={{ color: token.colorPrimary, fontSize: 12 }}
+                    >
+                      <Spin size='small' />
+                      <span>{saveStatus}</span>
+                    </Flex>
+                  )}
+                </div>
 
-                <Button htmlType='submit' type='primary' loading={loading}>
-                  {trackData?.id ? 'Update' : 'Save'}
-                </Button>
-              </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button htmlType='button' onClick={handleCancel} disabled={loading}>
+                    Cancel
+                  </Button>
+
+                  <Button
+                    htmlType='submit'
+                    type='primary'
+                    loading={loading}
+                    icon={
+                      autoClassifyVocab && watch('transcript')?.trim() ? (
+                        <ThunderboltOutlined />
+                      ) : undefined
+                    }
+                  >
+                    {trackData?.id ? 'Update' : 'Save'}
+                  </Button>
+                </div>
+              </Flex>
             </Col>
           </Row>
         </Space>

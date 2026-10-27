@@ -84,11 +84,6 @@ export const SyncDataCard: React.FC = () => {
         </Space>
       }
       extra={getSyncTag()}
-      style={{
-        width: '100%',
-        borderRadius: token.borderRadiusLG,
-        marginTop: token.size,
-      }}
     >
       <Row
         gutter={[token.size, token.size]}
@@ -229,13 +224,13 @@ export const SyncDataCard: React.FC = () => {
           {localItemCount > 0 && (
             <Popconfirm
               title='Clear local database?'
-              description='This will clear the cached items and examples from this device. Your data in Firebase cloud will not be affected.'
+              description='This will clear the cached items from this device. Your data in the cloud will not be affected.'
               okText='Yes, clear'
               cancelText='Cancel'
               onConfirm={clearLocalData}
             >
               <Button danger type='text' icon={<DeleteOutlined />}>
-                Clear Local DB
+                Clear
               </Button>
             </Popconfirm>
           )}

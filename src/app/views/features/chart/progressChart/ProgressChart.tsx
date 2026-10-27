@@ -141,7 +141,7 @@ export const ProgressChart: React.FC<IProps> = ({ title = 'Mastery & Level Progr
             buttonStyle='solid'
           >
             <Radio.Button value='category'>By Category</Radio.Button>
-            <Radio.Button value='levelSummary'>Total By Level</Radio.Button>
+            <Radio.Button value='levelSummary'>By Level</Radio.Button>
           </Radio.Group>
         </div>
       </div>

@@ -34,6 +34,7 @@ import {
   resolveGeminiApiKey,
   formatHtmlList,
   IDictionaryAutofillData,
+  filterWordsExcludingOrigin,
 } from '@/services/gemini'
 import { ThunderboltOutlined } from '@ant-design/icons'
 
@@ -88,7 +89,14 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const { closeModal } = useModal()
 
   useEffect(() => {
-    setCurrentItem(item)
+    if (item?.meanings) {
+      const sortedMeanings = [...item.meanings].sort(
+        (a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0),
+      )
+      setCurrentItem({ ...item, meanings: sortedMeanings })
+    } else {
+      setCurrentItem(item)
+    }
   }, [item])
 
   useEffect(() => {
@@ -116,19 +124,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   }
 
   const normalizeUniqueWords = (words: string[] = []) => {
-    const map = new Map<string, string>()
-
-    words
-      .map((word) => String(word || '').trim())
-      .filter(Boolean)
-      .forEach((word) => {
-        const key = word.toLowerCase()
-        if (!map.has(key)) {
-          map.set(key, word)
-        }
-      })
-
-    return Array.from(map.values())
+    return filterWordsExcludingOrigin(words)
   }
 
   const isSameWordFamily = (left: string[] = [], right: string[] = []) => {
@@ -277,6 +273,9 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             )
           : []
 
+      // Prioritize common meanings (sort common meanings first)
+      const sortedMeanings = [...meanings].sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0))
+
       const dataSubmit: IItem = {
         ...data,
         tags: data.tags || [],
@@ -284,7 +283,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         forms: data.forms || [],
         word_family: data.word_family || [],
         relation: data.relation || [],
-        meanings,
+        meanings: sortedMeanings,
       }
       const targetId = currentItem?.id || item?.id
       if (targetId) {
@@ -373,56 +372,73 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   }
 
   const applyAutofillData = async (originWord: string, data: IDictionaryAutofillData) => {
-    const formattedMeanings: IMeaning[] = (data.meanings || []).map((m, index) => {
-      const rawUk = (m.pronunciation?.uk || '').trim()
-      const rawUs = (m.pronunciation?.us || '').trim()
-      const rawCommon = (m.pronunciation?.common || '').trim()
+    const formattedMeanings: IMeaning[] = (data.meanings || [])
+      .map((m, index) => {
+        const rawUk = (m.pronunciation?.uk || '').trim()
+        const rawUs = (m.pronunciation?.us || '').trim()
+        const rawCommon = (m.pronunciation?.common || '').trim()
 
-      const cleanIpa = (val: string) =>
-        val
-          .replace(/^\/+|\/+$/g, '')
-          .trim()
-          .toLowerCase()
-      const isSamePronunciation = rawUk && rawUs && cleanIpa(rawUk) === cleanIpa(rawUs)
+        const cleanIpa = (val: string) =>
+          val
+            .replace(/^\/+|\/+$/g, '')
+            .trim()
+            .toLowerCase()
+        const isSamePronunciation = rawUk && rawUs && cleanIpa(rawUk) === cleanIpa(rawUs)
 
-      const finalUs = rawUs || rawUk || ''
-      const finalUk = isSamePronunciation ? '' : rawUk
-      const finalCommon = rawCommon || finalUs
+        const finalUs = rawUs || rawUk || ''
+        const finalUk = isSamePronunciation ? '' : rawUk
+        const finalCommon = rawCommon || finalUs
 
-      return {
-        typeId: m.typeId || EType.NOUN,
-        common: index === 0,
-        enable: true,
-        definition: m.definition || '',
-        translation: m.translation || '',
-        note: formatHtmlList(m.note || '', false),
-        grammar: formatHtmlList(m.grammar || '', true),
-        collocations: formatHtmlList(m.collocations || ''),
-        synonyms: m.synonyms || [],
-        antonyms: m.antonyms || [],
-        pronunciation: {
-          uk: finalUk,
-          us: finalUs,
-          common: finalCommon,
-        },
-        examples: (m.examples || []).map((ex) => ({
-          origin: ex.origin || '',
-          translation: ex.translation || '',
-          note: '',
-          created_date: Timestamp.now().toMillis(),
-          last_update: Timestamp.now().toMillis(),
-        })),
-      }
-    })
+        return {
+          typeId: m.typeId || EType.NOUN,
+          common: index === 0,
+          enable: true,
+          definition: m.definition || '',
+          translation: m.translation || '',
+          note: formatHtmlList(m.note || '', false),
+          grammar: formatHtmlList(m.grammar || '', true),
+          collocations: formatHtmlList(m.collocations || ''),
+          synonyms: filterWordsExcludingOrigin(m.synonyms || [], originWord),
+          antonyms: [],
+          pronunciation: {
+            uk: finalUk,
+            us: finalUs,
+            common: finalCommon,
+          },
+          examples: (m.examples || []).map((ex) => ({
+            origin: ex.origin || '',
+            translation: ex.translation || '',
+            note: '',
+            created_date: Timestamp.now().toMillis(),
+            last_update: Timestamp.now().toMillis(),
+          })),
+        }
+      })
+      .sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0))
+
+    const autofillForms = filterWordsExcludingOrigin(
+      data.forms && data.forms.length > 0 ? data.forms : getValues('forms') || [],
+      originWord,
+    )
+    const autofillFamily = filterWordsExcludingOrigin(
+      data.word_family && data.word_family.length > 0
+        ? data.word_family
+        : getValues('word_family') || [],
+      originWord,
+    )
+    const autofillRelation = filterWordsExcludingOrigin(
+      data.relation && data.relation.length > 0 ? data.relation : getValues('relation') || [],
+      originWord,
+    )
 
     reset({
       ...getValues(),
       origin: originWord,
       catId: data.catId ?? getValues('catId'),
       level: data.level ?? getValues('level'),
-      forms: getValues('forms') || [],
-      word_family: data.word_family || [],
-      relation: getValues('relation') || [],
+      forms: autofillForms,
+      word_family: autofillFamily,
+      relation: autofillRelation,
       meanings: formattedMeanings,
     })
 
@@ -561,21 +577,23 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         return
       }
 
-      const formattedMeanings: IMeaning[] = (existingItem.meanings || []).map((m) => ({
-        ...m,
-        typeId: m.typeId ?? EType.NOUN,
-        common: m.common ?? false,
-        enable: m.enable ?? true,
-        definition: m.definition || '',
-        translation: m.translation || '',
-        note: m.note || '',
-        grammar: m.grammar || '',
-        collocations: m.collocations || '',
-        pronunciation: m.pronunciation || { uk: '', us: '', common: '' },
-        synonyms: m.synonyms || [],
-        antonyms: m.antonyms || [],
-        examples: m.examples || [],
-      }))
+      const formattedMeanings: IMeaning[] = (existingItem.meanings || [])
+        .map((m) => ({
+          ...m,
+          typeId: m.typeId ?? EType.NOUN,
+          common: m.common ?? false,
+          enable: m.enable ?? true,
+          definition: m.definition || '',
+          translation: m.translation || '',
+          note: m.note || '',
+          grammar: m.grammar || '',
+          collocations: m.collocations || '',
+          pronunciation: m.pronunciation || { uk: '', us: '', common: '' },
+          synonyms: m.synonyms || [],
+          antonyms: m.antonyms || [],
+          examples: m.examples || [],
+        }))
+        .sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0))
 
       const filledItem: IItem = {
         ...initItem,

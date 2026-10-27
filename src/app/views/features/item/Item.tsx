@@ -24,7 +24,7 @@ import {
 import { Button, Dropdown, Flex, MenuProps, Skeleton, theme, Tag, Tooltip } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import clsx from 'clsx'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Reference } from '../references/References'
 import { getActionMenuItem } from './ActionMenuItem'
 import { MeaningItem } from './MeaningItem'
@@ -78,6 +78,38 @@ export const Item: React.FC<IProps> = ({
   const isInChecklist = isItemInChecklist(data?.id)
 
   const { viewMode } = useSelector((state) => state.setting)
+
+  const [showAllMeanings, setShowAllMeanings] = useState(false)
+
+  useEffect(() => {
+    setShowAllMeanings(false)
+  }, [data?.id])
+
+  const { displayMeanings, hasMoreMeanings, hiddenCount } = useMemo(() => {
+    if (!data?.meanings || data.meanings.length === 0) {
+      return { displayMeanings: [], hasMoreMeanings: false, hiddenCount: 0 }
+    }
+
+    // Only show enable meaning in item
+    const enabled = data.meanings.filter((m) => m.enable !== false)
+    if (enabled.length === 0) {
+      return { displayMeanings: [], hasMoreMeanings: false, hiddenCount: 0 }
+    }
+
+    // Prioritize common meanings (sort common meanings first)
+    const sorted = [...enabled].sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0))
+    const common = sorted.filter((m) => Boolean(m.common))
+
+    const hasCommon = common.length > 0
+    const primary = hasCommon ? common : sorted
+    const hidden = hasCommon ? sorted.length - common.length : 0
+
+    return {
+      displayMeanings: showAllMeanings ? sorted : primary,
+      hasMoreMeanings: hidden > 0,
+      hiddenCount: hidden,
+    }
+  }, [data?.meanings, showAllMeanings])
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
@@ -415,16 +447,29 @@ export const Item: React.FC<IProps> = ({
               data.relation.filter((word) => word).length > 0 &&
               data.relation.length > 0 && <Tags label={'Relation'} tags={data.relation} />}
 
-            {data.meanings &&
-              data.meanings.length > 0 &&
-              data.meanings.map((meaning, key) => (
+            {displayMeanings &&
+              displayMeanings.length > 0 &&
+              displayMeanings.map((meaning, key) => (
                 <MeaningItem
-                  key={key}
+                  key={meaning.id || key}
                   meaning={meaning}
                   catId={data.catId as ECategory}
                   origin={data.origin}
                 />
               ))}
+
+            {hasMoreMeanings && (
+              <Button
+                type='link'
+                size='small'
+                onClick={() => setShowAllMeanings((prev) => !prev)}
+                style={{ padding: 0, alignSelf: 'flex-start', fontSize: 12 }}
+              >
+                {showAllMeanings
+                  ? 'Show common meanings only'
+                  : `+${hiddenCount} more meaning${hiddenCount > 1 ? 's' : ''}`}
+              </Button>
+            )}
           </Flex>
 
           {/* <div className={styles.date}>

@@ -32,6 +32,7 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
   const { token } = theme.useToken()
 
   const [show, setShow] = useState<boolean[]>([])
+  const [onlyCommon, setOnlyCommon] = useState<boolean>(true)
 
   const { types } = useSelector((state) => state.setting)
 
@@ -43,7 +44,17 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
 
   useEffect(() => {
     setShow(new Array(fields?.length).fill(false))
-  }, [])
+  }, [fields?.length])
+
+  const meaningsValues = watch('meanings') || []
+  const hasCommonMeanings = fields.some((field, idx) =>
+    Boolean(meaningsValues[idx]?.common ?? (field as any).common),
+  )
+  const commonCount = fields.filter((field, idx) =>
+    Boolean(meaningsValues[idx]?.common ?? (field as any).common),
+  ).length
+  const totalCount = fields.length
+  const nonCommonCount = totalCount - commonCount
 
   return (
     <Space
@@ -57,28 +68,48 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
           <label htmlFor=''>Meaning:</label>
         </Col>
 
-        <Col md={20} xs={16}>
-          <Button
-            onClick={() => {
-              setShow((prev) => [true, ...prev])
-              fields.length > 0
-                ? prepend({
-                    ...meaningItem,
-                    pronunciation: {
-                      uk: getValues(`meanings.0.pronunciation.uk`),
-                      us: getValues(`meanings.0.pronunciation.us`),
-                      common: getValues(`meanings.0.pronunciation.common`),
-                    },
-                  })
-                : prepend({ ...meaningItem })
-            }}
-            type='primary'
-            icon={<PlusOutlined />}
-          />
+        <Col md={20} xs={18}>
+          <Flex align={'center'} gap={token.size / 2}>
+            <Button
+              onClick={() => {
+                setShow((prev) => [true, ...prev])
+                fields.length > 0
+                  ? prepend({
+                      ...meaningItem,
+                      pronunciation: {
+                        uk: getValues(`meanings.0.pronunciation.uk`),
+                        us: getValues(`meanings.0.pronunciation.us`),
+                        common: getValues(`meanings.0.pronunciation.common`),
+                      },
+                    })
+                  : prepend({ ...meaningItem })
+              }}
+              type='primary'
+              icon={<PlusOutlined />}
+            />
+
+            {hasCommonMeanings && nonCommonCount > 0 && (
+              <Button
+                size='small'
+                type='text'
+                onClick={() => setOnlyCommon((prev) => !prev)}
+                style={{ color: token.colorTextSecondary, fontSize: 12 }}
+              >
+                {onlyCommon ? `Show all (${totalCount})` : `Show only common (${commonCount})`}
+              </Button>
+            )}
+          </Flex>
         </Col>
       </Row>
 
       {fields.map((field, index) => {
+        const isCommon = Boolean(meaningsValues[index]?.common ?? (field as any).common)
+
+        // Prioritize common meaning: only show common meanings in ItemForm
+        if (onlyCommon && hasCommonMeanings && !isCommon && !show[index]) {
+          return null
+        }
+
         const enable = watch(`meanings.${index}.enable`)
         const definition = watch(`meanings.${index}.definition`)
         const translation = watch(`meanings.${index}.translation`)

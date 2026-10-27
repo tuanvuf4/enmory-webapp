@@ -41,7 +41,7 @@ import {
   evaluateDictation,
   IDictationResult,
   TDictationWordStatus,
-} from '../sentenceListening/dictationUtil'
+} from '../dictation/dictationUtil'
 import { shuffleArray } from '@/helpers/mics'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { exampleAction } from '@/store/reducers/example.reducer'
@@ -78,7 +78,7 @@ const getWordStatusClass = (status: TDictationWordStatus): string => {
   }
 }
 
-export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
+export const Translator: React.FC<ITranslationPracticeProps> = ({
   initialExample,
   onCancel,
   onSuccess,
@@ -403,18 +403,25 @@ export const TranslationPractice: React.FC<ITranslationPracticeProps> = ({
       {/* 1. Header Bar: Mode badge, Direction Switch, Reload button, Session counter */}
       <div className={styles.headerBar}>
         <div className={styles.modeBadge}>
-          <span>
-            {direction === 'vi-en' ? '🇻🇳 Tiếng Việt → 🇬🇧 English' : '🇬🇧 English → 🇻🇳 Tiếng Việt'}
-          </span>
+          {direction === 'en-vi' ? (
+            <span style={{ minWidth: 90 }}>🇬🇧 English</span>
+          ) : (
+            <span style={{ minWidth: 90 }}>🇻🇳 Tiếng Việt </span>
+          )}
+          <Button
+            type={'text'}
+            size='small'
+            icon={<SwapOutlined />}
+            onClick={handleSwitchDirection}
+          />
+          {direction === 'vi-en' ? (
+            <span style={{ minWidth: 90 }}>🇬🇧 English</span>
+          ) : (
+            <span style={{ minWidth: 90 }}>🇻🇳 Tiếng Việt</span>
+          )}
         </div>
 
         <Space size='small'>
-          <Tooltip title='Đổi chiều dịch'>
-            <Button size='small' icon={<SwapOutlined />} onClick={handleSwitchDirection}>
-              Đổi chiều
-            </Button>
-          </Tooltip>
-
           <Tooltip title='Tải câu mới'>
             <Button
               size='small'

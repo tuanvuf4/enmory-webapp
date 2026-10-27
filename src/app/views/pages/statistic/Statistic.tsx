@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Button, Col, Row, Space, Tag, theme } from 'antd'
-import { ReloadOutlined, DatabaseOutlined } from '@ant-design/icons'
-import classNames from 'clsx'
+import { Button, Col, Row, Space, theme } from 'antd'
+import { ReloadOutlined } from '@ant-design/icons'
 import appStyle from '@/style/appStyle.module.scss'
 import {
   AddedItemChart,
@@ -29,7 +28,7 @@ const Statistic = () => {
   }
 
   return (
-    <div className={appStyle.container}>
+    <>
       <div
         style={{
           display: 'flex',
@@ -39,23 +38,9 @@ const Statistic = () => {
           gap: 12,
         }}
       >
-        <PageTitle content={'Learning Statistics'} />
+        <PageTitle content={'Overview'} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 8 }}>
-          <Tag
-            color='purple'
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '4px 10px',
-              borderRadius: 8,
-              fontSize: 12,
-            }}
-          >
-            <DatabaseOutlined /> Local DB Powered
-          </Tag>
-
           <Button
             type='default'
             size='middle'
@@ -69,67 +54,65 @@ const Statistic = () => {
         </div>
       </div>
 
-      <div className={classNames(appStyle.contentPage)}>
-        <Space direction='vertical' size={token.size * 1.5} className={appStyle.fulWidth}>
-          {/* Top KPI Summary Stats Row */}
-          <SummaryStats key={`summary-${refreshKey}`} />
+      <Space direction='vertical' size={token.size * 1.5} className={appStyle.fulWidth}>
+        {/* Top KPI Summary Stats Row */}
+        <SummaryStats key={`summary-${refreshKey}`} />
 
-          {/* Row 1: Growth timeline & Category Overview */}
-          <Row justify='start' align='stretch' gutter={[token.size * 1.5, token.size * 1.5]}>
-            <Col xs={24} lg={15} style={{ display: 'flex' }}>
-              <div style={{ width: '100%' }}>
-                <AddedItemChart key={`added-${refreshKey}`} />
-              </div>
-            </Col>
+        {/* Row 1: Growth timeline & Category Overview */}
+        <Row justify='start' align='stretch' gutter={[token.size * 1.5, token.size * 1.5]}>
+          <Col xs={24} lg={15} style={{ display: 'flex' }}>
+            <div style={{ width: '100%' }}>
+              <AddedItemChart key={`added-${refreshKey}`} />
+            </div>
+          </Col>
 
-            <Col xs={24} lg={9} style={{ display: 'flex' }}>
-              <div style={{ width: '100%' }}>
-                <OverviewChart key={`overview-${refreshKey}`} />
-              </div>
-            </Col>
-          </Row>
+          <Col xs={24} lg={9} style={{ display: 'flex' }}>
+            <div style={{ width: '100%' }}>
+              <OverviewChart key={`overview-${refreshKey}`} />
+            </div>
+          </Col>
+        </Row>
 
-          {/* Row 2: Mastery Level Progress & Retention Funnel */}
-          <Row justify='start' align='stretch' gutter={[token.size * 1.5, token.size * 1.5]}>
-            <Col xs={24} lg={14} style={{ display: 'flex' }}>
-              <div style={{ width: '100%' }}>
-                <ProgressChart key={`progress-${refreshKey}`} />
-              </div>
-            </Col>
+        {/* Row 2: Mastery Level Progress & Retention Funnel */}
+        <Row justify='start' align='stretch' gutter={[token.size * 1.5, token.size * 1.5]}>
+          <Col xs={24} lg={14} style={{ display: 'flex' }}>
+            <div style={{ width: '100%' }}>
+              <ProgressChart key={`progress-${refreshKey}`} />
+            </div>
+          </Col>
 
-            <Col xs={24} lg={10} style={{ display: 'flex' }}>
-              <div style={{ width: '100%' }}>
-                <RetentionChart key={`retention-${refreshKey}`} />
-              </div>
-            </Col>
-          </Row>
+          <Col xs={24} lg={10} style={{ display: 'flex' }}>
+            <div style={{ width: '100%' }}>
+              <RetentionChart key={`retention-${refreshKey}`} />
+            </div>
+          </Col>
+        </Row>
 
-          {/* Row 3: Parts of Speech Distribution & Top Tags */}
-          <Row justify='start' align='stretch' gutter={[token.size * 1.5, token.size * 1.5]}>
-            <Col xs={24} lg={12} style={{ display: 'flex' }}>
-              <div style={{ width: '100%' }}>
-                <PartOfSpeechChart key={`pos-${refreshKey}`} />
-              </div>
-            </Col>
+        {/* Row 3: Parts of Speech Distribution & Top Tags */}
+        <Row justify='start' align='stretch' gutter={[token.size * 1.5, token.size * 1.5]}>
+          <Col xs={24} lg={12} style={{ display: 'flex' }}>
+            <div style={{ width: '100%' }}>
+              <PartOfSpeechChart key={`pos-${refreshKey}`} />
+            </div>
+          </Col>
 
-            <Col xs={24} lg={12} style={{ display: 'flex' }}>
-              <div style={{ width: '100%' }}>
-                <TopTagsChart key={`tags-${refreshKey}`} />
-              </div>
-            </Col>
-          </Row>
+          <Col xs={24} lg={12} style={{ display: 'flex' }}>
+            <div style={{ width: '100%' }}>
+              <TopTagsChart key={`tags-${refreshKey}`} />
+            </div>
+          </Col>
+        </Row>
 
-          {/* Row 4: Listening & Dictation Practice Analytics */}
-          <Row justify='start' align='stretch'>
-            <Col xs={24} style={{ display: 'flex' }}>
-              <div style={{ width: '100%' }}>
-                <ListeningChart key={`listening-${refreshKey}`} />
-              </div>
-            </Col>
-          </Row>
-        </Space>
-      </div>
-    </div>
+        {/* Row 4: Listening & Dictation Practice Analytics */}
+        <Row justify='start' align='stretch'>
+          <Col xs={24} style={{ display: 'flex' }}>
+            <div style={{ width: '100%' }}>
+              <ListeningChart key={`listening-${refreshKey}`} />
+            </div>
+          </Col>
+        </Row>
+      </Space>
+    </>
   )
 }
 

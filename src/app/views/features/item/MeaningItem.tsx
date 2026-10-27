@@ -89,7 +89,7 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin })
   }
 
   return (
-    <div className={clsx(styles.meaningItem)}>
+    <div className={clsx(styles.meaningItem, meaning.common ? styles.common : '')}>
       <Flex justify={'space-between'} align={'center'} className={`w-full`}>
         <div>{catId === ECategory.WORD && <span>{getType(meaning.typeId).origin}</span>}</div>
 

@@ -22,16 +22,21 @@ export const useItemModal = () => {
   const { openModal, closeModal } = useModal()
 
   const ItemFormContext = ({ data }: { data: IItem }) => {
+    const sortedMeanings = data?.meanings
+      ? [...data.meanings].sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0))
+      : []
+
     const methods = useForm<IItem>({
       defaultValues: {
         ...data,
+        meanings: sortedMeanings,
         catId: data?.catId || initItem.catId,
       },
     })
 
     return (
       <FormProvider {...methods}>
-        <ItemForm item={data} />
+        <ItemForm item={{ ...data, meanings: sortedMeanings }} />
       </FormProvider>
     )
   }

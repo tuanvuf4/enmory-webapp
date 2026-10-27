@@ -1,5 +1,4 @@
 export * from './chart'
-export * from './dictation'
 export * from './exampleItem'
 export * from './example'
 export * from './footer'

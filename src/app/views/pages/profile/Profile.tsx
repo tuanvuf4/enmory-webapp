@@ -1,15 +1,13 @@
-import { Button, Col, Input, Row, Space, theme } from 'antd'
+import { Button, Col, Flex, Input, Row, Space, theme } from 'antd'
 import appStyle from '@/style/appStyle.module.scss'
 import { useSelector } from '@/core/hooks/redux'
-import { AddedItemChart } from '@/views/features/chart/addedItemChart/AddedItemChart'
-import { OverviewChart } from '@/views/features/chart/overviewChart/OverviewChart'
-import { ProgressChart } from '@/views/features/chart/progressChart/ProgressChart'
 import { useState } from 'react'
 import { apiAuth } from '@/services/firebase'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
 
 import { SyncDataCard } from './SyncDataCard'
+import Statistic from '../statistic/Statistic'
 
 const Profile = () => {
   const { message } = usePrompt()
@@ -60,31 +58,39 @@ const Profile = () => {
 
   return (
     <div className={appStyle.container}>
-      <h2 className={clsx(appStyle.pageTitle)}>Profile</h2>
+      <h2 className={clsx(appStyle.pageTitle)}>Hello, {user?.firstName + ' ' + user?.lastName}</h2>
 
       <div className={clsx(appStyle.bodyContent)}>
-        <Row className={appStyle.innerContainer}>
-          <Col xs={24} md={24}>
-            <Space direction={'vertical'} size={token.size}>
-              <h2
-                style={{
-                  fontSize: token.fontSizeHeading2,
-                  margin: 0,
-                }}
-              >
-                Hello, {user?.firstName + ' ' + user?.lastName}
-              </h2>
+        <Statistic />
 
-              <h4
-                style={{
-                  fontSize: token.fontSizeHeading4,
-                  margin: 0,
-                }}
-              >
-                {user?.email}
-              </h4>
+        <Row gutter={[token.size * 1.5, token.size * 1.5]} style={{ marginTop: token.size * 1.5 }}>
+          <Col xs={24} md={8}>
+            <Space direction={'vertical'} size={token.size} className={clsx(appStyle.boxItem)}>
+              <Flex justify={'flex-start'} align={'center'} className={`w-full`} gap={token.size}>
+                <div>
+                  <img src={user?.photoURL} style={{ maxWidth: '200px' }} alt='' />
+                </div>
 
-              <img src={user?.photoURL} style={{ maxWidth: '200px' }} alt='' />
+                <div>
+                  <h2
+                    style={{
+                      fontSize: token.fontSizeHeading2,
+                      margin: 0,
+                    }}
+                  >
+                    Hello, {user?.firstName + ' ' + user?.lastName}
+                  </h2>
+
+                  <h4
+                    style={{
+                      fontSize: token.fontSizeHeading4,
+                      margin: 0,
+                    }}
+                  >
+                    {user?.email}
+                  </h4>
+                </div>
+              </Flex>
 
               {user?.provider === 'google' && (
                 <Space direction='vertical' style={{ width: '100%' }} size={token.size / 2}>
@@ -113,32 +119,10 @@ const Profile = () => {
             </Space>
           </Col>
 
-          <Col xs={24} md={24}>
+          <Col xs={24} md={16}>
             <SyncDataCard />
           </Col>
         </Row>
-
-        <div className={clsx(appStyle.contentPage, 'mt-8')}>
-          <Space
-            direction='vertical'
-            size={[token.size, token.size]}
-            className={clsx(appStyle.fulWidth)}
-          >
-            <Row justify={'start'} align={'top'} gutter={[token.size * 2, token.size * 2]}>
-              <Col xs={24} md={15}>
-                <AddedItemChart />
-              </Col>
-
-              <Col xs={24} md={9}>
-                <OverviewChart />
-              </Col>
-
-              <Col xs={24} md={24}>
-                <ProgressChart />
-              </Col>
-            </Row>
-          </Space>
-        </div>
       </div>
     </div>
   )

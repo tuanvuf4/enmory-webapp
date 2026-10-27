@@ -261,3 +261,47 @@ a.ck.ck-button:not(.ck-disabled):hover {
 :where(.css-dev-only-do-not-override-1ih6taz).ant-tabs-bottom > div > .ant-tabs-nav::before {
   border-bottom-color: var(--ant-color-border) !important;
 }
+
+/* ==========================================================================
+   Ant Card component style matching .chartCard
+   ========================================================================== */
+.ant-card {
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border);
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s ease-in-out;
+}
+
+.ant-card:hover,
+.ant-card.ant-card-hoverable:hover {
+  box-shadow: 0 6px 20px rgba(91, 92, 230, 0.08);
+  border-color: rgba(139, 110, 247, 0.3);
+}
+
+.ant-card:not(.ant-card-small) > .ant-card-body {
+  padding: 20px 24px;
+}
+
+.ant-card .ant-card-head {
+  border-bottom: 1px solid var(--ant-color-border);
+  padding: 0 24px;
+}
+
+.ant-card .ant-card-head-title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--ant-color-text-heading);
+}
+
+[data-theme='dark'] .ant-card {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme='dark'] .ant-card:hover,
+[data-theme='dark'] .ant-card.ant-card-hoverable:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  border-color: rgba(139, 110, 247, 0.4);
+}
+

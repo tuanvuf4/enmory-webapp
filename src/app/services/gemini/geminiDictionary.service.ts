@@ -116,7 +116,36 @@ export const getSourceContext = (source: string = 'Oxford'): string => {
   }
 }
 
-const normalizeDictionaryData = (data: IOxfordAutofillData): IOxfordAutofillData => {
+export const filterWordsExcludingOrigin = (
+  words: string[] = [],
+  originWord: string = '',
+): string[] => {
+  const normalizedOrigin = String(originWord || '')
+    .trim()
+    .toLowerCase()
+  const map = new Map<string, string>()
+
+  const flatWords = (words || []).flatMap((item) =>
+    typeof item === 'string' && item.includes(',') ? item.split(',') : [item],
+  )
+
+  flatWords
+    .map((word) => String(word || '').trim())
+    .filter(Boolean)
+    .forEach((word) => {
+      const key = word.toLowerCase()
+      if (key !== normalizedOrigin && !map.has(key)) {
+        map.set(key, word)
+      }
+    })
+
+  return Array.from(map.values())
+}
+
+const normalizeDictionaryData = (
+  data: IOxfordAutofillData,
+  originWord: string = '',
+): IOxfordAutofillData => {
   if (data.meanings && Array.isArray(data.meanings)) {
     data.meanings = data.meanings.map((m) => {
       const uk = (m.pronunciation?.uk || '').trim()
@@ -139,6 +168,8 @@ const normalizeDictionaryData = (data: IOxfordAutofillData): IOxfordAutofillData
         note: formatHtmlList(m.note || '', false),
         grammar: formatHtmlList(m.grammar || '', true),
         collocations: formatHtmlList(m.collocations),
+        synonyms: filterWordsExcludingOrigin(m.synonyms || [], originWord),
+        antonyms: [],
         pronunciation: {
           uk: finalUk,
           us: finalUs,
@@ -147,8 +178,9 @@ const normalizeDictionaryData = (data: IOxfordAutofillData): IOxfordAutofillData
       }
     })
   }
-  data.forms = data.forms || []
-  data.relation = data.relation || []
+  data.forms = filterWordsExcludingOrigin(data.forms || [], originWord)
+  data.word_family = filterWordsExcludingOrigin(data.word_family || [], originWord)
+  data.relation = filterWordsExcludingOrigin(data.relation || [], originWord)
   return data
 }
 
@@ -230,9 +262,16 @@ Extract and format accurate dictionary data following ${sourceContext} conventio
    - Based on Oxford 3000 / Oxford 5000 CEFR scale:
      1 = A1, 2 = A2, 3 = B1, 4 = B2, 5 = C1/C2.
 
-3. Word Family: Derived or related words sharing the morphological base (noun, verb, adj, adv).
+3. Forms: Other morphological or inflected forms of the word (e.g. plurals, verb conjugations - past tense, past participle, -ing, 3rd person singular, comparative/superlative forms).
+   - CRITICAL RULE: DO NOT include the origin word "${trimmed}" itself in forms.
 
-4. Meanings:
+4. Word Family: Derived or related words sharing the morphological base (noun, verb, adj, adv).
+   - CRITICAL RULE: DO NOT include the origin word "${trimmed}" itself in word_family.
+
+5. Relation: Related words, closely associated terms, or compounds.
+   - CRITICAL RULE: DO NOT include the origin word "${trimmed}" itself in relation.
+
+6. Meanings:
    - Provide up to 3 most important/common dictionary senses (with the context-fitting meaning as the first meaning).
    - For each meaning:
      - typeId: Part of speech (1=NOUN, 2=VERB, 3=ADJECTIVE, 4=ADVERB, 5=PREPOSITION, 6=CONJUNCTION, 7=PRONOUN, 8=ARTICLE, 9=DETERMINER, 10=INTERJECTION).
@@ -245,8 +284,8 @@ Extract and format accurate dictionary data following ${sourceContext} conventio
      - note: Important usage notes, register labels (formal, informal, spoken/written, literary, British/American differences), common pitfalls, or helpful learner tips in clear Vietnamese or English. Format as an HTML unordered list with <ul> and <li> tags if multiple notes (e.g. "<ul><li>Thường dùng trong ngữ cảnh trang trọng</li></ul>") or clean HTML string, or empty string if none.
      - grammar: Grammatical patterns, structures, syntactic behavior, or complementation patterns for this sense (e.g., [C, U] for nouns; [transitive, intransitive], [verb + object + to-infinitive], [verb + preposition], [adjective + that-clause], etc.). Format as an HTML unordered list with <ul> and <li> tags if multiple patterns (e.g. "<ul><li>[transitive, intransitive]</li><li>verb + noun</li></ul>") or clean HTML string, or empty string if not applicable.
      - collocations: Frequent collocations formatted as an HTML unordered list with <ul> and <li> tags.
-     - synonyms: Array of up to 5 synonyms.
-     - antonyms: Array of up to 5 antonyms (if any).
+     - synonyms: Array of up to 5 synonyms. CRITICAL RULE: DO NOT include the origin word "${trimmed}" itself in synonyms.
+     - antonyms: ALWAYS return an empty array [] (do not extract antonyms).
      - examples: 1-2 practical example sentences with:
        - origin: English sentence
        - translation: Natural Vietnamese translation
@@ -255,9 +294,9 @@ Return ONLY valid JSON matching this schema:
 {
   "catId": 1,
   "level": 3,
-  "forms": [],
+  "forms": ["..."],
   "word_family": ["..."],
-  "relation": [],
+  "relation": ["..."],
   "meanings": [
     {
       "typeId": 1,
@@ -267,7 +306,7 @@ Return ONLY valid JSON matching this schema:
       "grammar": "<ul><li>...</li></ul>",
       "collocations": "<ul><li>first collocation</li></ul>",
       "synonyms": ["..."],
-      "antonyms": ["..."],
+      "antonyms": [],
       "pronunciation": {
         "uk": "...",
         "us": "...",
@@ -308,7 +347,7 @@ Return ONLY valid JSON matching this schema:
               if (text) {
                 const raw = safeParseJson(text)
                 if (raw) {
-                  parsed = normalizeDictionaryData(raw)
+                  parsed = normalizeDictionaryData(raw, trimmed)
                   break
                 }
               }
@@ -348,7 +387,7 @@ Return ONLY valid JSON matching this schema:
           if (openAiText) {
             const raw = safeParseJson(openAiText)
             if (raw) {
-              parsed = normalizeDictionaryData(raw)
+              parsed = normalizeDictionaryData(raw, trimmed)
             }
           }
         } catch (openAiErr: any) {

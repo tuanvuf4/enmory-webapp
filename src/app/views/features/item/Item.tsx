@@ -319,7 +319,7 @@ export const Item: React.FC<IProps> = ({
 
               <Flex align={'center'} gap={token.size / 8}>
                 {isItemDue(data) && !data.archive && (
-                  <Tooltip title={`Đã đến chu kỳ ôn tập: ${getDueDurationText(data)}`}>
+                  <Tooltip title={`Chu kỳ ôn tập: ${getDueDurationText(data)}`}>
                     <Button
                       type='text'
                       size='small'

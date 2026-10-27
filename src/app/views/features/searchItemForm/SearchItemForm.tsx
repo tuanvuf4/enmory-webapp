@@ -98,6 +98,18 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
     }
   }
 
+  const onReset = () => {
+    reset({
+      ...getValues(),
+      archive: initSearchFormItem.archive,
+      favorite: initSearchFormItem.favorite,
+      tags: initSearchFormItem.tags,
+      cat: initSearchFormItem.cat,
+      orderBy: initSearchFormItem.orderBy,
+      order: initSearchFormItem.order,
+    })
+  }
+
   const onSubmit = (data: IFormSearchItem) => {
     location.pathname.includes('library')
       ? setUrlParams(data, true)
@@ -296,14 +308,19 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   )}
                 />
 
-                <Button
-                  type={'primary'}
-                  htmlType='submit'
-                  className={appStyle.fulWidth}
-                  onClick={() => handleSubmit(onSubmit)()}
-                >
-                  Apply
-                </Button>
+                <Flex gap={token.size / 2}>
+                  <Button className={appStyle.fulWidth} onClick={() => onReset()}>
+                    Reset
+                  </Button>
+                  <Button
+                    type={'primary'}
+                    htmlType='submit'
+                    className={appStyle.fulWidth}
+                    onClick={() => handleSubmit(onSubmit)()}
+                  >
+                    Apply
+                  </Button>
+                </Flex>
               </div>
             )}
           >

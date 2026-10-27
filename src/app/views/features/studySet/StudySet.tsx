@@ -582,7 +582,7 @@ export const StudySet: React.FC = () => {
       (item) =>
         (item.origin || '').toLowerCase().includes(kw) ||
         (item.meanings || []).some(
-          (m) =>
+          (m: any) =>
             (m.definition || '').toLowerCase().includes(kw) ||
             (m.translation || '').toLowerCase().includes(kw),
         ),

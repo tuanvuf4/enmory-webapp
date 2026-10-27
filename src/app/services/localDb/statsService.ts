@@ -1,6 +1,9 @@
 import { localDb } from './db'
 import { firebaseAuthService } from '@/services/firebase/authService'
+import { db, dbCollections } from '@/config/firebaseConfig'
+import { collection, getDocs, query, where } from 'firebase/firestore'
 import { IItem, ECategory, EType } from '@/models/item.model'
+import { ITagEntity } from '@/models/tag.model'
 import { IHttpResponse } from '@/models/http.model'
 import { getType } from '@/helpers/item'
 
@@ -458,42 +461,130 @@ export const getPartOfSpeechStats = async (): Promise<IHttpResponse<IPartOfSpeec
 }
 
 /**
- * Get top used tags across all vocabulary items
+ * Get top used tags across vocabulary items,
+ * ONLY including tags that exist on Firestore DB.
  */
 export const getTopTagsStats = async (limit = 8): Promise<IHttpResponse<ITagStat[]>> => {
   try {
+    const user = firebaseAuthService.getCurrentUser()
+    if (!user?.uid) {
+      return {
+        isSuccess: true,
+        message: 'No authenticated user',
+        content: [],
+        statusCode: 200,
+      }
+    }
+
+    // 1. Fetch tags that exist on Firestore DB
+    let firestoreTags: Array<{ id?: string; value: string; value_lowercase: string }> = []
+
+    try {
+      const q = query(collection(db, dbCollections.tags), where('uid', '==', user.uid))
+      const snapshot = await getDocs(q)
+      firestoreTags = snapshot.docs
+        .map((docSnap) => {
+          const data = docSnap.data() as Partial<ITagEntity>
+          const value = String(data.value || '').trim()
+          const value_lowercase = String(data.value_lowercase || value.toLowerCase()).trim()
+          return {
+            id: docSnap.id,
+            value,
+            value_lowercase,
+          }
+        })
+        .filter((t) => t.value)
+
+      // Sync fetched tags into localDb cache
+      if (firestoreTags.length > 0) {
+        try {
+          await localDb.tags.bulkPut(
+            firestoreTags.map((t) => ({
+              id: t.id || '',
+              uid: user.uid,
+              value: t.value,
+              value_lowercase: t.value_lowercase,
+              created_date: 0,
+              last_update: 0,
+            })),
+          )
+        } catch (cacheErr) {
+          console.warn('Failed to cache tags in localDb:', cacheErr)
+        }
+      }
+    } catch (firestoreErr) {
+      console.warn('Failed to fetch tags from Firestore DB, falling back to localDb:', firestoreErr)
+      try {
+        const localTags = await localDb.tags.where('uid').equals(user.uid).toArray()
+        firestoreTags = localTags
+          .map((t) => ({
+            id: t.id,
+            value: String(t.value || '').trim(),
+            value_lowercase: String(t.value_lowercase || t.value.toLowerCase()).trim(),
+          }))
+          .filter((t) => t.value)
+      } catch (localErr) {
+        console.warn('Failed to fetch tags from localDb fallback:', localErr)
+      }
+    }
+
+    // If there are no tags in Firestore DB, return empty list
+    if (firestoreTags.length === 0) {
+      return {
+        isSuccess: true,
+        message: 'No tags found on Firestore DB',
+        content: [],
+        statusCode: 200,
+      }
+    }
+
+    // Build map of valid tags that exist on Firestore DB (keyed by lowercase)
+    const validTagsMap = new Map<string, { tag: string; count: number }>()
+    firestoreTags.forEach((ft) => {
+      const key = ft.value_lowercase || ft.value.toLowerCase()
+      if (!validTagsMap.has(key)) {
+        validTagsMap.set(key, { tag: ft.value, count: 0 })
+      }
+    })
+
+    // 2. Count occurrences in local vocabulary items ONLY for tags that exist on Firestore DB
     const items = await getLocalItemsForStats()
-    const tagCountMap: Record<string, number> = {}
     let totalTagOccurrences = 0
 
     items.forEach((item) => {
       const tags = item.tags || []
-      tags.forEach((rawTag) => {
-        const tag = rawTag.trim()
-        if (tag) {
-          tagCountMap[tag] = (tagCountMap[tag] || 0) + 1
+      // Deduplicate tags per item (case-insensitive) so an item isn't double-counted for the same tag
+      const itemTagsLower = Array.from(
+        new Set(tags.map((rawTag) => String(rawTag).trim().toLowerCase()).filter(Boolean)),
+      )
+
+      itemTagsLower.forEach((lowerTag) => {
+        const target = validTagsMap.get(lowerTag)
+        if (target) {
+          target.count += 1
           totalTagOccurrences++
         }
       })
     })
 
-    const sortedTags = Object.entries(tagCountMap)
-      .map(([tag, count]) => ({
-        tag,
-        count,
-        percentage: totalTagOccurrences > 0 ? Math.round((count / totalTagOccurrences) * 100) : 0,
-      }))
+    const sortedTags: ITagStat[] = Array.from(validTagsMap.values())
+      .filter((entry) => entry.count > 0)
       .sort((a, b) => b.count - a.count)
       .slice(0, limit)
+      .map((entry) => ({
+        tag: entry.tag,
+        count: entry.count,
+        percentage: totalTagOccurrences > 0 ? Math.round((entry.count / totalTagOccurrences) * 100) : 0,
+      }))
 
     return {
       isSuccess: true,
-      message: 'Top tags retrieved from local database',
+      message: 'Top tags retrieved successfully from Firestore DB tags',
       content: sortedTags,
       statusCode: 200,
     }
   } catch (error) {
-    console.error('Error calculating top tags from localDb:', error)
+    console.error('Error calculating top tags from Firestore tags and local items:', error)
     return {
       isSuccess: false,
       message: error instanceof Error ? error.message : 'Failed to calculate top tags',

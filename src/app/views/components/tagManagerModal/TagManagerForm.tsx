@@ -7,6 +7,8 @@ import {
 } from '@ant-design/icons'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { usePrompt } from '@/helpers/hooks'
+import { useQueryClient } from '@tanstack/react-query'
+import { itemKeys } from '@/core/hooks/useItems'
 import { tagApi } from '@/services/firebase'
 import { actionAsyncApp } from '@/store/asyncActions'
 import { Button, Flex, Input, Popconfirm, Space, Table, theme } from 'antd'
@@ -32,6 +34,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
   const { token } = theme.useToken()
   const dispatch = useDispatch()
   const { message } = usePrompt()
+  const queryClient = useQueryClient()
 
   const { tags: allTags } = useSelector((state) => state.setting)
 
@@ -90,6 +93,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
       setTagKeyword('')
       message({ type: 'success', content: 'Tag created successfully' })
       await refreshTags()
+      queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
     } catch (error: any) {
       message({ type: 'error', content: error?.message || 'Failed to create tag' })
     } finally {
@@ -129,6 +133,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
       message({ type: 'success', content: 'Tag updated successfully' })
       handleCancelEdit()
       await refreshTags()
+      queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
     } catch (error: any) {
       message({ type: 'error', content: error?.message || 'Failed to update tag' })
     } finally {
@@ -139,7 +144,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
   const handleDeleteTag = async (tag: ITagRow) => {
     try {
       setTagSubmitting(true)
-      const response = await tagApi.deleteTag(tag.id)
+      const response = await tagApi.deleteTag(tag.id, tag.value)
 
       if (!response.isSuccess) {
         message({ type: 'error', content: response.message || 'Failed to delete tag' })
@@ -150,6 +155,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
 
       message({ type: 'success', content: 'Tag deleted successfully' })
       await refreshTags()
+      queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
     } catch (error: any) {
       message({ type: 'error', content: error?.message || 'Failed to delete tag' })
     } finally {

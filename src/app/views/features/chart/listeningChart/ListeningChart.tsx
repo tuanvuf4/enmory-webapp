@@ -44,7 +44,7 @@ interface IProps {
   title?: string
 }
 
-export const ListeningChart: React.FC<IProps> = ({ title = 'Sentence Listening & Dictation' }) => {
+export const ListeningChart: React.FC<IProps> = ({ title = 'Dictation' }) => {
   const { token } = theme.useToken()
   const themeMode = useSelector((state: any) => state?.setting?.themeMode ?? 'light')
   const isDark = themeMode === 'dark'
@@ -279,7 +279,7 @@ export const ListeningChart: React.FC<IProps> = ({ title = 'Sentence Listening &
                   <span>
                     Chưa có lịch sử luyện nghe.
                     <br />
-                    Hãy luyện tập với widget <b>Sentence Listening</b> trên Trang chủ!
+                    Hãy luyện tập với widget <b>Dictation</b> trên Trang chủ!
                   </span>
                 }
               />

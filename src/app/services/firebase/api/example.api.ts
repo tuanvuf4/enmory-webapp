@@ -165,7 +165,7 @@ const updateExample = async (body: Partial<IExample>): Promise<IHttpResponse<IEx
 
     for (const item of items) {
       let changed = false
-      const newMeanings = (item.meanings || []).map((m) => {
+      const newMeanings = (item.meanings || []).map((m: any) => {
         const newExamples = (m.examples || []).map((ex: any) => {
           if (ex && typeof ex === 'object') {
             const exId = ex.id || `${item.id || ''}_${(ex.origin || '').trim()}`
@@ -241,7 +241,7 @@ const deleteExample = async (id: string): Promise<IHttpResponse<IExample>> => {
     const items = await localDb.items.toArray()
     for (const item of items) {
       let changed = false
-      const newMeanings = (item.meanings || []).map((m) => {
+      const newMeanings = (item.meanings || []).map((m: any) => {
         const remaining = (m.examples || []).filter((ex: any) => {
           if (!ex || typeof ex !== 'object') return false
           const exId = ex.id || `${item.id || ''}_${(ex.origin || '').trim()}`

@@ -34,6 +34,7 @@ import {
   EditOutlined,
   RobotOutlined,
   CloseOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import { useSelector, itemKeys, useChecklist } from '@/core/hooks'
 import { useQueryClient } from '@tanstack/react-query'
@@ -1265,31 +1266,26 @@ export const Dictation: React.FC = () => {
                 </div>
 
                 <div className='flex items-center gap-1'>
-                  <Tooltip title='Edit'>
-                    <Button
-                      type='text'
-                      size='small'
-                      icon={<EditOutlined style={{ fontSize: 14 }} />}
-                      onClick={() => handleEditItem(item)}
-                    />
-                  </Tooltip>
-                  <Tooltip
-                    title={inChecklist ? 'Đã trong Checklist (Bấm để xóa)' : 'Thêm vào Checklist'}
-                  >
-                    <Button
-                      type='text'
-                      size='small'
-                      icon={
-                        <CheckSquareOutlined
-                          style={{
-                            color: inChecklist ? token.colorSuccess : undefined,
-                            fontSize: 14,
-                          }}
-                        />
-                      }
-                      onClick={() => handleToggleChecklist(item)}
-                    />
-                  </Tooltip>
+                  <Button
+                    type='text'
+                    size='small'
+                    icon={<EditOutlined style={{ fontSize: 14 }} />}
+                    onClick={() => handleEditItem(item)}
+                  />
+
+                  <Button
+                    type='text'
+                    size='small'
+                    icon={
+                      <CheckSquareOutlined
+                        style={{
+                          color: inChecklist ? token.colorSuccess : undefined,
+                          fontSize: 14,
+                        }}
+                      />
+                    }
+                    onClick={() => handleToggleChecklist(item)}
+                  />
                 </div>
               </div>
             )
@@ -1557,8 +1553,9 @@ export const Dictation: React.FC = () => {
 
             <div className={styles.dictationInputArea}>
               <Input.TextArea
-                rows={2}
+                rows={3}
                 placeholder='Nghe audio và gõ lại câu tại đây...'
+                style={{ resize: 'none' }}
                 value={userDictationInput}
                 onChange={(e) => {
                   setUserDictationInput(e.target.value)
@@ -1587,12 +1584,11 @@ export const Dictation: React.FC = () => {
                   icon={<CheckOutlined />}
                   onClick={handleCheckDictation}
                 >
-                  Kiểm tra
+                  Check
                 </Button>
                 <Button
-                  type='default'
                   size='small'
-                  icon={<RobotOutlined />}
+                  icon={<ThunderboltOutlined />}
                   onClick={handleAiReview}
                   loading={isReviewingAi}
                   disabled={!userDictationInput.trim()}
@@ -1605,7 +1601,7 @@ export const Dictation: React.FC = () => {
                   icon={<BulbOutlined />}
                   onClick={handleGiveHint}
                 >
-                  Gợi ý {hintStep > 0 ? `(${hintStep}/2)` : ''}
+                  Hint {hintStep > 0 ? `(${hintStep}/2)` : ''}
                 </Button>
               </Flex>
               {userDictationInput && (
@@ -1618,7 +1614,7 @@ export const Dictation: React.FC = () => {
                     setAiReviewData(null)
                   }}
                 >
-                  Xóa
+                  Delete
                 </Button>
               )}
             </div>
@@ -1805,7 +1801,7 @@ export const Dictation: React.FC = () => {
           onClick={() => handlePlayAudio()}
           loading={isPlaying}
         >
-          {isPlaying ? 'Đang đọc...' : 'Nghe'}
+          Listening
         </Button>
 
         {/* Button 3: Reveal Answer */}
@@ -1814,39 +1810,31 @@ export const Dictation: React.FC = () => {
           icon={isRevealed ? <EyeInvisibleOutlined /> : <EyeOutlined />}
           onClick={handleToggleReveal}
         >
-          {isRevealed ? 'Ẩn đáp án' : 'Hiện đáp án'}
+          {isRevealed ? 'Hide' : 'Show'}
         </Button>
 
         {/* Button 4: Next Sentence */}
-        <Tooltip
-          title={
-            isDictationMode && !dictationResult
-              ? 'Vui lòng kiểm tra câu trả lời trước khi chuyển sang câu tiếp theo'
-              : undefined
-          }
+        <Button
+          type={isLastSentence ? 'primary' : 'default'}
+          className={styles.actionBtn}
+          icon={isLastSentence ? <CheckCircleOutlined /> : <RightOutlined />}
+          onClick={handleNext}
+          disabled={isDictationMode && !dictationResult}
         >
-          <Button
-            type={isLastSentence ? 'primary' : 'default'}
-            className={styles.actionBtn}
-            icon={isLastSentence ? <CheckCircleOutlined /> : <RightOutlined />}
-            onClick={handleNext}
-            disabled={isDictationMode && !dictationResult}
-          >
-            {isLastSentence ? 'Hoàn thành' : 'Tiếp theo'}
-          </Button>
-        </Tooltip>
+          {isLastSentence ? 'Complete' : 'Next'}
+        </Button>
       </div>
 
       {/* Keyboard Shortcuts Hint */}
       <div className={styles.shortcutsHint} style={{ color: token.colorTextQuaternary }}>
-        <b>[Enter]</b> Nghe • <b>[Ctrl+Enter]</b>{' '}
+        <b>[Enter]</b> Listen • <b>[Ctrl+Enter]</b>{' '}
         {isDictationMode
           ? dictationResult
-            ? 'Tiếp theo'
-            : 'Kiểm tra'
+            ? 'Next'
+            : 'Check'
           : isRevealed
-            ? 'Tiếp theo'
-            : 'Hiện đáp án'}
+            ? 'Next'
+            : 'Show'}
       </div>
     </div>
   )

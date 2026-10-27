@@ -49,7 +49,7 @@ const getListeningSentences = async (
     try {
       localItems = await localDb.items.where('uid').equals(currentUser.uid).toArray()
     } catch (err) {
-      console.warn('Error querying localDb.items for sentence listening:', err)
+      console.warn('Error querying localDb.items for dictation:', err)
     }
 
     // Fallback: If localDb has no items, fetch from Firestore
@@ -183,7 +183,7 @@ const getStoredSession = async (uid?: string): Promise<ISentenceListeningSession
     }
     return null
   } catch (err) {
-    console.warn('Failed to read sentence listening session from localDb:', err)
+    console.warn('Failed to read dictation session from localDb:', err)
     return null
   }
 }
@@ -202,7 +202,7 @@ const saveSession = async (session: ISentenceListeningSession, uid?: string): Pr
       },
     })
   } catch (err) {
-    console.warn('Failed to save sentence listening session to localDb:', err)
+    console.warn('Failed to save dictation session to localDb:', err)
   }
 }
 
@@ -239,7 +239,7 @@ const clearSession = async (uid?: string): Promise<void> => {
     const key = getSessionKey(uid)
     await localDb.syncMeta.delete(key)
   } catch (err) {
-    console.warn('Failed to clear sentence listening session from localDb:', err)
+    console.warn('Failed to clear dictation session from localDb:', err)
   }
 }
 

@@ -224,7 +224,7 @@ const getEligibleItemsInCategory = async (catId: number): Promise<IItem[]> => {
 
     // Filter items that have examples
     const itemsWithExamples = eligible.filter((item) => {
-      const meanings = (item.meanings || []).filter((m) => {
+      const meanings = (item.meanings || []).filter((m: any) => {
         const def = m?.definition && typeof m.definition === 'string' ? m.definition.trim() : ''
         const trans =
           m?.translation && typeof m.translation === 'string' ? m.translation.trim() : ''

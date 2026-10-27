@@ -7,6 +7,8 @@ import {
 } from '@ant-design/icons'
 import { useDispatch, useSelector } from '@/core/hooks'
 import { usePrompt } from '@/helpers/hooks'
+import { useQueryClient } from '@tanstack/react-query'
+import { itemKeys } from '@/core/hooks/useItems'
 import { tagApi } from '@/services/firebase'
 import { actionAsyncApp } from '@/store/asyncActions'
 import { Button, Divider, Flex, Input, Select, theme } from 'antd'
@@ -52,6 +54,7 @@ export const TagSelect: React.FC<ITagSelectProps> = ({
   const { token } = theme.useToken()
   const dispatch = useDispatch()
   const { message, confirm } = usePrompt()
+  const queryClient = useQueryClient()
 
   const { tags: allTags } = useSelector((state) => state.setting)
 
@@ -294,7 +297,7 @@ export const TagSelect: React.FC<ITagSelectProps> = ({
           }
 
           if (targetTagId) {
-            const response = await tagApi.deleteTag(targetTagId)
+            const response = await tagApi.deleteTag(targetTagId, itemText)
             if (!response.isSuccess) {
               message({
                 type: 'error',
@@ -321,6 +324,7 @@ export const TagSelect: React.FC<ITagSelectProps> = ({
             content: `${capitalizedItemLabel} "${itemText}" deleted successfully`,
           })
           await dispatch(actionAsyncApp.fetchTags() as any)
+          queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
         } catch (error: any) {
           message({ type: 'error', content: error?.message || `Failed to delete ${itemLabel}` })
         }

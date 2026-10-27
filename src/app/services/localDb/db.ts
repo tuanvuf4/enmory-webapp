@@ -1,5 +1,6 @@
 import Dexie, { Table } from 'dexie'
 import { IItem, IExample } from '@/models/item.model'
+import { ITagEntity } from '@/models/tag.model'
 
 export interface ISyncMeta {
   key: string
@@ -29,6 +30,7 @@ export interface IListeningHistoryItem {
 export class EnmoryDatabase extends Dexie {
   items!: Table<IItem, string>
   examples!: Table<IExample, string>
+  tags!: Table<ITagEntity, string>
   syncMeta!: Table<ISyncMeta, string>
   audioCache!: Table<ICachedAudio, string>
   listeningHistory!: Table<IListeningHistoryItem, number>
@@ -46,6 +48,9 @@ export class EnmoryDatabase extends Dexie {
     this.version(3).stores({
       audioCache: 'key, created_at',
       listeningHistory: '++id, date, timestamp, accuracy',
+    })
+    this.version(4).stores({
+      tags: 'id, uid, value, value_lowercase, created_date, last_update',
     })
   }
 }

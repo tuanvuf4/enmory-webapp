@@ -467,7 +467,7 @@ export const queryLocalItems = async (
     const filterTags = params.tags.map((t) => t.toLowerCase().trim()).filter(Boolean)
     if (filterTags.length > 0) {
       filtered = filtered.filter((item) => {
-        const itemTags = item.tags_lowercase || (item.tags || []).map((t) => t.toLowerCase())
+        const itemTags = item.tags_lowercase || (item.tags || []).map((t: string) => t.toLowerCase())
         return filterTags.some((ft) => itemTags.includes(ft))
       })
     }

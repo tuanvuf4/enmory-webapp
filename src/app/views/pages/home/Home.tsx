@@ -74,7 +74,7 @@ const Home = () => {
                   <Checklist />
                 </Widget>
 
-                <Widget title={'Sentence Listening'}>
+                <Widget title={'Dictation'}>
                   <Dictation />
                 </Widget>
               </Space>

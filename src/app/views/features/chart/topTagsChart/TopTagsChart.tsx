@@ -25,12 +25,13 @@ const TAG_PALETTE = [
   '#14b8a6', // Teal
 ]
 
-export const TopTagsChart: React.FC<IProps> = ({ title = 'Top Study Tags & Topics' }) => {
+export const TopTagsChart: React.FC<IProps> = ({ title = 'Topics' }) => {
   const [tags, setTags] = useState<ITagStat[]>([])
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
 
   const { token } = theme.useToken()
   const themeMode = useSelector((state: any) => state?.setting?.themeMode ?? 'light')
+  const reduxTags = useSelector((state: any) => state?.setting?.tags)
   const isDark = themeMode === 'dark'
 
   const chartOptions = useMemo(() => {
@@ -106,7 +107,7 @@ export const TopTagsChart: React.FC<IProps> = ({ title = 'Top Study Tags & Topic
         console.error('Error fetching top tags:', err)
         setIsLoaded(true)
       })
-  }, [])
+  }, [reduxTags])
 
   return (
     <div className={styles.chartCard}>
@@ -116,7 +117,7 @@ export const TopTagsChart: React.FC<IProps> = ({ title = 'Top Study Tags & Topic
             <TagsOutlined className={styles.titleIcon} />
             {title}
           </h3>
-          <p className={styles.chartSubtitle}>Most frequently tagged topics in your collection</p>
+          <p className={styles.chartSubtitle}>Most frequently topics in your Library</p>
         </div>
       </div>
 

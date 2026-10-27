@@ -533,7 +533,8 @@ export const Translator: React.FC<ITranslationPracticeProps> = ({
           </Button>
 
           <Button
-            icon={<ThunderboltOutlined style={{ color: '#722ed1' }} />}
+            type={'default'}
+            icon={<ThunderboltOutlined />}
             onClick={handleAiReview}
             loading={isAiReviewing}
           >

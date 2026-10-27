@@ -193,7 +193,11 @@ export const syncService = {
       const allItems = await hydrateItemsWithExamples(cloudItems)
       const totalExamplesCount = allItems.reduce(
         (sum, item) =>
-          sum + (item.meanings || []).reduce((mSum: number, m: any) => mSum + (m.examples || []).length, 0),
+          sum +
+          (item.meanings || []).reduce(
+            (mSum: number, m: any) => mSum + (m.examples || []).length,
+            0,
+          ),
         0,
       )
 
@@ -212,7 +216,8 @@ export const syncService = {
       // Clean non-existing/deleted tags from items before saving locally
       allItems.forEach((item) => {
         const itemTags = item.tags || []
-        const itemTagsLower = item.tags_lowercase || itemTags.map((t: string) => t.trim().toLowerCase())
+        const itemTagsLower =
+          item.tags_lowercase || itemTags.map((t: string) => t.trim().toLowerCase())
         if (itemTagsLower.some((t: string) => !activeTagLowerSet.has(t))) {
           item.tags = itemTags.filter((t: string) => activeTagLowerSet.has(t.trim().toLowerCase()))
           item.tags_lowercase = itemTagsLower.filter((t: string) => activeTagLowerSet.has(t))
@@ -280,7 +285,11 @@ export const syncService = {
       const itemsToPut = await hydrateItemsWithExamples(cloudItemsToPut)
       const examplesToPutCount = itemsToPut.reduce(
         (sum, item) =>
-          sum + (item.meanings || []).reduce((mSum: number, m: any) => mSum + (m.examples || []).length, 0),
+          sum +
+          (item.meanings || []).reduce(
+            (mSum: number, m: any) => mSum + (m.examples || []).length,
+            0,
+          ),
         0,
       )
 
@@ -300,10 +309,7 @@ export const syncService = {
       } catch (tagIndexErr) {
         console.warn('deltaTagsQuery failed with index, falling back to uid query:', tagIndexErr)
         try {
-          const allTagsQuery = query(
-            collection(db, dbCollections.tags),
-            where('uid', '==', uid),
-          )
+          const allTagsQuery = query(collection(db, dbCollections.tags), where('uid', '==', uid))
           const allTagsSnapshot = await getDocs(allTagsQuery)
           allTagsSnapshot.forEach((docSnap) => {
             const data = docSnap.data() as any
@@ -415,7 +421,8 @@ export const syncService = {
         try {
           const lTag = await localDb.tags.get(tId)
           if (lTag?.value) tagValuesToDelete.add(lTag.value.trim().toLowerCase())
-          if (lTag?.value_lowercase) tagValuesToDelete.add(lTag.value_lowercase.trim().toLowerCase())
+          if (lTag?.value_lowercase)
+            tagValuesToDelete.add(lTag.value_lowercase.trim().toLowerCase())
         } catch {
           // ignore
         }
@@ -459,7 +466,8 @@ export const syncService = {
               continue
             }
             const itemTags = item.tags || []
-            const itemTagsLower = item.tags_lowercase || itemTags.map((t: string) => t.trim().toLowerCase())
+            const itemTagsLower =
+              item.tags_lowercase || itemTags.map((t: string) => t.trim().toLowerCase())
 
             if (
               itemTagsLower.some((t: string) => tagValuesToDelete.has(t)) ||
@@ -467,7 +475,9 @@ export const syncService = {
             ) {
               cleanedLocalItems.push({
                 ...item,
-                tags: itemTags.filter((t: string) => !tagValuesToDelete.has(t.trim().toLowerCase())),
+                tags: itemTags.filter(
+                  (t: string) => !tagValuesToDelete.has(t.trim().toLowerCase()),
+                ),
                 tags_lowercase: itemTagsLower.filter((t: string) => !tagValuesToDelete.has(t)),
                 last_update: now,
               })
@@ -516,7 +526,8 @@ export const syncService = {
     const allLocalItems = await localDb.items.where('uid').equals(uid).toArray()
     const totalExamples = allLocalItems.reduce(
       (sum, item) =>
-        sum + (item.meanings || []).reduce((mSum: number, m: any) => mSum + (m.examples || []).length, 0),
+        sum +
+        (item.meanings || []).reduce((mSum: number, m: any) => mSum + (m.examples || []).length, 0),
       0,
     )
 

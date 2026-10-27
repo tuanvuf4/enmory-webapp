@@ -45,7 +45,8 @@ const removeTagFromLocalItems = async (uid: string, targetTagLower: string): Pro
 
     for (const item of localItems) {
       const itemTags = item.tags || []
-      const itemTagsLower = item.tags_lowercase || itemTags.map((t: string) => String(t).trim().toLowerCase())
+      const itemTagsLower =
+        item.tags_lowercase || itemTags.map((t: string) => String(t).trim().toLowerCase())
 
       const hasTag =
         itemTagsLower.some((t: string) => String(t).trim().toLowerCase() === targetTagLower) ||
@@ -55,7 +56,9 @@ const removeTagFromLocalItems = async (uid: string, targetTagLower: string): Pro
         updatedLocalItems.push({
           ...item,
           tags: itemTags.filter((t: string) => String(t).trim().toLowerCase() !== targetTagLower),
-          tags_lowercase: itemTagsLower.filter((t: string) => String(t).trim().toLowerCase() !== targetTagLower),
+          tags_lowercase: itemTagsLower.filter(
+            (t: string) => String(t).trim().toLowerCase() !== targetTagLower,
+          ),
           last_update: now,
         })
       }
@@ -147,16 +150,18 @@ const syncDeletedTagsToServer = async (
         const snapshot = await getDocs(q)
         itemDocsToUpdate = snapshot.docs.map((d) => ({ id: d.id, ref: d.ref, data: d.data() }))
       } catch (indexErr) {
-        console.warn('Firestore query by tags_lowercase failed, falling back to client filter:', indexErr)
-        const fallbackQ = query(
-          collection(db, dbCollections.items),
-          where('uid', '==', uid),
+        console.warn(
+          'Firestore query by tags_lowercase failed, falling back to client filter:',
+          indexErr,
         )
+        const fallbackQ = query(collection(db, dbCollections.items), where('uid', '==', uid))
         const snapshot = await getDocs(fallbackQ)
         itemDocsToUpdate = snapshot.docs
           .filter((d) => {
             const data = d.data()
-            const tagsLower = data.tags_lowercase || (data.tags || []).map((t: string) => String(t).trim().toLowerCase())
+            const tagsLower =
+              data.tags_lowercase ||
+              (data.tags || []).map((t: string) => String(t).trim().toLowerCase())
             return tagsLower.includes(tagLower)
           })
           .map((d) => ({ id: d.id, ref: d.ref, data: d.data() }))
@@ -169,7 +174,8 @@ const syncDeletedTagsToServer = async (
         for (const itemDoc of itemDocsToUpdate) {
           const currentTags = (itemDoc.data.tags || []) as string[]
           const nextTags = currentTags.filter((t) => String(t).trim().toLowerCase() !== tagLower)
-          const currentTagsLower = (itemDoc.data.tags_lowercase || currentTags.map((t) => String(t).trim().toLowerCase())) as string[]
+          const currentTagsLower = (itemDoc.data.tags_lowercase ||
+            currentTags.map((t) => String(t).trim().toLowerCase())) as string[]
           const nextTagsLower = currentTagsLower.filter((t) => t !== tagLower)
 
           batch.update(itemDoc.ref, {

@@ -1828,13 +1828,7 @@ export const Dictation: React.FC = () => {
       {/* Keyboard Shortcuts Hint */}
       <div className={styles.shortcutsHint} style={{ color: token.colorTextQuaternary }}>
         <b>[Enter]</b> Listen • <b>[Ctrl+Enter]</b>{' '}
-        {isDictationMode
-          ? dictationResult
-            ? 'Next'
-            : 'Check'
-          : isRevealed
-            ? 'Next'
-            : 'Show'}
+        {isDictationMode ? (dictationResult ? 'Next' : 'Check') : isRevealed ? 'Next' : 'Show'}
       </div>
     </div>
   )

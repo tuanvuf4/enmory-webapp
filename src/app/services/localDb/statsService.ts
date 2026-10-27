@@ -574,7 +574,8 @@ export const getTopTagsStats = async (limit = 8): Promise<IHttpResponse<ITagStat
       .map((entry) => ({
         tag: entry.tag,
         count: entry.count,
-        percentage: totalTagOccurrences > 0 ? Math.round((entry.count / totalTagOccurrences) * 100) : 0,
+        percentage:
+          totalTagOccurrences > 0 ? Math.round((entry.count / totalTagOccurrences) * 100) : 0,
       }))
 
     return {

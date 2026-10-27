@@ -113,7 +113,9 @@ export const useManualSync = () => {
     }
 
     setIsSyncing(true)
-    setProgressText(forceFull ? 'Starting full sync for items & tag items...' : 'Connecting to cloud...')
+    setProgressText(
+      forceFull ? 'Starting full sync for items & tag items...' : 'Connecting to cloud...',
+    )
 
     try {
       const result = await syncService.sync({

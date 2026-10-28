@@ -678,22 +678,52 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
       updateData.tags_lowercase = normalizeLowercaseTags(normalizedTags)
     }
 
+    if (!updateData.uid && currentUser?.uid) {
+      updateData.uid = currentUser.uid
+    }
+
     // 1. Update local DB immediately
     let updatedItem: IItem
     try {
       const existing = await localDb.items.get(id)
       if (existing) {
         delete (existing as any).quiz
-        updatedItem = { ...existing, ...updateData, id }
+        const mergedTags = updateData.tags !== undefined ? updateData.tags : existing.tags || []
+        const mergedTagsLower =
+          updateData.tags_lowercase !== undefined
+            ? updateData.tags_lowercase
+            : existing.tags_lowercase ||
+              (existing.tags || []).map((t: string) =>
+                String(t).replace(/^#+/, '').trim().toLowerCase(),
+              )
+
+        updatedItem = {
+          ...existing,
+          ...updateData,
+          id,
+          uid: updateData.uid || existing.uid || currentUser.uid,
+          tags: mergedTags,
+          tags_lowercase: mergedTagsLower,
+        }
       } else {
-        updatedItem = { ...updateData, id } as IItem
+        updatedItem = {
+          ...updateData,
+          id,
+          uid: updateData.uid || currentUser.uid,
+          tags: updateData.tags || [],
+          tags_lowercase:
+            updateData.tags_lowercase ||
+            (updateData.tags || []).map((t: string) =>
+              String(t).replace(/^#+/, '').trim().toLowerCase(),
+            ),
+        } as IItem
       }
       delete (updatedItem as any).quiz
       await localDb.items.put(updatedItem)
       invalidateSearchIndex()
     } catch (localErr) {
       console.warn('Failed to update item in localDb:', localErr)
-      updatedItem = { ...updateData, id } as IItem
+      updatedItem = { ...updateData, id, uid: updateData.uid || currentUser.uid } as IItem
       delete (updatedItem as any).quiz
     }
 

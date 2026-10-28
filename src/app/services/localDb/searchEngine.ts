@@ -197,8 +197,23 @@ export const getOrBuildSearchIndex = (items: IItem[], uid?: string): MiniSearch<
             .map((m) => removeVietnameseTones(cleanSearchText(m.definition || '')))
             .filter(Boolean)
             .join(' ')
-        case 'tagsText':
-          return (document.tags || []).join(' ').toLowerCase()
+        case 'tagsText': {
+          const t1 = (document.tags || []).map((t) =>
+            String(t || '')
+              .replace(/^#+/, '')
+              .trim()
+              .toLowerCase(),
+          )
+          const t2 = (document.tags_lowercase || []).map((t) =>
+            String(t || '')
+              .replace(/^#+/, '')
+              .trim()
+              .toLowerCase(),
+          )
+          return Array.from(new Set([...t1, ...t2]))
+            .filter(Boolean)
+            .join(' ')
+        }
         case 'otherText': {
           const textParts: string[] = []
           if (document.forms?.length) textParts.push(document.forms.join(' '))
@@ -255,13 +270,9 @@ export const queryLocalItems = async (
   params: IItemRequestParams,
   uid?: string,
 ): Promise<ILocalSearchResponse> => {
-  // 1. Fetch items for this user
-  let query = localDb.items.toCollection()
-  if (uid) {
-    query = localDb.items.where('uid').equals(uid)
-  }
-
-  const rawItems = await query.toArray()
+  // 1. Fetch items for this user from local IndexedDB
+  const allItems = await localDb.items.toArray()
+  const rawItems = uid ? allItems.filter((item) => !item.uid || item.uid === uid) : allItems
 
   // 2. Keyword Search & Precision Ranking
   let candidateItems = rawItems
@@ -463,13 +474,40 @@ export const queryLocalItems = async (
     filtered = filtered.filter((item) => !!item.favorite)
   }
 
-  if (params.tags && params.tags.length > 0) {
-    const filterTags = params.tags.map((t) => t.toLowerCase().trim()).filter(Boolean)
+  if (params.tags) {
+    const rawTags = Array.isArray(params.tags) ? params.tags : [params.tags]
+    const filterTags = rawTags
+      .map((t) =>
+        String(t || '')
+          .replace(/^#+/, '')
+          .trim()
+          .toLowerCase(),
+      )
+      .filter(Boolean)
+
     if (filterTags.length > 0) {
       filtered = filtered.filter((item) => {
-        const itemTags =
-          item.tags_lowercase || (item.tags || []).map((t: string) => t.toLowerCase())
-        return filterTags.some((ft) => itemTags.includes(ft))
+        const rawItemTags = Array.isArray(item.tags)
+          ? item.tags
+          : typeof (item as any)?.tags === 'string'
+            ? [(item as any).tags]
+            : []
+        const rawItemTagsLower = Array.isArray(item.tags_lowercase)
+          ? item.tags_lowercase
+          : typeof (item as any)?.tags_lowercase === 'string'
+            ? [(item as any).tags_lowercase]
+            : []
+
+        const allItemTags = Array.from(new Set([...rawItemTags, ...rawItemTagsLower]))
+          .map((t) =>
+            String(t || '')
+              .replace(/^#+/, '')
+              .trim()
+              .toLowerCase(),
+          )
+          .filter(Boolean)
+
+        return filterTags.some((ft) => allItemTags.includes(ft))
       })
     }
   }

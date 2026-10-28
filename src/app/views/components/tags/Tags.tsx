@@ -72,9 +72,10 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch, searchBy = 'keywo
     const params = new URLSearchParams()
 
     if (searchBy === 'tags') {
-      params.set('tags', keyword)
+      const cleanTag = keyword.trim().replace(/^#+/, '')
+      params.set('tags', cleanTag)
     } else {
-      params.set('keyword', keyword)
+      params.set('keyword', keyword.trim())
     }
 
     params.set('page', appSetting.pagination.page.toString())

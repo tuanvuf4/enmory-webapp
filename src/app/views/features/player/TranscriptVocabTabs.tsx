@@ -474,7 +474,6 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
         {(item.phonetic || item.type) && (
           <div className={styles.phoneticRow}>
             {item.phonetic && <span className={styles.phonetic}>{item.phonetic}</span>}
-            {item.type && <span className={styles.pos}>{item.type}</span>}
           </div>
         )}
 
@@ -583,7 +582,6 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
             </Tooltip>
           )}
           <span className={styles.chipText}>{item.text}</span>
-          {item.type && <span className={styles.chipType}>({item.type})</span>}
           <Tag
             color={levelColor}
             style={{

@@ -147,10 +147,14 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin })
       </div>
 
       {meaning.definition && (
-        <div className={styles.definitionBlock}>
+        <div className={styles.subSection}>
+          <span className={styles.subSectionLabel}>
+            <ReadOutlined style={{ marginRight: 4 }} />
+            Definition
+          </span>
           <div
-            className={styles.definitionText}
-            dangerouslySetInnerHTML={{ __html: meaning.definition }}
+            className={styles.subSectionContent}
+            dangerouslySetInnerHTML={{ __html: meaning.grammar }}
           />
         </div>
       )}

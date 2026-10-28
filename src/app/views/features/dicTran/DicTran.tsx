@@ -5,7 +5,6 @@ import {
   Input,
   Progress,
   Tag,
-  Tooltip,
   Space,
   Typography,
   message,
@@ -37,6 +36,7 @@ import {
   CheckSquareOutlined,
   SettingOutlined,
   CheckOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons'
 import { IExample, IItem, ECategory, EType } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
@@ -1277,61 +1277,55 @@ export const DicTran: React.FC<IDicTranProps> = ({
                   </Space>
 
                   <Space size='small'>
-                    <Tooltip title={inChecklist ? 'Xóa khỏi Checklist' : 'Thêm vào Checklist'}>
-                      <Button
-                        type='text'
-                        size='small'
-                        icon={
-                          <CheckSquareOutlined
-                            style={{
-                              color: inChecklist ? token.colorSuccess : undefined,
-                            }}
-                          />
-                        }
-                        onClick={() => handleToggleChecklist(example)}
-                      />
-                    </Tooltip>
-                    <Tooltip title='Chỉnh sửa câu'>
-                      <Button
-                        type='text'
-                        size='small'
-                        icon={<EditOutlined />}
-                        onClick={() => handleEditItem(example)}
-                      />
-                    </Tooltip>
-                    <Tooltip title='Nghe phát âm chuẩn'>
-                      <Button
-                        type='text'
-                        size='small'
-                        icon={<SoundOutlined />}
-                        onClick={() => handlePlayAudio(tgtText)}
-                      />
-                    </Tooltip>
-                    <Tooltip title='Sao chép câu chuẩn'>
-                      <Button
-                        type='text'
-                        size='small'
-                        icon={<CopyOutlined />}
-                        onClick={() => {
-                          navigator.clipboard.writeText(tgtText)
-                          message.success('Đã sao chép câu chuẩn!')
-                        }}
-                      />
-                    </Tooltip>
-                    <Tooltip title='Luyện lại câu này'>
-                      <Button
-                        type='link'
-                        size='small'
-                        onClick={() => {
-                          setIsCompleted(false)
-                          setCurrentIndex(idx)
-                          saveSession({ currentIndex: idx, isCompleted: false })
-                          setTimeout(() => textAreaRef.current?.focus(), 50)
-                        }}
-                      >
-                        Luyện lại
-                      </Button>
-                    </Tooltip>
+                    <Button
+                      type='text'
+                      size='small'
+                      icon={
+                        <CheckSquareOutlined
+                          style={{
+                            color: inChecklist ? token.colorSuccess : undefined,
+                          }}
+                        />
+                      }
+                      onClick={() => handleToggleChecklist(example)}
+                    />
+
+                    <Button
+                      type='text'
+                      size='small'
+                      icon={<EditOutlined />}
+                      onClick={() => handleEditItem(example)}
+                    />
+
+                    <Button
+                      type='text'
+                      size='small'
+                      icon={<SoundOutlined />}
+                      onClick={() => handlePlayAudio(tgtText)}
+                    />
+
+                    <Button
+                      type='text'
+                      size='small'
+                      icon={<CopyOutlined />}
+                      onClick={() => {
+                        navigator.clipboard.writeText(tgtText)
+                        message.success('Đã sao chép câu chuẩn!')
+                      }}
+                    />
+
+                    <Button
+                      type='link'
+                      size='small'
+                      onClick={() => {
+                        setIsCompleted(false)
+                        setCurrentIndex(idx)
+                        saveSession({ currentIndex: idx, isCompleted: false })
+                        setTimeout(() => textAreaRef.current?.focus(), 50)
+                      }}
+                    >
+                      Luyện lại
+                    </Button>
                   </Space>
                 </div>
 
@@ -1460,50 +1454,44 @@ export const DicTran: React.FC<IDicTranProps> = ({
 
         <div className={styles.headerRight}>
           {/* Edit button */}
-          <Tooltip title='Chỉnh sửa câu'>
-            <Button
-              type='text'
-              size='small'
-              loading={isLoadingEditItem}
-              icon={<EditOutlined style={{ fontSize: 16 }} />}
-              onClick={(e) => {
-                e.stopPropagation()
-                handleEditItem()
-              }}
-            />
-          </Tooltip>
+          <Button
+            type='text'
+            size='small'
+            loading={isLoadingEditItem}
+            icon={<EditOutlined style={{ fontSize: 16 }} />}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleEditItem()
+            }}
+          />
 
           {/* Checklist button */}
-          <Tooltip title={isCurrentInChecklist ? 'Xóa khỏi Checklist' : 'Thêm vào Checklist'}>
-            <Button
-              type='text'
-              size='small'
-              loading={isTogglingChecklist}
-              icon={
-                <CheckSquareOutlined
-                  style={{
-                    color: isCurrentInChecklist ? token.colorSuccess : undefined,
-                    fontSize: 16,
-                  }}
-                />
-              }
-              onClick={(e) => {
-                e.stopPropagation()
-                handleToggleChecklist()
-              }}
-            />
-          </Tooltip>
+          <Button
+            type='text'
+            size='small'
+            loading={isTogglingChecklist}
+            icon={
+              <CheckSquareOutlined
+                style={{
+                  color: isCurrentInChecklist ? token.colorSuccess : undefined,
+                  fontSize: 16,
+                }}
+              />
+            }
+            onClick={(e) => {
+              e.stopPropagation()
+              handleToggleChecklist()
+            }}
+          />
 
           {/* Refresh Random Batch */}
-          <Tooltip title='Tải bộ 10 câu mới'>
-            <Button
-              type='text'
-              size='small'
-              icon={<SyncOutlined spin={loading} />}
-              onClick={() => loadBatch(true)}
-              loading={loading}
-            />
-          </Tooltip>
+          <Button
+            type='text'
+            size='small'
+            icon={<SyncOutlined spin={loading} />}
+            onClick={() => loadBatch(true)}
+            loading={loading}
+          />
 
           {/* Settings Popover */}
           {mode === 'dictation' && (
@@ -1513,16 +1501,12 @@ export const DicTran: React.FC<IDicTranProps> = ({
               trigger='click'
               placement='bottomRight'
             >
-              <Tooltip title='Cài đặt giọng đọc & tùy chọn'>
-                <Button type='text' size='small' icon={<SettingOutlined />} />
-              </Tooltip>
+              <Button type='text' size='small' icon={<SettingOutlined />} />
             </Popover>
           )}
 
           {onCancel && (
-            <Tooltip title='Đóng'>
-              <Button size='small' type='text' icon={<CloseOutlined />} onClick={onCancel} />
-            </Tooltip>
+            <Button size='small' type='text' icon={<CloseOutlined />} onClick={onCancel} />
           )}
         </div>
       </div>
@@ -1614,12 +1598,18 @@ export const DicTran: React.FC<IDicTranProps> = ({
       )}
 
       {/* 4. User Input */}
-      <div className={styles.inputWrapper}>
+      <Flex vertical gap={token.size / 4}>
         <Input.TextArea
           ref={textAreaRef}
           value={userAnswer}
+          placeholder={'Input here...'}
+          allowClear={{
+            clearIcon: (
+              <CloseCircleOutlined style={{ fontSize: 14, marginRight: -6, marginTop: -4 }} />
+            ),
+          }}
           onChange={(e) => handleAnswerChange(e.target.value)}
-          autoSize={{ minRows: 2, maxRows: 5 }}
+          autoSize={{ minRows: 2, maxRows: 10 }}
           className={styles.textAreaInput}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -1635,21 +1625,37 @@ export const DicTran: React.FC<IDicTranProps> = ({
             }
           }}
         />
-        <div className={styles.shortcutTip}>
+        <Flex
+          align={'center'}
+          justify={'space-between'}
+          gap={token.size / 2}
+          className={styles.shortcutTip}
+        >
           {currentMode === 'dictation' ? (
-            <></>
-          ) : (
-            <>
+            <span>
               Tip: Press <b>Ctrl + Enter</b> to{' '}
               {isChecked ? (isLastQuestion ? 'Complete' : 'Next') : 'Check'}
-            </>
+            </span>
+          ) : (
+            <span>
+              Tip: Press <b>Ctrl + Enter</b> to{' '}
+              {isChecked ? (isLastQuestion ? 'Complete' : 'Next') : 'Check'}
+            </span>
           )}
-        </div>
-      </div>
+
+          <Button
+            type={'text'}
+            size={'small'}
+            icon={<ClearOutlined />}
+            disabled={userAnswer ? false : true}
+            onClick={handleClearAnswer}
+          />
+        </Flex>
+      </Flex>
 
       {/* 5. Action Bar */}
-      <div className={styles.actionBar}>
-        <div className={styles.actionGroup}>
+      <Flex align={'center'} justify={'space-between'} gap={token.size / 2}>
+        <Flex align={'center'} gap={token.size / 2}>
           <Button
             type={!isChecked ? 'primary' : 'default'}
             icon={<CheckOutlined />}
@@ -1662,25 +1668,13 @@ export const DicTran: React.FC<IDicTranProps> = ({
             icon={<BulbOutlined />}
             onClick={handleToggleHint}
             type={showHint ? 'primary' : 'default'}
+            disabled={isChecked ? true : false}
             ghost={showHint}
-          >
-            Hint
-          </Button>
+          />
+        </Flex>
 
-          {userAnswer && <Button icon={<ClearOutlined />} onClick={handleClearAnswer} />}
-        </div>
-
-        <div className={styles.actionGroup}>
+        <Flex align={'center'} gap={token.size / 2}>
           <Button icon={<LeftOutlined />} onClick={handlePrev} disabled={safeCurrentIndex === 0} />
-
-          {mode === 'dictation' && (
-            <Button
-              icon={<SoundOutlined spin={isPlaying} />}
-              onClick={() => handlePlayAudio(targetText)}
-            >
-              Listen
-            </Button>
-          )}
 
           <Button
             type={isChecked ? 'primary' : 'default'}
@@ -1689,10 +1683,10 @@ export const DicTran: React.FC<IDicTranProps> = ({
             loading={loading}
             disabled={!isChecked}
           >
-            {isLastQuestion ? 'Hoàn thành' : 'Next'}
+            {isLastQuestion ? 'Complete' : 'Next'}
           </Button>
-        </div>
-      </div>
+        </Flex>
+      </Flex>
 
       {/* 6. Evaluation Result Section (LCS Diff & Reference) */}
       {isChecked && (
@@ -1756,23 +1750,19 @@ export const DicTran: React.FC<IDicTranProps> = ({
                 ))}
               </div>
               <Space size='small'>
-                <Tooltip title={isPlaying ? 'Dừng phát âm' : 'Nghe phát âm chuẩn'}>
-                  <Button
-                    type='primary'
-                    shape='circle'
-                    icon={<SoundOutlined spin={isPlaying} />}
-                    onClick={() => handlePlayAudio(targetText)}
-                    size='small'
-                  />
-                </Tooltip>
-                <Tooltip title='Sao chép câu chuẩn'>
-                  <Button
-                    shape='circle'
-                    icon={<CopyOutlined />}
-                    onClick={handleCopyReference}
-                    size='small'
-                  />
-                </Tooltip>
+                <Button
+                  type='primary'
+                  shape='circle'
+                  icon={<SoundOutlined spin={isPlaying} />}
+                  onClick={() => handlePlayAudio(targetText)}
+                  size='small'
+                />
+                <Button
+                  shape='circle'
+                  icon={<CopyOutlined />}
+                  onClick={handleCopyReference}
+                  size='small'
+                />
               </Space>
             </div>
           </div>

@@ -233,31 +233,67 @@ const ensureTagsExist = async (tags: string[]): Promise<IHttpResponse<string[]>>
     for (const tag of normalizedTags) {
       const lower = tag.toLowerCase()
 
-      const q = query(
-        collection(db, dbCollections.tags),
-        where('uid', '==', currentUser.uid),
-        where('value_lowercase', '==', lower),
-        limit(1),
-      )
+      try {
+        const q = query(
+          collection(db, dbCollections.tags),
+          where('uid', '==', currentUser.uid),
+          where('value_lowercase', '==', lower),
+          limit(1),
+        )
 
-      const snapshot = await getDocs(q)
+        const snapshot = await getDocs(q)
 
-      if (snapshot.empty) {
-        const now = Timestamp.now().toMillis()
+        if (snapshot.empty) {
+          const now = Timestamp.now().toMillis()
 
-        const payload: ITagEntity = {
-          uid: currentUser.uid,
-          value: tag,
-          value_lowercase: lower,
-          created_date: now,
-          last_update: now,
+          const payload: ITagEntity = {
+            uid: currentUser.uid,
+            value: tag,
+            value_lowercase: lower,
+            created_date: now,
+            last_update: now,
+          }
+
+          const addedDoc = await addDoc(collection(db, dbCollections.tags), payload)
+          try {
+            await localDb.tags.put({ id: addedDoc.id, ...payload })
+          } catch (localErr) {
+            console.warn('Failed to put tag into localDb:', localErr)
+          }
+        } else {
+          try {
+            const existingDoc = snapshot.docs[0]
+            await localDb.tags.put({ id: existingDoc.id, ...(existingDoc.data() as any) })
+          } catch (localErr) {
+            console.warn('Failed to cache existing tag into localDb:', localErr)
+          }
         }
-
-        const addedDoc = await addDoc(collection(db, dbCollections.tags), payload)
+      } catch (firestoreErr) {
+        console.warn(
+          `Firestore check failed for tag "${tag}", falling back to localDb:`,
+          firestoreErr,
+        )
         try {
-          await localDb.tags.put({ id: addedDoc.id, ...payload })
+          const existingLocal = await localDb.tags
+            .where('uid')
+            .equals(currentUser.uid)
+            .filter((t) => (t.value_lowercase || t.value?.toLowerCase()) === lower)
+            .first()
+
+          if (!existingLocal) {
+            const now = Timestamp.now().toMillis()
+            const id = doc(collection(db, dbCollections.tags)).id
+            await localDb.tags.put({
+              id,
+              uid: currentUser.uid,
+              value: tag,
+              value_lowercase: lower,
+              created_date: now,
+              last_update: now,
+            })
+          }
         } catch (localErr) {
-          console.warn('Failed to put tag into localDb:', localErr)
+          console.warn('Failed to put tag into localDb fallback:', localErr)
         }
       }
     }

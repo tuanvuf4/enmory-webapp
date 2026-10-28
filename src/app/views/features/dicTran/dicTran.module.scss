@@ -131,13 +131,6 @@
   }
 }
 
-.inputWrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  position: relative;
-}
-
 .textAreaInput {
   border-radius: 8px !important;
   font-size: 15px !important;
@@ -149,21 +142,6 @@
   font-size: 11px;
   opacity: 0.6;
   text-align: right;
-}
-
-.actionBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.actionGroup {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .resultCard {

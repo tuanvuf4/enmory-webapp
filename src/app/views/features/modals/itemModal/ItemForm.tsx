@@ -199,47 +199,46 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         // Validate and auto-create missing related items before API call
         await validateAndCreateRelatedItems(data, user?.uid)
 
-        // Sync latest tags and remove non-existing tags from item before saving
-        const tagsResponse = await tagApi.getTags('')
-        if (!tagsResponse.isSuccess) {
-          throw new Error(tagsResponse.message || 'Failed to validate tags')
-        }
-
-        const latestTags = tagsResponse.content || []
-        dispatch(
-          settingAction.setTags(
-            latestTags.map((tag) => ({
-              id: tag.id,
-              label: tag.value,
-              value: tag.value,
-            })),
-          ),
-        )
-
-        const tagLookup = new Map(latestTags.map((tag) => [tag.value_lowercase, tag.value]))
+        // Ensure all tags in data.tags exist in the tags collection (auto-create missing tags)
         const normalizedTags = Array.from(
           new Set((data.tags || []).map((tag) => String(tag || '').trim()).filter(Boolean)),
         )
 
-        const validTags = Array.from(
-          new Set(
-            normalizedTags
-              .map((tag) => tagLookup.get(tag.toLowerCase()))
-              .filter((tag): tag is string => !!tag),
-          ),
-        )
-
-        const removedTags = normalizedTags.filter((tag) => !tagLookup.has(tag.toLowerCase()))
-
-        data.tags = validTags
-        setValue('tags', validTags)
-
-        if (removedTags.length > 0) {
-          notification({
-            type: 'warning',
-            message: `Removed non-existing tags: ${removedTags.join(', ')}`,
-          })
+        if (normalizedTags.length > 0) {
+          try {
+            await tagApi.ensureTagsExist(normalizedTags)
+          } catch (tagErr) {
+            console.warn('Failed to ensure tags exist:', tagErr)
+          }
         }
+
+        // Sync latest tags and update Redux store
+        try {
+          const tagsResponse = await tagApi.getTags('')
+          if (tagsResponse.isSuccess && tagsResponse.content) {
+            const latestTags = tagsResponse.content
+            dispatch(
+              settingAction.setTags(
+                latestTags.map((tag) => ({
+                  id: tag.id,
+                  label: tag.value,
+                  value: tag.value,
+                })),
+              ),
+            )
+
+            const tagLookup = new Map(latestTags.map((tag) => [tag.value_lowercase, tag.value]))
+            const finalTags = normalizedTags.map((tag) => tagLookup.get(tag.toLowerCase()) || tag)
+            data.tags = Array.from(new Set(finalTags))
+          } else {
+            data.tags = normalizedTags
+          }
+        } catch (fetchTagErr) {
+          console.warn('Failed to fetch latest tags:', fetchTagErr)
+          data.tags = normalizedTags
+        }
+
+        setValue('tags', data.tags)
       } catch (error) {
         console.error('Error validating related items or syncing tags:', error)
         notification({
@@ -282,9 +281,16 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
       // Prioritize common meanings (sort common meanings first)
       const sortedMeanings = [...meanings].sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0))
 
+      const cleanTags = (data.tags || []).map((tag) => String(tag || '').trim()).filter(Boolean)
+      const cleanTagsLower = cleanTags
+        .map((tag) => tag.replace(/^#+/, '').trim().toLowerCase())
+        .filter(Boolean)
+
       const dataSubmit: IItem = {
         ...data,
-        tags: data.tags || [],
+        uid: data.uid || user?.uid || '',
+        tags: cleanTags,
+        tags_lowercase: cleanTagsLower,
         collocations: data.collocations || [],
         forms: data.forms || [],
         word_family: data.word_family || [],

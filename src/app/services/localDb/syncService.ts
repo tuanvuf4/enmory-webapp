@@ -210,23 +210,23 @@ export const syncService = {
         cloudTags.push({ id: docSnap.id, ...(docSnap.data() as any) })
       })
 
-      const activeTagLowerSet = new Set(
-        cloudTags.map((t) => (t.value_lowercase || t.value).trim().toLowerCase()),
-      )
-      // Clean non-existing/deleted tags from items before saving locally
-      allItems.forEach((item) => {
-        const itemTags = item.tags || []
-        const itemTagsLower =
-          item.tags_lowercase || itemTags.map((t: string) => t.trim().toLowerCase())
-        if (itemTagsLower.some((t: string) => !activeTagLowerSet.has(t))) {
-          item.tags = itemTags.filter((t: string) => activeTagLowerSet.has(t.trim().toLowerCase()))
-          item.tags_lowercase = itemTagsLower.filter((t: string) => activeTagLowerSet.has(t))
-        }
-      })
-
       // Sync pending deleted tags to cloud items if any
       const pendingTagLowers = await tagApi.getPendingDeletedTags(uid)
-      if (pendingTagLowers.length > 0) {
+      const pendingDeletedSet = new Set(pendingTagLowers.map((t) => t.trim().toLowerCase()))
+
+      if (pendingDeletedSet.size > 0) {
+        allItems.forEach((item) => {
+          const itemTags = item.tags || []
+          const itemTagsLower =
+            item.tags_lowercase || itemTags.map((t: string) => t.trim().toLowerCase())
+          if (itemTagsLower.some((t: string) => pendingDeletedSet.has(t))) {
+            item.tags = itemTags.filter(
+              (t: string) => !pendingDeletedSet.has(t.trim().toLowerCase()),
+            )
+            item.tags_lowercase = itemTagsLower.filter((t: string) => !pendingDeletedSet.has(t))
+          }
+        })
+
         options?.onProgress?.('Syncing deleted tag updates to cloud items...')
         cloudItemsUpdatedForTags = await tagApi.syncDeletedTagsToServer(
           uid,

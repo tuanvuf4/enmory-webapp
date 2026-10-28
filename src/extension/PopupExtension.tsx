@@ -1,19 +1,16 @@
 import { EPageExt } from '@/models/app.model'
-import { IExample, IItem } from '@/models/item.model'
+import { IItem } from '@/models/item.model'
 import { initItem } from '@/views/features/modals/itemModal/data'
 import { chromeStorage } from '@/extension/storageService'
-import { theme } from 'antd'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import styles from './popupExtension.module.scss'
-import { ExampleForm, HeaderExtension, LoginForm, RegisterForm, LoadingBar } from '@/views/features'
+import { HeaderExtension, LoginForm, RegisterForm, LoadingBar } from '@/views/features'
 import { ItemForm } from '@/views/features/modals/itemModal'
 import { useAuthInit, useCategories, useDispatch, useSelector, useTypes } from '@/core/hooks'
 import { settingAction } from '@/store/reducers/setting.reducer'
 
 export const PopupExtension = () => {
-  const { token } = theme.useToken()
-
   const dispatch = useDispatch()
 
   // Auth state now comes from Redux. Firebase persists the session itself
@@ -64,10 +61,6 @@ export const PopupExtension = () => {
 
   const onPageChange = (page: EPageExt) => setCurrentPage(+page)
 
-  const onSuccess = (data: IExample) => {
-    console.log(`data: `, data)
-  }
-
   return (
     <div className={styles.ext}>
       <HeaderExtension isAuth={isAuth} onPageChange={onPageChange} />
@@ -95,13 +88,6 @@ export const PopupExtension = () => {
               <FormProvider {...methods}>
                 <ItemForm item={initItem} />
               </FormProvider>
-            </div>
-          )}
-
-          {currentPage === EPageExt.ADD_EX && (
-            <div style={{ padding: (token.size / 4) * 3 }}>
-              <h2 style={{ fontWeight: 'normal' }}>Add a Example</h2>
-              <ExampleForm onSuccess={onSuccess} />
             </div>
           )}
 

@@ -345,6 +345,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
               }
             }
 
+            reset({ ...initItem })
             closeModal()
             notification({ type: 'success', message: 'Update item successful!' })
             // refresh list in library
@@ -371,6 +372,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             // refresh list in library
             await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
 
+            reset({ ...initItem })
             closeModal()
             notification({ type: 'success', message: 'Create a item successful!' })
           }

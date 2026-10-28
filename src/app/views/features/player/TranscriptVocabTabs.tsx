@@ -11,7 +11,6 @@ import {
   Empty,
   Tooltip,
   theme,
-  Segmented,
 } from 'antd'
 import {
   RobotOutlined,
@@ -101,7 +100,6 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
   const dispatch = useDispatch()
 
   const [activeTab, setActiveTab] = useState<string>('all')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
@@ -424,15 +422,6 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
   const filteredItems = useMemo(() => {
     let list = activeTab === 'all' ? allItems : itemsByLevel[activeTab as TCEFRLevel] || []
 
-    if (selectedCategory !== 'all') {
-      list = list.filter((it) => {
-        if (selectedCategory === 'phrase') {
-          return it.category === 'phrase' || it.category === 'phrasal_verb'
-        }
-        return it.category === selectedCategory
-      })
-    }
-
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim()
       list = list.filter(
@@ -445,21 +434,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
     }
 
     return list
-  }, [allItems, itemsByLevel, activeTab, selectedCategory, searchQuery])
-
-  // Count items by category for filter pills
-  const categoryCounts = useMemo(() => {
-    const pool = activeTab === 'all' ? allItems : itemsByLevel[activeTab as TCEFRLevel] || []
-
-    return {
-      all: pool.length,
-      word: pool.filter((it) => it.category === 'word').length,
-      phrase: pool.filter((it) => it.category === 'phrase' || it.category === 'phrasal_verb')
-        .length,
-      collocation: pool.filter((it) => it.category === 'collocation').length,
-      idiom: pool.filter((it) => it.category === 'idiom').length,
-    }
-  }, [allItems, itemsByLevel, activeTab])
+  }, [allItems, itemsByLevel, activeTab, searchQuery])
 
   // Render Popover content for hovering item
   const renderItemPopover = (item: IClassifiedVocabItem) => {
@@ -776,21 +751,6 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
 
           {/* Filter Bar: Category & Search */}
           <div className={styles.filterBar}>
-            <div className={styles.categoryGroup}>
-              <Segmented
-                size='small'
-                value={selectedCategory}
-                onChange={(val) => setSelectedCategory(val as string)}
-                options={[
-                  { label: `All (${categoryCounts.all})`, value: 'all' },
-                  { label: `Single Words (${categoryCounts.word})`, value: 'word' },
-                  { label: `Phrases (${categoryCounts.phrase})`, value: 'phrase' },
-                  { label: `Collocations (${categoryCounts.collocation})`, value: 'collocation' },
-                  { label: `Idioms (${categoryCounts.idiom})`, value: 'idiom' },
-                ]}
-              />
-            </div>
-
             <Input
               size='small'
               placeholder='Search vocabulary, meaning...'

@@ -11,7 +11,7 @@ import { Item } from '@/views/features/item/Item'
 import { IIotdDoc } from '@/models/item.model'
 import { Link } from 'react-router-dom'
 
-import { Translator } from '@/views/features/example/Translator'
+import { Translator } from '@/views/features/translator'
 
 interface IIotdItemCardProps {
   iotd?: IIotdDoc | null

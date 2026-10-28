@@ -309,7 +309,6 @@ export const PlayerDock: React.FC = () => {
     return segDuration > 0 ? Math.max(0, Math.min(100, (elapsed / segDuration) * 100)) : 0
   }, [transcriptSegments, activeIndex, smoothTime, player.duration])
 
-  const [forceTranscriptMode, setForceTranscriptMode] = useState(false)
 
   const hasValidMediaUrl = useMemo(() => {
     if (!resolvedSrc) return false
@@ -321,11 +320,8 @@ export const PlayerDock: React.FC = () => {
   }, [resolvedSrc])
 
   const isTranscriptPlayback = useMemo(() => {
-    if (!hasValidMediaUrl) {
-      return transcriptSegments.length > 0
-    }
-    return forceTranscriptMode && transcriptSegments.length > 0
-  }, [hasValidMediaUrl, forceTranscriptMode, transcriptSegments.length])
+    return !hasValidMediaUrl && transcriptSegments.length > 0
+  }, [hasValidMediaUrl, transcriptSegments.length])
 
   const transcriptDuration = useMemo(() => {
     if (!transcriptSegments.length) return 0
@@ -1446,30 +1442,10 @@ export const PlayerDock: React.FC = () => {
               type='text'
               size={'middle'}
               onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
-              className={appStyle.fromXs}
               icon={<FullscreenOutlined style={{ fontSize: '20px', color: token.colorText }} />}
               title='Toàn màn hình Focus Karaoke'
             />
 
-            {transcriptSegments.length > 0 && hasValidMediaUrl && (
-              <Button
-                type='text'
-                size={'middle'}
-                icon={
-                  <SoundOutlined
-                    style={{
-                      fontSize: '20px',
-                      color: forceTranscriptMode ? token.palette?.yellow?.[0] : token.colorText,
-                    }}
-                  />
-                }
-                onClick={() => {
-                  ttsService.stop()
-                  lastSpokenIndexRef.current = -1
-                  setForceTranscriptMode((v) => !v)
-                }}
-              />
-            )}
           </Flex>
 
           {/* seek bar */}

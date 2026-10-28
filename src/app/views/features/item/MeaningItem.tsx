@@ -1,13 +1,20 @@
-import { AudioOutlined } from '@ant-design/icons'
+import {
+  SoundOutlined,
+  StarFilled,
+  TranslationOutlined,
+  BulbOutlined,
+  ApartmentOutlined,
+  ReadOutlined,
+} from '@ant-design/icons'
 import { appSetting } from '@/config/appConfig'
 import { getType } from '@/helpers/item'
-import { IMeaning, ECategory, IExample } from '@/models/item.model'
+import { IMeaning, ECategory, IExample, EType } from '@/models/item.model'
 import { Tags } from '@/views/components'
-import { Button, Flex, Space, theme } from 'antd'
+import { Tag, Tooltip } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import styles from './item.module.scss'
 import clsx from 'clsx'
-import { speakWord } from '@/helpers/mics'
+import { speakWord, speakSentence } from '@/helpers/mics'
 
 interface IMeaningProps {
   origin: string
@@ -15,59 +22,84 @@ interface IMeaningProps {
   catId: ECategory
 }
 
+const getTypeColor = (type: EType): string => {
+  switch (type) {
+    case EType.NOUN:
+      return 'geekblue'
+    case EType.VERB:
+      return 'green'
+    case EType.ADJECTIVE:
+      return 'gold'
+    case EType.ADVERB:
+      return 'cyan'
+    case EType.PREPOSITION:
+      return 'purple'
+    case EType.CONJUNCTION:
+      return 'magenta'
+    case EType.PRONOUN:
+      return 'blue'
+    case EType.INTERJECTION:
+      return 'volcano'
+    default:
+      return 'default'
+  }
+}
+
+const stripHtml = (html?: string) => {
+  if (!html) return ''
+  return html.replace(/<[^>]*>?/gm, '').trim()
+}
+
 const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
-  if (catId === ECategory.WORD && (meaning.pronunciation.us || meaning.pronunciation.uk)) {
+  const { pronunciation } = meaning
+
+  if (catId === ECategory.WORD && (pronunciation.us || pronunciation.uk)) {
     return (
-      <div className={`${styles.pronouns} flex justify-end flex-wrap gap-x-2 gap-y-1 items-center`}>
-        {meaning.pronunciation.uk && (
-          <div className={styles.audio}>
-            <Button
-              variant={'text'}
-              type={'text'}
-              size={'small'}
-              className={clsx({ [styles.btnAudio]: true })}
-              icon={<AudioOutlined />}
-              onClick={() => speakWord(origin)}
+      <div className={styles.pronounceList}>
+        {pronunciation.uk && (
+          <Tooltip title='Phát âm tiếng Anh - Anh (UK)'>
+            <button
+              type='button'
+              className={clsx(styles.audioPill, styles.audioPillUk)}
+              onClick={() => speakWord(origin, 'en-GB')}
             >
-              {meaning.pronunciation?.uk || ''}
-            </Button>
-          </div>
+              <span className={styles.accentLabel}>UK</span>
+              <span className={styles.phoneticText}>{pronunciation.uk}</span>
+              <SoundOutlined className={styles.audioIcon} />
+            </button>
+          </Tooltip>
         )}
 
-        {meaning.pronunciation.us && (
-          <div className={styles.audio}>
-            {/* <span className={styles.accent}>US</span> */}
-            <Button
-              variant={'text'}
-              type={'text'}
-              size={'small'}
-              className={clsx({ [styles.btnAudio]: true })}
-              icon={<AudioOutlined />}
+        {pronunciation.us && (
+          <Tooltip title='Phát âm tiếng Anh - Mỹ (US)'>
+            <button
+              type='button'
+              className={clsx(styles.audioPill, styles.audioPillUs)}
               onClick={() => speakWord(origin, 'en-US')}
             >
-              {meaning.pronunciation?.us || ''}
-            </Button>
-          </div>
+              <span className={styles.accentLabel}>US</span>
+              <span className={styles.phoneticText}>{pronunciation.us}</span>
+              <SoundOutlined className={styles.audioIcon} />
+            </button>
+          </Tooltip>
         )}
       </div>
     )
   }
 
-  if (catId !== ECategory.WORD && meaning.pronunciation.common) {
+  if (catId !== ECategory.WORD && pronunciation.common) {
     return (
-      <div className={styles.pronouns}>
-        <div className={styles.audio}>
-          <Button
-            variant={'text'}
-            type={'text'}
-            size={'small'}
-            className={clsx({ [styles.btnAudio]: true })}
-            icon={<AudioOutlined />}
+      <div className={styles.pronounceList}>
+        <Tooltip title='Nghe phát âm'>
+          <button
+            type='button'
+            className={styles.audioPill}
             onClick={() => speakWord(origin, 'en-US')}
           >
-            {meaning.pronunciation?.common || ''}
-          </Button>
-        </div>
+            <span className={styles.phoneticText}>{pronunciation.common}</span>
+            <SoundOutlined className={styles.audioIcon} />
+          </button>
+        </Tooltip>
       </div>
     )
   }
@@ -78,8 +110,6 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
 export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin }) => {
   const navigate = useNavigate()
 
-  const { token } = theme.useToken()
-
   const onSearch = (keyword: string) => {
     const params = new URLSearchParams()
     params.set('keyword', keyword)
@@ -88,88 +118,132 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin })
     navigate(`/library?${params.toString()}`)
   }
 
+  const wordType = catId === ECategory.WORD ? getType(meaning.typeId) : null
+
   return (
-    <div className={clsx(styles.meaningItem, meaning.common ? styles.common : '')}>
-      <Flex justify={'space-between'} align={'center'} className={`w-full`}>
-        <div>{catId === ECategory.WORD && <span>{getType(meaning.typeId).origin}</span>}</div>
+    <div className={clsx(styles.meaningItem, meaning.common && styles.common)}>
+      <div className={styles.meaningHeader}>
+        <div className={styles.meaningHeaderLeft}>
+          {wordType && (
+            <Tag color={getTypeColor(meaning.typeId)} className={styles.posBadge}>
+              {wordType.origin}
+            </Tag>
+          )}
+
+          {meaning.common && (
+            <Tag color='gold' icon={<StarFilled />} className={styles.commonBadge}>
+              Common
+            </Tag>
+          )}
+        </div>
 
         {(meaning.pronunciation.uk || meaning.pronunciation.us || meaning.pronunciation.common) && (
           <Pronunciation origin={origin} catId={catId} meaning={meaning} />
         )}
-      </Flex>
+      </div>
 
-      <>
-        {meaning.note && (
-          <>
-            <h5 className={'italic font-bold m-0'}>Note:</h5>
-            <div className={styles.note} dangerouslySetInnerHTML={{ __html: meaning.note }} />
-          </>
-        )}
+      {meaning.definition && (
+        <div className={styles.definitionBlock}>
+          <div
+            className={styles.definitionText}
+            dangerouslySetInnerHTML={{ __html: meaning.definition }}
+          />
+        </div>
+      )}
 
-        {meaning.definition && (
-          <>
-            <h5 className={'italic font-bold m-0'}>Definition:</h5>
-            <div
-              className={styles.definition}
-              dangerouslySetInnerHTML={{ __html: meaning.definition }}
-            />
-          </>
-        )}
+      {meaning.translation && (
+        <div className={styles.translationBlock}>
+          <TranslationOutlined className={styles.translationIcon} />
+          <div
+            className={styles.translationText}
+            dangerouslySetInnerHTML={{ __html: meaning.translation }}
+          />
+        </div>
+      )}
 
-        {meaning.translation && (
-          <>
-            <h5 className={'italic font-bold m-0'}>Translation:</h5>
-            <div
-              className={styles.translate}
-              dangerouslySetInnerHTML={{ __html: meaning.translation }}
-            />
-          </>
-        )}
+      {meaning.note && (
+        <div className={styles.noteCallout}>
+          <div className={styles.noteHeader}>
+            <BulbOutlined /> Lưu ý
+          </div>
+          <div className={styles.noteContent} dangerouslySetInnerHTML={{ __html: meaning.note }} />
+        </div>
+      )}
 
-        {meaning.collocations && (
-          <>
-            <h5 className={'italic font-bold m-0'}>Collocations:</h5>
-            <div className={styles.list}>
-              <div dangerouslySetInnerHTML={{ __html: meaning.collocations }} />
-            </div>
-          </>
-        )}
+      {meaning.collocations && (
+        <div className={styles.subSection}>
+          <span className={styles.subSectionLabel}>
+            <ApartmentOutlined style={{ marginRight: 4 }} />
+            Collocations
+          </span>
+          <div
+            className={styles.subSectionContent}
+            dangerouslySetInnerHTML={{ __html: meaning.collocations }}
+          />
+        </div>
+      )}
 
-        {meaning.grammar && (
-          <>
-            <h5 className={'italic font-bold m-0'}>Grammar:</h5>
-            <div className={styles.list}>
-              <div dangerouslySetInnerHTML={{ __html: meaning.grammar }} />
-            </div>
-          </>
-        )}
+      {meaning.grammar && (
+        <div className={styles.subSection}>
+          <span className={styles.subSectionLabel}>
+            <ReadOutlined style={{ marginRight: 4 }} />
+            Grammar
+          </span>
+          <div
+            className={styles.subSectionContent}
+            dangerouslySetInnerHTML={{ __html: meaning.grammar }}
+          />
+        </div>
+      )}
 
-        {meaning.synonyms.length > 0 && (
-          <Tags label={'Synonyms'} tags={meaning.synonyms} onSearch={onSearch} />
-        )}
+      {meaning.synonyms && meaning.synonyms.length > 0 && (
+        <Tags label={'Synonyms'} tags={meaning.synonyms} onSearch={onSearch} />
+      )}
 
-        {meaning.antonyms.length > 0 && (
-          <Tags label={'Antonyms'} tags={meaning.antonyms} onSearch={onSearch} />
-        )}
+      {meaning.antonyms && meaning.antonyms.length > 0 && (
+        <Tags label={'Antonyms'} tags={meaning.antonyms} onSearch={onSearch} />
+      )}
 
-        {meaning.examples.length > 0 && (
-          <Space size={token.size / 2} direction={'vertical'}>
-            <h5 className={'italic font-bold m-0'}>Example:</h5>
-            <ul className={styles.examples}>
-              {(meaning.examples as IExample[]).map((example, key) => {
-                return (
-                  <li key={key} className={styles.exampleItem}>
-                    <ul>
-                      <li dangerouslySetInnerHTML={{ __html: example.origin }} />
-                      <li dangerouslySetInnerHTML={{ __html: example.translation }} />
-                    </ul>
-                  </li>
-                )
-              })}
-            </ul>
-          </Space>
-        )}
-      </>
+      {meaning.examples && meaning.examples.length > 0 && (
+        <div className={styles.examplesSection}>
+          <div className={styles.examplesHeader}>
+            <ReadOutlined style={{ marginRight: 4 }} /> Examples
+          </div>
+          <div className={styles.examplesList}>
+            {(meaning.examples as IExample[]).map((example, key) => {
+              const plainOrigin = stripHtml(example.origin)
+              return (
+                <div key={example.id || key} className={styles.exampleCard}>
+                  <div className={styles.exampleOriginRow}>
+                    <div
+                      className={styles.exampleOriginText}
+                      dangerouslySetInnerHTML={{ __html: example.origin }}
+                    />
+                    {plainOrigin && (
+                      <Tooltip title='Nghe câu ví dụ'>
+                        <button
+                          type='button'
+                          className={styles.exampleAudioBtn}
+                          onClick={() => speakSentence(plainOrigin)}
+                          aria-label='Phát âm ví dụ'
+                        >
+                          <SoundOutlined />
+                        </button>
+                      </Tooltip>
+                    )}
+                  </div>
+                  {example.translation && (
+                    <div
+                      className={styles.exampleTranslationText}
+                      dangerouslySetInnerHTML={{ __html: example.translation }}
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -16,7 +16,7 @@ import {
   AimOutlined,
   SoundOutlined,
 } from '@ant-design/icons'
-import { Button, Dropdown, MenuProps, Space, Tag, Tooltip } from 'antd'
+import { Button, Dropdown, Flex, MenuProps, Space, Tag, theme, Tooltip } from 'antd'
 import styles from './listening.module.scss'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
@@ -43,6 +43,7 @@ export const FocusListeningModal: React.FC = () => {
   const activeAllRef = useRef<HTMLDivElement | null>(null)
   const scrollAllContainerRef = useRef<HTMLDivElement | null>(null)
 
+  const { token } = theme.useToken()
   const [viewMode, setViewMode] = useState<'focus' | 'all'>('focus')
   const [revealedSegments, setRevealedSegments] = useState<Record<number, boolean>>({})
 
@@ -294,31 +295,33 @@ export const FocusListeningModal: React.FC = () => {
       <div className={styles.focusHeader}>
         <div className={styles.focusTrackInfo}>
           <h2 className={styles.focusTitle}>{currentTrack?.title || 'Không có bài nghe'}</h2>
-          <Space size={6} wrap>
-            <Tag color='cyan' style={{ fontSize: 12, borderRadius: 12 }}>
-              <SoundOutlined style={{ marginRight: 4 }} />
-              {activeIndex >= 0
-                ? `${activeIndex + 1} / ${segments.length}`
-                : `0 / ${segments.length}`}
-            </Tag>
-            {loopSegment && (
-              <Tag color='gold' style={{ fontSize: 12, borderRadius: 12 }}>
-                Đang lặp câu
-              </Tag>
-            )}
-            {transcriptDisplayMode === 'blur' && (
-              <Tag
-                color='gold'
-                style={{ fontSize: 12, borderRadius: 12, cursor: 'pointer' }}
-                onClick={handleToggleDisplayMode}
-              >
-                Mờ chữ (Nhấp để hiện lại)
-              </Tag>
-            )}
-          </Space>
+          <Space size={6} wrap></Space>
         </div>
 
-        <Space size='middle' align='center'>
+        <Flex gap={token.size / 2} align='center' wrap>
+          <Tag color='cyan' style={{ fontSize: 12, borderRadius: 12 }}>
+            <SoundOutlined style={{ marginRight: 4 }} />
+            {activeIndex >= 0
+              ? `${activeIndex + 1} / ${segments.length}`
+              : `0 / ${segments.length}`}
+          </Tag>
+
+          {loopSegment && (
+            <Tag color='gold' style={{ fontSize: 12, borderRadius: 12 }}>
+              Đang lặp câu
+            </Tag>
+          )}
+
+          {transcriptDisplayMode === 'blur' && (
+            <Tag
+              color='gold'
+              style={{ fontSize: 12, borderRadius: 12, cursor: 'pointer' }}
+              onClick={handleToggleDisplayMode}
+            >
+              Mờ chữ (Nhấp để hiện lại)
+            </Tag>
+          )}
+
           {/* Switch View Mode: 1-line Focus vs All scroll */}
           <Tooltip
             title={
@@ -354,17 +357,7 @@ export const FocusListeningModal: React.FC = () => {
               {transcriptDisplayMode === 'visible' ? 'Hiện chữ' : 'Đang làm mờ'}
             </Button>
           </Tooltip>
-
-          {/* Exit Fullscreen Button */}
-          <Tooltip title='Thoát toàn màn hình (Esc)'>
-            <Button
-              type='text'
-              className={styles.focusCloseBtn}
-              icon={<FullscreenExitOutlined style={{ fontSize: 24 }} />}
-              onClick={handleClose}
-            />
-          </Tooltip>
-        </Space>
+        </Flex>
       </div>
 
       {/* ── Main Body: Lyrics ────────────────────────────────────────────── */}

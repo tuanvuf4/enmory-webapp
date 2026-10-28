@@ -27,6 +27,21 @@ export interface IListeningHistoryItem {
   voice?: string
 }
 
+export interface ITranslationHistoryItem {
+  id?: number
+  uid?: string
+  date: string // YYYY-MM-DD
+  timestamp: number
+  sentenceId?: string
+  exampleId?: string
+  sourceText?: string
+  targetText?: string
+  userText?: string
+  accuracy: number
+  isPerfect: boolean
+  direction?: 'vi-en' | 'en-vi'
+}
+
 export class EnmoryDatabase extends Dexie {
   items!: Table<IItem, string>
   examples!: Table<IExample, string>
@@ -34,6 +49,7 @@ export class EnmoryDatabase extends Dexie {
   syncMeta!: Table<ISyncMeta, string>
   audioCache!: Table<ICachedAudio, string>
   listeningHistory!: Table<IListeningHistoryItem, number>
+  translationHistory!: Table<ITranslationHistoryItem, number>
 
   constructor() {
     super('EnmoryLocalDB')
@@ -51,6 +67,9 @@ export class EnmoryDatabase extends Dexie {
     })
     this.version(4).stores({
       tags: 'id, uid, value, value_lowercase, created_date, last_update',
+    })
+    this.version(5).stores({
+      translationHistory: '++id, date, timestamp, accuracy, direction',
     })
   }
 }

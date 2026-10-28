@@ -11,6 +11,7 @@ import {
   SummaryStats,
   RetentionChart,
   ListeningChart,
+  TranslationChart,
 } from '@/views/features/chart'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 
@@ -108,6 +109,15 @@ const Statistic = () => {
           <Col xs={24} style={{ display: 'flex' }}>
             <div style={{ width: '100%' }}>
               <ListeningChart key={`listening-${refreshKey}`} />
+            </div>
+          </Col>
+        </Row>
+
+        {/* Row 5: Translation Practice Analytics */}
+        <Row justify='start' align='stretch'>
+          <Col xs={24} style={{ display: 'flex' }}>
+            <div style={{ width: '100%' }}>
+              <TranslationChart key={`translation-${refreshKey}`} />
             </div>
           </Col>
         </Row>

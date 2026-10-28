@@ -1,0 +1,23 @@
+.popoverWordContent {
+  min-width: 230px;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.interactiveWord {
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0 3px;
+  transition: all 0.15s ease;
+  margin: 0 1px;
+
+  &:hover {
+    background-color: rgba(99, 102, 241, 0.15);
+    color: var(--ant-color-primary, #6366f1);
+  }
+}
+

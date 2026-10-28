@@ -29,7 +29,6 @@
   font-weight: 600;
   font-size: 13px;
   margin-inline-end: 0;
-  margin-top: 8px;
 }
 
 .progressBar {
@@ -203,56 +202,36 @@
   width: 100%;
 }
 
-.hintTagsContainer {
-  padding: 10px 14px;
-  border-radius: 8px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  animation: fadeIn 0.25s ease-in-out;
-  margin-top: 10px;
-}
-
-.hintTagsHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.hintTagsRow {
+.hintArea {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(250, 173, 20, 0.08);
+  border: 1px dashed rgba(250, 173, 20, 0.3);
+  animation: fadeIn 0.25s ease-in-out;
+  margin-top: 10px;
+  width: 100%;
 }
 
 .hintWordTag {
   cursor: pointer;
   user-select: none;
   font-size: 13px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  display: inline-flex;
-  align-items: center;
-  line-height: 1.5;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(250, 173, 20, 0.2);
+  transition: all 0.2s;
 
   &:hover {
+    background: #faad14;
+    color: #fff;
+    border-color: #faad14;
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-.hintWordTagUnrevealed {
-  border-style: dashed;
 }
 
 .popoverWordContent {

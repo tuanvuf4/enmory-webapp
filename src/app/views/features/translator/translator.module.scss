@@ -92,11 +92,13 @@
   padding: 2px 8px;
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(250, 173, 20, 0.2);
   transition: all 0.2s;
 
   &:hover {
     background: #faad14;
     color: #fff;
+    border-color: #faad14;
     transform: translateY(-1px);
   }
 }
@@ -260,6 +262,103 @@
   padding: 4px 8px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
+}
+
+.progressBar {
+  margin: 0 !important;
+}
+
+.completedContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+.completedStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.statBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.statNumber {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.statLabel {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reviewList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 4px;
+  width: 100%;
+}
+
+.reviewCard {
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.2s ease;
+}
+
+.reviewCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 6px;
+}
+
+.reviewRow {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+
+.reviewLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 600;
+  opacity: 0.6;
+  letter-spacing: 0.5px;
+}
+
+.reviewText {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 @keyframes fadeIn {

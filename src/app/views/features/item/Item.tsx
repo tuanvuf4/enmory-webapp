@@ -18,8 +18,17 @@ import {
   MoreOutlined,
   ReloadOutlined,
   HeartFilled,
+  HeartOutlined,
   BookOutlined,
   ClockCircleOutlined,
+  FieldTimeOutlined,
+  SoundOutlined,
+  WarningOutlined,
+  CheckSquareFilled,
+  CheckSquareOutlined,
+  UserOutlined,
+  DownOutlined,
+  UpOutlined,
 } from '@ant-design/icons'
 import { Button, Dropdown, Flex, MenuProps, Skeleton, theme, Tag, Tooltip } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
@@ -35,6 +44,8 @@ import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { IHttpResponse } from '@/models/http.model'
 import { initItem } from '../modals'
+import { speakWord } from '@/helpers/mics'
+
 interface IProps {
   action?: boolean
   active?: boolean
@@ -45,6 +56,25 @@ interface IProps {
   onViewSuccess?: () => void
   onArchive?: () => void
   onFavorite?: () => void
+}
+
+const getCategoryColor = (catId?: ECategory): string => {
+  switch (catId) {
+    case ECategory.WORD:
+      return 'blue'
+    case ECategory.PHRASE:
+      return 'purple'
+    case ECategory.IDIOM:
+      return 'volcano'
+    case ECategory.COLLOCATION:
+      return 'cyan'
+    case ECategory.SLANG:
+      return 'magenta'
+    case ECategory.SENTENCE:
+      return 'green'
+    default:
+      return 'default'
+  }
 }
 
 export const Item: React.FC<IProps> = ({
@@ -85,12 +115,12 @@ export const Item: React.FC<IProps> = ({
     setShowAllMeanings(false)
   }, [data?.id])
 
-  const { displayMeanings, hasMoreMeanings, hiddenCount } = useMemo(() => {
+  const { displayMeanings, hasMoreMeanings } = useMemo(() => {
     if (!data?.meanings || data.meanings.length === 0) {
       return { displayMeanings: [], hasMoreMeanings: false, hiddenCount: 0 }
     }
 
-    // Only show enable meaning in item
+    // Only show enabled meanings in item
     const enabled = data.meanings.filter((m) => m.enable !== false)
     if (enabled.length === 0) {
       return { displayMeanings: [], hasMoreMeanings: false, hiddenCount: 0 }
@@ -112,7 +142,7 @@ export const Item: React.FC<IProps> = ({
   }, [data?.meanings, showAllMeanings])
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
-    switch (e.key) {
+    switch (String(e.key)) {
       case '0':
         await onView(data.id || '')
         onViewSuccess?.()
@@ -175,9 +205,11 @@ export const Item: React.FC<IProps> = ({
   const getActionMenus = (menus = getActionMenuItem(data, isInChecklist)) => {
     return menus
       .map((menu) => {
-        if (!onViewSuccess && !action && menu?.key === 0) return false
-        if (!onEditSuccess && !action && menu?.key === 1) return false
-        if (!onDeleteSuccess && !action && menu?.key === 4) return false
+        if (!menu) return false
+        const key = 'key' in menu ? String(menu.key) : ''
+        if (!onViewSuccess && !action && key === '0') return false
+        if (!onEditSuccess && !action && key === '1') return false
+        if (!onDeleteSuccess && !action && key === '4') return false
         return menu
       })
       .filter(Boolean) as ItemType[]
@@ -290,10 +322,38 @@ export const Item: React.FC<IProps> = ({
     })
   }
 
+  const handleToggleChecklist = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const res = await toggleChecklist(data)
+      notification({
+        type: res.isSuccess ? 'success' : 'info',
+        message: res.message,
+      })
+    } catch (error: any) {
+      notification({
+        type: 'error',
+        message: error?.message || 'Failed to update checklist',
+      })
+    }
+  }
+
   const onRefetchIotd = async (catId: ECategory) => {
     setSpin(true)
     await dispatch(actionAsyncApp.fetchIotd({ catId, generate: true }))
     setSpin(false)
+  }
+
+  const handleTitleClick = () => {
+    if (data?.id) {
+      onView(data.id)
+      onViewSuccess?.()
+    }
+  }
+
+  const handleQuickSpeak = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    speakWord(data.origin)
   }
 
   useEffect(() => {
@@ -301,67 +361,87 @@ export const Item: React.FC<IProps> = ({
   }, [viewMode])
 
   return (
-    <div
-      className={clsx({
-        [styles.item]: true,
-      })}
-    >
-      {!data && <Skeleton />}
+    <div className={styles.item}>
+      {!data && <Skeleton active />}
 
       {data && (
-        <>
-          <Flex gap={token.size / 2} vertical>
-            <div className={styles.title}>
-              <h2 className={styles.origin}>
-                {isDefect(data) && <span className={styles.warnTitle}>{data.origin}</span>}
-                {!isDefect(data) && <span>{data.origin}</span>}
+        <Flex gap={token.size / 2} vertical>
+          {/* Header row: Title + Quick Sound + Defect Badge + Action buttons */}
+          <div className={styles.header}>
+            <div className={styles.titleArea}>
+              <h2
+                className={clsx(styles.originTitle, isDefect(data) && styles.originTitleDefect)}
+                onClick={handleTitleClick}
+              >
+                {data.origin}
               </h2>
 
-              <Flex align={'center'} gap={token.size / 8}>
-                {isItemDue(data) && !data.archive && (
-                  <Tooltip title={`Chu kỳ ôn tập: ${getDueDurationText(data)}`}>
+              <button type='button' className={styles.titleAudioBtn} onClick={handleQuickSpeak}>
+                <SoundOutlined />
+              </button>
+
+              {isDefect(data) && (
+                <Tooltip title='This item does not yet have a complete definition or translation.'>
+                  <WarningOutlined className={styles.defectIcon} />
+                </Tooltip>
+              )}
+            </div>
+
+            <div className={styles.headerActions}>
+              {reload && (
+                <Button
+                  type='text'
+                  size='small'
+                  icon={<ReloadOutlined spin={spin} />}
+                  onClick={() => onRefetchIotd(data.catId as ECategory)}
+                />
+              )}
+
+              {action && (
+                <>
+                  <Button
+                    type='text'
+                    size='small'
+                    icon={
+                      isInChecklist ? (
+                        <CheckSquareFilled style={{ color: '#52c41a' }} />
+                      ) : (
+                        <CheckSquareOutlined className={styles.headerActionDim} />
+                      )
+                    }
+                    onClick={handleToggleChecklist}
+                  />
+
+                  <Button
+                    type='text'
+                    size='small'
+                    icon={
+                      data.favorite ? (
+                        <HeartFilled className={styles.favoriteActive} />
+                      ) : (
+                        <HeartOutlined className={styles.headerActionDim} />
+                      )
+                    }
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      favorite(data)
+                      onFavorite?.()
+                    }}
+                  />
+
+                  {data.archive && (
                     <Button
                       type='text'
                       size='small'
-                      icon={<ClockCircleOutlined style={{ color: 'darkorange' }} />}
-                      style={{ cursor: 'default' }}
+                      icon={<BookOutlined className={styles.archiveActive} />}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        archive(data)
+                        onArchive?.()
+                      }}
                     />
-                  </Tooltip>
-                )}
-                {reload && (
-                  <Button
-                    type={'text'}
-                    icon={<ReloadOutlined spin={spin} />}
-                    title={'Reload'}
-                    onClick={() => {
-                      onRefetchIotd(data.catId as ECategory)
-                    }}
-                  />
-                )}
+                  )}
 
-                {data.archive && (
-                  <Button
-                    className={styles.archive}
-                    size='small'
-                    variant={'text'}
-                    type={'text'}
-                    title={'Archive'}
-                    icon={<BookOutlined style={{ color: token.palette?.red?.[4] }} />}
-                    onClick={() => archive(data)}
-                  />
-                )}
-
-                {data.favorite && (
-                  <Button
-                    size='small'
-                    type={'text'}
-                    title={'Favorite'}
-                    icon={<HeartFilled style={{ color: token.palette?.red?.[4] }} />}
-                    onClick={() => favorite(data)}
-                  />
-                )}
-
-                {action && (
                   <Dropdown
                     placement='bottomRight'
                     menu={menuProps}
@@ -372,111 +452,106 @@ export const Item: React.FC<IProps> = ({
                       size='small'
                       type='text'
                       icon={<MoreOutlined />}
-                      className={clsx({
-                        [styles.btnActions]: true,
-                        [styles.active]: active,
-                      })}
+                      className={clsx(styles.btnMore, active && styles.active)}
                     />
                   </Dropdown>
-                )}
-              </Flex>
+                </>
+              )}
             </div>
+          </div>
 
-            {!!data.catId && (
-              <h5 className={styles.kindOfWord}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: token.size / 2,
-                  }}
-                >
-                  <span>{getCategory(data.catId)}</span>
-                </div>
+          {/* Metadata Row: Category Tag + Level Stars + SRS Status Badge + Author */}
+          {!!data.catId && (
+            <div className={styles.metaRow}>
+              <div className={styles.metaLeft}>
+                <Tag color={getCategoryColor(data.catId)} className={styles.categoryBadge}>
+                  {getCategory(data.catId)}
+                </Tag>
 
-                {data.catId && (
-                  <div className={styles.level} style={{ display: 'flex', alignItems: 'center' }}>
-                    <Level level={data.level as number} />
-                    {!isItemDue(data) && !!data.next_review_date && !data.archive && (
-                      <Tooltip title={`Chu kỳ ôn tập SRS tiếp theo: ${getDueDurationText(data)}`}>
-                        <Tag
-                          color='default'
-                          style={{ marginLeft: 6, fontSize: 11, cursor: 'default' }}
-                        >
-                          {getDueDurationText(data)}
-                        </Tag>
-                      </Tooltip>
-                    )}
+                <Tooltip title={`Độ thành thục: Level ${data.level || 0}/5`}>
+                  <div className={styles.levelWrapper}>
+                    <Level level={data.level as number} size={13} />
                   </div>
-                )}
+                </Tooltip>
 
-                {data.user && (
-                  <span
-                    style={{
-                      color: token.colorPrimary,
-                      fontSize: token.fontSize,
-                      marginLeft: token.size / 2,
-                    }}
-                  >
-                    {data.user.firstName} {data.user.lastName}
-                  </span>
-                )}
-              </h5>
-            )}
+                {data.archive ? (
+                  <Tag icon={<BookOutlined />} className={styles.archiveTag}>
+                    Archived
+                  </Tag>
+                ) : isItemDue(data) ? (
+                  <Tooltip title={`Đã đến hạn ôn tập SRS (${getDueDurationText(data)})`}>
+                    <Tag color='warning' icon={<ClockCircleOutlined />} className={styles.dueTag}>
+                      {getDueDurationText(data)}
+                    </Tag>
+                  </Tooltip>
+                ) : !!data.next_review_date ? (
+                  <Tooltip title={`Chu kỳ ôn tập tiếp theo: ${getDueDurationText(data)}`}>
+                    <Tag icon={<FieldTimeOutlined />} className={styles.scheduledTag}>
+                      {getDueDurationText(data)}
+                    </Tag>
+                  </Tooltip>
+                ) : null}
+              </div>
 
-            <Reference origin={data.origin} />
+              {data.user && (
+                <div className={styles.authorBadge} title={data.user.email}>
+                  <UserOutlined style={{ fontSize: 11 }} />
+                  <span>{data.user.firstName}</span>
+                </div>
+              )}
+            </div>
+          )}
 
-            {data.tags && data.tags.filter((word) => word).length > 0 && data.tags.length > 0 && (
-              <Tags label={'Tags'} tags={data.tags} searchBy={'tags'} />
-            )}
+          {/* Reference dictionary links */}
+          <Reference origin={data.origin} />
 
-            {data.catId === ECategory.WORD && (
-              <>
-                {data.forms &&
-                  data.forms.filter((word) => word).length > 0 &&
-                  data.forms.length > 0 && <Tags label={'Form'} tags={data.forms} />}
+          {/* Tags */}
+          {data.tags && data.tags.filter(Boolean).length > 0 && (
+            <Tags label={'Tags'} tags={data.tags} searchBy={'tags'} />
+          )}
 
-                {data.word_family &&
-                  data.word_family.filter((word) => word).length > 0 &&
-                  data.word_family.length > 0 && <Tags label={'Family'} tags={data.word_family} />}
-              </>
-            )}
+          {/* Category-specific Tags: Form, Family, Relation */}
+          {data.catId === ECategory.WORD && (
+            <>
+              {data.forms && data.forms.filter(Boolean).length > 0 && (
+                <Tags label={'Form'} tags={data.forms} />
+              )}
 
-            {data.relation &&
-              data.relation.filter((word) => word).length > 0 &&
-              data.relation.length > 0 && <Tags label={'Relation'} tags={data.relation} />}
+              {data.word_family && data.word_family.filter(Boolean).length > 0 && (
+                <Tags label={'Family'} tags={data.word_family} />
+              )}
+            </>
+          )}
 
-            {displayMeanings &&
-              displayMeanings.length > 0 &&
-              displayMeanings.map((meaning, key) => (
-                <MeaningItem
-                  key={meaning.id || key}
-                  meaning={meaning}
-                  catId={data.catId as ECategory}
-                  origin={data.origin}
-                />
-              ))}
+          {data.relation && data.relation.filter(Boolean).length > 0 && (
+            <Tags label={'Relation'} tags={data.relation} />
+          )}
 
-            {hasMoreMeanings && (
-              <Button
-                type='link'
-                size='small'
-                onClick={() => setShowAllMeanings((prev) => !prev)}
-                style={{ padding: 0, alignSelf: 'flex-start', fontSize: 12 }}
-              >
-                {showAllMeanings
-                  ? 'Show common meanings only'
-                  : `+${hiddenCount} more meaning${hiddenCount > 1 ? 's' : ''}`}
-              </Button>
-            )}
-          </Flex>
+          {/* Meanings */}
+          {displayMeanings &&
+            displayMeanings.length > 0 &&
+            displayMeanings.map((meaning, key) => (
+              <MeaningItem
+                key={meaning.id || key}
+                meaning={meaning}
+                catId={data.catId as ECategory}
+                origin={data.origin}
+              />
+            ))}
 
-          {/* <div className={styles.date}>
-            <span>{moment(data.created_date).format(appSetting.dateTimeFormat)}</span>
-            <span>{moment(data.last_update).format(appSetting.dateTimeFormat)}</span>
-          </div> */}
-        </>
+          {/* Show / Hide more meanings */}
+          {hasMoreMeanings && (
+            <Button
+              type='dashed'
+              size='small'
+              icon={showAllMeanings ? <UpOutlined /> : <DownOutlined />}
+              onClick={() => setShowAllMeanings((prev) => !prev)}
+              className={styles.toggleMeaningsBtn}
+            >
+              {showAllMeanings ? 'Collapse' : 'Expand'}
+            </Button>
+          )}
+        </Flex>
       )}
     </div>
   )

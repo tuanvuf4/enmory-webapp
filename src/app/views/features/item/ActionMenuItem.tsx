@@ -21,18 +21,18 @@ interface IActionItem {
 export const ActionItem: React.FC<IActionItem> = (props) => {
   const { label = '', icon } = props
   const { token } = theme.useToken()
-  const itemStyle = {
+  const itemStyle: React.CSSProperties = {
     fontSize: token.fontSize,
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flexStart',
+    justifyContent: 'flex-start',
   }
-  const iconStyle = { marginRight: 8, fontSize: 16 }
+  const iconStyle: React.CSSProperties = { marginRight: 8, fontSize: 16 }
 
   return (
     <div style={itemStyle}>
       <span style={iconStyle}>{icon}</span>
-      {label}
+      <span>{label}</span>
     </div>
   )
 }
@@ -40,49 +40,65 @@ export const ActionItem: React.FC<IActionItem> = (props) => {
 export const getActionMenuItem = (data: IItem | undefined, isInChecklist = false): ItemType[] => {
   return [
     {
-      key: 0,
+      key: '0',
       label: <ActionItem label='View' icon={<EyeOutlined />} />,
     },
     {
-      key: 1,
+      key: '1',
       label: <ActionItem label='Edit' icon={<EditOutlined />} />,
     },
     {
-      key: 2,
+      key: '2',
       label: (
         <ActionItem
           label={`${data?.level === 5 ? '0 star' : '5 stars'}`}
-          icon={<StarFilled color={'yellow'} />}
+          icon={<StarFilled style={{ color: '#faad14' }} />}
         />
       ),
     },
     {
-      key: 7,
-      label: (
-        <ActionItem label='Favorite' icon={data?.favorite ? <HeartFilled /> : <HeartOutlined />} />
-      ),
-    },
-    {
-      key: 5,
-      label: (
-        <ActionItem label={`${data?.archive ? 'Unarchive' : 'Archive'}`} icon={<ReadOutlined />} />
-      ),
-    },
-    {
-      key: 8,
+      key: '7',
       label: (
         <ActionItem
-          label={isInChecklist ? 'Remove from checklist' : 'Add to checklist'}
+          label={data?.favorite ? 'Bỏ yêu thích' : 'Yêu thích'}
+          icon={
+            data?.favorite ? (
+              <HeartFilled style={{ color: '#ff4d4f' }} />
+            ) : (
+              <HeartOutlined />
+            )
+          }
+        />
+      ),
+    },
+    {
+      key: '5',
+      label: (
+        <ActionItem
+          label={`${data?.archive ? 'Bỏ lưu trữ (Unarchive)' : 'Lưu trữ (Archive)'}`}
+          icon={<ReadOutlined style={{ color: data?.archive ? '#fa8c16' : undefined }} />}
+        />
+      ),
+    },
+    {
+      key: '8',
+      label: (
+        <ActionItem
+          label={isInChecklist ? 'Xóa khỏi checklist' : 'Thêm vào checklist'}
           icon={<CheckSquareOutlined style={{ color: isInChecklist ? '#52c41a' : undefined }} />}
         />
       ),
     },
     {
-      key: 3,
+      key: '3',
       label: <ActionItem label='Reset' icon={<SyncOutlined />} />,
     },
     {
-      key: 4,
+      type: 'divider',
+    },
+    {
+      key: '4',
+      danger: true,
       label: <ActionItem label='Delete' icon={<DeleteOutlined />} />,
     },
   ]

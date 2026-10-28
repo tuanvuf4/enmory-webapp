@@ -106,12 +106,26 @@ export const exampleReducer = createSlice({
         localStorage.setItem(getPinnedStorageKey(action.payload), JSON.stringify([]))
       } catch {}
     },
-    setPracticeHistory(state: IExampleState, action: PayloadAction<IExample[]>) {
+    setPracticeHistory(
+      state: IExampleState,
+      action: PayloadAction<IExample[] | { history: IExample[]; currentIndex?: number }>,
+    ) {
       if (!state.translationPractice) {
         state.translationPractice = { history: [], currentIndex: 0, direction: 'vi-en' }
       }
-      state.translationPractice.history = action.payload
-      state.translationPractice.currentIndex = Math.max(0, action.payload.length - 1)
+      if (Array.isArray(action.payload)) {
+        state.translationPractice.history = action.payload
+        state.translationPractice.currentIndex = 0
+      } else {
+        state.translationPractice.history = action.payload.history
+        state.translationPractice.currentIndex = Math.max(
+          0,
+          Math.min(
+            action.payload.currentIndex ?? 0,
+            Math.max(0, action.payload.history.length - 1),
+          ),
+        )
+      }
     },
     addPracticeExample(state: IExampleState, action: PayloadAction<IExample>) {
       if (!state.translationPractice) {

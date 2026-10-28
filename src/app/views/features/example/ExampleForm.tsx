@@ -13,7 +13,7 @@ import styles from './example.module.scss'
 import { initExampleData } from '@/constant/example'
 import { ReviewableTextArea } from '@/views/components'
 import { removeLineBreaks } from '@/core/utils'
-import { Translator } from './Translator'
+import { Translator } from '../translator'
 
 interface IProps {
   data?: IExample

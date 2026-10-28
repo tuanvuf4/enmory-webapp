@@ -53,11 +53,7 @@ export const SentenceDiffView: React.FC<ISentenceDiffViewProps> = ({
           <Space align='center' size='small'>
             <Tag
               color={
-                result.accuracy >= 90
-                  ? 'success'
-                  : result.accuracy >= 60
-                    ? 'warning'
-                    : 'error'
+                result.accuracy >= 90 ? 'success' : result.accuracy >= 60 ? 'warning' : 'error'
               }
               style={{ fontSize: 13, padding: '2px 10px', borderRadius: 12 }}
             >
@@ -77,11 +73,7 @@ export const SentenceDiffView: React.FC<ISentenceDiffViewProps> = ({
             style={{ width: 120, margin: 0 }}
             showInfo={false}
             status={
-              result.accuracy >= 90
-                ? 'success'
-                : result.accuracy >= 60
-                  ? 'normal'
-                  : 'exception'
+              result.accuracy >= 90 ? 'success' : result.accuracy >= 60 ? 'normal' : 'exception'
             }
           />
         </div>
@@ -113,4 +105,3 @@ export const SentenceDiffView: React.FC<ISentenceDiffViewProps> = ({
 // Backward compatible aliases
 export const DictationDiffView = SentenceDiffView
 export type IDictationDiffViewProps = ISentenceDiffViewProps
-

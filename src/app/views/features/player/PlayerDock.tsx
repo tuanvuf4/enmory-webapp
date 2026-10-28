@@ -309,7 +309,6 @@ export const PlayerDock: React.FC = () => {
     return segDuration > 0 ? Math.max(0, Math.min(100, (elapsed / segDuration) * 100)) : 0
   }, [transcriptSegments, activeIndex, smoothTime, player.duration])
 
-
   const hasValidMediaUrl = useMemo(() => {
     if (!resolvedSrc) return false
     const trimmed = resolvedSrc.trim()
@@ -1445,7 +1444,6 @@ export const PlayerDock: React.FC = () => {
               icon={<FullscreenOutlined style={{ fontSize: '20px', color: token.colorText }} />}
               title='Toàn màn hình Focus Karaoke'
             />
-
           </Flex>
 
           {/* seek bar */}

@@ -153,4 +153,3 @@ export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
     </div>
   )
 }
-

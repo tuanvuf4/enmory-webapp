@@ -88,4 +88,3 @@ export const DiffWordTag: React.FC<IDiffWordTagProps> = ({
     </WordLookupPopover>
   )
 }
-

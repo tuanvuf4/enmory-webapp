@@ -1637,9 +1637,7 @@ export const DicTran: React.FC<IDicTranProps> = ({
         />
         <div className={styles.shortcutTip}>
           {currentMode === 'dictation' ? (
-            <>
-              
-            </>
+            <></>
           ) : (
             <>
               Tip: Press <b>Ctrl + Enter</b> to{' '}

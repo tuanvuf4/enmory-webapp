@@ -247,4 +247,3 @@ export const evaluateSentenceDiff = (
 
 // Backward compatible alias
 export const evaluateDictation = evaluateSentenceDiff
-

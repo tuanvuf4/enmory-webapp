@@ -64,4 +64,3 @@ export const WordLookupPopover: React.FC<IWordLookupPopoverProps> = ({
     </Popover>
   )
 }
-

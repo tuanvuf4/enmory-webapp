@@ -61,13 +61,7 @@ export const getActionMenuItem = (data: IItem | undefined, isInChecklist = false
       label: (
         <ActionItem
           label={data?.favorite ? 'Bỏ yêu thích' : 'Yêu thích'}
-          icon={
-            data?.favorite ? (
-              <HeartFilled style={{ color: '#ff4d4f' }} />
-            ) : (
-              <HeartOutlined />
-            )
-          }
+          icon={data?.favorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
         />
       ),
     },

@@ -187,9 +187,7 @@ export const TranslationChart: React.FC<IProps> = ({ title = 'Translator' }) => 
             <TranslationOutlined className={styles.titleIcon} />
             {title}
           </h3>
-          <p className={styles.chartSubtitle}>
-            Thống kê tiến độ luyện dịch câu 7 ngày gần đây
-          </p>
+          <p className={styles.chartSubtitle}>Thống kê tiến độ luyện dịch câu 7 ngày gần đây</p>
         </div>
       </div>
 

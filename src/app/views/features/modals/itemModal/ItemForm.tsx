@@ -24,7 +24,7 @@ import { TagSelect } from '@/views/components'
 import { itemApi, tagApi } from '@/services/firebase'
 import { collection, doc, Timestamp } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
-import { removeLineBreaks } from '@/core/utils'
+import { removeLineBreaks, sanitizePronunciation } from '@/core/utils'
 import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
 import { useModal } from '@/context/modal.context'
 import { useQueryClient } from '@tanstack/react-query'
@@ -263,7 +263,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
                 grammar: meaning.grammar || '',
                 definition: meaning.definition || '',
                 translation: meaning.translation || '',
-                pronunciation: meaning.pronunciation || { common: '', uk: '', us: '' },
+                pronunciation: meaning.pronunciation
+                  ? {
+                      uk: sanitizePronunciation(meaning.pronunciation.uk),
+                      us: sanitizePronunciation(meaning.pronunciation.us),
+                      common: sanitizePronunciation(meaning.pronunciation.common),
+                    }
+                  : { common: '', uk: '', us: '' },
                 common: meaning.common || false,
                 enable: meaning.enable || false,
                 antonyms: meaning.antonyms || [],
@@ -385,9 +391,9 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             .toLowerCase()
         const isSamePronunciation = rawUk && rawUs && cleanIpa(rawUk) === cleanIpa(rawUs)
 
-        const finalUs = rawUs || rawUk || ''
-        const finalUk = isSamePronunciation ? '' : rawUk
-        const finalCommon = rawCommon || finalUs
+        const finalUs = sanitizePronunciation(rawUs || rawUk)
+        const finalUk = isSamePronunciation ? '' : sanitizePronunciation(rawUk)
+        const finalCommon = sanitizePronunciation(rawCommon || finalUs)
 
         return {
           typeId: m.typeId || EType.NOUN,
@@ -588,7 +594,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
           note: m.note || '',
           grammar: m.grammar || '',
           collocations: m.collocations || '',
-          pronunciation: m.pronunciation || { uk: '', us: '', common: '' },
+          pronunciation: m.pronunciation
+            ? {
+                uk: sanitizePronunciation(m.pronunciation.uk),
+                us: sanitizePronunciation(m.pronunciation.us),
+                common: sanitizePronunciation(m.pronunciation.common),
+              }
+            : { uk: '', us: '', common: '' },
           synonyms: m.synonyms || [],
           antonyms: m.antonyms || [],
           examples: m.examples || [],

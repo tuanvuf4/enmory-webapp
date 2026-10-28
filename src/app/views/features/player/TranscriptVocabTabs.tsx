@@ -47,6 +47,7 @@ import {
 import { tracksApi } from '@/services/firebase/api/tracks.api'
 import { usePrompt, useItemModal } from '@/helpers/hooks'
 import { initItem } from '@/views/features/modals/itemModal/data'
+import { sanitizePronunciation } from '@/core/utils'
 import { parseTranscript } from './transcriptUtils'
 import styles from './transcriptVocabTabs.module.scss'
 
@@ -296,16 +297,16 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
       origin: item.text.trim(),
       catId: mapCategoryToECategory(item.category),
       level: mapLevelToNumber(item.level),
-      tags: [item.level.toLowerCase(), item.category],
+      tags: [item.level.toUpperCase()],
       meanings: [
         {
           typeId: EType.NOUN,
           common: true,
           enable: true,
           pronunciation: {
-            us: item.phonetic || '',
+            us: sanitizePronunciation(item.phonetic),
             uk: '',
-            common: item.phonetic || '',
+            common: sanitizePronunciation(item.phonetic),
           },
           note: item.notes || '',
           definition: item.meaning || '',

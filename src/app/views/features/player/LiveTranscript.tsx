@@ -3,6 +3,8 @@ import styles from './listening.module.scss'
 import { formatSegmentTime, getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import {
   AimOutlined,
+  CheckOutlined,
+  CopyOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
   FullscreenOutlined,
@@ -14,9 +16,11 @@ import { useSmoothTime } from './useSmoothTime'
 import { useSelector } from '@/core/hooks'
 import { useDispatch } from 'react-redux'
 import { listeningAction } from '@/store/reducers/listening.reducer'
+import { usePrompt } from '@/helpers/hooks'
 
 export const LiveTranscript: React.FC = () => {
   const { token } = theme.useToken()
+  const { message } = usePrompt()
 
   const { currentTrack, player } = useSelector((state) => state.listening)
 
@@ -40,6 +44,7 @@ export const LiveTranscript: React.FC = () => {
 
   const [autoFollow, setAutoFollow] = useState(true)
   const [revealedSegments, setRevealedSegments] = useState<Record<number, boolean>>({})
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
 
   const smoothTime = useSmoothTime(playedSeconds, playing, playbackRate)
 
@@ -97,6 +102,22 @@ export const LiveTranscript: React.FC = () => {
     if (transcriptDisplayMode === 'visible') return
     e.stopPropagation()
     setRevealedSegments((prev) => ({ ...prev, [index]: !prev[index] }))
+  }
+
+  const handleCopySegment = (text: string, index: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopiedIndex(index)
+        message({ type: 'success', content: 'Đã sao chép câu vào clipboard!' })
+        setTimeout(() => {
+          setCopiedIndex((prev) => (prev === index ? null : prev))
+        }, 2000)
+      })
+      .catch(() => {
+        message({ type: 'error', content: 'Không thể sao chép vào clipboard!' })
+      })
   }
 
   // Fallback: raw HTML when no timestamp segments are detected
@@ -229,6 +250,7 @@ export const LiveTranscript: React.FC = () => {
           const isPlayed = i < activeIndex
           const isRevealed = revealedSegments[i]
           const isBlur = transcriptDisplayMode === 'blur' && !isRevealed
+          const isCopied = copiedIndex === i
 
           return (
             <div
@@ -241,43 +263,58 @@ export const LiveTranscript: React.FC = () => {
                 dispatch(listeningAction.updatePlayer({ seekTo: seg.timeSeconds, playing: true }))
               }
             >
-              <Tag
-                color='cyan'
-                style={{
-                  fontSize: 11,
-                  lineHeight: '18px',
-                  verticalAlign: 'middle',
-                  cursor: 'pointer',
-                }}
-              >
-                {formatSegmentTime(seg.timeSeconds)}
-              </Tag>
-              {isActive && loopSegment && (
-                <Tag
-                  color='gold'
-                  style={{
-                    fontSize: 10,
-                    lineHeight: '18px',
-                    verticalAlign: 'middle',
-                    marginLeft: 4,
-                  }}
-                >
-                  Lặp câu
-                </Tag>
-              )}
-              {isRevealed && transcriptDisplayMode === 'blur' && (
-                <Tag
-                  color='purple'
-                  style={{
-                    fontSize: 10,
-                    lineHeight: '18px',
-                    verticalAlign: 'middle',
-                    marginLeft: 4,
-                  }}
-                >
-                  Đã mở
-                </Tag>
-              )}
+              <div className={styles.segmentHeader}>
+                <div className={styles.segmentTags}>
+                  <Tag
+                    color='cyan'
+                    style={{
+                      fontSize: 11,
+                      lineHeight: '18px',
+                      verticalAlign: 'middle',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {formatSegmentTime(seg.timeSeconds)}
+                  </Tag>
+                  {isActive && loopSegment && (
+                    <Tag
+                      color='gold'
+                      style={{
+                        fontSize: 10,
+                        lineHeight: '18px',
+                        verticalAlign: 'middle',
+                      }}
+                    >
+                      Lặp câu
+                    </Tag>
+                  )}
+                  {isRevealed && transcriptDisplayMode === 'blur' && (
+                    <Tag
+                      color='purple'
+                      style={{
+                        fontSize: 10,
+                        lineHeight: '18px',
+                        verticalAlign: 'middle',
+                      }}
+                    >
+                      Đã mở
+                    </Tag>
+                  )}
+                </div>
+
+                <Tooltip title={isCopied ? 'Đã sao chép' : 'Sao chép'}>
+                  <Button
+                    type='text'
+                    size='small'
+                    className={styles.copySegmentBtn}
+                    icon={
+                      isCopied ? <CheckOutlined style={{ color: '#52c41a' }} /> : <CopyOutlined />
+                    }
+                    onClick={(e) => handleCopySegment(seg.text, i, e)}
+                  />
+                </Tooltip>
+              </div>
+
               <p
                 className={`${isBlur ? styles.transcriptBlurred : ''} ${
                   isRevealed ? styles.transcriptRevealed : ''

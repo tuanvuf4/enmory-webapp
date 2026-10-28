@@ -6,7 +6,7 @@ import {
   CaretDownOutlined,
   CaretRightOutlined,
 } from '@ant-design/icons'
-import { patternValidation } from '@/core/utils'
+import { sanitizePronunciation } from '@/core/utils'
 import { ECategory, EType, IItem } from '@/models/item.model'
 import { InputTag } from '@/views/components'
 import { theme, Space, Col, Row, Button, Select, Checkbox, Input, Flex } from 'antd'
@@ -77,9 +77,9 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                   ? prepend({
                       ...meaningItem,
                       pronunciation: {
-                        uk: getValues(`meanings.0.pronunciation.uk`),
-                        us: getValues(`meanings.0.pronunciation.us`),
-                        common: getValues(`meanings.0.pronunciation.common`),
+                        uk: sanitizePronunciation(getValues(`meanings.0.pronunciation.uk`)),
+                        us: sanitizePronunciation(getValues(`meanings.0.pronunciation.us`)),
+                        common: sanitizePronunciation(getValues(`meanings.0.pronunciation.common`)),
                       },
                     })
                   : prepend({ ...meaningItem })
@@ -303,12 +303,14 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                             render={({ field }) => (
                               <Input
                                 {...field}
+                                value={sanitizePronunciation(field.value)}
+                                onChange={(e) =>
+                                  field.onChange(sanitizePronunciation(e.target.value))
+                                }
                                 onBlur={() => trigger()}
                                 onInput={(e) => {
                                   const input = e.target as HTMLInputElement
-                                  input.value = input.value
-                                    .toLowerCase()
-                                    .replace(patternValidation.specialCharacterPronouns, '')
+                                  input.value = sanitizePronunciation(input.value)
                                 }}
                               />
                             )}
@@ -327,13 +329,15 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                                   render={({ field }) => (
                                     <Input
                                       {...field}
+                                      value={sanitizePronunciation(field.value)}
+                                      onChange={(e) =>
+                                        field.onChange(sanitizePronunciation(e.target.value))
+                                      }
                                       placeholder='UK'
                                       onBlur={() => trigger()}
                                       onInput={(e) => {
                                         const input = e.target as HTMLInputElement
-                                        input.value = input.value
-                                          .toLowerCase()
-                                          .replace(patternValidation.specialCharacterPronouns, '')
+                                        input.value = sanitizePronunciation(input.value)
                                       }}
                                     />
                                   )}
@@ -351,13 +355,15 @@ export const MeaningItemForm: React.FC<IProps> = ({ catType, loading = false, on
                                   render={({ field }) => (
                                     <Input
                                       {...field}
+                                      value={sanitizePronunciation(field.value)}
+                                      onChange={(e) =>
+                                        field.onChange(sanitizePronunciation(e.target.value))
+                                      }
                                       placeholder='US'
                                       onBlur={() => trigger()}
                                       onInput={(e) => {
                                         const input = e.target as HTMLInputElement
-                                        input.value = input.value
-                                          .toLowerCase()
-                                          .replace(patternValidation.specialCharacterPronouns, '')
+                                        input.value = sanitizePronunciation(input.value)
                                       }}
                                     />
                                   )}

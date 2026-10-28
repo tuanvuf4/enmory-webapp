@@ -224,6 +224,9 @@ export const appTheme: ThemeConfig = {
       borderRadius: 8,
       multipleItemHeight: 32,
     },
+    Dropdown: {
+      colorBgElevated: '#ffffff',
+    },
     Card: {
       borderRadius: 14,
       borderRadiusLG: 14,

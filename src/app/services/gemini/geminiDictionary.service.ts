@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai'
 import OpenAI from 'openai'
 import { ECategory, EType } from '@/models/item.model'
 import { IHttpResponse } from '@/models/http.model'
+import { sanitizePronunciation } from '@/core/utils'
 import { DEFAULT_AUTOFILL_MODEL, GEMINI_MODELS, TGeminiModel } from './geminiModels'
 import { resolveOpenAiApiKey } from '../openai/tts.service'
 
@@ -159,9 +160,9 @@ const normalizeDictionaryData = (
           .toLowerCase()
       const isSame = uk && us && cleanIpa(uk) === cleanIpa(us)
 
-      const finalUs = us || uk || ''
-      const finalUk = isSame ? '' : uk
-      const finalCommon = common || finalUs
+      const finalUs = sanitizePronunciation(us || uk)
+      const finalUk = isSame ? '' : sanitizePronunciation(uk)
+      const finalCommon = sanitizePronunciation(common || finalUs)
 
       return {
         ...m,

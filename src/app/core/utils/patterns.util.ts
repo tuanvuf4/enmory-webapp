@@ -9,5 +9,6 @@ export const patternValidation = {
   isEmptyValue: /^(?!\\s*$).+/,
   referralCodePattern: /^[0-9]{6}$/,
   specialCharacterPattern: /[ `!@#$%^&*()_+=\[\]{};:\\|,.<>\/?~]/g,
-  specialCharacterPronouns: /[`_+=\[\]{}\\/0-9]/g,
+  /** @deprecated Dùng hàm `sanitizePronunciation` thay cho regex này */
+  specialCharacterPronouns: /[/`_+=\[\]{}\\\d]/g,
 }

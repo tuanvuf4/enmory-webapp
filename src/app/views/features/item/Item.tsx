@@ -218,6 +218,11 @@ export const Item: React.FC<IProps> = ({
   const menuProps = {
     items: getActionMenus(),
     onClick: handleMenuClick,
+    style: {
+      backgroundColor: token.colorBgElevated,
+      border: `1px solid ${token.colorBorderSecondary}`,
+      boxShadow: token.boxShadowSecondary,
+    },
   }
 
   const onUpdateItemSuccess = async ({ isSuccess, content }: IHttpResponse<IItem>) => {
@@ -468,7 +473,7 @@ export const Item: React.FC<IProps> = ({
                   {getCategory(data.catId)}
                 </Tag>
 
-                <Tooltip title={`Độ thành thục: Level ${data.level || 0}/5`}>
+                <Tooltip title={`Level: ${data.level || 0}/5`}>
                   <div className={styles.levelWrapper}>
                     <Level level={data.level as number} size={13} />
                   </div>

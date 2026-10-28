@@ -10,6 +10,7 @@ import { geminiDictionaryService, resolveGeminiApiKey } from '@/services/gemini'
 import { resolveOpenAiApiKey } from '@/services/openai/tts.service'
 import { localDb, invalidateSearchIndex } from '@/services/localDb'
 import { getType } from '@/helpers/item'
+import { sanitizePronunciation } from '@/core/utils'
 import { IWordLookupData } from './types'
 
 // Strip standard punctuation marks and whitespace
@@ -170,9 +171,9 @@ export const useWordLookup = (rawWord: string, sentenceContext?: string) => {
             note: lookupData.note || '',
             grammar: lookupData.grammar || '',
             pronunciation: {
-              us: lookupData.phonetic || '',
+              us: sanitizePronunciation(lookupData.phonetic),
               uk: '',
-              common: lookupData.phonetic || '',
+              common: sanitizePronunciation(lookupData.phonetic),
             },
           },
         ],

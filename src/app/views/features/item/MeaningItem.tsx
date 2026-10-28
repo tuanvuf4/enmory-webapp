@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom'
 import styles from './item.module.scss'
 import clsx from 'clsx'
 import { speakWord, speakSentence } from '@/helpers/mics'
+import { sanitizePronunciation } from '@/core/utils'
 
 interface IMeaningProps {
   origin: string
@@ -51,12 +52,15 @@ const stripHtml = (html?: string) => {
 }
 
 const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
-  const { pronunciation } = meaning
+  const { pronunciation = { uk: '', us: '', common: '' } } = meaning
+  const cleanUk = sanitizePronunciation(pronunciation.uk)
+  const cleanUs = sanitizePronunciation(pronunciation.us)
+  const cleanCommon = sanitizePronunciation(pronunciation.common)
 
-  if (catId === ECategory.WORD && (pronunciation.us || pronunciation.uk)) {
+  if (catId === ECategory.WORD && (cleanUs || cleanUk)) {
     return (
       <div className={styles.pronounceList}>
-        {pronunciation.uk && (
+        {cleanUk && (
           <Tooltip title='Phát âm tiếng Anh - Anh (UK)'>
             <button
               type='button'
@@ -64,13 +68,13 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
               onClick={() => speakWord(origin, 'en-GB')}
             >
               <span className={styles.accentLabel}>UK</span>
-              <span className={styles.phoneticText}>{pronunciation.uk}</span>
+              <span className={styles.phoneticText}>{cleanUk}</span>
               <SoundOutlined className={styles.audioIcon} />
             </button>
           </Tooltip>
         )}
 
-        {pronunciation.us && (
+        {cleanUs && (
           <Tooltip title='Phát âm tiếng Anh - Mỹ (US)'>
             <button
               type='button'
@@ -78,7 +82,7 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
               onClick={() => speakWord(origin, 'en-US')}
             >
               <span className={styles.accentLabel}>US</span>
-              <span className={styles.phoneticText}>{pronunciation.us}</span>
+              <span className={styles.phoneticText}>{cleanUs}</span>
               <SoundOutlined className={styles.audioIcon} />
             </button>
           </Tooltip>
@@ -87,7 +91,7 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
     )
   }
 
-  if (catId !== ECategory.WORD && pronunciation.common) {
+  if (catId !== ECategory.WORD && cleanCommon) {
     return (
       <div className={styles.pronounceList}>
         <Tooltip title='Nghe phát âm'>
@@ -96,7 +100,7 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
             className={styles.audioPill}
             onClick={() => speakWord(origin, 'en-US')}
           >
-            <span className={styles.phoneticText}>{pronunciation.common}</span>
+            <span className={styles.phoneticText}>{cleanCommon}</span>
             <SoundOutlined className={styles.audioIcon} />
           </button>
         </Tooltip>

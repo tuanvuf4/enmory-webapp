@@ -211,6 +211,36 @@
   }
 }
 
+.segmentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.segmentTags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.copySegmentBtn {
+  opacity: 0.65;
+  transition: opacity 0.2s, color 0.2s;
+  background: transparent !important;
+  color: var(--ant-color-text-secondary);
+
+  &:hover {
+    opacity: 1;
+    color: var(--ant-color-primary) !important;
+  }
+}
+
+.transcriptSegment:hover .copySegmentBtn {
+  opacity: 1;
+}
+
 .transcriptActive {
   background: rgba(255, 255, 255, 0.08);
   border-left-color: $color-primary;

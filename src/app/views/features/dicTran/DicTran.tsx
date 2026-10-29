@@ -36,7 +36,6 @@ import {
   CheckSquareOutlined,
   SettingOutlined,
   CheckOutlined,
-  CloseCircleOutlined,
 } from '@ant-design/icons'
 import { IExample, IItem, ECategory, EType } from '@/models/item.model'
 import { exampleApi } from '@/services/firebase/api/example.api'
@@ -546,24 +545,22 @@ export const DicTran: React.FC<IDicTranProps> = ({
               )
             }
           } else {
-            message.error(
-              createRes.message || 'Không thể tạo câu trong Thư viện để thêm vào Checklist',
-            )
+            message.error(createRes.message || 'Cannot create sentence!')
             return
           }
         }
 
         // 4. Add targetItem to Checklist
         if (!targetItem) {
-          message.error('Không thể thêm câu vào Checklist')
+          message.error('Cannot add to Checklist!')
           return
         }
 
         const res = await addChecklistItem(targetItem)
         if (res.isSuccess) {
-          message.success('Đã thêm câu vào Checklist!')
+          message.success('Added to Checklist!')
         } else {
-          message.error(res.message || 'Không thể thêm câu vào Checklist')
+          message.error(res.message || 'Cannot add to Checklist!')
         }
       } catch (err: any) {
         console.error('Error toggling checklist:', err)
@@ -739,25 +736,6 @@ export const DicTran: React.FC<IDicTranProps> = ({
         },
       }))
     }
-  }
-
-  // Clear answer
-  const handleClearAnswer = () => {
-    setUserAnswer('')
-    setIsChecked(false)
-    setDictationResult(null)
-    setAiReviewResult(null)
-    setIsAiReviewing(false)
-    setSessionRecords((prev) => ({
-      ...prev,
-      [safeCurrentIndex]: {
-        userAnswer: '',
-        isChecked: false,
-        dictationResult: null,
-        aiReviewResult: null,
-      },
-    }))
-    textAreaRef.current?.focus()
   }
 
   // Retry current 10-question set
@@ -1423,7 +1401,7 @@ export const DicTran: React.FC<IDicTranProps> = ({
     >
       {/* 1. Header Bar: Counter badge, Origin Tag, Mode Tag, Replay Tag, Action buttons (Identical to Dictation) */}
       <div className={styles.header}>
-        <Flex align='center' gap={token.size / 4} wrap='wrap'>
+        <Flex align='center' gap={token.size / 2} wrap='wrap'>
           <Tag className={styles.counterBadge} style={{ color: token.colorTextSecondary }}>
             {safeCurrentIndex + 1} / {history.length}
           </Tag>
@@ -1604,9 +1582,7 @@ export const DicTran: React.FC<IDicTranProps> = ({
           value={userAnswer}
           placeholder={'Input here...'}
           allowClear={{
-            clearIcon: (
-              <CloseCircleOutlined style={{ fontSize: 14, marginRight: -6, marginTop: -4 }} />
-            ),
+            clearIcon: <ClearOutlined style={{ fontSize: 14 }} />,
           }}
           onChange={(e) => handleAnswerChange(e.target.value)}
           autoSize={{ minRows: 2, maxRows: 10 }}
@@ -1631,25 +1607,10 @@ export const DicTran: React.FC<IDicTranProps> = ({
           gap={token.size / 2}
           className={styles.shortcutTip}
         >
-          {currentMode === 'dictation' ? (
-            <span>
-              Tip: Press <b>Ctrl + Enter</b> to{' '}
-              {isChecked ? (isLastQuestion ? 'Complete' : 'Next') : 'Check'}
-            </span>
-          ) : (
-            <span>
-              Tip: Press <b>Ctrl + Enter</b> to{' '}
-              {isChecked ? (isLastQuestion ? 'Complete' : 'Next') : 'Check'}
-            </span>
-          )}
-
-          <Button
-            type={'text'}
-            size={'small'}
-            icon={<ClearOutlined />}
-            disabled={userAnswer ? false : true}
-            onClick={handleClearAnswer}
-          />
+          <span>
+            Tip: Press <b>Ctrl + Enter</b> to
+            {isChecked ? (isLastQuestion ? ' Complete' : ' Next') : ' Check'}
+          </span>
         </Flex>
       </Flex>
 
@@ -1731,13 +1692,13 @@ export const DicTran: React.FC<IDicTranProps> = ({
 
           {/* Reusable LCS Diff Comparison with Interactive Word Lookups */}
           {dictationResult && (
-            <SentenceDiffView result={dictationResult} sentenceContext={targetText} />
+            <SentenceDiffView interactive result={dictationResult} sentenceContext={targetText} />
           )}
 
           {/* Reference Sentence & TTS */}
           <div>
             <Text type='secondary' style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
-              Câu chuẩn tham khảo (bấm vào từ để xem từ điển):
+              Câu chuẩn tham khảo:
             </Text>
             <div className={styles.referenceBox}>
               <div className={styles.referenceContent}>
@@ -1772,7 +1733,7 @@ export const DicTran: React.FC<IDicTranProps> = ({
             <div className={styles.aiFeedbackCard} style={{ textAlign: 'center', padding: '16px' }}>
               <Space>
                 <RobotOutlined style={{ fontSize: 18, color: '#722ed1' }} />
-                <Spin size='small' tip='AI Mentor đang phân tích câu dịch của bạn...' />
+                <Spin size='small' />
               </Space>
             </div>
           )}
@@ -1782,10 +1743,10 @@ export const DicTran: React.FC<IDicTranProps> = ({
               <div className={styles.aiHeader}>
                 <Space>
                   <RobotOutlined style={{ fontSize: 16 }} />
-                  <span>AI Mentor nhận xét:</span>
+                  <span>Review:</span>
                 </Space>
                 <Tag color={aiReviewResult.score >= 80 ? 'success' : 'warning'}>
-                  Điểm AI: {aiReviewResult.score}/100
+                  Điểm: {aiReviewResult.score}/100
                 </Tag>
               </div>
 
@@ -1827,7 +1788,7 @@ export const DicTran: React.FC<IDicTranProps> = ({
                 onClick={handleAiReview}
                 style={{ color: '#722ed1', borderColor: 'rgba(114, 46, 209, 0.4)' }}
               >
-                Nhờ AI Mentor phân tích chi tiết
+                Review in details
               </Button>
             </div>
           )}

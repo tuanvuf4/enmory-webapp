@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Tabs, Badge, Tag, Button, Space, Input, Popover, Spin, Empty, Tooltip, theme } from 'antd'
+import {
+  Tabs,
+  Badge,
+  Tag,
+  Button,
+  Space,
+  Input,
+  Popover,
+  Spin,
+  Empty,
+  Tooltip,
+  theme,
+  Flex,
+} from 'antd'
 import {
   RobotOutlined,
   SoundOutlined,
@@ -457,17 +470,19 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
             </Tooltip>
           </div>
 
-          <div className={styles.badges}>
+          <Flex gap={(token.size / 8) * 3} align={'center'}>
             {isSaved && (
-              <Tag color='success' icon={<CheckOutlined />}>
+              <Tag color='success' style={{ margin: 0 }} icon={<CheckOutlined />}>
                 Đã có
               </Tag>
             )}
-            <Tag color={levelColor} className={styles.levelTag}>
+            <Tag style={{ margin: 0 }} color={levelColor} className={styles.levelTag}>
               {item.level}
             </Tag>
-            <Tag color={catColor}>{CATEGORY_LABELS[item.category] || item.category}</Tag>
-          </div>
+            <Tag style={{ margin: 0 }} color={catColor}>
+              {CATEGORY_LABELS[item.category] || item.category}
+            </Tag>
+          </Flex>
         </div>
 
         {/* Phonetic & Part of Speech */}
@@ -566,7 +581,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
       <Popover
         key={item.id}
         content={renderItemPopover(item)}
-        trigger={['hover', 'click']}
+        trigger={['click']}
         placement='top'
         mouseEnterDelay={0.15}
         mouseLeaveDelay={0.15}

@@ -3,12 +3,19 @@
 
 export const chromeStorage = {
   set: async (payload: Record<string, unknown>) => {
-    await chrome.storage.sync.set(payload)
+    if (typeof chrome !== 'undefined' && chrome?.storage?.sync) {
+      await chrome.storage.sync.set(payload)
+    }
   },
   get: async (data: string[]) => {
-    return await chrome.storage.sync.get(data)
+    if (typeof chrome !== 'undefined' && chrome?.storage?.sync) {
+      return await chrome.storage.sync.get(data)
+    }
+    return {}
   },
   clear: async () => {
-    return await chrome.storage.sync.clear()
+    if (typeof chrome !== 'undefined' && chrome?.storage?.sync) {
+      return await chrome.storage.sync.clear()
+    }
   },
 }

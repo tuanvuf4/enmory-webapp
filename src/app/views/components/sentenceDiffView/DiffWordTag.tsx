@@ -1,5 +1,5 @@
 import React from 'react'
-import { theme, Tooltip } from 'antd'
+import { theme } from 'antd'
 import { IDictationWord } from './sentenceDiffUtil'
 import { WordLookupPopover } from '../wordLookup'
 import styles from './sentenceDiffView.module.scss'
@@ -28,14 +28,6 @@ export const DiffWordTag: React.FC<IDiffWordTagProps> = ({
   const isMissing = item.status === 'missing'
   const isExtra = item.status === 'extra'
 
-  const tooltipText = isCorrect
-    ? 'Chính xác!'
-    : isTypo
-      ? `Gần đúng! Bạn gõ: "${item.userWord}" (Chuẩn: "${item.word}")`
-      : isMissing
-        ? `Từ bị thiếu: "${item.word}"`
-        : `Từ gõ thừa: "${item.userWord}"`
-
   const bgColor = isCorrect
     ? token.colorSuccessBg
     : isTypo
@@ -61,21 +53,19 @@ export const DiffWordTag: React.FC<IDiffWordTagProps> = ({
         : token.colorBorder
 
   const tagContent = (
-    <Tooltip title={tooltipText}>
-      <span
-        className={`${styles.diffWordTag} ${compact ? styles.diffWordTagCompact : ''} ${
-          isExtra ? styles.diffExtraTag : ''
-        } ${className || ''}`}
-        style={{
-          backgroundColor: bgColor,
-          color: textColor,
-          border: `1px solid ${borderColor}`,
-          ...style,
-        }}
-      >
-        {item.word}
-      </span>
-    </Tooltip>
+    <span
+      className={`${styles.diffWordTag} ${compact ? styles.diffWordTagCompact : ''} ${
+        isExtra ? styles.diffExtraTag : ''
+      } ${className || ''}`}
+      style={{
+        backgroundColor: bgColor,
+        color: textColor,
+        border: `1px solid ${borderColor}`,
+        ...style,
+      }}
+    >
+      {item.word}
+    </span>
   )
 
   if (!interactive) {

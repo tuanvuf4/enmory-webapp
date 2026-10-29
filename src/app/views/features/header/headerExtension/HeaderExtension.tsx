@@ -1,4 +1,4 @@
-import { DownOutlined, PlusOutlined } from '@ant-design/icons'
+import { DownOutlined, PlusOutlined, SyncOutlined } from '@ant-design/icons'
 import { Button, Dropdown, Flex, Layout, MenuProps, Space, theme } from 'antd'
 import classNames from 'clsx'
 import { addNewTypeExtension, menuExtension } from './Menu'
@@ -13,6 +13,7 @@ import { authAction } from '@/store/reducers/auth.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { exampleAction } from '@/store/reducers/example.reducer'
+import { useManualSync } from '@/services/localDb'
 
 interface IHeaderExt {
   isAuth: boolean
@@ -23,6 +24,7 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
   const { token } = theme.useToken()
 
   const dispatch = useDispatch()
+  const { isSyncing, syncNow } = useManualSync()
 
   // Get user info directly from Redux (Firebase auth state)
   const user = useSelector((state) => state.auth.user)
@@ -98,6 +100,22 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
           <div className={classNames(styles.userContainer)}>
             {isAuth && (
               <>
+                <Button
+                  className={classNames(styles.btnAddNew)}
+                  icon={
+                    <SyncOutlined
+                      spin={isSyncing}
+                      style={{
+                        fontSize: token.fontSizeHeading4,
+                      }}
+                    />
+                  }
+                  loading={isSyncing}
+                  onClick={() => syncNow()}
+                >
+                  Sync
+                </Button>
+
                 <Dropdown trigger={['click']} menu={menuAddProps} placement='bottomLeft' arrow>
                   <Button
                     className={classNames(styles.btnAddNew)}

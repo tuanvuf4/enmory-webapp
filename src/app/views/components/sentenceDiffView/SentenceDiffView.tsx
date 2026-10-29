@@ -34,10 +34,6 @@ export const SentenceDiffView: React.FC<ISentenceDiffViewProps> = ({
     return null
   }
 
-  const defaultTitle = compact
-    ? 'So khớp từng từ:'
-    : 'So khớp từng từ (Bấm vào từ để xem chi tiết / tra từ điển):'
-
   return (
     <div
       className={`${styles.diffContainer} ${compact ? styles.diffContainerCompact : ''} ${className || ''}`}
@@ -82,7 +78,7 @@ export const SentenceDiffView: React.FC<ISentenceDiffViewProps> = ({
       {/* Header title */}
       {showTitle && (
         <div className={styles.diffTitle} style={{ color: token.colorTextSecondary }}>
-          {title ?? defaultTitle}
+          {title ?? 'So khớp từng từ:'}
         </div>
       )}
 

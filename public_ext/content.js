@@ -12,6 +12,31 @@ const reviewCache = new WeakMap()
 
 const normalizeSelection = (value = '') => value.replace(/\s+/g, ' ').trim()
 
+const isExtensionContextValid = () => {
+  return typeof chrome !== 'undefined' && Boolean(chrome.runtime?.id)
+}
+
+const safeSendMessage = (message, callback) => {
+  if (!isExtensionContextValid()) {
+    return
+  }
+  try {
+    const promise = chrome.runtime.sendMessage(message, (response) => {
+      if (chrome.runtime?.lastError) {
+        // Suppressed or handled
+      }
+      if (callback) callback(response)
+    })
+    if (promise && typeof promise.catch === 'function') {
+      promise.catch((err) => {
+        console.debug('[Enmory] Extension message failed (context invalidated):', err?.message)
+      })
+    }
+  } catch (err) {
+    console.debug('[Enmory] Extension context error:', err?.message)
+  }
+}
+
 if (document.documentElement.dataset.appType === 'WEB_APP') {
   // Disable extension review features on the web app; the web app has its own local review flow.
   // Keep this content script effectively inactive on the web version.
@@ -379,7 +404,7 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
         }
       }, 30000)
 
-      chrome.runtime.sendMessage({ action: 'reviewSentence', text }, (response) => {
+      safeSendMessage({ action: 'reviewSentence', text }, (response) => {
         if (requestId !== reviewRequestSeq) return
         window.clearTimeout(timeoutId)
 
@@ -615,7 +640,7 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
     const selectedText = normalizeSelection(document.getSelection()?.toString() || '')
 
     if (selectedText.length) {
-      chrome.runtime.sendMessage({
+      safeSendMessage({
         addOrigin: 'addOrigin',
         value: selectedText,
         catId: getCategoryIdFromSelection(selectedText),

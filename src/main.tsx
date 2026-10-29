@@ -75,8 +75,18 @@ const AppWrapper: React.FC<IAppTypeProps> = ({ type }) => (
   </React.StrictMode>
 )
 
+
+const isExtension =
+  import.meta.env.MODE === 'ext' ||
+  (import.meta.env.VITE_APP_TYPE &&
+    String(import.meta.env.VITE_APP_TYPE).includes(EAppType.EXTENSION)) ||
+  (typeof window !== 'undefined' && window.location?.protocol === 'chrome-extension:')
+
+const currentAppType = isExtension ? EAppType.EXTENSION : EAppType.WEB_APP
+
+
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
-root.render(<AppWrapper type={import.meta.env.VITE_APP_TYPE as EAppType} />)
+root.render(<AppWrapper type={currentAppType} />)
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

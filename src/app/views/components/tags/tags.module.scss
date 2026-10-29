@@ -23,7 +23,7 @@
     padding: $size * 0.125 0;
     background: transparent !important;
     border: none;
-    border-left: 1px solid $color-text;
+    border-left: 1px solid var(--ant-color-border);
     outline: none;
     cursor: pointer;
     border-radius: 0;
@@ -36,7 +36,7 @@
 
 .tagItem {
   border-radius: $size * 0.25;
-  border: 1px solid $color-text;
+  border: 1px solid var(--ant-color-border);
 
   &.active {
     border: 1px solid $color-white;

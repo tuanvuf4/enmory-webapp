@@ -173,10 +173,6 @@ export const Item: React.FC<IProps> = ({
         onArchive?.()
         break
 
-      case '6':
-        // markItem(data?.id || '')
-        break
-
       case '7':
         await favorite(data)
         onFavorite?.()
@@ -222,7 +218,7 @@ export const Item: React.FC<IProps> = ({
     onClick: handleMenuClick,
     style: {
       backgroundColor: token.colorBgElevated,
-      border: `1px solid ${token.colorBorderSecondary}`,
+      border: `1px solid ${token.colorBorderBg}`,
       boxShadow: token.boxShadowSecondary,
     },
   }

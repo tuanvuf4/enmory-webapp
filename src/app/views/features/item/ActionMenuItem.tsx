@@ -60,7 +60,7 @@ export const getActionMenuItem = (data: IItem | undefined, isInChecklist = false
       key: '7',
       label: (
         <ActionItem
-          label={data?.favorite ? 'Bỏ yêu thích' : 'Yêu thích'}
+          label={data?.favorite ? 'Unfavorite' : 'Favorite'}
           icon={data?.favorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
         />
       ),
@@ -69,7 +69,7 @@ export const getActionMenuItem = (data: IItem | undefined, isInChecklist = false
       key: '5',
       label: (
         <ActionItem
-          label={`${data?.archive ? 'Bỏ lưu trữ (Unarchive)' : 'Lưu trữ (Archive)'}`}
+          label={`${data?.archive ? 'Unarchive' : 'Archive'}`}
           icon={<ReadOutlined style={{ color: data?.archive ? '#fa8c16' : undefined }} />}
         />
       ),
@@ -78,7 +78,7 @@ export const getActionMenuItem = (data: IItem | undefined, isInChecklist = false
       key: '8',
       label: (
         <ActionItem
-          label={isInChecklist ? 'Xóa khỏi checklist' : 'Thêm vào checklist'}
+          label={isInChecklist ? 'Remove from checklist' : 'Add to checklist'}
           icon={<CheckSquareOutlined style={{ color: isInChecklist ? '#52c41a' : undefined }} />}
         />
       ),
@@ -86,9 +86,6 @@ export const getActionMenuItem = (data: IItem | undefined, isInChecklist = false
     {
       key: '3',
       label: <ActionItem label='Reset' icon={<SyncOutlined />} />,
-    },
-    {
-      type: 'divider',
     },
     {
       key: '4',

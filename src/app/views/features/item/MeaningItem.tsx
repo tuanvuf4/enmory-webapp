@@ -146,16 +146,12 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin })
         )}
       </div>
 
-      {meaning.definition && (
-        <div className={styles.subSection}>
-          <span className={styles.subSectionLabel}>
-            <ReadOutlined style={{ marginRight: 4 }} />
-            Definition
-          </span>
-          <div
-            className={styles.subSectionContent}
-            dangerouslySetInnerHTML={{ __html: meaning.grammar }}
-          />
+      {meaning.note && (
+        <div className={styles.noteCallout}>
+          <div className={styles.noteHeader}>
+            <BulbOutlined /> Lưu ý
+          </div>
+          <div className={styles.noteContent} dangerouslySetInnerHTML={{ __html: meaning.note }} />
         </div>
       )}
 
@@ -169,12 +165,16 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin })
         </div>
       )}
 
-      {meaning.note && (
-        <div className={styles.noteCallout}>
-          <div className={styles.noteHeader}>
-            <BulbOutlined /> Lưu ý
-          </div>
-          <div className={styles.noteContent} dangerouslySetInnerHTML={{ __html: meaning.note }} />
+      {meaning.definition && (
+        <div className={styles.subSection}>
+          <span className={styles.subSectionLabel}>
+            <ReadOutlined style={{ marginRight: 4 }} />
+            Definition
+          </span>
+          <div
+            className={styles.subSectionContent}
+            dangerouslySetInnerHTML={{ __html: meaning.grammar }}
+          />
         </div>
       )}
 

@@ -51,8 +51,6 @@ import {
   ForkOutlined,
   ApartmentOutlined,
   ShareAltOutlined,
-  CloseOutlined,
-  CheckOutlined,
   UpCircleFilled,
   DownCircleFilled,
 } from '@ant-design/icons'
@@ -806,8 +804,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             <BookOutlined style={{ color: token.colorPrimary, fontSize: 18 }} />
             <span className={styles.sectionTitle}>Thông tin từ vựng</span>
 
-            {isEditing ? <Tag color={'yellow'}>EDITING</Tag> : <Tag color={'green'}>CREATING</Tag>}
-
             <Controller
               control={control}
               name='catId'
@@ -1159,30 +1155,26 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
       {/* ── CARD 5: STICKY ACTION FOOTER ── */}
       <div className={styles.stickyFooter}>
         <div className={styles.footerInfo}>
-          {origin ? (
-            <Flex align='center' gap={8} wrap='wrap'>
-              <Button
-                size={'middle'}
-                icon={showMeanings ? <UpCircleFilled /> : <DownCircleFilled />}
-                onClick={() => setShowMeanings((prev) => !prev)}
-              >
-                {`${showMeanings ? 'Collapse' : 'Expand'}`}
-              </Button>
-            </Flex>
-          ) : (
-            <span style={{ fontSize: 12, opacity: 0.65 }}>Phím tắt: Ctrl + S để lưu nhanh</span>
-          )}
+          <Flex align='center' gap={8} wrap='wrap'>
+            <Button
+              size={'middle'}
+              icon={showMeanings ? <UpCircleFilled /> : <DownCircleFilled />}
+              onClick={() => setShowMeanings((prev) => !prev)}
+            />
+
+            {isEditing ? <Tag color={'yellow'}>EDITING</Tag> : <Tag color={'green'}>CREATING</Tag>}
+          </Flex>
         </div>
 
         <div className={styles.footerButtons}>
-          <Button size={'middle'} icon={<CloseOutlined />} onClick={handleCancel}>
+          <Button type={'default'} size={'middle'} style={{ minWidth: 80 }} onClick={handleCancel}>
             Cancel
           </Button>
 
           <Button
             type='primary'
             size={'middle'}
-            icon={<CheckOutlined />}
+            style={{ minWidth: 80 }}
             loading={isSubmitting || isCreating || isUpdating}
             disabled={
               !isValid ||

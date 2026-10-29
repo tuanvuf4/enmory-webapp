@@ -20,10 +20,15 @@ export const articleCategoryKeys = blogCategoryKeys
  * Fetch all blog categories
  */
 export const useBlogCategories = (params: IBlogCategoryRequestParams = {}) => {
+  const queryParams: IBlogCategoryRequestParams = {
+    orderBy: 'order',
+    order: 'ASC',
+    ...params,
+  }
   return useQuery({
-    queryKey: blogCategoryKeys.list(params),
+    queryKey: blogCategoryKeys.list(queryParams),
     queryFn: async () => {
-      const response = await blogCategoriesApi.getCategories(params)
+      const response = await blogCategoriesApi.getCategories(queryParams)
       if (!response.isSuccess) {
         throw new Error(response.message || 'Failed to fetch blog categories')
       }

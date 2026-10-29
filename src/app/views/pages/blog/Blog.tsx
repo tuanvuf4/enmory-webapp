@@ -1,12 +1,30 @@
 import { useState, useEffect } from 'react'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { Col, Row, theme, Button, Spin, Pagination, Flex, Modal, Tag } from 'antd'
+import {
+  Col,
+  Row,
+  theme,
+  Button,
+  Spin,
+  Pagination,
+  Flex,
+  Modal,
+  Tag,
+  Tooltip,
+  Badge,
+  Divider,
+} from 'antd'
 import { BlogItem } from '@/views/components/blogItem/BlogItem'
 import { useBlogs, useBlogsCount, useBlogCategories } from '@/core/hooks'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
 import { useBlogCategoryModal } from '@/helpers/hooks/useBlogCategoryModal'
-import { PlusOutlined } from '@ant-design/icons'
+import {
+  PlusOutlined,
+  AppstoreOutlined,
+  UnorderedListOutlined,
+  TagsOutlined,
+} from '@ant-design/icons'
 import { NotFound } from '@/views/components'
 import { BlogCategoryList } from '@/views/components/blogCategoryList/blogCategoryList'
 import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
@@ -24,6 +42,7 @@ export const Blog = () => {
   const [page, setPage] = useState(0)
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>()
   const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   const { openBlogModal } = useBlogModal()
   const { openBlogCategoryModal } = useBlogCategoryModal()
@@ -42,10 +61,7 @@ export const Blog = () => {
 
   const { data: totalCount = 0 } = useBlogsCount(selectedCategory)
 
-  const { data: cats = [], isLoading: isLoadingCategories } = useBlogCategories({
-    orderBy: 'created_date',
-    order: 'ASC',
-  })
+  const { data: cats = [], isLoading: isLoadingCategories } = useBlogCategories()
 
   const categories = cats
 
@@ -75,30 +91,92 @@ export const Blog = () => {
     setSelectedCategory(categoryId)
   }
 
+  const colSpan =
+    viewMode === 'grid'
+      ? { xs: 24, sm: 12, md: 12, lg: 8, xl: 8 }
+      : { xs: 24, sm: 24, md: 24, lg: 24, xl: 24 }
+
   return (
     <>
       <div className={appStyle.containerMd}>
         <PageTitle content='Blog' />
 
-        <Flex justify='space-between' align={'center'} gap={token.size} wrap={'wrap'}>
-          <Flex justify='flex-start' align={'center'} gap={token.size} wrap={'nowrap'}>
-            <Button
-              variant={'solid'}
-              type={'primary'}
-              icon={<PlusOutlined />}
-              onClick={() =>
-                openBlogModal('add', {
-                  description: '',
-                  title: '',
-                  category_id: selectedCategory,
-                  relation: [],
-                  tags: [],
-                })
-              }
-            />
+        {/* Toolbar */}
+        <Flex
+          justify='space-between'
+          align='center'
+          gap={token.sizeSM}
+          wrap='wrap'
+          style={{ marginBottom: token.size }}
+        >
+          {/* Left actions */}
+          <Flex align='center' gap={token.sizeSM}>
+            <Tooltip title='New post'>
+              <Button
+                type='primary'
+                icon={<PlusOutlined />}
+                onClick={() =>
+                  openBlogModal('add', {
+                    description: '',
+                    title: '',
+                    category_id: selectedCategory,
+                    relation: [],
+                    tags: [],
+                  })
+                }
+              >
+                New Post
+              </Button>
+            </Tooltip>
+
+            <Divider type='vertical' style={{ margin: 0 }} />
+
+            <Tooltip title='Manage categories'>
+              <Button icon={<TagsOutlined />} onClick={() => setShowCategoryModal(true)}>
+                Categories
+              </Button>
+            </Tooltip>
           </Flex>
 
-          <Flex gap={token.size / 2} wrap={'wrap'} align={'center'}>
+          {/* Right: view toggle + post count */}
+          <Flex align='center' gap={token.sizeSM}>
+            <Button.Group>
+              <Tooltip title='Grid view'>
+                <Button
+                  icon={<AppstoreOutlined />}
+                  type={viewMode === 'grid' ? 'primary' : 'default'}
+                  onClick={() => setViewMode('grid')}
+                />
+              </Tooltip>
+              <Tooltip title='List view'>
+                <Button
+                  icon={<UnorderedListOutlined />}
+                  type={viewMode === 'list' ? 'primary' : 'default'}
+                  onClick={() => setViewMode('list')}
+                />
+              </Tooltip>
+            </Button.Group>
+          </Flex>
+        </Flex>
+
+        {/* Category filter bar */}
+        <Flex
+          gap={token.sizeXS}
+          wrap='wrap'
+          align='center'
+          style={{
+            marginBottom: token.size,
+            padding: `${token.sizeXS}px ${token.sizeSM}px`,
+            background: token.colorFillQuaternary,
+            borderRadius: token.borderRadiusLG,
+          }}
+        >
+          <Badge
+            count={!selectedCategory ? totalCount : 0}
+            size='small'
+            color={token.colorPrimary}
+            overflowCount={999}
+          >
             <CheckableTag
               key='all'
               checked={!selectedCategory}
@@ -106,40 +184,32 @@ export const Blog = () => {
             >
               All
             </CheckableTag>
+          </Badge>
 
-            {categories.map((cat) => (
-              <CheckableTag
-                key={cat.id}
-                checked={selectedCategory === cat.id}
-                onChange={(checked) => handleSelectCategory(checked ? cat.id : undefined)}
-                style={
-                  selectedCategory === cat.id && cat.color
-                    ? { backgroundColor: cat.color, borderColor: cat.color, color: '#fff' }
-                    : undefined
-                }
-              >
-                {cat.name}
-              </CheckableTag>
-            ))}
-          </Flex>
+          {categories.map((cat) => (
+            <CheckableTag
+              key={cat.id}
+              checked={selectedCategory === cat.id}
+              onChange={(checked) => handleSelectCategory(checked ? cat.id : undefined)}
+            >
+              {cat.name}
+            </CheckableTag>
+          ))}
         </Flex>
 
+        {/* Blog grid / list */}
         <Spin spinning={isLoadingBlogs}>
           {blogsError && (
-            <div className={'flex items-center justify-center p-4'} style={{ minHeight: 400 }}>
+            <div className='flex items-center justify-center p-4' style={{ minHeight: 400 }}>
               <NotFound
                 classNames={{ container: 'justify-center gap-4' }}
                 label={
-                  <h2 className={'m-0'}>
+                  <h2 className='m-0'>
                     Error loading blog posts: {(blogsError as Error)?.message || 'Unknown error'}
                   </h2>
                 }
                 button={
-                  <Button
-                    variant={'solid'}
-                    type={'primary'}
-                    onClick={() => window.location.reload()}
-                  >
+                  <Button variant='solid' type='primary' onClick={() => window.location.reload()}>
                     Retry
                   </Button>
                 }
@@ -148,9 +218,9 @@ export const Blog = () => {
           )}
 
           {!blogsError && blogs.length > 0 ? (
-            <Row gutter={[token.size, token.size]} className={'my-4'}>
+            <Row gutter={[token.size, token.size]} className='my-4'>
               {blogs.map((blog) => (
-                <Col xs={24} sm={12} md={12} lg={12} xl={12} key={blog.id || Math.random()}>
+                <Col {...colSpan} key={blog.id || Math.random()}>
                   <Widget styles={{ wrapper: { height: '100%' }, content: { height: '100%' } }}>
                     <BlogItem
                       id={blog.id}
@@ -160,20 +230,21 @@ export const Blog = () => {
                       category_id={blog.category_id}
                       relation={blog.relation}
                       tags={blog.tags}
+                      compact={viewMode === 'list'}
                     />
                   </Widget>
                 </Col>
               ))}
             </Row>
           ) : !blogsError ? (
-            <div className={'flex items-center justify-center p-4'} style={{ minHeight: 400 }}>
+            <div className='flex items-center justify-center p-4' style={{ minHeight: 400 }}>
               <NotFound
                 classNames={{ container: 'justify-center gap-4' }}
-                label={<h2 className={'m-0'}>No blog posts found.</h2>}
+                label={<h2 className='m-0'>No blog posts found.</h2>}
                 button={
                   <Button
-                    variant={'solid'}
-                    type={'primary'}
+                    variant='solid'
+                    type='primary'
                     icon={<PlusOutlined />}
                     onClick={() =>
                       openBlogModal('add', {
@@ -193,21 +264,27 @@ export const Blog = () => {
           ) : null}
         </Spin>
 
-        <Flex justify='flex-end' align={'flex-end'} style={{ margin: token.size }} gap={token.size}>
-          <Pagination
-            current={page + 1}
-            pageSize={PAGE_SIZE}
-            total={totalCount}
-            onChange={(newPage) => setPage(newPage - 1)}
-          />
-        </Flex>
+        {/* Pagination — only shown when there is more than one page */}
+        {totalCount > PAGE_SIZE && (
+          <Flex justify='flex-end' style={{ margin: `${token.size}px 0` }}>
+            <Pagination
+              current={page + 1}
+              pageSize={PAGE_SIZE}
+              total={totalCount}
+              showSizeChanger={false}
+              showTotal={(total) => `${total} posts`}
+              onChange={(newPage) => setPage(newPage - 1)}
+            />
+          </Flex>
+        )}
       </div>
 
       {/* Blog Category Modal */}
       <Modal
         title={
-          <Flex align={'center'} gap={token.size}>
-            <span>Categories</span>
+          <Flex align='center' gap={token.size}>
+            <TagsOutlined />
+            <span>Manage Categories</span>
             <Button
               type='primary'
               icon={<PlusOutlined />}
@@ -220,7 +297,7 @@ export const Blog = () => {
         onCancel={handleCloseCategoryModal}
         footer={null}
         keyboard={false}
-        width={900}
+        width={700}
         maskClosable={false}
       >
         <BlogCategoryList

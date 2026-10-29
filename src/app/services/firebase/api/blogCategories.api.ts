@@ -19,6 +19,7 @@ export interface IBlogCategory {
   uid?: string
   name: string
   color?: string
+  order?: number
   created_date?: number
   last_update?: number
 }
@@ -35,7 +36,7 @@ export interface IBlogCategoryResponse<T> {
 export type IArticleCategoryResponse<T> = IBlogCategoryResponse<T>
 
 export interface IBlogCategoryRequestParams {
-  orderBy?: 'created_date' | 'name'
+  orderBy?: 'created_date' | 'name' | 'order'
   order?: 'ASC' | 'DESC'
 }
 
@@ -95,16 +96,30 @@ export const blogCategoriesApi = {
           uid: data.uid,
           name: data.name,
           color: data.color,
+          order: typeof data.order === 'number' ? data.order : 0,
           created_date: data.created_date,
           last_update: data.last_update,
         } as IBlogCategory
       })
 
       // Sort in-memory to avoid Firestore composite index requirement and handle missing created_date
-      const orderByField = params.orderBy || 'created_date'
+      const orderByField = params.orderBy || 'order'
       const orderDirection = params.order === 'DESC' ? 'desc' : 'asc'
 
       categories.sort((a, b) => {
+        if (orderByField === 'order') {
+          const orderA = typeof a.order === 'number' ? a.order : 0
+          const orderB = typeof b.order === 'number' ? b.order : 0
+          if (orderA !== orderB) {
+            return orderDirection === 'desc' ? orderB - orderA : orderA - orderB
+          }
+          const timeA = a.created_date || 0
+          const timeB = b.created_date || 0
+          if (timeA !== timeB) {
+            return timeA - timeB
+          }
+          return (a.name || '').localeCompare(b.name || '')
+        }
         if (orderByField === 'name') {
           const nameA = (a.name || '').toLowerCase()
           const nameB = (b.name || '').toLowerCase()
@@ -170,6 +185,7 @@ export const blogCategoriesApi = {
         uid: data.uid,
         name: data.name,
         color: data.color,
+        order: typeof data.order === 'number' ? data.order : 0,
         created_date: data.created_date,
         last_update: data.last_update,
       }
@@ -215,6 +231,7 @@ export const blogCategoriesApi = {
         uid: currentUser.uid,
         name: data.name || '',
         color: data.color ?? '',
+        order: typeof data.order === 'number' ? data.order : 0,
         created_date: data.created_date || now,
         last_update: now,
       }
@@ -271,6 +288,7 @@ export const blogCategoriesApi = {
       }
       if (data.name !== undefined) categoryData.name = data.name
       if (data.color !== undefined) categoryData.color = data.color
+      if (data.order !== undefined) categoryData.order = typeof data.order === 'number' ? data.order : 0
 
       const docRef = doc(db, dbCollections.blog_categories || dbCollections.article_categories, id)
       await updateDoc(docRef, categoryData)

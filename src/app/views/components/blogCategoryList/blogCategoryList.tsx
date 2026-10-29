@@ -39,7 +39,7 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      width: '70%',
+      width: '55%',
       render: (text: string) => text,
     },
     {
@@ -60,6 +60,14 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
           title={color}
         />
       ),
+    },
+    {
+      title: 'Order',
+      dataIndex: 'order',
+      key: 'order',
+      width: '15%',
+      align: 'center',
+      render: (order?: number) => order ?? 0,
     },
     {
       title: 'Actions',

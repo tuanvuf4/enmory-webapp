@@ -36,10 +36,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
   const { mutateAsync: updateCategoryMutation } = useUpdateBlogCategory()
   const { mutateAsync: deleteCategoryMutation } = useDeleteBlogCategory()
 
-  const { data: cats = [] } = useBlogCategories({
-    orderBy: 'created_date',
-    order: 'ASC',
-  })
+  const { data: cats = [] } = useBlogCategories()
 
   const categories = cats
 

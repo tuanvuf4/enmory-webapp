@@ -370,7 +370,6 @@ export const Item: React.FC<IProps> = ({
         .writeText(textToCopy)
         .then(() => {
           setIsCopied(true)
-          message({ type: 'success', content: `Đã sao chép "${textToCopy}"!` })
           setTimeout(() => setIsCopied(false), 2000)
         })
         .catch(() => {
@@ -415,27 +414,19 @@ export const Item: React.FC<IProps> = ({
                 {data.origin}
               </h2>
 
-              <Tooltip title={isCopied ? 'Đã sao chép' : 'Sao chép từ'}>
-                <button
-                  type='button'
+              <Tooltip title={isCopied ? 'Copied' : 'Copy'}>
+                <Button
+                  type={'text'}
                   className={clsx(styles.titleCopyBtn, isCopied && styles.titleCopyBtnCopied)}
                   onClick={handleCopyOrigin}
-                  aria-label='Sao chép'
                 >
                   {isCopied ? <CheckOutlined /> : <CopyOutlined />}
-                </button>
+                </Button>
               </Tooltip>
 
-              <Tooltip title='Phát âm'>
-                <button
-                  type='button'
-                  className={styles.titleAudioBtn}
-                  onClick={handleQuickSpeak}
-                  aria-label='Phát âm'
-                >
-                  <SoundOutlined />
-                </button>
-              </Tooltip>
+              <Button type={'text'} className={styles.titleAudioBtn} onClick={handleQuickSpeak}>
+                <SoundOutlined />
+              </Button>
 
               {isDefect(data) && (
                 <Tooltip title='This item does not yet have a complete definition or translation.'>

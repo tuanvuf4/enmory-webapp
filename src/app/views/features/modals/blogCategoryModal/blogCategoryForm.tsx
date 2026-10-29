@@ -1,6 +1,6 @@
 import { useCreateBlogCategory, useUpdateBlogCategory } from '@/core/hooks/useBlogCategories'
 import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
-import { theme, Input, Button, Flex, ColorPicker } from 'antd'
+import { theme, Input, InputNumber, Button, Flex, ColorPicker } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import type { Color } from 'antd/es/color-picker'
 import './blogCategoryForm.module.scss'
@@ -40,6 +40,7 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
     defaultValues: {
       name: data?.name || '',
       color: data?.color || '',
+      order: data?.order ?? 0,
     },
   })
 
@@ -47,14 +48,19 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
     reset({
       name: data?.name || '',
       color: data?.color || '',
+      order: data?.order ?? 0,
     })
   }, [data, reset])
 
   const onSubmit = (values: IBlogCategory) => {
+    const payload: IBlogCategory = {
+      ...values,
+      order: typeof values.order === 'number' ? values.order : 0,
+    }
     if (isEditing && data?.id) {
       // Update mode
       updateCategory(
-        { id: data.id, data: values },
+        { id: data.id, data: payload },
         {
           onSuccess: () => {
             reset()
@@ -70,7 +76,7 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
       )
     } else {
       // Create mode
-      createCategory(values, {
+      createCategory(payload, {
         onSuccess: () => {
           reset()
           onSuccess?.()
@@ -132,6 +138,25 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
                 </div>
               )}
             </>
+          )}
+        />
+      </div>
+
+      {/* Order Field */}
+      <div style={{ marginBottom: token.size }}>
+        <label style={{ display: 'block', marginBottom: token.size / 2 }}>Order</label>
+        <Controller
+          control={control}
+          name='order'
+          render={({ field }) => (
+            <InputNumber
+              {...field}
+              min={0}
+              placeholder='0'
+              style={{ width: '100%' }}
+              value={field.value ?? 0}
+              onChange={(val) => field.onChange(val ?? 0)}
+            />
           )}
         />
       </div>

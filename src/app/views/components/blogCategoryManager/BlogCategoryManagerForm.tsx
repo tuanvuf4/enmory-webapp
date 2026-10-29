@@ -13,10 +13,10 @@ export interface BlogCategoryManagerFormProps {
 export const BlogCategoryManagerForm: React.FC<BlogCategoryManagerFormProps> = ({ onClose }) => {
   const { token } = theme.useToken()
 
-  const { data: cats = [], isLoading } = useBlogCategories({
-    orderBy: 'created_date',
-    order: 'ASC',
-  })
+  const { data: cats = [], isLoading } = useBlogCategories()
+
+
+
 
   const [searchKeyword, setSearchKeyword] = useState('')
   const [editingCategory, setEditingCategory] = useState<IBlogCategory | undefined>(undefined)
@@ -32,6 +32,7 @@ export const BlogCategoryManagerForm: React.FC<BlogCategoryManagerFormProps> = (
       const name = (cat.name || '').toLowerCase()
       return name.includes(keyword)
     })
+  
   }, [cats, searchKeyword])
 
   const handleOpenAdd = () => {

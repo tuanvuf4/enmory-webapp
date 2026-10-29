@@ -1,24 +1,26 @@
-import appStyle from '@/style/appStyle.module.scss'
 import {
-  PlusOutlined,
-  DeleteOutlined,
   CaretDownOutlined,
   CaretRightOutlined,
+  DeleteOutlined,
+  PlusOutlined,
   TranslationOutlined,
 } from '@ant-design/icons'
+import { Button, Checkbox, Col, Flex, Input, Row, Select, Space, Tag,theme } from 'antd'
+import clsx from 'clsx'
+import { memo, useCallback,useEffect, useMemo, useState } from 'react'
+import { Controller,useFieldArray, useFormContext } from 'react-hook-form'
+
+import { useSelector } from '@/core/hooks'
 import { sanitizePronunciation } from '@/core/utils'
+import { usePrompt } from '@/helpers/hooks'
+import { getType } from '@/helpers/item'
 import { ECategory, EType, IItem } from '@/models/item.model'
+import appStyle from '@/style/appStyle.module.scss'
 import { InputTag, TextEditor } from '@/views/components'
-import { theme, Space, Col, Row, Button, Select, Checkbox, Input, Flex, Tag } from 'antd'
-import { useFormContext, useFieldArray, Controller } from 'react-hook-form'
+
 import { meaningItem } from './data'
 import { ExampleItem } from './ExampleItemForm'
 import styles from './itemModal.module.scss'
-import clsx from 'clsx'
-import { usePrompt } from '@/helpers/hooks'
-import { useEffect, useState, memo, useMemo, useCallback } from 'react'
-import { getType } from '@/helpers/item'
-import { useSelector } from '@/core/hooks'
 
 interface IProps {
   origin?: string
@@ -113,7 +115,7 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
         >
           <Flex align='center' gap={token.size / 2}>
             <TranslationOutlined style={{ color: token.colorPrimary, fontSize: 16 }} />
-            <span className={styles.sectionTitle}>Ý nghĩa & Định nghĩa</span>
+            <span className={styles.sectionTitle}>Ý nghĩa</span>
             <Tag color='processing' style={{ borderRadius: 10, margin: 0 }}>
               {fields.length} nghĩa
             </Tag>
@@ -140,7 +142,7 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
       </div>
 
       {fields.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '24px 0', opacity: 0.65 }}>
+        <div style={{ textAlign: 'center', padding: '24px 0' }}>
           <p style={{ marginBottom: 12 }}>Chưa có định nghĩa nào cho từ này.</p>
           <Button type='primary' size='small' icon={<PlusOutlined />} onClick={handleAddMeaning}>
             Thêm định nghĩa đầu tiên
@@ -220,7 +222,7 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                   <Flex align='center' gap={8} className={styles.collapsedPreview}>
                     {catType === ECategory.WORD && (
                       <Tag color='geekblue' style={{ margin: 0, fontSize: 11, borderRadius: 4 }}>
-                        {getType(getValues(`meanings.${index}.typeId`)).abbr}
+                        {getType(getValues(`meanings.${index}.typeId`) as EType).abbr}
                       </Tag>
                     )}
 
@@ -461,7 +463,10 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                         control={control}
                         name={`meanings.${index}.synonyms`}
                         render={({ field: { onChange, value } }) => (
-                          <InputTag tags={value} onChange={(val: string[]) => onChange(val)} />
+                          <InputTag
+                            tags={value || []}
+                            onChange={(val: string[]) => onChange(val)}
+                          />
                         )}
                       />
                     </Col>
@@ -479,7 +484,10 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                         control={control}
                         name={`meanings.${index}.antonyms`}
                         render={({ field: { onChange, value } }) => (
-                          <InputTag onChange={(value: string[]) => onChange(value)} tags={value} />
+                          <InputTag
+                            onChange={(value: string[]) => onChange(value)}
+                            tags={value || []}
+                          />
                         )}
                       />
                     </Col>

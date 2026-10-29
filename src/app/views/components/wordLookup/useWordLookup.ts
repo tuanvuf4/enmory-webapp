@@ -32,7 +32,8 @@ export const useWordLookup = (rawWord: string, sentenceContext?: string) => {
     cleanWord ? { origin: cleanWord } : null,
   )
   const [isLookingUpAi, setIsLookingUpAi] = useState(false)
-  const [isSavingToLibrary, setIsSavingToLibrary] = useState(false)
+  // const [isSavingToLibrary, setIsSavingToLibrary] = useState(false)
+  const [isSavingToLibrary] = useState(false)
   const [isPlayingAudio, setIsPlayingAudio] = useState(false)
 
   // Lookup in local indexedDb

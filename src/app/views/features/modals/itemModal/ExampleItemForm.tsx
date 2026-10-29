@@ -30,11 +30,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
 
   return (
     <>
-      <Space
-        direction='vertical'
-        size={[token.size / 2, token.size / 2]}
-        className={appStyle.fulWidth}
-      >
+      <Space direction='vertical' size={[token.size / 2, token.size / 2]} className={appStyle.full}>
         <Col xs={24}>
           <Row gutter={[token.size / 2, token.size / 2]} align={'middle'}>
             <Col md={4} xs={6}>
@@ -78,7 +74,7 @@ export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
                   <Space
                     size={[token.size / 2, token.size / 2]}
                     direction='vertical'
-                    className={appStyle.fulWidth}
+                    className={appStyle.full}
                   >
                     <Row gutter={[token.size / 4, token.size / 4]} align={'middle'}>
                       <Col md={24} xs={24}>

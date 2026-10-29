@@ -103,7 +103,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                       suffix={isSearching ? <Loading3QuartersOutlined spin /> : undefined}
                     />
                   }
-                  className={clsx(styles.autoSearchInput, appStyle.fulWidth)}
+                  className={clsx(styles.autoSearchInput, appStyle.full)}
                   filterOption={false}
                   options={options}
                   onSelect={onSelect}
@@ -130,7 +130,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                   name={`orderBy`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={appStyle.fulWidth}
+                      className={appStyle.full}
                       value={value}
                       onChange={(e) => {
                         onChange(e)
@@ -149,7 +149,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
                   name={`order`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={appStyle.fulWidth}
+                      className={appStyle.full}
                       value={value}
                       onChange={(e) => {
                         onChange(e)
@@ -165,7 +165,7 @@ export const FormSearchEx: React.FC<IProps> = ({ filter = true }) => {
 
                 <Button
                   htmlType='submit'
-                  className={appStyle.fulWidth}
+                  className={appStyle.full}
                   onClick={() => handleSubmit(onSubmit)()}
                 >
                   Apply

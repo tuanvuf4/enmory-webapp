@@ -220,7 +220,7 @@ export const Checklist: React.FC = () => {
   if (isLoading) {
     return (
       <div className='flex justify-center items-center p-6'>
-        <Spin tip='Loading...' />
+        <Spin children='Loading...' />
       </div>
     )
   }

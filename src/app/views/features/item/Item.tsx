@@ -29,6 +29,8 @@ import {
   UserOutlined,
   DownOutlined,
   UpOutlined,
+  CopyOutlined,
+  CheckOutlined,
 } from '@ant-design/icons'
 import { Button, Dropdown, Flex, MenuProps, Skeleton, theme, Tag, Tooltip } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
@@ -361,6 +363,42 @@ export const Item: React.FC<IProps> = ({
     speakWord(data.origin)
   }
 
+  const [isCopied, setIsCopied] = useState(false)
+
+  const handleCopyOrigin = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!data?.origin) return
+    const textToCopy = data.origin.trim()
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(textToCopy)
+        .then(() => {
+          setIsCopied(true)
+          message({ type: 'success', content: `Đã sao chép "${textToCopy}"!` })
+          setTimeout(() => setIsCopied(false), 2000)
+        })
+        .catch(() => {
+          message({ type: 'error', content: 'Không thể sao chép vào clipboard!' })
+        })
+    } else {
+      try {
+        const textArea = document.createElement('textarea')
+        textArea.value = textToCopy
+        textArea.style.position = 'fixed'
+        textArea.style.opacity = '0'
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+        setIsCopied(true)
+        message({ type: 'success', content: `Đã sao chép "${textToCopy}"!` })
+        setTimeout(() => setIsCopied(false), 2000)
+      } catch {
+        message({ type: 'error', content: 'Không thể sao chép vào clipboard!' })
+      }
+    }
+  }
+
   useEffect(() => {
     viewMode === EViewMode.LIST ? setSize(24) : setSize(8)
   }, [viewMode])
@@ -381,9 +419,27 @@ export const Item: React.FC<IProps> = ({
                 {data.origin}
               </h2>
 
-              <button type='button' className={styles.titleAudioBtn} onClick={handleQuickSpeak}>
-                <SoundOutlined />
-              </button>
+              <Tooltip title={isCopied ? 'Đã sao chép' : 'Sao chép từ'}>
+                <button
+                  type='button'
+                  className={clsx(styles.titleCopyBtn, isCopied && styles.titleCopyBtnCopied)}
+                  onClick={handleCopyOrigin}
+                  aria-label='Sao chép'
+                >
+                  {isCopied ? <CheckOutlined /> : <CopyOutlined />}
+                </button>
+              </Tooltip>
+
+              <Tooltip title='Phát âm'>
+                <button
+                  type='button'
+                  className={styles.titleAudioBtn}
+                  onClick={handleQuickSpeak}
+                  aria-label='Phát âm'
+                >
+                  <SoundOutlined />
+                </button>
+              </Tooltip>
 
               {isDefect(data) && (
                 <Tooltip title='This item does not yet have a complete definition or translation.'>

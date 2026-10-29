@@ -81,11 +81,7 @@ export const RegisterForm = ({ showBanner = true }) => {
       <div style={{ padding: `${token.size * 2}px ${token.size * 2}px ${token.size * 4}px` }}>
         {!isRegistered && (
           <form onSubmit={handleSubmit(handleOk)}>
-            <Space
-              direction='vertical'
-              size={[token.size, token.size]}
-              className={appStyle.fulWidth}
-            >
+            <Space direction='vertical' size={[token.size, token.size]} className={appStyle.full}>
               <Row align={'top'} gutter={[token.size, token.size]}>
                 <Col xs={24} md={24}>
                   <label
@@ -320,7 +316,7 @@ export const RegisterForm = ({ showBanner = true }) => {
                 <Col span={24}>
                   <div style={{ textAlign: 'center', margin: `${token.size}px 0` }}>
                     <Button
-                      className={appStyle.fulWidth}
+                      className={appStyle.full}
                       type='primary'
                       htmlType='submit'
                       loading={firebaseLoading}
@@ -389,7 +385,7 @@ export const RegisterForm = ({ showBanner = true }) => {
               <Row gutter={[token.size, token.size]}>
                 <Col span={24}>
                   <Button
-                    className={appStyle.fulWidth}
+                    className={appStyle.full}
                     onClick={handleGoogleLogin}
                     loading={firebaseLoading}
                   >

@@ -70,7 +70,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
 
       <div style={{ padding: `${token.size * 2}px ${token.size * 2}px ${token.size * 4}px` }}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
+          <Space direction='vertical' size={[token.size, token.size]} className={appStyle.full}>
             <Row align={'middle'}>
               <Col span={24}>
                 <label htmlFor=''></label>
@@ -117,7 +117,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
               <Col span={24}>
                 <div style={{ textAlign: 'center', margin: `${token.size}px 0` }}>
                   <Button
-                    className={appStyle.fulWidth}
+                    className={appStyle.full}
                     type='primary'
                     htmlType='submit'
                     loading={isLoading}
@@ -186,11 +186,7 @@ export const LoginForm: React.FC<Login> = ({ onLoginSuccess, showBanner = true }
 
             <Row justify={'center'}>
               <Col span={24}>
-                <Button
-                  variant={'outlined'}
-                  className={appStyle.fulWidth}
-                  onClick={handleGoogleLogin}
-                >
+                <Button variant={'outlined'} className={appStyle.full} onClick={handleGoogleLogin}>
                   Google
                 </Button>
               </Col>

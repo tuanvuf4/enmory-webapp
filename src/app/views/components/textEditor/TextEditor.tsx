@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo, useState } from 'react'
+import React, { useRef, useEffect, useMemo, useState, memo } from 'react'
 
 import {
   ClassicEditor,
@@ -32,6 +32,73 @@ import './textEditor.scss'
 import '../reviewableTextArea/ReviewableTextArea'
 import 'ckeditor5/ckeditor5.css'
 
+const CKEDITOR_CONFIG = {
+  plugins: [
+    Essentials,
+    Bold,
+    Heading,
+    Indent,
+    IndentBlock,
+    Italic,
+    Link,
+    List,
+    MediaEmbed,
+    Image,
+    AutoImage,
+    ImageInsertViaUrl,
+    Alignment,
+    Paragraph,
+    Table,
+    Undo,
+    Strikethrough,
+    BlockQuote,
+  ],
+  heading: {
+    options: [
+      { model: 'paragraph' as const, title: 'Paragraph', class: 'ck-heading_paragraph' },
+      { model: 'heading1' as const, view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+      { model: 'heading2' as const, view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+      { model: 'heading3' as const, view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
+      { model: 'heading4' as const, view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' },
+      { model: 'heading5' as const, view: 'h5', title: 'Heading 5', class: 'ck-heading_heading5' },
+      { model: 'heading6' as const, view: 'h6', title: 'Heading 6', class: 'ck-heading_heading6' },
+    ],
+  },
+  toolbar: [
+    'heading',
+    '|',
+    'bold',
+    'italic',
+    'strikethrough',
+    '|',
+    'insertTable',
+    '|',
+    'alignment',
+    '|',
+    'link',
+    'blockQuote',
+    'imageInsertViaUrl',
+    'insertImage',
+    'uploadImage',
+    '|',
+    'indent',
+    'outdent',
+    '|',
+    'numberedList',
+    'bulletedList',
+  ],
+}
+
+const plainTextFromHtml = (html: string) => {
+  if (!html) return ''
+  const container = document.createElement('div')
+  container.innerHTML = html
+  return (container.textContent || '')
+    .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 // props for text editor component
 export interface TextEditorProps {
   disabled?: boolean
@@ -42,7 +109,7 @@ export interface TextEditorProps {
   onChange?: (content: string) => void
 }
 
-export const TextEditor = ({ content, onChange }: Omit<TextEditorProps, 'disabled'>) => {
+export const TextEditor = memo(({ content, onChange }: Omit<TextEditorProps, 'disabled'>) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   // use a mutable ref so we can assign editor instance in onReady
@@ -57,20 +124,7 @@ export const TextEditor = ({ content, onChange }: Omit<TextEditorProps, 'disable
     'idle',
   )
   const [reviewResult, setReviewResult] = useState<IReviewSentenceResponse | null>(null)
-  const [hasContent, setHasContent] = useState<boolean>(false)
-
-  const plainTextFromHtml = (html: string) => {
-    const container = document.createElement('div')
-    container.innerHTML = html || ''
-    return (container.textContent || '')
-      .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-  }
-
-  useEffect(() => {
-    setHasContent(Boolean(plainTextFromHtml(content || '')))
-  }, [content])
+  const hasContent = useMemo(() => Boolean(plainTextFromHtml(content || '')), [content])
 
   const badgeLabel = useMemo(() => {
     if (reviewState === 'clean') return '✓'
@@ -143,13 +197,14 @@ export const TextEditor = ({ content, onChange }: Omit<TextEditorProps, 'disable
 
   // Update editor content only when it changes from outside (not from user typing)
   useEffect(() => {
-    if (editorRef.current && content !== contentRef.current && content !== undefined) {
+    if (editorRef.current && content !== undefined && content !== contentRef.current) {
       const currentData = editorRef.current.getData()
-      // Only update if the new content is different from what's currently in the editor
       if (currentData !== content) {
+        contentRef.current = content
         editorRef.current.setData(content || '')
+      } else {
+        contentRef.current = content
       }
-      contentRef.current = content
     }
   }, [content])
 
@@ -178,74 +233,20 @@ export const TextEditor = ({ content, onChange }: Omit<TextEditorProps, 'disable
     <div className={'text-editor'} ref={containerRef}>
       <CKEditor
         editor={ClassicEditor}
-        config={{
-          plugins: [
-            Essentials,
-            Bold,
-            Heading,
-            Indent,
-            IndentBlock,
-            Italic,
-            Link,
-            List,
-            MediaEmbed,
-            Image,
-            AutoImage,
-            ImageInsertViaUrl,
-            Alignment,
-            Paragraph,
-            Table,
-            Undo,
-            Strikethrough,
-            BlockQuote,
-          ],
-          heading: {
-            options: [
-              { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
-              { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
-              { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
-              { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
-              { model: 'heading4', view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' },
-              { model: 'heading5', view: 'h5', title: 'Heading 5', class: 'ck-heading_heading5' },
-              { model: 'heading6', view: 'h6', title: 'Heading 6', class: 'ck-heading_heading6' },
-            ],
-          },
-          toolbar: [
-            'heading',
-            '|',
-            'bold',
-            'italic',
-            'strikethrough',
-            '|',
-            'insertTable',
-            // '|',
-            'alignment',
-            // only works for text format
-            '|',
-            'link',
-            'blockQuote',
-            'imageInsertViaUrl',
-            'insertImage',
-            'uploadImage',
-            '|',
-            'indent',
-            'outdent',
-            '|',
-            'numberedList',
-            'bulletedList',
-          ],
-        }}
+        config={CKEDITOR_CONFIG}
         // CKEditor passes (event, editor) but we only care about data
         onChange={() => {
           const data = editorRef.current?.getData() ?? ''
-          const text = plainTextFromHtml(data)
+          // Ignore event if it was triggered by internal setData or already matched
+          if (data === contentRef.current) return
 
-          setHasContent(Boolean(text))
-          if (!text) {
+          contentRef.current = data
+          onChange?.(data)
+
+          if (!data) {
             setReviewOpen(false)
           }
 
-          onChange?.(data)
           if (reviewState !== 'idle') {
             setReviewState('idle')
             setReviewResult(null)
@@ -255,11 +256,9 @@ export const TextEditor = ({ content, onChange }: Omit<TextEditorProps, 'disable
         onReady={(editor) => {
           editorRef.current = editor
           if (content) {
+            contentRef.current = content
             editor.setData(content)
           }
-
-          const initialText = plainTextFromHtml(editor.getData() || '')
-          setHasContent(Boolean(initialText))
         }}
       />
 
@@ -326,4 +325,4 @@ export const TextEditor = ({ content, onChange }: Omit<TextEditorProps, 'disable
       )}
     </div>
   )
-}
+})

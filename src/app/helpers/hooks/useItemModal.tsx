@@ -54,7 +54,7 @@ export const useItemModal = () => {
 
     if (mode === 'add') {
       openModal({
-        title: 'Add Item',
+        title: 'Item Form',
         width: 800,
         footer: null,
         maskClosable: false,
@@ -64,7 +64,7 @@ export const useItemModal = () => {
 
     if (mode === 'edit') {
       openModal({
-        title: 'Edit Item',
+        title: 'Item Form',
         width: 800,
         footer: null,
         maskClosable: false,

@@ -1,5 +1,6 @@
 import React from 'react'
 import type { TooltipPlacement } from 'antd/es/tooltip'
+import { IItem } from '@/models/item.model'
 
 export interface IWordLookupData {
   origin: string
@@ -9,6 +10,7 @@ export interface IWordLookupData {
   pos?: string
   typeId?: number
   itemId?: string
+  item?: IItem
   fromAi?: boolean
   note?: string
   grammar?: string
@@ -31,5 +33,6 @@ export interface IWordLookupContentProps {
   onPlayAudio?: () => void
   onAiLookup?: () => void
   onAddToLibrary?: () => void
+  onViewItem?: () => void
   className?: string
 }

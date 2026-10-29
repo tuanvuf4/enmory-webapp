@@ -55,7 +55,7 @@ const Statistic = () => {
         </div>
       </div>
 
-      <Space direction='vertical' size={token.size * 1.5} className={appStyle.fulWidth}>
+      <Space direction='vertical' size={token.size * 1.5} className={appStyle.full}>
         {/* Top KPI Summary Stats Row */}
         <SummaryStats key={`summary-${refreshKey}`} />
 

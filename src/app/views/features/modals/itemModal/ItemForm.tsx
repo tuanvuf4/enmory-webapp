@@ -11,9 +11,9 @@ import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { InputTag, Level, ReviewableTextArea } from '@/views/components'
 import { Reference } from '@/views/features/references/References'
-import { theme, Row, Space, Col, Select, Checkbox, Button, Flex } from 'antd'
+import { theme, Select, Button, Flex, Alert, Tooltip, Tag } from 'antd'
 import clsx from 'clsx'
-import { useEffect, Suspense, useState } from 'react'
+import { useEffect, Suspense, useState, useCallback, useMemo, useRef } from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
 import { initItem } from './data'
 import { MeaningItemForm } from './MeaningItemForm'
@@ -36,7 +36,26 @@ import {
   IDictionaryAutofillData,
   filterWordsExcludingOrigin,
 } from '@/services/gemini'
-import { ThunderboltOutlined } from '@ant-design/icons'
+import {
+  ThunderboltOutlined,
+  BookOutlined,
+  CompassOutlined,
+  DownloadOutlined,
+  TrophyOutlined,
+  StarFilled,
+  StarOutlined,
+  FolderFilled,
+  InboxOutlined,
+  TagsOutlined,
+  BranchesOutlined,
+  ForkOutlined,
+  ApartmentOutlined,
+  ShareAltOutlined,
+  CloseOutlined,
+  CheckOutlined,
+  UpCircleFilled,
+  DownCircleFilled,
+} from '@ant-design/icons'
 
 interface ItemFormProps {
   item: IItem
@@ -48,6 +67,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const [isAutofilling, setIsAutofilling] = useState(false)
   const [isLoadingItem, setIsLoadingItem] = useState(false)
   const [currentItem, setCurrentItem] = useState<IItem>(item)
+  const [showMeanings, setShowMeanings] = useState<boolean>(true)
 
   const { notification, confirm } = usePrompt()
 
@@ -71,6 +91,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
     getValues,
     trigger,
     watch,
+    register,
     formState: { isValid, errors },
   } = useFormContext<IItem>()
 
@@ -78,32 +99,59 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
   const origin = watch('origin')
 
-  const { options, isSearching } = useAutoComplete(
-    {
+  const autoCompleteFilters = useMemo(
+    () => ({
       keyword: origin || '',
-    },
-    'item',
-    false,
+    }),
+    [origin],
   )
+
+  const { options, isSearching } = useAutoComplete(autoCompleteFilters, 'item', false, 300)
 
   const { closeModal } = useModal()
 
+  const currentItemRef = useRef<IItem>(currentItem)
+  currentItemRef.current = currentItem
+
+  const optionsRef = useRef(options)
+  optionsRef.current = options
+
+  const loadedItemIdRef = useRef<string | undefined>(item?.id)
+  const loadedOriginRef = useRef<string>(item?.origin || '')
+
   useEffect(() => {
-    if (item?.meanings) {
-      const sortedMeanings = [...item.meanings].sort(
-        (a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0),
-      )
-      setCurrentItem({ ...item, meanings: sortedMeanings })
-    } else {
-      setCurrentItem(item)
+    if (item?.id) {
+      loadedItemIdRef.current = item.id
+      loadedOriginRef.current = item.origin || ''
+      if (item?.meanings) {
+        const sortedMeanings = [...item.meanings].sort(
+          (a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0),
+        )
+        const updated = { ...item, meanings: sortedMeanings }
+        setCurrentItem(updated)
+        currentItemRef.current = updated
+      } else {
+        setCurrentItem(item)
+        currentItemRef.current = item
+      }
     }
   }, [item])
 
+  // Re-validate origin promptly when autocomplete search completes or options update
+  const prevOptionsRef = useRef(options)
+  const prevSearchingRef = useRef(isSearching)
   useEffect(() => {
-    if (origin && !isSearching) {
-      trigger('origin')
+    const searchFinished = prevSearchingRef.current && !isSearching
+    const optionsChanged = prevOptionsRef.current !== options
+    prevSearchingRef.current = isSearching
+    prevOptionsRef.current = options
+
+    if ((searchFinished || optionsChanged) && !isSearching) {
+      if (getValues('origin')?.trim()) {
+        trigger('origin')
+      }
     }
-  }, [options, isSearching, origin, trigger])
+  }, [options, isSearching, trigger, getValues])
 
   const createExample = async (meanings: IMeaning): Promise<IExample[]> => {
     const now = Timestamp.now().toMillis()
@@ -297,8 +345,17 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         relation: data.relation || [],
         meanings: sortedMeanings,
       }
-      const targetId = currentItem?.id || item?.id
+      const targetId =
+        dataSubmit.id ||
+        data?.id ||
+        getValues('id') ||
+        loadedItemIdRef.current ||
+        currentItemRef.current?.id ||
+        currentItem?.id ||
+        item?.id
+
       if (targetId) {
+        dataSubmit.id = String(targetId)
         try {
           const { isSuccess, content } = await updateMutation({
             id: String(targetId),
@@ -524,7 +581,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
     if (hasMeaningContent) {
       confirm({
-        title: `Replace existing meanings with ${sourceName} data?`,
+        title: `Replace existing meanings?`,
         content: `This will replace the current meanings with data from ${sourceName}.`,
         okText: 'Replace',
         onOk: () => runAutofill(currentOrigin, sourceName),
@@ -544,11 +601,12 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
     try {
       let existingItem: IItem | null = null
 
-      const matchedOpt =
-        options.find((opt) => opt.value === currentOrigin) ||
-        options.find(
-          (opt) => opt.origin && opt.origin.toLowerCase() === currentOrigin.toLowerCase(),
-        )
+      const matchedOpt = options.find((opt) => {
+        const optWord = String(opt.origin || opt.value || '')
+          .trim()
+          .toLowerCase()
+        return optWord === currentOrigin.toLowerCase()
+      })
 
       const existingId = matchedOpt?.id ? String(matchedOpt.id) : undefined
 
@@ -615,9 +673,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         }))
         .sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0))
 
+      const finalItemId =
+        existingItem.id || existingId || (matchedOpt?.id ? String(matchedOpt.id) : undefined)
+
       const filledItem: IItem = {
         ...initItem,
         ...existingItem,
+        id: finalItemId,
         catId: existingItem.catId ?? getValues('catId') ?? ECategory.WORD,
         origin: existingItem.origin || currentOrigin,
         tags: existingItem.tags || [],
@@ -631,7 +693,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         meanings: formattedMeanings,
       }
 
+      loadedItemIdRef.current = finalItemId
+      loadedOriginRef.current = (filledItem.origin || currentOrigin).trim()
+      currentItemRef.current = filledItem
       setCurrentItem(filledItem)
+      setValue('id', finalItemId)
       reset(filledItem)
       await trigger()
 
@@ -650,23 +716,29 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
     }
   }
 
-  const handleCancel = () => closeModal()
+  const handleCancel = useCallback(() => closeModal(), [closeModal])
 
-  const handleTagUpdated = (previousValue: string, nextValue: string) => {
-    const currentTags = getValues('tags') || []
-    const nextTags = Array.from(
-      new Set(currentTags.map((tag) => (tag === previousValue ? nextValue : tag))),
-    )
-    setValue('tags', nextTags)
-  }
+  const handleTagUpdated = useCallback(
+    (previousValue: string, nextValue: string) => {
+      const currentTags = getValues('tags') || []
+      const nextTags = Array.from(
+        new Set(currentTags.map((tag) => (tag === previousValue ? nextValue : tag))),
+      )
+      setValue('tags', nextTags)
+    },
+    [getValues, setValue],
+  )
 
-  const handleTagDeleted = (deletedValue: string) => {
-    const currentTags = getValues('tags') || []
-    setValue(
-      'tags',
-      currentTags.filter((tag) => tag !== deletedValue),
-    )
-  }
+  const handleTagDeleted = useCallback(
+    (deletedValue: string) => {
+      const currentTags = getValues('tags') || []
+      setValue(
+        'tags',
+        currentTags.filter((tag) => tag !== deletedValue),
+      )
+    },
+    [getValues, setValue],
+  )
 
   const getDefaultCategoryFromOrigin = (value: string) =>
     isGroupWord(value) ? ECategory.PHRASE : ECategory.WORD
@@ -685,343 +757,448 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
     }
   }, [item?.id, reset])
 
+  // Shortcut: Ctrl+S or Cmd+S to quickly save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        if (
+          isValid &&
+          !isSubmitting &&
+          !isCreating &&
+          !isUpdating &&
+          !isSearching &&
+          !isAutofilling &&
+          !isLoadingItem
+        ) {
+          handleSubmit(onSubmit)()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [
+    isValid,
+    isSubmitting,
+    isCreating,
+    isUpdating,
+    isSearching,
+    isAutofilling,
+    isLoadingItem,
+    handleSubmit,
+    onSubmit,
+  ])
+
+  const isEditing = !!(currentItem?.id || item?.id || loadedItemIdRef.current || getValues('id'))
+  const currentLevel = watch('level') || 0
+
+  const handleSaveMeaning = useCallback(() => {
+    handleSubmit(onSubmit)()
+  }, [handleSubmit, onSubmit])
+
   return (
-    <>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Row>
-          <Space
-            direction='vertical'
-            size={[token.size / 2, token.size / 2]}
-            className={appStyle.fulWidth}
-          >
-            <Row align={'middle'}>
-              <Col md={4} xs={12}>
-                <label htmlFor=''>Type:</label>
-              </Col>
+    <form onSubmit={handleSubmit(onSubmit)} className={styles.formContainer}>
+      <input type='hidden' {...register('id')} />
+      {/* ── CARD 1: MAIN VOCABULARY TERM & AI AUTOFILL ── */}
+      <div className={styles.sectionCard}>
+        <div className={styles.cardHeader}>
+          <Flex align='center' gap={token.size / 2}>
+            <BookOutlined style={{ color: token.colorPrimary, fontSize: 18 }} />
+            <span className={styles.sectionTitle}>Thông tin từ vựng</span>
 
-              <Col md={4} xs={12}>
-                <Controller
-                  control={control}
-                  name={`catId`}
-                  render={({ field: { onChange, value, ref } }) => (
-                    <Select
-                      ref={ref}
-                      className={appStyle.fulWidth}
-                      onChange={onChange}
-                      options={categories}
-                      value={value}
-                      defaultValue={ECategory.WORD}
-                    />
-                  )}
+            {isEditing ? <Tag color={'yellow'}>EDITING</Tag> : <Tag color={'green'}>CREATING</Tag>}
+
+            <Controller
+              control={control}
+              name='catId'
+              render={({ field: { onChange, value, ref } }) => (
+                <Select
+                  ref={ref}
+                  className={styles.categorySelect}
+                  onChange={onChange}
+                  options={categories}
+                  value={value}
+                  defaultValue={ECategory.WORD}
+                  size='middle'
                 />
-              </Col>
-            </Row>
-
-            <Row align={'top'} gutter={[token.size / 2, token.size / 2]}>
-              <Col md={4} xs={24}>
-                <label htmlFor='' style={{ lineHeight: '32px' }}>
-                  Origin:
-                </label>
-              </Col>
-
-              <Col md={20} xs={24}>
-                <Flex align={'flex-start'} gap={token.size / 2} wrap='wrap'>
-                  <div style={{ flex: '1 1 240px', minWidth: 200 }}>
-                    <Controller
-                      control={control}
-                      name={`origin`}
-                      rules={{
-                        required: {
-                          value: true,
-                          message: msgErrors.required,
-                        },
-                        validate: {
-                          existed: (value) => {
-                            if (!value) return true
-                            const currentOrigin = (currentItem?.origin || item.origin || '').trim()
-                            if (
-                              currentOrigin &&
-                              value.trim().toLowerCase() === currentOrigin.toLowerCase()
-                            ) {
-                              return true
-                            }
-
-                            const existsInOptions =
-                              options.findIndex(
-                                (opt) =>
-                                  opt.value === value ||
-                                  (opt.origin &&
-                                    opt.origin.toLowerCase() === value.trim().toLowerCase()),
-                              ) > -1 && currentOrigin.toLowerCase() !== value.trim().toLowerCase()
-
-                            if (!existsInOptions) return true
-
-                            return msgErrors.existed
-                          },
-                        },
-                      }}
-                      render={({ field: { onChange, value }, fieldState: { invalid } }) => {
-                        return (
-                          <>
-                            <ReviewableTextArea
-                              className={clsx(appStyle.fulWidth)}
-                              value={value}
-                              placeholder='Original'
-                              autoSize={{ minRows: 1, maxRows: 3 }}
-                              onChange={(nextValue) => {
-                                onChange(nextValue)
-
-                                if (isGroupWord(nextValue) && catType === ECategory.WORD)
-                                  setValue('catId', ECategory.PHRASE)
-
-                                if (!isGroupWord(nextValue)) setValue('catId', ECategory.WORD)
-
-                                trigger('origin')
-                              }}
-                              onBlur={() => trigger('origin')}
-                              language='en'
-                              enableReview={true}
-                            />
-
-                            {invalid && errors.origin?.type === 'required' && (
-                              <p className={clsx(appStyle.errorMsg, appStyle.textLeft)}>
-                                {errors.origin?.message as string}
-                              </p>
-                            )}
-
-                            {invalid && errors.origin?.type === 'existed' && (
-                              <Flex
-                                align='center'
-                                gap={token.size / 2}
-                                className={clsx(appStyle.errorMsg, appStyle.textLeft)}
-                              >
-                                <span>{errors.origin?.message as string}</span>
-                                <Button
-                                  type='primary'
-                                  size='small'
-                                  loading={isLoadingItem}
-                                  disabled={isLoadingItem}
-                                  onClick={handleLoadExistingItem}
-                                  htmlType='button'
-                                >
-                                  Load
-                                </Button>
-                              </Flex>
-                            )}
-                          </>
-                        )
-                      }}
-                    />
-                  </div>
-
-                  <Space.Compact style={{ flexShrink: 0 }}>
-                    <Button
-                      htmlType='button'
-                      type='primary'
-                      loading={isAutofilling}
-                      icon={<ThunderboltOutlined />}
-                      disabled={!origin?.trim() || isAutofilling}
-                      onClick={() => handleAutoFill('Google')}
-                    >
-                      Auto Fill
-                    </Button>
-                  </Space.Compact>
-                </Flex>
-
-                {origin && (
-                  <Flex
-                    align={'center'}
-                    justify={'flex-start'}
-                    wrap={'wrap'}
-                    gap={token.size * 0.25}
-                    style={{ marginTop: token.size / 2 }}
-                  >
-                    <Reference origin={origin} />
-                  </Flex>
-                )}
-              </Col>
-            </Row>
-
-            <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-              <Col md={{ span: 10, offset: 4 }} xs={{ span: 12 }}>
-                <Row gutter={[token.size / 2, token.size / 2]}>
-                  <Col span={24}>
-                    <Controller
-                      control={control}
-                      name={`archive`}
-                      render={({ field: { onChange, value } }) => (
-                        <Checkbox
-                          checked={value}
-                          onChange={(e) => {
-                            onChange(e.target.checked)
-                          }}
-                        >
-                          Archive
-                        </Checkbox>
-                      )}
-                    />
-                  </Col>
-
-                  <Col span={24}>
-                    <Controller
-                      control={control}
-                      name={`favorite`}
-                      render={({ field: { onChange, value } }) => (
-                        <Checkbox checked={value} onChange={(e) => onChange(e.target.checked)}>
-                          Favorite
-                        </Checkbox>
-                      )}
-                    />
-                  </Col>
-                </Row>
-              </Col>
-
-              <Col md={{ span: 10 }} xs={{ span: 12 }}>
-                <Controller
-                  control={control}
-                  name={`level`}
-                  render={() => (
-                    <Level
-                      level={getValues('level')}
-                      disabled={false}
-                      size={18}
-                      onChange={(rate) => setValue('level', rate)}
-                    />
-                  )}
-                />
-              </Col>
-            </Row>
-
-            <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-              <Col md={4} xs={6}>
-                <Flex align={'center'} gap={token.size / 2}>
-                  <span>Tags:</span>
-                </Flex>
-              </Col>
-
-              <Col md={20} xs={18}>
-                <Controller
-                  control={control}
-                  name={`tags`}
-                  render={({ field }) => (
-                    <TagSelect
-                      style={{ width: '100%' }}
-                      value={field.value || []}
-                      onChange={field.onChange}
-                      onTagUpdated={handleTagUpdated}
-                      onTagDeleted={handleTagDeleted}
-                    />
-                  )}
-                />
-              </Col>
-            </Row>
-
-            {catType === ECategory.WORD && (
-              <>
-                <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-                  <Col md={4} xs={6}>
-                    Form:
-                  </Col>
-
-                  <Col md={20} xs={18}>
-                    <Controller
-                      control={control}
-                      name={`forms`}
-                      render={() => (
-                        <InputTag
-                          tags={getValues('forms') || []}
-                          onChange={(value: string[]) => {
-                            setValue('forms', value)
-                          }}
-                        />
-                      )}
-                    />
-                  </Col>
-                </Row>
-
-                <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-                  <Col md={4} xs={6}>
-                    Family:
-                  </Col>
-
-                  <Col md={20} xs={18}>
-                    <Controller
-                      control={control}
-                      name={`word_family`}
-                      render={() => (
-                        <InputTag
-                          tags={getValues('word_family') || []}
-                          allowSpace={false}
-                          onChange={(value: string[]) => {
-                            setValue('word_family', value)
-                          }}
-                        />
-                      )}
-                    />
-                  </Col>
-                </Row>
-              </>
-            )}
-
-            <Row align={'middle'} gutter={[token.size / 2, token.size / 2]}>
-              <Col md={4} xs={6}>
-                Relation:
-              </Col>
-
-              <Col md={20} xs={18}>
-                <Controller
-                  control={control}
-                  name={`relation`}
-                  render={() => (
-                    <InputTag
-                      tags={getValues('relation') || []}
-                      onChange={(value: string[]) => {
-                        setValue('relation', value)
-                      }}
-                    />
-                  )}
-                />
-              </Col>
-            </Row>
-
-            <Suspense fallback={<div>Loading...</div>}>
-              <MeaningItemForm
-                loading={!isValid || isSubmitting || isCreating || isUpdating || isLoadingItem}
-                origin={origin}
-                catType={catType as ECategory}
-                onSubmit={() => handleSubmit(onSubmit)()}
-              />
-            </Suspense>
-          </Space>
-        </Row>
-
-        <Row gutter={[token.size / 2, token.size / 2]}>
-          <Col xs={24}>
-            <div className={styles.action}>
-              <Button htmlType='button' onClick={handleCancel}>
-                Cancel
-              </Button>
-
+              )}
+            />
+          </Flex>
+          <Flex align='center' gap={token.size / 2} wrap='wrap'>
+            <Tooltip title='Tra cứu từ vựng'>
               <Button
-                loading={isSubmitting || isCreating || isUpdating}
-                disabled={
-                  !isValid ||
-                  isSubmitting ||
-                  isCreating ||
-                  isUpdating ||
-                  isSearching ||
-                  isAutofilling ||
-                  isLoadingItem
-                }
-                type={'primary'}
-                onClick={() => handleSubmit(onSubmit)()}
+                htmlType='button'
+                type='primary'
+                className={styles.aiAutofillBtn}
+                loading={isAutofilling}
+                icon={<ThunderboltOutlined />}
+                disabled={!origin?.trim() || isAutofilling}
+                onClick={() => handleAutoFill('Google')}
               >
-                Save
+                {isAutofilling ? 'Đang phân tích...' : 'Auto Fill'}
               </Button>
+            </Tooltip>
+          </Flex>
+        </div>
+
+        <div className={styles.originInputWrapper}>
+          <Controller
+            control={control}
+            name='origin'
+            rules={{
+              required: {
+                value: true,
+                message: msgErrors.required,
+              },
+              validate: {
+                required: (value) => {
+                  if (!value || !value.trim()) {
+                    return msgErrors.required
+                  }
+                  return true
+                },
+                existed: (value) => {
+                  const trimmedValue = (value || '').trim()
+                  if (!trimmedValue) return true
+
+                  const activeItem = currentItemRef.current || currentItem
+                  const currentId =
+                    getValues('id') || loadedItemIdRef.current || activeItem?.id || item?.id
+                  const originalOrigin = (
+                    loadedOriginRef.current ||
+                    activeItem?.origin ||
+                    item?.origin ||
+                    ''
+                  )
+                    .trim()
+                    .toLowerCase()
+
+                  const valLower = trimmedValue.toLowerCase()
+
+                  // 1. If editing this item and the origin hasn't changed, it's valid
+                  if (originalOrigin && valLower === originalOrigin) {
+                    return true
+                  }
+
+                  // 2. Check against options
+                  const currentOptions = optionsRef.current || options || []
+                  const existsInOptions = currentOptions.some((opt) => {
+                    // Do not treat self as duplicate when editing
+                    if (currentId && opt.id && String(opt.id) === String(currentId)) {
+                      return false
+                    }
+                    const optOrigin = String(opt.origin || opt.value || '')
+                      .trim()
+                      .toLowerCase()
+                    return optOrigin === valLower
+                  })
+
+                  if (!existsInOptions) return true
+
+                  return msgErrors.existed
+                },
+              },
+            }}
+            render={({ field: { onChange, value }, fieldState: { invalid } }) => {
+              return (
+                <>
+                  <ReviewableTextArea
+                    className={clsx(appStyle.full, styles.originTextArea)}
+                    value={value}
+                    placeholder='Original (Nhập từ, cụm từ, câu)...'
+                    autoSize={{ minRows: 1, maxRows: 3 }}
+                    onChange={(nextValue) => {
+                      onChange(nextValue)
+
+                      const currentCat = getValues('catId')
+                      const isGroup = isGroupWord(nextValue)
+                      if (isGroup && currentCat === ECategory.WORD) {
+                        setValue('catId', ECategory.PHRASE)
+                      } else if (!isGroup && currentCat === ECategory.PHRASE) {
+                        setValue('catId', ECategory.WORD)
+                      }
+
+                      // If input becomes empty, or if an error was already displayed, validate immediately
+                      if (!nextValue?.trim() || errors.origin) {
+                        trigger('origin')
+                      }
+                    }}
+                    onBlur={() => trigger('origin')}
+                    language='en'
+                    enableReview={true}
+                  />
+
+                  {invalid && errors.origin?.type !== 'existed' && (
+                    <Alert
+                      type='error'
+                      showIcon
+                      message={errors.origin?.message as string}
+                      banner
+                      style={{ borderRadius: 8, marginTop: 4 }}
+                    />
+                  )}
+
+                  {invalid && errors.origin?.type === 'existed' && (
+                    <Alert
+                      type='error'
+                      showIcon
+                      style={{ borderRadius: 8, marginTop: 6 }}
+                      message={
+                        <Flex align='center' justify='space-between' wrap='wrap' gap={8}>
+                          <span>
+                            {(errors.origin?.message as string) ||
+                              'Từ này đã có trong từ điển của bạn.'}
+                          </span>
+                          <Button
+                            type='primary'
+                            size='small'
+                            icon={<DownloadOutlined />}
+                            loading={isLoadingItem}
+                            disabled={isLoadingItem}
+                            onClick={handleLoadExistingItem}
+                            htmlType='button'
+                          >
+                            Load
+                          </Button>
+                        </Flex>
+                      }
+                    />
+                  )}
+                </>
+              )
+            }}
+          />
+        </div>
+
+        {origin && (
+          <div className={styles.referenceBar}>
+            <Flex align='center' gap={6} className={styles.referenceLabel}>
+              <CompassOutlined />
+              <span>Nguồn tra cứu:</span>
+            </Flex>
+            <Reference origin={origin} onSelect={(ref) => handleAutoFill(ref.src)} />
+          </div>
+        )}
+      </div>
+
+      {/* ── CARD 2: METADATA, MASTERY & TAGS ── */}
+      <div className={styles.sectionCard}>
+        <div className={styles.metaGrid}>
+          <div className={styles.metaControlsRow}>
+            {/* Mastery Level */}
+            <div className={styles.levelWrapper}>
+              <Flex align='center' gap={6}>
+                <TrophyOutlined style={{ color: '#faad14', fontSize: 16 }} />
+                <span className={styles.levelLabel}>Mức độ:</span>
+              </Flex>
+              <Controller
+                control={control}
+                name='level'
+                render={({ field }) => (
+                  <Level
+                    level={field.value ?? 0}
+                    disabled={false}
+                    size={20}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              <Tag color='gold' style={{ margin: 0, fontWeight: 600 }}>
+                {['Lv 0', 'Lv 1', 'Lv 2', 'Lv 3', 'Lv 4', 'Lv 5'][currentLevel] || 'Lv 0'}
+              </Tag>
             </div>
-          </Col>
-        </Row>
-      </form>
-    </>
+
+            {/* Favorite & Archive Toggle Pills */}
+            <Flex align='center' gap={10} wrap='wrap'>
+              <Controller
+                control={control}
+                name='favorite'
+                render={({ field: { onChange, value } }) => (
+                  <div
+                    className={clsx(styles.togglePill, value && styles.activeFavorite)}
+                    onClick={() => onChange(!value)}
+                    role='button'
+                    tabIndex={0}
+                  >
+                    {value ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+                    <span>Yêu thích</span>
+                  </div>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name='archive'
+                render={({ field: { onChange, value } }) => (
+                  <div
+                    className={clsx(styles.togglePill, value && styles.activeArchive)}
+                    onClick={() => onChange(!value)}
+                    role='button'
+                    tabIndex={0}
+                  >
+                    {value ? (
+                      <FolderFilled style={{ color: token.colorPrimary }} />
+                    ) : (
+                      <InboxOutlined />
+                    )}
+                    <span>Lưu trữ</span>
+                  </div>
+                )}
+              />
+            </Flex>
+          </div>
+
+          {/* Tags */}
+          <div className={styles.tagRow}>
+            <div className={styles.tagLabel}>
+              <TagsOutlined style={{ color: token.colorPrimary }} />
+              <span>Tags:</span>
+            </div>
+            <div style={{ flex: 1, minWidth: 200, width: '100%' }}>
+              <Controller
+                control={control}
+                name='tags'
+                render={({ field }) => (
+                  <TagSelect
+                    style={{ width: '100%' }}
+                    value={field.value || []}
+                    onChange={field.onChange}
+                    onTagUpdated={handleTagUpdated}
+                    onTagDeleted={handleTagDeleted}
+                    placeholder='Thêm nhãn (Tags)...'
+                  />
+                )}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── CARD 3: LINGUISTIC RELATIONS & FORMS ── */}
+      <div className={styles.relationsCard}>
+        <div className={styles.cardHeader}>
+          <Flex align='center' gap={8}>
+            <BranchesOutlined style={{ color: token.colorPrimary, fontSize: 16 }} />
+            <span className={styles.sectionTitle}>Mạng lưới từ vựng & Dạng từ</span>
+          </Flex>
+          <span className={styles.relationHint}>
+            Liên kết các dạng từ, họ từ và ngữ cảnh liên quan
+          </span>
+        </div>
+
+        <div className={styles.relationsGrid}>
+          {catType === ECategory.WORD && (
+            <>
+              <div className={styles.relationItem}>
+                <div className={styles.relationItemHeader}>
+                  <span className={styles.relationItemTitle}>
+                    <ForkOutlined /> Dạng từ (Forms)
+                  </span>
+                  <span className={styles.relationHint}>V1, V2, V-ing, -ed...</span>
+                </div>
+                <Controller
+                  control={control}
+                  name='forms'
+                  render={({ field }) => (
+                    <InputTag tags={field.value || []} onChange={field.onChange} />
+                  )}
+                />
+              </div>
+
+              <div className={styles.relationItem}>
+                <div className={styles.relationItemHeader}>
+                  <span className={styles.relationItemTitle}>
+                    <ApartmentOutlined /> Gia đình từ (Word Family)
+                  </span>
+                  <span className={styles.relationHint}>Đồng bộ tự động</span>
+                </div>
+                <Controller
+                  control={control}
+                  name='word_family'
+                  render={({ field }) => (
+                    <InputTag
+                      tags={field.value || []}
+                      allowSpace={false}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+              </div>
+            </>
+          )}
+
+          <div className={styles.relationItem}>
+            <div className={styles.relationItemHeader}>
+              <span className={styles.relationItemTitle}>
+                <ShareAltOutlined /> Từ liên quan (Relation)
+              </span>
+              <span className={styles.relationHint}>Collocations, ngữ cảnh...</span>
+            </div>
+            <Controller
+              control={control}
+              name='relation'
+              render={({ field }) => (
+                <InputTag tags={field.value || []} onChange={field.onChange} />
+              )}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── CARD 4: MEANINGS & EXAMPLES ── */}
+      <div className={styles.sectionCard}>
+        <Suspense fallback={<div>Đang tải phần định nghĩa...</div>}>
+          <MeaningItemForm
+            showMeanings={showMeanings}
+            catType={catType as ECategory}
+            onSubmit={handleSaveMeaning}
+          />
+        </Suspense>
+      </div>
+
+      {/* ── CARD 5: STICKY ACTION FOOTER ── */}
+      <div className={styles.stickyFooter}>
+        <div className={styles.footerInfo}>
+          {origin ? (
+            <Flex align='center' gap={8} wrap='wrap'>
+              <Button
+                size={'middle'}
+                icon={showMeanings ? <UpCircleFilled /> : <DownCircleFilled />}
+                onClick={() => setShowMeanings((prev) => !prev)}
+              >
+                {`${showMeanings ? 'Collapse' : 'Expand'}`}
+              </Button>
+            </Flex>
+          ) : (
+            <span style={{ fontSize: 12, opacity: 0.65 }}>Phím tắt: Ctrl + S để lưu nhanh</span>
+          )}
+        </div>
+
+        <div className={styles.footerButtons}>
+          <Button size={'middle'} icon={<CloseOutlined />} onClick={handleCancel}>
+            Cancel
+          </Button>
+
+          <Button
+            type='primary'
+            size={'middle'}
+            icon={<CheckOutlined />}
+            loading={isSubmitting || isCreating || isUpdating}
+            disabled={
+              !isValid ||
+              isSubmitting ||
+              isCreating ||
+              isUpdating ||
+              isSearching ||
+              isAutofilling ||
+              isLoadingItem
+            }
+            onClick={() => handleSubmit(onSubmit)()}
+          >
+            {isEditing ? 'Update' : 'Save'}
+          </Button>
+        </div>
+      </div>
+    </form>
   )
 }

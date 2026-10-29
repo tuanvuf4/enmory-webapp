@@ -61,7 +61,8 @@
   opacity: 0.8;
 }
 
-.titleAudioBtn {
+.titleAudioBtn,
+.titleCopyBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -84,6 +85,16 @@
 
   :global([data-theme='dark']) & {
     background: rgba(130, 115, 255, 0.12);
+  }
+}
+
+.titleCopyBtnCopied {
+  background: rgba(82, 196, 26, 0.12) !important;
+  color: #52c41a !important;
+
+  &:hover {
+    background: #52c41a !important;
+    color: #ffffff !important;
   }
 }
 

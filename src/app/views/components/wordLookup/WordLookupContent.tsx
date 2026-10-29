@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button, Tag, theme } from 'antd'
-import { SoundOutlined, SearchOutlined, PlusOutlined } from '@ant-design/icons'
+import { SoundOutlined, SearchOutlined, PlusOutlined, EyeOutlined } from '@ant-design/icons'
 import { IWordLookupContentProps } from './types'
 import styles from './wordLookup.module.scss'
 import appStyle from '@/style/appStyle.module.scss'
@@ -13,6 +13,7 @@ export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
   onPlayAudio,
   onAiLookup,
   onAddToLibrary,
+  onViewItem,
   className,
 }) => {
   const { token } = theme.useToken()
@@ -54,38 +55,12 @@ export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
             style={{ color: token.colorText }}
           >
             <div dangerouslySetInnerHTML={{ __html: data.translation }} />
-            {data.fromAi ? (
-              <Tag color='green' style={{ fontSize: 10, margin: 0, padding: '0 4px' }}>
-                AI
-              </Tag>
-            ) : (
-              <Tag color='cyan' style={{ fontSize: 10, margin: 0, padding: '0 4px' }}>
-                Thư viện
-              </Tag>
-            )}
-          </div>
-          <div className='flex justify-end'>
-            <Button
-              size='small'
-              type='text'
-              icon={<SearchOutlined />}
-              onClick={onAiLookup}
-              loading={isLookingUpAi}
-              style={{
-                fontSize: 11,
-                padding: 0,
-                height: 'auto',
-                color: token.colorTextTertiary,
-              }}
-            >
-              Tra lại với AI
-            </Button>
           </div>
         </div>
       ) : (
         <div className='flex flex-col gap-2'>
           <span className='text-xs' style={{ color: token.colorTextSecondary }}>
-            Chưa có trong từ điển cá nhân.
+            This item has no meaning.
           </span>
           <Button
             size='small'
@@ -103,7 +78,7 @@ export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
       {data.definition && (
         <div
           className='text-xs'
-          style={{ color: token.colorTextSecondary, maxHeight: 60, overflowY: 'auto' }}
+          style={{ color: token.colorTextSecondary, maxHeight: 60 }}
           dangerouslySetInnerHTML={{ __html: data.definition }}
         />
       )}
@@ -112,7 +87,7 @@ export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
       {data.grammar && (
         <div
           className='text-xs'
-          style={{ color: token.colorTextSecondary, maxHeight: 60, overflowY: 'auto' }}
+          style={{ color: token.colorTextSecondary, maxHeight: 60 }}
           dangerouslySetInnerHTML={{ __html: data.grammar }}
         />
       )}
@@ -121,22 +96,35 @@ export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
       {data.note && (
         <div
           className='text-xs italic'
-          style={{ color: token.colorTextSecondary, maxHeight: 60, overflowY: 'auto' }}
+          style={{ color: token.colorTextSecondary, maxHeight: 60 }}
           dangerouslySetInnerHTML={{ __html: data.note }}
         />
       )}
 
-      {/* Add To Library / Already In Library Badge */}
+      {/* Add To Library / Already In Library Badge & View Item Button */}
       <div
-        className='flex justify-center items-center'
+        className='flex justify-between items-center'
         style={{
-          border: `1px dashed ${token.colorBorderSecondary}`,
+          border: data.itemId ? 'none' : `1px dashed ${token.colorBorderSecondary}`,
+          width: '100%',
         }}
       >
         {data.itemId ? (
-          <Tag color='success' style={{ fontSize: 11, margin: 0, padding: '2px 8px' }}>
-            ✓ Đã có trong Thư viện
-          </Tag>
+          <>
+            <Tag color='success' style={{ fontSize: 11, margin: 0, padding: '2px 8px' }}>
+              ✓ Đã có trong Thư viện
+            </Tag>
+            <Button
+              size='small'
+              type='primary'
+              ghost
+              icon={<EyeOutlined />}
+              onClick={onViewItem}
+              style={{ fontSize: 12 }}
+            >
+              View Item
+            </Button>
+          </>
         ) : (
           <Button
             size='small'

@@ -57,7 +57,7 @@ export const Listening = () => {
                 <Space
                   direction={'vertical'}
                   size={token.size}
-                  className={`${styles.description} ${appStyle.fulWidth}`}
+                  className={`${styles.description} ${appStyle.full}`}
                 >
                   <h3 style={{ color: token.colorPrimary, margin: 0 }}>
                     {tracks.findIndex((t) => t.id === currentTrack?.id) !== -1
@@ -92,7 +92,7 @@ export const Listening = () => {
                 <Space
                   direction={'vertical'}
                   size={token.size}
-                  className={`${styles.description} ${appStyle.fulWidth}`}
+                  className={`${styles.description} ${appStyle.full}`}
                 >
                   <TrackList />
                   <LiveTranscript />

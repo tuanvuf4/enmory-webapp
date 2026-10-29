@@ -1,38 +1,43 @@
-import { useState, useCallback, useMemo } from 'react'
-import { usePrompt } from '@/helpers/hooks'
-import { useQueryClient } from '@tanstack/react-query'
-import { itemKeys } from '@/core/hooks'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import { usePrompt, useItemModal } from '@/helpers/hooks'
 import { IItem, ECategory, EType } from '@/models/item.model'
 import { initItem, meaningItem } from '@/views/features/modals/itemModal'
-import { itemApi } from '@/services/firebase/api/item.api'
 import { geminiTtsService } from '@/services/gemini/geminiTts.service'
 import { geminiDictionaryService, resolveGeminiApiKey } from '@/services/gemini'
 import { resolveOpenAiApiKey } from '@/services/openai/tts.service'
-import { localDb, invalidateSearchIndex } from '@/services/localDb'
+import { localDb } from '@/services/localDb'
 import { getType } from '@/helpers/item'
 import { sanitizePronunciation } from '@/core/utils'
 import { IWordLookupData } from './types'
 
-// Strip standard punctuation marks and whitespace
-export const cleanWordPunctuation = (str: string): string => {
-  return str.replace(/[.,/#!$%^&*;:{}=\-_`~()?"'’]/g, '').trim()
+// Strip standard punctuation marks and whitespace from word edges while preserving internal apostrophes
+export const cleanWordPunctuation = (str?: string): string => {
+  if (!str) return ''
+  return str
+    .trim()
+    .replace(
+      /^[^a-zA-Z0-9\u00C0-\u024F\u1EA0-\u1EF9]+|[^a-zA-Z0-9\u00C0-\u024F\u1EA0-\u1EF9]+$/gu,
+      '',
+    )
+    .trim()
 }
 
 export const useWordLookup = (rawWord: string, sentenceContext?: string) => {
   const { message } = usePrompt()
-  const queryClient = useQueryClient()
+  const { openItemModal } = useItemModal()
 
-  const [lookupData, setLookupData] = useState<IWordLookupData | null>(null)
+  const cleanWord = useMemo(() => cleanWordPunctuation(rawWord), [rawWord])
+
+  const [lookupData, setLookupData] = useState<IWordLookupData | null>(() =>
+    cleanWord ? { origin: cleanWord } : null,
+  )
   const [isLookingUpAi, setIsLookingUpAi] = useState(false)
   const [isSavingToLibrary, setIsSavingToLibrary] = useState(false)
   const [isPlayingAudio, setIsPlayingAudio] = useState(false)
 
-  const cleanWord = useMemo(() => cleanWordPunctuation(rawWord), [rawWord])
-
   // Lookup in local indexedDb
   const performLookup = useCallback(async () => {
     if (!cleanWord) return
-    setLookupData({ origin: cleanWord })
 
     try {
       const matched = await localDb.items
@@ -49,15 +54,34 @@ export const useWordLookup = (rawWord: string, sentenceContext?: string) => {
           pos: m?.typeId !== undefined ? getType(m.typeId).origin : undefined,
           typeId: m?.typeId,
           itemId: matched.id,
+          item: matched,
           fromAi: false,
           note: m?.note,
           grammar: m?.grammar,
+        })
+      } else {
+        setLookupData((prev) => {
+          if (prev && prev.origin.toLowerCase() === cleanWord.toLowerCase()) return prev
+          return { origin: cleanWord }
         })
       }
     } catch (err) {
       console.warn('Word lookup in localDb failed:', err)
     }
   }, [cleanWord])
+
+  // Sync lookupData when cleanWord changes and prefetch local match
+  useEffect(() => {
+    if (cleanWord) {
+      setLookupData((prev) => {
+        if (prev?.origin?.toLowerCase() === cleanWord.toLowerCase()) return prev
+        return { origin: cleanWord }
+      })
+      performLookup()
+    } else {
+      setLookupData(null)
+    }
+  }, [cleanWord, performLookup])
 
   // Play pronunciation via Gemini TTS / Web Speech API
   const handlePlayAudio = useCallback(async () => {
@@ -147,63 +171,72 @@ export const useWordLookup = (rawWord: string, sentenceContext?: string) => {
     }
   }, [cleanWord, sentenceContext, message])
 
-  // Save new word into personal library
-  const handleAddWordToLibrary = useCallback(async () => {
-    if (!lookupData) return
-    try {
-      if (lookupData.itemId) {
-        message({ type: 'info', content: `Từ "${lookupData.origin}" đã có sẵn trong Thư viện!` })
-        return
-      }
+  // Open ItemForm modal to add new word into personal library
+  const handleAddWordToLibrary = useCallback(() => {
+    const targetWord = lookupData?.origin || cleanWord
+    if (!targetWord) return
 
-      setIsSavingToLibrary(true)
-      const newItem: IItem = {
-        ...initItem,
-        origin: lookupData.origin,
-        catId: ECategory.WORD,
-        level: 1,
-        meanings: [
+    if (lookupData?.itemId) {
+      message({ type: 'info', content: `Từ "${targetWord}" đã có sẵn trong Thư viện!` })
+      return
+    }
+
+    const hasAiData = Boolean(
+      lookupData?.translation ||
+        lookupData?.definition ||
+        lookupData?.phonetic ||
+        lookupData?.note ||
+        lookupData?.grammar,
+    )
+
+    const initialMeanings = hasAiData
+      ? [
           {
             ...meaningItem,
-            typeId: lookupData.typeId ?? EType.NOUN,
-            definition: lookupData.definition || '',
-            translation: lookupData.translation || '',
-            note: lookupData.note || '',
-            grammar: lookupData.grammar || '',
+            typeId: lookupData?.typeId ?? EType.NOUN,
+            definition: lookupData?.definition || '',
+            translation: lookupData?.translation || '',
+            note: lookupData?.note || '',
+            grammar: lookupData?.grammar || '',
             pronunciation: {
-              us: sanitizePronunciation(lookupData.phonetic),
+              us: sanitizePronunciation(lookupData?.phonetic),
               uk: '',
-              common: sanitizePronunciation(lookupData.phonetic),
+              common: sanitizePronunciation(lookupData?.phonetic),
             },
           },
-        ],
-      }
-      const createRes = await itemApi.createItem(newItem)
+        ]
+      : []
 
-      if (createRes.isSuccess && createRes.content) {
-        const createdItem = createRes.content
-        await localDb.items.put(createdItem)
-        invalidateSearchIndex()
-        queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
-
-        setLookupData((prev) => (prev ? { ...prev, itemId: createdItem.id } : prev))
-        message({
-          type: 'success',
-          content: `Đã thêm "${lookupData.origin}" vào Thư viện thành công!`,
-        })
-      } else {
-        message({
-          type: 'error',
-          content: createRes.message || 'Không thể thêm vào Thư viện',
-        })
-      }
-    } catch (err: any) {
-      console.warn('Failed to add word to library:', err)
-      message({ type: 'error', content: err?.message || 'Không thể thêm vào Thư viện' })
-    } finally {
-      setIsSavingToLibrary(false)
+    const newItem: IItem = {
+      ...initItem,
+      origin: targetWord,
+      catId: ECategory.WORD,
+      level: 1,
+      meanings: initialMeanings,
     }
-  }, [lookupData, queryClient, message])
+
+    openItemModal('add', newItem)
+  }, [lookupData, cleanWord, openItemModal, message])
+
+  // Open item detail in ItemModal
+  const handleViewItem = useCallback(async () => {
+    if (!lookupData?.itemId) return
+    let itemToView = lookupData.item
+    if (!itemToView) {
+      try {
+        const found = await localDb.items.get(lookupData.itemId)
+        if (found) {
+          itemToView = found
+        }
+      } catch (err) {
+        console.warn('Failed to load item from localDb:', err)
+      }
+    }
+    openItemModal(
+      'view',
+      itemToView || ({ id: lookupData.itemId, origin: lookupData.origin } as IItem),
+    )
+  }, [lookupData, openItemModal])
 
   return {
     cleanWord,
@@ -215,5 +248,6 @@ export const useWordLookup = (rawWord: string, sentenceContext?: string) => {
     handlePlayAudio,
     handleAiLookup,
     handleAddWordToLibrary,
+    handleViewItem,
   }
 }

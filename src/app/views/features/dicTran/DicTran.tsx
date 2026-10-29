@@ -1087,7 +1087,7 @@ export const DicTran: React.FC<IDicTranProps> = ({
   if (loading && !currentExample) {
     return (
       <div style={{ padding: '36px 0', textAlign: 'center' }}>
-        <Spin size='large' tip='Đang tải câu thực hành...' />
+        <Spin size='large' children='Đang tải câu thực hành...' />
       </div>
     )
   }
@@ -1137,10 +1137,10 @@ export const DicTran: React.FC<IDicTranProps> = ({
           status='success'
           title={
             currentMode === 'dictation'
-              ? 'Hoàn thành bài luyện Dictation!'
-              : 'Hoàn thành bài luyện dịch!'
+              ? 'Complete Dictation Exercise!'
+              : 'Complete Translation Exercise!'
           }
-          subTitle={`Bạn đã hoàn thành bộ ${totalCount} câu hỏi. Xem lại chi tiết lịch sử bên dưới:`}
+          subTitle={` You have completed the set of ${totalCount} questions. Review your detailed history below:`}
           extra={[
             <Button
               type='primary'
@@ -1149,27 +1149,15 @@ export const DicTran: React.FC<IDicTranProps> = ({
               onClick={() => loadBatch(true)}
               loading={loading}
             >
-              Bộ 10 câu mới
+              New
             </Button>,
             <Button key='retry' icon={<ReloadOutlined />} onClick={handleRetryCurrentSet}>
-              Làm lại bộ này
-            </Button>,
-            <Button
-              key='review-step'
-              icon={<EyeOutlined />}
-              onClick={() => {
-                setIsCompleted(false)
-                setCurrentIndex(0)
-                saveSession({ currentIndex: 0, isCompleted: false })
-                setTimeout(() => textAreaRef.current?.focus(), 50)
-              }}
-            >
-              Xem lại từng câu
+              Redo
             </Button>,
             ...(onCancel
               ? [
                   <Button key='close' icon={<CloseOutlined />} onClick={onCancel}>
-                    Đóng
+                    Close
                   </Button>,
                 ]
               : []),
@@ -1308,12 +1296,10 @@ export const DicTran: React.FC<IDicTranProps> = ({
                 </div>
 
                 {/* Source & Target */}
-                {currentMode === 'translator' && (
-                  <div className={styles.reviewRow}>
-                    <span className={styles.reviewLabel}>Câu tiếng Việt:</span>
-                    <span className={styles.reviewText}>{srcText}</span>
-                  </div>
-                )}
+                <div className={styles.reviewRow}>
+                  <span className={styles.reviewLabel}>Câu tiếng Việt:</span>
+                  <span className={styles.reviewText}>{srcText}</span>
+                </div>
 
                 <div className={styles.reviewRow}>
                   <span className={styles.reviewLabel} style={{ color: token.colorPrimary }}>
@@ -1333,9 +1319,10 @@ export const DicTran: React.FC<IDicTranProps> = ({
                       {dictRes && dictRes.words.length > 0 && (
                         <div style={{ marginTop: 6 }}>
                           <SentenceDiffView
+                            interactive
+                            compact
                             result={dictRes}
                             sentenceContext={tgtText}
-                            compact
                             showTitle={false}
                           />
                         </div>
@@ -1698,17 +1685,20 @@ export const DicTran: React.FC<IDicTranProps> = ({
           {/* Reference Sentence & TTS */}
           <div>
             <Text type='secondary' style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
-              Câu chuẩn tham khảo:
+              CÂU CHUẨN THAM KHẢO:
             </Text>
             <div className={styles.referenceBox}>
               <div className={styles.referenceContent}>
-                {targetText.split(/\s+/).map((word, wIdx) => (
-                  <WordLookupPopover key={wIdx} word={word} sentenceContext={targetText}>
-                    <span style={{ cursor: 'pointer', display: 'inline-block', margin: '0 1px' }}>
-                      {word}{' '}
-                    </span>
-                  </WordLookupPopover>
-                ))}
+                {targetText
+                  .split(/\s+/)
+                  .filter(Boolean)
+                  .map((word, wIdx) => (
+                    <WordLookupPopover key={wIdx} word={word} sentenceContext={targetText}>
+                      <Tag style={{ cursor: 'pointer', display: 'inline-block', margin: '0 1px' }}>
+                        {word}
+                      </Tag>
+                    </WordLookupPopover>
+                  ))}
               </div>
               <Space size='small'>
                 <Button
@@ -1725,6 +1715,13 @@ export const DicTran: React.FC<IDicTranProps> = ({
                   size='small'
                 />
               </Space>
+            </div>
+          </div>
+
+          <div>
+            <div className={styles.reviewRow}>
+              <span className={styles.reviewLabel}>Câu tiếng Việt:</span>
+              <span className={styles.reviewText}>{sourceText}</span>
             </div>
           </div>
 
@@ -1755,7 +1752,7 @@ export const DicTran: React.FC<IDicTranProps> = ({
               {aiReviewResult.grammarFeedback && (
                 <div style={{ fontSize: 13, marginTop: 4 }}>
                   <Text strong style={{ display: 'block', marginBottom: 2, color: '#fa8c16' }}>
-                    Điểm ngữ pháp cần lưu ý:
+                    Ngữ pháp cần lưu ý:
                   </Text>
                   <div>{aiReviewResult.grammarFeedback}</div>
                 </div>
@@ -1788,7 +1785,7 @@ export const DicTran: React.FC<IDicTranProps> = ({
                 onClick={handleAiReview}
                 style={{ color: '#722ed1', borderColor: 'rgba(114, 46, 209, 0.4)' }}
               >
-                Review in details
+                Review
               </Button>
             </div>
           )}

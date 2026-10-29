@@ -18,7 +18,7 @@ export const Toolbar = ({ formSearch = <SearchItemForm />, pagination }: IProps)
 
   return (
     <div className={appStyle.stickyBar}>
-      <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
+      <Space direction='vertical' size={[token.size, token.size]} className={appStyle.full}>
         <Row
           justify={isShowSearchFormItem ? 'space-between' : 'end'}
           align={'top'}

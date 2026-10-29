@@ -880,7 +880,7 @@ export const Developer: React.FC = () => {
                 {loading ? (
                   <Card>
                     <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                      <Spin size='large' tip='Đang đọc dữ liệu từ IndexedDB...' />
+                      <Spin size='large' children='Đang đọc dữ liệu từ IndexedDB...' />
                     </div>
                   </Card>
                 ) : (

@@ -218,7 +218,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   name={`archive`}
                   render={({ field: { onChange, value } }) => (
                     <Checkbox
-                      className={appStyle.fulWidth}
+                      className={appStyle.full}
                       checked={value}
                       onChange={(e) => onChange(e.target.checked)}
                     >
@@ -232,7 +232,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   name={`favorite`}
                   render={({ field: { onChange, value } }) => (
                     <Checkbox
-                      className={appStyle.fulWidth}
+                      className={appStyle.full}
                       checked={value}
                       onChange={(e) => onChange(e.target.checked)}
                     >
@@ -250,7 +250,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   name={`tags`}
                   render={({ field: { onChange, value } }) => (
                     <TagSelect
-                      className={appStyle.fulWidth}
+                      className={appStyle.full}
                       value={value || []}
                       onChange={onChange}
                       onTagUpdated={handleTagUpdated}
@@ -266,7 +266,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   name={`cat`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={appStyle.fulWidth}
+                      className={appStyle.full}
                       value={value}
                       onChange={(e) => onChange(e)}
                       options={categories}
@@ -283,7 +283,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   name={`orderBy`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={appStyle.fulWidth}
+                      className={appStyle.full}
                       value={value}
                       onChange={(e) => onChange(e)}
                       options={orderByOptions}
@@ -299,7 +299,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   name={`order`}
                   render={({ field: { onChange, value } }) => (
                     <Select
-                      className={appStyle.fulWidth}
+                      className={appStyle.full}
                       value={value}
                       onChange={(e) => onChange(e)}
                       options={orderOptions}
@@ -309,13 +309,13 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                 />
 
                 <Flex gap={token.size / 2}>
-                  <Button className={appStyle.fulWidth} onClick={() => onReset()}>
+                  <Button className={appStyle.full} onClick={() => onReset()}>
                     Reset
                   </Button>
                   <Button
                     type={'primary'}
                     htmlType='submit'
-                    className={appStyle.fulWidth}
+                    className={appStyle.full}
                     onClick={() => handleSubmit(onSubmit)()}
                   >
                     Apply

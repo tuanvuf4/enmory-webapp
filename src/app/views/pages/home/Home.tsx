@@ -115,7 +115,7 @@ const Home = () => {
       )}
 
       {!isAuth && (
-        <Space direction='vertical' size={[token.size, token.size]} className={appStyle.fulWidth}>
+        <Space direction='vertical' size={[token.size, token.size]} className={appStyle.full}>
           <Row justify={'center'}>
             <Col span={24}>
               <div className={'text-center'}>

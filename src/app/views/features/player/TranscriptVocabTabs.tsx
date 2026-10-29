@@ -719,7 +719,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
       {loading && (
         <div style={{ padding: '32px 0', textAlign: 'center' }}>
           <Spin
-            tip='Gemini đang phân tích transcript và phân loại từ vựng, cụm từ, collocation theo cấp độ A1 → C2...'
+            children='Gemini đang phân tích transcript và phân loại từ vựng, cụm từ, collocation theo cấp độ A1 → C2...'
             size='large'
           />
         </div>

@@ -75,7 +75,6 @@ const AppWrapper: React.FC<IAppTypeProps> = ({ type }) => (
   </React.StrictMode>
 )
 
-
 const isExtension =
   import.meta.env.MODE === 'ext' ||
   (import.meta.env.VITE_APP_TYPE &&
@@ -83,7 +82,6 @@ const isExtension =
   (typeof window !== 'undefined' && window.location?.protocol === 'chrome-extension:')
 
 const currentAppType = isExtension ? EAppType.EXTENSION : EAppType.WEB_APP
-
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(<AppWrapper type={currentAppType} />)

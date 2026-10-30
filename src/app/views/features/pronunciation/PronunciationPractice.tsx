@@ -285,7 +285,7 @@ export const PronunciationPractice: React.FC = () => {
   const [speed, setSpeed] = useState<number>(0.85)
   const [shadowChunk, setShadowChunk] = useState<number | null>(null)
   const [shadowPlaying, setShadowPlaying] = useState(false)
-  const [chunkSize, setChunkSize] = useState<number>(3)
+  const [chunkSize, setChunkSize] = useState<number>(4)
   const [showTip, setShowTip] = useState(false)
   const [revealed, setRevealed] = useState(false)
 
@@ -543,11 +543,8 @@ export const PronunciationPractice: React.FC = () => {
           <Flex justify='space-between' align='center' style={{ marginBottom: token.size * 0.75 }}>
             <Flex align='center' gap={8}>
               <Title level={5} style={{ margin: 0, fontSize: 15 }}>
-                Luyện Nói & Ngữ Âm Tích Hợp
+                Luyện Nói & Ngữ Âm
               </Title>
-              <Tag color='blue' style={{ borderRadius: 6, fontSize: 11, fontWeight: 600 }}>
-                {Object.values(activeTechniques).filter(Boolean).length}/4 Kỹ thuật
-              </Tag>
             </Flex>
             <Flex gap={4} align='center'>
               <Text type='secondary' style={{ fontSize: 12 }}>
@@ -771,39 +768,26 @@ export const PronunciationPractice: React.FC = () => {
 
             {/* Buttons row */}
             <Flex justify='space-between' align='center' wrap='wrap' gap={8}>
-              <Flex gap={8}>
-                <Button onClick={handlePrev} disabled={examples.length <= 1}>
-                  ← Trước
-                </Button>
-                <Button type='primary' onClick={handleNext} disabled={examples.length <= 1}>
-                  Tiếp →
-                </Button>
-              </Flex>
+              <Button onClick={handlePrev} disabled={examples.length <= 1}>
+                ← Trước
+              </Button>
 
-              <Flex gap={6}>
-                <Tooltip title='Phát chậm 50% để nghe rõ nối âm & trọng âm'>
-                  <Button
-                    icon={<SoundOutlined />}
-                    onClick={() => handleSpeak(plainOrigin, 0.5)}
-                    disabled={speaking}
-                    style={{ fontSize: 12 }}
-                  >
-                    Chậm 50%
-                  </Button>
-                </Tooltip>
+              <Button
+                type='primary'
+                icon={speaking ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                onClick={speaking ? handleStop : () => handleSpeak()}
+                style={{
+                  background: speaking ? '#ff4d4f' : token.colorPrimary,
+                  borderColor: speaking ? '#ff4d4f' : token.colorPrimary,
+                  minWidth: 100,
+                }}
+              >
+                {speaking ? 'Dừng' : 'Nghe'}
+              </Button>
 
-                <Button
-                  type='primary'
-                  icon={speaking ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                  onClick={speaking ? handleStop : () => handleSpeak()}
-                  style={{
-                    background: speaking ? '#ff4d4f' : token.colorPrimary,
-                    borderColor: speaking ? '#ff4d4f' : token.colorPrimary,
-                  }}
-                >
-                  {speaking ? 'Dừng' : 'Nghe mẫu'}
-                </Button>
-              </Flex>
+              <Button type='primary' onClick={handleNext} disabled={examples.length <= 1}>
+                Tiếp →
+              </Button>
             </Flex>
           </Flex>
 
@@ -814,7 +798,13 @@ export const PronunciationPractice: React.FC = () => {
             size='small'
             className={styles.recorderCard}
             title={
-              <Flex justify='space-between' align='center' wrap='wrap' gap={8}>
+              <Flex
+                justify='space-between'
+                align='center'
+                wrap='wrap'
+                gap={8}
+                className={'mt-2 mb-2'}
+              >
                 <Flex align='center' gap={8}>
                   <AudioOutlined style={{ color: '#1677ff', fontSize: 16 }} />
                   <span style={{ fontWeight: 700, fontSize: 13 }}>
@@ -857,7 +847,7 @@ export const PronunciationPractice: React.FC = () => {
             {/* Bảng điều khiển thu âm */}
             <div className={styles.recordConsole}>
               {!isRecording && !audioUrl && (
-                <Flex vertical align='center' gap={8}>
+                <Flex vertical align='center' gap={token.size}>
                   <Button
                     type='primary'
                     danger
@@ -868,7 +858,7 @@ export const PronunciationPractice: React.FC = () => {
                   >
                     Bắt đầu thu âm giọng bạn
                   </Button>
-                  <Text type='secondary' style={{ fontSize: 12 }}>
+                  <Text type='secondary' style={{ fontSize: 12, textAlign: 'center' }}>
                     Đọc to câu trên và AI sẽ phân tích nối âm, trọng âm, ngữ điệu & shadowing.
                   </Text>
                 </Flex>

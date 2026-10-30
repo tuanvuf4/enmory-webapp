@@ -189,12 +189,21 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
                 value={field.value || []}
                 onChange={field.onChange}
                 onCreateItem={async (name) => {
-                  const res = await createCategoryMutation({ name })
+                  const res = await createCategoryMutation({
+                    name,
+                    value: name.trim().toLowerCase().replace(/\s+/g, '_'),
+                  })
                   queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
                   return res?.name || name
                 }}
                 onUpdateItem={async (id, newName) => {
-                  await updateCategoryMutation({ id, data: { name: newName } })
+                  await updateCategoryMutation({
+                    id,
+                    data: {
+                      name: newName,
+                      value: newName.trim().toLowerCase().replace(/\s+/g, '_'),
+                    },
+                  })
                   queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
                   handleTagUpdated(id, newName)
                 }}

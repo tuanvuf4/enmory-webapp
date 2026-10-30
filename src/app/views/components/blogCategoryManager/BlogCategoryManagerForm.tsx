@@ -128,11 +128,13 @@ export const BlogCategoryManagerForm: React.FC<BlogCategoryManagerFormProps> = (
         newCategoryOrder ??
         (categoryRows.length > 0 ? Math.max(...categoryRows.map((c) => c.order ?? 1)) + 1 : 1)
 
+      const categoryValue = name.trim().toLowerCase().replace(/\s+/g, '_')
+
       const response = await blogCategoriesApi.createCategory({
         name,
         color: newCategoryColor || DEFAULT_TAG_COLOR,
         order: nextOrder,
-        value: '',
+        value: categoryValue,
       })
 
       if (!response.isSuccess) {
@@ -181,10 +183,12 @@ export const BlogCategoryManagerForm: React.FC<BlogCategoryManagerFormProps> = (
     try {
       setCategorySubmitting(true)
       const targetId = cat.name || cat.id
+      const categoryValue = nextName.trim().toLowerCase().replace(/\s+/g, '_')
       const response = await blogCategoriesApi.updateCategory(targetId, {
         name: nextName,
         color: editingCategoryColor || DEFAULT_TAG_COLOR,
         order: editingCategoryOrder,
+        value: categoryValue,
       })
 
       if (!response.isSuccess) {

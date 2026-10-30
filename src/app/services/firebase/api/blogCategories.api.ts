@@ -23,6 +23,16 @@ export interface IBlogCategory extends ITag {
   id?: string
 }
 
+/**
+ * Format blog category name into value slug (e.g. "Tech Talk" => 'tech_talk')
+ */
+export const formatBlogCategoryValue = (name: string): string => {
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+}
+
 export interface IBlogCategoryResponse<T> {
   isSuccess: boolean
   message: string
@@ -106,6 +116,7 @@ export const blogCategoriesApi = {
       const categories: IBlogCategory[] = rawTags.map((tag) => ({
         ...tag,
         id: tag.name,
+        value: tag.value ? formatBlogCategoryValue(tag.value) : formatBlogCategoryValue(tag.name),
         uid: currentUser!.uid,
       }))
 
@@ -185,6 +196,9 @@ export const blogCategoriesApi = {
         content: {
           ...matched,
           id: matched.name,
+          value: matched.value
+            ? formatBlogCategoryValue(matched.value)
+            : formatBlogCategoryValue(matched.name),
           uid: currentUser.uid,
         },
         statusCode: 200,
@@ -240,6 +254,9 @@ export const blogCategoriesApi = {
           content: {
             ...existing,
             id: existing.name,
+            value: existing.value
+              ? formatBlogCategoryValue(existing.value)
+              : formatBlogCategoryValue(existing.name),
             uid: currentUser.uid,
           },
           statusCode: 200,
@@ -249,8 +266,12 @@ export const blogCategoriesApi = {
       const maxOrder =
         currentTags.length > 0 ? Math.max(...currentTags.map((t) => t.order ?? 1)) : 0
 
+      const categoryValue = formatBlogCategoryValue(data.value || normalized.name)
+
       const newCategory: ITag = {
         ...normalized,
+        name: normalized.name,
+        value: categoryValue,
         order: typeof data.order === 'number' ? data.order : maxOrder + 1,
         created_date: Date.now(),
         last_update: Date.now(),
@@ -339,11 +360,16 @@ export const blogCategoriesApi = {
       }
 
       const existing = currentTags[oldIndex]
+      const categoryValue =
+        data.value !== undefined && String(data.value).trim() !== ''
+          ? formatBlogCategoryValue(data.value)
+          : formatBlogCategoryValue(newName)
+
       const updatedTag: ITag = {
         ...existing,
         ...data,
         name: newName,
-        value: data.value !== undefined ? String(data.value) : (existing.value ?? ''),
+        value: categoryValue,
         color: data.color || existing.color || DEFAULT_TAG_COLOR,
         order: typeof data.order === 'number' ? data.order : (existing.order ?? 1),
         last_update: Date.now(),
@@ -403,7 +429,7 @@ export const blogCategoriesApi = {
   /**
    * Delete a blog category/tag
    */
-  async deleteCategory(id: string): Promise<IBlogCategoryResponse<null>> {
+  async deleteCategory(name: string): Promise<IBlogCategoryResponse<null>> {
     try {
       let currentUser = firebaseAuthService.getCurrentUser()
       if (!currentUser) {
@@ -419,7 +445,7 @@ export const blogCategoriesApi = {
         }
       }
 
-      const targetName = String(id || '').trim()
+      const targetName = String(name || '').trim()
       const currentTags = await getBlogTagsFromUser(currentUser.uid)
       const nextTags = currentTags.filter((t) => t.name.toLowerCase() !== targetName.toLowerCase())
 
@@ -464,6 +490,3 @@ export const blogCategoriesApi = {
     }
   },
 }
-
-export const articleCategoriesApi = blogCategoriesApi
-export const blogTagsApi = blogCategoriesApi

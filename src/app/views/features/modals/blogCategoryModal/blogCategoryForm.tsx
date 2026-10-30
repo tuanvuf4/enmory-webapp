@@ -55,11 +55,17 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
   }, [data, reset])
 
   const onSubmit = (values: IBlogCategory) => {
+    const tagName = (values.name || '').trim()
+    const tagValue = values.value?.trim()
+      ? values.value.trim().toLowerCase().replace(/\s+/g, '_')
+      : tagName.toLowerCase().replace(/\s+/g, '_')
+
     const payload: IBlogCategory = {
       ...values,
+      name: tagName,
       color: values.color || '#1890ff',
       order: typeof values.order === 'number' ? values.order : 1,
-      value: values.value ?? '',
+      value: tagValue,
     }
     const targetId = data?.id || data?.name
     if (isEditing && targetId) {

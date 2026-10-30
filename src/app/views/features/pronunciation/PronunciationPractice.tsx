@@ -209,8 +209,8 @@ const buildUnifiedSentence = (
   const pattern: 'falling' | 'rising' | 'fall-rise' = isWHQuestion
     ? 'falling'
     : isQuestion
-    ? 'rising'
-    : 'falling'
+      ? 'rising'
+      : 'falling'
 
   const chunks: string[] = []
   for (let i = 0; i < words.length; i += chunkSize) {
@@ -309,10 +309,7 @@ export const PronunciationPractice: React.FC = () => {
 
   const currentExample = examples[currentIndex]
   const plainOrigin = useMemo(() => stripHtml(currentExample?.origin), [currentExample])
-  const plainTranslation = useMemo(
-    () => stripHtml(currentExample?.translation),
-    [currentExample],
-  )
+  const plainTranslation = useMemo(() => stripHtml(currentExample?.translation), [currentExample])
 
   // Phân tích đồng thời cả 4 kỹ thuật
   const { tokens, pattern, chunks } = useMemo(
@@ -464,9 +461,7 @@ export const PronunciationPractice: React.FC = () => {
       if (response.isSuccess && response.content) {
         setEvalResult(response.content)
       } else {
-        setEvalError(
-          response.message || 'Không thể đánh giá âm thanh lúc này. Vui lòng thử lại.',
-        )
+        setEvalError(response.message || 'Không thể đánh giá âm thanh lúc này. Vui lòng thử lại.')
       }
     } catch (err: any) {
       console.error('Audio evaluation error:', err)
@@ -598,8 +593,8 @@ export const PronunciationPractice: React.FC = () => {
                   {pattern === 'rising'
                     ? '↗ Lên giọng cuối câu (Yes/No Question)'
                     : pattern === 'fall-rise'
-                    ? '↘↗ Lên - xuống giọng kết hợp'
-                    : '↘ Xuống giọng cuối câu (Trần thuật / WH-question)'}
+                      ? '↘↗ Lên - xuống giọng kết hợp'
+                      : '↘ Xuống giọng cuối câu (Trần thuật / WH-question)'}
                 </Tag>
               )}
 
@@ -614,9 +609,7 @@ export const PronunciationPractice: React.FC = () => {
             <div className={styles.tokensRow}>
               {tokens.map((t, idx) => {
                 const isCurrentChunkActive =
-                  activeTechniques.shadow &&
-                  shadowChunk === t.chunkIndex &&
-                  shadowPlaying
+                  activeTechniques.shadow && shadowChunk === t.chunkIndex && shadowPlaying
 
                 return (
                   <React.Fragment key={idx}>
@@ -665,8 +658,8 @@ export const PronunciationPractice: React.FC = () => {
                             t.linkType === 'consonant-vowel'
                               ? `Nối phụ âm cuối "${t.cleanWord.slice(-1)}" với nguyên âm đầu của "${t.nextWord}"`
                               : t.linkType === 'vowel-vowel'
-                              ? `Nối nguyên âm - nguyên âm (lướt âm /w/ hoặc /j/)`
-                              : `Âm câm / nối mờ lướt nhẹ`
+                                ? `Nối nguyên âm - nguyên âm (lướt âm /w/ hoặc /j/)`
+                                : `Âm câm / nối mờ lướt nhẹ`
                           }
                           placement='bottom'
                         >
@@ -977,8 +970,8 @@ export const PronunciationPractice: React.FC = () => {
                         evalResult.overallScore >= 80
                           ? '#52c41a'
                           : evalResult.overallScore >= 60
-                          ? '#faad14'
-                          : '#ff4d4f'
+                            ? '#faad14'
+                            : '#ff4d4f'
                       }
                       format={(pct) => `${pct}đ`}
                     />
@@ -988,8 +981,8 @@ export const PronunciationPractice: React.FC = () => {
                           {evalResult.overallScore >= 85
                             ? 'Xuất sắc! 🎉'
                             : evalResult.overallScore >= 70
-                            ? 'Khá tốt! 👍'
-                            : 'Cần luyện tập thêm 💪'}
+                              ? 'Khá tốt! 👍'
+                              : 'Cần luyện tập thêm 💪'}
                         </Title>
                         {evalResult.modelUsed && (
                           <Tag color='geekblue' style={{ borderRadius: 6, fontSize: 10 }}>
@@ -997,7 +990,10 @@ export const PronunciationPractice: React.FC = () => {
                           </Tag>
                         )}
                       </Flex>
-                      <Text type='secondary' style={{ fontSize: 12, display: 'block', marginTop: 2 }}>
+                      <Text
+                        type='secondary'
+                        style={{ fontSize: 12, display: 'block', marginTop: 2 }}
+                      >
                         {evalResult.overallFeedback}
                       </Text>
                     </div>
@@ -1029,9 +1025,7 @@ export const PronunciationPractice: React.FC = () => {
                         {evalResult.techniques.linking.score}%
                       </Tag>
                     </div>
-                    <Text style={{ fontSize: 12 }}>
-                      {evalResult.techniques.linking.feedback}
-                    </Text>
+                    <Text style={{ fontSize: 12 }}>{evalResult.techniques.linking.feedback}</Text>
                     {evalResult.techniques.linking.details && (
                       <Text type='secondary' style={{ fontSize: 11 }}>
                         💡 {evalResult.techniques.linking.details}
@@ -1052,9 +1046,7 @@ export const PronunciationPractice: React.FC = () => {
                         {evalResult.techniques.stress.score}%
                       </Tag>
                     </div>
-                    <Text style={{ fontSize: 12 }}>
-                      {evalResult.techniques.stress.feedback}
-                    </Text>
+                    <Text style={{ fontSize: 12 }}>{evalResult.techniques.stress.feedback}</Text>
                     {evalResult.techniques.stress.details && (
                       <Text type='secondary' style={{ fontSize: 11 }}>
                         💡 {evalResult.techniques.stress.details}
@@ -1098,9 +1090,7 @@ export const PronunciationPractice: React.FC = () => {
                         {evalResult.techniques.shadowing.score}%
                       </Tag>
                     </div>
-                    <Text style={{ fontSize: 12 }}>
-                      {evalResult.techniques.shadowing.feedback}
-                    </Text>
+                    <Text style={{ fontSize: 12 }}>{evalResult.techniques.shadowing.feedback}</Text>
                     {evalResult.techniques.shadowing.details && (
                       <Text type='secondary' style={{ fontSize: 11 }}>
                         💡 {evalResult.techniques.shadowing.details}
@@ -1126,8 +1116,8 @@ export const PronunciationPractice: React.FC = () => {
                               w.status === 'correct'
                                 ? 'success'
                                 : w.status === 'imprecise'
-                                ? 'warning'
-                                : 'error'
+                                  ? 'warning'
+                                  : 'error'
                             }
                             style={{ cursor: 'pointer', borderRadius: 6, fontSize: 12 }}
                           >
@@ -1168,7 +1158,9 @@ export const PronunciationPractice: React.FC = () => {
           title={
             <Flex gap={6} align='center'>
               <InfoCircleOutlined />
-              <span style={{ fontSize: 12, fontWeight: 600 }}>Chú thích kỹ thuật đang hiển thị</span>
+              <span style={{ fontSize: 12, fontWeight: 600 }}>
+                Chú thích kỹ thuật đang hiển thị
+              </span>
             </Flex>
           }
         >

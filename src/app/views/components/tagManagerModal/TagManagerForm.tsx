@@ -118,8 +118,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
     try {
       setTagSubmitting(true)
       const nextOrder =
-        newTagOrder ??
-        (tagRows.length > 0 ? Math.max(...tagRows.map((t) => t.order ?? 1)) + 1 : 1)
+        newTagOrder ?? (tagRows.length > 0 ? Math.max(...tagRows.map((t) => t.order ?? 1)) + 1 : 1)
 
       const response = await tagApi.createTag({
         name,
@@ -228,7 +227,10 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
 
         if (!isEditing) {
           return (
-            <Tag color={record.color || DEFAULT_TAG_COLOR} style={{ fontSize: 13, padding: '2px 8px' }}>
+            <Tag
+              color={record.color || DEFAULT_TAG_COLOR}
+              style={{ fontSize: 13, padding: '2px 8px' }}
+            >
               {record.name}
             </Tag>
           )
@@ -395,10 +397,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
           style={{ flex: 1, minWidth: 200 }}
           allowClear
         />
-        <ColorPicker
-          value={newTagColor}
-          onChange={(_, hex) => setNewTagColor(hex)}
-        />
+        <ColorPicker value={newTagColor} onChange={(_, hex) => setNewTagColor(hex)} />
         <Button
           type='primary'
           htmlType='button'

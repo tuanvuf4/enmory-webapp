@@ -270,5 +270,12 @@ export const authReducer = createSlice({
 })
 
 export const authAction = authReducer.actions
-export const { clearError, logOut, updateUserConfig, updateItemTags, updateBlogTags, setGoogleAuth } = authReducer.actions
+export const {
+  clearError,
+  logOut,
+  updateUserConfig,
+  updateItemTags,
+  updateBlogTags,
+  setGoogleAuth,
+} = authReducer.actions
 export default authReducer.reducer

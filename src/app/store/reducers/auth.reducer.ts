@@ -4,7 +4,9 @@
  */
 
 import { firebaseAuthService, IUserProfile } from '@/services/firebase'
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import { appSetting } from '@/config/appConfig'
+import { ITag, normalizeTagList } from '@/models/tag.model'
 
 export interface IAuthState {
   // Firebase user (combined auth info and profile)
@@ -135,6 +137,26 @@ export const authReducer = createSlice({
         state.user.configuration = action.payload
       }
     },
+    updateItemTags: (state, action: PayloadAction<ITag[] | string[]>) => {
+      if (state.user) {
+        if (!state.user.configuration) {
+          state.user.configuration = { ...appSetting.meta } as any
+        }
+        if (state.user.configuration) {
+          state.user.configuration.itemTags = normalizeTagList(action.payload as any)
+        }
+      }
+    },
+    updateBlogTags: (state, action: PayloadAction<ITag[] | string[]>) => {
+      if (state.user) {
+        if (!state.user.configuration) {
+          state.user.configuration = { ...appSetting.meta } as any
+        }
+        if (state.user.configuration) {
+          state.user.configuration.blogTags = normalizeTagList(action.payload as any)
+        }
+      }
+    },
     setGoogleAuth: (state, action) => {
       state.isAuth = true
       // Store Firebase user info
@@ -248,5 +270,5 @@ export const authReducer = createSlice({
 })
 
 export const authAction = authReducer.actions
-export const { clearError, logOut, updateUserConfig, setGoogleAuth } = authReducer.actions
+export const { clearError, logOut, updateUserConfig, updateItemTags, updateBlogTags, setGoogleAuth } = authReducer.actions
 export default authReducer.reducer

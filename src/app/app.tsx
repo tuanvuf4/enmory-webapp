@@ -45,12 +45,28 @@ export const App = () => {
   }, [types, dispatch])
 
   useEffect(() => {
-    if (user?.uid) {
+    if (user?.configuration?.itemTags) {
+      const formattedTags = (user.configuration.itemTags || []).map((tag: any) => {
+        const tagName =
+          typeof tag === 'string' ? tag : String(tag.name || tag.label || tag.value || '')
+        const tagColor = typeof tag === 'string' ? '#1890ff' : tag.color || '#1890ff'
+        const tagOrder = typeof tag === 'string' ? 1 : tag.order ?? 1
+        return {
+          id: tagName,
+          label: tagName,
+          value: tagName,
+          name: tagName,
+          color: tagColor,
+          order: tagOrder,
+        }
+      })
+      dispatch(settingAction.setTags(formattedTags))
+    } else if (user?.uid) {
       dispatch(actionAsyncApp.fetchTags())
     } else {
       dispatch(settingAction.setTags([]))
     }
-  }, [user?.uid, dispatch])
+  }, [user?.uid, user?.configuration?.itemTags, dispatch])
 
   if (isInitializing) {
     return <Loading show={isInitializing} />

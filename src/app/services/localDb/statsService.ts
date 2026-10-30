@@ -1,11 +1,9 @@
 import { localDb } from './db'
 import { firebaseAuthService } from '@/services/firebase/authService'
-import { db, dbCollections } from '@/config/firebaseConfig'
-import { collection, getDocs, query, where } from 'firebase/firestore'
 import { IItem, ECategory, EType } from '@/models/item.model'
-import { ITagEntity } from '@/models/tag.model'
 import { IHttpResponse } from '@/models/http.model'
 import { getType } from '@/helpers/item'
+import { tagApi } from '@/services/firebase/api/tag.api'
 
 export interface IChartCategoryItem {
   id: number
@@ -480,40 +478,16 @@ export const getTopTagsStats = async (limit = 8): Promise<IHttpResponse<ITagStat
     let firestoreTags: Array<{ id?: string; value: string; value_lowercase: string }> = []
 
     try {
-      const q = query(collection(db, dbCollections.tags), where('uid', '==', user.uid))
-      const snapshot = await getDocs(q)
-      firestoreTags = snapshot.docs
-        .map((docSnap) => {
-          const data = docSnap.data() as Partial<ITagEntity>
-          const value = String(data.value || '').trim()
-          const value_lowercase = String(data.value_lowercase || value.toLowerCase()).trim()
-          return {
-            id: docSnap.id,
-            value,
-            value_lowercase,
-          }
-        })
-        .filter((t) => t.value)
-
-      // Sync fetched tags into localDb cache
-      if (firestoreTags.length > 0) {
-        try {
-          await localDb.tags.bulkPut(
-            firestoreTags.map((t) => ({
-              id: t.id || '',
-              uid: user.uid,
-              value: t.value,
-              value_lowercase: t.value_lowercase,
-              created_date: 0,
-              last_update: 0,
-            })),
-          )
-        } catch (cacheErr) {
-          console.warn('Failed to cache tags in localDb:', cacheErr)
-        }
+      const tagsRes = await tagApi.getTags('')
+      if (tagsRes.isSuccess && tagsRes.content) {
+        firestoreTags = tagsRes.content.map((t) => ({
+          id: t.id,
+          value: t.name || t.value || '',
+          value_lowercase: (t.name || t.value || '').toLowerCase(),
+        }))
       }
-    } catch (firestoreErr) {
-      console.warn('Failed to fetch tags from Firestore DB, falling back to localDb:', firestoreErr)
+    } catch (tagErr) {
+      console.warn('Failed to fetch tags from tagApi, falling back to localDb:', tagErr)
       try {
         const localTags = await localDb.tags.where('uid').equals(user.uid).toArray()
         firestoreTags = localTags

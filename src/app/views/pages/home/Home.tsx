@@ -12,6 +12,7 @@ import { IIotdDoc } from '@/models/item.model'
 import { Link } from 'react-router-dom'
 
 import { Translator } from '@/views/features/translator'
+import { PronunciationPractice } from '@/views/features'
 
 interface IIotdItemCardProps {
   iotd?: IIotdDoc | null
@@ -76,6 +77,10 @@ const Home = () => {
 
                 <Widget title={'Dictation'}>
                   <Dictation />
+                </Widget>
+
+                <Widget title={'Speaking'}>
+                  <PronunciationPractice />
                 </Widget>
               </Space>
             </Col>

@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useDispatch } from '@/core/hooks'
+import { authAction } from '@/store/reducers/auth.reducer'
 import {
   blogCategoriesApi,
   IBlogCategoryRequestParams,
@@ -67,17 +69,22 @@ export const useArticleCategory = useBlogCategory
  */
 export const useCreateBlogCategory = () => {
   const queryClient = useQueryClient()
+  const dispatch = useDispatch()
 
   return useMutation({
     mutationFn: async (data: IBlogCategory) => {
       const response = await blogCategoriesApi.createCategory(data)
       return response.content
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.refetchQueries({
         queryKey: blogCategoryKeys.lists(),
         type: 'active',
       })
+      const res = await blogCategoriesApi.getCategories()
+      if (res.isSuccess && res.content) {
+        dispatch(authAction.updateBlogTags(res.content))
+      }
     },
   })
 }
@@ -89,13 +96,14 @@ export const useCreateArticleCategory = useCreateBlogCategory
  */
 export const useUpdateBlogCategory = () => {
   const queryClient = useQueryClient()
+  const dispatch = useDispatch()
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: IBlogCategory }) => {
       const response = await blogCategoriesApi.updateCategory(id, data)
       return response.content
     },
-    onSuccess: (updatedCategory) => {
+    onSuccess: async (updatedCategory) => {
       queryClient.refetchQueries({
         queryKey: blogCategoryKeys.lists(),
         type: 'active',
@@ -105,6 +113,10 @@ export const useUpdateBlogCategory = () => {
           queryKey: blogCategoryKeys.detail(updatedCategory.id),
           type: 'active',
         })
+      }
+      const res = await blogCategoriesApi.getCategories()
+      if (res.isSuccess && res.content) {
+        dispatch(authAction.updateBlogTags(res.content))
       }
     },
   })
@@ -117,19 +129,31 @@ export const useUpdateArticleCategory = useUpdateBlogCategory
  */
 export const useDeleteBlogCategory = () => {
   const queryClient = useQueryClient()
+  const dispatch = useDispatch()
 
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await blogCategoriesApi.deleteCategory(id)
       return response
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.refetchQueries({
         queryKey: blogCategoryKeys.lists(),
         type: 'active',
       })
+      const res = await blogCategoriesApi.getCategories()
+      if (res.isSuccess && res.content) {
+        dispatch(authAction.updateBlogTags(res.content))
+      }
     },
   })
 }
 
 export const useDeleteArticleCategory = useDeleteBlogCategory
+
+export const useBlogTags = useBlogCategories
+export const useBlogTag = useBlogCategory
+export const useCreateBlogTag = useCreateBlogCategory
+export const useUpdateBlogTag = useUpdateBlogCategory
+export const useDeleteBlogTag = useDeleteBlogCategory
+export const blogTagKeys = blogCategoryKeys

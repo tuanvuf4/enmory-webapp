@@ -15,7 +15,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import './blogForm.module.scss'
 import { usePrompt } from '@/helpers/hooks'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 export interface BlogFormProps {
   data?: IBlogItem
@@ -37,11 +37,20 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
   const { mutateAsync: deleteCategoryMutation } = useDeleteBlogCategory()
 
   const { data: cats = [] } = useBlogCategories()
-
   const categories = cats
 
   const isEditing = !!data?.id
   const isPending = isCreating || isUpdating
+
+  const initialTags = useMemo(() => {
+    if (data?.tags && Array.isArray(data.tags) && data.tags.length > 0) {
+      return data.tags
+    }
+    if (data?.category_id) {
+      return [data.category_id]
+    }
+    return []
+  }, [data])
 
   const {
     control,
@@ -54,9 +63,8 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
     defaultValues: {
       title: data?.title || '',
       description: data?.description || '',
-      category_id: data?.category_id || categories[0]?.id || '',
       relation: data?.relation || [],
-      tags: data?.tags || [],
+      tags: initialTags,
     },
   })
 
@@ -65,12 +73,11 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
       reset({
         title: data.title || '',
         description: data.description || '',
-        category_id: data.category_id || categories[0]?.id || '',
         relation: data.relation || [],
-        tags: data.tags || [],
+        tags: initialTags,
       })
     }
-  }, [data, categories, reset])
+  }, [data, initialTags, reset])
 
   const handleTagUpdated = (previousValue: string, nextValue: string) => {
     const currentTags = getValues('tags') || []
@@ -90,7 +97,8 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
 
   const onSubmit = (values: IBlogItem) => {
     const dataSubmit: IBlogItem = {
-      ...values,
+      title: values.title,
+      description: values.description,
       relation: values.relation || [],
       tags: values.tags || [],
     }
@@ -136,75 +144,30 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Flex style={{ width: '100%' }} gap={token.size} align={'flex-end'} wrap={'wrap'}>
-        <div style={{ marginBottom: token.size, flex: 1 }}>
-          <label style={{ display: 'block', marginBottom: token.size / 2 }}>
-            Title <span style={{ color: token.colorError }}>*</span>
-          </label>
+      {/* Title */}
+      <div style={{ marginBottom: token.size }}>
+        <label style={{ display: 'block', marginBottom: token.size / 2 }}>
+          Title <span style={{ color: token.colorError }}>*</span>
+        </label>
 
-          <Controller
-            control={control}
-            name='title'
-            rules={{ required: 'Please enter blog title' }}
-            render={({ field }) => (
-              <>
-                <Input {...field} placeholder='Blog title' status={errors.title ? 'error' : ''} />
-                {errors.title && (
-                  <div style={{ color: token.colorError, fontSize: 12, marginTop: 4 }}>
-                    {errors.title.message}
-                  </div>
-                )}
-              </>
-            )}
-          />
-        </div>
+        <Controller
+          control={control}
+          name='title'
+          rules={{ required: 'Please enter blog title' }}
+          render={({ field }) => (
+            <>
+              <Input {...field} placeholder='Blog title' status={errors.title ? 'error' : ''} />
+              {errors.title && (
+                <div style={{ color: token.colorError, fontSize: 12, marginTop: 4 }}>
+                  {errors.title.message}
+                </div>
+              )}
+            </>
+          )}
+        />
+      </div>
 
-        <div style={{ marginBottom: token.size, flex: '0 0 250px' }}>
-          <label style={{ display: 'block', marginBottom: token.size / 2 }}>Category</label>
-
-          <Controller
-            control={control}
-            name='category_id'
-            render={({ field }) => (
-              <TagSelect
-                mode={undefined}
-                style={{ width: '100%' }}
-                placeholder='Select a category'
-                itemLabel='category'
-                allowClear
-                options={categories.map((cat) => ({
-                  id: cat.id,
-                  label: cat.name,
-                  value: cat.id,
-                }))}
-                value={field.value}
-                onChange={(val) => field.onChange(val || '')}
-                onCreateItem={async (name) => {
-                  const res = await createCategoryMutation({ name })
-                  queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
-                  return res?.id
-                }}
-                onUpdateItem={async (id, newName) => {
-                  await updateCategoryMutation({ id, data: { name: newName } })
-                  queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
-                }}
-                onDeleteItem={async (id) => {
-                  const res = await deleteCategoryMutation(id)
-                  if (res && !res.isSuccess) {
-                    throw new Error(res.message || 'Failed to delete category')
-                  }
-                  if (field.value === id) {
-                    field.onChange('')
-                  }
-                  queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
-                }}
-              />
-            )}
-          />
-        </div>
-      </Flex>
-
-      {/* tags */}
+      {/* Tags (Blog tags stored in user config) */}
       <Row gutter={[token.size / 2, token.size / 2]} style={{ marginBottom: token.size }}>
         <Col xs={24}>
           <label style={{ display: 'block', marginBottom: token.size / 2 }}>Tags:</label>
@@ -214,9 +177,35 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
             name='tags'
             render={({ field }) => (
               <TagSelect
+                mode='multiple'
                 style={{ width: '100%' }}
+                placeholder='Select tags'
+                itemLabel='tag'
+                options={categories.map((cat) => ({
+                  id: cat.name,
+                  label: cat.name,
+                  value: cat.name,
+                }))}
                 value={field.value || []}
                 onChange={field.onChange}
+                onCreateItem={async (name) => {
+                  const res = await createCategoryMutation({ name })
+                  queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
+                  return res?.name || name
+                }}
+                onUpdateItem={async (id, newName) => {
+                  await updateCategoryMutation({ id, data: { name: newName } })
+                  queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
+                  handleTagUpdated(id, newName)
+                }}
+                onDeleteItem={async (id) => {
+                  const res = await deleteCategoryMutation(id)
+                  if (res && !res.isSuccess) {
+                    throw new Error(res.message || 'Failed to delete tag')
+                  }
+                  handleTagDeleted(id)
+                  queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
+                }}
                 onTagUpdated={handleTagUpdated}
                 onTagDeleted={handleTagDeleted}
               />
@@ -225,7 +214,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
         </Col>
       </Row>
 
-      {/* relation */}
+      {/* Relation */}
       <Row gutter={[token.size / 2, token.size / 2]} style={{ marginBottom: token.size }}>
         <Col xs={24}>
           <label style={{ display: 'block', marginBottom: token.size / 2 }}>Relation:</label>
@@ -245,6 +234,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
         </Col>
       </Row>
 
+      {/* Description */}
       <div style={{ marginBottom: token.size }}>
         <label style={{ display: 'block', marginBottom: token.size / 2 }}>
           Description <span style={{ color: token.colorError }}>*</span>

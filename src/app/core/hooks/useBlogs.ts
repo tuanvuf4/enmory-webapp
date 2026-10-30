@@ -36,7 +36,7 @@ export const useBlogs = (params: IBlogRequestParams) => {
   // Create a unique key for this query configuration (excluding page)
   const queryConfigKey = JSON.stringify({
     keyword: params.keyword,
-    categoryId: params.categoryId,
+    tag: params.tag || params.categoryId,
     orderBy: params.orderBy,
     order: params.order,
   })

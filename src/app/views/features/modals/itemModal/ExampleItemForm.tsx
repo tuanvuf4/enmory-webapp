@@ -12,7 +12,7 @@ interface IProps {
   nestIndex: number
 }
 
-export const ExampleItem: React.FC<IProps> = ({ nestIndex }) => {
+export const ExampleItemForm: React.FC<IProps> = ({ nestIndex }) => {
   const { token } = theme.useToken()
 
   const { confirm } = usePrompt()

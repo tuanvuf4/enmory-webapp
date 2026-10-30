@@ -1,23 +1,25 @@
-import { IBlogItem } from '@/models/blog.model'
-import { db, dbCollections } from '@/config/firebaseConfig'
-import { firebaseAuthService } from '@/services/firebase/authService'
 import {
-  collection,
-  query,
-  where,
-  getDocs,
   addDoc,
-  Timestamp,
-  QueryConstraint,
-  orderBy,
-  limit,
-  startAfter,
-  QueryDocumentSnapshot,
+  collection,
+  deleteField,
+  doc,
   DocumentData,
   getCountFromServer,
-  doc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  QueryConstraint,
+  QueryDocumentSnapshot,
+  startAfter,
+  Timestamp,
   updateDoc,
+  where,
 } from 'firebase/firestore'
+
+import { db, dbCollections } from '@/config/firebaseConfig'
+import { IBlogItem } from '@/models/blog.model'
+import { firebaseAuthService } from '@/services/firebase/authService'
 
 export interface IBlogResponse<T> {
   isSuccess: boolean
@@ -32,7 +34,9 @@ export type IArticleResponse<T> = IBlogResponse<T>
 
 export interface IBlogRequestParams {
   keyword?: string
+  /** @deprecated use tag instead */
   categoryId?: string
+  tag?: string
   page: number
   size: number
   orderBy?: 'created_date' | 'title'
@@ -53,9 +57,10 @@ const buildQueryConstraints = (params: IBlogRequestParams): QueryConstraint[] =>
     constraints.push(where('uid', '==', currentUser.uid))
   }
 
-  // Filter by category if provided
-  if (params.categoryId) {
-    constraints.push(where('category_id', '==', params.categoryId))
+  // Filter by tag/category if provided
+  const filterTag = params.tag || params.categoryId
+  if (filterTag) {
+    constraints.push(where('tags', 'array-contains', filterTag))
   }
 
   // Order by
@@ -67,6 +72,19 @@ const buildQueryConstraints = (params: IBlogRequestParams): QueryConstraint[] =>
   constraints.push(limit(params.size + 1))
 
   return constraints
+}
+
+/**
+ * Helper to normalize article tags
+ */
+const normalizeArticleTags = (data: any): string[] => {
+  if (Array.isArray(data.tags)) {
+    return Array.from(new Set(data.tags.map((t: any) => String(t || '').trim()).filter(Boolean)))
+  }
+  if (data.category_id && typeof data.category_id === 'string' && data.category_id.trim()) {
+    return [data.category_id.trim()]
+  }
+  return []
 }
 
 /**
@@ -94,14 +112,11 @@ export const blogApi = {
         }
       }
 
-      let constraints: QueryConstraint[] = buildQueryConstraints(params)
+      const constraints: QueryConstraint[] = buildQueryConstraints(params)
 
       // Handle pagination - startAfter must come after orderBy but before limit
       if (lastDoc) {
-        // Insert startAfter before the limit constraint
-        // buildQueryConstraints returns: [where, where, orderBy, limit]
-        // We need: [where, where, orderBy, startAfter, limit]
-        const limitIndex = constraints.length - 1 // limit is always last
+        const limitIndex = constraints.length - 1
         constraints.splice(limitIndex, 0, startAfter(lastDoc))
       }
 
@@ -113,27 +128,23 @@ export const blogApi = {
       let hasMore = false
 
       if (querySnapshot.docs.length > 0) {
-        // If we fetched size + 1 docs, it means there are more pages
         if (querySnapshot.docs.length > params.size) {
           hasMore = true
         }
 
-        // Get the last document of the valid items (before the extra one)
         newLastDoc = querySnapshot.docs[Math.min(params.size - 1, querySnapshot.docs.length - 1)]
-
-        // Slice to get only the requested number of documents
         const docsToProcess = querySnapshot.docs.slice(0, params.size)
 
-        blogs = docsToProcess.map((doc) => {
-          const data = doc.data()
+        blogs = docsToProcess.map((docSnap) => {
+          const data = docSnap.data()
+          const tags = normalizeArticleTags(data)
           return {
-            id: doc.id,
+            id: docSnap.id,
             uid: data.uid,
             title: data.title,
             description: data.description,
-            category_id: data.category_id,
             relation: data.relation || [],
-            tags: data.tags || [],
+            tags,
             created_date: data.created_date,
             last_update: data.last_update,
           } as IBlogItem
@@ -187,10 +198,12 @@ export const blogApi = {
         }
       }
 
-      const blogData: IBlogItem = {
-        ...data,
+      const tags = normalizeArticleTags(data)
+      const blogData: Record<string, any> = {
+        title: data.title,
+        description: data.description,
         relation: data.relation || [],
-        tags: data.tags || [],
+        tags,
         uid: currentUser.uid,
         created_date: Timestamp.now().toMillis(),
         last_update: Timestamp.now().toMillis(),
@@ -231,7 +244,7 @@ export const blogApi = {
   /**
    * Get total count of blogs for current user
    */
-  async getBlogsCount(categoryId?: string): Promise<number> {
+  async getBlogsCount(tagOrCategoryId?: string): Promise<number> {
     try {
       const currentUser = firebaseAuthService.getCurrentUser()
 
@@ -241,12 +254,11 @@ export const blogApi = {
 
       const constraints: QueryConstraint[] = [where('uid', '==', currentUser.uid)]
 
-      if (categoryId) {
-        constraints.push(where('category_id', '==', categoryId))
+      if (tagOrCategoryId) {
+        constraints.push(where('tags', 'array-contains', tagOrCategoryId))
       }
 
       const q = query(collection(db, dbCollections.blogs || dbCollections.articles), ...constraints)
-
       const countSnapshot = await getCountFromServer(q)
       return countSnapshot.data().count
     } catch (error) {
@@ -258,8 +270,8 @@ export const blogApi = {
   /**
    * Alias for getBlogsCount
    */
-  async getArticlesCount(categoryId?: string): Promise<number> {
-    return this.getBlogsCount(categoryId)
+  async getArticlesCount(tagOrCategoryId?: string): Promise<number> {
+    return this.getBlogsCount(tagOrCategoryId)
   },
 
   /**
@@ -290,15 +302,15 @@ export const blogApi = {
       }
 
       const data = docRef.data()
+      const tags = normalizeArticleTags(data)
 
       const blog: IBlogItem = {
         id: docRef.id,
         uid: (data as any).uid,
         title: (data as any).title,
         description: (data as any).description,
-        category_id: (data as any).category_id,
         relation: (data as any).relation || [],
-        tags: (data as any).tags || [],
+        tags,
         created_date: (data as any).created_date,
         last_update: (data as any).last_update,
       }
@@ -343,12 +355,13 @@ export const blogApi = {
         }
       }
 
-      const blogData = {
+      const tags = normalizeArticleTags(data)
+      const blogData: Record<string, any> = {
         title: data.title,
         description: data.description,
-        category_id: data.category_id || null,
         relation: data.relation || [],
-        tags: data.tags || [],
+        tags,
+        category_id: deleteField(),
         last_update: Timestamp.now().toMillis(),
       }
 
@@ -360,8 +373,13 @@ export const blogApi = {
         message: 'Blog updated successfully',
         content: {
           id,
-          ...data,
-          ...blogData,
+          uid: currentUser.uid,
+          title: data.title,
+          description: data.description,
+          relation: data.relation || [],
+          tags,
+          created_date: data.created_date,
+          last_update: Date.now(),
         } as IBlogItem,
         statusCode: 200,
       }

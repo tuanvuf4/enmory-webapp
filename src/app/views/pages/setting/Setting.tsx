@@ -152,6 +152,8 @@ const Setting = () => {
     )
     return {
       ...appSetting.meta,
+      itemTags: user?.configuration?.itemTags || [],
+      blogTags: user?.configuration?.blogTags || [],
       ...cleanConfig,
       numberOfListeningSentences:
         config?.numberOfListeningSentences ?? appSetting.meta.numberOfListeningSentences,

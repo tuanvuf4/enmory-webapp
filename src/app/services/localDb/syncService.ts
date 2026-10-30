@@ -1,5 +1,7 @@
 import {
   collection,
+  doc,
+  getDoc,
   getDocs,
   getCountFromServer,
   query,
@@ -80,20 +82,17 @@ export const syncService = {
   async getServerTagCount(uid: string): Promise<number> {
     if (!uid) return 0
     try {
-      const tagsRef = collection(db, dbCollections.tags)
-      const baseQuery = query(tagsRef, where('uid', '==', uid))
-      const totalSnap = await getCountFromServer(baseQuery)
-      return totalSnap.data().count
-    } catch (err) {
-      console.warn('getCountFromServer for tags failed, falling back to getDocs:', err)
-      try {
-        const tagsQuery = query(collection(db, dbCollections.tags), where('uid', '==', uid))
-        const snapshot = await getDocs(tagsQuery)
-        return snapshot.size
-      } catch (fallbackErr) {
-        console.error('Failed to get server tag count:', fallbackErr)
-        return 0
+      const userDoc = await getDoc(doc(db, 'users', uid))
+      if (userDoc.exists()) {
+        const itemTags = userDoc.data()?.configuration?.itemTags
+        if (Array.isArray(itemTags)) {
+          return itemTags.length
+        }
       }
+      return 0
+    } catch (err) {
+      console.warn('Failed to get server tag count from user doc:', err)
+      return 0
     }
   },
 
@@ -201,14 +200,27 @@ export const syncService = {
         0,
       )
 
-      // Fetch all tags from Firestore
-      options?.onProgress?.('Fetching all tag items from cloud...')
-      const tagsQuery = query(collection(db, dbCollections.tags), where('uid', '==', uid))
-      const tagsSnapshot = await getDocs(tagsQuery)
-      const cloudTags: ITagEntity[] = []
-      tagsSnapshot.forEach((docSnap) => {
-        cloudTags.push({ id: docSnap.id, ...(docSnap.data() as any) })
-      })
+      // Fetch all tags from user configuration in Firestore
+      options?.onProgress?.('Fetching all tag items from cloud configuration...')
+      const userDoc = await getDoc(doc(db, 'users', uid))
+      const userItemTags: any[] = userDoc.exists()
+        ? userDoc.data()?.configuration?.itemTags || []
+        : []
+      const cloudTags: ITagEntity[] = userItemTags
+        .map((tag: any) => {
+          const name =
+            typeof tag === 'string' ? tag.trim() : String(tag?.name || tag?.value || '').trim()
+          if (!name) return null
+          return {
+            id: name,
+            uid,
+            value: name,
+            value_lowercase: name.toLowerCase(),
+            created_date: tag?.created_date || 0,
+            last_update: tag?.last_update || 0,
+          }
+        })
+        .filter(Boolean) as ITagEntity[]
 
       // Sync pending deleted tags to cloud items if any
       const pendingTagLowers = await tagApi.getPendingDeletedTags(uid)
@@ -293,34 +305,30 @@ export const syncService = {
         0,
       )
 
-      // Query tags changed since lastSyncTime
+      // Query tags from user configuration
       options?.onProgress?.('Checking for updated tag items since last sync...')
       const cloudTagsToPut: ITagEntity[] = []
       try {
-        const deltaTagsQuery = query(
-          collection(db, dbCollections.tags),
-          where('uid', '==', uid),
-          where('last_update', '>', lastSyncTime),
-        )
-        const deltaTagsSnapshot = await getDocs(deltaTagsQuery)
-        deltaTagsSnapshot.forEach((docSnap) => {
-          cloudTagsToPut.push({ id: docSnap.id, ...(docSnap.data() as any) })
-        })
-      } catch (tagIndexErr) {
-        console.warn('deltaTagsQuery failed with index, falling back to uid query:', tagIndexErr)
-        try {
-          const allTagsQuery = query(collection(db, dbCollections.tags), where('uid', '==', uid))
-          const allTagsSnapshot = await getDocs(allTagsQuery)
-          allTagsSnapshot.forEach((docSnap) => {
-            const data = docSnap.data() as any
-            const lastUpdate = data.last_update || data.created_date || 0
-            if (lastUpdate > lastSyncTime) {
-              cloudTagsToPut.push({ id: docSnap.id, ...data })
+        const userDoc = await getDoc(doc(db, 'users', uid))
+        if (userDoc.exists()) {
+          const userItemTags: any[] = userDoc.data()?.configuration?.itemTags || []
+          userItemTags.forEach((tag: any) => {
+            const name =
+              typeof tag === 'string' ? tag.trim() : String(tag?.name || tag?.value || '').trim()
+            if (name) {
+              cloudTagsToPut.push({
+                id: name,
+                uid,
+                value: name,
+                value_lowercase: name.toLowerCase(),
+                created_date: tag?.created_date || 0,
+                last_update: tag?.last_update || Date.now(),
+              })
             }
           })
-        } catch (fallbackErr) {
-          console.warn('Fallback delta tags query failed:', fallbackErr)
         }
+      } catch (userErr) {
+        console.warn('Failed to get tags from user configuration during delta sync:', userErr)
       }
 
       // Query deleted_records collection for items and tags deleted on other devices

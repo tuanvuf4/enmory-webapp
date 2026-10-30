@@ -35,9 +35,12 @@ const fetchTags = createAsyncThunk('tags/fetchTags', async () => {
       ...tags,
       content:
         tags.content?.map((tag) => ({
-          id: tag.id,
-          label: tag.value,
-          value: tag.value,
+          id: tag.name,
+          label: tag.name,
+          value: tag.name,
+          name: tag.name,
+          color: tag.color,
+          order: tag.order,
         })) || [],
     }
   }

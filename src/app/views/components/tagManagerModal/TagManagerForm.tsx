@@ -10,14 +10,26 @@ import { usePrompt } from '@/helpers/hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { itemKeys } from '@/core/hooks/useItems'
 import { tagApi } from '@/services/firebase'
+import { ITag, DEFAULT_TAG_COLOR, DEFAULT_TAG_ORDER } from '@/models/tag.model'
 import { actionAsyncApp } from '@/store/asyncActions'
-import { Button, Flex, Input, Popconfirm, Space, Table, theme } from 'antd'
+import { authAction } from '@/store/reducers/auth.reducer'
+import {
+  Button,
+  ColorPicker,
+  Flex,
+  Input,
+  InputNumber,
+  Popconfirm,
+  Space,
+  Table,
+  Tag,
+  theme,
+} from 'antd'
 import type { TableProps } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
-interface ITagRow {
+export interface ITagRow extends ITag {
   id: string
-  value: string
 }
 
 export interface ITagManagerFormProps {
@@ -39,29 +51,48 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
   const { tags: allTags } = useSelector((state) => state.setting)
 
   const [tagKeyword, setTagKeyword] = useState('')
+  const [newTagColor, setNewTagColor] = useState(DEFAULT_TAG_COLOR)
+  const [newTagOrder, setNewTagOrder] = useState<number | null>(null)
+
   const [editingTagId, setEditingTagId] = useState<string>('')
-  const [editingTagValue, setEditingTagValue] = useState('')
+  const [editingTagName, setEditingTagName] = useState('')
+  const [editingTagColor, setEditingTagColor] = useState(DEFAULT_TAG_COLOR)
+  const [editingTagOrder, setEditingTagOrder] = useState(DEFAULT_TAG_ORDER)
   const [tagSubmitting, setTagSubmitting] = useState(false)
 
   const tagRows = useMemo<ITagRow[]>(
     () =>
       (allTags || [])
-        .map((tag) => ({
-          id: String(tag.id || ''),
-          value: String(tag.value || '').trim(),
+        .map((tag: any) => ({
+          id: String(tag.id || tag.name || tag.value || ''),
+          name: String(tag.name || tag.label || tag.value || '').trim(),
+          value: tag.value !== undefined ? String(tag.value) : '',
+          color: tag.color || DEFAULT_TAG_COLOR,
+          order: typeof tag.order === 'number' ? tag.order : DEFAULT_TAG_ORDER,
+          created_date: tag.created_date,
+          last_update: tag.last_update,
         }))
-        .filter((tag) => tag.id && tag.value),
+        .filter((tag) => tag.name),
     [allTags],
   )
 
   const filteredTagRows = useMemo(() => {
     const normalizedKeyword = tagKeyword.trim().toLowerCase()
-    if (!normalizedKeyword) return tagRows
-    return tagRows.filter((tag) => tag.value.toLowerCase().includes(normalizedKeyword))
+    const list = !normalizedKeyword
+      ? tagRows
+      : tagRows.filter((tag) => tag.name.toLowerCase().includes(normalizedKeyword))
+    return [...list].sort((a, b) => {
+      const diff = (a.order ?? DEFAULT_TAG_ORDER) - (b.order ?? DEFAULT_TAG_ORDER)
+      if (diff !== 0) return diff
+      return a.name.localeCompare(b.name)
+    })
   }, [tagKeyword, tagRows])
 
   const refreshTags = async () => {
-    await dispatch(actionAsyncApp.fetchTags() as any)
+    const res = await dispatch(actionAsyncApp.fetchTags() as any)
+    if (res?.payload?.content) {
+      dispatch(authAction.updateItemTags(res.payload.content))
+    }
   }
 
   useEffect(() => {
@@ -71,26 +102,40 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
   const closeAndReset = () => {
     setTagKeyword('')
     setEditingTagId('')
-    setEditingTagValue('')
+    setEditingTagName('')
+    setEditingTagColor(DEFAULT_TAG_COLOR)
+    setEditingTagOrder(DEFAULT_TAG_ORDER)
     onClose?.()
   }
 
   const handleCreateTag = async () => {
-    const value = tagKeyword.trim()
-    if (!value) {
-      message({ type: 'warning', content: 'Please enter tag value' })
+    const name = tagKeyword.trim()
+    if (!name) {
+      message({ type: 'warning', content: 'Please enter tag name' })
       return
     }
 
     try {
       setTagSubmitting(true)
-      const response = await tagApi.createTag(value)
+      const nextOrder =
+        newTagOrder ??
+        (tagRows.length > 0 ? Math.max(...tagRows.map((t) => t.order ?? 1)) + 1 : 1)
+
+      const response = await tagApi.createTag({
+        name,
+        color: newTagColor || DEFAULT_TAG_COLOR,
+        order: nextOrder,
+        value: '',
+      })
+
       if (!response.isSuccess) {
         message({ type: 'error', content: response.message || 'Failed to create tag' })
         return
       }
 
       setTagKeyword('')
+      setNewTagColor(DEFAULT_TAG_COLOR)
+      setNewTagOrder(null)
       message({ type: 'success', content: 'Tag created successfully' })
       await refreshTags()
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
@@ -103,31 +148,40 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
 
   const handleStartEdit = (tag: ITagRow) => {
     setEditingTagId(tag.id)
-    setEditingTagValue(tag.value)
+    setEditingTagName(tag.name)
+    setEditingTagColor(tag.color || DEFAULT_TAG_COLOR)
+    setEditingTagOrder(tag.order ?? DEFAULT_TAG_ORDER)
   }
 
   const handleCancelEdit = () => {
     setEditingTagId('')
-    setEditingTagValue('')
+    setEditingTagName('')
+    setEditingTagColor(DEFAULT_TAG_COLOR)
+    setEditingTagOrder(DEFAULT_TAG_ORDER)
   }
 
   const handleSaveTag = async (tag: ITagRow) => {
-    const nextValue = editingTagValue.trim()
-    if (!nextValue) {
-      message({ type: 'warning', content: 'Please enter tag value' })
+    const nextName = editingTagName.trim()
+    if (!nextName) {
+      message({ type: 'warning', content: 'Please enter tag name' })
       return
     }
 
     try {
       setTagSubmitting(true)
-      const response = await tagApi.updateTag(tag.id, nextValue)
+      const response = await tagApi.updateTag(tag.id, {
+        name: nextName,
+        color: editingTagColor || DEFAULT_TAG_COLOR,
+        order: editingTagOrder,
+      })
+
       if (!response.isSuccess) {
         message({ type: 'error', content: response.message || 'Failed to update tag' })
         return
       }
 
-      if (tag.value !== nextValue) {
-        onTagUpdated?.(tag.value, nextValue)
+      if (tag.name !== nextName) {
+        onTagUpdated?.(tag.name, nextName)
       }
 
       message({ type: 'success', content: 'Tag updated successfully' })
@@ -144,14 +198,14 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
   const handleDeleteTag = async (tag: ITagRow) => {
     try {
       setTagSubmitting(true)
-      const response = await tagApi.deleteTag(tag.id, tag.value)
+      const response = await tagApi.deleteTag(tag.id, tag.name)
 
       if (!response.isSuccess) {
         message({ type: 'error', content: response.message || 'Failed to delete tag' })
         return
       }
 
-      onTagDeleted?.(tag.value)
+      onTagDeleted?.(tag.name)
 
       message({ type: 'success', content: 'Tag deleted successfully' })
       await refreshTags()
@@ -165,19 +219,25 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
 
   const tagColumns: TableProps<ITagRow>['columns'] = [
     {
-      title: 'Tag',
-      key: 'value',
-      dataIndex: 'value',
-      width: '85%',
+      title: 'Tag Name',
+      key: 'name',
+      dataIndex: 'name',
+      width: '50%',
       render: (_, record) => {
         const isEditing = editingTagId === record.id
 
-        if (!isEditing) return <span>{record.value}</span>
+        if (!isEditing) {
+          return (
+            <Tag color={record.color || DEFAULT_TAG_COLOR} style={{ fontSize: 13, padding: '2px 8px' }}>
+              {record.name}
+            </Tag>
+          )
+        }
 
         return (
           <Input
-            value={editingTagValue}
-            onChange={(e) => setEditingTagValue(e.target.value)}
+            value={editingTagName}
+            onChange={(e) => setEditingTagName(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault()
@@ -195,9 +255,67 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
       },
     },
     {
+      title: 'Color',
+      key: 'color',
+      dataIndex: 'color',
+      width: '18%',
+      align: 'center',
+      render: (_, record) => {
+        const isEditing = editingTagId === record.id
+
+        if (!isEditing) {
+          return (
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                backgroundColor: record.color || DEFAULT_TAG_COLOR,
+                borderRadius: 4,
+                margin: 'auto',
+                border: `1px solid ${token.colorBorder}`,
+              }}
+              title={record.color}
+            />
+          )
+        }
+
+        return (
+          <ColorPicker
+            value={editingTagColor}
+            onChange={(_, hex) => setEditingTagColor(hex)}
+            size='small'
+          />
+        )
+      },
+    },
+    {
+      title: 'Order',
+      key: 'order',
+      dataIndex: 'order',
+      width: '16%',
+      align: 'center',
+      render: (_, record) => {
+        const isEditing = editingTagId === record.id
+
+        if (!isEditing) {
+          return <span>{record.order ?? DEFAULT_TAG_ORDER}</span>
+        }
+
+        return (
+          <InputNumber
+            min={0}
+            size='small'
+            value={editingTagOrder}
+            onChange={(val) => setEditingTagOrder(val ?? DEFAULT_TAG_ORDER)}
+            style={{ width: '100%' }}
+          />
+        )
+      },
+    },
+    {
       title: 'Actions',
       key: 'actions',
-      width: '15%',
+      width: '16%',
       align: 'center',
       render: (_, record) => {
         const isEditing = editingTagId === record.id
@@ -261,9 +379,10 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
 
   return (
     <Flex vertical gap={token.size} style={{ marginTop: onClose ? token.size : 0, width: '100%' }}>
-      <Flex align='center' gap={token.size / 2}>
+      {/* Create / Filter bar */}
+      <Flex align='center' gap={token.size / 2} wrap='wrap'>
         <Input
-          placeholder='Search and add new tag...'
+          placeholder='Enter tag name to add or filter...'
           value={tagKeyword}
           onChange={(e) => setTagKeyword(e.target.value)}
           onKeyDown={(e) => {
@@ -273,7 +392,12 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
               handleCreateTag()
             }
           }}
+          style={{ flex: 1, minWidth: 200 }}
           allowClear
+        />
+        <ColorPicker
+          value={newTagColor}
+          onChange={(_, hex) => setNewTagColor(hex)}
         />
         <Button
           type='primary'
@@ -282,7 +406,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
           onClick={handleCreateTag}
           loading={tagSubmitting}
         >
-          Add
+          Add Tag
         </Button>
       </Flex>
 

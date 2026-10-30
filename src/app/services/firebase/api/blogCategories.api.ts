@@ -1,30 +1,27 @@
 import { db, dbCollections } from '@/config/firebaseConfig'
+import {
+  ITag,
+  DEFAULT_TAG_COLOR,
+  DEFAULT_TAG_ORDER,
+  normalizeTag,
+  normalizeTagList,
+} from '@/models/tag.model'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import {
   collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  Timestamp,
-  QueryConstraint,
   doc,
   getDoc,
+  getDocs,
+  query,
+  setDoc,
+  where,
+  writeBatch,
 } from 'firebase/firestore'
 
-export interface IBlogCategory {
-  id?: string
+export interface IBlogCategory extends ITag {
   uid?: string
-  name: string
-  color?: string
-  order?: number
-  created_date?: number
-  last_update?: number
+  id?: string
 }
-
-export type IArticleCategory = IBlogCategory
 
 export interface IBlogCategoryResponse<T> {
   isSuccess: boolean
@@ -43,25 +40,48 @@ export interface IBlogCategoryRequestParams {
 export type IArticleCategoryRequestParams = IBlogCategoryRequestParams
 
 /**
- * Helper function to build Firestore query constraints for blog categories
+ * Helper to get current blogTags from user configuration in Firestore
  */
-const buildQueryConstraints = (uid?: string): QueryConstraint[] => {
-  const constraints: QueryConstraint[] = []
-
-  // Filter by current user
-  if (uid) {
-    constraints.push(where('uid', '==', uid))
+const getBlogTagsFromUser = async (uid: string): Promise<ITag[]> => {
+  try {
+    const userDocRef = doc(db, 'users', uid)
+    const userDoc = await getDoc(userDocRef)
+    if (userDoc.exists()) {
+      const data = userDoc.data()
+      const rawTags = data?.configuration?.blogTags
+      if (Array.isArray(rawTags)) {
+        return normalizeTagList(rawTags)
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to get blogTags from Firestore user doc:', err)
   }
-
-  return constraints
+  return []
 }
 
 /**
- * Blog Categories API
+ * Helper to save blogTags to user configuration in Firestore
+ */
+const saveBlogTagsToUser = async (uid: string, tags: ITag[]): Promise<ITag[]> => {
+  const normalized = normalizeTagList(tags)
+  const userDocRef = doc(db, 'users', uid)
+  await setDoc(
+    userDocRef,
+    {
+      configuration: { blogTags: normalized },
+      updatedAt: Date.now(),
+    },
+    { merge: true },
+  )
+  return normalized
+}
+
+/**
+ * Blog Tags (Categories) API using user configuration
  */
 export const blogCategoriesApi = {
   /**
-   * Fetch blog categories list
+   * Fetch blog tags/categories list from user configuration
    */
   async getCategories(
     params: IBlogCategoryRequestParams = {},
@@ -81,58 +101,25 @@ export const blogCategoriesApi = {
         }
       }
 
-      const constraints: QueryConstraint[] = buildQueryConstraints(currentUser.uid)
+      const rawTags = await getBlogTagsFromUser(currentUser.uid)
 
-      const q = query(
-        collection(db, dbCollections.blog_categories || dbCollections.article_categories),
-        ...constraints,
-      )
-      const querySnapshot = await getDocs(q)
+      const categories: IBlogCategory[] = rawTags.map((tag) => ({
+        ...tag,
+        id: tag.name,
+        uid: currentUser!.uid,
+      }))
 
-      const categories = querySnapshot.docs.map((docSnap) => {
-        const data = docSnap.data()
-        return {
-          id: docSnap.id,
-          uid: data.uid,
-          name: data.name,
-          color: data.color,
-          order: typeof data.order === 'number' ? data.order : 0,
-          created_date: data.created_date,
-          last_update: data.last_update,
-        } as IBlogCategory
-      })
-
-      // Sort in-memory to avoid Firestore composite index requirement and handle missing created_date
+      // Sort
       const orderByField = params.orderBy || 'order'
       const orderDirection = params.order === 'DESC' ? 'desc' : 'asc'
 
       categories.sort((a, b) => {
-        if (orderByField === 'order') {
-          const orderA = typeof a.order === 'number' ? a.order : 0
-          const orderB = typeof b.order === 'number' ? b.order : 0
-          if (orderA !== orderB) {
-            return orderDirection === 'desc' ? orderB - orderA : orderA - orderB
-          }
-          const timeA = a.created_date || 0
-          const timeB = b.created_date || 0
-          if (timeA !== timeB) {
-            return timeA - timeB
-          }
-          return (a.name || '').localeCompare(b.name || '')
-        }
         if (orderByField === 'name') {
-          const nameA = (a.name || '').toLowerCase()
-          const nameB = (b.name || '').toLowerCase()
-          const comp = nameA.localeCompare(nameB)
+          const comp = a.name.localeCompare(b.name)
           return orderDirection === 'desc' ? -comp : comp
         }
-
-        const timeA = a.created_date || 0
-        const timeB = b.created_date || 0
-        if (timeA !== timeB) {
-          return orderDirection === 'desc' ? timeB - timeA : timeA - timeB
-        }
-        return (a.name || '').localeCompare(b.name || '')
+        const diff = (a.order ?? DEFAULT_TAG_ORDER) - (b.order ?? DEFAULT_TAG_ORDER)
+        return orderDirection === 'desc' ? -diff : diff
       })
 
       return {
@@ -153,7 +140,7 @@ export const blogCategoriesApi = {
   },
 
   /**
-   * Get single blog category by id
+   * Get single blog category by name/id
    */
   async getCategoryById(id: string): Promise<IBlogCategoryResponse<IBlogCategory>> {
     try {
@@ -166,10 +153,24 @@ export const blogCategoriesApi = {
         }
       }
 
-      const docRef = doc(db, dbCollections.blog_categories || dbCollections.article_categories, id)
-      const docSnap = await getDoc(docRef)
+      let currentUser = firebaseAuthService.getCurrentUser()
+      if (!currentUser) {
+        currentUser = await firebaseAuthService.waitForUser()
+      }
 
-      if (!docSnap.exists()) {
+      if (!currentUser) {
+        return {
+          isSuccess: false,
+          message: 'Unauthorized',
+          content: null,
+          statusCode: 401,
+        }
+      }
+
+      const tags = await getBlogTagsFromUser(currentUser.uid)
+      const matched = tags.find((t) => t.name.toLowerCase() === id.toLowerCase())
+
+      if (!matched) {
         return {
           isSuccess: false,
           message: 'Blog category not found',
@@ -178,22 +179,14 @@ export const blogCategoriesApi = {
         }
       }
 
-      const data = docSnap.data()
-
-      const category: IBlogCategory = {
-        id: docSnap.id,
-        uid: data.uid,
-        name: data.name,
-        color: data.color,
-        order: typeof data.order === 'number' ? data.order : 0,
-        created_date: data.created_date,
-        last_update: data.last_update,
-      }
-
       return {
         isSuccess: true,
         message: 'Success',
-        content: category,
+        content: {
+          ...matched,
+          id: matched.name,
+          uid: currentUser.uid,
+        },
         statusCode: 200,
       }
     } catch (error) {
@@ -208,7 +201,7 @@ export const blogCategoriesApi = {
   },
 
   /**
-   * Create a new blog category
+   * Create a new blog category/tag in user configuration
    */
   async createCategory(data: IBlogCategory): Promise<IBlogCategoryResponse<IBlogCategory>> {
     try {
@@ -226,28 +219,54 @@ export const blogCategoriesApi = {
         }
       }
 
-      const now = Timestamp.now().toMillis()
-      const categoryData: Record<string, any> = {
-        uid: currentUser.uid,
-        name: data.name || '',
-        color: data.color ?? '',
-        order: typeof data.order === 'number' ? data.order : 0,
-        created_date: data.created_date || now,
-        last_update: now,
+      const normalized = normalizeTag(data)
+      if (!normalized || !normalized.name) {
+        return {
+          isSuccess: false,
+          message: 'Category name is required',
+          content: null,
+          statusCode: 400,
+        }
       }
 
-      const docRef = await addDoc(
-        collection(db, dbCollections.blog_categories || dbCollections.article_categories),
-        categoryData,
-      )
+      const currentTags = await getBlogTagsFromUser(currentUser.uid)
+      if (currentTags.some((t) => t.name.toLowerCase() === normalized.name.toLowerCase())) {
+        const existing = currentTags.find(
+          (t) => t.name.toLowerCase() === normalized.name.toLowerCase(),
+        )!
+        return {
+          isSuccess: true,
+          message: 'Category already exists',
+          content: {
+            ...existing,
+            id: existing.name,
+            uid: currentUser.uid,
+          },
+          statusCode: 200,
+        }
+      }
+
+      const maxOrder =
+        currentTags.length > 0 ? Math.max(...currentTags.map((t) => t.order ?? 1)) : 0
+
+      const newCategory: ITag = {
+        ...normalized,
+        order: typeof data.order === 'number' ? data.order : maxOrder + 1,
+        created_date: Date.now(),
+        last_update: Date.now(),
+      }
+
+      const nextTags = [...currentTags, newCategory]
+      await saveBlogTagsToUser(currentUser.uid, nextTags)
 
       return {
         isSuccess: true,
         message: 'Blog category created successfully',
         content: {
-          id: docRef.id,
-          ...categoryData,
-        } as IBlogCategory,
+          ...newCategory,
+          id: newCategory.name,
+          uid: currentUser.uid,
+        },
         statusCode: 201,
       }
     } catch (error) {
@@ -262,7 +281,7 @@ export const blogCategoriesApi = {
   },
 
   /**
-   * Update an existing blog category
+   * Update an existing blog category/tag
    */
   async updateCategory(
     id: string,
@@ -283,24 +302,91 @@ export const blogCategoriesApi = {
         }
       }
 
-      const categoryData: Record<string, any> = {
-        last_update: Timestamp.now().toMillis(),
-      }
-      if (data.name !== undefined) categoryData.name = data.name
-      if (data.color !== undefined) categoryData.color = data.color
-      if (data.order !== undefined) categoryData.order = typeof data.order === 'number' ? data.order : 0
+      const oldName = String(id || '').trim()
+      const newName = String(data.name || oldName).trim()
 
-      const docRef = doc(db, dbCollections.blog_categories || dbCollections.article_categories, id)
-      await updateDoc(docRef, categoryData)
+      if (!oldName || !newName) {
+        return {
+          isSuccess: false,
+          message: 'Name is required',
+          content: null,
+          statusCode: 400,
+        }
+      }
+
+      const currentTags = await getBlogTagsFromUser(currentUser.uid)
+      const oldIndex = currentTags.findIndex((t) => t.name.toLowerCase() === oldName.toLowerCase())
+
+      if (oldIndex === -1) {
+        return {
+          isSuccess: false,
+          message: 'Category not found',
+          content: null,
+          statusCode: 404,
+        }
+      }
+
+      const duplicateExists = currentTags.some(
+        (t, idx) => idx !== oldIndex && t.name.toLowerCase() === newName.toLowerCase(),
+      )
+      if (duplicateExists) {
+        return {
+          isSuccess: false,
+          message: 'Category with this name already exists',
+          content: null,
+          statusCode: 409,
+        }
+      }
+
+      const existing = currentTags[oldIndex]
+      const updatedTag: ITag = {
+        ...existing,
+        ...data,
+        name: newName,
+        value: data.value !== undefined ? String(data.value) : (existing.value ?? ''),
+        color: data.color || existing.color || DEFAULT_TAG_COLOR,
+        order: typeof data.order === 'number' ? data.order : (existing.order ?? 1),
+        last_update: Date.now(),
+      }
+
+      const updatedTags = [...currentTags]
+      updatedTags[oldIndex] = updatedTag
+      await saveBlogTagsToUser(currentUser.uid, updatedTags)
+
+      // Update articles that contain oldName in their tags
+      if (oldName.toLowerCase() !== newName.toLowerCase()) {
+        try {
+          const blogsQuery = query(
+            collection(db, dbCollections.blogs || dbCollections.articles),
+            where('uid', '==', currentUser.uid),
+            where('tags', 'array-contains', oldName),
+          )
+          const snap = await getDocs(blogsQuery)
+          if (!snap.empty) {
+            const batch = writeBatch(db)
+            snap.docs.forEach((d) => {
+              const articleData = d.data()
+              const prevTags: string[] = Array.isArray(articleData.tags) ? articleData.tags : []
+              const newArticleTags = Array.from(
+                new Set(prevTags.map((t) => (t === oldName ? newName : t))),
+              )
+              batch.update(d.ref, { tags: newArticleTags, last_update: Date.now() })
+            })
+            await batch.commit()
+          }
+        } catch (articleErr) {
+          console.warn('Failed to update tags in existing articles:', articleErr)
+        }
+      }
 
       return {
         isSuccess: true,
         message: 'Blog category updated successfully',
         content: {
-          id,
+          ...updatedTag,
+          id: updatedTag.name,
           uid: currentUser.uid,
-          ...categoryData,
-        } as IBlogCategory,
+        },
         statusCode: 200,
       }
     } catch (error) {
@@ -315,7 +401,7 @@ export const blogCategoriesApi = {
   },
 
   /**
-   * Delete a blog category
+   * Delete a blog category/tag
    */
   async deleteCategory(id: string): Promise<IBlogCategoryResponse<null>> {
     try {
@@ -333,8 +419,33 @@ export const blogCategoriesApi = {
         }
       }
 
-      const docRef = doc(db, dbCollections.blog_categories || dbCollections.article_categories, id)
-      await deleteDoc(docRef)
+      const targetName = String(id || '').trim()
+      const currentTags = await getBlogTagsFromUser(currentUser.uid)
+      const nextTags = currentTags.filter((t) => t.name.toLowerCase() !== targetName.toLowerCase())
+
+      await saveBlogTagsToUser(currentUser.uid, nextTags)
+
+      // Remove tag from existing articles
+      try {
+        const blogsQuery = query(
+          collection(db, dbCollections.blogs || dbCollections.articles),
+          where('uid', '==', currentUser.uid),
+          where('tags', 'array-contains', targetName),
+        )
+        const snap = await getDocs(blogsQuery)
+        if (!snap.empty) {
+          const batch = writeBatch(db)
+          snap.docs.forEach((d) => {
+            const articleData = d.data()
+            const prevTags: string[] = Array.isArray(articleData.tags) ? articleData.tags : []
+            const newTags = prevTags.filter((t) => t !== targetName)
+            batch.update(d.ref, { tags: newTags, last_update: Date.now() })
+          })
+          await batch.commit()
+        }
+      } catch (articleErr) {
+        console.warn('Failed to remove tag from existing articles:', articleErr)
+      }
 
       return {
         isSuccess: true,
@@ -355,3 +466,4 @@ export const blogCategoriesApi = {
 }
 
 export const articleCategoriesApi = blogCategoriesApi
+export const blogTagsApi = blogCategoriesApi

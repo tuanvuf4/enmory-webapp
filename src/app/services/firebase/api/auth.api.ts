@@ -2,8 +2,7 @@ import { IHttpResponse } from '@/models/http.model'
 import { ILogin, ILoginResponse, IUser } from '@/models/user.model'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { db } from '@/config/firebaseConfig'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { appSetting } from '@/config/appConfig'
+import { doc, setDoc } from 'firebase/firestore'
 
 /**
  * Get Google user info from Firebase Auth user
@@ -116,27 +115,14 @@ const getUserInfo = async (): Promise<IHttpResponse<IUser<string>>> => {
       throw new Error('No user logged in')
     }
 
-    const userDocRef = doc(db, 'users', currentUser.uid)
-    const userDoc = await getDoc(userDocRef)
-
-    if (!userDoc.exists()) {
+    const userProfile = await firebaseAuthService.getUserProfile(currentUser.uid)
+    if (!userProfile) {
       throw new Error('User document not found')
     }
 
-    const rawUserData = userDoc.data() as IUser<string>
-    const rawConfig = (rawUserData.configuration || {}) as Record<string, any>
-    const cleanConfig = Object.fromEntries(
-      Object.entries(rawConfig).filter(([_, v]) => v !== undefined),
-    )
     const userData: IUser<string> = {
-      ...rawUserData,
-      uid: currentUser.uid as any,
-      configuration: {
-        ...appSetting.meta,
-        ...cleanConfig,
-        numberOfListeningSentences:
-          rawConfig.numberOfListeningSentences ?? appSetting.meta.numberOfListeningSentences,
-      } as any,
+      ...(userProfile as any),
+      uid: currentUser.uid,
     }
 
     return {

@@ -47,6 +47,7 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
       dataIndex: 'color',
       key: 'color',
       width: '15%',
+      align: 'center',
       render: (color: string) => (
         <div
           style={{
@@ -67,7 +68,7 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
       key: 'order',
       width: '15%',
       align: 'center',
-      render: (order?: number) => order ?? 0,
+      render: (order?: number) => order ?? 1,
     },
     {
       title: 'Actions',
@@ -85,9 +86,9 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
             title='Edit'
           />
           <Popconfirm
-            title='Delete Category'
-            description='Are you sure you want to delete this category?'
-            onConfirm={() => handleDelete(record.id)}
+            title='Delete Tag'
+            description='Are you sure you want to delete this tag?'
+            onConfirm={() => handleDelete(record.id || record.name)}
             okText='Yes'
             cancelText='No'
           >

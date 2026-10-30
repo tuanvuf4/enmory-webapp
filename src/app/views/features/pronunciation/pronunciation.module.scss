@@ -1,0 +1,445 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Technique Selection Bar (Checkboxes) ── */
+.techniqueBar {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+:global(.dark) .techniqueBar {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.techniqueCheckboxes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.techniqueLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ── Practice Card ── */
+.practiceCard {
+  border-radius: 14px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* ── Tip Box ── */
+.tipBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fffbe6;
+  border: 1px solid #ffe58f;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+:global(.dark) .tipBox {
+  background: rgba(250, 219, 20, 0.08);
+  border-color: rgba(250, 219, 20, 0.25);
+}
+
+/* ── Unified Visualizer Box ── */
+.visualizerBox {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 110px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+:global(.dark) .visualizerBox {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.visualizerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+
+/* ── Token Row (Unified Sentence) ── */
+.tokensRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  row-gap: 16px;
+  column-gap: 2px;
+  line-height: 1.8;
+  padding: 6px 0;
+}
+
+.wordContainer {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  margin: 0 4px;
+}
+
+/* Intonation layer on top */
+.intonationSlot {
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.arrowUp {
+  color: #52c41a;
+  animation: floatUp 1.2s ease-in-out infinite alternate;
+}
+
+.arrowDown {
+  color: #1677ff;
+}
+
+@keyframes floatUp {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-2px);
+  }
+}
+
+/* Stress layer indicator */
+.stressDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fa541c;
+  margin-bottom: 2px;
+}
+
+/* Word token */
+.token {
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  cursor: default;
+  transition: all 0.2s ease;
+  padding: 0 2px;
+}
+
+.tokenStressed {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fa541c !important;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
+.tokenUnstressed {
+  font-size: 14px;
+  font-weight: 400;
+  opacity: 0.65;
+}
+
+.tokenSpeaking {
+  animation: tokenPulse 0.7s ease-in-out infinite alternate;
+  background: rgba(22, 119, 255, 0.12);
+  border-radius: 4px;
+}
+
+@keyframes tokenPulse {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.05);
+    opacity: 0.75;
+  }
+}
+
+/* Chunk divider for Shadowing */
+.chunkDivider {
+  display: inline-flex;
+  align-items: center;
+  color: #722ed1;
+  font-weight: 700;
+  font-size: 14px;
+  margin: 0 6px;
+  user-select: none;
+  opacity: 0.8;
+}
+
+/* ── Linking Arcs between words ── */
+.linkSlot {
+  position: absolute;
+  bottom: -9px;
+  left: 100%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 9px;
+  border-bottom-left-radius: 50%;
+  border-bottom-right-radius: 50%;
+  border-bottom: 2.5px solid transparent;
+  pointer-events: auto;
+  cursor: help;
+  z-index: 2;
+}
+
+.linkCV {
+  border-bottom-color: #1677ff;
+}
+
+.linkVV {
+  border-bottom-color: #52c41a;
+  border-bottom-style: dashed;
+}
+
+.linkSilent {
+  border-bottom-color: #fa8c16;
+  border-bottom-style: dotted;
+}
+
+/* ── Shadowing Chunk Bar ── */
+.shadowChunksBar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+:global(.dark) .shadowChunksBar {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.shadowChunksList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.shadowChunkItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(114, 46, 209, 0.25);
+  background: rgba(114, 46, 209, 0.04);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shadowChunkItem:hover {
+  border-color: #722ed1;
+  background: rgba(114, 46, 209, 0.08);
+}
+
+.shadowChunkActive {
+  background: #722ed1 !important;
+  color: #fff !important;
+  border-color: #722ed1 !important;
+}
+
+/* ── Translation ── */
+.translationArea {
+  min-height: 28px;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+/* ── AI Voice Recorder & Evaluation Section ── */
+.recorderCard {
+  border-radius: 14px;
+  border: 1px solid rgba(22, 119, 255, 0.2);
+  background: linear-gradient(180deg, rgba(22, 119, 255, 0.02) 0%, rgba(22, 119, 255, 0.05) 100%);
+  overflow: hidden;
+}
+
+:global(.dark) .recorderCard {
+  border-color: rgba(22, 119, 255, 0.3);
+  background: linear-gradient(180deg, rgba(22, 119, 255, 0.04) 0%, rgba(22, 119, 255, 0.08) 100%);
+}
+
+.recordConsole {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.recordWaveAnimation {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+}
+
+.waveBar {
+  width: 3px;
+  background: #ff4d4f;
+  border-radius: 3px;
+  animation: wavePulse 1s ease-in-out infinite alternate;
+}
+
+.waveBar:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.waveBar:nth-child(3) {
+  animation-delay: 0.4s;
+}
+.waveBar:nth-child(4) {
+  animation-delay: 0.1s;
+}
+.waveBar:nth-child(5) {
+  animation-delay: 0.3s;
+}
+
+@keyframes wavePulse {
+  0% {
+    height: 6px;
+  }
+  100% {
+    height: 22px;
+  }
+}
+
+.audioPlayer {
+  width: 100%;
+  max-width: 360px;
+  height: 38px;
+  border-radius: 20px;
+  outline: none;
+}
+
+/* ── AI Evaluation Result Box ── */
+.evaluationBox {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+:global(.dark) .evaluationBox {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.scoreBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+:global(.dark) .scoreBanner {
+  background: rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.transcribeBox {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  border-left: 3px solid #1677ff;
+}
+
+:global(.dark) .transcribeBox {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.techniquesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.techniqueCard {
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+:global(.dark) .techniqueCard {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.techniqueCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wordTagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tipsBox {
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+:global(.dark) .tipsBox {
+  background: rgba(82, 196, 26, 0.08);
+  border-color: rgba(82, 196, 26, 0.25);
+}
+
+/* ── Legend Card ── */
+.legendCard {
+  border-radius: 12px;
+}

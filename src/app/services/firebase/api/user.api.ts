@@ -1,8 +1,9 @@
 import { IHttpResponse } from '@/models/http.model'
 import { IUser, IUserConfig } from '@/models/user.model'
+import { ITag } from '@/models/tag.model'
 import { db } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
-import { collection, getDocs, doc, updateDoc, Timestamp, query } from 'firebase/firestore'
+import { collection, getDocs, doc, getDoc, updateDoc, Timestamp, query } from 'firebase/firestore'
 import { appSetting } from '@/config/appConfig'
 import { removeUndefinedFields } from '@/services/firebase/dbIntegration'
 
@@ -135,14 +136,24 @@ const updateUserConfig = async (
     }
 
     const userDocRef = doc(db, 'users', currentUser.uid)
+    const userDocSnap = await getDoc(userDocRef)
+    const existingConfig = (userDocSnap.data()?.configuration || {}) as Record<string, any>
+
     const cleanConfig = Object.fromEntries(
       Object.entries(config || {}).filter(([_, v]) => v !== undefined),
     )
     const sanitizedConfig: IUserConfig<number[]> = {
       ...appSetting.meta,
+      ...existingConfig,
       ...cleanConfig,
+      itemTags:
+        cleanConfig.itemTags !== undefined ? cleanConfig.itemTags : existingConfig.itemTags || [],
+      blogTags:
+        cleanConfig.blogTags !== undefined ? cleanConfig.blogTags : existingConfig.blogTags || [],
       numberOfListeningSentences:
-        config?.numberOfListeningSentences ?? appSetting.meta.numberOfListeningSentences,
+        config?.numberOfListeningSentences ??
+        existingConfig.numberOfListeningSentences ??
+        appSetting.meta.numberOfListeningSentences,
     }
 
     const updateData = removeUndefinedFields({
@@ -169,9 +180,59 @@ const updateUserConfig = async (
   }
 }
 
+/**
+ * Update item tags in user configuration
+ */
+const updateItemTags = async (tags: ITag[] | string[]): Promise<IHttpResponse<ITag[]>> => {
+  try {
+    const currentUser = firebaseAuthService.getCurrentUser()
+    if (!currentUser) throw new Error('User not authenticated')
+    const updated = await firebaseAuthService.updateItemTags(currentUser.uid, tags)
+    return {
+      isSuccess: true,
+      message: 'Item tags updated successfully',
+      content: updated,
+      statusCode: 200,
+    }
+  } catch (error: any) {
+    return {
+      isSuccess: false,
+      message: error?.message || 'Failed to update item tags',
+      content: [],
+      statusCode: 500,
+    }
+  }
+}
+
+/**
+ * Update blog tags in user configuration
+ */
+const updateBlogTags = async (tags: ITag[] | string[]): Promise<IHttpResponse<ITag[]>> => {
+  try {
+    const currentUser = firebaseAuthService.getCurrentUser()
+    if (!currentUser) throw new Error('User not authenticated')
+    const updated = await firebaseAuthService.updateBlogTags(currentUser.uid, tags)
+    return {
+      isSuccess: true,
+      message: 'Blog tags updated successfully',
+      content: updated,
+      statusCode: 200,
+    }
+  } catch (error: any) {
+    return {
+      isSuccess: false,
+      message: error?.message || 'Failed to update blog tags',
+      content: [],
+      statusCode: 500,
+    }
+  }
+}
+
 export const apiUser = {
   getUsers,
   createUser,
   userConfig,
   updateUserConfig,
+  updateItemTags,
+  updateBlogTags,
 }

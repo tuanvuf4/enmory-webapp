@@ -22,6 +22,7 @@ import {
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore'
 import { dbCollections, app as firebaseApp } from '@/config/firebaseConfig'
 import { IUserConfig } from '@/models/user.model'
+import { ITag, normalizeTagList } from '@/models/tag.model'
 import { appSetting } from '@/config/appConfig'
 import { IHttpResponse } from '@/models/http.model'
 
@@ -451,11 +452,59 @@ export class FirebaseAuthService {
         const cleanConfig = Object.fromEntries(
           Object.entries(rawConfig).filter(([_, v]) => v !== undefined),
         )
+
+        // Tags are strictly fetched from user configuration as ITag[]
+        const itemTags: ITag[] = normalizeTagList(rawConfig.itemTags)
+        const blogTags: ITag[] = normalizeTagList(rawConfig.blogTags)
+
+        // Synchronize data on Firestore so itemTags & blogTags follow the ITag structure
+        const needsItemTagsSync =
+          Array.isArray(rawConfig.itemTags) &&
+          rawConfig.itemTags.some(
+            (t: any) =>
+              typeof t === 'string' ||
+              !t?.name ||
+              t.color === undefined ||
+              t.order === undefined ||
+              t.value === undefined,
+          )
+        const needsBlogTagsSync =
+          Array.isArray(rawConfig.blogTags) &&
+          rawConfig.blogTags.some(
+            (t: any) =>
+              typeof t === 'string' ||
+              !t?.name ||
+              t.color === undefined ||
+              t.order === undefined ||
+              t.value === undefined,
+          )
+
+        if (needsItemTagsSync || needsBlogTagsSync) {
+          try {
+            await setDoc(
+              userDocRef,
+              {
+                configuration: {
+                  ...cleanConfig,
+                  itemTags,
+                  blogTags,
+                },
+                updatedAt: Date.now(),
+              },
+              { merge: true },
+            )
+          } catch (syncErr) {
+            console.warn('Failed to sync normalized tags to user configuration:', syncErr)
+          }
+        }
+
         return {
           ...data,
           configuration: {
             ...appSetting.meta,
             ...cleanConfig,
+            itemTags,
+            blogTags,
             numberOfListeningSentences:
               rawConfig.numberOfListeningSentences ?? appSetting.meta.numberOfListeningSentences,
           },
@@ -481,6 +530,40 @@ export class FirebaseAuthService {
       console.error('Error updating user profile:', error)
       throw error
     }
+  }
+
+  /**
+   * Update item tags in user configuration
+   */
+  async updateItemTags(uid: string, tags: ITag[] | string[]): Promise<ITag[]> {
+    const normalizedTags = normalizeTagList(tags as any[])
+    const userDocRef = doc(this.db, 'users', uid)
+    await setDoc(
+      userDocRef,
+      {
+        configuration: { itemTags: normalizedTags },
+        updatedAt: Date.now(),
+      },
+      { merge: true },
+    )
+    return normalizedTags
+  }
+
+  /**
+   * Update blog tags in user configuration
+   */
+  async updateBlogTags(uid: string, tags: ITag[] | string[]): Promise<ITag[]> {
+    const normalizedTags = normalizeTagList(tags as any[])
+    const userDocRef = doc(this.db, 'users', uid)
+    await setDoc(
+      userDocRef,
+      {
+        configuration: { blogTags: normalizedTags },
+        updatedAt: Date.now(),
+      },
+      { merge: true },
+    )
+    return normalizedTags
   }
 
   /**

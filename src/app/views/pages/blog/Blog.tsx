@@ -1,35 +1,35 @@
-import { useState, useEffect } from 'react'
-import appStyle from '@/style/appStyle.module.scss'
-import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 import {
-  Col,
-  Row,
-  theme,
+  AppstoreOutlined,
+  PlusOutlined,
+  TagsOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons'
+import {
+  Badge,
   Button,
-  Spin,
-  Pagination,
+  Col,
+  Divider,
   Flex,
   Modal,
+  Pagination,
+  Row,
+  Spin,
   Tag,
+  theme,
   Tooltip,
-  Badge,
-  Divider,
 } from 'antd'
-import { BlogItem } from '@/views/components/blogItem/BlogItem'
+import { useEffect, useState } from 'react'
+
 import { useBlogs, useBlogsCount, useBlogCategories } from '@/core/hooks'
-import { useBlogModal } from '@/helpers/hooks/useBlogModal'
-import { useBlogCategoryModal } from '@/helpers/hooks/useBlogCategoryModal'
-import {
-  PlusOutlined,
-  AppstoreOutlined,
-  UnorderedListOutlined,
-  TagsOutlined,
-} from '@ant-design/icons'
-import { NotFound } from '@/views/components'
-import { BlogCategoryList } from '@/views/components/blogCategoryList/blogCategoryList'
-import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
-import { Widget } from '@/views/features'
 import { usePrompt } from '@/helpers/hooks'
+import { useBlogCategoryModal } from '@/helpers/hooks/useBlogCategoryModal'
+import { useBlogModal } from '@/helpers/hooks/useBlogModal'
+import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
+import appStyle from '@/style/appStyle.module.scss'
+import { NotFound, PageTitle } from '@/views/components'
+import { BlogCategoryList } from '@/views/components/blogCategoryList/blogCategoryList'
+import { BlogItem } from '@/views/components/blogItem/BlogItem'
+import { Widget } from '@/views/features/widget/Widget'
 
 const { CheckableTag } = Tag
 
@@ -40,7 +40,7 @@ export const Blog = () => {
   const { token } = theme.useToken()
 
   const [page, setPage] = useState(0)
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>()
+  const [selectedTag, setSelectedTag] = useState<string | undefined>()
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
@@ -54,15 +54,15 @@ export const Blog = () => {
   } = useBlogs({
     page,
     size: PAGE_SIZE,
-    categoryId: selectedCategory,
+    tag: selectedTag,
+    categoryId: selectedTag,
     orderBy: 'created_date',
     order: 'DESC',
   })
 
-  const { data: totalCount = 0 } = useBlogsCount(selectedCategory)
+  const { data: totalCount = 0 } = useBlogsCount(selectedTag)
 
   const { data: cats = [], isLoading: isLoadingCategories } = useBlogCategories()
-
   const categories = cats
 
   useEffect(() => {
@@ -86,9 +86,9 @@ export const Blog = () => {
     setShowCategoryModal(false)
   }
 
-  const handleSelectCategory = (categoryId?: string) => {
+  const handleSelectTag = (tag?: string) => {
     setPage(0)
-    setSelectedCategory(categoryId)
+    setSelectedTag(tag)
   }
 
   const colSpan =
@@ -119,9 +119,8 @@ export const Blog = () => {
                   openBlogModal('add', {
                     description: '',
                     title: '',
-                    category_id: selectedCategory,
                     relation: [],
-                    tags: [],
+                    tags: selectedTag ? [selectedTag] : [],
                   })
                 }
               >
@@ -131,9 +130,9 @@ export const Blog = () => {
 
             <Divider type='vertical' style={{ margin: 0 }} />
 
-            <Tooltip title='Manage categories'>
+            <Tooltip title='Manage blog tags'>
               <Button icon={<TagsOutlined />} onClick={() => setShowCategoryModal(true)}>
-                Categories
+                Tags
               </Button>
             </Tooltip>
           </Flex>
@@ -159,7 +158,7 @@ export const Blog = () => {
           </Flex>
         </Flex>
 
-        {/* Category filter bar */}
+        {/* Tag filter bar */}
         <Flex
           gap={token.sizeXS}
           wrap='wrap'
@@ -172,15 +171,15 @@ export const Blog = () => {
           }}
         >
           <Badge
-            count={!selectedCategory ? totalCount : 0}
+            count={!selectedTag ? totalCount : 0}
             size='small'
             color={token.colorPrimary}
             overflowCount={999}
           >
             <CheckableTag
               key='all'
-              checked={!selectedCategory}
-              onChange={() => handleSelectCategory(undefined)}
+              checked={!selectedTag}
+              onChange={() => handleSelectTag(undefined)}
             >
               All
             </CheckableTag>
@@ -188,9 +187,9 @@ export const Blog = () => {
 
           {categories.map((cat) => (
             <CheckableTag
-              key={cat.id}
-              checked={selectedCategory === cat.id}
-              onChange={(checked) => handleSelectCategory(checked ? cat.id : undefined)}
+              key={cat.id || cat.name}
+              checked={selectedTag === cat.name}
+              onChange={(checked) => handleSelectTag(checked ? cat.name : undefined)}
             >
               {cat.name}
             </CheckableTag>
@@ -227,7 +226,6 @@ export const Blog = () => {
                       title={blog.title}
                       description={blog.description}
                       created_date={blog.created_date}
-                      category_id={blog.category_id}
                       relation={blog.relation}
                       tags={blog.tags}
                       compact={viewMode === 'list'}
@@ -250,9 +248,8 @@ export const Blog = () => {
                       openBlogModal('add', {
                         description: '',
                         title: '',
-                        category_id: selectedCategory,
                         relation: [],
-                        tags: [],
+                        tags: selectedTag ? [selectedTag] : [],
                       })
                     }
                   >
@@ -279,12 +276,12 @@ export const Blog = () => {
         )}
       </div>
 
-      {/* Blog Category Modal */}
+      {/* Blog Category/Tags Modal */}
       <Modal
         title={
           <Flex align='center' gap={token.size}>
             <TagsOutlined />
-            <span>Manage Categories</span>
+            <span>Manage Blog Tags</span>
             <Button
               type='primary'
               icon={<PlusOutlined />}

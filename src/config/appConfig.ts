@@ -1,3 +1,5 @@
+import { ITag } from '@/models/tag.model'
+
 export enum EVN {
   PRODUCTION = 'production',
   DEVELOPMENT = 'development',
@@ -147,6 +149,8 @@ export const appSetting = {
     community: true,
     showPlayer: true,
     references: [],
+    itemTags: [] as ITag[],
+    blogTags: [] as ITag[],
   },
   options: [
     { value: 0, label: 0 },

@@ -5,10 +5,10 @@ import {
   PlusOutlined,
   TranslationOutlined,
 } from '@ant-design/icons'
-import { Button, Checkbox, Col, Flex, Input, Row, Select, Space, Tag,theme } from 'antd'
+import { Button, Checkbox, Col, Flex, Input, Row, Select, Space, Tag, theme } from 'antd'
 import clsx from 'clsx'
-import { memo, useCallback,useEffect, useMemo, useState } from 'react'
-import { Controller,useFieldArray, useFormContext } from 'react-hook-form'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { Controller, useFieldArray, useFormContext } from 'react-hook-form'
 
 import { useSelector } from '@/core/hooks'
 import { sanitizePronunciation } from '@/core/utils'
@@ -19,7 +19,7 @@ import appStyle from '@/style/appStyle.module.scss'
 import { InputTag, TextEditor } from '@/views/components'
 
 import { meaningItem } from './data'
-import { ExampleItem } from './ExampleItemForm'
+import { ExampleItemForm } from './ExampleItemForm'
 import styles from './itemModal.module.scss'
 
 interface IProps {
@@ -494,7 +494,7 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                   </Row>
                 </Col>
 
-                <ExampleItem nestIndex={index} />
+                <ExampleItemForm nestIndex={index} />
               </Space>
             )}
           </div>

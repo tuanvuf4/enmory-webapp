@@ -7,6 +7,7 @@ import { isGroupWord } from '@/helpers/validate'
 import { ECategory, EType, IItem, IExample, IMeaning } from '@/models/item.model'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
+import { authAction } from '@/store/reducers/auth.reducer'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { InputTag, Level, ReviewableTextArea } from '@/views/components'
@@ -263,17 +264,20 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
           const tagsResponse = await tagApi.getTags('')
           if (tagsResponse.isSuccess && tagsResponse.content) {
             const latestTags = tagsResponse.content
+            dispatch(authAction.updateItemTags(latestTags))
             dispatch(
               settingAction.setTags(
                 latestTags.map((tag) => ({
-                  id: tag.id,
-                  label: tag.value,
-                  value: tag.value,
+                  id: tag.name,
+                  label: tag.name,
+                  value: tag.name,
+                  color: tag.color,
+                  order: tag.order,
                 })),
               ),
             )
 
-            const tagLookup = new Map(latestTags.map((tag) => [tag.value_lowercase, tag.value]))
+            const tagLookup = new Map(latestTags.map((tag) => [tag.name.toLowerCase(), tag.name]))
             const finalTags = normalizedTags.map((tag) => tagLookup.get(tag.toLowerCase()) || tag)
             data.tags = Array.from(new Set(finalTags))
           } else {

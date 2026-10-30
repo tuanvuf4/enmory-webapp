@@ -87,11 +87,15 @@ export const TagSelect: React.FC<ITagSelectProps> = ({
   const defaultTagOptions = useMemo(
     () =>
       (allTags || [])
-        .map((tag) => ({
-          id: (tag as any).id,
-          label: String(tag.value || '').trim(),
-          value: String(tag.value || '').trim(),
-        }))
+        .map((tag: any) => {
+          const val = String(tag.name || tag.label || tag.value || '').trim()
+          return {
+            id: tag.id || val,
+            label: val,
+            value: val,
+            color: tag.color,
+          }
+        })
         .filter((tag) => Boolean(tag.value)),
     [allTags],
   )

@@ -2,12 +2,12 @@ import { GoogleGenAI } from '@google/genai'
 import { IHttpResponse } from '@/models/http.model'
 import { resolveGeminiApiKey } from './geminiDictionary.service'
 import {
-  type TGeminiTranscriptModel,
+  type TGeminiModel,
   GEMINI_TRANSCRIPT_MODELS,
   CANDIDATE_GEMINI_MODELS,
 } from './geminiModels'
 
-export type { TGeminiTranscriptModel }
+export type { TGeminiModel }
 export { GEMINI_TRANSCRIPT_MODELS, CANDIDATE_GEMINI_MODELS }
 
 export const DEFAULT_TRANSCRIPT_DESCRIPTION =
@@ -38,7 +38,7 @@ export const geminiTranscriptService = {
    */
   generatePromptFromDescription: async (
     description: string,
-    preferredModel?: TGeminiTranscriptModel,
+    preferredModel?: TGeminiModel,
   ): Promise<string> => {
     const ai = getGeminiClient()
 
@@ -96,7 +96,7 @@ Return ONLY the generated prompt text, ready to be sent to an AI model. Do not i
    */
   generateTranscriptFromPrompt: async (
     generatedPrompt: string,
-    preferredModel?: TGeminiTranscriptModel,
+    preferredModel?: TGeminiModel,
   ): Promise<IGenerateTranscriptResponse> => {
     const ai = getGeminiClient()
 
@@ -170,7 +170,7 @@ You MUST return a JSON object with this exact schema:
   generateTranscript: async (
     description?: string,
     onProgress?: (step: 'prompt' | 'transcript') => void,
-    preferredModel?: TGeminiTranscriptModel,
+    preferredModel?: TGeminiModel,
   ): Promise<IHttpResponse<IGenerateTranscriptResponse>> => {
     try {
       const desc = description?.trim() || DEFAULT_TRANSCRIPT_DESCRIPTION

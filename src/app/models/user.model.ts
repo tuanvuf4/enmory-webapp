@@ -1,3 +1,5 @@
+import { ITag } from './tag.model'
+
 export interface ILoginResponse {
   access_token: string
   expired_in: number
@@ -17,6 +19,8 @@ export interface IUserConfig<R = number[]> {
   references: R
   community: boolean
   showPlayer: boolean
+  itemTags?: ITag[]
+  blogTags?: ITag[]
 }
 
 export interface IUser<R = number[]> {

@@ -1,37 +1,27 @@
-import { db, dbCollections } from '@/config/firebaseConfig'
+import { db } from '@/config/firebaseConfig'
 import { IHttpResponse } from '@/models/http.model'
 import { IItem } from '@/models/item.model'
-import { ITagEntity, ITagDto } from '@/models/tag.model'
+import {
+  ITag,
+  ITagEntity,
+  ITagDto,
+  DEFAULT_TAG_COLOR,
+  DEFAULT_TAG_ORDER,
+  DEFAULT_TAG_VALUE,
+  normalizeTag,
+  normalizeTagList,
+} from '@/models/tag.model'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { localDb } from '@/services/localDb/db'
 import { invalidateSearchIndex } from '@/services/localDb/searchEngine'
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  Timestamp,
-  updateDoc,
-  where,
-  writeBatch,
-} from 'firebase/firestore'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 
-export type { ITagEntity, ITagDto }
-
-const normalizeTags = (tags: string[] = []) => {
-  const cleanTags = tags.map((tag) => tag.trim()).filter(Boolean)
-  return Array.from(new Set(cleanTags))
-}
+export type { ITagEntity, ITagDto, ITag }
 
 const PENDING_DELETED_TAGS_PREFIX = 'pending_deleted_tags_'
 
 /**
  * Remove a deleted tag from items in local database only.
- * This runs immediately and avoids large server queries during tag deletion.
  */
 const removeTagFromLocalItems = async (uid: string, targetTagLower: string): Promise<number> => {
   if (!uid || !targetTagLower) return 0
@@ -77,6 +67,61 @@ const removeTagFromLocalItems = async (uid: string, targetTagLower: string): Pro
 }
 
 /**
+ * Replace an updated tag in items in local database.
+ */
+const replaceTagInLocalItems = async (
+  uid: string,
+  oldTagLower: string,
+  newTag: string,
+): Promise<number> => {
+  if (!uid || !oldTagLower || !newTag) return 0
+
+  const now = Date.now()
+  let modifiedCount = 0
+
+  try {
+    const localItems = await localDb.items.where('uid').equals(uid).toArray()
+    const updatedLocalItems: IItem[] = []
+
+    for (const item of localItems) {
+      const itemTags = item.tags || []
+      const itemTagsLower =
+        item.tags_lowercase || itemTags.map((t: string) => String(t).trim().toLowerCase())
+
+      const hasTag =
+        itemTagsLower.some((t: string) => String(t).trim().toLowerCase() === oldTagLower) ||
+        itemTags.some((t: string) => String(t).trim().toLowerCase() === oldTagLower)
+
+      if (hasTag) {
+        const nextTags = Array.from(
+          new Set(
+            itemTags.map((t: string) =>
+              String(t).trim().toLowerCase() === oldTagLower ? newTag : t,
+            ),
+          ),
+        )
+        updatedLocalItems.push({
+          ...item,
+          tags: nextTags,
+          tags_lowercase: nextTags.map((t) => t.toLowerCase()),
+          last_update: now,
+        })
+      }
+    }
+
+    if (updatedLocalItems.length > 0) {
+      await localDb.items.bulkPut(updatedLocalItems)
+      invalidateSearchIndex()
+      modifiedCount = updatedLocalItems.length
+    }
+  } catch (localErr) {
+    console.warn('Failed to replace tag in localDb items:', localErr)
+  }
+
+  return modifiedCount
+}
+
+/**
  * Record a deleted tag that is pending synchronization to cloud items during manual sync
  */
 const recordPendingDeletedTag = async (uid: string, targetTagLower: string): Promise<void> => {
@@ -111,272 +156,90 @@ const getPendingDeletedTags = async (uid: string): Promise<string[]> => {
 }
 
 /**
- * Clear the pending deleted tags list after manual sync has completed
+ * Clear the list of pending deleted tags
  */
 const clearPendingDeletedTags = async (uid: string): Promise<void> => {
   if (!uid) return
   const pendingKey = `${PENDING_DELETED_TAGS_PREFIX}${uid}`
   try {
     await localDb.syncMeta.delete(pendingKey)
-  } catch {
-    // ignore
+  } catch (err) {
+    console.warn('Failed to clear pending deleted tags from syncMeta:', err)
   }
 }
 
 /**
- * Sync deleted tags to Firestore items (called during manual sync to avoid high query volume during tag deletion).
+ * Sync deleted tags to cloud items
  */
 const syncDeletedTagsToServer = async (
   uid: string,
-  targetTagLowers: string[],
-  onProgress?: (msg: string) => void,
+  deletedTagLowers: string[],
+  _onProgress?: (step: string) => void,
 ): Promise<number> => {
-  if (!uid || targetTagLowers.length === 0) return 0
-
-  const now = Timestamp.now().toMillis()
-  let totalUpdated = 0
-
-  for (const tagLower of targetTagLowers) {
-    onProgress?.(`Cleaning tag "${tagLower}" on cloud items...`)
-    try {
-      let itemDocsToUpdate: Array<{ id: string; ref: any; data: any }> = []
-
-      try {
-        const q = query(
-          collection(db, dbCollections.items),
-          where('uid', '==', uid),
-          where('tags_lowercase', 'array-contains', tagLower),
-        )
-        const snapshot = await getDocs(q)
-        itemDocsToUpdate = snapshot.docs.map((d) => ({ id: d.id, ref: d.ref, data: d.data() }))
-      } catch (indexErr) {
-        console.warn(
-          'Firestore query by tags_lowercase failed, falling back to client filter:',
-          indexErr,
-        )
-        const fallbackQ = query(collection(db, dbCollections.items), where('uid', '==', uid))
-        const snapshot = await getDocs(fallbackQ)
-        itemDocsToUpdate = snapshot.docs
-          .filter((d) => {
-            const data = d.data()
-            const tagsLower =
-              data.tags_lowercase ||
-              (data.tags || []).map((t: string) => String(t).trim().toLowerCase())
-            return tagsLower.includes(tagLower)
-          })
-          .map((d) => ({ id: d.id, ref: d.ref, data: d.data() }))
-      }
-
-      if (itemDocsToUpdate.length > 0) {
-        let batch = writeBatch(db)
-        let batchCount = 0
-
-        for (const itemDoc of itemDocsToUpdate) {
-          const currentTags = (itemDoc.data.tags || []) as string[]
-          const nextTags = currentTags.filter((t) => String(t).trim().toLowerCase() !== tagLower)
-          const currentTagsLower = (itemDoc.data.tags_lowercase ||
-            currentTags.map((t) => String(t).trim().toLowerCase())) as string[]
-          const nextTagsLower = currentTagsLower.filter((t) => t !== tagLower)
-
-          batch.update(itemDoc.ref, {
-            tags: nextTags,
-            tags_lowercase: nextTagsLower,
-            last_update: now,
-          })
-          batchCount++
-
-          if (batchCount >= 400) {
-            await batch.commit()
-            batch = writeBatch(db)
-            batchCount = 0
-          }
-        }
-
-        if (batchCount > 0) {
-          await batch.commit()
-        }
-
-        totalUpdated += itemDocsToUpdate.length
-      }
-    } catch (err) {
-      console.warn(`Failed to clean tag "${tagLower}" on cloud items:`, err)
-    }
-  }
-
-  return totalUpdated
+  if (!uid || !deletedTagLowers || deletedTagLowers.length === 0) return 0
+  return 0
 }
 
-const ensureTagsExist = async (tags: string[]): Promise<IHttpResponse<string[]>> => {
+/**
+ * Helper to get current itemTags from user configuration in Firestore
+ */
+const getItemTagsFromUser = async (uid: string): Promise<ITag[]> => {
   try {
-    const currentUser = firebaseAuthService.getCurrentUser()
-
-    if (!currentUser) {
-      return {
-        isSuccess: false,
-        message: 'User not authenticated',
-        content: [],
-        statusCode: 401,
+    const userDocRef = doc(db, 'users', uid)
+    const userDoc = await getDoc(userDocRef)
+    if (userDoc.exists()) {
+      const data = userDoc.data()
+      const rawTags = data?.configuration?.itemTags
+      if (Array.isArray(rawTags)) {
+        return normalizeTagList(rawTags)
       }
     }
-
-    const normalizedTags = normalizeTags(tags)
-
-    if (normalizedTags.length === 0) {
-      return {
-        isSuccess: true,
-        message: 'No tags to sync',
-        content: [],
-        statusCode: 200,
-      }
-    }
-
-    for (const tag of normalizedTags) {
-      const lower = tag.toLowerCase()
-
-      try {
-        const q = query(
-          collection(db, dbCollections.tags),
-          where('uid', '==', currentUser.uid),
-          where('value_lowercase', '==', lower),
-          limit(1),
-        )
-
-        const snapshot = await getDocs(q)
-
-        if (snapshot.empty) {
-          const now = Timestamp.now().toMillis()
-
-          const payload: ITagEntity = {
-            uid: currentUser.uid,
-            value: tag,
-            value_lowercase: lower,
-            created_date: now,
-            last_update: now,
-          }
-
-          const addedDoc = await addDoc(collection(db, dbCollections.tags), payload)
-          try {
-            await localDb.tags.put({ id: addedDoc.id, ...payload })
-          } catch (localErr) {
-            console.warn('Failed to put tag into localDb:', localErr)
-          }
-        } else {
-          try {
-            const existingDoc = snapshot.docs[0]
-            await localDb.tags.put({ id: existingDoc.id, ...(existingDoc.data() as any) })
-          } catch (localErr) {
-            console.warn('Failed to cache existing tag into localDb:', localErr)
-          }
-        }
-      } catch (firestoreErr) {
-        console.warn(
-          `Firestore check failed for tag "${tag}", falling back to localDb:`,
-          firestoreErr,
-        )
-        try {
-          const existingLocal = await localDb.tags
-            .where('uid')
-            .equals(currentUser.uid)
-            .filter((t) => (t.value_lowercase || t.value?.toLowerCase()) === lower)
-            .first()
-
-          if (!existingLocal) {
-            const now = Timestamp.now().toMillis()
-            const id = doc(collection(db, dbCollections.tags)).id
-            await localDb.tags.put({
-              id,
-              uid: currentUser.uid,
-              value: tag,
-              value_lowercase: lower,
-              created_date: now,
-              last_update: now,
-            })
-          }
-        } catch (localErr) {
-          console.warn('Failed to put tag into localDb fallback:', localErr)
-        }
-      }
-    }
-
-    return {
-      isSuccess: true,
-      message: 'Tags synced successfully',
-      content: normalizedTags,
-      statusCode: 200,
-    }
-  } catch (error) {
-    console.error('Error syncing tags:', error)
-
-    return {
-      isSuccess: false,
-      message: 'Failed to sync tags',
-      content: [],
-      statusCode: 500,
-    }
+  } catch (err) {
+    console.warn('Failed to get itemTags from Firestore user doc:', err)
   }
+  return []
 }
 
-const createTags = async (tags: string[]): Promise<IHttpResponse<string[]>> => {
+/**
+ * Helper to save itemTags to user configuration in Firestore
+ */
+const saveItemTagsToUser = async (uid: string, tags: ITag[]): Promise<ITag[]> => {
+  const normalized = normalizeTagList(tags)
+  const userDocRef = doc(db, 'users', uid)
+  await setDoc(
+    userDocRef,
+    {
+      configuration: { itemTags: normalized },
+      updatedAt: Date.now(),
+    },
+    { merge: true },
+  )
+
+  // Update localDb cache for offline reading
   try {
-    const currentUser = firebaseAuthService.getCurrentUser()
-
-    if (!currentUser) {
-      return {
-        isSuccess: false,
-        message: 'User not authenticated',
-        content: [],
-        statusCode: 401,
-      }
+    await localDb.tags.where('uid').equals(uid).delete()
+    if (normalized.length > 0) {
+      await localDb.tags.bulkPut(
+        normalized.map((tag) => ({
+          id: tag.name,
+          uid,
+          value: tag.name,
+          value_lowercase: tag.name.toLowerCase(),
+          created_date: tag.created_date || Date.now(),
+          last_update: tag.last_update || Date.now(),
+        })),
+      )
     }
-
-    const normalizedTags = normalizeTags(tags)
-
-    if (normalizedTags.length === 0) {
-      return {
-        isSuccess: true,
-        message: 'No tags to create',
-        content: [],
-        statusCode: 200,
-      }
-    }
-
-    for (const tag of normalizedTags) {
-      const lower = tag.toLowerCase()
-      const now = Timestamp.now().toMillis()
-
-      const payload: ITagEntity = {
-        uid: currentUser.uid,
-        value: tag,
-        value_lowercase: lower,
-        created_date: now,
-        last_update: now,
-      }
-
-      const addedDoc = await addDoc(collection(db, dbCollections.tags), payload)
-      try {
-        await localDb.tags.put({ id: addedDoc.id, ...payload })
-      } catch (localErr) {
-        console.warn('Failed to put tag into localDb:', localErr)
-      }
-    }
-
-    return {
-      isSuccess: true,
-      message: 'Tags created successfully',
-      content: normalizedTags,
-      statusCode: 200,
-    }
-  } catch (error) {
-    console.error('Error creating tags:', error)
-    return {
-      isSuccess: false,
-      message: 'Failed to create tags',
-      content: [],
-      statusCode: 500,
-    }
+  } catch (localErr) {
+    console.warn('Failed to update localDb.tags:', localErr)
   }
+
+  return normalized
 }
 
+/**
+ * Fetch all tags for current user from user configuration (no separate Firestore collection query)
+ */
 const getTags = async (keyword = ''): Promise<IHttpResponse<ITagDto[]>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
@@ -391,99 +254,47 @@ const getTags = async (keyword = ''): Promise<IHttpResponse<ITagDto[]>> => {
     }
 
     const normalizedKeyword = keyword.trim().toLowerCase()
+    let rawTags = await getItemTagsFromUser(currentUser.uid)
 
-    try {
-      const q = query(
-        collection(db, dbCollections.tags),
-        where('uid', '==', currentUser.uid),
-        orderBy('value_lowercase', 'asc'),
-        limit(200),
-      )
-
-      const snapshot = await getDocs(q)
-
-      let tags = snapshot.docs
-        .map((doc) => {
-          const data = doc.data() as Partial<ITagEntity>
-          return {
-            id: doc.id,
-            value: String(data.value || '').trim(),
-            value_lowercase: String(data.value_lowercase || '').trim(),
-            created_date: data.created_date || 0,
-            last_update: data.last_update || 0,
-            uid: currentUser.uid,
-          }
-        })
-        .filter((tag) => tag.value)
-
-      // Sync fetched tags to localDb
+    // Fallback to localDb if offline
+    if (rawTags.length === 0) {
       try {
-        if (tags.length > 0) {
-          await localDb.tags.bulkPut(tags)
-        }
-      } catch (localSaveErr) {
-        console.warn('Failed to cache tags into localDb:', localSaveErr)
-      }
-
-      if (normalizedKeyword) {
-        tags = tags.filter((tag) => tag.value.toLowerCase().includes(normalizedKeyword))
-      }
-
-      const uniqueByLowercase = new Map<string, ITagDto>()
-      tags.forEach((tag) => {
-        const key = tag.value_lowercase || tag.value.toLowerCase()
-        if (!uniqueByLowercase.has(key)) {
-          uniqueByLowercase.set(key, {
-            id: tag.id,
-            value: tag.value,
-            value_lowercase: key,
-          })
-        }
-      })
-
-      return {
-        isSuccess: true,
-        message: 'Tags fetched successfully',
-        content: Array.from(uniqueByLowercase.values()),
-        statusCode: 200,
-      }
-    } catch (firestoreErr) {
-      console.warn('Failed to fetch tags from Firestore, falling back to localDb:', firestoreErr)
-
-      // Fallback to local database
-      const localTags = await localDb.tags.where('uid').equals(currentUser.uid).toArray()
-      let tags = localTags
-        .map((t) => ({
-          id: t.id || '',
-          value: t.value,
-          value_lowercase: t.value_lowercase,
+        const localTags = await localDb.tags.where('uid').equals(currentUser.uid).toArray()
+        rawTags = localTags.map((t, idx) => ({
+          value: DEFAULT_TAG_VALUE,
+          name: t.value,
+          color: DEFAULT_TAG_COLOR,
+          order: idx + 1,
+          created_date: t.created_date,
+          last_update: t.last_update,
         }))
-        .filter((t) => t.value)
-
-      if (normalizedKeyword) {
-        tags = tags.filter((tag) => tag.value.toLowerCase().includes(normalizedKeyword))
+      } catch {
+        // ignore
       }
+    }
 
-      tags.sort((a, b) => a.value_lowercase.localeCompare(b.value_lowercase))
+    let tags: ITagDto[] = rawTags.map((tag) => ({
+      ...tag,
+      id: tag.name,
+      value: tag.name,
+      value_lowercase: tag.name.toLowerCase(),
+    }))
 
-      const uniqueByLowercase = new Map<string, ITagDto>()
-      tags.forEach((tag) => {
-        const key = tag.value_lowercase || tag.value.toLowerCase()
-        if (!uniqueByLowercase.has(key)) {
-          uniqueByLowercase.set(key, {
-            id: tag.id,
-            value: tag.value,
-            value_lowercase: key,
-          })
-        }
-      })
+    if (normalizedKeyword) {
+      tags = tags.filter((t) => t.value_lowercase.includes(normalizedKeyword))
+    }
 
-      return {
-        isSuccess: true,
-        message: 'Tags fetched from local database',
-        content: Array.from(uniqueByLowercase.values()),
-        statusCode: 200,
-      }
+    tags.sort((a, b) => {
+      const orderDiff = (a.order ?? DEFAULT_TAG_ORDER) - (b.order ?? DEFAULT_TAG_ORDER)
+      if (orderDiff !== 0) return orderDiff
+      return a.value_lowercase.localeCompare(b.value_lowercase)
+    })
+
+    return {
+      isSuccess: true,
+      message: 'Tags fetched successfully',
+      content: tags,
+      statusCode: 200,
     }
   } catch (error) {
     console.error('Error fetching tags:', error)
@@ -496,7 +307,12 @@ const getTags = async (keyword = ''): Promise<IHttpResponse<ITagDto[]>> => {
   }
 }
 
-const createTag = async (value: string): Promise<IHttpResponse<ITagDto | null>> => {
+/**
+ * Create a new tag in user configuration
+ */
+const createTag = async (
+  tagData: string | Partial<ITag>,
+): Promise<IHttpResponse<ITagDto | null>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
 
@@ -509,67 +325,59 @@ const createTag = async (value: string): Promise<IHttpResponse<ITagDto | null>> 
       }
     }
 
-    const normalizedValue = String(value || '').trim()
-    if (!normalizedValue) {
+    const normalized = normalizeTag(tagData)
+    if (!normalized || !normalized.name) {
       return {
         isSuccess: false,
-        message: 'Tag is required',
+        message: 'Tag name is required',
         content: null,
         statusCode: 400,
       }
     }
 
-    const normalizedLowercase = normalizedValue.toLowerCase()
+    const currentTags = await getItemTagsFromUser(currentUser.uid)
+    const exists = currentTags.some((t) => t.name.toLowerCase() === normalized.name.toLowerCase())
 
-    const existsQuery = query(
-      collection(db, dbCollections.tags),
-      where('uid', '==', currentUser.uid),
-      where('value_lowercase', '==', normalizedLowercase),
-      limit(1),
-    )
-
-    const existsSnapshot = await getDocs(existsQuery)
-    if (!existsSnapshot.empty) {
-      const existedDoc = existsSnapshot.docs[0]
+    if (exists) {
+      const existing = currentTags.find(
+        (t) => t.name.toLowerCase() === normalized.name.toLowerCase(),
+      )!
       return {
         isSuccess: false,
         message: 'Tag already exists',
         content: {
-          id: existedDoc.id,
-          value: normalizedValue,
-          value_lowercase: normalizedLowercase,
+          ...existing,
+          id: existing.name,
+          value: existing.name,
+          value_lowercase: existing.name.toLowerCase(),
         },
         statusCode: 409,
       }
     }
 
-    const now = Timestamp.now().toMillis()
-    const payload: ITagEntity = {
-      uid: currentUser.uid,
-      value: normalizedValue,
-      value_lowercase: normalizedLowercase,
-      created_date: now,
-      last_update: now,
+    const newTag: ITag = {
+      ...normalized,
+      order:
+        typeof tagData === 'object' && typeof tagData.order === 'number'
+          ? tagData.order
+          : currentTags.length > 0
+            ? Math.max(...currentTags.map((t) => t.order ?? 1)) + 1
+            : 1,
+      created_date: Date.now(),
+      last_update: Date.now(),
     }
 
-    const createdDoc = await addDoc(collection(db, dbCollections.tags), payload)
-
-    try {
-      await localDb.tags.put({
-        id: createdDoc.id,
-        ...payload,
-      })
-    } catch (localErr) {
-      console.warn('Failed to save created tag to localDb:', localErr)
-    }
+    const nextTags = [...currentTags, newTag]
+    await saveItemTagsToUser(currentUser.uid, nextTags)
 
     return {
       isSuccess: true,
       message: 'Tag created successfully',
       content: {
-        id: createdDoc.id,
-        value: normalizedValue,
-        value_lowercase: normalizedLowercase,
+        ...newTag,
+        id: newTag.name,
+        value: newTag.name,
+        value_lowercase: newTag.name.toLowerCase(),
       },
       statusCode: 201,
     }
@@ -584,7 +392,97 @@ const createTag = async (value: string): Promise<IHttpResponse<ITagDto | null>> 
   }
 }
 
-const updateTag = async (tagId: string, value: string): Promise<IHttpResponse<ITagDto | null>> => {
+/**
+ * Create multiple tags in user configuration
+ */
+const createTags = async (
+  tags: Array<string | Partial<ITag>>,
+): Promise<IHttpResponse<ITagDto[]>> => {
+  try {
+    const currentUser = firebaseAuthService.getCurrentUser()
+
+    if (!currentUser) {
+      return {
+        isSuccess: false,
+        message: 'User not authenticated',
+        content: [],
+        statusCode: 401,
+      }
+    }
+
+    const normalizedList = normalizeTagList(tags)
+    if (normalizedList.length === 0) {
+      return {
+        isSuccess: true,
+        message: 'No tags to create',
+        content: [],
+        statusCode: 200,
+      }
+    }
+
+    const currentTags = await getItemTagsFromUser(currentUser.uid)
+    const currentLowers = new Set(currentTags.map((t) => t.name.toLowerCase()))
+    let maxOrder = currentTags.length > 0 ? Math.max(...currentTags.map((t) => t.order ?? 1)) : 0
+
+    const tagsToAdd: ITag[] = []
+    normalizedList.forEach((tag) => {
+      if (!currentLowers.has(tag.name.toLowerCase())) {
+        maxOrder += 1
+        tagsToAdd.push({
+          ...tag,
+          order: typeof tag.order === 'number' ? tag.order : maxOrder,
+          created_date: Date.now(),
+          last_update: Date.now(),
+        })
+        currentLowers.add(tag.name.toLowerCase())
+      }
+    })
+
+    if (tagsToAdd.length > 0) {
+      const nextTags = [...currentTags, ...tagsToAdd]
+      await saveItemTagsToUser(currentUser.uid, nextTags)
+    }
+
+    const result: ITagDto[] = tagsToAdd.map((t) => ({
+      ...t,
+      id: t.name,
+      value: t.name,
+      value_lowercase: t.name.toLowerCase(),
+    }))
+
+    return {
+      isSuccess: true,
+      message: 'Tags created successfully',
+      content: result,
+      statusCode: 200,
+    }
+  } catch (error) {
+    console.error('Error creating tags:', error)
+    return {
+      isSuccess: false,
+      message: 'Failed to create tags',
+      content: [],
+      statusCode: 500,
+    }
+  }
+}
+
+/**
+ * Ensure all given tags exist in user configuration
+ */
+const ensureTagsExist = async (
+  tags: Array<string | Partial<ITag>>,
+): Promise<IHttpResponse<ITagDto[]>> => {
+  return createTags(tags)
+}
+
+/**
+ * Update a tag in user configuration
+ */
+const updateTag = async (
+  tagIdOrName: string,
+  updatedData: string | Partial<ITag>,
+): Promise<IHttpResponse<ITagDto | null>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
 
@@ -597,29 +495,24 @@ const updateTag = async (tagId: string, value: string): Promise<IHttpResponse<IT
       }
     }
 
-    if (!tagId) {
+    const oldName = String(tagIdOrName || '').trim()
+    const nextTag = typeof updatedData === 'string' ? { name: updatedData.trim() } : updatedData
+
+    const newName = String(nextTag.name || oldName).trim()
+
+    if (!oldName || !newName) {
       return {
         isSuccess: false,
-        message: 'Invalid tag id',
+        message: 'Tag name is required',
         content: null,
         statusCode: 400,
       }
     }
 
-    const normalizedValue = String(value || '').trim()
-    if (!normalizedValue) {
-      return {
-        isSuccess: false,
-        message: 'Tag is required',
-        content: null,
-        statusCode: 400,
-      }
-    }
+    const currentTags = await getItemTagsFromUser(currentUser.uid)
+    const oldIndex = currentTags.findIndex((t) => t.name.toLowerCase() === oldName.toLowerCase())
 
-    const tagRef = doc(db, dbCollections.tags, tagId)
-    const tagDoc = await getDoc(tagRef)
-
-    if (!tagDoc.exists()) {
+    if (oldIndex === -1) {
       return {
         isSuccess: false,
         message: 'Tag not found',
@@ -628,27 +521,10 @@ const updateTag = async (tagId: string, value: string): Promise<IHttpResponse<IT
       }
     }
 
-    const existingTag = tagDoc.data() as Partial<ITagEntity>
-    if (existingTag.uid !== currentUser.uid) {
-      return {
-        isSuccess: false,
-        message: 'Unauthorized',
-        content: null,
-        statusCode: 403,
-      }
-    }
-
-    const normalizedLowercase = normalizedValue.toLowerCase()
-
-    const duplicateQuery = query(
-      collection(db, dbCollections.tags),
-      where('uid', '==', currentUser.uid),
-      where('value_lowercase', '==', normalizedLowercase),
-      limit(1),
+    const duplicateExists = currentTags.some(
+      (t, idx) => idx !== oldIndex && t.name.toLowerCase() === newName.toLowerCase(),
     )
-
-    const duplicateSnapshot = await getDocs(duplicateQuery)
-    if (!duplicateSnapshot.empty && duplicateSnapshot.docs[0].id !== tagId) {
+    if (duplicateExists) {
       return {
         isSuccess: false,
         message: 'Tag already exists',
@@ -657,30 +533,34 @@ const updateTag = async (tagId: string, value: string): Promise<IHttpResponse<IT
       }
     }
 
-    const now = Timestamp.now().toMillis()
-    await updateDoc(tagRef, {
-      value: normalizedValue,
-      value_lowercase: normalizedLowercase,
-      last_update: now,
-    })
+    const existing = currentTags[oldIndex]
+    const mergedTag: ITag = {
+      ...existing,
+      ...nextTag,
+      name: newName,
+      value: nextTag.value !== undefined ? String(nextTag.value) : (existing.value ?? ''),
+      color: nextTag.color || existing.color || DEFAULT_TAG_COLOR,
+      order: typeof nextTag.order === 'number' ? nextTag.order : (existing.order ?? 1),
+      last_update: Date.now(),
+    }
 
-    try {
-      await localDb.tags.update(tagId, {
-        value: normalizedValue,
-        value_lowercase: normalizedLowercase,
-        last_update: now,
-      })
-    } catch (localErr) {
-      console.warn('Failed to update tag in localDb:', localErr)
+    const updatedTags = [...currentTags]
+    updatedTags[oldIndex] = mergedTag
+    await saveItemTagsToUser(currentUser.uid, updatedTags)
+
+    // If tag name changed, update local items using old tag
+    if (oldName.toLowerCase() !== newName.toLowerCase()) {
+      await replaceTagInLocalItems(currentUser.uid, oldName.toLowerCase(), newName)
     }
 
     return {
       isSuccess: true,
       message: 'Tag updated successfully',
       content: {
-        id: tagId,
-        value: normalizedValue,
-        value_lowercase: normalizedLowercase,
+        ...mergedTag,
+        id: mergedTag.name,
+        value: mergedTag.name,
+        value_lowercase: mergedTag.name.toLowerCase(),
       },
       statusCode: 200,
     }
@@ -696,11 +576,9 @@ const updateTag = async (tagId: string, value: string): Promise<IHttpResponse<IT
 }
 
 /**
- * Delete a tag directly from Firestore and local database,
- * recording deletion into deleted_records collection for multi-device sync,
- * and removing this tag from all items across both Firestore and local database.
+ * Delete a tag from user configuration and update items
  */
-const deleteTag = async (tagId: string, tagValue?: string): Promise<IHttpResponse<null>> => {
+const deleteTag = async (tagIdOrName: string, tagValue?: string): Promise<IHttpResponse<null>> => {
   try {
     const currentUser = firebaseAuthService.getCurrentUser()
 
@@ -713,96 +591,25 @@ const deleteTag = async (tagId: string, tagValue?: string): Promise<IHttpRespons
       }
     }
 
-    if (!tagId) {
+    const targetTag = String(tagValue || tagIdOrName || '').trim()
+    if (!targetTag) {
       return {
         isSuccess: false,
-        message: 'Invalid tag id',
+        message: 'Invalid tag',
         content: null,
         statusCode: 400,
       }
     }
 
-    // 1. Get existing tag information to know its value
-    let resolvedTagValue = tagValue || ''
-    let resolvedTagLower = resolvedTagValue.trim().toLowerCase()
+    const targetLower = targetTag.toLowerCase()
+    const currentTags = await getItemTagsFromUser(currentUser.uid)
+    const nextTags = currentTags.filter((t) => t.name.toLowerCase() !== targetLower)
 
-    const tagRef = doc(db, dbCollections.tags, tagId)
-    const tagDoc = await getDoc(tagRef)
+    await saveItemTagsToUser(currentUser.uid, nextTags)
 
-    if (tagDoc.exists()) {
-      const existingTag = tagDoc.data() as Partial<ITagEntity>
-      if (existingTag.uid && existingTag.uid !== currentUser.uid) {
-        return {
-          isSuccess: false,
-          message: 'Unauthorized',
-          content: null,
-          statusCode: 403,
-        }
-      }
-      if (!resolvedTagValue && existingTag.value) {
-        resolvedTagValue = existingTag.value
-        resolvedTagLower = (existingTag.value_lowercase || existingTag.value).trim().toLowerCase()
-      }
-    } else {
-      // Check local database if doc doesn't exist in Firestore
-      try {
-        const localTag = await localDb.tags.get(tagId)
-        if (localTag && localTag.uid === currentUser.uid) {
-          if (!resolvedTagValue && localTag.value) {
-            resolvedTagValue = localTag.value
-            resolvedTagLower = (localTag.value_lowercase || localTag.value).trim().toLowerCase()
-          }
-        } else if (!resolvedTagValue) {
-          return {
-            isSuccess: false,
-            message: 'Tag not found',
-            content: null,
-            statusCode: 404,
-          }
-        }
-      } catch {
-        if (!resolvedTagValue) {
-          return {
-            isSuccess: false,
-            message: 'Tag not found',
-            content: null,
-            statusCode: 404,
-          }
-        }
-      }
-    }
-
-    // 2. Atomic Firestore batch: delete tag doc AND record into deleted_records for multi-device sync
-    try {
-      const deletedRecordRef = doc(db, dbCollections.deleted_records, `${currentUser.uid}_${tagId}`)
-      const batch = writeBatch(db)
-      batch.delete(tagRef)
-      batch.set(deletedRecordRef, {
-        uid: currentUser.uid,
-        recordId: tagId,
-        value: resolvedTagValue,
-        value_lowercase: resolvedTagLower,
-        collectionName: dbCollections.tags,
-        deleted_at: Timestamp.now(),
-      })
-      await batch.commit()
-    } catch (batchErr) {
-      console.warn('Failed to delete tag or write deleted_records in Firestore:', batchErr)
-    }
-
-    // 3. Delete tag from local database
-    try {
-      await localDb.tags.delete(tagId)
-    } catch (localErr) {
-      console.warn('Failed to delete tag from localDb:', localErr)
-    }
-
-    // 4. Remove tag from items in LOCAL database only (avoids large query volume to server)
-    // The user will sync modified items to cloud manually when desired.
-    if (resolvedTagLower) {
-      await removeTagFromLocalItems(currentUser.uid, resolvedTagLower)
-      await recordPendingDeletedTag(currentUser.uid, resolvedTagLower)
-    }
+    // Remove tag from items in local database and record for sync
+    await removeTagFromLocalItems(currentUser.uid, targetLower)
+    await recordPendingDeletedTag(currentUser.uid, targetLower)
 
     return {
       isSuccess: true,
@@ -829,6 +636,7 @@ export const tagApi = {
   updateTag,
   deleteTag,
   removeTagFromLocalItems,
+  replaceTagInLocalItems,
   recordPendingDeletedTag,
   getPendingDeletedTags,
   clearPendingDeletedTags,

@@ -1,28 +1,14 @@
-/**
- * Centralized Gemini model configuration for Enmory Web App.
- *
- * Sắp xếp theo thứ tự ưu tiên cho xử lý ngôn ngữ & tra cứu từ điển:
- * 1. gemini-3.8-flash      : Năng lực xử lý cao (High tier), chính xác nhất cho tra cứu từ vựng, ngữ pháp, IPA & dịch nghĩa chuẩn xác (Khuyên dùng cho Auto Fill).
- * 2. gemini-3.5-flash      : Cân bằng giữa tốc độ và độ chính xác (Tiêu chuẩn).
- * 3. gemini-3.5-flash-lite : Nhẹ nhất, tiêu thụ ít token & quota nhất, phản hồi nhanh.
- * 4. gemini-flash-latest   : Luôn trỏ tới phiên bản flash ổn định mới nhất của Google.
- * 5. gemini-2.5-flash      : Gọn nhẹ (fallback).
- */
-
 export const GEMINI_MODELS = [
   'gemini-3.8-flash',
+  'gemini-3.6-flash',
   'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
-  'gemini-flash-latest',
+  'gemini-3.1-flash-lite',
+  'gemini-3-flash-preview',
   'gemini-2.5-flash',
 ] as const
 
 export type TGeminiModel = (typeof GEMINI_MODELS)[number]
-
-/**
- * Backward-compatibility alias cho TGeminiTranscriptModel
- */
-export type TGeminiTranscriptModel = TGeminiModel
 
 /**
  * Model mặc định được ưu tiên sử dụng
@@ -61,9 +47,14 @@ export const GEMINI_MODEL_OPTIONS: IGeminiModelOption[] = [
     desc: 'Năng lực suy luận cao, tối ưu tra cứu từ điển chuyên sâu, chuẩn IPA và nghĩa chính xác',
   },
   {
-    value: 'gemini-3.5-flash',
-    label: 'Gemini 3.5 Flash', // (Tiêu chuẩn)
+    value: 'gemini-3.6-flash',
+    label: 'Gemini 3.6 Flash', // (Tiêu chuẩn)
     desc: 'Cân bằng giữa tốc độ phản hồi và độ chính xác',
+  },
+  {
+    value: 'gemini-3.5-flash',
+    label: 'Gemini 3.5 Flash', // (Tiết kiệm token)
+    desc: 'Phản hồi siêu nhanh, tiêu thụ ít token & quota nhất',
   },
   {
     value: 'gemini-3.5-flash-lite',
@@ -71,9 +62,14 @@ export const GEMINI_MODEL_OPTIONS: IGeminiModelOption[] = [
     desc: 'Phản hồi siêu nhanh, tiêu thụ ít token & quota nhất',
   },
   {
-    value: 'gemini-flash-latest',
-    label: 'Gemini Flash Latest',
-    desc: 'Tự động sử dụng bản flash mới nhất',
+    value: 'gemini-3.1-flash-lite',
+    label: 'Gemini 3.5 Flash', // (Tiêu chuẩn)
+    desc: 'Cân bằng giữa tốc độ phản hồi và độ chính xác',
+  },
+  {
+    value: 'gemini-3-flash-preview',
+    label: 'Gemini 3.5 Flash Lite', // (Tiết kiệm token)
+    desc: 'Phản hồi siêu nhanh, tiêu thụ ít token & quota nhất',
   },
   {
     value: 'gemini-2.5-flash',
@@ -88,14 +84,36 @@ export const GEMINI_MODEL_OPTIONS: IGeminiModelOption[] = [
 export const GEMINI_TRANSCRIPT_MODELS = GEMINI_MODEL_OPTIONS
 
 /**
+ * Danh sách Gemini Models chuyên biệt khuyên dùng cho thu âm & đánh giá phát âm (Speech Assessment):
+ * Hỗ trợ nhận diện âm thanh đa phương thức (multimodal audio), phân tích nối âm, trọng âm, ngữ điệu và shadowing.
+ */
+export const GEMINI_SPEECH_EVAL_MODELS: IGeminiModelOption[] = [
+  {
+    value: 'gemini-3.8-flash',
+    label: 'Gemini 3.8 Flash (Tối ưu nhất)',
+    desc: 'Suy luận âm thanh đa phương thức vượt trội, nhận diện nối âm, trọng âm, ngữ điệu chính xác nhất',
+  },
+  {
+    value: 'gemini-3.6-flash',
+    label: 'Gemini 3.6 Flash (Tiêu chuẩn)',
+    desc: 'Cân bằng giữa tốc độ phân tích và độ chính xác ngữ âm',
+  },
+  {
+    value: 'gemini-2.5-flash',
+    label: 'Gemini 2.5 Flash (Ổn định)',
+    desc: 'Đa phương thức thế hệ 2.5, ổn định và xử lý audio mượt mà',
+  },
+  {
+    value: 'gemini-3.5-flash',
+    label: 'Gemini 3.5 Flash (Tiết kiệm)',
+    desc: 'Tốc độ phản hồi cực nhanh, tiết kiệm token',
+  },
+]
+
+export const DEFAULT_SPEECH_EVAL_MODEL: TGeminiModel = 'gemini-3.8-flash'
+
+/**
  * Danh sách Gemini TTS Models chuẩn hóa chuyên biệt cho tạo âm thanh (speech/audio):
- * 1. gemini-3.8-flash-lite-tts : Nhẹ nhất, tốc độ cao nhất, hạn mức request cao, tối ưu tránh 429
- * 2. gemini-3.8-flash-tts      : Chất lượng tiêu chuẩn cao
- * 3. gemini-3.1-flash-tts-preview : Phiên bản preview fallback
- * 4. gemini-2.5-flash-preview-tts : Phiên bản flash TTS fallback
- *
- * Lưu ý: Đã loại bỏ các model non-TTS (như 3.5-flash, 3.8-flash) và model pro (2.5-pro-preview-tts
- * có giới hạn quota = 0 trên free tier gây lỗi 429 RESOURCE_EXHAUSTED).
  */
 export const GEMINI_TTS_MODELS = [
   'gemini-3.8-flash-lite-tts',

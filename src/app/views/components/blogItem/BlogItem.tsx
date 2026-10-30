@@ -17,7 +17,6 @@ export const BlogItem = ({
   title,
   description,
   created_date,
-  category_id,
   relation,
   tags,
   compact = false,
@@ -82,7 +81,6 @@ export const BlogItem = ({
                 title,
                 description,
                 created_date,
-                category_id,
                 relation,
                 tags,
               })
@@ -116,7 +114,6 @@ export const BlogItem = ({
               title,
               description,
               created_date,
-              category_id,
               relation,
               tags,
             })

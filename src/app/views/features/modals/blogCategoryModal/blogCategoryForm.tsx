@@ -28,7 +28,7 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
   const { mutate: createCategory, isPending: isCreating } = useCreateBlogCategory()
   const { mutate: updateCategory, isPending: isUpdating } = useUpdateBlogCategory()
 
-  const isEditing = !!data?.id
+  const isEditing = !!(data?.id || data?.name)
   const isPending = isCreating || isUpdating
 
   const {
@@ -39,37 +39,42 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
   } = useForm<IBlogCategory>({
     defaultValues: {
       name: data?.name || '',
-      color: data?.color || '',
-      order: data?.order ?? 0,
+      color: data?.color || '#1890ff',
+      order: data?.order ?? 1,
+      value: data?.value ?? '',
     },
   })
 
   useEffect(() => {
     reset({
       name: data?.name || '',
-      color: data?.color || '',
-      order: data?.order ?? 0,
+      color: data?.color || '#1890ff',
+      order: data?.order ?? 1,
+      value: data?.value ?? '',
     })
   }, [data, reset])
 
   const onSubmit = (values: IBlogCategory) => {
     const payload: IBlogCategory = {
       ...values,
-      order: typeof values.order === 'number' ? values.order : 0,
+      color: values.color || '#1890ff',
+      order: typeof values.order === 'number' ? values.order : 1,
+      value: values.value ?? '',
     }
-    if (isEditing && data?.id) {
+    const targetId = data?.id || data?.name
+    if (isEditing && targetId) {
       // Update mode
       updateCategory(
-        { id: data.id, data: payload },
+        { id: targetId, data: payload },
         {
           onSuccess: () => {
             reset()
             onSuccess?.()
             onClose?.()
-            message({ type: 'success', content: 'Category updated successfully' })
+            message({ type: 'success', content: 'Tag updated successfully' })
           },
           onError: (error) => {
-            message({ type: 'error', content: 'Failed to update category' })
+            message({ type: 'error', content: 'Failed to update tag' })
             console.error(error)
           },
         },
@@ -81,10 +86,10 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
           reset()
           onSuccess?.()
           onClose?.()
-          message({ type: 'success', content: 'Category created successfully' })
+          message({ type: 'success', content: 'Tag created successfully' })
         },
         onError: (error) => {
-          message({ type: 'error', content: 'Failed to create category' })
+          message({ type: 'error', content: 'Failed to create tag' })
           console.error(error)
         },
       })
@@ -152,10 +157,10 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
             <InputNumber
               {...field}
               min={0}
-              placeholder='0'
+              placeholder='1'
               style={{ width: '100%' }}
-              value={field.value ?? 0}
-              onChange={(val) => field.onChange(val ?? 0)}
+              value={field.value ?? 1}
+              onChange={(val) => field.onChange(val ?? 1)}
             />
           )}
         />

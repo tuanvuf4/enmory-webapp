@@ -5,6 +5,7 @@ export const initialBlog: IBlogItem = {
   uid: '',
   title: '',
   description: '',
+  tags: [],
   created_date: 0,
   last_update: 0,
 }

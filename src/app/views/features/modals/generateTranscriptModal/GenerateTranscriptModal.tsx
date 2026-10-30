@@ -35,7 +35,7 @@ import {
   TGeminiVoice,
   GEMINI_VOICES,
   GEMINI_TRANSCRIPT_MODELS,
-  TGeminiTranscriptModel,
+  TGeminiModel,
   DEFAULT_GEMINI_MODEL,
 } from '@/services/gemini'
 import { parseTranscript, formatSegmentTime } from '../../player/transcriptUtils'
@@ -73,7 +73,7 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
   const [loading, setLoading] = useState(false)
   const [statusText, setStatusText] = useState<string>('')
   const [generatedPrompt, setGeneratedPrompt] = useState<string>('')
-  const [selectedModel, setSelectedModel] = useState<TGeminiTranscriptModel>(DEFAULT_GEMINI_MODEL)
+  const [selectedModel, setSelectedModel] = useState<TGeminiModel>(DEFAULT_GEMINI_MODEL)
   const [result, setResult] = useState<IGenerateTranscriptResponse | null>(null)
 
   // Preview TTS player state

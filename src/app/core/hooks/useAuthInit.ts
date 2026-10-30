@@ -1,27 +1,29 @@
 /**
  * useAuthInit Hook
- * Initializes authentication state on app load using Firebase
+ * Initializes authentication state and loads user configuration on app load using Firebase
  */
 
 import { useEffect } from 'react'
+import { useDispatch } from '@/core/hooks/redux'
+import { checkAuthState } from '@/store/reducers/auth.reducer'
 import { firebaseAuthService } from '@/services/firebase/authService'
 
 export const useAuthInit = () => {
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        // Check Firebase authentication state
-        const firebaseUser = firebaseAuthService.getCurrentAuthUser()
-        if (firebaseUser) {
-          // console.log('[Auth Init] Firebase user found:', firebaseUser.email)
-          // User is logged in via Firebase
-          // The auth state will be set through Firebase auth listener
-        }
-      } catch (error) {
-        console.error('[Auth Init] Error during initialization:', error)
-      }
-    }
+  const dispatch = useDispatch()
 
-    initAuth()
-  }, [])
+  useEffect(() => {
+    // Fetch user profile and configuration on initial load to reduce synchronization requests
+    dispatch(checkAuthState() as any)
+
+    // Listen to Firebase auth changes to keep configuration up to date
+    const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
+      if (user) {
+        dispatch(checkAuthState() as any)
+      }
+    })
+
+    return () => {
+      unsubscribe()
+    }
+  }, [dispatch])
 }

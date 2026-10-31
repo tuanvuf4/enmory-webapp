@@ -111,11 +111,7 @@ export const Tags: React.FC<IPros> = ({
 
       {tags.map((tag, key) => {
         return (
-          <div
-            key={key}
-            className={styles.tagItem}
-            onClick={() => handleTagClick(tag)}
-          >
+          <div key={key} className={styles.tagItem} onClick={() => handleTagClick(tag)}>
             <div className={styles.tagItemContainer}>
               <span className={'select-none'}>{tag}</span>
               <button

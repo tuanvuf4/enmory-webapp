@@ -415,34 +415,6 @@ export const PronunciationPractice: React.FC = () => {
     [speed],
   )
 
-  // Bật/tắt tất cả kỹ thuật cùng lúc
-  const isAllSelected = useMemo(
-    () =>
-      activeTechniques.linking &&
-      activeTechniques.stress &&
-      activeTechniques.intonation &&
-      activeTechniques.shadow,
-    [activeTechniques],
-  )
-
-  const handleToggleAll = useCallback(() => {
-    if (isAllSelected) {
-      setActiveTechniques({
-        linking: false,
-        stress: false,
-        intonation: false,
-        shadow: false,
-      })
-    } else {
-      setActiveTechniques({
-        linking: true,
-        stress: true,
-        intonation: true,
-        shadow: true,
-      })
-    }
-  }, [isAllSelected])
-
   // Gửi audio tới Gemini model để nhận xét và đánh giá
   const handleEvaluateAudio = useCallback(async () => {
     if (!audioBlob || isEvaluating) return

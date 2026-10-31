@@ -3,11 +3,11 @@ import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
 import { theme, Input, InputNumber, Button, Flex, ColorPicker } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import type { Color } from 'antd/es/color-picker'
-import './blogCategoryForm.module.scss'
+import './blogTagForm.module.scss'
 import { usePrompt } from '@/helpers/hooks'
 import React, { useEffect } from 'react'
 
-export interface BlogCategoryFormProps {
+export interface BlogTagFormProps {
   data?: IBlogCategory
   onCancel?: () => void
   onClose?: () => void
@@ -15,7 +15,9 @@ export interface BlogCategoryFormProps {
   isInline?: boolean
 }
 
-export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
+export type BlogCategoryFormProps = BlogTagFormProps
+
+export const BlogTagForm: React.FC<BlogTagFormProps> = ({
   data,
   onCancel,
   onClose,
@@ -56,16 +58,19 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
 
   const onSubmit = (values: IBlogCategory) => {
     const tagName = (values.name || '').trim()
-    const tagValue = values.value?.trim()
-      ? values.value.trim().toLowerCase().replace(/\s+/g, '_')
-      : tagName.toLowerCase().replace(/\s+/g, '_')
 
     const payload: IBlogCategory = {
       ...values,
       name: tagName,
       color: values.color || '#1890ff',
       order: typeof values.order === 'number' ? values.order : 1,
-      value: tagValue,
+      // Khi update blog tag, không update blog tag value (giữ nguyên data?.value)
+      value:
+        isEditing && (data?.value || '').trim()
+          ? data.value
+          : values.value?.trim()
+            ? values.value.trim().toLowerCase().replace(/\s+/g, '_')
+            : tagName.toLowerCase().replace(/\s+/g, '_'),
     }
     const targetId = data?.id || data?.name
     if (isEditing && targetId) {
@@ -205,4 +210,5 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
   )
 }
 
-export const ArticleCategoryForm = BlogCategoryForm
+export const BlogCategoryForm = BlogTagForm
+export const ArticleCategoryForm = BlogTagForm

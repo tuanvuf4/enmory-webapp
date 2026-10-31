@@ -85,7 +85,7 @@ export const GeminiSidebarWidget: React.FC<IProps> = ({ isCollapsed }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
           <span>Requests:</span>
           <Typography.Text strong style={{ color: requestColor }}>
-            {stats.totalRequests.toLocaleString()} / {limits.maxRequests.toLocaleString()} (
+            {stats.totalRequests.toLocaleString()} / {formatTokens(limits.maxRequests)} (
             {formatPercent(stats.totalRequests, limits.maxRequests)})
           </Typography.Text>
         </div>
@@ -106,7 +106,7 @@ export const GeminiSidebarWidget: React.FC<IProps> = ({ isCollapsed }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
           <span>Token:</span>
           <Typography.Text strong style={{ color: tokenColor }}>
-            {stats.totalTokens.toLocaleString()} / {limits.maxTokens.toLocaleString()} (
+            {stats.totalTokens.toLocaleString()} / {formatTokens(limits.maxTokens)} (
             {formatPercent(stats.totalTokens, limits.maxTokens)})
           </Typography.Text>
         </div>
@@ -213,26 +213,6 @@ export const GeminiSidebarWidget: React.FC<IProps> = ({ isCollapsed }) => {
           )}
         </Flex>
 
-        {/* Tokens Row */}
-        <Flex align='center' justify='space-between' style={{ marginTop: 4 }}>
-          <Typography.Text type='secondary' style={{ fontSize: 11 }}>
-            Tokens:
-          </Typography.Text>
-          <Typography.Text strong style={{ fontSize: 11, color: tokenColor }}>
-            {formatTokens(stats.totalTokens)} / {formatTokens(limits.maxTokens)}{' '}
-            <span style={{ fontSize: 10, fontWeight: 400, opacity: 0.85 }}>
-              ({formatPercent(stats.totalTokens, limits.maxTokens)})
-            </span>
-          </Typography.Text>
-        </Flex>
-        <Progress
-          percent={calcProgressPercent(stats.totalTokens, limits.maxTokens)}
-          size={['100%', 3]}
-          showInfo={false}
-          strokeColor={tokenColor}
-          style={{ margin: '2px 0 0 0' }}
-        />
-
         {/* Request Row */}
         <Flex align='center' justify='space-between' style={{ marginTop: 4 }}>
           <Typography.Text type='secondary' style={{ fontSize: 11 }}>
@@ -250,6 +230,26 @@ export const GeminiSidebarWidget: React.FC<IProps> = ({ isCollapsed }) => {
           size={['100%', 3]}
           showInfo={false}
           strokeColor={requestColor}
+          style={{ margin: '2px 0 0 0' }}
+        />
+
+        {/* Tokens Row */}
+        <Flex align='center' justify='space-between' style={{ marginTop: 4 }}>
+          <Typography.Text type='secondary' style={{ fontSize: 11 }}>
+            Tokens:
+          </Typography.Text>
+          <Typography.Text strong style={{ fontSize: 11, color: tokenColor }}>
+            {formatTokens(stats.totalTokens)} / {formatTokens(limits.maxTokens)}{' '}
+            <span style={{ fontSize: 10, fontWeight: 400, opacity: 0.85 }}>
+              ({formatPercent(stats.totalTokens, limits.maxTokens)})
+            </span>
+          </Typography.Text>
+        </Flex>
+        <Progress
+          percent={calcProgressPercent(stats.totalTokens, limits.maxTokens)}
+          size={['100%', 3]}
+          showInfo={false}
+          strokeColor={tokenColor}
           style={{ margin: '2px 0 0 0' }}
         />
       </div>

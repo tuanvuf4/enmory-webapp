@@ -30,7 +30,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
-import { TagManagerForm, BlogCategoryManagerForm } from '@/views/components'
+import { TagManagerForm, BlogTagManagerForm } from '@/views/components'
 
 const { Text } = Typography
 
@@ -435,7 +435,7 @@ const Setting = () => {
               title='Blog Categories'
               description='Manage categories for blog posts'
             >
-              <BlogCategoryManagerForm />
+              <BlogTagManagerForm />
             </SectionCard>
 
             {/* ── Save button ── */}

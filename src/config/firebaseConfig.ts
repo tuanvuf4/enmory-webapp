@@ -14,8 +14,6 @@ export const dbCollections = {
   iotd: 'iotd',
   articles: 'articles',
   blogs: 'articles',
-  article_categories: 'article_categories',
-  blog_categories: 'article_categories',
   tracks: 'tracks',
   checklists: 'checklists',
   deleted_records: 'deleted_records',

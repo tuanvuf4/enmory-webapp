@@ -1,6 +1,6 @@
 import { useModal } from '@/context/modal.context'
 import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
-import { BlogCategoryForm } from '@/views/features/modals/blogCategoryModal/BlogCategoryForm'
+import { BlogTagForm } from '@/views/features/modals/blogTagModal/BlogTagForm'
 
 export const useBlogCategoryModal = () => {
   const { openModal, closeModal } = useModal()
@@ -12,7 +12,7 @@ export const useBlogCategoryModal = () => {
         width: 600,
         footer: null,
         maskClosable: false,
-        content: <BlogCategoryForm data={data} onCancel={closeModal} onClose={closeModal} />,
+        content: <BlogTagForm data={data} onCancel={closeModal} onClose={closeModal} />,
       })
     }
 
@@ -22,7 +22,7 @@ export const useBlogCategoryModal = () => {
         width: 600,
         footer: null,
         maskClosable: false,
-        content: <BlogCategoryForm data={data} onCancel={closeModal} onClose={closeModal} />,
+        content: <BlogTagForm data={data} onCancel={closeModal} onClose={closeModal} />,
       })
     }
   }

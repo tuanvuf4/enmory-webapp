@@ -1,5 +1,5 @@
 export * from './blogModal'
-export * from './blogCategoryModal'
+export * from './blogTagModal'
 export * from './itemModal'
 export * from './mediaUploadModal'
 export * from './generateTranscriptModal'

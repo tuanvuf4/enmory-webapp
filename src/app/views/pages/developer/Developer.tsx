@@ -1393,7 +1393,8 @@ export const Developer: React.FC = () => {
                       padding: '0 6px',
                     }}
                   >
-                    {geminiStats.totalRequests} reqs • {geminiStats.totalTokens.toLocaleString()} token
+                    {geminiStats.totalRequests} reqs • {geminiStats.totalTokens.toLocaleString()}{' '}
+                    token
                   </Tag>
                 )}
               </Space>

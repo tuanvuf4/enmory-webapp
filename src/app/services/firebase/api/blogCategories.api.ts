@@ -360,10 +360,13 @@ export const blogCategoriesApi = {
       }
 
       const existing = currentTags[oldIndex]
+      // Khi update blog tag, khong update blog tag value - uu tien giu nguyen existing.value
       const categoryValue =
-        data.value !== undefined && String(data.value).trim() !== ''
-          ? formatBlogCategoryValue(data.value)
-          : formatBlogCategoryValue(newName)
+        existing.value && String(existing.value).trim() !== ''
+          ? existing.value
+          : data.value !== undefined && String(data.value).trim() !== ''
+            ? formatBlogCategoryValue(data.value)
+            : formatBlogCategoryValue(newName)
 
       const updatedTag: ITag = {
         ...existing,

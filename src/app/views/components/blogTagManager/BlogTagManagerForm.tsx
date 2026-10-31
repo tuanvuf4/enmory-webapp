@@ -32,7 +32,7 @@ export interface IBlogCategoryRow extends IBlogCategory {
   id: string
 }
 
-export interface BlogCategoryManagerFormProps {
+export interface BlogTagManagerFormProps {
   onClose?: () => void
   onCategoryUpdated?: (previousValue: string, nextValue: string) => void
   onCategoryDeleted?: (deletedValue: string) => void
@@ -40,7 +40,9 @@ export interface BlogCategoryManagerFormProps {
   onTagDeleted?: (deletedValue: string) => void
 }
 
-export const BlogCategoryManagerForm: React.FC<BlogCategoryManagerFormProps> = ({
+export type BlogCategoryManagerFormProps = BlogTagManagerFormProps
+
+export const BlogTagManagerForm: React.FC<BlogTagManagerFormProps> = ({
   onClose,
   onCategoryUpdated,
   onCategoryDeleted,
@@ -183,12 +185,12 @@ export const BlogCategoryManagerForm: React.FC<BlogCategoryManagerFormProps> = (
     try {
       setCategorySubmitting(true)
       const targetId = cat.name || cat.id
-      const categoryValue = nextName.trim().toLowerCase().replace(/\s+/g, '_')
       const response = await blogCategoriesApi.updateCategory(targetId, {
         name: nextName,
         color: editingCategoryColor || DEFAULT_TAG_COLOR,
         order: editingCategoryOrder,
-        value: categoryValue,
+        // Khi update blog tag, không update blog tag value (giữ nguyên cat.value)
+        value: cat.value,
       })
 
       if (!response.isSuccess) {
@@ -464,4 +466,5 @@ export const BlogCategoryManagerForm: React.FC<BlogCategoryManagerFormProps> = (
   )
 }
 
-export const ArticleCategoryManagerForm = BlogCategoryManagerForm
+export const BlogCategoryManagerForm = BlogTagManagerForm
+export const ArticleCategoryManagerForm = BlogTagManagerForm

@@ -318,11 +318,12 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
                     return res?.name || name
                   }}
                   onUpdateItem={async (id, newName) => {
+                    const existingCat = cats.find((c) => c.name === id || c.value === id)
                     await updateCategoryMutation({
                       id,
                       data: {
                         name: newName,
-                        value: newName.trim().toLowerCase().replace(/\s+/g, '_'),
+                        value: existingCat?.value || id,
                       },
                     })
                     queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })

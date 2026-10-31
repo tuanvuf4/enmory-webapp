@@ -1,5 +1,5 @@
-export * from './blogCategoryList'
-export * from './blogCategoryManager'
+export * from './blogTagList'
+export * from './blogTagManager'
 export * from './blogItem'
 export * from './google'
 export * from './inputTag'

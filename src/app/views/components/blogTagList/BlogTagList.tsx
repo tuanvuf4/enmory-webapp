@@ -13,23 +13,20 @@ import {
   ColorPicker,
   Tag,
 } from 'antd'
-import {
-  EditOutlined,
-  DeleteOutlined,
-  CheckOutlined,
-  CloseOutlined,
-} from '@ant-design/icons'
+import { EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import type { TableProps } from 'antd'
 import { usePrompt } from '@/helpers/hooks'
 import React, { useState } from 'react'
 
-export interface BlogCategoryListProps {
+export interface BlogTagListProps {
   categories: IBlogCategory[]
   isLoading?: boolean
   onEdit?: (category: IBlogCategory) => void
 }
 
-export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
+export type BlogCategoryListProps = BlogTagListProps
+
+export const BlogTagList: React.FC<BlogTagListProps> = ({
   categories,
   isLoading = false,
   onEdit,
@@ -67,7 +64,6 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
     }
 
     const targetId = record.id || record.name
-    const tagValue = nextName.toLowerCase().replace(/\s+/g, '_')
 
     updateCategoryMutation(
       {
@@ -77,7 +73,8 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
           name: nextName,
           color: editingCategoryColor || DEFAULT_TAG_COLOR,
           order: editingCategoryOrder,
-          value: tagValue,
+          // Khi update blog tag, không update blog tag value (giữ nguyên record.value)
+          value: record.value,
         },
       },
       {
@@ -112,7 +109,7 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
       dataIndex: 'name',
       key: 'name',
       width: '50%',
-      render: (text: string, record) => {
+      render: (_text: string, record) => {
         const recordId = record.id || record.name
         const isEditing = editingCategoryId === recordId
 
@@ -298,4 +295,5 @@ export const BlogCategoryList: React.FC<BlogCategoryListProps> = ({
   )
 }
 
-export const ArticleCategoryList = BlogCategoryList
+export const BlogCategoryList = BlogTagList
+export const ArticleCategoryList = BlogTagList

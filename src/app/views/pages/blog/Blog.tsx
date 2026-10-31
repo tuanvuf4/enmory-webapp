@@ -29,7 +29,7 @@ import { useBlogModal } from '@/helpers/hooks/useBlogModal'
 import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
 import appStyle from '@/style/appStyle.module.scss'
 import { NotFound, PageTitle } from '@/views/components'
-import { BlogCategoryList } from '@/views/components/blogCategoryList/blogCategoryList'
+import { BlogTagList } from '@/views/components/blogTagList/BlogTagList'
 import { BlogItem } from '@/views/components/blogItem/BlogItem'
 import { Widget } from '@/views/features/widget/Widget'
 
@@ -345,7 +345,7 @@ export const Blog = () => {
         width={700}
         maskClosable={false}
       >
-        <BlogCategoryList categories={cats} />
+        <BlogTagList categories={cats} />
       </Modal>
     </>
   )

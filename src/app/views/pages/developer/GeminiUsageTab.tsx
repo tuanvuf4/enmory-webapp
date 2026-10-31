@@ -603,7 +603,8 @@ export const GeminiUsageTab: React.FC = () => {
                 )}
               </Space>
               <Text type='secondary' style={{ fontSize: 11 }}>
-                Còn: {Math.max(0, limits.maxRequests - stats.totalRequests).toLocaleString()} request
+                Còn: {Math.max(0, limits.maxRequests - stats.totalRequests).toLocaleString()}{' '}
+                request
               </Text>
             </div>
           </Card>

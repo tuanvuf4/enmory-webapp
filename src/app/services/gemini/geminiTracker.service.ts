@@ -129,11 +129,8 @@ export const saveGeminiLimits = (limits: Partial<IGeminiLimits>): IGeminiLimits 
     const current = getGeminiLimits()
     const updated: IGeminiLimits = {
       maxRequests:
-        Number(limits.maxRequests) > 0
-          ? Number(limits.maxRequests)
-          : current.maxRequests,
-      maxTokens:
-        Number(limits.maxTokens) > 0 ? Number(limits.maxTokens) : current.maxTokens,
+        Number(limits.maxRequests) > 0 ? Number(limits.maxRequests) : current.maxRequests,
+      maxTokens: Number(limits.maxTokens) > 0 ? Number(limits.maxTokens) : current.maxTokens,
     }
     localStorage.setItem(LIMITS_STORAGE_KEY, JSON.stringify(updated))
     window.dispatchEvent(new CustomEvent(LIMITS_CHANGE_EVENT, { detail: updated }))

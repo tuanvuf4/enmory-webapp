@@ -9,6 +9,7 @@ import {
 } from '../openai/tts.service'
 import { resolveGeminiApiKey } from './geminiDictionary.service'
 import { GEMINI_TTS_MODELS } from './geminiModels'
+import { generateContentWithTracking } from './geminiTracker.service'
 import { localDb } from '../localDb/db'
 
 export type TGeminiVoice = 'auto' | 'Aoede' | 'Puck' | 'Kore' | 'Charon' | 'Fenrir'
@@ -410,7 +411,7 @@ export class GeminiTTSPlayer {
 
           for (const model of GEMINI_TTS_MODELS) {
             try {
-              const response = await ai.models.generateContent({
+              const response = await generateContentWithTracking(ai, 'TTS Speech', {
                 model,
                 contents: cleanText,
                 config: {
@@ -427,7 +428,7 @@ export class GeminiTTSPlayer {
 
               const candidate = response.candidates?.[0]
               const parts = candidate?.content?.parts || []
-              const audioPart = parts.find((p) => p.inlineData && p.inlineData.data)
+              const audioPart = parts.find((p: any) => p.inlineData && p.inlineData.data)
 
               if (audioPart && audioPart.inlineData?.data) {
                 const wavBlob = geminiAudioToWavBlob(audioPart.inlineData.data)

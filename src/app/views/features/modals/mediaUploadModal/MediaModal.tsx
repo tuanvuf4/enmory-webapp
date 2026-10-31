@@ -1,7 +1,7 @@
 import { CloseSquareOutlined } from '@ant-design/icons'
 import { Modal } from 'antd'
 import { ITracks } from '@/models/media.model'
-import { MediaUploadForm } from './MediaUploadForm'
+import { MediaForm } from './MediaForm'
 
 interface IProps {
   onConfirm?: (track: ITracks) => void
@@ -11,13 +11,7 @@ interface IProps {
   trackData?: ITracks
 }
 
-export const MediaUploadModal: React.FC<IProps> = ({
-  open,
-  title,
-  onCancel,
-  onConfirm,
-  trackData,
-}) => {
+export const MediaModal: React.FC<IProps> = ({ open, title, onCancel, onConfirm, trackData }) => {
   return (
     <Modal
       title={trackData?.id ? `Edit Track` : title || 'Upload'}
@@ -28,7 +22,9 @@ export const MediaUploadModal: React.FC<IProps> = ({
       footer={false}
       maskClosable={false}
     >
-      <MediaUploadForm trackData={trackData} onConfirm={onConfirm} onCancel={onCancel} />
+      <MediaForm trackData={trackData} onConfirm={onConfirm} onCancel={onCancel} />
     </Modal>
   )
 }
+
+export const MediaUploadModal = MediaModal

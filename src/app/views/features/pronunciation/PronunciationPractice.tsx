@@ -13,8 +13,6 @@ import {
   AudioOutlined,
   RedoOutlined,
   RobotOutlined,
-  CheckSquareOutlined,
-  BorderOutlined,
   StopOutlined,
 } from '@ant-design/icons'
 import {
@@ -503,17 +501,6 @@ export const PronunciationPractice: React.FC = () => {
             )
           })}
         </div>
-
-        {/* Nút bật/tắt nhanh tất cả */}
-        <Button
-          size='small'
-          type='text'
-          icon={isAllSelected ? <CheckSquareOutlined /> : <BorderOutlined />}
-          onClick={handleToggleAll}
-          style={{ fontSize: 12, color: token.colorTextSecondary }}
-        >
-          {isAllSelected ? 'Tắt tất cả' : 'Bật tất cả'}
-        </Button>
       </div>
 
       {/* ── Main Practice Card ── */}

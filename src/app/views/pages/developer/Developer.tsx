@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import {
   Card,
   Tabs,
@@ -36,6 +36,7 @@ import {
   ExclamationCircleOutlined,
   EyeOutlined,
   StarFilled,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
@@ -45,6 +46,8 @@ import { extractExamplesFromItems } from '@/services/firebase/dbIntegration'
 import { IItem, IExample, IMeaning, ECategory } from '@/models/item.model'
 import { ISyncMeta } from '@/services/localDb/db'
 import { getCategory, getType } from '@/helpers/item'
+import { GeminiUsageTab } from './GeminiUsageTab'
+import { useGeminiStats } from '@/services/gemini'
 import styles from './developer.module.scss'
 
 const { Text, Paragraph } = Typography
@@ -60,9 +63,35 @@ export const Developer: React.FC = () => {
   }
 
   const { user } = useSelector((state) => state.auth)
+  const geminiStats = useGeminiStats()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabFromQuery = searchParams.get('tab')
 
-  // Main page tab: 'local-db' | 'firebase-tools'
-  const [mainTab, setMainTab] = useState<string>('local-db')
+  // Main page tab: 'local-db' | 'firebase-tools' | 'gemini-tracker'
+  const [mainTab, setMainTab] = useState<string>(() => {
+    if (tabFromQuery === 'gemini' || tabFromQuery === 'gemini-tracker') return 'gemini-tracker'
+    if (tabFromQuery === 'firebase' || tabFromQuery === 'firebase-tools') return 'firebase-tools'
+    return 'local-db'
+  })
+
+  useEffect(() => {
+    if (tabFromQuery === 'gemini' || tabFromQuery === 'gemini-tracker') {
+      setMainTab('gemini-tracker')
+    } else if (tabFromQuery === 'firebase' || tabFromQuery === 'firebase-tools') {
+      setMainTab('firebase-tools')
+    }
+  }, [tabFromQuery])
+
+  const handleTabChange = (key: string) => {
+    setMainTab(key)
+    if (key === 'gemini-tracker') {
+      setSearchParams({ tab: 'gemini' })
+    } else if (key === 'firebase-tools') {
+      setSearchParams({ tab: 'firebase' })
+    } else {
+      setSearchParams({})
+    }
+  }
 
   // ================= Local DB State =================
   const [loading, setLoading] = useState<boolean>(true)
@@ -719,7 +748,7 @@ export const Developer: React.FC = () => {
 
       <Tabs
         activeKey={mainTab}
-        onChange={setMainTab}
+        onChange={handleTabChange}
         type='card'
         items={[
           {
@@ -1347,6 +1376,30 @@ export const Developer: React.FC = () => {
                 </Card>
               </Space>
             ),
+          },
+          {
+            key: 'gemini-tracker',
+            label: (
+              <Space>
+                <ThunderboltOutlined style={{ color: token.colorPrimary }} />
+                <span>Gemini API & Token Usage</span>
+                {geminiStats.totalRequests > 0 && (
+                  <Tag
+                    color='purple'
+                    style={{
+                      margin: 0,
+                      fontSize: 11,
+                      borderRadius: 10,
+                      padding: '0 6px',
+                    }}
+                  >
+                    {geminiStats.totalRequests} reqs • {geminiStats.totalTokens.toLocaleString()}{' '}
+                    tok
+                  </Tag>
+                )}
+              </Space>
+            ),
+            children: <GeminiUsageTab />,
           },
         ]}
       />

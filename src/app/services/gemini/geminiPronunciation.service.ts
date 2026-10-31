@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai'
 import { IHttpResponse } from '@/models/http.model'
 import { resolveGeminiApiKey } from './geminiDictionary.service'
 import { CANDIDATE_GEMINI_MODELS, DEFAULT_SPEECH_EVAL_MODEL, TGeminiModel } from './geminiModels'
+import { generateContentWithTracking } from './geminiTracker.service'
 
 export interface IWordEvaluation {
   word: string
@@ -215,7 +216,7 @@ Return ONLY a valid JSON object matching this schema exactly (no outside markdow
 
       for (const model of modelCandidates) {
         try {
-          const response = await ai.models.generateContent({
+          const response = await generateContentWithTracking(ai, 'Pronunciation Evaluation', {
             model,
             contents: [
               {

@@ -74,44 +74,474 @@
   left: 0;
   top: 0;
   z-index: 999;
-  display: flex;
-  align-items: center;
-  gap: $size * 2;
+  width: 100%;
   background: $color-bg-widget;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
   transition:
     transform 0.3s ease,
     background 0.3s ease,
     border-color 0.3s ease;
 
   :global([data-theme='dark']) & {
-    background: $color-cyan-9;
-    border-top: 1px solid rgba(130, 115, 255, 0.15);
+    background: rgba(5, 71, 83, 0.94);
+    border-top: 1px solid rgba(130, 115, 255, 0.2);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+
+.dockContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px 12px 10px;
+    gap: 6px;
+  }
+}
+
+/* Left Zone: Disc + Meta + Bilingual Subtitles */
+.dockLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1.2 1 36%;
+  min-width: 0;
+  max-width: 42%;
+
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    max-width: 100%;
+    flex: unset;
+    gap: 10px;
+    justify-content: space-between;
+  }
+}
+
+.dockDisc {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #13c2c2 0%, #08979c 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(19, 194, 194, 0.35);
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  user-select: none;
+  flex-shrink: 0;
+
+  @media screen and (max-width: 768px) {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    font-size: 18px;
+  }
+
+  &:hover {
+    transform: scale(1.08);
+  }
+
+  &.spinning {
+    animation: spinDisc 8s linear infinite;
+  }
+}
+
+@keyframes spinDisc {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
 .dockMeta {
   flex: 1;
   min-width: 0;
-  max-width: 100%;
   display: flex;
   flex-direction: column;
-  gap: $size * 0.5;
+  gap: 2px;
+}
+
+.dockTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .dockTitle {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: $font-size-heading-4;
+  font-size: 14.5px;
+  font-weight: 600;
   color: $color-primary;
-  font-weight: 500;
+  line-height: 1.3;
 
   :global([data-theme='dark']) & {
-    color: $color-white;
+    color: #ffffff;
   }
+}
+
+.dockSubtitles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  width: 100%;
+}
+
+.dockKaraoke {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: $color-text-base;
+  width: 100%;
+  min-width: 0;
+  letter-spacing: 0.1px;
+
+  @media screen and (max-width: 768px) {
+    font-size: 14px;
+    line-height: 1.3;
+  }
+}
+
+.dockTranslation {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--ant-color-text-secondary);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+
+  @media screen and (max-width: 768px) {
+    font-size: 12.5px;
+    line-height: 1.3;
+  }
+
+  :global([data-theme='dark']) & {
+    color: #ffd43b;
+    opacity: 0.95;
+  }
+}
+
+/* ── Horizontal Scrolling (Marquee) for Long Subtitles ───────────────────── */
+@keyframes marqueeScroll {
+  0%,
+  18% {
+    transform: translateX(0);
+  }
+  68%,
+  85% {
+    transform: translateX(var(--marquee-distance, 0));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.marqueeContainer {
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  display: block;
+  min-width: 0;
+
+  &.marqueeHasOverflow {
+    mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black calc(100% - 18px),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black calc(100% - 18px),
+      transparent 100%
+    );
+  }
+}
+
+.marqueeContent {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+  min-width: 0;
+  vertical-align: middle;
+
+  &:hover {
+    animation-play-state: paused !important;
+  }
+}
+
+.marqueeScrolling {
+  animation: marqueeScroll var(--marquee-duration, 6s) cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+}
+
+.dockTranslateBtn {
+  font-size: 11px !important;
+  height: 20px !important;
+  line-height: 18px !important;
+  padding: 0 8px !important;
+  border-radius: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  width: fit-content;
+  color: $color-primary !important;
+  background: rgba(19, 194, 194, 0.1) !important;
+  border: 1px dashed rgba(19, 194, 194, 0.4) !important;
+  margin-top: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(19, 194, 194, 0.2) !important;
+    transform: scale(1.02);
+  }
+}
+
+/* Center Zone: Playback Controls & Modern Seek Bar */
+.dockCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1.4 1 40%;
+  max-width: 580px;
+  min-width: 260px;
+  gap: 4px;
+
+  @media screen and (max-width: 768px) {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex: unset;
+    gap: 4px;
+  }
+}
+
+.dockControlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    justify-content: space-evenly;
+    gap: 2px;
+  }
+}
+
+.dockControlBtn {
+  color: var(--ant-color-text) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 6px !important;
+  border-radius: 50% !important;
+  cursor: pointer;
+  transition: all 0.15s ease !important;
+
+  &:hover {
+    color: var(--ant-color-primary) !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+    transform: scale(1.08);
+
+    :global([data-theme='dark']) & {
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    padding: 4px !important;
+  }
+}
+
+.dockBtnActive {
+  color: #fab005 !important;
+}
+
+.dockMainPlayBtn {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #13c2c2 0%, #08979c 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(19, 194, 194, 0.4) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  padding: 0 !important;
+  transition: all 0.2s ease !important;
+
+  &:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px rgba(19, 194, 194, 0.55) !important;
+    background: linear-gradient(135deg, #36cfc9 0%, #13c2c2 100%) !important;
+  }
+
+  span {
+    color: #ffffff !important;
+    font-size: 20px !important;
+  }
+
+  @media screen and (max-width: 768px) {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+  }
+}
+
+.dockSeekBar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  @media screen and (max-width: 768px) {
+    gap: 6px;
+    padding: 0;
+  }
+}
+
+.dockTime {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ant-color-text-secondary);
+  min-width: 36px;
+  text-align: center;
+  user-select: none;
+}
+
+.dockSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--dock-slider-color, #13c2c2) 0%,
+    var(--dock-slider-color, #13c2c2) var(--progress-percent, 0%),
+    rgba(140, 140, 140, 0.25) var(--progress-percent, 0%),
+    rgba(140, 140, 140, 0.25) 100%
+  );
+  outline: none;
+  cursor: pointer;
+  transition: height 0.15s ease;
+
+  &:hover {
+    height: 7px;
+  }
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  &:hover::-webkit-slider-thumb {
+    transform: scale(1.25);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* Right Zone: Secondary Tools & Actions (Desktop) */
+.dockRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex: 1 1 28%;
+  min-width: 0;
+
+  @media screen and (max-width: 768px) {
+    display: none;
+  }
+}
+
+/* Mobile Quick Tools beside Title/Disc in Row 1 */
+.dockMobileRightTools {
+  display: none;
+
+  @media screen and (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+}
+
+/* Mobile Mini Controls on right side */
+.dockMobileControls {
+  display: none;
+
+  @media screen and (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+/* Mobile Progress Bar at top edge of dock */
+.dockMobileTopBar {
+  display: none;
+
+  @media screen and (max-width: 768px) {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: rgba(140, 140, 140, 0.2);
+    cursor: pointer;
+
+    .dockMobileProgress {
+      height: 100%;
+      background: var(--dock-slider-color, #13c2c2);
+      transition: width 0.1s linear;
+    }
+  }
+}
+
+.dockVolumeSlider {
+  width: 90px;
 }
 
 .liveTranscript {
@@ -340,6 +770,20 @@
     display: inline;
     background-image: linear-gradient(to right, #fab005 50%, #8ea5b0 50%);
   }
+}
+
+.pipTranslationText {
+  display: block;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #ffd43b;
+  margin-top: 8px;
+  font-style: italic;
+  opacity: 0.95;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .pipControls {

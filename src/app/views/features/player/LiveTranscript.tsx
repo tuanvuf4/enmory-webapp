@@ -48,7 +48,10 @@ export const LiveTranscript: React.FC = () => {
 
   const smoothTime = useSmoothTime(playedSeconds, playing, playbackRate)
 
-  const segments = useMemo(() => parseTranscript(transcript), [transcript])
+  const segments = useMemo(
+    () => parseTranscript(transcript, currentTrack?.translation || ''),
+    [transcript, currentTrack?.translation],
+  )
   const activeIndex = getActiveSegmentIndex(segments, smoothTime)
 
   const activeSegmentProgress = useMemo(() => {
@@ -332,6 +335,20 @@ export const LiveTranscript: React.FC = () => {
                   seg.text
                 )}
               </p>
+
+              {player.showTranslation !== false && seg.translation && (
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontStyle: 'italic',
+                    color: token.colorTextSecondary,
+                    marginTop: 4,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {seg.translation}
+                </div>
+              )}
             </div>
           )
         })}

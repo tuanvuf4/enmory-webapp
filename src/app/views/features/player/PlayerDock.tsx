@@ -1,22 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import appStyle from '@/style/appStyle.module.scss'
 import {
   CaretRightFilled,
+  CustomerServiceOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
   FastBackwardOutlined,
   FastForwardOutlined,
-  PauseCircleFilled,
+  FullscreenOutlined,
+  MutedOutlined,
   PauseOutlined,
-  PlayCircleFilled,
   ReloadOutlined,
   RetweetOutlined,
   SoundOutlined,
   StepBackwardOutlined,
   StepForwardOutlined,
   UnorderedListOutlined,
-  FullscreenOutlined,
 } from '@ant-design/icons'
 import { FocusListeningModal } from './FocusListeningModal'
-import { Button, Dropdown, Flex, MenuProps, Space, Tag, theme } from 'antd'
+import { Button, Dropdown, MenuProps, Popover, Slider, Tag, Tooltip, theme } from 'antd'
 import ReactPlayer from 'react-player'
 import { createPortal } from 'react-dom'
 import styles from './listening.module.scss'
@@ -25,6 +26,7 @@ import { listeningAction } from '@/store/reducers/listening.reducer'
 import { appSetting } from '@/config/appConfig'
 import { getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import { KaraokeText } from './KaraokeText'
+import { MarqueeText } from './MarqueeText'
 import { useSmoothTime } from './useSmoothTime'
 import { tracksApi } from '@/services/firebase'
 import { TrackList } from './TrackList'
@@ -285,16 +287,26 @@ export const PlayerDock: React.FC = () => {
   const smoothTime = useSmoothTime(playedSeconds, playing, playbackRate)
 
   const transcriptSegments = useMemo(
-    () => parseTranscript(currentTrack?.transcript || ''),
-    [currentTrack?.transcript],
+    () => parseTranscript(currentTrack?.transcript || '', currentTrack?.translation || ''),
+    [currentTrack?.transcript, currentTrack?.translation],
   )
   const activeIndex = useMemo(() => {
     return getActiveSegmentIndex(transcriptSegments, smoothTime)
   }, [transcriptSegments, smoothTime])
 
-  const activeSegmentText = useMemo(() => {
-    return activeIndex >= 0 ? transcriptSegments[activeIndex].text : ''
+  const activeSegment = useMemo(() => {
+    return activeIndex >= 0 && activeIndex < transcriptSegments.length
+      ? transcriptSegments[activeIndex]
+      : null
   }, [transcriptSegments, activeIndex])
+
+  const activeSegmentText = useMemo(() => {
+    return activeSegment ? activeSegment.text : ''
+  }, [activeSegment])
+
+  const activeSegmentTranslation = useMemo(() => {
+    return activeSegment?.translation || ''
+  }, [activeSegment])
 
   const activeSegmentProgress = useMemo(() => {
     if (activeIndex < 0) return 0
@@ -1195,6 +1207,50 @@ export const PlayerDock: React.FC = () => {
     return `${min}:${String(sec).padStart(2, '0')}`
   }
 
+  const handleVolumeChange = (val: number) => {
+    const newVol = val / 100
+    dispatch(listeningAction.updatePlayer({ volume: newVol, muted: false }))
+    if (playerRef.current) {
+      playerRef.current.volume = newVol
+      playerRef.current.muted = false
+    }
+  }
+
+  const handleToggleMute = () => {
+    const nextMuted = !muted
+    dispatch(listeningAction.updatePlayer({ muted: nextMuted }))
+    if (playerRef.current) {
+      playerRef.current.muted = nextMuted
+    }
+  }
+
+  const volumeContent = (
+    <div style={{ padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <Button
+        type='text'
+        size='small'
+        icon={
+          muted || volume === 0 ? (
+            <MutedOutlined style={{ color: token.colorError }} />
+          ) : (
+            <SoundOutlined />
+          )
+        }
+        onClick={handleToggleMute}
+      />
+      <Slider
+        min={0}
+        max={100}
+        value={muted ? 0 : Math.round(volume * 100)}
+        onChange={handleVolumeChange}
+        style={{ width: 90, margin: 0 }}
+      />
+      <span style={{ fontSize: 11, minWidth: 28, fontVariantNumeric: 'tabular-nums' }}>
+        {muted ? '0%' : `${Math.round(volume * 100)}%`}
+      </span>
+    </div>
+  )
+
   const speedMenuProps: MenuProps = {
     items: [
       { key: '0.5', label: '0.5x' },
@@ -1216,8 +1272,7 @@ export const PlayerDock: React.FC = () => {
       className={styles.playerDock}
       style={{
         width: showPlayer ? '100%' : 50,
-        padding: showPlayer ? token.size / 2 : 0,
-        transition: 'width 0.3s ease, padding 0.3s ease',
+        transition: 'width 0.3s ease',
       }}
     >
       {/* Track list panel (appears inside dock, above controls) */}
@@ -1227,241 +1282,393 @@ export const PlayerDock: React.FC = () => {
         </div>
       )}
 
-      {/* Track info + seek bar */}
       {showPlayer && (
-        <div className={styles.dockMeta}>
-          <div className={styles.dockTitle} title={currentTrack?.title}>
-            {currentTrack?.title}
-            {isTranscriptPlayback && (
-              <Dropdown
-                menu={{
-                  items: GEMINI_VOICES.map((v) => ({
-                    key: v.value,
-                    label: v.label,
-                    onClick: () => {
-                      if (currentTrack) {
-                        dispatch(listeningAction.updateTrack({ ...currentTrack, voice: v.value }))
-                        ttsService.stop()
-                        lastSpokenIndexRef.current = -1
-                      }
-                    },
-                  })),
-                  selectable: true,
-                  selectedKeys: [currentVoice],
-                }}
-                trigger={['click']}
+        <div className={styles.dockContainer}>
+          {/* ── Left Zone: Disc + Meta + Bilingual Subtitles + Mobile Quick Tools ── */}
+          <div className={styles.dockLeft}>
+            <Tooltip title={trackListOpen ? 'Đóng danh sách bài' : 'Xem danh sách bài nghe'}>
+              <div
+                className={`${styles.dockDisc} ${playing ? styles.spinning : ''}`}
+                onClick={() => setTrackListOpen((v) => !v)}
               >
-                <Tag
-                  color='cyan'
-                  style={{
-                    marginLeft: 8,
-                    fontSize: 11,
-                    lineHeight: '18px',
-                    verticalAlign: 'middle',
-                    cursor: 'pointer',
-                  }}
-                  title='Nhấp để đổi giọng đọc tự nhiên Gemini TTS'
+                <CustomerServiceOutlined />
+              </div>
+            </Tooltip>
+
+            <div className={styles.dockMeta}>
+              <div className={styles.dockTitleRow}>
+                <span
+                  className={styles.dockTitle}
+                  title={currentTrack?.title || 'Chưa chọn bài nghe'}
                 >
-                  <SoundOutlined style={{ marginRight: 4 }} />
-                  Gemini TTS:{' '}
-                  {GEMINI_VOICES.find((v) => v.value === currentVoice)?.label.split(' ')[0] ||
-                    'Auto'}
-                </Tag>
-              </Dropdown>
-            )}
-          </div>
+                  {currentTrack?.title || 'Chưa chọn bài nghe'}
+                </span>
 
-          {activeSegmentText && (
-            <div
-              className={`${styles.liveTranscript} ${player.transcriptDisplayMode === 'blur' ? styles.transcriptBlurred : player.transcriptDisplayMode === 'hidden' ? styles.transcriptHidden : ''}`}
-              onClick={() => {
-                if (player.transcriptDisplayMode !== 'visible') {
-                  dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: 'visible' }))
-                }
-              }}
-            >
-              <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
-            </div>
-          )}
-        </div>
-      )}
+                {isTranscriptPlayback && (
+                  <Dropdown
+                    menu={{
+                      items: GEMINI_VOICES.map((v) => ({
+                        key: v.value,
+                        label: v.label,
+                        onClick: () => {
+                          if (currentTrack) {
+                            dispatch(
+                              listeningAction.updateTrack({ ...currentTrack, voice: v.value }),
+                            )
+                            ttsService.stop()
+                            lastSpokenIndexRef.current = -1
+                          }
+                        },
+                      })),
+                      selectable: true,
+                      selectedKeys: [currentVoice],
+                    }}
+                    trigger={['click']}
+                  >
+                    <Tag
+                      color='cyan'
+                      style={{
+                        fontSize: 10,
+                        lineHeight: '16px',
+                        padding: '0 6px',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                      title='Nhấp để đổi giọng đọc tự nhiên Gemini TTS'
+                    >
+                      <SoundOutlined style={{ marginRight: 3 }} />
+                      {GEMINI_VOICES.find((v) => v.value === currentVoice)?.label.split(' ')[0] ||
+                        'Auto'}
+                    </Tag>
+                  </Dropdown>
+                )}
+              </div>
 
-      {showPlayer && (
-        <Space size={[0, 8]} direction={'vertical'}>
-          {/* controls */}
-          <Flex gap={token.size / 4}>
-            <Button
-              type={trackListOpen ? 'primary' : 'text'}
-              variant={'text'}
-              size={'middle'}
-              style={{ background: 'transparent', boxShadow: 'none' }}
-              icon={
-                <UnorderedListOutlined
-                  style={{
-                    fontSize: '20px',
-                    color: trackListOpen ? token.palette?.yellow?.[0] : token.colorText,
-                  }}
-                />
-              }
-              onClick={() => setTrackListOpen((v) => !v)}
-            />
-
-            <Button
-              type={'text'}
-              size={'middle'}
-              title={
-                loopSegment ? 'Đang bật lặp câu (Nhấp để tắt)' : 'Lặp câu hiện tại (Nhấp để bật)'
-              }
-              icon={
-                <div
-                  style={{
-                    position: 'relative',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <RetweetOutlined style={{ fontSize: '20px' }} />
-                  <span
-                    style={{
-                      position: 'absolute',
-                      fontSize: '9px',
-                      fontWeight: 'bold',
-                      top: '-4px',
-                      right: '-5px',
-                      lineHeight: 1,
+              {/* Subtitles: English Karaoke + Vietnamese Translation */}
+              {activeSegmentText ? (
+                <div className={styles.dockSubtitles}>
+                  <div
+                    className={`${styles.dockKaraoke} ${
+                      player.transcriptDisplayMode === 'blur'
+                        ? styles.transcriptBlurred
+                        : player.transcriptDisplayMode === 'hidden'
+                          ? styles.transcriptHidden
+                          : ''
+                    }`}
+                    onClick={() => {
+                      if (player.transcriptDisplayMode !== 'visible') {
+                        dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: 'visible' }))
+                      }
                     }}
                   >
-                    1
-                  </span>
-                </div>
-              }
-              style={{
-                background: 'transparent',
-                boxShadow: 'none',
-                color: loopSegment ? token.palette?.yellow?.[0] : token.colorText,
-              }}
-              onClick={handleToggleLoopSegment}
-            />
+                    <MarqueeText
+                      isPlaying={playing}
+                      textKey={`en-${activeIndex}-${activeSegmentText}`}
+                      title={activeSegmentText}
+                    >
+                      <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
+                    </MarqueeText>
+                  </div>
 
-            <Dropdown menu={speedMenuProps} trigger={['click']} placement='bottomLeft'>
+                  {activeSegmentTranslation && (
+                    <div className={styles.dockTranslation}>
+                      <MarqueeText
+                        isPlaying={playing}
+                        textKey={`vi-${activeIndex}-${activeSegmentTranslation}`}
+                        title={activeSegmentTranslation}
+                      >
+                        <span>{activeSegmentTranslation}</span>
+                      </MarqueeText>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+
+            {/* Mobile Quick Tools on Row 1: Speed, Focus, Tracklist */}
+            <div className={styles.dockMobileRightTools}>
+              <Dropdown menu={speedMenuProps} trigger={['click']} placement='top'>
+                <Button
+                  type='text'
+                  size='small'
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    borderRadius: 10,
+                    padding: '0 6px',
+                    height: 24,
+                    background: 'rgba(150, 150, 150, 0.1)',
+                  }}
+                >
+                  {playbackRate}x
+                </Button>
+              </Dropdown>
+
               <Button
                 type='text'
-                title={'Rate'}
-                size={'middle'}
-                className={appStyle.fromXs}
-                style={{ lineHeight: '40px' }}
-              >
-                {playbackRate}x
-              </Button>
+                size='small'
+                className={styles.dockControlBtn}
+                onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
+                icon={<FullscreenOutlined style={{ fontSize: 16 }} />}
+                title='Focus Karaoke'
+              />
+
+              <Button
+                type='text'
+                size='small'
+                className={`${styles.dockControlBtn} ${trackListOpen ? styles.dockBtnActive : ''}`}
+                icon={<UnorderedListOutlined style={{ fontSize: 16 }} />}
+                onClick={() => setTrackListOpen((v) => !v)}
+                title='Danh sách bài'
+              />
+            </div>
+          </div>
+
+          {/* ── Center Zone: Playback Controls & Modern Seek Bar ── */}
+          <div className={styles.dockCenter}>
+            <div className={styles.dockControlsRow}>
+              {/* Loop Segment 1 */}
+              <Tooltip title={loopSegment ? 'Tắt lặp câu (Đang bật)' : 'Bật lặp câu hiện tại'}>
+                <Button
+                  type='text'
+                  size='middle'
+                  className={`${styles.dockControlBtn} ${loopSegment ? styles.dockBtnActive : ''}`}
+                  icon={
+                    <div
+                      style={{
+                        position: 'relative',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <RetweetOutlined style={{ fontSize: '18px' }} />
+                      <span
+                        style={{
+                          position: 'absolute',
+                          fontSize: '8px',
+                          fontWeight: 'bold',
+                          top: '-4px',
+                          right: '-4px',
+                          lineHeight: 1,
+                        }}
+                      >
+                        1
+                      </span>
+                    </div>
+                  }
+                  onClick={handleToggleLoopSegment}
+                />
+              </Tooltip>
+
+              {/* Previous */}
+              <Tooltip title='Bài trước'>
+                <Button
+                  type='text'
+                  size='middle'
+                  className={styles.dockControlBtn}
+                  icon={<StepBackwardOutlined style={{ fontSize: '18px' }} />}
+                  onClick={onPrev}
+                />
+              </Tooltip>
+
+              {/* -10s */}
+              <Tooltip title='Lùi 10 giây'>
+                <Button
+                  type='text'
+                  size='middle'
+                  className={styles.dockControlBtn}
+                  icon={<FastBackwardOutlined style={{ fontSize: '18px' }} />}
+                  onClick={() => onSeekBy(-10)}
+                />
+              </Tooltip>
+
+              {/* Main Play / Pause */}
+              <Tooltip title={playing ? 'Tạm dừng (Space)' : 'Phát (Space)'}>
+                <Button
+                  type='text'
+                  className={styles.dockMainPlayBtn}
+                  icon={
+                    playing ? (
+                      <PauseOutlined style={{ fontSize: '20px' }} />
+                    ) : (
+                      <CaretRightFilled style={{ fontSize: '22px', marginLeft: '2px' }} />
+                    )
+                  }
+                  onClick={playing ? handlePause : handlePlay}
+                />
+              </Tooltip>
+
+              {/* +10s */}
+              <Tooltip title='Tua nhanh 10 giây'>
+                <Button
+                  type='text'
+                  size='middle'
+                  className={styles.dockControlBtn}
+                  icon={<FastForwardOutlined style={{ fontSize: '18px' }} />}
+                  onClick={() => onSeekBy(10)}
+                />
+              </Tooltip>
+
+              {/* Next */}
+              <Tooltip title='Bài tiếp'>
+                <Button
+                  type='text'
+                  size='middle'
+                  className={styles.dockControlBtn}
+                  icon={<StepForwardOutlined style={{ fontSize: '18px' }} />}
+                  onClick={onNext}
+                />
+              </Tooltip>
+
+              {/* Loop Track */}
+              <Tooltip title={loop ? 'Tắt lặp bài (Đang bật)' : 'Bật lặp bài'}>
+                <Button
+                  type='text'
+                  size='middle'
+                  className={`${styles.dockControlBtn} ${loop ? styles.dockBtnActive : ''}`}
+                  icon={<ReloadOutlined style={{ fontSize: '18px' }} />}
+                  onClick={handleToggleLoop}
+                />
+              </Tooltip>
+            </div>
+
+            {/* Modern seek bar */}
+            <div className={styles.dockSeekBar}>
+              <span className={styles.dockTime}>{formatTime(duration * played)}</span>
+              <input
+                type='range'
+                className={styles.dockSlider}
+                min={0}
+                max={0.999999}
+                step='any'
+                value={played}
+                style={
+                  {
+                    '--progress-percent': `${Math.min(100, Math.max(0, (played || 0) * 100))}%`,
+                    '--dock-slider-color': token.colorPrimary,
+                  } as React.CSSProperties
+                }
+                onMouseDown={handleSeekMouseDown}
+                onChange={handleSeekChange}
+                onMouseUp={handleSeekMouseUp}
+              />
+              <span className={styles.dockTime}>{formatTime(duration)}</span>
+            </div>
+          </div>
+
+          {/* ── Right Zone: Secondary Tools & Utilities ── */}
+          <div className={styles.dockRight}>
+            {/* Speed Pill Dropdown */}
+            <Dropdown menu={speedMenuProps} trigger={['click']} placement='top'>
+              <Tooltip title='Tốc độ phát'>
+                <Button
+                  type='text'
+                  size='small'
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    borderRadius: 12,
+                    padding: '0 8px',
+                    height: 26,
+                    background: 'rgba(150, 150, 150, 0.1)',
+                  }}
+                >
+                  {playbackRate}x
+                </Button>
+              </Tooltip>
             </Dropdown>
 
-            <Button
-              type='text'
-              size={'middle'}
-              title={'Previous'}
-              icon={<StepBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
-              onClick={onPrev}
-            />
-
-            <Button
-              type='text'
-              size={'middle'}
-              title={'-10s'}
-              icon={<FastBackwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
-              onClick={() => onSeekBy(-10)}
-            />
-
-            <Button
-              type='text'
-              size={'middle'}
-              icon={
-                playing ? (
-                  <PauseCircleFilled
-                    style={{ fontSize: '20px', color: token.palette?.yellow?.[0] }}
-                  />
-                ) : (
-                  <PlayCircleFilled
-                    style={{ fontSize: '20px', color: token.palette?.yellow?.[0] }}
-                  />
-                )
+            {/* Transcript Display Mode (Visible / Blur toggle) */}
+            <Tooltip
+              title={
+                player.transcriptDisplayMode === 'visible'
+                  ? 'Làm mờ chữ (Luyện nghe)'
+                  : 'Đang làm mờ chữ (Nhấp để hiện rõ)'
               }
-              onClick={playing ? handlePause : handlePlay}
-            />
+            >
+              <Button
+                type='text'
+                size='middle'
+                className={`${styles.dockControlBtn} ${
+                  player.transcriptDisplayMode === 'blur' ? styles.dockBtnActive : ''
+                }`}
+                icon={
+                  player.transcriptDisplayMode === 'visible' ? (
+                    <EyeOutlined style={{ fontSize: 18 }} />
+                  ) : (
+                    <EyeInvisibleOutlined style={{ fontSize: 18 }} />
+                  )
+                }
+                onClick={() => {
+                  const nextMode = player.transcriptDisplayMode === 'visible' ? 'blur' : 'visible'
+                  dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: nextMode }))
+                }}
+              />
+            </Tooltip>
 
-            <Button
-              type='text'
-              title={'+5s'}
-              size={'middle'}
-              icon={<FastForwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
-              onClick={() => onSeekBy(10)}
-            />
+            {/* Volume Popover */}
+            <Popover content={volumeContent} trigger='hover' placement='top'>
+              <Button
+                type='text'
+                size='middle'
+                className={styles.dockControlBtn}
+                icon={
+                  muted || volume === 0 ? (
+                    <MutedOutlined style={{ fontSize: 18, color: token.colorError }} />
+                  ) : (
+                    <SoundOutlined style={{ fontSize: 18 }} />
+                  )
+                }
+                onClick={handleToggleMute}
+              />
+            </Popover>
 
-            <Button
-              type='text'
-              title={'Next'}
-              size={'middle'}
-              icon={<StepForwardOutlined style={{ fontSize: '20px', color: token.colorText }} />}
-              onClick={onNext}
-            />
+            {/* PiP Button */}
+            <Tooltip title='Chế độ Picture-in-Picture'>
+              <Button
+                type='text'
+                size='middle'
+                className={`${styles.dockControlBtn} ${pipWindow ? styles.dockBtnActive : ''}`}
+                onClick={toggleDocumentPiP}
+                icon={
+                  <svg
+                    viewBox='0 0 24 24'
+                    width='18'
+                    height='18'
+                    fill='currentColor'
+                    style={{ color: pipWindow ? token.palette?.yellow?.[0] : 'inherit' }}
+                  >
+                    <path d='M19 11h-8v6h8v-6zm4 8V5c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 0H3V5h18v14z' />
+                  </svg>
+                }
+              />
+            </Tooltip>
 
-            <Button
-              type={'text'}
-              size={'middle'}
-              title={'Repeat'}
-              icon={<ReloadOutlined style={{ fontSize: '20px' }} />}
-              style={{
-                background: 'transparent',
-                boxShadow: 'none',
-                color: loop ? token.palette?.yellow?.[0] : token.colorText,
-              }}
-              onClick={() => handleToggleLoop()}
-            />
+            {/* Focus Fullscreen Karaoke Button */}
+            <Tooltip title='Toàn màn hình Focus Karaoke'>
+              <Button
+                type='text'
+                size='middle'
+                className={styles.dockControlBtn}
+                onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
+                icon={<FullscreenOutlined style={{ fontSize: 18 }} />}
+              />
+            </Tooltip>
 
-            <Button
-              type='text'
-              size={'middle'}
-              onClick={toggleDocumentPiP}
-              className={appStyle.fromXs}
-              icon={
-                <svg
-                  viewBox='0 0 24 24'
-                  width='22'
-                  height='22'
-                  fill='currentColor'
-                  style={{ color: pipWindow ? token.palette?.yellow?.[0] : 'inherit' }}
-                >
-                  <path d='M19 11h-8v6h8v-6zm4 8V5c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 0H3V5h18v14z' />
-                </svg>
-              }
-              title='Picture in Picture'
-            />
-
-            <Button
-              type='text'
-              size={'middle'}
-              onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
-              icon={<FullscreenOutlined style={{ fontSize: '20px', color: token.colorText }} />}
-              title='Toàn màn hình Focus Karaoke'
-            />
-          </Flex>
-
-          {/* seek bar */}
-          <Flex gap={token.size / 2} align={'center'}>
-            <span>{formatTime(duration * played)}</span>
-            <input
-              type='range'
-              min={0}
-              max={0.999999}
-              step='any'
-              value={played}
-              onMouseDown={handleSeekMouseDown}
-              onChange={handleSeekChange}
-              onMouseUp={handleSeekMouseUp}
-            />
-            <span>{formatTime(duration)}</span>
-          </Flex>
-        </Space>
+            {/* Tracklist Toggle */}
+            <Tooltip title='Danh sách bài nghe'>
+              <Button
+                type='text'
+                size='middle'
+                className={`${styles.dockControlBtn} ${trackListOpen ? styles.dockBtnActive : ''}`}
+                icon={<UnorderedListOutlined style={{ fontSize: 18 }} />}
+                onClick={() => setTrackListOpen((v) => !v)}
+              />
+            </Tooltip>
+          </div>
+        </div>
       )}
 
       {/* Hidden ReactPlayer engine */}
@@ -1528,13 +1735,16 @@ export const PlayerDock: React.FC = () => {
             {/* Title */}
             <div className={styles.pipTitle}>{currentTrack?.title || 'No Track Playing'}</div>
 
-            {/* Karaoke text */}
+            {/* Karaoke text + Translation */}
             <div className={styles.pipContentWrapper}>
               <div className={styles.pipKaraokeText}>
                 {activeSegmentText ? (
                   <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
                 ) : (
                   <span style={{ color: '#8ea5b0', opacity: 0.6 }}>...</span>
+                )}
+                {activeSegmentTranslation && (
+                  <div className={styles.pipTranslationText}>{activeSegmentTranslation}</div>
                 )}
               </div>
             </div>

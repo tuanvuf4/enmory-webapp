@@ -4,6 +4,8 @@ import { IItem } from '@/models/item.model'
 import { Item } from '@/views/features'
 import { initItem, ItemForm } from '@/views/features/modals/itemModal'
 import { FormProvider, useForm } from 'react-hook-form'
+import { BookOutlined } from '@ant-design/icons'
+import { Tag } from 'antd'
 
 interface IViewItemModalContentProps {
   initialData: IItem
@@ -55,9 +57,16 @@ export const useItemModal = () => {
     if (mode === 'add') {
       openModal({
         title: 'Item Form',
+        tag: <Tag color={'green'}>CREATE</Tag>,
         width: 800,
         footer: null,
         maskClosable: false,
+        allowMinimize: true,
+        minimizeInfo: {
+          title: data?.origin ? `Item: ${data.origin}` : 'Item Form',
+          tooltip: data?.origin ? `Mở lại biểu mẫu: ${data.origin}` : 'Mở lại Item Form',
+          icon: <BookOutlined />,
+        },
         content: <ItemFormContext data={data} />,
       })
     }
@@ -65,9 +74,16 @@ export const useItemModal = () => {
     if (mode === 'edit') {
       openModal({
         title: 'Item Form',
+        tag: <Tag color={'yellow'}>UPDATE</Tag>,
         width: 800,
         footer: null,
         maskClosable: false,
+        allowMinimize: true,
+        minimizeInfo: {
+          title: data?.origin ? `Item: ${data.origin}` : 'Item Form',
+          tooltip: data?.origin ? `Mở lại biểu mẫu: ${data.origin}` : 'Mở lại Item Form',
+          icon: <BookOutlined />,
+        },
         content: <ItemFormContext data={data} />,
       })
     }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 import appStyle from '@/style/appStyle.module.scss'
 import { useBlog } from '@/core/hooks'
@@ -14,6 +14,7 @@ import { Tags } from '@/views/components'
 
 export const BlogDetail: React.FC = () => {
   const params = useParams<{ id: string }>()
+  const navigate = useNavigate()
 
   const { token } = theme.useToken()
 
@@ -65,7 +66,12 @@ export const BlogDetail: React.FC = () => {
                   }}
                 >
                   {blog.tags && blog.tags.length > 0 && (
-                    <Tags label={'Tags'} tags={blog.tags} searchBy={'tags'} />
+                    <Tags
+                      label={'Tags'}
+                      tags={blog.tags}
+                      searchBy={'tags'}
+                      onTagClick={(tag) => navigate(`/blog?tag=${encodeURIComponent(tag)}`)}
+                    />
                   )}
                   {blog.relation && blog.relation.length > 0 && (
                     <Tags label={'Relation'} tags={blog.relation} />

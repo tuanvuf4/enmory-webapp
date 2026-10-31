@@ -27,6 +27,11 @@ export const BlogItem = ({
 
   const preview = description.length > 200 ? `${description.substring(0, 200)}...` : description
 
+  const handleTagClick = (tag: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigate(`/blog?tag=${encodeURIComponent(tag)}`)
+  }
+
   if (compact) {
     return (
       <Flex justify='space-between' align='flex-start' gap={token.sizeSM} style={{ width: '100%' }}>
@@ -53,7 +58,12 @@ export const BlogItem = ({
           {tags && tags.length > 0 && (
             <Space size={4} wrap>
               {tags.slice(0, 4).map((tag) => (
-                <Tag key={tag} style={{ margin: 0, fontSize: token.fontSizeSM }}>
+                <Tag
+                  key={tag}
+                  className='cursor-pointer'
+                  style={{ margin: 0, fontSize: token.fontSizeSM }}
+                  onClick={(e) => handleTagClick(tag, e)}
+                >
                   {tag}
                 </Tag>
               ))}
@@ -141,7 +151,12 @@ export const BlogItem = ({
       {tags && tags.length > 0 && (
         <Space size={4} wrap>
           {tags.slice(0, 4).map((tag) => (
-            <Tag key={tag} style={{ margin: 0, fontSize: token.fontSizeSM }}>
+            <Tag
+              key={tag}
+              className='cursor-pointer'
+              style={{ margin: 0, fontSize: token.fontSizeSM }}
+              onClick={(e) => handleTagClick(tag, e)}
+            >
               {tag}
             </Tag>
           ))}

@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai'
 import { IHttpResponse } from '@/models/http.model'
 import { resolveGeminiApiKey } from './geminiDictionary.service'
 import { GEMINI_MODELS } from './geminiModels'
+import { generateContentWithTracking } from './geminiTracker.service'
 
 export interface IReviewSuggestion {
   issue: 'grammar' | 'spelling' | 'word-choice' | 'punctuation' | 'style'
@@ -125,7 +126,7 @@ JSON Schema:
 
       for (const model of GEMINI_MODELS) {
         try {
-          const response = await ai.models.generateContent({
+          const response = await generateContentWithTracking(ai, 'Sentence Review', {
             model,
             contents: prompt,
             config: {

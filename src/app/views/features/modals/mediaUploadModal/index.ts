@@ -1,2 +1,2 @@
-export * from './MediaUploadForm'
-export * from './MediaUploadModal'
+export * from './MediaForm'
+export * from './MediaModal'

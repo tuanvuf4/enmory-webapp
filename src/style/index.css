@@ -262,6 +262,10 @@ a.ck.ck-button:not(.ck-disabled):hover {
   border-bottom-color: var(--ant-color-border) !important;
 }
 
+:where(.css-dev-only-do-not-override-1i90bka).ant-modal .ant-modal-close {
+  top: 16px;
+}
+
 /* ==========================================================================
    Ant Card component style matching .chartCard
    ========================================================================== */
@@ -304,4 +308,3 @@ a.ck.ck-button:not(.ck-disabled):hover {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
   border-color: rgba(139, 110, 247, 0.4);
 }
-

@@ -6,6 +6,7 @@ import {
   GEMINI_TRANSCRIPT_MODELS,
   CANDIDATE_GEMINI_MODELS,
 } from './geminiModels'
+import { generateContentWithTracking } from './geminiTracker.service'
 
 export type { TGeminiModel }
 export { GEMINI_TRANSCRIPT_MODELS, CANDIDATE_GEMINI_MODELS }
@@ -66,7 +67,7 @@ Return ONLY the generated prompt text, ready to be sent to an AI model. Do not i
 
     for (const model of modelCandidates) {
       try {
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithTracking(ai, 'Transcript Prompt Generation', {
           model,
           contents: `Description: "${description || DEFAULT_TRANSCRIPT_DESCRIPTION}"\n\nGenerate the complete prompt based on this description.`,
           config: {
@@ -126,7 +127,7 @@ You MUST return a JSON object with this exact schema:
 
     for (const model of modelCandidates) {
       try {
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithTracking(ai, 'Transcript Script Generation', {
           model,
           contents: generatedPrompt,
           config: {
@@ -207,6 +208,100 @@ You MUST return a JSON object with this exact schema:
         statusCode: 500,
       }
     }
+  },
+
+  /**
+   * Translates a single English sentence to natural Vietnamese.
+   */
+  translateSentence: async (sentence: string, preferredModel?: TGeminiModel): Promise<string> => {
+    const clean = sentence.trim()
+    if (!clean) return ''
+    const ai = getGeminiClient()
+
+    const systemInstruction = `You are an expert bilingual English-Vietnamese translator.
+Translate the following English sentence into natural, fluent Vietnamese suitable for an English language learner.
+Return ONLY the Vietnamese translation text. Do not include quotes, markdown formatting, explanations, or notes.`
+
+    const modelCandidates = preferredModel
+      ? [preferredModel, ...CANDIDATE_GEMINI_MODELS.filter((m) => m !== preferredModel)]
+      : CANDIDATE_GEMINI_MODELS
+
+    let lastError: any = null
+    for (const model of modelCandidates) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: `Translate to Vietnamese: "${clean}"`,
+          config: {
+            systemInstruction,
+            temperature: 0.3,
+          },
+        })
+        const text = response.text?.trim()
+        if (text) return text
+      } catch (err: any) {
+        lastError = err
+        console.warn(
+          `Gemini translation with ${model} failed, trying fallback:`,
+          err?.message || err,
+        )
+      }
+    }
+    throw lastError || new Error('Không thể dịch câu bằng Gemini.')
+  },
+
+  /**
+   * Translates an entire English transcript with timestamp markers into natural Vietnamese.
+   * Keeps all timestamps (e.g. 0:00, 0:25) unchanged so they map 1:1 to audio segments.
+   */
+  translateTranscript: async (
+    transcript: string,
+    preferredModel?: TGeminiModel,
+  ): Promise<string> => {
+    const clean = transcript.trim()
+    if (!clean) return ''
+    const ai = getGeminiClient()
+
+    const systemInstruction = `You are an expert bilingual English-Vietnamese translator and curriculum designer.
+Translate the following English audio transcript into natural, fluent Vietnamese.
+
+CRITICAL REQUIREMENTS:
+1. Preserve every timestamp marker (e.g. 0:00, 0:25, 1:15, etc.) exactly on its own line matching ^(\\d+):(\\d{2})$.
+2. Beneath each timestamp marker, output the natural Vietnamese translation corresponding to that segment.
+3. Keep the exact same number and sequence of timestamp segments.
+4. Separate segments with a blank line.
+5. Return ONLY the translated transcript text with timestamps. Do not include markdown codeblocks or commentary.`
+
+    const modelCandidates = preferredModel
+      ? [preferredModel, ...CANDIDATE_GEMINI_MODELS.filter((m) => m !== preferredModel)]
+      : CANDIDATE_GEMINI_MODELS
+
+    let lastError: any = null
+    for (const model of modelCandidates) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: clean,
+          config: {
+            systemInstruction,
+            temperature: 0.3,
+          },
+        })
+        let text = response.text?.trim() || ''
+        text = text
+          .replace(/^```(?:text|markdown)?\s*/i, '')
+          .replace(/```\s*$/i, '')
+          .trim()
+        if (text) return text
+      } catch (err: any) {
+        lastError = err
+        console.warn(
+          `Gemini transcript translation with ${model} failed, trying fallback:`,
+          err?.message || err,
+        )
+      }
+    }
+    throw lastError || new Error('Không thể dịch transcript bằng Gemini.')
   },
 }
 

@@ -4,6 +4,7 @@ import { IHttpResponse } from '@/models/http.model'
 import { resolveGeminiApiKey } from './geminiDictionary.service'
 import { resolveOpenAiApiKey } from '../openai/tts.service'
 import { GEMINI_MODELS } from './geminiModels'
+import { generateContentWithTracking } from './geminiTracker.service'
 
 export interface ITranslationReviewRequest {
   sourceText: string
@@ -115,7 +116,7 @@ Return ONLY valid JSON matching this schema:
           const ai = new GoogleGenAI({ apiKey: geminiApiKey })
           for (const model of GEMINI_MODELS) {
             try {
-              const response = await ai.models.generateContent({
+              const response = await generateContentWithTracking(ai, 'Translation Review', {
                 model,
                 contents: prompt,
                 config: {

@@ -49,7 +49,10 @@ export const FocusListeningModal: React.FC = () => {
 
   const transcript = currentTrack?.transcript || ''
   const smoothTime = useSmoothTime(playedSeconds, playing, playbackRate)
-  const segments = useMemo(() => parseTranscript(transcript), [transcript])
+  const segments = useMemo(
+    () => parseTranscript(transcript, currentTrack?.translation || ''),
+    [transcript, currentTrack?.translation],
+  )
   const activeIndex = getActiveSegmentIndex(segments, smoothTime)
 
   // Calculate karaoke fill progress for the active segment
@@ -377,6 +380,21 @@ export const FocusListeningModal: React.FC = () => {
                     {formatSegmentTime(currentSegment.timeSeconds)}
                   </span>
                   {renderSegmentText(currentSegment, activeIndex, true)}
+                  {player.showTranslation !== false && currentSegment.translation && (
+                    <div
+                      style={{
+                        fontSize: 20,
+                        color: '#ffd43b',
+                        fontStyle: 'italic',
+                        marginTop: 14,
+                        opacity: 0.95,
+                        lineHeight: 1.45,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {currentSegment.translation}
+                    </div>
+                  )}
                 </>
               ) : (
                 <span className={styles.focusPlaceholder}>Đang chuẩn bị phát...</span>
@@ -398,6 +416,20 @@ export const FocusListeningModal: React.FC = () => {
                   <span className={styles.focusTimeTag}>{formatSegmentTime(seg.timeSeconds)}</span>
                   <div className={styles.focusAllTextWrapper}>
                     {renderSegmentText(seg, i, isActive)}
+                    {player.showTranslation !== false && seg.translation && (
+                      <div
+                        style={{
+                          fontSize: 14,
+                          color: '#ffd43b',
+                          fontStyle: 'italic',
+                          marginTop: 4,
+                          opacity: 0.9,
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {seg.translation}
+                      </div>
+                    )}
                   </div>
                 </div>
               )

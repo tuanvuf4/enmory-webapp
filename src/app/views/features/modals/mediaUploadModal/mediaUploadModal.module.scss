@@ -1,0 +1,110 @@
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionCard {
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  padding: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: var(--ant-color-border);
+  }
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ant-color-text);
+
+  span {
+    line-height: 1.4;
+  }
+}
+
+.sectionIcon {
+  color: var(--ant-color-primary);
+  font-size: 16px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ant-color-text-secondary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.requiredAsterisk {
+  color: var(--ant-color-error);
+  margin-left: 2px;
+}
+
+.transcriptCol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.transcriptHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 32px;
+}
+
+.helperText {
+  font-size: 11px;
+  color: var(--ant-color-text-tertiary);
+  margin-top: 4px;
+}
+
+.footerActions {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--ant-color-bg-container, #ffffff);
+  border-top: 1px solid var(--ant-color-border-secondary, rgba(0, 0, 0, 0.08));
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  margin-top: 8px;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  button {
+    font-weight: 500;
+  }
+
+  :global([data-theme='dark']) & {
+    background: rgba(18, 22, 54, 0.95);
+    border-top-color: rgba(130, 115, 255, 0.15);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  }
+}
+

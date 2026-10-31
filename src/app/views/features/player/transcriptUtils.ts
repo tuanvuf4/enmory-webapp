@@ -1,6 +1,7 @@
 export interface ITranscriptSegment {
   timeSeconds: number
   text: string
+  translation?: string
 }
 
 /**
@@ -12,20 +13,9 @@ const TIMESTAMP_RE = /^(\d+):(\d{2})(?::(\d{2}))?$/
 
 /**
  * Parses a plain-text transcript with timestamp markers into segments.
- *
- * Input format:
- * ```
- * 19:26
- *
- * But if we just listen and pay attention...
- *
- * So reflect on your own life.
- *
- * 19:41
- * If you try to embrace those things...
- * ```
+ * Optionally merges a parallel Vietnamese translation transcript mapped by timestamp or sequence.
  */
-export function parseTranscript(transcript: string): ITranscriptSegment[] {
+export function parseTranscript(transcript: string, translation?: string): ITranscriptSegment[] {
   if (!transcript?.trim()) return []
 
   const segments: ITranscriptSegment[] = []
@@ -45,7 +35,6 @@ export function parseTranscript(transcript: string): ITranscriptSegment[] {
 
     if (match) {
       flush()
-      // H:MM:SS or MM:SS
       currentTime =
         match[3] !== undefined
           ? parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseInt(match[3])
@@ -57,6 +46,43 @@ export function parseTranscript(transcript: string): ITranscriptSegment[] {
   }
 
   flush()
+
+  // Match and attach translation if provided
+  if (translation?.trim() && segments.length > 0) {
+    const transSegments = parseTranscript(translation)
+    if (transSegments.length > 0) {
+      const hasCloseTimestamps = transSegments.some((ts) =>
+        segments.some((s) => Math.abs(s.timeSeconds - ts.timeSeconds) <= 2),
+      )
+
+      segments.forEach((seg, idx) => {
+        if (hasCloseTimestamps) {
+          const match = transSegments.find((ts) => Math.abs(ts.timeSeconds - seg.timeSeconds) <= 2)
+          if (match) {
+            seg.translation = match.text
+            return
+          }
+        }
+        if (transSegments[idx]) {
+          seg.translation = transSegments[idx].text
+        }
+      })
+    } else {
+      // Translation might be lines without timestamps
+      const lines = translation
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean)
+      if (lines.length > 0) {
+        segments.forEach((seg, idx) => {
+          if (lines[idx]) {
+            seg.translation = lines[idx]
+          }
+        })
+      }
+    }
+  }
+
   return segments
 }
 

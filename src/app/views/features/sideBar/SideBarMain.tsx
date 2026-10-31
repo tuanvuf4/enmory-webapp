@@ -16,6 +16,7 @@ import {
 } from '@ant-design/icons'
 import { useManualSync } from '@/services/localDb'
 import moment from 'moment'
+import { GeminiSidebarWidget } from './GeminiSidebarWidget'
 
 export const SideBarMain: React.FC = () => {
   const { isSidebarOpened, drawer, themeMode } = useSelector((state) => state.setting)
@@ -98,7 +99,10 @@ export const SideBarMain: React.FC = () => {
       <div style={{ padding: isCollapsed ? '8px 6px' : '8px 12px' }}>
         <Divider style={{ margin: '0 0 10px 0', opacity: 0.5 }} />
 
-        <Flex vertical gap={4} align={isCollapsed ? 'center' : 'stretch'}>
+        <Flex vertical gap={6} align={isCollapsed ? 'center' : 'stretch'}>
+          {/* Gemini API Usage Widget */}
+          <GeminiSidebarWidget isCollapsed={isCollapsed} />
+
           {/* Sync Button */}
           {isAuth && (
             <Tooltip

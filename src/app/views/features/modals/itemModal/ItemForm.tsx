@@ -107,7 +107,19 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
   const { options, isSearching } = useAutoComplete(autoCompleteFilters, 'item', false, 300)
 
-  const { closeModal } = useModal()
+  const { closeModal, updateModal } = useModal()
+
+  useEffect(() => {
+    if (origin?.trim()) {
+      updateModal({
+        minimizeInfo: {
+          title: `Item: ${origin.trim()}`,
+          tooltip: `Mở lại biểu mẫu: ${origin.trim()}`,
+          icon: <BookOutlined />,
+        },
+      })
+    }
+  }, [origin])
 
   const currentItemRef = useRef<IItem>(currentItem)
   currentItemRef.current = currentItem
@@ -520,6 +532,23 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
   const runAutofill = async (originWord: string, sourceName: string = 'Google') => {
     setIsAutofilling(true)
+    updateModal({
+      isMinimized: true,
+      minimizeInfo: {
+        title: `Item: ${originWord}`,
+        tooltip: `Gemini đang phân tích "${originWord}"... Nhấn để mở lại.`,
+        status: 'processing',
+        icon: <ThunderboltOutlined spin style={{ color: '#722ed1' }} />,
+      },
+    })
+    notification({
+      type: 'info',
+      message: `Gemini đang phân tích "${originWord}"`,
+      description:
+        'Biểu mẫu đã thu nhỏ xuống nút tròn góc phải để bạn tiếp tục thao tác. Nhấn vào nút tròn bất cứ lúc nào để mở lại.',
+      duration: 4,
+    })
+
     try {
       const resp = await geminiDictionaryService.fetchFromReference(
         originWord,
@@ -527,6 +556,14 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         undefined,
       )
       if (!resp.isSuccess || !resp.content) {
+        updateModal({
+          minimizeInfo: {
+            title: `Item: ${originWord}`,
+            tooltip: `Không thể lấy dữ liệu từ ${sourceName}. Nhấn để mở lại.`,
+            status: 'error',
+            icon: <BookOutlined />,
+          },
+        })
         notification({
           type: 'error',
           message: resp.message || `Failed to fetch dictionary data from ${sourceName}.`,
@@ -536,12 +573,31 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
       await applyAutofillData(originWord, resp.content)
 
+      updateModal({
+        minimizeInfo: {
+          title: `Item: ${originWord}`,
+          tooltip: `Gemini đã phân tích xong "${originWord}". Nhấn để mở lại!`,
+          status: 'success',
+          icon: <BookOutlined />,
+        },
+      })
+
       notification({
         type: 'success',
-        message: `Loaded ${sourceName} dictionary data for "${originWord}"!`,
+        message: `Đã nạp xong từ điển cho "${originWord}"!`,
+        description: 'Nhấn vào nút tròn góc phải để mở lại biểu mẫu và kiểm tra.',
+        duration: 5,
       })
     } catch (error: any) {
       console.error('Auto-fill error:', error)
+      updateModal({
+        minimizeInfo: {
+          title: `Item: ${originWord}`,
+          tooltip: `Lỗi khi tra từ "${originWord}". Nhấn để mở lại.`,
+          status: 'error',
+          icon: <BookOutlined />,
+        },
+      })
       notification({
         type: 'error',
         message: error?.message || `Error occurred during ${sourceName} auto-fill.`,
@@ -793,6 +849,12 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
   const isEditing = !!(currentItem?.id || item?.id || loadedItemIdRef.current || getValues('id'))
   const currentLevel = watch('level') || 0
+
+  useEffect(() => {
+    updateModal({
+      tag: isEditing ? <Tag color={'yellow'}>UPDATE</Tag> : <Tag color={'green'}>CREATE</Tag>,
+    })
+  }, [isEditing])
 
   const handleSaveMeaning = useCallback(() => {
     handleSubmit(onSubmit)()
@@ -1130,7 +1192,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
           <div className={styles.relationItem}>
             <div className={styles.relationItemHeader}>
               <span className={styles.relationItemTitle}>
-                <ShareAltOutlined /> Từ liên quan (Relation)
+                <ShareAltOutlined /> Relation
               </span>
               <span className={styles.relationHint}>Collocations, ngữ cảnh...</span>
             </div>
@@ -1165,8 +1227,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
               icon={showMeanings ? <UpCircleFilled /> : <DownCircleFilled />}
               onClick={() => setShowMeanings((prev) => !prev)}
             />
-
-            {isEditing ? <Tag color={'yellow'}>EDITING</Tag> : <Tag color={'green'}>CREATING</Tag>}
           </Flex>
         </div>
 

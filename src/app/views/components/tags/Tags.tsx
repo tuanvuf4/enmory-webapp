@@ -14,9 +14,16 @@ interface IPros {
   tags: string[]
   searchBy?: TSearchBy
   onSearch?: (tag: string) => void
+  onTagClick?: (tag: string) => void
 }
 
-export const Tags: React.FC<IPros> = ({ label, tags, onSearch, searchBy = 'keyword' }) => {
+export const Tags: React.FC<IPros> = ({
+  label,
+  tags,
+  onSearch,
+  onTagClick,
+  searchBy = 'keyword',
+}) => {
   const { showLoading, hideLoading } = useLoading()
 
   const { openItemModal } = useItemModal()
@@ -86,6 +93,18 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch, searchBy = 'keywo
     navigate(`/library?${params.toString()}`)
   }
 
+  const handleTagClick = (tag: string) => {
+    if (onTagClick) {
+      onTagClick(tag)
+      return
+    }
+    if (searchBy === 'tags') {
+      onNavigate(tag)
+    } else {
+      getItem(tag)
+    }
+  }
+
   return (
     <Flex align={'center'} justify={'flex-start'} wrap={'wrap'} gap={token.size / 2}>
       <span>{label}:</span>
@@ -95,14 +114,18 @@ export const Tags: React.FC<IPros> = ({ label, tags, onSearch, searchBy = 'keywo
           <div
             key={key}
             className={styles.tagItem}
-            onClick={() => (searchBy === 'tags' ? onNavigate(tag) : getItem(tag))}
+            onClick={() => handleTagClick(tag)}
           >
             <div className={styles.tagItemContainer}>
               <span className={'select-none'}>{tag}</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  onNavigate(tag)
+                  if (onTagClick) {
+                    onTagClick(tag)
+                  } else {
+                    onNavigate(tag)
+                  }
                 }}
               >
                 <SearchOutlined />

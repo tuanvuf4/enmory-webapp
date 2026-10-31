@@ -11,6 +11,7 @@ import {
 import { resolveGeminiApiKey } from './geminiDictionary.service'
 import { resolveOpenAiApiKey } from '../openai/tts.service'
 import { DEFAULT_GEMINI_MODEL, GEMINI_MODELS, TGeminiModel } from './geminiModels'
+import { generateContentWithTracking } from './geminiTracker.service'
 
 const STORAGE_PREFIX = 'enmory_transcript_vocab_'
 
@@ -239,7 +240,7 @@ Return ONLY valid JSON matching this structure:
 
           for (const model of modelCandidates) {
             try {
-              const response = await ai.models.generateContent({
+              const response = await generateContentWithTracking(ai, 'Vocabulary Classifier', {
                 model,
                 contents: prompt,
                 config: {

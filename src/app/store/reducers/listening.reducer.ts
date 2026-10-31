@@ -23,6 +23,7 @@ export interface PlayerState {
   seekTo: number | null
   isFocusMode?: boolean
   transcriptDisplayMode?: TTranscriptDisplayMode
+  showTranslation?: boolean
 }
 
 export interface IListeningState {
@@ -54,6 +55,7 @@ export const initialState: IListeningState = {
     seekTo: null,
     isFocusMode: false,
     transcriptDisplayMode: 'visible',
+    showTranslation: true,
   },
 }
 

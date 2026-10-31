@@ -1,6 +1,8 @@
 import { useModal } from '@/context/modal.context'
 import { ITracks } from '@/models/media.model'
-import { MediaUploadForm } from '@/views/features/modals/mediaUploadModal/MediaUploadForm'
+import { MediaForm } from '@/views/features/modals/mediaUploadModal/MediaForm'
+import { SoundOutlined } from '@ant-design/icons'
+import { Tag } from 'antd'
 
 export const useMediaUploadModal = () => {
   const { openModal, closeModal } = useModal()
@@ -11,12 +13,19 @@ export const useMediaUploadModal = () => {
     onConfirm?: (track: ITracks) => void,
   ) => {
     openModal({
-      title: mode === 'edit' ? 'Edit Track' : 'Upload',
+      title: 'Media Form',
+      tag: mode === 'edit' ? <Tag color={'yellow'}>UPDATE</Tag> : <Tag color={'green'}>CREATE</Tag>,
       width: 1000,
       footer: null,
       maskClosable: false,
+      allowMinimize: true,
+      minimizeInfo: {
+        title: trackData?.title ? `Track: ${trackData.title}` : 'Media Upload',
+        tooltip: trackData?.title ? `Mở lại bài nghe: ${trackData.title}` : 'Mở lại Media Upload',
+        icon: <SoundOutlined />,
+      },
       content: (
-        <MediaUploadForm
+        <MediaForm
           trackData={trackData}
           onConfirm={(track) => {
             onConfirm?.(track)

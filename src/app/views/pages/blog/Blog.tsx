@@ -13,12 +13,14 @@ import {
   Modal,
   Pagination,
   Row,
+  Space,
   Spin,
   Tag,
   theme,
   Tooltip,
 } from 'antd'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { useBlogs, useBlogsCount, useBlogCategories } from '@/core/hooks'
 import { usePrompt } from '@/helpers/hooks'
@@ -38,9 +40,10 @@ const PAGE_SIZE = 10
 export const Blog = () => {
   const { message } = usePrompt()
   const { token } = theme.useToken()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [page, setPage] = useState(0)
-  const [selectedTag, setSelectedTag] = useState<string | undefined>()
+  const selectedTag = searchParams.get('tag') || undefined
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
@@ -74,6 +77,10 @@ export const Blog = () => {
     }
   }, [blogsError])
 
+  useEffect(() => {
+    setPage(0)
+  }, [selectedTag])
+
   const handleAddCategory = () => {
     openBlogCategoryModal('add', {} as IBlogCategory)
   }
@@ -88,7 +95,15 @@ export const Blog = () => {
 
   const handleSelectTag = (tag?: string) => {
     setPage(0)
-    setSelectedTag(tag)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (tag) {
+        next.set('tag', tag)
+      } else {
+        next.delete('tag')
+      }
+      return next
+    })
   }
 
   const colSpan =
@@ -130,7 +145,7 @@ export const Blog = () => {
 
             <Divider type='vertical' style={{ margin: 0 }} />
 
-            <Tooltip title='Manage blog tags'>
+            <Tooltip title='Blog tags'>
               <Button icon={<TagsOutlined />} onClick={() => setShowCategoryModal(true)}>
                 Tags
               </Button>
@@ -139,7 +154,7 @@ export const Blog = () => {
 
           {/* Right: view toggle + post count */}
           <Flex align='center' gap={token.sizeSM}>
-            <Button.Group>
+            <Space.Compact>
               <Tooltip title='Grid view'>
                 <Button
                   icon={<AppstoreOutlined />}
@@ -154,7 +169,7 @@ export const Blog = () => {
                   onClick={() => setViewMode('list')}
                 />
               </Tooltip>
-            </Button.Group>
+            </Space.Compact>
           </Flex>
         </Flex>
 
@@ -194,6 +209,18 @@ export const Blog = () => {
               {cat.name}
             </CheckableTag>
           ))}
+
+          {!isLoadingCategories &&
+            selectedTag &&
+            !categories.some((cat) => cat.name === selectedTag) && (
+              <CheckableTag
+                key={selectedTag}
+                checked={true}
+                onChange={() => handleSelectTag(undefined)}
+              >
+                {selectedTag}
+              </CheckableTag>
+            )}
         </Flex>
 
         {/* Blog grid / list */}
@@ -281,7 +308,7 @@ export const Blog = () => {
         title={
           <Flex align='center' gap={token.size}>
             <TagsOutlined />
-            <span>Manage Blog Tags</span>
+            <span>Blog Tags</span>
             <Button
               type='primary'
               icon={<PlusOutlined />}

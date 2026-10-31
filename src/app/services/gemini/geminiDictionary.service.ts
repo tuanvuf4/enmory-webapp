@@ -5,6 +5,7 @@ import { IHttpResponse } from '@/models/http.model'
 import { sanitizePronunciation } from '@/core/utils'
 import { DEFAULT_AUTOFILL_MODEL, GEMINI_MODELS, TGeminiModel } from './geminiModels'
 import { resolveOpenAiApiKey } from '../openai/tts.service'
+import { generateContentWithTracking } from './geminiTracker.service'
 
 export interface IDictionaryAutofillData {
   catId: ECategory
@@ -335,7 +336,7 @@ Return ONLY valid JSON matching this schema:
 
           for (const model of modelCandidates) {
             try {
-              const response = await ai.models.generateContent({
+              const response = await generateContentWithTracking(ai, 'Dictionary Autofill', {
                 model,
                 contents: prompt,
                 config: {

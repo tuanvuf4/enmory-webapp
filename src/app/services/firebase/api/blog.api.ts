@@ -34,8 +34,6 @@ export type IArticleResponse<T> = IBlogResponse<T>
 
 export interface IBlogRequestParams {
   keyword?: string
-  /** @deprecated use tag instead */
-  categoryId?: string
   tag?: string
   page: number
   size: number
@@ -58,7 +56,7 @@ const buildQueryConstraints = (params: IBlogRequestParams): QueryConstraint[] =>
   }
 
   // Filter by tag/category if provided
-  const filterTag = params.tag || params.categoryId
+  const filterTag = params.tag
   if (filterTag) {
     constraints.push(where('tags', 'array-contains', filterTag))
   }

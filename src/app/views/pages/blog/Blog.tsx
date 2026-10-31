@@ -58,7 +58,6 @@ export const Blog = () => {
     page,
     size: PAGE_SIZE,
     tag: selectedTag,
-    categoryId: selectedTag,
     orderBy: 'created_date',
     order: 'DESC',
   })
@@ -66,7 +65,6 @@ export const Blog = () => {
   const { data: totalCount = 0 } = useBlogsCount(selectedTag)
 
   const { data: cats = [], isLoading: isLoadingCategories } = useBlogCategories()
-  const categories = cats
 
   useEffect(() => {
     if (blogsError) {
@@ -200,27 +198,15 @@ export const Blog = () => {
             </CheckableTag>
           </Badge>
 
-          {categories.map((cat) => (
+          {cats.map((cat) => (
             <CheckableTag
-              key={cat.id || cat.name}
-              checked={selectedTag === cat.name}
-              onChange={(checked) => handleSelectTag(checked ? cat.name : undefined)}
+              key={cat.id || cat.value}
+              checked={selectedTag === cat.value}
+              onChange={(checked) => handleSelectTag(checked ? cat.value : undefined)}
             >
               {cat.name}
             </CheckableTag>
           ))}
-
-          {!isLoadingCategories &&
-            selectedTag &&
-            !categories.some((cat) => cat.name === selectedTag) && (
-              <CheckableTag
-                key={selectedTag}
-                checked={true}
-                onChange={() => handleSelectTag(undefined)}
-              >
-                {selectedTag}
-              </CheckableTag>
-            )}
         </Flex>
 
         {/* Blog grid / list */}
@@ -296,7 +282,6 @@ export const Blog = () => {
               pageSize={PAGE_SIZE}
               total={totalCount}
               showSizeChanger={false}
-              showTotal={(total) => `${total} posts`}
               onChange={(newPage) => setPage(newPage - 1)}
             />
           </Flex>

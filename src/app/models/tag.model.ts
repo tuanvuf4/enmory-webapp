@@ -1,8 +1,8 @@
 export interface ITag {
-  value?: string // mặc định: ''
+  value: string
   name: string
-  color?: string // mặc định: #1890ff
-  order?: number // mặc định: 1
+  color?: string
+  order?: number
   created_date?: number
   last_update?: number
 }

@@ -14,7 +14,6 @@ import {
   SoundOutlined,
   StepBackwardOutlined,
   StepForwardOutlined,
-  UnorderedListOutlined,
 } from '@ant-design/icons'
 import { FocusListeningModal } from './FocusListeningModal'
 import { Button, Dropdown, MenuProps, Popover, Slider, Tag, Tooltip, theme } from 'antd'
@@ -1385,44 +1384,6 @@ export const PlayerDock: React.FC = () => {
                 </div>
               ) : null}
             </div>
-
-            {/* Mobile Quick Tools on Row 1: Speed, Focus, Tracklist */}
-            <div className={styles.dockMobileRightTools}>
-              <Dropdown menu={speedMenuProps} trigger={['click']} placement='top'>
-                <Button
-                  type='text'
-                  size='small'
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    borderRadius: 10,
-                    padding: '0 6px',
-                    height: 24,
-                    background: 'rgba(150, 150, 150, 0.1)',
-                  }}
-                >
-                  {playbackRate}x
-                </Button>
-              </Dropdown>
-
-              <Button
-                type='text'
-                size='small'
-                className={styles.dockControlBtn}
-                onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
-                icon={<FullscreenOutlined style={{ fontSize: 16 }} />}
-                title='Focus Karaoke'
-              />
-
-              <Button
-                type='text'
-                size='small'
-                className={`${styles.dockControlBtn} ${trackListOpen ? styles.dockBtnActive : ''}`}
-                icon={<UnorderedListOutlined style={{ fontSize: 16 }} />}
-                onClick={() => setTrackListOpen((v) => !v)}
-                title='Danh sách bài'
-              />
-            </div>
           </div>
 
           {/* ── Center Zone: Playback Controls & Modern Seek Bar ── */}
@@ -1626,7 +1587,7 @@ export const PlayerDock: React.FC = () => {
             </Popover>
 
             {/* PiP Button */}
-            <Tooltip title='Chế độ Picture-in-Picture'>
+            <Tooltip title='Picture-in-Picture'>
               <Button
                 type='text'
                 size='middle'
@@ -1647,26 +1608,13 @@ export const PlayerDock: React.FC = () => {
             </Tooltip>
 
             {/* Focus Fullscreen Karaoke Button */}
-            <Tooltip title='Toàn màn hình Focus Karaoke'>
-              <Button
-                type='text'
-                size='middle'
-                className={styles.dockControlBtn}
-                onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
-                icon={<FullscreenOutlined style={{ fontSize: 18 }} />}
-              />
-            </Tooltip>
-
-            {/* Tracklist Toggle */}
-            <Tooltip title='Danh sách bài nghe'>
-              <Button
-                type='text'
-                size='middle'
-                className={`${styles.dockControlBtn} ${trackListOpen ? styles.dockBtnActive : ''}`}
-                icon={<UnorderedListOutlined style={{ fontSize: 18 }} />}
-                onClick={() => setTrackListOpen((v) => !v)}
-              />
-            </Tooltip>
+            <Button
+              type='text'
+              size='middle'
+              className={styles.dockControlBtn}
+              onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
+              icon={<FullscreenOutlined style={{ fontSize: 18 }} />}
+            />
           </div>
         </div>
       )}

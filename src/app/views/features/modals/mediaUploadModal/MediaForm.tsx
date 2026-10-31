@@ -8,6 +8,7 @@ import {
   LinkOutlined,
   SoundOutlined,
   LoadingOutlined,
+  MinusOutlined,
 } from '@ant-design/icons'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -29,7 +30,7 @@ import {
   geminiTranscriptService,
 } from '@/services/gemini'
 import { IClassifiedVocabItem } from '@/models/vocabClassification.model'
-import { useModal } from '@/context/modal.context'
+import { useModal, useCurrentModal } from '@/context/modal.context'
 import styles from './mediaUploadModal.module.scss'
 import moment from 'moment'
 
@@ -49,9 +50,16 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
   const [autoClassifyVocab, setAutoClassifyVocab] = useState<boolean>(true)
   const [isTranslating, setIsTranslating] = useState(false)
   const dispatch = useDispatch()
-  const { updateModal } = useModal()
+  const { updateModal, minimizeModal } = useModal()
+  const currentModal = useCurrentModal()
 
-  console.log(trackData)
+  const handleMinimize = () => {
+    if (currentModal?.minimize) {
+      currentModal.minimize()
+    } else {
+      minimizeModal()
+    }
+  }
 
   const { currentTrack, tracks } = useSelector((state) => state.listening)
 
@@ -655,6 +663,10 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
           </div>
 
           <div style={{ display: 'flex', gap: '10px' }}>
+            <Button htmlType='button' icon={<MinusOutlined />} onClick={handleMinimize}>
+              Minimize
+            </Button>
+
             <Button htmlType='button' onClick={handleCancel} disabled={loading}>
               Cancel
             </Button>
@@ -670,7 +682,7 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
                 ) : undefined
               }
             >
-              {trackData?.id ? 'Update Track' : 'Save Track'}
+              {trackData?.id ? 'Update' : 'Create'}
             </Button>
           </div>
         </div>

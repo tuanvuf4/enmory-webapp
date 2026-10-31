@@ -487,19 +487,7 @@ export const getTopTagsStats = async (limit = 8): Promise<IHttpResponse<ITagStat
         }))
       }
     } catch (tagErr) {
-      console.warn('Failed to fetch tags from tagApi, falling back to localDb:', tagErr)
-      try {
-        const localTags = await localDb.tags.where('uid').equals(user.uid).toArray()
-        firestoreTags = localTags
-          .map((t) => ({
-            id: t.id,
-            value: String(t.value || '').trim(),
-            value_lowercase: String(t.value_lowercase || t.value.toLowerCase()).trim(),
-          }))
-          .filter((t) => t.value)
-      } catch (localErr) {
-        console.warn('Failed to fetch tags from localDb fallback:', localErr)
-      }
+      console.warn('Failed to fetch tags from tagApi:', tagErr)
     }
 
     // If there are no tags in Firestore DB, return empty list

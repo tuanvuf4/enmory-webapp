@@ -61,7 +61,6 @@ export const useItemModal = () => {
         width: 800,
         footer: null,
         maskClosable: false,
-        allowMinimize: true,
         minimizeInfo: {
           title: data?.origin ? `Item: ${data.origin}` : 'Item Form',
           tooltip: data?.origin ? `Mở lại biểu mẫu: ${data.origin}` : 'Mở lại Item Form',
@@ -78,7 +77,6 @@ export const useItemModal = () => {
         width: 800,
         footer: null,
         maskClosable: false,
-        allowMinimize: true,
         minimizeInfo: {
           title: data?.origin ? `Item: ${data.origin}` : 'Item Form',
           tooltip: data?.origin ? `Mở lại biểu mẫu: ${data.origin}` : 'Mở lại Item Form',

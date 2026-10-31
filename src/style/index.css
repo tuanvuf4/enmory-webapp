@@ -261,9 +261,8 @@ a.ck.ck-button:not(.ck-disabled):hover {
 :where(.css-dev-only-do-not-override-1ih6taz).ant-tabs-bottom > div > .ant-tabs-nav::before {
   border-bottom-color: var(--ant-color-border) !important;
 }
-
-:where(.css-dev-only-do-not-override-1i90bka).ant-modal .ant-modal-close {
-  top: 16px;
+.ant-modal .ant-modal-close {
+  top: 10px;
 }
 
 .ant-divider {

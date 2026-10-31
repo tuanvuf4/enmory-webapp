@@ -32,19 +32,18 @@
 .titleArea {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex: 1;
   min-width: 0;
 }
 
 .originTitle {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--ant-color-text-heading, #1b2252);
   line-height: 1.3;
-  cursor: pointer;
   word-break: break-word;
   transition:
     color 0.2s ease,
@@ -60,7 +59,12 @@
 }
 
 .originTitleDefect {
-  opacity: 0.8;
+  opacity: 0.5;
+  color: $color-gold-8 !important;
+
+  :global([data-theme='dark']) & {
+    color: $color-gold-4 !important;
+  }
 }
 
 .titleAudioBtn,
@@ -155,21 +159,6 @@
 }
 
 // ── Metadata / Status Row ───────────────────────────────────────
-.metaRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 2px 0 4px 0;
-}
-
-.metaLeft {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
 
 .categoryBadge {
   margin: 0;
@@ -186,6 +175,10 @@
   align-items: center;
   line-height: 1;
   padding: 0 2px;
+
+  ul {
+    padding-left: 0 !important;
+  }
 }
 
 .dueTag {
@@ -596,9 +589,6 @@
 }
 .origin {
   @extend .originTitle;
-}
-.kindOfWord {
-  @extend .metaRow;
 }
 .level {
   @extend .levelWrapper;

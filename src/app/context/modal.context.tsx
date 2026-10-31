@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, PropsWithChildren, ReactNode } from 'react'
-import { Modal, ModalProps, FloatButton, Tooltip, Button, Flex, theme } from 'antd'
+import { Modal, ModalProps, FloatButton, Flex, theme } from 'antd'
 import {
   CloseSquareOutlined,
-  MinusOutlined,
   CloseOutlined,
   LoadingOutlined,
   CheckCircleOutlined,
@@ -180,46 +179,21 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }
 
   const renderTitle = (config: ModalConfig) => {
-    if (!config.title && !config.allowMinimize && !config.tag) return config.title
-    if (!config.allowMinimize && !config.tag) return config.title
+    if (!config.title && !config.tag && !config.minimizeInfo?.icon) return config.title
 
     return (
-      <Flex align={'center'} justify={'space-between'} gap={token.size / 2}>
-        <Flex
-          align={'center'}
-          gap={8}
+      <Flex align={'center'} gap={8} style={{ overflow: 'hidden' }}>
+        {config.minimizeInfo?.icon}
+        <span
           style={{
             overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
-          {config.minimizeInfo?.icon}
-          <span
-            style={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {config.title}
-          </span>
-          {config.tag}
-        </Flex>
-        {config.allowMinimize && (
-          <Tooltip title='Minimize' mouseEnterDelay={0.2}>
-            <Button
-              type='text'
-              style={{
-                borderRadius: 4,
-                marginRight: 40,
-              }}
-              icon={<MinusOutlined />}
-              onClick={(e) => {
-                e.stopPropagation()
-                minimizeModal(config.id)
-              }}
-            />
-          </Tooltip>
-        )}
+          {config.title}
+        </span>
+        {config.tag}
       </Flex>
     )
   }

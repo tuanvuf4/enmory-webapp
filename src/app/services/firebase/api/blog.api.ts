@@ -1,32 +1,15 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  DocumentData,
-  getCountFromServer,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  QueryConstraint,
-  QueryDocumentSnapshot,
-  startAfter,
-  Timestamp,
-  updateDoc,
-  where,
-} from 'firebase/firestore'
+import { addDoc, collection, doc, Timestamp, updateDoc, writeBatch } from 'firebase/firestore'
 
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { IBlogItem } from '@/models/blog.model'
 import { firebaseAuthService } from '@/services/firebase/authService'
+import { localDb } from '@/services/localDb/db'
 
 export interface IBlogResponse<T> {
   isSuccess: boolean
   message: string
   content: T | null
   statusCode: number
-  lastDoc?: QueryDocumentSnapshot<DocumentData>
   hasMore?: boolean
 }
 
@@ -76,39 +59,6 @@ export const getTagVariants = (tag: string): string[] => {
 }
 
 /**
- * Helper function to build Firestore query constraints for blogs
- */
-const buildQueryConstraints = (params: IBlogRequestParams, currentUser: any): QueryConstraint[] => {
-  const constraints: QueryConstraint[] = []
-
-  // Filter by current user
-  if (currentUser) {
-    constraints.push(where('uid', '==', currentUser.uid))
-  }
-
-  // Filter by tag if provided
-  const filterTag = params.tag
-  if (filterTag) {
-    const variants = getTagVariants(filterTag)
-    if (variants.length === 1) {
-      constraints.push(where('tags', 'array-contains', variants[0]))
-    } else if (variants.length > 1) {
-      constraints.push(where('tags', 'array-contains-any', variants.slice(0, 10)))
-    }
-  }
-
-  // Order by
-  const orderByField = params.orderBy || 'created_date'
-  const orderDirection = params.order === 'DESC' ? 'desc' : 'asc'
-  constraints.push(orderBy(orderByField, orderDirection))
-
-  // Limit results + 1 to check if there are more pages
-  constraints.push(limit(params.size + 1))
-
-  return constraints
-}
-
-/**
  * Helper to normalize article tags
  */
 const normalizeArticleTags = (data: any): string[] => {
@@ -124,7 +74,6 @@ const normalizeArticleTags = (data: any): string[] => {
 export const normalizeBlogTimestamp = (val: any): number | undefined => {
   if (val === null || val === undefined) return undefined
   if (typeof val === 'number') {
-    // If it's in seconds instead of milliseconds (e.g. 10 digits vs 13 digits)
     if (val > 0 && val < 10000000000) {
       return val * 1000
     }
@@ -210,16 +159,15 @@ export const mapDocToBlogItem = (docSnap: any): IBlogItem => {
 }
 
 /**
- * Get blogs list with pagination support
+ * Blog API:
+ * - Read operations (getBlogs, getBlogsCount, getBlogById) ONLY read from localDb.
+ * - Write operations (createBlog, updateBlog, deleteBlog) write to both localDb and Firestore.
  */
 export const blogApi = {
   /**
-   * Fetch blogs list
+   * Fetch blogs list exclusively from localDb
    */
-  async getBlogs(
-    params: IBlogRequestParams,
-    lastDoc?: QueryDocumentSnapshot<DocumentData>,
-  ): Promise<IBlogResponse<IBlogItem[]>> {
+  async getBlogs(params: IBlogRequestParams): Promise<IBlogResponse<IBlogItem[]>> {
     try {
       let currentUser = firebaseAuthService.getCurrentUser()
       if (!currentUser) {
@@ -230,119 +178,66 @@ export const blogApi = {
         return {
           isSuccess: false,
           message: 'Unauthorized',
-          content: null,
+          content: [],
           statusCode: 401,
-          lastDoc: undefined,
           hasMore: false,
         }
       }
 
-      const constraints: QueryConstraint[] = buildQueryConstraints(params, currentUser)
+      let userBlogs = await localDb.blogs.where('uid').equals(currentUser.uid).toArray()
 
-      // Handle pagination - startAfter must come after orderBy but before limit
-      if (lastDoc) {
-        const limitIndex = constraints.length - 1
-        constraints.splice(limitIndex, 0, startAfter(lastDoc))
-      }
-
-      let querySnapshot: any
-      try {
-        const q = query(
-          collection(db, dbCollections.blogs || dbCollections.articles),
-          ...constraints,
-        )
-        querySnapshot = await getDocs(q)
-      } catch (queryErr: any) {
-        console.warn('Primary blog query failed, executing fallback in-memory query:', queryErr)
-        // Fallback for missing composite index or query limitation
-        const fallbackQ = query(
-          collection(db, dbCollections.blogs || dbCollections.articles),
-          where('uid', '==', currentUser.uid),
-        )
-        const allDocsSnapshot = await getDocs(fallbackQ)
-        const filterTag = (params.tag || '').trim().toLowerCase()
-        const variants = filterTag ? getTagVariants(filterTag).map((v) => v.toLowerCase()) : []
-
-        let filteredDocs = allDocsSnapshot.docs.filter((docSnap: any) => {
-          if (!filterTag) return true
-          const data = docSnap.data()
-          const tags = normalizeArticleTags(data).map((t) => t.toLowerCase())
-          return tags.some((t) => variants.includes(t) || t === filterTag)
+      // Filter by tag if provided
+      if (params.tag) {
+        const variants = getTagVariants(params.tag).map((v) => v.toLowerCase())
+        userBlogs = userBlogs.filter((b) => {
+          const bTags = (b.tags || []).map((t) => String(t).trim().toLowerCase())
+          return bTags.some((t) => variants.includes(t))
         })
-
-        // Sort in memory for fallback query
-        const orderByField = params.orderBy || 'created_date'
-        const isDesc = params.order !== 'ASC'
-        filteredDocs.sort((a: any, b: any) => {
-          const dataA = a.data() || {}
-          const dataB = b.data() || {}
-          let valA: any
-          let valB: any
-
-          if (orderByField === 'last_update') {
-            valA = extractLastUpdate(dataA) || 0
-            valB = extractLastUpdate(dataB) || 0
-          } else if (orderByField === 'created_date') {
-            valA = extractCreatedDate(dataA) || 0
-            valB = extractCreatedDate(dataB) || 0
-          } else {
-            valA = (dataA[orderByField] || '').toString().toLowerCase()
-            valB = (dataB[orderByField] || '').toString().toLowerCase()
-          }
-
-          if (valA < valB) return isDesc ? 1 : -1
-          if (valA > valB) return isDesc ? -1 : 1
-          return 0
-        })
-
-        const startIdx = params.page * params.size
-        const pagedDocs = filteredDocs.slice(startIdx, startIdx + params.size)
-        const hasMore = filteredDocs.length > startIdx + params.size
-        const newLastDoc = pagedDocs.length > 0 ? pagedDocs[pagedDocs.length - 1] : undefined
-
-        const blogs: IBlogItem[] = pagedDocs.map(mapDocToBlogItem)
-
-        return {
-          isSuccess: true,
-          message: 'Success',
-          content: blogs,
-          statusCode: 200,
-          lastDoc: newLastDoc,
-          hasMore,
-        }
       }
 
-      let blogs: IBlogItem[] = []
-      let newLastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined
-      let hasMore = false
-
-      if (querySnapshot.docs.length > 0) {
-        if (querySnapshot.docs.length > params.size) {
-          hasMore = true
-        }
-
-        newLastDoc = querySnapshot.docs[Math.min(params.size - 1, querySnapshot.docs.length - 1)]
-        const docsToProcess = querySnapshot.docs.slice(0, params.size)
-
-        blogs = docsToProcess.map(mapDocToBlogItem)
+      // Filter by keyword if provided
+      if (params.keyword) {
+        const kw = params.keyword.trim().toLowerCase()
+        userBlogs = userBlogs.filter(
+          (b) =>
+            (b.title || '').toLowerCase().includes(kw) ||
+            (b.description || '').toLowerCase().includes(kw),
+        )
       }
+
+      // Sort
+      const orderByField = params.orderBy || 'created_date'
+      const isDesc = params.order !== 'ASC'
+      userBlogs.sort((a: any, b: any) => {
+        let valA = a[orderByField] ?? 0
+        let valB = b[orderByField] ?? 0
+        if (typeof valA === 'string') valA = valA.toLowerCase()
+        if (typeof valB === 'string') valB = valB.toLowerCase()
+        if (valA < valB) return isDesc ? 1 : -1
+        if (valA > valB) return isDesc ? -1 : 1
+        return 0
+      })
+
+      const pageSize = params.size || 10
+      const pageNum = params.page || 0
+      const startIdx = pageNum * pageSize
+      const pagedBlogs = userBlogs.slice(startIdx, startIdx + pageSize)
+      const hasMore = userBlogs.length > startIdx + pageSize
 
       return {
         isSuccess: true,
         message: 'Success',
-        content: blogs,
+        content: pagedBlogs,
         statusCode: 200,
-        lastDoc: newLastDoc,
         hasMore,
       }
     } catch (error: any) {
-      console.error('Error fetching blogs:', error)
+      console.error('Error fetching blogs from localDb:', error)
       return {
         isSuccess: false,
         message: error?.message || 'Error fetching blogs',
-        content: null,
+        content: [],
         statusCode: 500,
-        lastDoc: undefined,
         hasMore: false,
       }
     }
@@ -351,15 +246,12 @@ export const blogApi = {
   /**
    * Alias for getBlogs
    */
-  async getArticles(
-    params: IBlogRequestParams,
-    lastDoc?: QueryDocumentSnapshot<DocumentData>,
-  ): Promise<IBlogResponse<IBlogItem[]>> {
-    return this.getBlogs(params, lastDoc)
+  async getArticles(params: IBlogRequestParams): Promise<IBlogResponse<IBlogItem[]>> {
+    return this.getBlogs(params)
   },
 
   /**
-   * Create a new blog
+   * Create a new blog: saves to both Firestore and localDb
    */
   async createBlog(data: IBlogItem): Promise<IBlogResponse<IBlogItem>> {
     try {
@@ -392,18 +284,28 @@ export const blogApi = {
         last_update,
       }
 
+      // 1. Create in Firestore
       const docRef = await addDoc(
         collection(db, dbCollections.blogs || dbCollections.articles),
         blogData,
       )
 
+      const createdBlog = {
+        id: docRef.id,
+        ...blogData,
+      } as IBlogItem
+
+      // 2. Save in Local DB
+      try {
+        await localDb.blogs.put(createdBlog)
+      } catch (localErr) {
+        console.warn('Failed to save created blog to localDb:', localErr)
+      }
+
       return {
         isSuccess: true,
         message: 'Blog created successfully',
-        content: {
-          id: docRef.id,
-          ...blogData,
-        } as IBlogItem,
+        content: createdBlog,
         statusCode: 201,
       }
     } catch (error: any) {
@@ -425,7 +327,7 @@ export const blogApi = {
   },
 
   /**
-   * Get total count of blogs for current user
+   * Get total count of blogs for current user exclusively from localDb
    */
   async getBlogsCount(tag?: string): Promise<number> {
     try {
@@ -438,44 +340,17 @@ export const blogApi = {
         return 0
       }
 
-      const constraints: QueryConstraint[] = [where('uid', '==', currentUser.uid)]
-
+      let userBlogs = await localDb.blogs.where('uid').equals(currentUser.uid).toArray()
       if (tag) {
-        const variants = getTagVariants(tag)
-        if (variants.length === 1) {
-          constraints.push(where('tags', 'array-contains', variants[0]))
-        } else if (variants.length > 1) {
-          constraints.push(where('tags', 'array-contains-any', variants.slice(0, 10)))
-        }
+        const variants = getTagVariants(tag).map((v) => v.toLowerCase())
+        userBlogs = userBlogs.filter((b) => {
+          const bTags = (b.tags || []).map((t) => String(t).trim().toLowerCase())
+          return bTags.some((t) => variants.includes(t))
+        })
       }
-
-      try {
-        const q = query(
-          collection(db, dbCollections.blogs || dbCollections.articles),
-          ...constraints,
-        )
-        const countSnapshot = await getCountFromServer(q)
-        return countSnapshot.data().count
-      } catch (err) {
-        console.warn('getBlogsCount query failed, fallback counting:', err)
-        const fallbackQ = query(
-          collection(db, dbCollections.blogs || dbCollections.articles),
-          where('uid', '==', currentUser.uid),
-        )
-        const allDocsSnapshot = await getDocs(fallbackQ)
-        if (!tag) return allDocsSnapshot.docs.length
-
-        const target = tag.trim().toLowerCase()
-        const variants = getTagVariants(target).map((v) => v.toLowerCase())
-
-        return allDocsSnapshot.docs.filter((docSnap: any) => {
-          const data = docSnap.data()
-          const tags = normalizeArticleTags(data).map((t) => t.toLowerCase())
-          return tags.some((t) => variants.includes(t) || t === target)
-        }).length
-      }
+      return userBlogs.length
     } catch (error) {
-      console.error('Error getting blogs count:', error)
+      console.error('Error counting blogs from localDb:', error)
       return 0
     }
   },
@@ -488,7 +363,7 @@ export const blogApi = {
   },
 
   /**
-   * Get single blog by id
+   * Get single blog by id exclusively from localDb
    */
   async getBlogById(id: string): Promise<IBlogResponse<IBlogItem>> {
     try {
@@ -501,11 +376,8 @@ export const blogApi = {
         }
       }
 
-      const docRef = await import('firebase/firestore').then(({ doc, getDoc }) =>
-        getDoc(doc(db, dbCollections.blogs || dbCollections.articles, id)),
-      )
-
-      if (!docRef.exists()) {
+      const localBlog = await localDb.blogs.get(id)
+      if (!localBlog) {
         return {
           isSuccess: false,
           message: 'Blog not found',
@@ -514,16 +386,14 @@ export const blogApi = {
         }
       }
 
-      const blog = mapDocToBlogItem(docRef)
-
       return {
         isSuccess: true,
         message: 'Success',
-        content: blog,
+        content: localBlog,
         statusCode: 200,
       }
     } catch (error: any) {
-      console.error('Error fetching blog by id:', error)
+      console.error('Error fetching blog from localDb by id:', error)
       return {
         isSuccess: false,
         message: error?.message || 'Error fetching blog',
@@ -541,7 +411,7 @@ export const blogApi = {
   },
 
   /**
-   * Update an existing blog
+   * Update an existing blog: updates in both Firestore and localDb
    */
   async updateBlog(id: string, data: IBlogItem): Promise<IBlogResponse<IBlogItem>> {
     try {
@@ -569,22 +439,32 @@ export const blogApi = {
         last_update: now,
       }
 
+      // 1. Update in Firestore
       const docRef = doc(db, dbCollections.blogs || dbCollections.articles, id)
       await updateDoc(docRef, blogData)
+
+      const updatedBlog = {
+        id,
+        uid: currentUser.uid,
+        title: data.title,
+        description: data.description,
+        relation: data.relation || [],
+        tags,
+        created_date: extractCreatedDate(data),
+        last_update: now,
+      } as IBlogItem
+
+      // 2. Update in Local DB
+      try {
+        await localDb.blogs.put(updatedBlog)
+      } catch (localErr) {
+        console.warn('Failed to update blog in localDb:', localErr)
+      }
 
       return {
         isSuccess: true,
         message: 'Blog updated successfully',
-        content: {
-          id,
-          uid: currentUser.uid,
-          title: data.title,
-          description: data.description,
-          relation: data.relation || [],
-          tags,
-          created_date: extractCreatedDate(data),
-          last_update: now,
-        } as IBlogItem,
+        content: updatedBlog,
         statusCode: 200,
       }
     } catch (error: any) {
@@ -606,7 +486,7 @@ export const blogApi = {
   },
 
   /**
-   * Delete an existing blog
+   * Delete an existing blog: deletes from both Firestore and localDb, recording into deleted_records
    */
   async deleteBlog(id: string): Promise<IBlogResponse<boolean>> {
     try {
@@ -624,8 +504,26 @@ export const blogApi = {
         }
       }
 
+      // 1. Delete from Firestore and record deletion into deleted_records
       const docRef = doc(db, dbCollections.blogs || dbCollections.articles, id)
-      await deleteDoc(docRef)
+      const deletedRecordRef = doc(db, dbCollections.deleted_records, `${currentUser.uid}_${id}`)
+
+      const batch = writeBatch(db)
+      batch.delete(docRef)
+      batch.set(deletedRecordRef, {
+        uid: currentUser.uid,
+        recordId: id,
+        collectionName: dbCollections.blogs || 'articles',
+        deleted_at: Timestamp.now(),
+      })
+      await batch.commit()
+
+      // 2. Delete from Local DB
+      try {
+        await localDb.blogs.delete(id)
+      } catch (localErr) {
+        console.warn('Failed to delete blog from localDb:', localErr)
+      }
 
       return {
         isSuccess: true,

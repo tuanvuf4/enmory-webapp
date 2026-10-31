@@ -88,11 +88,16 @@ export const Listening = () => {
                 </Space>
               </Col>
 
-              <Col span={24} md={12} lg={8}>
+              <Col
+                span={24}
+                md={12}
+                lg={8}
+                style={{ borderLeft: `1px solid ${token.colorBorder}` }}
+              >
                 <Space
                   direction={'vertical'}
-                  size={token.size}
-                  className={`${styles.description} ${appStyle.full}`}
+                  size={0}
+                  className={`${styles.description} ${appStyle.full} !p-0`}
                 >
                   <TrackList />
                   <LiveTranscript />

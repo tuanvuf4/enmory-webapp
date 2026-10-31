@@ -107,16 +107,6 @@
   color: $color-text-secondary;
 }
 
-.kindOfWord {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: $size * 0.5;
-  margin-bottom: $margin * 0.25;
-  font-weight: normal;
-  font-style: italic;
-}
-
 .level {
   display: flex;
   align-items: center;

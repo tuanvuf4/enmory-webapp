@@ -78,7 +78,7 @@ export const BlogItem = ({
             strong
             className='cursor-pointer'
             style={{ fontSize: token.fontSizeLG, lineHeight: 1.4 }}
-            onClick={() => navigate(`/blog/${id}`)}
+            onClick={() => navigate(`/blog?id=${id}`)}
           >
             {title}
           </Text>
@@ -106,7 +106,7 @@ export const BlogItem = ({
 
         {/* Actions */}
         <Flex gap={token.sizeXS} align='center' flex='none'>
-          <Button size='small' icon={<ReadOutlined />} onClick={() => navigate(`/blog/${id}`)}>
+          <Button size='small' icon={<ReadOutlined />} onClick={() => navigate(`/blog?id=${id}`)}>
             Read
           </Button>
           <Button
@@ -154,7 +154,7 @@ export const BlogItem = ({
           strong
           className='cursor-pointer'
           style={{ fontSize: token.fontSizeLG, lineHeight: 1.4, flex: 1 }}
-          onClick={() => navigate(`/blog/${id}`)}
+          onClick={() => navigate(`/blog?id=${id}`)}
         >
           {title}
         </Text>
@@ -237,7 +237,7 @@ export const BlogItem = ({
           icon={<ReadOutlined />}
           variant='outlined'
           type='default'
-          onClick={() => navigate(`/blog/${id}`)}
+          onClick={() => navigate(`/blog?id=${id}`)}
         >
           Read more
         </Button>

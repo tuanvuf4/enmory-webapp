@@ -12,7 +12,7 @@ import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { InputTag, Level, ReviewableTextArea } from '@/views/components'
 import { Reference } from '@/views/features/references/References'
-import { theme, Select, Button, Flex, Alert, Tooltip, Tag } from 'antd'
+import { theme, Select, Button, Flex, Alert, Tooltip, Tag, Typography } from 'antd'
 import clsx from 'clsx'
 import { useEffect, Suspense, useState, useCallback, useMemo, useRef } from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
@@ -27,7 +27,7 @@ import { collection, doc, Timestamp } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { removeLineBreaks, sanitizePronunciation } from '@/core/utils'
 import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
-import { useModal } from '@/context/modal.context'
+import { useModal, useCurrentModal } from '@/context/modal.context'
 import { useQueryClient } from '@tanstack/react-query'
 import { validateAndCreateRelatedItems } from './itemValidation'
 import {
@@ -38,6 +38,7 @@ import {
   filterWordsExcludingOrigin,
 } from '@/services/gemini'
 import {
+  MinusOutlined,
   ThunderboltOutlined,
   BookOutlined,
   CompassOutlined,
@@ -55,6 +56,7 @@ import {
   UpCircleFilled,
   DownCircleFilled,
 } from '@ant-design/icons'
+import moment from 'moment'
 
 interface ItemFormProps {
   item: IItem
@@ -107,7 +109,16 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
   const { options, isSearching } = useAutoComplete(autoCompleteFilters, 'item', false, 300)
 
-  const { closeModal, updateModal } = useModal()
+  const { closeModal, updateModal, minimizeModal } = useModal()
+  const currentModal = useCurrentModal()
+
+  const handleMinimize = () => {
+    if (currentModal?.minimize) {
+      currentModal.minimize()
+    } else {
+      minimizeModal()
+    }
+  }
 
   useEffect(() => {
     if (origin?.trim()) {
@@ -1222,15 +1233,36 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
       <div className={styles.stickyFooter}>
         <div className={styles.footerInfo}>
           <Flex align='center' gap={8} wrap='wrap'>
-            <Button
-              size={'middle'}
-              icon={showMeanings ? <UpCircleFilled /> : <DownCircleFilled />}
-              onClick={() => setShowMeanings((prev) => !prev)}
-            />
+            {currentItem.meanings &&
+              currentItem.meanings.length > 0 &&
+              item.meanings &&
+              item.meanings.length > 0 && (
+                <Button
+                  size={'middle'}
+                  icon={showMeanings ? <UpCircleFilled /> : <DownCircleFilled />}
+                  onClick={() => setShowMeanings((prev) => !prev)}
+                />
+              )}
+
+            {item?.last_update && isEditing && (
+              <Typography.Text type='secondary' style={{ fontSize: 12 }}>
+                Last update: {moment(item.last_update).fromNow()}
+              </Typography.Text>
+            )}
           </Flex>
         </div>
 
         <div className={styles.footerButtons}>
+          <Button
+            type={'default'}
+            size={'middle'}
+            icon={<MinusOutlined />}
+            onClick={handleMinimize}
+            disabled={isSubmitting || isCreating || isUpdating}
+          >
+            Minimize
+          </Button>
+
           <Button type={'default'} size={'middle'} style={{ minWidth: 80 }} onClick={handleCancel}>
             Cancel
           </Button>
@@ -1240,6 +1272,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             size={'middle'}
             style={{ minWidth: 80 }}
             loading={isSubmitting || isCreating || isUpdating}
+            icon={<ThunderboltOutlined />}
             disabled={
               !isValid ||
               isSubmitting ||
@@ -1251,7 +1284,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             }
             onClick={() => handleSubmit(onSubmit)()}
           >
-            {isEditing ? 'Update' : 'Save'}
+            {isEditing ? 'Update' : 'Create'}
           </Button>
         </div>
       </div>

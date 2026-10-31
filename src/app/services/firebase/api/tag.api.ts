@@ -7,7 +7,6 @@ import {
   ITagDto,
   DEFAULT_TAG_COLOR,
   DEFAULT_TAG_ORDER,
-  DEFAULT_TAG_VALUE,
   normalizeTag,
   normalizeTagList,
 } from '@/models/tag.model'
@@ -17,8 +16,6 @@ import { invalidateSearchIndex } from '@/services/localDb/searchEngine'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 export type { ITagEntity, ITagDto, ITag }
-
-const PENDING_DELETED_TAGS_PREFIX = 'pending_deleted_tags_'
 
 /**
  * Remove a deleted tag from items in local database only.
@@ -121,64 +118,14 @@ const replaceTagInLocalItems = async (
   return modifiedCount
 }
 
-/**
- * Record a deleted tag that is pending synchronization to cloud items during manual sync
- */
-const recordPendingDeletedTag = async (uid: string, targetTagLower: string): Promise<void> => {
-  if (!uid || !targetTagLower) return
-  const pendingKey = `${PENDING_DELETED_TAGS_PREFIX}${uid}`
-  try {
-    const existing = await localDb.syncMeta.get(pendingKey)
-    const currentList: string[] = Array.isArray(existing?.value) ? existing.value : []
-    if (!currentList.includes(targetTagLower)) {
-      await localDb.syncMeta.put({
-        key: pendingKey,
-        value: [...currentList, targetTagLower],
-      })
-    }
-  } catch (err) {
-    console.warn('Failed to record pending deleted tag in syncMeta:', err)
-  }
-}
-
-/**
- * Get the list of deleted tags pending synchronization to cloud items
- */
-const getPendingDeletedTags = async (uid: string): Promise<string[]> => {
-  if (!uid) return []
-  const pendingKey = `${PENDING_DELETED_TAGS_PREFIX}${uid}`
-  try {
-    const existing = await localDb.syncMeta.get(pendingKey)
-    return Array.isArray(existing?.value) ? existing.value : []
-  } catch {
-    return []
-  }
-}
-
-/**
- * Clear the list of pending deleted tags
- */
-const clearPendingDeletedTags = async (uid: string): Promise<void> => {
-  if (!uid) return
-  const pendingKey = `${PENDING_DELETED_TAGS_PREFIX}${uid}`
-  try {
-    await localDb.syncMeta.delete(pendingKey)
-  } catch (err) {
-    console.warn('Failed to clear pending deleted tags from syncMeta:', err)
-  }
-}
-
-/**
- * Sync deleted tags to cloud items
- */
+const recordPendingDeletedTag = async (_uid: string, _targetTagLower: string): Promise<void> => {}
+const getPendingDeletedTags = async (_uid: string): Promise<string[]> => []
+const clearPendingDeletedTags = async (_uid: string): Promise<void> => {}
 const syncDeletedTagsToServer = async (
-  uid: string,
-  deletedTagLowers: string[],
+  _uid: string,
+  _deletedTagLowers: string[],
   _onProgress?: (step: string) => void,
-): Promise<number> => {
-  if (!uid || !deletedTagLowers || deletedTagLowers.length === 0) return 0
-  return 0
-}
+): Promise<number> => 0
 
 /**
  * Helper to get current itemTags from user configuration in Firestore
@@ -215,25 +162,7 @@ const saveItemTagsToUser = async (uid: string, tags: ITag[]): Promise<ITag[]> =>
     { merge: true },
   )
 
-  // Update localDb cache for offline reading
-  try {
-    await localDb.tags.where('uid').equals(uid).delete()
-    if (normalized.length > 0) {
-      await localDb.tags.bulkPut(
-        normalized.map((tag) => ({
-          id: tag.name,
-          uid,
-          value: tag.name,
-          value_lowercase: tag.name.toLowerCase(),
-          created_date: tag.created_date || Date.now(),
-          last_update: tag.last_update || Date.now(),
-        })),
-      )
-    }
-  } catch (localErr) {
-    console.warn('Failed to update localDb.tags:', localErr)
-  }
-
+  // Helper to save itemTags to user configuration in Firestore
   return normalized
 }
 
@@ -255,23 +184,6 @@ const getTags = async (keyword = ''): Promise<IHttpResponse<ITagDto[]>> => {
 
     const normalizedKeyword = keyword.trim().toLowerCase()
     let rawTags = await getItemTagsFromUser(currentUser.uid)
-
-    // Fallback to localDb if offline
-    if (rawTags.length === 0) {
-      try {
-        const localTags = await localDb.tags.where('uid').equals(currentUser.uid).toArray()
-        rawTags = localTags.map((t, idx) => ({
-          value: DEFAULT_TAG_VALUE,
-          name: t.value,
-          color: DEFAULT_TAG_COLOR,
-          order: idx + 1,
-          created_date: t.created_date,
-          last_update: t.last_update,
-        }))
-      } catch {
-        // ignore
-      }
-    }
 
     let tags: ITagDto[] = rawTags.map((tag) => ({
       ...tag,
@@ -607,9 +519,8 @@ const deleteTag = async (tagIdOrName: string, tagValue?: string): Promise<IHttpR
 
     await saveItemTagsToUser(currentUser.uid, nextTags)
 
-    // Remove tag from items in local database and record for sync
+    // Remove tag from items in local database
     await removeTagFromLocalItems(currentUser.uid, targetLower)
-    await recordPendingDeletedTag(currentUser.uid, targetLower)
 
     return {
       isSuccess: true,

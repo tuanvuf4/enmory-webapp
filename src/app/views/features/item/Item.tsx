@@ -21,9 +21,7 @@ import {
   HeartOutlined,
   BookOutlined,
   ClockCircleOutlined,
-  FieldTimeOutlined,
   SoundOutlined,
-  WarningOutlined,
   CheckSquareFilled,
   CheckSquareOutlined,
   UserOutlined,
@@ -329,14 +327,14 @@ export const Item: React.FC<IProps> = ({
     e.stopPropagation()
     try {
       const res = await toggleChecklist(data)
-      notification({
+      message({
         type: res.isSuccess ? 'success' : 'info',
-        message: res.message,
+        content: res.message,
       })
     } catch (error: any) {
-      notification({
+      message({
         type: 'error',
-        message: error?.message || 'Failed to update checklist',
+        content: error?.message || 'Failed to update checklist',
       })
     }
   }
@@ -345,13 +343,6 @@ export const Item: React.FC<IProps> = ({
     setSpin(true)
     await dispatch(actionAsyncApp.fetchIotd({ catId, generate: true }))
     setSpin(false)
-  }
-
-  const handleTitleClick = () => {
-    if (data?.id) {
-      onView(data.id)
-      onViewSuccess?.()
-    }
   }
 
   const handleQuickSpeak = (e: React.MouseEvent) => {
@@ -407,12 +398,21 @@ export const Item: React.FC<IProps> = ({
           {/* Header row: Title + Quick Sound + Defect Badge + Action buttons */}
           <div className={styles.header}>
             <div className={styles.titleArea}>
-              <h2
-                className={clsx(styles.originTitle, isDefect(data) && styles.originTitleDefect)}
-                onClick={handleTitleClick}
-              >
-                {data.origin}
-              </h2>
+              {isDefect(data) ? (
+                <Tooltip title='This item does not yet have a complete definition or translation.'>
+                  <h2
+                    className={clsx(styles.originTitle, isDefect(data) && styles.originTitleDefect)}
+                  >
+                    {data.origin}
+                  </h2>
+                </Tooltip>
+              ) : (
+                <h2
+                  className={clsx(styles.originTitle, isDefect(data) && styles.originTitleDefect)}
+                >
+                  {data.origin}
+                </h2>
+              )}
 
               <Tooltip title={isCopied ? 'Copied' : 'Copy'}>
                 <Button
@@ -427,12 +427,6 @@ export const Item: React.FC<IProps> = ({
               <Button type={'text'} className={styles.titleAudioBtn} onClick={handleQuickSpeak}>
                 <SoundOutlined />
               </Button>
-
-              {isDefect(data) && (
-                <Tooltip title='This item does not yet have a complete definition or translation.'>
-                  <WarningOutlined className={styles.defectIcon} />
-                </Tooltip>
-              )}
             </div>
 
             <div className={styles.headerActions}>
@@ -447,49 +441,6 @@ export const Item: React.FC<IProps> = ({
 
               {action && (
                 <>
-                  <Button
-                    type='text'
-                    size='small'
-                    icon={
-                      isInChecklist ? (
-                        <CheckSquareFilled style={{ color: '#52c41a' }} />
-                      ) : (
-                        <CheckSquareOutlined className={styles.headerActionDim} />
-                      )
-                    }
-                    onClick={handleToggleChecklist}
-                  />
-
-                  <Button
-                    type='text'
-                    size='small'
-                    icon={
-                      data.favorite ? (
-                        <HeartFilled className={styles.favoriteActive} />
-                      ) : (
-                        <HeartOutlined className={styles.headerActionDim} />
-                      )
-                    }
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      favorite(data)
-                      onFavorite?.()
-                    }}
-                  />
-
-                  {data.archive && (
-                    <Button
-                      type='text'
-                      size='small'
-                      icon={<BookOutlined className={styles.archiveActive} />}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        archive(data)
-                        onArchive?.()
-                      }}
-                    />
-                  )}
-
                   <Dropdown
                     placement='bottomRight'
                     menu={menuProps}
@@ -510,44 +461,79 @@ export const Item: React.FC<IProps> = ({
 
           {/* Metadata Row: Category Tag + Level Stars + SRS Status Badge + Author */}
           {!!data.catId && (
-            <div className={styles.metaRow}>
-              <div className={styles.metaLeft}>
+            <Flex align={'center'} justify={'space-between'} gap={token.size / 2}>
+              <Flex align={'center'} justify={'space-between'} gap={token.size / 2}>
                 <Tag color={getCategoryColor(data.catId)} className={styles.categoryBadge}>
                   {getCategory(data.catId)}
                 </Tag>
 
-                <Tooltip title={`Level: ${data.level || 0}/5`}>
-                  <div className={styles.levelWrapper}>
-                    <Level level={data.level as number} size={13} />
-                  </div>
-                </Tooltip>
-
-                {data.archive ? (
-                  <Tag icon={<BookOutlined />} className={styles.archiveTag}>
-                    Archived
-                  </Tag>
-                ) : isItemDue(data) ? (
-                  <Tooltip title={`Đã đến hạn ôn tập SRS (${getDueDurationText(data)})`}>
-                    <Tag color='warning' icon={<ClockCircleOutlined />} className={styles.dueTag}>
-                      {getDueDurationText(data)}
-                    </Tag>
-                  </Tooltip>
-                ) : !!data.next_review_date ? (
-                  <Tooltip title={`Chu kỳ ôn tập tiếp theo: ${getDueDurationText(data)}`}>
-                    <Tag icon={<FieldTimeOutlined />} className={styles.scheduledTag}>
-                      {getDueDurationText(data)}
-                    </Tag>
-                  </Tooltip>
-                ) : null}
-              </div>
-
-              {data.user && (
-                <div className={styles.authorBadge} title={data.user.email}>
-                  <UserOutlined style={{ fontSize: 11 }} />
-                  <span>{data.user.firstName}</span>
+                <div className={styles.levelWrapper}>
+                  <Level level={data.level as number} size={13} />
                 </div>
-              )}
-            </div>
+              </Flex>
+
+              <Flex align={'center'} justify={'space-between'} gap={token.size / 2}>
+                <Button
+                  type='text'
+                  size='small'
+                  icon={
+                    isInChecklist ? (
+                      <CheckSquareFilled style={{ color: '#52c41a' }} />
+                    ) : (
+                      <CheckSquareOutlined className={styles.headerActionDim} />
+                    )
+                  }
+                  onClick={handleToggleChecklist}
+                />
+
+                <Button
+                  type='text'
+                  size='small'
+                  icon={
+                    data.favorite ? (
+                      <HeartFilled className={styles.favoriteActive} />
+                    ) : (
+                      <HeartOutlined className={styles.headerActionDim} />
+                    )
+                  }
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    favorite(data)
+                    onFavorite?.()
+                  }}
+                />
+
+                <Button
+                  type='text'
+                  size='small'
+                  icon={
+                    data.archive ? (
+                      <BookOutlined className={styles.archiveActive} />
+                    ) : (
+                      <BookOutlined className={styles.headerActionDim} />
+                    )
+                  }
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    archive(data)
+                    onArchive?.()
+                  }}
+                />
+
+                {isItemDue(data) && (
+                  <Tooltip title={`${getDueDurationText(data)}`}>
+                    <Tag color='warning' icon={<ClockCircleOutlined />} className={styles.dueTag} />
+                  </Tooltip>
+                )}
+
+                {data.user && (
+                  <div className={styles.authorBadge} title={data.user.email}>
+                    <UserOutlined style={{ fontSize: 11 }} />
+                    <span>{data.user.firstName}</span>
+                  </div>
+                )}
+              </Flex>
+            </Flex>
           )}
 
           {/* Reference dictionary links */}

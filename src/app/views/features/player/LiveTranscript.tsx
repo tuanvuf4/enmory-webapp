@@ -9,6 +9,7 @@ import {
   EyeOutlined,
   FullscreenOutlined,
   RetweetOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons'
 import { Button, Space, Tag, Tooltip, theme } from 'antd'
 import { KaraokeText } from './KaraokeText'
@@ -25,6 +26,8 @@ export const LiveTranscript: React.FC = () => {
   const { currentTrack, player } = useSelector((state) => state.listening)
 
   const dispatch = useDispatch()
+
+  const [show, setShow] = useState(true)
 
   const transcript = currentTrack?.transcript || ''
 
@@ -133,14 +136,21 @@ export const LiveTranscript: React.FC = () => {
   return (
     <div className={styles.liveTranscriptWrapper} style={{ background: token.colorBgContainer }}>
       <div className={styles.liveTranscriptHeader}>
-        <h3>
-          Transcript
+        <Button
+          size='small'
+          variant={'text'}
+          type={'text'}
+          icon={<UnorderedListOutlined />}
+          onClick={() => setShow(!show)}
+          style={{ background: 'transparent', fontSize: 14 }}
+        >
+          Transcript{' '}
           <span>
             {activeIndex >= 0
-              ? `(${activeIndex + 1}/${segments.length})`
-              : `(0/${segments.length})`}
+              ? ` (${activeIndex + 1}/${segments.length})`
+              : ` (0/${segments.length})`}
           </span>
-        </h3>
+        </Button>
 
         <Space size='small' align='center'>
           {/* Transcript Blur/Visible Button */}
@@ -152,6 +162,7 @@ export const LiveTranscript: React.FC = () => {
             }
           >
             <Button
+              size={'small'}
               type={'text'}
               variant={'text'}
               icon={
@@ -166,27 +177,9 @@ export const LiveTranscript: React.FC = () => {
             />
           </Tooltip>
 
-          {/* Badge indicator when text is blurred */}
-          {transcriptDisplayMode === 'blur' && (
-            <Tag
-              color='gold'
-              style={{
-                fontSize: 10,
-                lineHeight: '18px',
-                cursor: 'pointer',
-                margin: 0,
-                padding: '0 6px',
-                borderRadius: 8,
-              }}
-              onClick={handleToggleDisplayMode}
-              title='Đang làm mờ chữ. Nhấp để hiện lại'
-            >
-              Mờ chữ
-            </Tag>
-          )}
-
           {/* Loop Segment Button */}
           <Button
+            size={'small'}
             type={'text'}
             variant={'text'}
             icon={
@@ -225,6 +218,7 @@ export const LiveTranscript: React.FC = () => {
 
           {/* Sync Button */}
           <Button
+            size={'small'}
             type={'text'}
             variant={'text'}
             icon={<AimOutlined />}
@@ -237,6 +231,7 @@ export const LiveTranscript: React.FC = () => {
           {/* Fullscreen Focus Mode Button */}
           <Tooltip title='Toàn màn hình Focus Karaoke'>
             <Button
+              size={'small'}
               type={'text'}
               variant={'text'}
               icon={<FullscreenOutlined style={{ fontSize: '16px' }} />}
@@ -247,112 +242,114 @@ export const LiveTranscript: React.FC = () => {
         </Space>
       </div>
 
-      <div ref={containerRef} className={styles.liveTranscriptFull} onScroll={handleScroll}>
-        {segments.map((seg, i) => {
-          const isActive = i === activeIndex
-          const isPlayed = i < activeIndex
-          const isRevealed = revealedSegments[i]
-          const isBlur = transcriptDisplayMode === 'blur' && !isRevealed
-          const isCopied = copiedIndex === i
+      {show && (
+        <div ref={containerRef} className={styles.liveTranscriptFull} onScroll={handleScroll}>
+          {segments.map((seg, i) => {
+            const isActive = i === activeIndex
+            const isPlayed = i < activeIndex
+            const isRevealed = revealedSegments[i]
+            const isBlur = transcriptDisplayMode === 'blur' && !isRevealed
+            const isCopied = copiedIndex === i
 
-          return (
-            <div
-              key={i}
-              ref={isActive ? activeRef : null}
-              className={`${styles.transcriptSegment} ${
-                isActive ? styles.transcriptActive : ''
-              } ${isPlayed ? styles.transcriptPlayed : ''}`}
-              onClick={() =>
-                dispatch(listeningAction.updatePlayer({ seekTo: seg.timeSeconds, playing: true }))
-              }
-            >
-              <div className={styles.segmentHeader}>
-                <div className={styles.segmentTags}>
-                  <Tag
-                    color='cyan'
+            return (
+              <div
+                key={i}
+                ref={isActive ? activeRef : null}
+                className={`${styles.transcriptSegment} ${
+                  isActive ? styles.transcriptActive : ''
+                } ${isPlayed ? styles.transcriptPlayed : ''}`}
+                onClick={() =>
+                  dispatch(listeningAction.updatePlayer({ seekTo: seg.timeSeconds, playing: true }))
+                }
+              >
+                <div className={styles.segmentHeader}>
+                  <div className={styles.segmentTags}>
+                    <Tag
+                      color='cyan'
+                      style={{
+                        fontSize: 11,
+                        lineHeight: '18px',
+                        verticalAlign: 'middle',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {formatSegmentTime(seg.timeSeconds)}
+                    </Tag>
+                    {isActive && loopSegment && (
+                      <Tag
+                        color='gold'
+                        style={{
+                          fontSize: 10,
+                          lineHeight: '18px',
+                          verticalAlign: 'middle',
+                        }}
+                      >
+                        Lặp câu
+                      </Tag>
+                    )}
+                    {isRevealed && transcriptDisplayMode === 'blur' && (
+                      <Tag
+                        color='purple'
+                        style={{
+                          fontSize: 10,
+                          lineHeight: '18px',
+                          verticalAlign: 'middle',
+                        }}
+                      >
+                        Đã mở
+                      </Tag>
+                    )}
+                  </div>
+
+                  <Tooltip title={isCopied ? 'Đã sao chép' : 'Sao chép'}>
+                    <Button
+                      type='text'
+                      size='small'
+                      className={styles.copySegmentBtn}
+                      icon={
+                        isCopied ? <CheckOutlined style={{ color: '#52c41a' }} /> : <CopyOutlined />
+                      }
+                      onClick={(e) => handleCopySegment(seg.text, i, e)}
+                    />
+                  </Tooltip>
+                </div>
+
+                <p
+                  className={`${isBlur ? styles.transcriptBlurred : ''} ${
+                    isRevealed ? styles.transcriptRevealed : ''
+                  }`}
+                  onClick={(e) => {
+                    if (isBlur) {
+                      handleToggleReveal(i, e)
+                    }
+                  }}
+                  title={isBlur ? 'Nhấp vào để hé mở câu này' : undefined}
+                >
+                  {isActive ? (
+                    <KaraokeText text={seg.text} progress={activeSegmentProgress} />
+                  ) : (
+                    seg.text
+                  )}
+                </p>
+
+                {player.showTranslation !== false && seg.translation && (
+                  <div
                     style={{
-                      fontSize: 11,
-                      lineHeight: '18px',
-                      verticalAlign: 'middle',
-                      cursor: 'pointer',
+                      fontSize: 13,
+                      fontStyle: 'italic',
+                      color: token.colorTextSecondary,
+                      marginTop: 4,
+                      lineHeight: 1.4,
                     }}
                   >
-                    {formatSegmentTime(seg.timeSeconds)}
-                  </Tag>
-                  {isActive && loopSegment && (
-                    <Tag
-                      color='gold'
-                      style={{
-                        fontSize: 10,
-                        lineHeight: '18px',
-                        verticalAlign: 'middle',
-                      }}
-                    >
-                      Lặp câu
-                    </Tag>
-                  )}
-                  {isRevealed && transcriptDisplayMode === 'blur' && (
-                    <Tag
-                      color='purple'
-                      style={{
-                        fontSize: 10,
-                        lineHeight: '18px',
-                        verticalAlign: 'middle',
-                      }}
-                    >
-                      Đã mở
-                    </Tag>
-                  )}
-                </div>
-
-                <Tooltip title={isCopied ? 'Đã sao chép' : 'Sao chép'}>
-                  <Button
-                    type='text'
-                    size='small'
-                    className={styles.copySegmentBtn}
-                    icon={
-                      isCopied ? <CheckOutlined style={{ color: '#52c41a' }} /> : <CopyOutlined />
-                    }
-                    onClick={(e) => handleCopySegment(seg.text, i, e)}
-                  />
-                </Tooltip>
-              </div>
-
-              <p
-                className={`${isBlur ? styles.transcriptBlurred : ''} ${
-                  isRevealed ? styles.transcriptRevealed : ''
-                }`}
-                onClick={(e) => {
-                  if (isBlur) {
-                    handleToggleReveal(i, e)
-                  }
-                }}
-                title={isBlur ? 'Nhấp vào để hé mở câu này' : undefined}
-              >
-                {isActive ? (
-                  <KaraokeText text={seg.text} progress={activeSegmentProgress} />
-                ) : (
-                  seg.text
+                    {seg.translation}
+                  </div>
                 )}
-              </p>
-
-              {player.showTranslation !== false && seg.translation && (
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontStyle: 'italic',
-                    color: token.colorTextSecondary,
-                    marginTop: 4,
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {seg.translation}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

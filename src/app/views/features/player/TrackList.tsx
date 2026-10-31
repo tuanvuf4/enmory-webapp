@@ -1,9 +1,8 @@
 import {
-  CaretDownFilled,
-  CaretUpFilled,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons'
 import { Button, Flex, theme } from 'antd'
 import { useDispatch, useSelector } from '@/core/hooks'
@@ -32,8 +31,7 @@ export const TrackList: React.FC = () => {
         align={'center'}
         style={{
           borderBottom: `1px solid ${token.colorBorder}`,
-          padding: token.size / 2,
-          paddingRight: token.size * 0.75,
+          padding: '10px 12px 10px 8px',
         }}
       >
         <Flex align='center' gap={4}>
@@ -41,9 +39,9 @@ export const TrackList: React.FC = () => {
             size='small'
             variant={'text'}
             type={'text'}
-            icon={show ? <CaretUpFilled /> : <CaretDownFilled />}
+            icon={<UnorderedListOutlined />}
             onClick={() => setShow(!show)}
-            style={{ background: 'transparent' }}
+            style={{ background: 'transparent', fontSize: 14 }}
           >
             Track list
           </Button>

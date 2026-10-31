@@ -8,7 +8,6 @@ import {
   Badge,
   Button,
   Col,
-  Divider,
   Flex,
   Modal,
   Pagination,
@@ -31,6 +30,7 @@ import appStyle from '@/style/appStyle.module.scss'
 import { NotFound, PageTitle } from '@/views/components'
 import { BlogTagList } from '@/views/components/blogTagList/BlogTagList'
 import { BlogItem } from '@/views/components/blogItem/BlogItem'
+import { BlogDetail } from '@/views/pages/blogDetail/BlogDetail'
 import { Widget } from '@/views/features/widget/Widget'
 
 const { CheckableTag } = Tag
@@ -44,6 +44,7 @@ export const Blog = () => {
 
   const [page, setPage] = useState(0)
   const selectedTag = searchParams.get('tag') || undefined
+  const blogId = searchParams.get('id') || undefined
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
@@ -54,15 +55,18 @@ export const Blog = () => {
     data: blogs = [],
     isLoading: isLoadingBlogs,
     error: blogsError,
-  } = useBlogs({
-    page,
-    size: PAGE_SIZE,
-    tag: selectedTag,
-    orderBy: 'created_date',
-    order: 'DESC',
-  })
+  } = useBlogs(
+    {
+      page,
+      size: PAGE_SIZE,
+      tag: selectedTag,
+      orderBy: 'created_date',
+      order: 'DESC',
+    },
+    !blogId,
+  )
 
-  const { data: totalCount = 0 } = useBlogsCount(selectedTag)
+  const { data: totalCount = 0 } = useBlogsCount(selectedTag, !blogId)
 
   const { user } = useSelector((state) => state.auth)
   const cats = user?.configuration?.blogTags || []
@@ -118,10 +122,14 @@ export const Blog = () => {
     )
   }
 
+  if (blogId) {
+    return <BlogDetail id={blogId} />
+  }
+
   const colSpan =
     viewMode === 'grid'
-      ? { xs: 24, sm: 12, md: 12, lg: 8, xl: 8 }
-      : { xs: 24, sm: 24, md: 24, lg: 24, xl: 24 }
+      ? { xs: 24, sm: 12, md: 12, lg: 12, xl: 12 }
+      : { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 }
 
   return (
     <>
@@ -154,8 +162,6 @@ export const Blog = () => {
                 New Post
               </Button>
             </Tooltip>
-
-            <Divider type='vertical' style={{ margin: 0 }} />
 
             <Tooltip title='Blog tags'>
               <Button icon={<TagsOutlined />} onClick={() => setShowCategoryModal(true)}>
@@ -280,7 +286,7 @@ export const Blog = () => {
             !blogsError && (
               <div className='flex items-center justify-center p-4' style={{ minHeight: 400 }}>
                 <NotFound
-                  classNames={{ container: 'justify-center gap-4' }}
+                  vertical={true}
                   label={
                     <h2 className='m-0'>
                       {selectedTag
@@ -341,9 +347,7 @@ export const Blog = () => {
         open={showCategoryModal}
         onCancel={handleCloseCategoryModal}
         footer={null}
-        keyboard={false}
         width={700}
-        maskClosable={false}
       >
         <BlogTagList categories={cats} />
       </Modal>

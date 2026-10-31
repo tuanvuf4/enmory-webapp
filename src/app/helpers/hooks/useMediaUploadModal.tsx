@@ -18,7 +18,6 @@ export const useMediaUploadModal = () => {
       width: 1000,
       footer: null,
       maskClosable: false,
-      allowMinimize: true,
       minimizeInfo: {
         title: trackData?.title ? `Track: ${trackData.title}` : 'Media Upload',
         tooltip: trackData?.title ? `Mở lại bài nghe: ${trackData.title}` : 'Mở lại Media Upload',

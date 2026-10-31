@@ -217,9 +217,6 @@ const getEligibleItemsInCategory = async (catId: number): Promise<IItem[]> => {
       (item) => item.catId === catId && currentUser && item.uid === currentUser.uid,
     )
 
-    // console.log(`*** allLocalItems *** `, allLocalItems)
-    // console.log(`*** userItems *** `, userItems)
-
     const eligible = userItems.filter(hasValidMeaning)
 
     // Filter items that have examples

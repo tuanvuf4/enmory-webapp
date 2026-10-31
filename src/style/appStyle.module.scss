@@ -92,6 +92,7 @@ $footer-background: #fff;
   z-index: 999;
   border-bottom: 1px solid color-mix(in srgb, #d7d9ef 75%, transparent);
   backdrop-filter: blur(8px);
+  margin-top: -8px;
 
   :global([data-theme='dark']) & {
     border-bottom-color: rgba(130, 110, 255, 0.1);

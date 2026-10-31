@@ -1,10 +1,11 @@
 import appStyle from '@/style/appStyle.module.scss'
 import { PlusOutlined } from '@ant-design/icons'
-import { Button, theme } from 'antd'
+import { Button, Flex, theme } from 'antd'
 import clsx from 'clsx'
 import { cloneElement, isValidElement, JSX, ReactElement } from 'react'
 
 interface NotFoundProps {
+  vertical?: boolean
   button?: JSX.Element
   showButton?: boolean
   label?: JSX.Element | string
@@ -96,13 +97,18 @@ export const NotFound = ({
     button: '',
   },
   button,
+  vertical = false,
   showButton = true,
   label,
   onClickBtn,
 }: NotFoundProps) => {
+  const { token } = theme.useToken()
   return (
-    <div
-      className={`flex items-center gap-2 ${classNames.container}`}
+    <Flex
+      vertical={vertical}
+      align={'center'}
+      gap={token.size}
+      className={`${classNames.container}`}
       onClick={(e) => e.stopPropagation()}
     >
       <LabelWrapper label={label} className={classNames.label} />
@@ -110,6 +116,6 @@ export const NotFound = ({
       {showButton && (
         <ButtonWrapper button={button} className={classNames.button} onClickBtn={onClickBtn} />
       )}
-    </div>
+    </Flex>
   )
 }

@@ -21,7 +21,7 @@ import {
   DatabaseOutlined,
   MobileOutlined,
   ReloadOutlined,
-  TagsOutlined,
+  ReadOutlined,
 } from '@ant-design/icons'
 import { useManualSync } from '@/services/localDb'
 import moment from 'moment'
@@ -38,11 +38,10 @@ export const SyncDataCard: React.FC = () => {
     serverItemCount,
     isLoadingServerCount,
     refreshServerItemCount,
-    localTagCount,
-    serverTagCount,
-    isLoadingServerTagCount,
-    refreshServerTagCount,
-    pendingTagCleanupsCount,
+    localBlogCount,
+    serverBlogCount,
+    isLoadingServerBlogCount,
+    refreshServerBlogCount,
     syncNow,
     clearLocalData,
   } = useManualSync()
@@ -51,13 +50,13 @@ export const SyncDataCard: React.FC = () => {
     serverItemCount !== null && !isLoadingServerCount && serverItemCount !== localItemCount
   const diffItemCount = serverItemCount !== null ? serverItemCount - localItemCount : 0
 
-  const hasTagDiff =
-    serverTagCount !== null && !isLoadingServerTagCount && serverTagCount !== localTagCount
-  const diffTagCount = serverTagCount !== null ? serverTagCount - localTagCount : 0
+  const hasBlogDiff =
+    serverBlogCount !== null && !isLoadingServerBlogCount && serverBlogCount !== localBlogCount
+  const diffBlogCount = serverBlogCount !== null ? serverBlogCount - localBlogCount : 0
 
-  const hasDiff = hasItemDiff || hasTagDiff
+  const hasDiff = hasItemDiff || hasBlogDiff
   const totalNewCount =
-    (diffItemCount > 0 ? diffItemCount : 0) + (diffTagCount > 0 ? diffTagCount : 0)
+    (diffItemCount > 0 ? diffItemCount : 0) + (diffBlogCount > 0 ? diffBlogCount : 0)
 
   const getSyncTag = () => {
     if (isSyncing) {
@@ -71,13 +70,6 @@ export const SyncDataCard: React.FC = () => {
       return (
         <Tag color='warning' icon={<ExclamationCircleOutlined />}>
           Sync Recommended
-        </Tag>
-      )
-    }
-    if (pendingTagCleanupsCount > 0) {
-      return (
-        <Tag color='processing' icon={<ExclamationCircleOutlined />}>
-          Tag Sync Pending ({pendingTagCleanupsCount})
         </Tag>
       )
     }
@@ -176,7 +168,6 @@ export const SyncDataCard: React.FC = () => {
 
         <Col xs={24} sm={8}>
           <Text type='secondary'>Sync Status:</Text>
-
           <div style={{ marginTop: 4 }}>
             <Tag color='success' icon={<CheckCircleOutlined />}>
               All Up to Date
@@ -184,31 +175,31 @@ export const SyncDataCard: React.FC = () => {
           </div>
         </Col>
 
-        {/* Row 2: Tag Items info + Status */}
+        {/* Row 2: Blog info + Status */}
         <Col xs={24} sm={8}>
           <Space align='center' size={4}>
-            <TagsOutlined style={{ color: token.colorPrimary, fontSize: 13 }} />
-            <Text type='secondary'>Tag Items in Local DB:</Text>
+            <ReadOutlined style={{ color: token.colorPrimary, fontSize: 13 }} />
+            <Text type='secondary'>Blogs in Local DB:</Text>
           </Space>
           <div style={{ marginTop: 4 }}>
-            <Tag color='cyan' style={{ fontSize: 14, padding: '2px 10px' }}>
-              {localTagCount} tags
+            <Tag color='purple' style={{ fontSize: 14, padding: '2px 10px' }}>
+              {localBlogCount} blogs
             </Tag>
           </div>
         </Col>
 
         <Col xs={24} sm={8}>
           <Space align='center' size={4}>
-            <TagsOutlined style={{ color: token.colorPrimary, fontSize: 13 }} />
-            <Text type='secondary'>Tag Items on Server:</Text>
-            <Tooltip title='Refresh server tags count'>
+            <ReadOutlined style={{ color: token.colorPrimary, fontSize: 13 }} />
+            <Text type='secondary'>Blogs on Server:</Text>
+            <Tooltip title='Refresh server blogs count'>
               <Button
                 type='text'
                 size='small'
                 shape='circle'
-                icon={<ReloadOutlined spin={isLoadingServerTagCount} style={{ fontSize: 11 }} />}
-                onClick={refreshServerTagCount}
-                disabled={isLoadingServerTagCount || isSyncing}
+                icon={<ReloadOutlined spin={isLoadingServerBlogCount} style={{ fontSize: 11 }} />}
+                onClick={refreshServerBlogCount}
+                disabled={isLoadingServerBlogCount || isSyncing}
                 style={{
                   width: 20,
                   height: 20,
@@ -220,21 +211,21 @@ export const SyncDataCard: React.FC = () => {
             </Tooltip>
           </Space>
           <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            {isLoadingServerTagCount ? (
+            {isLoadingServerBlogCount ? (
               <Tag color='default' style={{ fontSize: 14, padding: '2px 10px' }}>
                 <SyncOutlined spin /> Checking...
               </Tag>
-            ) : serverTagCount !== null ? (
+            ) : serverBlogCount !== null ? (
               <>
                 <Tag
-                  color={serverTagCount === localTagCount ? 'green' : 'orange'}
+                  color={serverBlogCount === localBlogCount ? 'green' : 'orange'}
                   style={{ fontSize: 14, padding: '2px 10px' }}
                 >
-                  {serverTagCount} tags
+                  {serverBlogCount} blogs
                 </Tag>
-                {hasTagDiff && (
-                  <Tag color={diffTagCount > 0 ? 'warning' : 'default'} style={{ fontSize: 12 }}>
-                    {diffTagCount > 0 ? `+${diffTagCount} new` : `${diffTagCount}`}
+                {hasBlogDiff && (
+                  <Tag color={diffBlogCount > 0 ? 'warning' : 'default'} style={{ fontSize: 12 }}>
+                    {diffBlogCount > 0 ? `+${diffBlogCount} new` : `${diffBlogCount}`}
                   </Tag>
                 )}
               </>
@@ -291,37 +282,22 @@ export const SyncDataCard: React.FC = () => {
                   )}
                 </div>
               )}
-              {hasTagDiff && (
+              {hasBlogDiff && (
                 <div>
-                  {diffTagCount > 0 ? (
+                  {diffBlogCount > 0 ? (
                     <>
-                      Server has <strong>{diffTagCount}</strong> tag item(s) not synced to this
-                      device.
+                      Server has <strong>{diffBlogCount}</strong> blog(s) not synced to this device.
                     </>
                   ) : (
                     <>
-                      Local database has <strong>{Math.abs(diffTagCount)}</strong> tag item(s)
+                      Local database has <strong>{Math.abs(diffBlogCount)}</strong> blog(s)
                       difference compared to server.
                     </>
                   )}
                 </div>
               )}
-              <div>Sync is recommended to keep your items and tag items up to date.</div>
+              <div>Sync is recommended to keep your items and blogs up to date.</div>
             </div>
-          }
-        />
-      )}
-
-      {pendingTagCleanupsCount > 0 && !isSyncing && (
-        <Alert
-          type='info'
-          showIcon
-          style={{ marginBottom: token.size }}
-          message={
-            <span>
-              Có <strong>{pendingTagCleanupsCount}</strong> tag đã xóa ở local đang chờ đồng bộ vào
-              items trên server. Bấm <strong>Sync</strong> để đồng bộ lên cloud.
-            </span>
           }
         />
       )}
@@ -361,10 +337,10 @@ export const SyncDataCard: React.FC = () => {
             Mobile Ready
           </Tag>
 
-          {(localItemCount > 0 || localTagCount > 0) && (
+          {(localItemCount > 0 || localBlogCount > 0) && (
             <Popconfirm
               title='Clear local database?'
-              description='This will clear the cached items and tag items from this device. Your data in the cloud will not be affected.'
+              description='This will clear the cached items and blogs from this device. Your data in the cloud will not be affected.'
               okText='Yes, clear'
               cancelText='Cancel'
               onConfirm={clearLocalData}

@@ -15,17 +15,18 @@ import { theme, Input, Button, Row, Col, Tag, Segmented, Space, Typography, Flex
 import { useForm, Controller } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePrompt } from '@/helpers/hooks'
-import { useModal } from '@/context/modal.context'
+import { useModal, useCurrentModal } from '@/context/modal.context'
 import {
   FileTextOutlined,
+  MinusOutlined,
   TagsOutlined,
   BranchesOutlined,
   EditOutlined,
   EyeOutlined,
   ClockCircleOutlined,
-  CheckOutlined,
   ReadOutlined,
   CalendarOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import clsx from 'clsx'
 import moment from 'moment'
@@ -45,7 +46,16 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
   const { message } = usePrompt()
   const { token } = theme.useToken()
   const queryClient = useQueryClient()
-  const { updateModal } = useModal()
+  const { updateModal, minimizeModal } = useModal()
+  const currentModal = useCurrentModal()
+
+  const handleMinimize = () => {
+    if (currentModal?.minimize) {
+      currentModal.minimize()
+    } else {
+      minimizeModal()
+    }
+  }
 
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor')
 
@@ -469,6 +479,10 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
         </Flex>
 
         <Space size={10}>
+          <Button icon={<MinusOutlined />} onClick={handleMinimize} disabled={isPending}>
+            Minimize
+          </Button>
+
           <Button onClick={() => onCancel?.()} disabled={isPending}>
             Cancel
           </Button>
@@ -477,8 +491,8 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
             type='primary'
             htmlType='submit'
             loading={isPending}
-            icon={<CheckOutlined />}
-            style={{ borderRadius: token.borderRadiusLG, minWidth: 110 }}
+            icon={<ThunderboltOutlined />}
+            style={{ minWidth: 110 }}
           >
             {isEditing ? 'Update' : 'Create'}
           </Button>

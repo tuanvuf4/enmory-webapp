@@ -1,33 +1,87 @@
-import React from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { PageTitle } from '@/views/components/pageTitle/PageTitle'
+import React, { useEffect } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { NotFound, PageTitle, Tags } from '@/views/components'
 import appStyle from '@/style/appStyle.module.scss'
-import { useBlog } from '@/core/hooks'
-import { Button, Flex, Spin, theme } from 'antd'
+import { useBlog, useDeleteBlog, useSelector } from '@/core/hooks'
+import { Button, Flex, Popconfirm, Spin, theme } from 'antd'
 import { appSetting } from '@/config/appConfig'
 import moment from 'moment'
-import { EditOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
+import { usePrompt } from '@/helpers/hooks'
 import clsx from 'clsx'
 import { Widget } from '@/views/features/widget/Widget'
-import { Tags } from '@/views/components'
 
-export const BlogDetail: React.FC = () => {
+export interface BlogDetailProps {
+  id?: string
+}
+
+export const BlogDetail: React.FC<BlogDetailProps> = ({ id: propId }) => {
   const params = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
   const { token } = theme.useToken()
-
   const { openBlogModal } = useBlogModal()
+  const { message } = usePrompt()
+  const { mutateAsync: deleteBlogMutation, isPending: isDeleting } = useDeleteBlog()
 
-  const { id } = params
+  const { user } = useSelector((state) => state.auth)
+  const tags = user?.configuration?.blogTags || []
+
+  // Redirect legacy /blog/:id to /blog?id=:id
+  useEffect(() => {
+    if (params.id) {
+      navigate(`/blog?id=${params.id}`, { replace: true })
+    }
+  }, [params.id, navigate])
+
+  const id = propId || searchParams.get('id') || params.id
 
   const { data: blog, isLoading } = useBlog(id || '', !!id)
 
+  const getTagName = (tag: string) => {
+    const item = tags.find((i) => i.value === tag)
+    if (item) return item.name
+    return ''
+  }
+
+  const handleBack = () => {
+    if (searchParams.has('id')) {
+      const next = new URLSearchParams(searchParams)
+      next.delete('id')
+      const searchStr = next.toString()
+      navigate(`/blog${searchStr ? `?${searchStr}` : ''}`)
+    } else {
+      navigate('/blog')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!id) return
+    try {
+      await deleteBlogMutation(id)
+      message({
+        type: 'success',
+        content: 'Blog post deleted successfully',
+      })
+      handleBack()
+    } catch (error: any) {
+      message({
+        type: 'error',
+        content: error?.message || 'Failed to delete blog post',
+      })
+    }
+  }
+
   return (
     <div className={clsx(appStyle.contentPage, appStyle.containerMd)}>
+      <Button type='text' icon={<ArrowLeftOutlined />} onClick={handleBack} className='!mb-3'>
+        Back to blogs
+      </Button>
+
       <Spin spinning={isLoading} style={{ width: '100%' }}>
-        {blog && (
+        {blog ? (
           <>
             <PageTitle content={blog?.title || 'Blog detail'} />
 
@@ -39,16 +93,30 @@ export const BlogDetail: React.FC = () => {
                   : ''}
               </i>
 
-              <Button
-                variant={'text'}
-                type={'default'}
-                icon={<EditOutlined />}
-                onClick={() => {
-                  openBlogModal('edit', { ...blog })
-                }}
-              >
-                Edit
-              </Button>
+              <Flex gap={token.sizeXS} align='center'>
+                <Button
+                  variant={'text'}
+                  type={'default'}
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    openBlogModal('edit', { ...blog })
+                  }}
+                >
+                  Edit
+                </Button>
+
+                <Popconfirm
+                  title='Delete post'
+                  description='Are you sure you want to delete this blog post?'
+                  onConfirm={handleDelete}
+                  okText='Yes'
+                  cancelText='No'
+                >
+                  <Button variant='text' icon={<DeleteOutlined />} danger loading={isDeleting}>
+                    Delete
+                  </Button>
+                </Popconfirm>
+              </Flex>
             </Flex>
 
             <Widget>
@@ -68,7 +136,7 @@ export const BlogDetail: React.FC = () => {
                   {blog.tags && blog.tags.length > 0 && (
                     <Tags
                       label={'Tags'}
-                      tags={blog.tags}
+                      tags={blog.tags.map((t) => getTagName(t))}
                       searchBy={'tags'}
                       onTagClick={(tag) => navigate(`/blog?tag=${encodeURIComponent(tag)}`)}
                     />
@@ -85,6 +153,19 @@ export const BlogDetail: React.FC = () => {
               />
             </Widget>
           </>
+        ) : (
+          !isLoading && (
+            <div className='flex items-center justify-center p-4' style={{ minHeight: 400 }}>
+              <NotFound
+                label={<h2 className='m-0'>Blog post not found</h2>}
+                button={
+                  <Button type='primary' onClick={handleBack}>
+                    Back to blogs
+                  </Button>
+                }
+              />
+            </div>
+          )
         )}
       </Spin>
     </div>

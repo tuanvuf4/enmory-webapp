@@ -15,7 +15,6 @@ export const useBlogModal = () => {
         width: 880,
         footer: null,
         maskClosable: false,
-        allowMinimize: true,
         minimizeInfo: {
           title: data?.title ? `Blog: ${data.title}` : 'Blog Form',
           tooltip: data?.title ? `Mở lại bài viết: ${data.title}` : 'Mở lại Blog Form',
@@ -32,7 +31,6 @@ export const useBlogModal = () => {
         width: 880,
         footer: null,
         maskClosable: false,
-        allowMinimize: true,
         minimizeInfo: {
           title: data?.title ? `Blog: ${data.title}` : 'Blog Form',
           tooltip: data?.title ? `Mở lại bài viết: ${data.title}` : 'Mở lại Blog Form',

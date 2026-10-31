@@ -1,6 +1,6 @@
 import { useModal } from '@/context/modal.context'
 import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
-import { BlogCategoryForm } from '@/views/features/modals/blogCategoryModal/blogCategoryForm'
+import { BlogCategoryForm } from '@/views/features/modals/blogCategoryModal/BlogCategoryForm'
 
 export const useBlogCategoryModal = () => {
   const { openModal, closeModal } = useModal()
@@ -8,7 +8,7 @@ export const useBlogCategoryModal = () => {
   const openBlogCategoryModal = (mode: 'edit' | 'add', data?: IBlogCategory) => {
     if (mode === 'add') {
       openModal({
-        title: 'Add Category',
+        title: 'Add Tag',
         width: 600,
         footer: null,
         maskClosable: false,
@@ -18,7 +18,7 @@ export const useBlogCategoryModal = () => {
 
     if (mode === 'edit') {
       openModal({
-        title: 'Edit Category',
+        title: 'Edit Tag',
         width: 600,
         footer: null,
         maskClosable: false,

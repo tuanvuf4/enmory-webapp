@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { theme, Input, Row, Col, Button, Select, Flex, Switch, Tag, Spin } from 'antd'
+import { theme, Input, Row, Col, Button, Select, Flex, Switch, Tag, Typography, Spin } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { appSetting } from '@/config/appConfig'
 import { IMediaForm, ITracks } from '@/models/media.model'
@@ -31,6 +31,7 @@ import {
 import { IClassifiedVocabItem } from '@/models/vocabClassification.model'
 import { useModal } from '@/context/modal.context'
 import styles from './mediaUploadModal.module.scss'
+import moment from 'moment'
 
 interface IMediaUploadFormProps {
   onConfirm?: (track: ITracks) => void
@@ -49,6 +50,8 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
   const [isTranslating, setIsTranslating] = useState(false)
   const dispatch = useDispatch()
   const { updateModal } = useModal()
+
+  console.log(trackData)
 
   const { currentTrack, tracks } = useSelector((state) => state.listening)
 
@@ -167,7 +170,7 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
         isMinimized: true,
         minimizeInfo: {
           title: 'Dịch transcript',
-          tooltip: 'Gemini AI đang dịch transcript... Nhấn để mở lại.',
+          tooltip: 'Gemini AI đang dịch transcript...',
           status: 'processing',
           icon: <TranslationOutlined spin style={{ color: '#1677ff' }} />,
         },
@@ -183,7 +186,7 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
         updateModal({
           minimizeInfo: {
             title: 'Dịch transcript',
-            tooltip: 'Gemini đã dịch xong transcript! Nhấn để mở lại.',
+            tooltip: 'Gemini đã dịch xong transcript!',
             status: 'success',
             icon: <SoundOutlined />,
           },
@@ -198,7 +201,7 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
       updateModal({
         minimizeInfo: {
           title: 'Dịch transcript',
-          tooltip: 'Có lỗi xảy ra khi dịch transcript. Nhấn để mở lại.',
+          tooltip: 'Có lỗi xảy ra khi dịch transcript.',
           status: 'error',
           icon: <SoundOutlined />,
         },
@@ -637,10 +640,16 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
         {/* ── Section 5: Footer Actions ── */}
         <div className={styles.footerActions}>
           <div>
+            {trackData?.last_update && (
+              <Typography.Text type='secondary' style={{ fontSize: 12 }}>
+                Last update: {moment(trackData.last_update).fromNow()}
+              </Typography.Text>
+            )}
+
             {saveStatus && (
               <Flex align='center' gap={6} style={{ color: token.colorPrimary, fontSize: 12 }}>
-                <Spin size='small' />
                 <span>{saveStatus}</span>
+                <Spin size='small' />
               </Flex>
             )}
           </div>

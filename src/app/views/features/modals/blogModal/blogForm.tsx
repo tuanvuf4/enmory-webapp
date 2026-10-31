@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react'
 import {
   useCreateBlog,
   useUpdateBlog,
-  useBlogCategories,
   useCreateBlogCategory,
   useUpdateBlogCategory,
   useDeleteBlogCategory,
   blogCategoryKeys,
+  useSelector,
 } from '@/core/hooks'
 import { blogKeys } from '@/core/hooks/useBlogs'
 import { IBlogItem } from '@/models/blog.model'
@@ -56,8 +56,8 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
   const { mutateAsync: updateCategoryMutation } = useUpdateBlogCategory()
   const { mutateAsync: deleteCategoryMutation } = useDeleteBlogCategory()
 
-  const { data: cats = [] } = useBlogCategories()
-  const categories = cats
+  const { user } = useSelector((state) => state.auth)
+  const cats = user?.configuration?.blogTags || []
 
   const isEditing = !!data?.id
   const isPending = isCreating || isUpdating
@@ -71,9 +71,6 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
   const initialTags = useMemo(() => {
     if (data?.tags && Array.isArray(data.tags) && data.tags.length > 0) {
       return data.tags
-    }
-    if (data?.category_id) {
-      return [data.category_id]
     }
     return []
   }, [data])
@@ -157,6 +154,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
       description: values.description,
       relation: values.relation || [],
       tags: values.tags || [],
+      created_date: data?.created_date,
     }
 
     if (isEditing && data?.id) {
@@ -304,10 +302,10 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
                   style={{ width: '100%' }}
                   placeholder='Chọn hoặc tạo mới thẻ tag...'
                   itemLabel='tag'
-                  options={categories.map((cat) => ({
+                  options={cats.map((cat) => ({
                     id: cat.name,
                     label: cat.name,
-                    value: cat.name,
+                    value: cat.value,
                   }))}
                   value={field.value || []}
                   onChange={field.onChange}
@@ -460,13 +458,12 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
       {/* Sticky Bottom Actions */}
       <div className={styles.stickyFooter}>
         <Flex align='center' gap={8}>
-          <Tag color={isEditing ? 'gold' : 'blue'}>
-            {isEditing ? 'Đang chỉnh sửa bài viết' : 'Bài viết mới'}
-          </Tag>
-          {data?.last_update && (
+          {data?.last_update ? (
             <Text type='secondary' style={{ fontSize: 11 }}>
               Last update: {moment(data.last_update).fromNow()}
             </Text>
+          ) : (
+            <div></div>
           )}
         </Flex>
 

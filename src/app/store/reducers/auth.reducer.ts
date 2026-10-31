@@ -143,7 +143,17 @@ export const authReducer = createSlice({
           state.user.configuration = { ...appSetting.meta } as any
         }
         if (state.user.configuration) {
-          state.user.configuration.itemTags = normalizeTagList(action.payload as any)
+          const sortedArray = normalizeTagList(action.payload as any).sort((a, b) => {
+            const numA = Number(a.value)
+            const numB = Number(b.value)
+            if (!isNaN(numA) && !isNaN(numB) && a.value !== '' && b.value !== '') {
+              return numA - numB
+            }
+            const orderDiff = (a.order ?? 1) - (b.order ?? 1)
+            if (orderDiff !== 0) return orderDiff
+            return (a.name || a.value).localeCompare(b.name || b.value)
+          })
+          state.user.configuration.itemTags = sortedArray
         }
       }
     },

@@ -74,6 +74,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 12px 12px;
 }
 
 :global(.dark) .visualizerBox {
@@ -236,11 +237,14 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 8px 0;
+  width: 100%;
   border-top: 1px dashed rgba(0, 0, 0, 0.08);
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
 }
 
 :global(.dark) .shadowChunksBar {
-  border-top-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 .shadowChunksList {

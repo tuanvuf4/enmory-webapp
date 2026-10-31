@@ -1,1 +1,1 @@
-export { BlogCategoryForm, ArticleCategoryForm } from './blogCategoryForm'
+export { BlogCategoryForm, ArticleCategoryForm } from './BlogCategoryForm'

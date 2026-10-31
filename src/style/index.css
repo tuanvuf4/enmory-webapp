@@ -266,6 +266,10 @@ a.ck.ck-button:not(.ck-disabled):hover {
   top: 16px;
 }
 
+.ant-divider {
+  border-color: var(--ant-color-border);
+}
+
 /* ==========================================================================
    Ant Card component style matching .chartCard
    ========================================================================== */

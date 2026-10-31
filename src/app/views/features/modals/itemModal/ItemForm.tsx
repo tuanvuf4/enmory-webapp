@@ -536,7 +536,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
       isMinimized: true,
       minimizeInfo: {
         title: `Item: ${originWord}`,
-        tooltip: `Gemini đang phân tích "${originWord}"... Nhấn để mở lại.`,
+        tooltip: `Gemini đang phân tích "${originWord}"...`,
         status: 'processing',
         icon: <ThunderboltOutlined spin style={{ color: '#722ed1' }} />,
       },
@@ -559,7 +559,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         updateModal({
           minimizeInfo: {
             title: `Item: ${originWord}`,
-            tooltip: `Không thể lấy dữ liệu từ ${sourceName}. Nhấn để mở lại.`,
+            tooltip: `Không thể lấy dữ liệu từ ${sourceName}.`,
             status: 'error',
             icon: <BookOutlined />,
           },
@@ -576,7 +576,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
       updateModal({
         minimizeInfo: {
           title: `Item: ${originWord}`,
-          tooltip: `Gemini đã phân tích xong "${originWord}". Nhấn để mở lại!`,
+          tooltip: `Gemini đã phân tích xong "${originWord}"!`,
           status: 'success',
           icon: <BookOutlined />,
         },
@@ -593,7 +593,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
       updateModal({
         minimizeInfo: {
           title: `Item: ${originWord}`,
-          tooltip: `Lỗi khi tra từ "${originWord}". Nhấn để mở lại.`,
+          tooltip: `Lỗi khi tra từ "${originWord}".`,
           status: 'error',
           icon: <BookOutlined />,
         },

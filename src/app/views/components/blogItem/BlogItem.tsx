@@ -2,9 +2,11 @@ import { IBlogItem } from '@/models/blog.model'
 import { appSetting } from '@/config/index'
 import moment from 'moment'
 import { useNavigate } from 'react-router-dom'
-import { Button, Flex, Tag, theme, Typography, Space } from 'antd'
-import { EditOutlined, CalendarOutlined, ReadOutlined } from '@ant-design/icons'
+import { Button, Flex, Popconfirm, Tag, theme, Typography, Space } from 'antd'
+import { EditOutlined, CalendarOutlined, ReadOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
+import { usePrompt } from '@/helpers/hooks'
+import { useDeleteBlog, useSelector } from '@/core/hooks'
 
 const { Text, Paragraph } = Typography
 
@@ -17,6 +19,7 @@ export const BlogItem = ({
   title,
   description,
   created_date,
+  last_update,
   relation,
   tags,
   compact = false,
@@ -24,12 +27,37 @@ export const BlogItem = ({
   const navigate = useNavigate()
   const { token } = theme.useToken()
   const { openBlogModal } = useBlogModal()
+  const { message } = usePrompt()
+  const { mutateAsync: deleteBlogMutation, isPending: isDeleting } = useDeleteBlog()
+
+  const handleDelete = async () => {
+    if (!id) return
+    try {
+      await deleteBlogMutation(id)
+      message({
+        type: 'success',
+        content: 'Blog post deleted successfully',
+      })
+    } catch (error: any) {
+      message({
+        type: 'error',
+        content: error?.message || 'Failed to delete blog post',
+      })
+    }
+  }
 
   const preview = description.length > 200 ? `${description.substring(0, 200)}...` : description
 
   const handleTagClick = (tag: string, e: React.MouseEvent) => {
     e.stopPropagation()
     navigate(`/blog?tag=${encodeURIComponent(tag)}`)
+  }
+
+  const { user } = useSelector((state) => state.auth)
+  const cats = user?.configuration?.blogTags || []
+
+  const getSelectedTagName = (tag: string) => {
+    return cats.find((i) => i.value === tag)?.name
   }
 
   if (compact) {
@@ -91,11 +119,28 @@ export const BlogItem = ({
                 title,
                 description,
                 created_date,
+                last_update,
                 relation,
                 tags,
               })
             }
           />
+          <Popconfirm
+            title='Delete post'
+            description='Are you sure you want to delete this blog post?'
+            onConfirm={handleDelete}
+            okText='Yes'
+            cancelText='No'
+          >
+            <Button
+              size='small'
+              variant='text'
+              icon={<DeleteOutlined />}
+              danger
+              loading={isDeleting}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Popconfirm>
         </Flex>
       </Flex>
     )
@@ -113,22 +158,40 @@ export const BlogItem = ({
         >
           {title}
         </Text>
-        <Button
-          variant='text'
-          icon={<EditOutlined />}
-          size='small'
-          style={{ flexShrink: 0 }}
-          onClick={() =>
-            openBlogModal('edit', {
-              id,
-              title,
-              description,
-              created_date,
-              relation,
-              tags,
-            })
-          }
-        />
+        <Flex gap={token.sizeXXS} align='center' style={{ flexShrink: 0 }}>
+          <Button
+            variant='text'
+            icon={<EditOutlined />}
+            size='small'
+            onClick={() =>
+              openBlogModal('edit', {
+                id,
+                title,
+                description,
+                created_date,
+                last_update,
+                relation,
+                tags,
+              })
+            }
+          />
+          <Popconfirm
+            title='Delete post'
+            description='Are you sure you want to delete this blog post?'
+            onConfirm={handleDelete}
+            okText='Yes'
+            cancelText='No'
+          >
+            <Button
+              variant='text'
+              icon={<DeleteOutlined />}
+              size='small'
+              danger
+              loading={isDeleting}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Popconfirm>
+        </Flex>
       </Flex>
 
       {/* Date */}
@@ -157,7 +220,7 @@ export const BlogItem = ({
               style={{ margin: 0, fontSize: token.fontSizeSM }}
               onClick={(e) => handleTagClick(tag, e)}
             >
-              {tag}
+              {getSelectedTagName(tag)}
             </Tag>
           ))}
           {tags.length > 4 && (

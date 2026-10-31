@@ -189,7 +189,7 @@ export const BlogCategoryForm: React.FC<BlogCategoryFormProps> = ({
 
       {/* Buttons */}
       <Flex justify='flex-end' gap={token.size}>
-        <Button htmlType='button' onClick={onCancel}>
+        <Button htmlType='button' onClick={() => onCancel?.()}>
           Cancel
         </Button>
         <Button

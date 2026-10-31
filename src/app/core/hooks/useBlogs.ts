@@ -88,8 +88,6 @@ export const useBlogs = (params: IBlogRequestParams) => {
   })
 }
 
-export const useArticles = useBlogs
-
 // Fetch single blog by id
 export const useBlog = (id: string, enabled = true) => {
   return useQuery({
@@ -140,7 +138,8 @@ export const useUpdateBlog = () => {
       return response.content
     },
     onSuccess: (updatedBlog) => {
-      // Invalidate blog lists to refetch (don't clear cursors to preserve pagination)
+      clearLastBlogDocStore()
+      // Invalidate blog lists to refetch
       queryClient.invalidateQueries({
         queryKey: blogKeys.lists(),
       })
@@ -158,20 +157,49 @@ export const useUpdateBlog = () => {
   })
 }
 
-export const useUpdateArticle = useUpdateBlog
+/**
+ * Delete blog mutation
+ */
+export const useDeleteBlog = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await blogApi.deleteBlog(id)
+      if (!response.isSuccess) {
+        throw new Error(response.message || 'Failed to delete blog')
+      }
+      return id
+    },
+    onSuccess: (deletedId) => {
+      clearLastBlogDocStore()
+      queryClient.invalidateQueries({
+        queryKey: blogKeys.lists(),
+      })
+      queryClient.invalidateQueries({
+        queryKey: blogKeys.counts(),
+      })
+      if (deletedId) {
+        queryClient.invalidateQueries({
+          queryKey: blogKeys.detail(deletedId),
+        })
+      }
+    },
+  })
+}
+
+export const useDeleteArticle = useDeleteBlog
 
 /**
  * Fetch total count of blogs
  */
-export const useBlogsCount = (categoryId?: string) => {
+export const useBlogsCount = (tag?: string) => {
   return useQuery({
-    queryKey: [...blogKeys.counts(), categoryId],
+    queryKey: [...blogKeys.counts(), tag],
     queryFn: async () => {
-      const count = await blogApi.getBlogsCount(categoryId)
+      const count = await blogApi.getBlogsCount(tag)
       return count
     },
     refetchOnWindowFocus: false,
   })
 }
-
-export const useArticlesCount = useBlogsCount

@@ -2,8 +2,13 @@ import { resolveGeminiApiKey } from '@/services/gemini/geminiDictionary.service'
 import { DEFAULT_GEMINI_MODEL, GEMINI_MODELS, TGeminiModel } from '@/services/gemini/geminiModels'
 import {
   clearGeminiStats,
+  DEFAULT_GEMINI_LIMITS,
   generateContentWithTracking,
+  IGeminiLimits,
   IGeminiRequestLog,
+  resetGeminiLimits,
+  saveGeminiLimits,
+  useGeminiLimits,
   useGeminiStats,
 } from '@/services/gemini/geminiTracker.service'
 import {
@@ -15,6 +20,7 @@ import {
   KeyOutlined,
   PlayCircleOutlined,
   SearchOutlined,
+  SettingOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons'
 import { GoogleGenAI } from '@google/genai'
@@ -24,7 +30,9 @@ import {
   Button,
   Card,
   Col,
+  Form,
   Input,
+  InputNumber,
   message,
   Modal,
   Progress,
@@ -46,10 +54,73 @@ const { Text } = Typography
 export const GeminiUsageTab: React.FC = () => {
   const { token } = theme.useToken()
   const stats = useGeminiStats()
+  const limits = useGeminiLimits()
 
   const [activeSubTab, setActiveSubTab] = useState<'models' | 'services' | 'logs'>('models')
   const [logSearchKeyword, setLogSearchKeyword] = useState<string>('')
   const [logStatusFilter, setLogStatusFilter] = useState<'all' | 'success' | 'error'>('all')
+
+  // Limits configuration state
+  const [isLimitsModalOpen, setIsLimitsModalOpen] = useState(false)
+  const [limitForm] = Form.useForm<IGeminiLimits>()
+
+  const formatPercent = (used: number, max: number): string => {
+    if (!max || max <= 0 || !used || used <= 0) return '0%'
+    const pct = (used / max) * 100
+    if (pct >= 100) return `${Math.round(pct)}%`
+    if (pct >= 10) return `${pct.toFixed(1)}%`
+    if (pct >= 0.1) return `${pct.toFixed(1)}%`
+    if (pct >= 0.01) return `${pct.toFixed(2)}%`
+    return `${pct.toFixed(3)}%`
+  }
+
+  const calcProgressPercent = (used: number, max: number): number => {
+    if (!max || max <= 0 || !used || used <= 0) return 0
+    const pct = (used / max) * 100
+    if (pct > 0 && pct < 1) {
+      return Math.max(1, Number(pct.toFixed(1)))
+    }
+    return Math.min(100, Number(pct.toFixed(1)))
+  }
+
+  const rawTokenPercent = limits.maxTokens > 0 ? (stats.totalTokens / limits.maxTokens) * 100 : 0
+  const rawRequestPercent =
+    limits.maxRequests > 0 ? (stats.totalRequests / limits.maxRequests) * 100 : 0
+
+  const getStatusColor = (percent: number) => {
+    if (percent >= 90) return token.colorError
+    if (percent >= 75) return token.colorWarning
+    return token.colorSuccess
+  }
+
+  const tokenColor = getStatusColor(rawTokenPercent)
+  const requestColor = getStatusColor(rawRequestPercent)
+
+  const handleOpenLimitsModal = () => {
+    limitForm.setFieldsValue({
+      maxRequests: limits.maxRequests,
+      maxTokens: limits.maxTokens,
+    })
+    setIsLimitsModalOpen(true)
+  }
+
+  const handleSaveLimits = (values: IGeminiLimits) => {
+    saveGeminiLimits({
+      maxRequests: Number(values.maxRequests) || DEFAULT_GEMINI_LIMITS.maxRequests,
+      maxTokens: Number(values.maxTokens) || DEFAULT_GEMINI_LIMITS.maxTokens,
+    })
+    setIsLimitsModalOpen(false)
+    message.success('Đã cập nhật giới hạn Gemini API thành công!')
+  }
+
+  const handleResetLimits = () => {
+    resetGeminiLimits()
+    limitForm.setFieldsValue({
+      maxRequests: DEFAULT_GEMINI_LIMITS.maxRequests,
+      maxTokens: DEFAULT_GEMINI_LIMITS.maxTokens,
+    })
+    message.success('Đã khôi phục giới hạn mặc định (1,500 request / 1,000,000 token)')
+  }
 
   // Test call state
   const [isTesting, setIsTesting] = useState<boolean>(false)
@@ -471,6 +542,9 @@ export const GeminiUsageTab: React.FC = () => {
           </Col>
           <Col>
             <Space wrap>
+              <Button icon={<SettingOutlined />} onClick={handleOpenLimitsModal}>
+                Cài đặt giới hạn
+              </Button>
               <Button
                 icon={<DownloadOutlined />}
                 onClick={handleExportJson}
@@ -496,25 +570,41 @@ export const GeminiUsageTab: React.FC = () => {
         <Col xs={24} sm={12} md={6}>
           <Card size='small' hoverable style={{ borderRadius: token.borderRadiusLG }}>
             <Statistic
-              title='Tổng số Requests'
-              value={stats.totalRequests}
-              prefix={<ThunderboltOutlined style={{ color: token.colorPrimary }} />}
-              formatter={(val) => Number(val).toLocaleString()}
+              title='Tổng Requests / Giới hạn'
+              value={`${stats.totalRequests.toLocaleString()} / ${limits.maxRequests.toLocaleString()}`}
+              prefix={<ThunderboltOutlined style={{ color: requestColor }} />}
+              valueStyle={{ fontSize: 18, color: requestColor }}
             />
-            <div style={{ marginTop: 8, display: 'flex', gap: 6, alignItems: 'center' }}>
-              <Tag color='success' style={{ margin: 0, fontSize: 11 }}>
-                {stats.successRequests} ok
-              </Tag>
-              {stats.failedRequests > 0 && (
-                <Tag color='error' style={{ margin: 0, fontSize: 11 }}>
-                  {stats.failedRequests} lỗi
+            <Progress
+              percent={calcProgressPercent(stats.totalRequests, limits.maxRequests)}
+              format={() => formatPercent(stats.totalRequests, limits.maxRequests)}
+              size='small'
+              strokeColor={requestColor}
+              style={{ marginTop: 6, marginBottom: 4 }}
+            />
+            <div
+              style={{
+                marginTop: 4,
+                display: 'flex',
+                gap: 6,
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+              }}
+            >
+              <Space size={4}>
+                <Tag color='success' style={{ margin: 0, fontSize: 11 }}>
+                  {stats.successRequests} ok
                 </Tag>
-              )}
-              {stats.totalRequests > 0 && (
-                <Text type='secondary' style={{ fontSize: 11 }}>
-                  ({Math.round((stats.successRequests / stats.totalRequests) * 100)}% ok)
-                </Text>
-              )}
+                {stats.failedRequests > 0 && (
+                  <Tag color='error' style={{ margin: 0, fontSize: 11 }}>
+                    {stats.failedRequests} lỗi
+                  </Tag>
+                )}
+              </Space>
+              <Text type='secondary' style={{ fontSize: 11 }}>
+                Còn: {Math.max(0, limits.maxRequests - stats.totalRequests).toLocaleString()} request
+              </Text>
             </div>
           </Card>
         </Col>
@@ -522,19 +612,35 @@ export const GeminiUsageTab: React.FC = () => {
         <Col xs={24} sm={12} md={6}>
           <Card size='small' hoverable style={{ borderRadius: token.borderRadiusLG }}>
             <Statistic
-              title='Tổng số Tokens tiêu thụ'
-              value={stats.totalTokens}
-              prefix={<ThunderboltOutlined style={{ color: token.colorSuccess }} />}
-              valueStyle={{ color: token.colorSuccess }}
-              formatter={(val) => Number(val).toLocaleString()}
+              title='Tổng Tokens / Giới hạn'
+              value={`${stats.totalTokens.toLocaleString()} / ${limits.maxTokens.toLocaleString()}`}
+              prefix={<ThunderboltOutlined style={{ color: tokenColor }} />}
+              valueStyle={{ fontSize: 18, color: tokenColor }}
             />
-            <div style={{ marginTop: 8 }}>
+            <Progress
+              percent={calcProgressPercent(stats.totalTokens, limits.maxTokens)}
+              format={() => formatPercent(stats.totalTokens, limits.maxTokens)}
+              size='small'
+              strokeColor={tokenColor}
+              style={{ marginTop: 6, marginBottom: 4 }}
+            />
+            <div
+              style={{
+                marginTop: 4,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <Text type='secondary' style={{ fontSize: 11 }}>
                 TB: ~
                 {stats.totalRequests > 0
                   ? Math.round(stats.totalTokens / stats.totalRequests).toLocaleString()
                   : 0}{' '}
-                tokens / req
+                / request
+              </Text>
+              <Text type='secondary' style={{ fontSize: 11 }}>
+                Còn: {Math.max(0, limits.maxTokens - stats.totalTokens).toLocaleString()} token
               </Text>
             </div>
           </Card>
@@ -752,6 +858,119 @@ export const GeminiUsageTab: React.FC = () => {
           />
         )}
       </Card>
+
+      {/* Modal Cài đặt giới hạn API */}
+      <Modal
+        title={
+          <Space>
+            <SettingOutlined style={{ color: token.colorPrimary }} />
+            <span>Cài đặt giới hạn Gemini API (Quotas)</span>
+          </Space>
+        }
+        open={isLimitsModalOpen}
+        onCancel={() => setIsLimitsModalOpen(false)}
+        footer={null}
+        destroyOnClose
+      >
+        <Form
+          form={limitForm}
+          layout='vertical'
+          onFinish={handleSaveLimits}
+          initialValues={{
+            maxRequests: limits.maxRequests,
+            maxTokens: limits.maxTokens,
+          }}
+        >
+          <Alert
+            message='Cấu hình hạn mức theo dõi'
+            description='Hạn mức giúp bạn theo dõi việc tiêu thụ API. Widget trên thanh Sidebar và trang Developer sẽ chuyển màu cảnh báo khi tiệm cận hạn mức (vàng khi ≥75%, đỏ khi ≥90%).'
+            type='info'
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+
+          <Form.Item
+            label='Giới hạn Requests (lượt gọi)'
+            name='maxRequests'
+            rules={[{ required: true, message: 'Vui lòng nhập giới hạn request' }]}
+            extra='Ví dụ: 1,500 requests / ngày đối với gói Free Tier của Gemini'
+          >
+            <InputNumber<number>
+              style={{ width: '100%' }}
+              min={1}
+              step={100}
+              formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={(val) => Number(val?.replace(/\$\s?|(,*)/g, '') || 0)}
+            />
+          </Form.Item>
+
+          <Form.Item
+            label='Giới hạn Tokens'
+            name='maxTokens'
+            rules={[{ required: true, message: 'Vui lòng nhập giới hạn token' }]}
+            extra='Ví dụ: 1,000,000 tokens đối với hạn mức định lượng thông thường'
+          >
+            <InputNumber<number>
+              style={{ width: '100%' }}
+              min={1000}
+              step={50000}
+              formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={(val) => Number(val?.replace(/\$\s?|(,*)/g, '') || 0)}
+            />
+          </Form.Item>
+
+          <div style={{ marginBottom: 16 }}>
+            <Text type='secondary' style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
+              Mẫu cấu hình nhanh:
+            </Text>
+            <Space wrap>
+              <Button
+                size='small'
+                onClick={() => {
+                  limitForm.setFieldsValue({
+                    maxRequests: 1500,
+                    maxTokens: 1000000,
+                  })
+                }}
+              >
+                Gemini Free Tier (1.5k request / 1M token)
+              </Button>
+              <Button
+                size='small'
+                onClick={() => {
+                  limitForm.setFieldsValue({
+                    maxRequests: 5000,
+                    maxTokens: 5000000,
+                  })
+                }}
+              >
+                Gói vừa (5k request / 5M token)
+              </Button>
+              <Button
+                size='small'
+                onClick={() => {
+                  limitForm.setFieldsValue({
+                    maxRequests: 20000,
+                    maxTokens: 20000000,
+                  })
+                }}
+              >
+                Gói lớn (20k request / 20M token)
+              </Button>
+            </Space>
+          </div>
+
+          <Row justify='space-between' style={{ marginTop: 20 }}>
+            <Button onClick={handleResetLimits}>Khôi phục mặc định</Button>
+            <Space>
+              <Button onClick={() => setIsLimitsModalOpen(false)}>Huỷ</Button>
+              <Button type='primary' htmlType='submit'>
+                Lưu cấu hình
+              </Button>
+            </Space>
+          </Row>
+        </Form>
+      </Modal>
     </Space>
   )
 }

@@ -122,8 +122,6 @@ export const useUpdateBlogCategory = () => {
   })
 }
 
-export const useUpdateArticleCategory = useUpdateBlogCategory
-
 /**
  * Delete blog category mutation
  */

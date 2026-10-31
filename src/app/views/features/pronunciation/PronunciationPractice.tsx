@@ -1,6 +1,5 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import {
-  SoundOutlined,
   SyncOutlined,
   PlayCircleOutlined,
   PauseCircleOutlined,
@@ -34,13 +33,13 @@ import {
   Spin,
 } from 'antd'
 import clsx from 'clsx'
+import { useSelector } from '@/core/hooks'
+import { localDb } from '@/services/localDb'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import {
   geminiTtsService,
   geminiPronunciationService,
-  GEMINI_SPEECH_EVAL_MODELS,
   DEFAULT_SPEECH_EVAL_MODEL,
-  TGeminiModel,
   IPronunciationEvaluationResult,
 } from '@/services/gemini'
 import { useAudioRecorder } from '@/helpers/hooks'
@@ -263,32 +262,95 @@ const TIPS: string[] = [
   'Shadowing: Chia câu thành các cụm nghĩa nhỏ (chunks) 2-4 từ, nghe và nhại lại ngay lập tức theo ngữ điệu người bản xứ.',
 ]
 
+const getPronunciationSessionKey = (uid?: string) =>
+  `pronunciation_practice_session_${uid || 'default'}`
+
+interface IPronunciationSession {
+  items: IExample[]
+  currentIndex: number
+  updatedAt: number
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export const PronunciationPractice: React.FC = () => {
   const { token } = theme.useToken()
+  const { user } = useSelector((state) => state.auth)
 
   // Kỹ thuật được kích hoạt qua checkbox (mặc định bật tất cả để người học thấy bức tranh toàn cảnh)
-  const [activeTechniques, setActiveTechniques] = useState<IActiveTechniques>({
-    linking: true,
-    stress: true,
-    intonation: true,
-    shadow: true,
+  const [activeTechniques, setActiveTechniques] = useState<IActiveTechniques>(() => {
+    try {
+      const saved = localStorage.getItem('pronunciation_active_techniques')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      linking: true,
+      stress: true,
+      intonation: true,
+      shadow: true,
+    }
   })
 
   const [examples, setExamples] = useState<IExample[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [speaking, setSpeaking] = useState(false)
-  const [speed, setSpeed] = useState<number>(0.85)
+  const [speed, setSpeed] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('pronunciation_speed')
+      if (saved) return Number(saved) || 1
+    } catch {}
+    return 1
+  })
   const [shadowChunk, setShadowChunk] = useState<number | null>(null)
   const [shadowPlaying, setShadowPlaying] = useState(false)
-  const [chunkSize, setChunkSize] = useState<number>(4)
+  const [chunkSize, setChunkSize] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('pronunciation_chunk_size')
+      if (saved) return Number(saved) || 4
+    } catch {}
+    return 4
+  })
   const [showTip, setShowTip] = useState(false)
   const [revealed, setRevealed] = useState(false)
 
+  // Track latest state for safe persistence
+  const stateRef = useRef({
+    examples,
+    currentIndex,
+  })
+  useEffect(() => {
+    stateRef.current = {
+      examples,
+      currentIndex,
+    }
+  }, [examples, currentIndex])
+
+  const handleTechniqueChange = useCallback((key: keyof IActiveTechniques, checked: boolean) => {
+    setActiveTechniques((prev) => {
+      const updated = { ...prev, [key]: checked }
+      try {
+        localStorage.setItem('pronunciation_active_techniques', JSON.stringify(updated))
+      } catch {}
+      return updated
+    })
+  }, [])
+
+  const handleSpeedChange = useCallback((v: number) => {
+    setSpeed(v)
+    try {
+      localStorage.setItem('pronunciation_speed', String(v))
+    } catch {}
+  }, [])
+
+  const handleChunkSizeChange = useCallback((val: number) => {
+    setChunkSize(val)
+    try {
+      localStorage.setItem('pronunciation_chunk_size', String(val))
+    } catch {}
+  }, [])
+
   // Gemini model được chọn để đánh giá thu âm
-  const [evalModel, setEvalModel] = useState<TGeminiModel>(DEFAULT_SPEECH_EVAL_MODEL)
   const [isEvaluating, setIsEvaluating] = useState(false)
   const [evalResult, setEvalResult] = useState<IPronunciationEvaluationResult | null>(null)
   const [evalError, setEvalError] = useState<string | null>(null)
@@ -315,33 +377,138 @@ export const PronunciationPractice: React.FC = () => {
     [plainOrigin, chunkSize],
   )
 
-  // Fetch dữ liệu câu ví dụ
-  const fetchExamples = useCallback(async () => {
-    setLoading(true)
-    setCurrentIndex(0)
-    setRevealed(false)
-    setShadowChunk(null)
-    setEvalResult(null)
-    setEvalError(null)
-    resetRecording()
-    try {
-      const { isSuccess, content } = await exampleApi.getRandomExamples(15)
-      if (isSuccess && content) {
-        const filtered = content.filter((ex) => {
-          const text = stripHtml(ex.origin)
-          return text.split(/\s+/).length >= 4
+  // Lưu session (danh sách câu và câu hiện tại) vào localDb & localStorage
+  const saveSession = useCallback(
+    async (patch: { items?: IExample[]; currentIndex?: number }) => {
+      try {
+        const key = getPronunciationSessionKey(user?.uid)
+        const cur = stateRef.current
+        const sessionData: IPronunciationSession = {
+          items: patch.items ?? cur.examples,
+          currentIndex: patch.currentIndex ?? cur.currentIndex,
+          updatedAt: Date.now(),
+        }
+
+        try {
+          localStorage.setItem(key, JSON.stringify(sessionData))
+        } catch {}
+
+        await localDb.syncMeta.put({
+          key,
+          value: sessionData,
         })
-        setExamples(filtered.length >= 3 ? filtered : content)
+      } catch (err) {
+        console.warn('Failed to save pronunciation session:', err)
       }
-    } catch (err) {
-      console.error('PronunciationPractice fetch error:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [resetRecording])
+    },
+    [user?.uid],
+  )
+
+  // Fetch hoặc phục hồi session câu ví dụ
+  const fetchExamples = useCallback(
+    async (forceNew = false) => {
+      setLoading(true)
+      setRevealed(false)
+      setShadowChunk(null)
+      setEvalResult(null)
+      setEvalError(null)
+      resetRecording()
+
+      const key = getPronunciationSessionKey(user?.uid)
+
+      // 1. Phục hồi bộ câu đã lưu nếu không ép tải mới (tránh đổi bộ câu khi refresh page)
+      if (!forceNew) {
+        try {
+          let savedSession: IPronunciationSession | null = null
+
+          // Thử lấy từ localDb.syncMeta
+          try {
+            const record = await localDb.syncMeta.get(key)
+            if (
+              record?.value &&
+              Array.isArray(record.value.items) &&
+              record.value.items.length > 0
+            ) {
+              savedSession = record.value
+            }
+          } catch (e) {
+            console.warn('Failed to restore pronunciation from localDb:', e)
+          }
+
+          // Fallback sang localStorage nếu localDb chưa có
+          if (!savedSession) {
+            try {
+              const raw = localStorage.getItem(key)
+              if (raw) {
+                const parsed = JSON.parse(raw)
+                if (parsed && Array.isArray(parsed.items) && parsed.items.length > 0) {
+                  savedSession = parsed
+                }
+              }
+            } catch (e) {
+              console.warn('Failed to restore pronunciation from localStorage:', e)
+            }
+          }
+
+          if (savedSession && savedSession.items.length > 0) {
+            const savedItems = savedSession.items
+            const savedIndex = Math.min(
+              Math.max(0, savedSession.currentIndex || 0),
+              savedItems.length - 1,
+            )
+            setExamples(savedItems)
+            setCurrentIndex(savedIndex)
+            setLoading(false)
+            return
+          }
+        } catch (err) {
+          console.warn('Failed to restore pronunciation session:', err)
+        }
+      }
+
+      // 2. Tải bộ câu ngẫu nhiên mới khi không có session lưu hoặc khi bấm tải lại
+      setCurrentIndex(0)
+      try {
+        const { isSuccess, content } = await exampleApi.getRandomExamples(15)
+        if (isSuccess && content) {
+          const filtered = content.filter((ex) => {
+            const text = stripHtml(ex.origin)
+            return text.split(/\s+/).length >= 4
+          })
+          const newItems = filtered.length >= 3 ? filtered : content
+          setExamples(newItems)
+
+          // Lưu vào session để giữ nguyên khi refresh
+          const sessionData: IPronunciationSession = {
+            items: newItems,
+            currentIndex: 0,
+            updatedAt: Date.now(),
+          }
+
+          try {
+            localStorage.setItem(key, JSON.stringify(sessionData))
+          } catch {}
+
+          try {
+            await localDb.syncMeta.put({
+              key,
+              value: sessionData,
+            })
+          } catch (e) {
+            console.warn('Failed to save pronunciation session to localDb:', e)
+          }
+        }
+      } catch (err) {
+        console.error('PronunciationPractice fetch error:', err)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [resetRecording, user?.uid],
+  )
 
   useEffect(() => {
-    fetchExamples()
+    fetchExamples(false)
   }, [fetchExamples])
 
   // Phát âm toàn câu hoặc 1 đoạn với Gemini TTS
@@ -379,8 +546,12 @@ export const PronunciationPractice: React.FC = () => {
     setEvalResult(null)
     setEvalError(null)
     resetRecording()
-    setCurrentIndex((prev) => (prev + 1) % Math.max(examples.length, 1))
-  }, [examples.length, handleStop, resetRecording])
+    setCurrentIndex((prev) => {
+      const nextIdx = (prev + 1) % Math.max(examples.length, 1)
+      saveSession({ currentIndex: nextIdx, items: examples })
+      return nextIdx
+    })
+  }, [examples, handleStop, resetRecording, saveSession])
 
   const handlePrev = useCallback(() => {
     handleStop()
@@ -389,31 +560,14 @@ export const PronunciationPractice: React.FC = () => {
     setEvalResult(null)
     setEvalError(null)
     resetRecording()
-    setCurrentIndex((prev) => (prev - 1 + examples.length) % examples.length)
-  }, [examples.length, handleStop, resetRecording])
+    setCurrentIndex((prev) => {
+      const prevIdx = (prev - 1 + examples.length) % Math.max(examples.length, 1)
+      saveSession({ currentIndex: prevIdx, items: examples })
+      return prevIdx
+    })
+  }, [examples, handleStop, resetRecording, saveSession])
 
   // Phát từng chunk (Shadowing)
-  const handlePlayChunk = useCallback(
-    async (chunkText: string, chunkIdx: number) => {
-      setShadowPlaying(true)
-      setShadowChunk(chunkIdx)
-      try {
-        await geminiTtsService.playSpeech(chunkText, {
-          voice: 'Aoede',
-          playbackRate: speed,
-          onEnd: () => {
-            setShadowPlaying(false)
-          },
-          onError: () => {
-            setShadowPlaying(false)
-          },
-        })
-      } catch {
-        setShadowPlaying(false)
-      }
-    },
-    [speed],
-  )
 
   // Gửi audio tới Gemini model để nhận xét và đánh giá
   const handleEvaluateAudio = useCallback(async () => {
@@ -425,21 +579,21 @@ export const PronunciationPractice: React.FC = () => {
         audioBlob,
         originalText: plainOrigin,
         translation: plainTranslation,
-        preferredModel: evalModel,
+        preferredModel: DEFAULT_SPEECH_EVAL_MODEL,
       })
 
       if (response.isSuccess && response.content) {
         setEvalResult(response.content)
       } else {
-        setEvalError(response.message || 'Không thể đánh giá âm thanh lúc này. Vui lòng thử lại.')
+        setEvalError(response.message || 'Không thể đánh giá lúc này. Vui lòng thử lại.')
       }
     } catch (err: any) {
       console.error('Audio evaluation error:', err)
-      setEvalError(err?.message || 'Có lỗi xảy ra khi gửi audio đến Gemini.')
+      setEvalError(err?.message || 'Có lỗi xảy ra khi gửi.')
     } finally {
       setIsEvaluating(false)
     }
-  }, [audioBlob, isEvaluating, plainOrigin, plainTranslation, evalModel])
+  }, [audioBlob, isEvaluating, plainOrigin, plainTranslation])
 
   const randomTip = useMemo(() => TIPS[Math.floor(Math.random() * TIPS.length)], [currentIndex])
 
@@ -454,12 +608,7 @@ export const PronunciationPractice: React.FC = () => {
               <Tooltip key={cfg.key} title={cfg.desc} placement='top'>
                 <Checkbox
                   checked={isChecked}
-                  onChange={(e) =>
-                    setActiveTechniques((prev) => ({
-                      ...prev,
-                      [cfg.key]: e.target.checked,
-                    }))
-                  }
+                  onChange={(e) => handleTechniqueChange(cfg.key, e.target.checked)}
                 >
                   <span
                     className={styles.techniqueLabel}
@@ -484,7 +633,7 @@ export const PronunciationPractice: React.FC = () => {
         <Card className={styles.practiceCard}>
           <Flex vertical align='center' gap={12}>
             <Text type='secondary'>Không tìm thấy câu ví dụ.</Text>
-            <Button icon={<SyncOutlined />} onClick={fetchExamples}>
+            <Button icon={<SyncOutlined />} onClick={() => fetchExamples(true)}>
               Tải lại
             </Button>
           </Flex>
@@ -494,7 +643,7 @@ export const PronunciationPractice: React.FC = () => {
           className={styles.practiceCard}
           styles={{ body: { padding: token.size } }}
           style={{
-            borderColor: token.colorPrimaryBorder,
+            borderColor: token.colorBorder,
             boxShadow: `0 4px 20px rgba(0, 0, 0, 0.05)`,
           }}
         >
@@ -504,11 +653,12 @@ export const PronunciationPractice: React.FC = () => {
               <Title level={5} style={{ margin: 0, fontSize: 15 }}>
                 Luyện Nói & Ngữ Âm
               </Title>
-            </Flex>
-            <Flex gap={4} align='center'>
               <Text type='secondary' style={{ fontSize: 12 }}>
-                {currentIndex + 1} / {examples.length}
+                {currentIndex + 1}/{examples.length}
               </Text>
+            </Flex>
+
+            <Flex gap={4} align='center'>
               <Tooltip title='Mẹo luyện phát âm'>
                 <Button
                   type='text'
@@ -520,7 +670,7 @@ export const PronunciationPractice: React.FC = () => {
               <Button
                 size='small'
                 icon={<SyncOutlined spin={loading} />}
-                onClick={fetchExamples}
+                onClick={() => fetchExamples(true)}
                 type='text'
               />
             </Flex>
@@ -544,7 +694,7 @@ export const PronunciationPractice: React.FC = () => {
                     pattern === 'rising' ? 'green' : pattern === 'fall-rise' ? 'orange' : 'blue'
                   }
                   icon={<RiseOutlined />}
-                  style={{ borderRadius: 6, fontWeight: 600, fontSize: 12 }}
+                  style={{ borderRadius: 6, fontWeight: 600, fontSize: 12, whiteSpace: 'normal' }}
                 >
                   {pattern === 'rising'
                     ? '↗ Lên giọng cuối câu (Yes/No Question)'
@@ -558,6 +708,31 @@ export const PronunciationPractice: React.FC = () => {
                 <Tag color='purple' style={{ borderRadius: 6, fontSize: 11 }}>
                   {chunks.length} cụm nhịp điệu (Chunks)
                 </Tag>
+              )}
+
+              {/* Shadowing: Thanh lặp lại từng cụm khi kích hoạt Shadowing */}
+              {activeTechniques.shadow && chunks.length > 0 && (
+                <div className={styles.shadowChunksBar}>
+                  <Flex justify='space-between' align='center' wrap='wrap' gap={6}>
+                    <Text style={{ fontSize: 12, fontWeight: 600, color: '#722ed1' }}>
+                      Luyện nhại từng cụm (Shadowing):
+                    </Text>
+                    <Flex align='center' gap={6}>
+                      <Text style={{ fontSize: 11, color: token.colorTextSecondary }}>Độ dài:</Text>
+                      <Select
+                        size='small'
+                        value={chunkSize}
+                        onChange={handleChunkSizeChange}
+                        style={{ width: 80 }}
+                        options={[
+                          { label: '3 từ', value: 3 },
+                          { label: '4 từ', value: 4 },
+                          { label: '5 từ', value: 5 },
+                        ]}
+                      />
+                    </Flex>
+                  </Flex>
+                </div>
               )}
             </div>
 
@@ -639,48 +814,6 @@ export const PronunciationPractice: React.FC = () => {
                 )
               })}
             </div>
-
-            {/* Shadowing: Thanh lặp lại từng cụm khi kích hoạt Shadowing */}
-            {activeTechniques.shadow && chunks.length > 0 && (
-              <div className={styles.shadowChunksBar}>
-                <Flex justify='space-between' align='center' wrap='wrap' gap={6}>
-                  <Text style={{ fontSize: 12, fontWeight: 600, color: '#722ed1' }}>
-                    Luyện nhại từng cụm (Shadowing):
-                  </Text>
-                  <Flex align='center' gap={6}>
-                    <Text style={{ fontSize: 11, color: token.colorTextSecondary }}>Độ dài:</Text>
-                    <Select
-                      size='small'
-                      value={chunkSize}
-                      onChange={(val) => setChunkSize(val)}
-                      style={{ width: 80 }}
-                      options={[
-                        { label: '2 từ', value: 2 },
-                        { label: '3 từ', value: 3 },
-                        { label: '4 từ', value: 4 },
-                      ]}
-                    />
-                  </Flex>
-                </Flex>
-
-                <div className={styles.shadowChunksList}>
-                  {chunks.map((chunk, cIdx) => (
-                    <button
-                      key={cIdx}
-                      type='button'
-                      className={clsx(
-                        styles.shadowChunkItem,
-                        shadowChunk === cIdx && shadowPlaying && styles.shadowChunkActive,
-                      )}
-                      onClick={() => handlePlayChunk(chunk, cIdx)}
-                    >
-                      <SoundOutlined />
-                      <span>{chunk}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* ── Translation reveal ── */}
@@ -705,7 +838,7 @@ export const PronunciationPractice: React.FC = () => {
             )}
           </div>
 
-          <Divider style={{ margin: `${token.size * 0.75}px 0` }} />
+          <Divider style={{ margin: `${token.size * 0.5}px 0` }} />
 
           {/* ── Controls: Tốc độ, Nghe mẫu và Chuyển câu ── */}
           <Flex vertical gap={token.size * 0.75}>
@@ -719,7 +852,7 @@ export const PronunciationPractice: React.FC = () => {
                 max={1.5}
                 step={0.05}
                 value={speed}
-                onChange={(v) => setSpeed(v)}
+                onChange={handleSpeedChange}
                 style={{ flex: 1 }}
                 tooltip={{ formatter: (v) => `${Math.round((v || 1) * 100)}%` }}
               />
@@ -750,7 +883,7 @@ export const PronunciationPractice: React.FC = () => {
             </Flex>
           </Flex>
 
-          <Divider style={{ margin: `${token.size * 0.75}px 0` }} />
+          <Divider style={{ margin: `${token.size * 0.5}px 0` }} />
 
           {/* ── THU ÂM & ĐÁNH GIÁ VỚI GEMINI MODELS ── */}
           <Card
@@ -769,25 +902,6 @@ export const PronunciationPractice: React.FC = () => {
                   <span style={{ fontWeight: 700, fontSize: 13 }}>
                     Thu âm & Đánh giá với Gemini AI
                   </span>
-                </Flex>
-
-                {/* Dropdown chọn Gemini Model */}
-                <Flex align='center' gap={6}>
-                  <Text style={{ fontSize: 11, color: token.colorTextSecondary }}>Mô hình AI:</Text>
-                  <Select
-                    size='small'
-                    value={evalModel}
-                    onChange={(val) => setEvalModel(val)}
-                    style={{ minWidth: 190 }}
-                    options={GEMINI_SPEECH_EVAL_MODELS.map((m) => ({
-                      value: m.value,
-                      label: (
-                        <Tooltip title={m.desc} placement='left'>
-                          <span>{m.label}</span>
-                        </Tooltip>
-                      ),
-                    }))}
-                  />
                 </Flex>
               </Flex>
             }
@@ -889,7 +1003,7 @@ export const PronunciationPractice: React.FC = () => {
               <Flex vertical align='center' justify='center' gap={12} style={{ padding: '24px 0' }}>
                 <Spin size='large' />
                 <Text style={{ fontSize: 13, color: token.colorPrimary }}>
-                  Mô hình {evalModel} đang lắng nghe và đánh giá phát âm...
+                  AI đang lắng nghe và đánh giá phát âm...
                 </Text>
               </Flex>
             )}

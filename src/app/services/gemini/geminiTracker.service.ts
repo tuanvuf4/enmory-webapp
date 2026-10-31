@@ -36,8 +36,20 @@ export interface IGeminiUsageStats {
   lastUpdated: number
 }
 
+export interface IGeminiLimits {
+  maxRequests: number
+  maxTokens: number
+}
+
+export const DEFAULT_GEMINI_LIMITS: IGeminiLimits = {
+  maxRequests: 1500, // 1,500 requests (Google AI Studio Free Tier RPD)
+  maxTokens: 1000000, // 1,000,000 tokens (1M tokens limit)
+}
+
 const STORAGE_KEY = 'enmory_gemini_tracker_stats'
 const STATS_CHANGE_EVENT = 'enmory_gemini_stats_changed'
+const LIMITS_STORAGE_KEY = 'enmory_gemini_tracker_limits'
+const LIMITS_CHANGE_EVENT = 'enmory_gemini_limits_changed'
 const MAX_RECENT_LOGS = 100
 
 const defaultStats: IGeminiUsageStats = {
@@ -91,6 +103,49 @@ export const clearGeminiStats = (): void => {
     lastUpdated: Date.now(),
   }
   saveGeminiStats(reset)
+}
+
+export const getGeminiLimits = (): IGeminiLimits => {
+  try {
+    const raw = localStorage.getItem(LIMITS_STORAGE_KEY)
+    if (!raw) return { ...DEFAULT_GEMINI_LIMITS }
+    const parsed = JSON.parse(raw)
+    return {
+      maxRequests:
+        Number(parsed.maxRequests) > 0
+          ? Number(parsed.maxRequests)
+          : DEFAULT_GEMINI_LIMITS.maxRequests,
+      maxTokens:
+        Number(parsed.maxTokens) > 0 ? Number(parsed.maxTokens) : DEFAULT_GEMINI_LIMITS.maxTokens,
+    }
+  } catch (err) {
+    console.error('Failed to parse Gemini limits:', err)
+    return { ...DEFAULT_GEMINI_LIMITS }
+  }
+}
+
+export const saveGeminiLimits = (limits: Partial<IGeminiLimits>): IGeminiLimits => {
+  try {
+    const current = getGeminiLimits()
+    const updated: IGeminiLimits = {
+      maxRequests:
+        Number(limits.maxRequests) > 0
+          ? Number(limits.maxRequests)
+          : current.maxRequests,
+      maxTokens:
+        Number(limits.maxTokens) > 0 ? Number(limits.maxTokens) : current.maxTokens,
+    }
+    localStorage.setItem(LIMITS_STORAGE_KEY, JSON.stringify(updated))
+    window.dispatchEvent(new CustomEvent(LIMITS_CHANGE_EVENT, { detail: updated }))
+    return updated
+  } catch (err) {
+    console.error('Failed to save Gemini limits:', err)
+    return getGeminiLimits()
+  }
+}
+
+export const resetGeminiLimits = (): IGeminiLimits => {
+  return saveGeminiLimits(DEFAULT_GEMINI_LIMITS)
 }
 
 const updateStatItem = (
@@ -259,10 +314,42 @@ export const useGeminiStats = (): IGeminiUsageStats => {
   return stats
 }
 
+/**
+ * React hook to subscribe to real-time Gemini usage limits
+ */
+export const useGeminiLimits = (): IGeminiLimits => {
+  const [limits, setLimits] = useState<IGeminiLimits>(getGeminiLimits)
+
+  useEffect(() => {
+    const handleUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<IGeminiLimits>
+      if (customEvent?.detail) {
+        setLimits(customEvent.detail)
+      } else {
+        setLimits(getGeminiLimits())
+      }
+    }
+
+    window.addEventListener(LIMITS_CHANGE_EVENT, handleUpdate)
+    window.addEventListener('storage', handleUpdate)
+
+    return () => {
+      window.removeEventListener(LIMITS_CHANGE_EVENT, handleUpdate)
+      window.removeEventListener('storage', handleUpdate)
+    }
+  }, [])
+
+  return limits
+}
+
 export const geminiTrackerService = {
   getStats: getGeminiStats,
   saveStats: saveGeminiStats,
   recordCall: recordGeminiCall,
   clearStats: clearGeminiStats,
+  getLimits: getGeminiLimits,
+  saveLimits: saveGeminiLimits,
+  resetLimits: resetGeminiLimits,
+  useGeminiLimits,
   generateContentWithTracking,
 }

@@ -11,7 +11,7 @@ import {
   RetweetOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-import { Button, Space, Tag, Tooltip, theme } from 'antd'
+import { Button, Space, Tag, theme } from 'antd'
 import { KaraokeText } from './KaraokeText'
 import { useSmoothTime } from './useSmoothTime'
 import { useSelector } from '@/core/hooks'
@@ -211,28 +211,23 @@ export const LiveTranscript: React.FC = () => {
 
         <Space size='small' align='center'>
           {/* Transcript Blur/Visible Button */}
-          <Tooltip
-            title={
-              transcriptDisplayMode === 'visible'
-                ? 'Nhấp để làm mờ chữ (Luyện nghe)'
-                : 'Đang làm mờ chữ. Nhấp để hiện lại'
+
+          <Button
+            size={'small'}
+            type={'text'}
+            variant={'text'}
+            icon={
+              transcriptDisplayMode === 'visible' ? (
+                <EyeOutlined style={{ fontSize: '16px' }} />
+              ) : (
+                <EyeInvisibleOutlined
+                  style={{ fontSize: '16px', color: token.palette?.yellow?.[0] }}
+                />
+              )
             }
-          >
-            <Button
-              size={'small'}
-              type={'text'}
-              variant={'text'}
-              icon={
-                transcriptDisplayMode === 'visible' ? (
-                  <EyeOutlined style={{ fontSize: '16px' }} />
-                ) : (
-                  <EyeInvisibleOutlined style={{ fontSize: '16px', color: '#fab005' }} />
-                )
-              }
-              onClick={handleToggleDisplayMode}
-              style={{ background: 'transparent' }}
-            />
-          </Tooltip>
+            onClick={handleToggleDisplayMode}
+            style={{ background: 'transparent' }}
+          />
 
           {/* Loop Segment Button */}
           <Button
@@ -274,37 +269,30 @@ export const LiveTranscript: React.FC = () => {
           />
 
           {/* Sync Button */}
-          <Tooltip
-            title={
-              autoFollow
-                ? 'Tự động cuộn theo audio (Đang bật - Nhấp để căn giữa)'
-                : 'Đã tạm dừng cuộn (Nhấp để bật lại & cuộn về câu đang phát)'
+
+          <Button
+            size={'small'}
+            type={'text'}
+            variant={'text'}
+            icon={
+              autoFollow ? (
+                <AimOutlined />
+              ) : (
+                <AimOutlined style={{ color: token.palette?.yellow?.[0] }} />
+              )
             }
-          >
-            <Button
-              size={'small'}
-              type={'text'}
-              variant={'text'}
-              icon={<AimOutlined />}
-              onClick={handleSync}
-              style={{
-                background: 'transparent',
-                color: autoFollow ? token.colorPrimary : '#faad14',
-              }}
-            />
-          </Tooltip>
+            onClick={handleSync}
+          />
 
           {/* Fullscreen Focus Mode Button */}
-          <Tooltip title='Toàn màn hình Focus Karaoke'>
-            <Button
-              size={'small'}
-              type={'text'}
-              variant={'text'}
-              icon={<FullscreenOutlined style={{ fontSize: '16px' }} />}
-              onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
-              style={{ background: 'transparent' }}
-            />
-          </Tooltip>
+          <Button
+            size={'small'}
+            type={'text'}
+            variant={'text'}
+            icon={<FullscreenOutlined style={{ fontSize: '16px' }} />}
+            onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
+            style={{ background: 'transparent' }}
+          />
         </Space>
       </div>
 
@@ -370,17 +358,15 @@ export const LiveTranscript: React.FC = () => {
                     )}
                   </div>
 
-                  <Tooltip title={isCopied ? 'Đã sao chép' : 'Sao chép'}>
-                    <Button
-                      type='text'
-                      size='small'
-                      className={styles.copySegmentBtn}
-                      icon={
-                        isCopied ? <CheckOutlined style={{ color: '#52c41a' }} /> : <CopyOutlined />
-                      }
-                      onClick={(e) => handleCopySegment(seg.text, i, e)}
-                    />
-                  </Tooltip>
+                  <Button
+                    type='text'
+                    size='small'
+                    className={styles.copySegmentBtn}
+                    icon={
+                      isCopied ? <CheckOutlined style={{ color: '#52c41a' }} /> : <CopyOutlined />
+                    }
+                    onClick={(e) => handleCopySegment(seg.text, i, e)}
+                  />
                 </div>
 
                 <p

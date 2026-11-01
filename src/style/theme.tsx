@@ -113,7 +113,7 @@ export const appTheme: ThemeConfig = {
         '#613400',
       ],
       yellow: [
-        '#fadb14',
+        '#fab005',
         '#feffe6',
         '#ffffb8',
         '#fffb8f',

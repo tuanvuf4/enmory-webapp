@@ -1394,139 +1394,117 @@ export const PlayerDock: React.FC = () => {
           <div className={styles.dockCenter}>
             <div className={styles.dockControlsRow}>
               {/* Loop Segment 1 */}
-              <Tooltip title={loopSegment ? 'Tắt lặp câu (Đang bật)' : 'Bật lặp câu hiện tại'}>
-                <Button
-                  type='text'
-                  size='middle'
-                  className={`${styles.dockControlBtn} ${loopSegment ? styles.dockBtnActive : ''}`}
-                  icon={
-                    <div
+              <Button
+                type='text'
+                size='middle'
+                className={`${styles.dockControlBtn} ${loopSegment ? styles.dockBtnActive : ''}`}
+                icon={
+                  <div
+                    style={{
+                      position: 'relative',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <RetweetOutlined style={{ fontSize: '18px' }} />
+                    <span
                       style={{
-                        position: 'relative',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        position: 'absolute',
+                        fontSize: '8px',
+                        fontWeight: 'bold',
+                        top: '-4px',
+                        right: '-4px',
+                        lineHeight: 1,
                       }}
                     >
-                      <RetweetOutlined style={{ fontSize: '18px' }} />
-                      <span
-                        style={{
-                          position: 'absolute',
-                          fontSize: '8px',
-                          fontWeight: 'bold',
-                          top: '-4px',
-                          right: '-4px',
-                          lineHeight: 1,
-                        }}
-                      >
-                        1
-                      </span>
-                    </div>
-                  }
-                  onClick={handleToggleLoopSegment}
-                />
-              </Tooltip>
+                      1
+                    </span>
+                  </div>
+                }
+                onClick={handleToggleLoopSegment}
+              />
 
               {/* Previous */}
-              <Tooltip title='Bài trước'>
-                <Button
-                  type='text'
-                  size='middle'
-                  className={styles.dockControlBtn}
-                  icon={<StepBackwardOutlined style={{ fontSize: '18px' }} />}
-                  onClick={onPrev}
-                />
-              </Tooltip>
+              <Button
+                type='text'
+                size='middle'
+                className={styles.dockControlBtn}
+                icon={<StepBackwardOutlined style={{ fontSize: '18px' }} />}
+                onClick={onPrev}
+              />
 
               {/* -10s */}
-              <Tooltip title='Lùi 10 giây'>
-                <Button
-                  type='text'
-                  size='middle'
-                  className={styles.dockControlBtn}
-                  icon={<FastBackwardOutlined style={{ fontSize: '18px' }} />}
-                  onClick={() => onSeekBy(-10)}
-                />
-              </Tooltip>
+              <Button
+                type='text'
+                size='middle'
+                className={styles.dockControlBtn}
+                icon={<FastBackwardOutlined style={{ fontSize: '18px' }} />}
+                onClick={() => onSeekBy(-10)}
+              />
 
               {/* Main Play / Pause */}
-              <Tooltip title={playing ? 'Tạm dừng (Space)' : 'Phát (Space)'}>
-                <Button
-                  type='text'
-                  className={styles.dockMainPlayBtn}
-                  icon={
-                    playing ? (
-                      <PauseOutlined style={{ fontSize: '20px' }} />
-                    ) : (
-                      <CaretRightFilled style={{ fontSize: '22px', marginLeft: '2px' }} />
-                    )
-                  }
-                  onClick={playing ? handlePause : handlePlay}
-                />
-              </Tooltip>
+              <Button
+                type='text'
+                className={styles.dockMainPlayBtn}
+                icon={
+                  playing ? (
+                    <PauseOutlined style={{ fontSize: '20px' }} />
+                  ) : (
+                    <CaretRightFilled style={{ fontSize: '22px', marginLeft: '2px' }} />
+                  )
+                }
+                onClick={playing ? handlePause : handlePlay}
+              />
 
               {/* +10s */}
-              <Tooltip title='Tua nhanh 10 giây'>
-                <Button
-                  type='text'
-                  size='middle'
-                  className={styles.dockControlBtn}
-                  icon={<FastForwardOutlined style={{ fontSize: '18px' }} />}
-                  onClick={() => onSeekBy(10)}
-                />
-              </Tooltip>
+              <Button
+                type='text'
+                size='middle'
+                className={styles.dockControlBtn}
+                icon={<FastForwardOutlined style={{ fontSize: '18px' }} />}
+                onClick={() => onSeekBy(10)}
+              />
 
               {/* Next */}
-              <Tooltip title='Bài tiếp'>
-                <Button
-                  type='text'
-                  size='middle'
-                  className={styles.dockControlBtn}
-                  icon={<StepForwardOutlined style={{ fontSize: '18px' }} />}
-                  onClick={onNext}
-                />
-              </Tooltip>
+              <Button
+                type='text'
+                size='middle'
+                className={styles.dockControlBtn}
+                icon={<StepForwardOutlined style={{ fontSize: '18px' }} />}
+                onClick={onNext}
+              />
 
               {/* Loop Track (Desktop only) */}
-              <Tooltip title={loop ? 'Tắt lặp bài (Đang bật)' : 'Bật lặp bài'}>
-                <Button
-                  type='text'
-                  size='middle'
-                  className={`${styles.dockControlBtn} ${styles.dockDesktopOnly} ${
-                    loop ? styles.dockBtnActive : ''
-                  }`}
-                  icon={<ReloadOutlined style={{ fontSize: '18px' }} />}
-                  onClick={handleToggleLoop}
-                />
-              </Tooltip>
+              <Button
+                type='text'
+                size='middle'
+                className={`${styles.dockControlBtn} ${styles.dockDesktopOnly} ${
+                  loop ? styles.dockBtnActive : ''
+                }`}
+                icon={<ReloadOutlined style={{ fontSize: '18px' }} />}
+                onClick={handleToggleLoop}
+              />
 
               {/* Blur Toggle (Mobile only - replaces Loop Track) */}
-              <Tooltip
-                title={
-                  player.transcriptDisplayMode === 'visible'
-                    ? 'Làm mờ chữ (Luyện nghe)'
-                    : 'Đang làm mờ chữ (Nhấp để hiện rõ)'
+              <Button
+                type='text'
+                size='middle'
+                className={`${styles.dockControlBtn} ${styles.dockMobileOnly} ${
+                  player.transcriptDisplayMode === 'blur' ? styles.dockBtnActive : ''
+                }`}
+                icon={
+                  player.transcriptDisplayMode === 'visible' ? (
+                    <EyeOutlined style={{ fontSize: 18 }} />
+                  ) : (
+                    <EyeInvisibleOutlined style={{ fontSize: 18 }} />
+                  )
                 }
-              >
-                <Button
-                  type='text'
-                  size='middle'
-                  className={`${styles.dockControlBtn} ${styles.dockMobileOnly} ${
-                    player.transcriptDisplayMode === 'blur' ? styles.dockBtnActive : ''
-                  }`}
-                  icon={
-                    player.transcriptDisplayMode === 'visible' ? (
-                      <EyeOutlined style={{ fontSize: 18 }} />
-                    ) : (
-                      <EyeInvisibleOutlined style={{ fontSize: 18 }} />
-                    )
-                  }
-                  onClick={() => {
-                    const nextMode = player.transcriptDisplayMode === 'visible' ? 'blur' : 'visible'
-                    dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: nextMode }))
-                  }}
-                />
-              </Tooltip>
+                onClick={() => {
+                  const nextMode = player.transcriptDisplayMode === 'visible' ? 'blur' : 'visible'
+                  dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: nextMode }))
+                }}
+              />
             </div>
 
             {/* Modern seek bar */}
@@ -1557,51 +1535,41 @@ export const PlayerDock: React.FC = () => {
           <div className={styles.dockRight}>
             {/* Speed Pill Dropdown */}
             <Dropdown menu={speedMenuProps} trigger={['click']} placement='top'>
-              <Tooltip title='Tốc độ phát'>
-                <Button
-                  type='text'
-                  size='small'
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    borderRadius: 12,
-                    padding: '0 8px',
-                    height: 26,
-                    background: 'rgba(150, 150, 150, 0.1)',
-                  }}
-                >
-                  {playbackRate}x
-                </Button>
-              </Tooltip>
+              <Button
+                type='text'
+                size='small'
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderRadius: 12,
+                  padding: '0 8px',
+                  height: 26,
+                  background: 'rgba(150, 150, 150, 0.1)',
+                }}
+              >
+                {playbackRate}x
+              </Button>
             </Dropdown>
 
             {/* Transcript Display Mode (Visible / Blur toggle) */}
-            <Tooltip
-              title={
-                player.transcriptDisplayMode === 'visible'
-                  ? 'Làm mờ chữ (Luyện nghe)'
-                  : 'Đang làm mờ chữ (Nhấp để hiện rõ)'
+            <Button
+              type='text'
+              size='middle'
+              className={`${styles.dockControlBtn} ${
+                player.transcriptDisplayMode === 'blur' ? styles.dockBtnActive : ''
+              }`}
+              icon={
+                player.transcriptDisplayMode === 'visible' ? (
+                  <EyeOutlined style={{ fontSize: 18 }} />
+                ) : (
+                  <EyeInvisibleOutlined style={{ fontSize: 18 }} />
+                )
               }
-            >
-              <Button
-                type='text'
-                size='middle'
-                className={`${styles.dockControlBtn} ${
-                  player.transcriptDisplayMode === 'blur' ? styles.dockBtnActive : ''
-                }`}
-                icon={
-                  player.transcriptDisplayMode === 'visible' ? (
-                    <EyeOutlined style={{ fontSize: 18 }} />
-                  ) : (
-                    <EyeInvisibleOutlined style={{ fontSize: 18 }} />
-                  )
-                }
-                onClick={() => {
-                  const nextMode = player.transcriptDisplayMode === 'visible' ? 'blur' : 'visible'
-                  dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: nextMode }))
-                }}
-              />
-            </Tooltip>
+              onClick={() => {
+                const nextMode = player.transcriptDisplayMode === 'visible' ? 'blur' : 'visible'
+                dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: nextMode }))
+              }}
+            />
 
             {/* Volume Popover */}
             <Popover content={volumeContent} trigger='hover' placement='top'>
@@ -1621,25 +1589,23 @@ export const PlayerDock: React.FC = () => {
             </Popover>
 
             {/* PiP Button */}
-            <Tooltip title='Picture-in-Picture'>
-              <Button
-                type='text'
-                size='middle'
-                className={`${styles.dockControlBtn} ${pipWindow ? styles.dockBtnActive : ''}`}
-                onClick={toggleDocumentPiP}
-                icon={
-                  <svg
-                    viewBox='0 0 24 24'
-                    width='18'
-                    height='18'
-                    fill='currentColor'
-                    style={{ color: pipWindow ? token.palette?.yellow?.[0] : 'inherit' }}
-                  >
-                    <path d='M19 11h-8v6h8v-6zm4 8V5c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 0H3V5h18v14z' />
-                  </svg>
-                }
-              />
-            </Tooltip>
+            <Button
+              type='text'
+              size='middle'
+              className={`${styles.dockControlBtn} ${pipWindow ? styles.dockBtnActive : ''}`}
+              onClick={toggleDocumentPiP}
+              icon={
+                <svg
+                  viewBox='0 0 24 24'
+                  width='18'
+                  height='18'
+                  fill='currentColor'
+                  style={{ color: pipWindow ? token.palette?.yellow?.[0] : 'inherit' }}
+                >
+                  <path d='M19 11h-8v6h8v-6zm4 8V5c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 0H3V5h18v14z' />
+                </svg>
+              }
+            />
 
             {/* Focus Fullscreen Karaoke Button */}
             <Button

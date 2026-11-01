@@ -13,16 +13,18 @@ export const usePrompt = () => {
     okText = 'Delete',
     onOk,
     onCancel,
+    ...props
   }: ModalFuncProps) => {
-    modalRef.confirm({
+    return modalRef.confirm({
       type,
       title,
       content,
       okText,
       maskClosable: false,
       closable: true,
-      onOk: () => onOk?.(),
-      onCancel: () => onCancel?.(),
+      onOk: (...args) => onOk?.(...args),
+      onCancel: (...args) => onCancel?.(...args),
+      ...props,
     })
   }
 

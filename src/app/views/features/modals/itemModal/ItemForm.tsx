@@ -544,7 +544,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const runAutofill = async (originWord: string, sourceName: string = 'Google') => {
     setIsAutofilling(true)
     updateModal({
-      isMinimized: true,
+      isMinimized: false,
       minimizeInfo: {
         title: `Item: ${originWord}`,
         tooltip: `Gemini đang phân tích "${originWord}"...`,
@@ -554,10 +554,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
     })
     notification({
       type: 'info',
-      message: `Gemini đang phân tích "${originWord}"`,
-      description:
-        'Biểu mẫu đã thu nhỏ xuống nút tròn góc phải để bạn tiếp tục thao tác. Nhấn vào nút tròn bất cứ lúc nào để mở lại.',
-      duration: 4,
+      message: `Gemini đang phân tích "${originWord}"...`,
+      duration: 3,
     })
 
     try {
@@ -596,8 +594,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
       notification({
         type: 'success',
         message: `Đã nạp xong từ điển cho "${originWord}"!`,
-        description: 'Nhấn vào nút tròn góc phải để mở lại biểu mẫu và kiểm tra.',
-        duration: 5,
+        duration: 4,
       })
     } catch (error: any) {
       console.error('Auto-fill error:', error)
@@ -653,7 +650,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         title: `Replace existing meanings?`,
         content: `This will replace the current meanings with data from ${sourceName}.`,
         okText: 'Replace',
-        onOk: () => runAutofill(currentOrigin, sourceName),
+        onOk: (close) => {
+          close?.()
+          runAutofill(currentOrigin, sourceName)
+        },
       })
       return
     }

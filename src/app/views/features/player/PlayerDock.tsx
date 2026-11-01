@@ -25,7 +25,6 @@ import { listeningAction } from '@/store/reducers/listening.reducer'
 import { appSetting } from '@/config/appConfig'
 import { getActiveSegmentIndex, parseTranscript } from './transcriptUtils'
 import { KaraokeText } from './KaraokeText'
-import { MarqueeText } from './MarqueeText'
 import { useSmoothTime } from './useSmoothTime'
 import { tracksApi } from '@/services/firebase'
 import { TrackList } from './TrackList'
@@ -1360,14 +1359,9 @@ export const PlayerDock: React.FC = () => {
                         dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: 'visible' }))
                       }
                     }}
+                    title={activeSegmentText}
                   >
-                    <MarqueeText
-                      isPlaying={playing}
-                      textKey={`en-${activeIndex}-${activeSegmentText}`}
-                      title={activeSegmentText}
-                    >
-                      <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
-                    </MarqueeText>
+                    <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
                   </div>
 
                   {activeSegmentTranslation && (
@@ -1386,14 +1380,9 @@ export const PlayerDock: React.FC = () => {
                           )
                         }
                       }}
+                      title={activeSegmentTranslation}
                     >
-                      <MarqueeText
-                        isPlaying={playing}
-                        textKey={`vi-${activeIndex}-${activeSegmentTranslation}`}
-                        title={activeSegmentTranslation}
-                      >
-                        <span>{activeSegmentTranslation}</span>
-                      </MarqueeText>
+                      <span>{activeSegmentTranslation}</span>
                     </div>
                   )}
                 </div>
@@ -1511,31 +1500,16 @@ export const PlayerDock: React.FC = () => {
                 />
               </Tooltip>
 
-              {/* Blur Toggle (Mobile only - replaces Loop Track) */}
-              <Tooltip
-                title={
-                  player.transcriptDisplayMode === 'visible'
-                    ? 'Làm mờ chữ (Luyện nghe)'
-                    : 'Đang làm mờ chữ (Nhấp để hiện rõ)'
-                }
-              >
+              {/* Fullscreen Focus Karaoke (Mobile only) */}
+              <Tooltip title='Toàn màn hình Focus Karaoke'>
                 <Button
                   type='text'
                   size='middle'
                   className={`${styles.dockControlBtn} ${styles.dockMobileOnly} ${
-                    player.transcriptDisplayMode === 'blur' ? styles.dockBtnActive : ''
+                    player.isFocusMode ? styles.dockBtnActive : ''
                   }`}
-                  icon={
-                    player.transcriptDisplayMode === 'visible' ? (
-                      <EyeOutlined style={{ fontSize: 18 }} />
-                    ) : (
-                      <EyeInvisibleOutlined style={{ fontSize: 18 }} />
-                    )
-                  }
-                  onClick={() => {
-                    const nextMode = player.transcriptDisplayMode === 'visible' ? 'blur' : 'visible'
-                    dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: nextMode }))
-                  }}
+                  icon={<FullscreenOutlined style={{ fontSize: 18 }} />}
+                  onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
                 />
               </Tooltip>
             </div>

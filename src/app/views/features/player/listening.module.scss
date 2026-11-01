@@ -201,44 +201,53 @@
 .dockSubtitles {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
   width: 100%;
 }
 
 .dockKaraoke {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
   color: $color-text-base;
   width: 100%;
   min-width: 0;
   letter-spacing: 0.1px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+
+  :global([data-theme='dark']) & {
+    color: #ffffff;
+  }
 
   @media screen and (max-width: 768px) {
-    font-size: 14px;
-    line-height: 1.3;
+    font-size: 13.5px;
+    line-height: 1.35;
   }
 }
 
 .dockTranslation {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  line-height: 1.35;
-  color: var(--ant-color-text-secondary);
+  line-height: 1.4;
+  color: #08979c;
   font-style: italic;
-  display: flex;
-  align-items: center;
+  display: block;
   width: 100%;
   min-width: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 
   @media screen and (max-width: 768px) {
-    font-size: 12.5px;
-    line-height: 1.3;
+    font-size: 12px;
+    line-height: 1.35;
   }
 
   :global([data-theme='dark']) & {
-    color: #ffd43b;
+    color: #36cfc9;
     opacity: 0.95;
   }
 }
@@ -291,6 +300,20 @@
 
 .marqueeScrolling {
   animation: marqueeScroll var(--marquee-duration, 6s) cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+}
+
+.liveTranslationText {
+  font-size: 13.5px;
+  font-style: italic;
+  color: #08979c;
+  margin-top: 4px;
+  line-height: 1.45;
+  word-break: break-word;
+  overflow-wrap: break-word;
+
+  :global([data-theme='dark']) & {
+    color: #36cfc9;
+  }
 }
 
 .dockTranslateBtn {
@@ -692,10 +715,6 @@
   border-left-color: $color-primary;
 }
 
-.transcriptPlayed {
-  font-weight: bold;
-}
-
 .karaokeWord {
   --word-progress: 0%;
 
@@ -792,12 +811,12 @@
   display: block;
   font-size: 14px;
   line-height: 1.45;
-  color: #ffd43b;
+  color: #36cfc9;
   margin-top: 8px;
   font-style: italic;
   opacity: 0.95;
   text-align: center;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Lora', Georgia, serif;
   word-break: normal;
   overflow-wrap: break-word;
 }

@@ -43,7 +43,9 @@ export const LiveTranscript: React.FC = () => {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const activeRef = useRef<HTMLDivElement | null>(null)
   const isUserScrolling = useRef(false)
+  const isAutoScrolling = useRef(false)
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const autoScrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [autoFollow, setAutoFollow] = useState(true)
   const [revealedSegments, setRevealedSegments] = useState<Record<number, boolean>>({})
@@ -75,8 +77,59 @@ export const LiveTranscript: React.FC = () => {
     setRevealedSegments({})
   }, [currentTrack?.id, transcriptDisplayMode])
 
-  // Detect manual scroll — pause auto-follow while user is scrolling
+  // Smoothly scroll container to active segment without scrolling outer window
+  const scrollToActiveSegment = useCallback(
+    (behavior: ScrollBehavior = 'smooth', align: 'center' | 'nearest' = 'center') => {
+      const container = containerRef.current
+      const target = activeRef.current
+      if (!container || !target) return
+
+      const targetTop = target.offsetTop - container.offsetTop
+      const containerHeight = container.clientHeight
+      const targetHeight = target.offsetHeight
+
+      let targetScrollTop = targetTop - containerHeight / 2 + targetHeight / 2
+
+      if (align === 'nearest') {
+        const currentScroll = container.scrollTop
+        const targetBottom = targetTop + targetHeight
+
+        // If segment is already safely visible inside container, don't jitter
+        if (
+          targetTop >= currentScroll + 30 &&
+          targetBottom <= currentScroll + containerHeight - 30
+        ) {
+          return
+        }
+        targetScrollTop = targetTop - containerHeight / 2 + targetHeight / 2
+      }
+
+      // Mark programmatic scroll so handleScroll does NOT disable autoFollow
+      isAutoScrolling.current = true
+      if (autoScrollTimeout.current) clearTimeout(autoScrollTimeout.current)
+
+      container.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior,
+      })
+
+      autoScrollTimeout.current = setTimeout(() => {
+        isAutoScrolling.current = false
+      }, 700)
+    },
+    [],
+  )
+
+  // Detect user manual interaction (mouse wheel / touch) to pause auto-follow
+  const handleUserManualScroll = useCallback(() => {
+    if (isAutoScrolling.current) return
+    setAutoFollow(false)
+  }, [])
+
+  // Detect scroll events — only pause autoFollow if triggered by actual user
   const handleScroll = useCallback(() => {
+    if (isAutoScrolling.current) return
+
     if (!isUserScrolling.current) {
       isUserScrolling.current = true
       setAutoFollow(false)
@@ -84,18 +137,22 @@ export const LiveTranscript: React.FC = () => {
     if (scrollTimer.current) clearTimeout(scrollTimer.current)
     scrollTimer.current = setTimeout(() => {
       isUserScrolling.current = false
-    }, 1500)
+    }, 1200)
   }, [])
 
-  // Auto-scroll when active segment changes AND autoFollow is on
+  // Auto-scroll inside container when active segment changes AND autoFollow is true
   useEffect(() => {
-    if (!autoFollow) return
-    activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-  }, [activeIndex, autoFollow])
+    if (!autoFollow || activeIndex < 0) return
+    // Small timeout to allow DOM ref assignment on new activeIndex
+    const timer = setTimeout(() => {
+      scrollToActiveSegment('smooth', 'nearest')
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [activeIndex, autoFollow, scrollToActiveSegment])
 
   const handleSync = () => {
     setAutoFollow(true)
-    activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    scrollToActiveSegment('smooth', 'center')
   }
 
   // Toggle display mode directly: visible <-> blur
@@ -217,16 +274,25 @@ export const LiveTranscript: React.FC = () => {
           />
 
           {/* Sync Button */}
-          <Button
-            size={'small'}
-            type={'text'}
-            variant={'text'}
-            icon={<AimOutlined />}
-            title={'Sync câu hiện tại'}
-            onClick={handleSync}
-            style={{ background: 'transparent' }}
-            color={autoFollow ? 'primary' : 'gold'}
-          />
+          <Tooltip
+            title={
+              autoFollow
+                ? 'Tự động cuộn theo audio (Đang bật - Nhấp để căn giữa)'
+                : 'Đã tạm dừng cuộn (Nhấp để bật lại & cuộn về câu đang phát)'
+            }
+          >
+            <Button
+              size={'small'}
+              type={'text'}
+              variant={'text'}
+              icon={<AimOutlined />}
+              onClick={handleSync}
+              style={{
+                background: 'transparent',
+                color: autoFollow ? token.colorPrimary : '#faad14',
+              }}
+            />
+          </Tooltip>
 
           {/* Fullscreen Focus Mode Button */}
           <Tooltip title='Toàn màn hình Focus Karaoke'>
@@ -243,10 +309,15 @@ export const LiveTranscript: React.FC = () => {
       </div>
 
       {show && (
-        <div ref={containerRef} className={styles.liveTranscriptFull} onScroll={handleScroll}>
+        <div
+          ref={containerRef}
+          className={styles.liveTranscriptFull}
+          onScroll={handleScroll}
+          onWheel={handleUserManualScroll}
+          onTouchMove={handleUserManualScroll}
+        >
           {segments.map((seg, i) => {
             const isActive = i === activeIndex
-            const isPlayed = i < activeIndex
             const isRevealed = revealedSegments[i]
             const isBlur = transcriptDisplayMode === 'blur' && !isRevealed
             const isCopied = copiedIndex === i
@@ -255,9 +326,7 @@ export const LiveTranscript: React.FC = () => {
               <div
                 key={i}
                 ref={isActive ? activeRef : null}
-                className={`${styles.transcriptSegment} ${
-                  isActive ? styles.transcriptActive : ''
-                } ${isPlayed ? styles.transcriptPlayed : ''}`}
+                className={`${styles.transcriptSegment} ${isActive ? styles.transcriptActive : ''}`}
                 onClick={() =>
                   dispatch(listeningAction.updatePlayer({ seekTo: seg.timeSeconds, playing: true }))
                 }
@@ -334,7 +403,7 @@ export const LiveTranscript: React.FC = () => {
 
                 {player.showTranslation !== false && seg.translation && (
                   <div
-                    className={`${isBlur ? styles.transcriptBlurred : ''} ${
+                    className={`${styles.liveTranslationText} ${isBlur ? styles.transcriptBlurred : ''} ${
                       isRevealed ? styles.transcriptRevealed : ''
                     }`}
                     onClick={(e) => {
@@ -343,13 +412,6 @@ export const LiveTranscript: React.FC = () => {
                       }
                     }}
                     title={isBlur ? 'Nhấp vào để hé mở câu này' : undefined}
-                    style={{
-                      fontSize: 13,
-                      fontStyle: 'italic',
-                      color: token.colorTextSecondary,
-                      marginTop: 4,
-                      lineHeight: 1.4,
-                    }}
                   >
                     {seg.translation}
                   </div>

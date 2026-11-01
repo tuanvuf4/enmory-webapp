@@ -9,14 +9,13 @@ import {
   FastBackwardOutlined,
   FastForwardOutlined,
   RetweetOutlined,
-  ReloadOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
   UnorderedListOutlined,
   AimOutlined,
   SoundOutlined,
 } from '@ant-design/icons'
-import { Button, Dropdown, Flex, MenuProps, Space, Tag, theme, Tooltip } from 'antd'
+import { Button, Flex, Space, Tag, theme, Tooltip } from 'antd'
 import styles from './listening.module.scss'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { listeningAction } from '@/store/reducers/listening.reducer'
@@ -33,7 +32,6 @@ export const FocusListeningModal: React.FC = () => {
     playedSeconds,
     duration,
     playbackRate = 1,
-    loop,
     loopSegment,
     isFocusMode,
     transcriptDisplayMode = 'visible',
@@ -142,17 +140,6 @@ export const FocusListeningModal: React.FC = () => {
     dispatch(listeningAction.updatePlayer({ loopSegment: !loopSegment }))
   }, [dispatch, loopSegment])
 
-  const handleToggleLoop = useCallback(() => {
-    dispatch(listeningAction.updatePlayer({ loop: !loop }))
-  }, [dispatch, loop])
-
-  const handleSetSpeed = useCallback(
-    (rate: number) => {
-      dispatch(listeningAction.updatePlayer({ playbackRate: rate }))
-    },
-    [dispatch],
-  )
-
   // Direct toggle: visible <-> blur
   const handleToggleDisplayMode = useCallback(() => {
     const nextMode = transcriptDisplayMode === 'visible' ? 'blur' : 'visible'
@@ -247,15 +234,6 @@ export const FocusListeningModal: React.FC = () => {
   const currentSegment = activeIndex >= 0 ? segments[activeIndex] : null
 
   // Dropdown menu for speed selection
-  const speedMenu: MenuProps = {
-    items: [0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => ({
-      key: String(rate),
-      label: `${rate}x`,
-      onClick: () => handleSetSpeed(rate),
-    })),
-    selectable: true,
-    selectedKeys: [String(playbackRate)],
-  }
 
   const formatTime = (secs: number) => {
     if (isNaN(secs) || secs < 0) return '00:00'
@@ -317,7 +295,7 @@ export const FocusListeningModal: React.FC = () => {
         title={isBlur ? 'Nhấp để lật mở câu này' : undefined}
         style={{
           fontSize,
-          color: '#ffd43b',
+          color: 'rgb(181 181 181)',
           fontStyle: 'italic',
           marginTop,
           opacity: 0.95,
@@ -473,7 +451,7 @@ export const FocusListeningModal: React.FC = () => {
         {/* Buttons Row */}
         <div className={styles.focusControlsRow}>
           {/* Playback Rate Dropdown (bên trái) */}
-          <Dropdown menu={speedMenu} trigger={['click']}>
+          {/* <Dropdown menu={speedMenu} trigger={['click']}>
             <Tooltip title='Tốc độ phát'>
               <Button
                 type='text'
@@ -483,15 +461,42 @@ export const FocusListeningModal: React.FC = () => {
                 {playbackRate}x
               </Button>
             </Tooltip>
-          </Dropdown>
+          </Dropdown> */}
 
           {/* Loop Whole Track */}
-          <Tooltip title={loop ? 'Tắt lặp lại bài' : 'Bật lặp lại toàn bài'}>
+          {/* <Tooltip title={loop ? 'Tắt lặp lại bài' : 'Bật lặp lại toàn bài'}>
             <Button
               type='text'
               icon={<ReloadOutlined style={{ fontSize: 20 }} />}
               className={`${styles.focusCtrlBtn} ${loop ? styles.focusBtnActive : ''}`}
               onClick={handleToggleLoop}
+            />
+          </Tooltip> */}
+
+          {/* Loop Current Segment */}
+          <Tooltip
+            title={loopSegment ? 'Đang lặp câu này (L để tắt)' : 'Lặp câu hiện tại (Phím L)'}
+          >
+            <Button
+              type='text'
+              icon={
+                <div style={{ position: 'relative', display: 'inline-flex' }}>
+                  <RetweetOutlined style={{ fontSize: 22 }} />
+                  <span
+                    style={{
+                      position: 'absolute',
+                      fontSize: 9,
+                      fontWeight: 'bold',
+                      top: -4,
+                      right: -5,
+                    }}
+                  >
+                    1
+                  </span>
+                </div>
+              }
+              className={`${styles.focusCtrlBtn} ${loopSegment ? styles.focusBtnActive : ''}`}
+              onClick={handleToggleLoopSegment}
             />
           </Tooltip>
 
@@ -548,33 +553,6 @@ export const FocusListeningModal: React.FC = () => {
               icon={<FastForwardOutlined style={{ fontSize: 24 }} />}
               className={styles.focusCtrlBtn}
               onClick={() => handleSeekBy(10)}
-            />
-          </Tooltip>
-
-          {/* Loop Current Segment */}
-          <Tooltip
-            title={loopSegment ? 'Đang lặp câu này (L để tắt)' : 'Lặp câu hiện tại (Phím L)'}
-          >
-            <Button
-              type='text'
-              icon={
-                <div style={{ position: 'relative', display: 'inline-flex' }}>
-                  <RetweetOutlined style={{ fontSize: 22 }} />
-                  <span
-                    style={{
-                      position: 'absolute',
-                      fontSize: 9,
-                      fontWeight: 'bold',
-                      top: -4,
-                      right: -5,
-                    }}
-                  >
-                    1
-                  </span>
-                </div>
-              }
-              className={`${styles.focusCtrlBtn} ${loopSegment ? styles.focusBtnActive : ''}`}
-              onClick={handleToggleLoopSegment}
             />
           </Tooltip>
 

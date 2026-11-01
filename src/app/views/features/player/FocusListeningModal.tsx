@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  FullscreenExitOutlined,
   PlayCircleFilled,
   PauseCircleFilled,
   StepBackwardOutlined,
@@ -14,6 +13,7 @@ import {
   UnorderedListOutlined,
   AimOutlined,
   SoundOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons'
 import { Button, Flex, Space, Tag, theme, Tooltip } from 'antd'
 import styles from './listening.module.scss'
@@ -32,6 +32,7 @@ export const FocusListeningModal: React.FC = () => {
     playedSeconds,
     duration,
     playbackRate = 1,
+    loop,
     loopSegment,
     isFocusMode,
     transcriptDisplayMode = 'visible',
@@ -135,6 +136,10 @@ export const FocusListeningModal: React.FC = () => {
       handleSeekTo(segments[activeIndex + 1].timeSeconds)
     }
   }, [activeIndex, segments, handleSeekTo])
+
+  const handleToggleLoop = useCallback(() => {
+    dispatch(listeningAction.updatePlayer({ loop: !loop }))
+  }, [dispatch, loop])
 
   const handleToggleLoopSegment = useCallback(() => {
     dispatch(listeningAction.updatePlayer({ loopSegment: !loopSegment }))
@@ -325,22 +330,6 @@ export const FocusListeningModal: React.FC = () => {
               : `0 / ${segments.length}`}
           </Tag>
 
-          {loopSegment && (
-            <Tag color='gold' style={{ fontSize: 12, borderRadius: 12 }}>
-              Đang lặp câu
-            </Tag>
-          )}
-
-          {transcriptDisplayMode === 'blur' && (
-            <Tag
-              color='gold'
-              style={{ fontSize: 12, borderRadius: 12, cursor: 'pointer' }}
-              onClick={handleToggleDisplayMode}
-            >
-              Mờ chữ (Nhấp để hiện lại)
-            </Tag>
-          )}
-
           {/* Switch View Mode: 1-line Focus vs All scroll */}
           <Tooltip
             title={
@@ -463,16 +452,6 @@ export const FocusListeningModal: React.FC = () => {
             </Tooltip>
           </Dropdown> */}
 
-          {/* Loop Whole Track */}
-          {/* <Tooltip title={loop ? 'Tắt lặp lại bài' : 'Bật lặp lại toàn bài'}>
-            <Button
-              type='text'
-              icon={<ReloadOutlined style={{ fontSize: 20 }} />}
-              className={`${styles.focusCtrlBtn} ${loop ? styles.focusBtnActive : ''}`}
-              onClick={handleToggleLoop}
-            />
-          </Tooltip> */}
-
           {/* Loop Current Segment */}
           <Tooltip
             title={loopSegment ? 'Đang lặp câu này (L để tắt)' : 'Lặp câu hiện tại (Phím L)'}
@@ -556,15 +535,25 @@ export const FocusListeningModal: React.FC = () => {
             />
           </Tooltip>
 
+          {/* Loop Whole Track */}
+          <Tooltip title={loop ? 'Tắt lặp lại bài' : 'Bật lặp lại toàn bài'}>
+            <Button
+              type='text'
+              icon={<ReloadOutlined style={{ fontSize: 20 }} />}
+              className={`${styles.focusCtrlBtn} ${loop ? styles.focusBtnActive : ''}`}
+              onClick={handleToggleLoop}
+            />
+          </Tooltip>
+
           {/* Fullscreen Button (bên phải) */}
-          <Tooltip title='Thoát toàn màn hình (Esc)'>
+          {/* <Tooltip title='Thoát toàn màn hình (Esc)'>
             <Button
               type='text'
               icon={<FullscreenExitOutlined style={{ fontSize: 22 }} />}
               className={styles.focusCtrlBtn}
               onClick={handleClose}
             />
-          </Tooltip>
+          </Tooltip> */}
         </div>
       </div>
     </div>,

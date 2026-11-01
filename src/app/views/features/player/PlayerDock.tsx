@@ -1500,16 +1500,31 @@ export const PlayerDock: React.FC = () => {
                 />
               </Tooltip>
 
-              {/* Fullscreen Focus Karaoke (Mobile only) */}
-              <Tooltip title='Toàn màn hình Focus Karaoke'>
+              {/* Blur Toggle (Mobile only - replaces Loop Track) */}
+              <Tooltip
+                title={
+                  player.transcriptDisplayMode === 'visible'
+                    ? 'Làm mờ chữ (Luyện nghe)'
+                    : 'Đang làm mờ chữ (Nhấp để hiện rõ)'
+                }
+              >
                 <Button
                   type='text'
                   size='middle'
                   className={`${styles.dockControlBtn} ${styles.dockMobileOnly} ${
-                    player.isFocusMode ? styles.dockBtnActive : ''
+                    player.transcriptDisplayMode === 'blur' ? styles.dockBtnActive : ''
                   }`}
-                  icon={<FullscreenOutlined style={{ fontSize: 18 }} />}
-                  onClick={() => dispatch(listeningAction.updatePlayer({ isFocusMode: true }))}
+                  icon={
+                    player.transcriptDisplayMode === 'visible' ? (
+                      <EyeOutlined style={{ fontSize: 18 }} />
+                    ) : (
+                      <EyeInvisibleOutlined style={{ fontSize: 18 }} />
+                    )
+                  }
+                  onClick={() => {
+                    const nextMode = player.transcriptDisplayMode === 'visible' ? 'blur' : 'visible'
+                    dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: nextMode }))
+                  }}
                 />
               </Tooltip>
             </div>

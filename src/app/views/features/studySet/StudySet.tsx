@@ -1161,9 +1161,11 @@ export const StudySet: React.FC = () => {
             rowKey='id'
             size='small'
             pagination={{ pageSize: 6 }}
+            style={{ width: '100%' }}
+            scroll={{ x: 900 }}
             columns={[
               {
-                title: 'Từ / Cụm từ',
+                title: 'Origin',
                 dataIndex: 'origin',
                 key: 'origin',
                 render: (origin: string, record: IItem) => (
@@ -1179,7 +1181,7 @@ export const StudySet: React.FC = () => {
                 ),
               },
               {
-                title: 'Loại',
+                title: 'Category',
                 dataIndex: 'catId',
                 key: 'catId',
                 width: 90,
@@ -1193,22 +1195,25 @@ export const StudySet: React.FC = () => {
                 render: (level: number) => <Tag color='blue'>Lv {level ?? 0}</Tag>,
               },
               {
-                title: 'Trạng thái SRS',
+                title: 'SRS Status',
                 key: 'srsStatus',
                 width: 140,
                 render: (_: any, record: IItem) => (
-                  <Tag color='warning' icon={<ClockCircleOutlined />}>
-                    {getDueDurationText(record)}
-                  </Tag>
+                  <Tag color='warning'>{getDueDurationText(record)}</Tag>
                 ),
               },
               {
-                title: 'Định nghĩa / Dịch',
+                title: 'Definition / Translation',
                 key: 'meaning',
                 ellipsis: true,
                 render: (_: any, record: IItem) => {
                   const m = record.meanings?.[0]
-                  return m?.definition || m?.translation || ''
+                  return (
+                    <div
+                      style={{ whiteSpace: 'pre-wrap' }}
+                      dangerouslySetInnerHTML={{ __html: m?.definition || m?.translation || '' }}
+                    />
+                  )
                 },
               },
             ]}

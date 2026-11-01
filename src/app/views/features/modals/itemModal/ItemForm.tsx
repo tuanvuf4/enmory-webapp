@@ -1049,7 +1049,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
               <CompassOutlined />
               <span>Nguồn tra cứu:</span>
             </Flex>
-            <Reference origin={origin} onSelect={(ref) => handleAutoFill(ref.src)} />
+            <Reference origin={origin} />
           </div>
         )}
       </div>

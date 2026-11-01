@@ -116,7 +116,7 @@ const SettingRow = ({ label, hint, children, last }: SettingRowProps) => {
         gutter={[token.size, token.sizeXS]}
         style={{ padding: `${token.sizeXS}px 0` }}
       >
-        <Col xs={24} sm={14}>
+        <Col xs={18} sm={14}>
           <Text style={{ fontWeight: 500, color: token.colorText }}>{label}</Text>
           {hint && (
             <div>
@@ -126,7 +126,7 @@ const SettingRow = ({ label, hint, children, last }: SettingRowProps) => {
             </div>
           )}
         </Col>
-        <Col xs={24} sm={10} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Col xs={6} sm={10} style={{ display: 'flex', justifyContent: 'flex-end' }}>
           {children}
         </Col>
       </Row>

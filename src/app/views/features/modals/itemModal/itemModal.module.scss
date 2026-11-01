@@ -4,21 +4,6 @@
   color: $color-white;
 }
 
-.showMeaningOption {
-  & p {
-    margin: 0;
-  }
-
-  & ul {
-    padding-left: $size * 1;
-
-    & li {
-      display: list-item;
-      word-break: break-word;
-    }
-  }
-}
-
 .contentStyle {
   padding: 12px;
   border: 1px solid var(--ant-color-border-secondary, rgba(130, 115, 255, 0.18));
@@ -405,7 +390,7 @@
   gap: 8px;
   flex: 1;
   min-width: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .meaningHeaderRight {
@@ -441,10 +426,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 380px;
-
-  p {
-    margin: 0;
+  
+  & p {
     display: inline;
+    margin: 0;
+  }
+
+  & ul {
+    padding-left: $size * 1;
+
+    & li {
+      display: list-item;
+      word-break: break-word;
+    }
   }
 }
 

@@ -14,12 +14,11 @@ export interface IReferenceItem {
 interface IPros {
   style?: React.CSSProperties
   origin: string
-  onSelect?: (reference: IReferenceItem) => void
   loadingId?: number | null
   autoFill?: boolean
 }
 
-export const Reference: React.FC<IPros> = ({ origin, style, onSelect, loadingId }) => {
+export const Reference: React.FC<IPros> = ({ origin, style, loadingId }) => {
   const { token } = theme.useToken()
   const { user } = useSelector((state) => state.auth)
 
@@ -45,17 +44,9 @@ export const Reference: React.FC<IPros> = ({ origin, style, onSelect, loadingId 
               type='text'
               loading={loadingId === reference.id}
               disabled={!!loadingId && loadingId !== reference.id}
-              title={
-                onSelect
-                  ? `Click to auto-fill with ${reference.src} (Ctrl+Click to open link)`
-                  : `Open ${reference.src}`
-              }
-              onClick={(e) => {
-                if (e.ctrlKey || e.metaKey || !onSelect) {
-                  window.open(reference.url + origin, reference.target)
-                  return
-                }
-                onSelect(reference)
+              title={reference.src}
+              onClick={() => {
+                window.open(reference.url + origin, reference.target)
               }}
             >
               {reference.src}

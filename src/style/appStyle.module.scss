@@ -181,10 +181,6 @@ $footer-background: #fff;
   display: none !important;
 }
 
-.xsOnly {
-  display: none !important;
-}
-
 .toXs {
   display: none !important;
 }
@@ -273,9 +269,18 @@ $footer-background: #fff;
   }
 }
 
+.fromMd {
+  display: block !important;
+}
+
+.fromMdFlex {
+  display: flex !important;
+}
+
 @media screen and (max-width: 767px) {
-  .xsOnly {
-    display: block !important;
+  .fromMd,
+  .fromMdFlex {
+    display: none !important;
   }
 }
 
@@ -293,12 +298,6 @@ $footer-background: #fff;
 
 @media screen and (min-width: 576px) {
   .fromXs {
-    display: block !important;
-  }
-}
-
-@media screen and (max-width: 1024px) {
-  .xsOnly {
     display: block !important;
   }
 }

@@ -5,7 +5,7 @@ import {
   PlusOutlined,
   TranslationOutlined,
 } from '@ant-design/icons'
-import { Button, Checkbox, Col, Flex, Input, Row, Select, Space, Tag, theme } from 'antd'
+import { Button, Checkbox, Col, Flex, Input, Row, Select, Space, Tag, theme, Tooltip } from 'antd'
 import clsx from 'clsx'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form'
@@ -35,6 +35,7 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
 
   const [show, setShow] = useState<boolean[]>([])
   const [onlyCommon, setOnlyCommon] = useState<boolean>(false)
+  const [onlyEnable, setOnlyEnable] = useState<boolean>(false)
   const { types } = useSelector((state) => state.setting)
 
   const { confirm } = usePrompt()
@@ -55,6 +56,9 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
   )
   const commonCount = fields.filter((field, idx) =>
     Boolean(meaningsValues[idx]?.common ?? (field as any).common),
+  ).length
+  const enableCount = fields.filter((field, idx) =>
+    Boolean(meaningsValues[idx]?.enable ?? (field as any).enable),
   ).length
   const totalCount = fields.length
   const nonCommonCount = totalCount - commonCount
@@ -130,12 +134,24 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                 onClick={() => setOnlyCommon((prev) => !prev)}
                 style={{ fontSize: 12, borderRadius: 6 }}
               >
-                {`Common (${commonCount})`}
+                {`C (${commonCount})`}
+              </Button>
+            )}
+
+            {enableCount > 0 && (
+              <Button
+                size='small'
+                type={onlyEnable ? 'primary' : 'default'}
+                ghost={onlyEnable}
+                onClick={() => setOnlyEnable((prev) => !prev)}
+                style={{ fontSize: 12, borderRadius: 6 }}
+              >
+                {`E (${enableCount})`}
               </Button>
             )}
 
             <Button size='small' type='primary' icon={<PlusOutlined />} onClick={handleAddMeaning}>
-              Thêm nghĩa
+              Add
             </Button>
           </Flex>
         </Flex>
@@ -195,12 +211,14 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                   style={{ color: token.colorPrimary }}
                 />
 
-                <Tag
-                  color={isCommon ? 'gold' : 'default'}
-                  style={{ fontWeight: 600, margin: 0, borderRadius: 4 }}
-                >
-                  #{index + 1}
-                </Tag>
+                <div className={show[index] ? appStyle.fromMd : undefined}>
+                  <Tag
+                    color={isCommon ? 'gold' : 'default'}
+                    style={{ fontWeight: 600, margin: 0, borderRadius: 4 }}
+                  >
+                    #{index + 1}
+                  </Tag>
+                </div>
 
                 {show[index] && catType === ECategory.WORD && (
                   <Controller
@@ -226,15 +244,28 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                       </Tag>
                     )}
 
-                    <div
-                      className={clsx(styles.collapsedTranslation, styles.showMeaningOption)}
-                      dangerouslySetInnerHTML={{
-                        __html:
-                          getValues(`meanings.${index}.translation`) ||
-                          getValues(`meanings.${index}.definition`) ||
-                          '<span style="opacity: 0.5">(Chưa có nghĩa)</span>',
-                      }}
-                    />
+                    <Tooltip
+                      title={
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html:
+                              getValues(`meanings.${index}.translation`) ||
+                              getValues(`meanings.${index}.definition`) ||
+                              '<span style="opacity: 0.5">(Chưa có nghĩa)</span>',
+                          }}
+                        />
+                      }
+                    >
+                      <div
+                        className={clsx(styles.collapsedTranslation)}
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            getValues(`meanings.${index}.translation`) ||
+                            getValues(`meanings.${index}.definition`) ||
+                            '<span style="opacity: 0.5">(Chưa có nghĩa)</span>',
+                        }}
+                      />
+                    </Tooltip>
                   </Flex>
                 )}
               </Flex>
@@ -244,9 +275,15 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                   control={control}
                   name={`meanings.${index}.common`}
                   render={({ field: { onChange, value } }) => (
-                    <Checkbox checked={value} onChange={onChange}>
-                      <span style={{ fontSize: 12, fontWeight: 500 }}>Common</span>
-                    </Checkbox>
+                    <Tooltip title='Common'>
+                      <Checkbox
+                        checked={value}
+                        onChange={onChange}
+                        className={show[index] ? undefined : appStyle.fromMdFlex}
+                      >
+                        <span style={{ fontSize: 12, fontWeight: 500 }}>C</span>
+                      </Checkbox>
+                    </Tooltip>
                   )}
                 />
 
@@ -254,15 +291,15 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                   control={control}
                   name={`meanings.${index}.enable`}
                   render={({ field: { onChange, value } }) => (
-                    <Checkbox
-                      checked={value}
-                      onChange={(e) => {
-                        onChange(e)
-                        trigger()
-                      }}
-                    >
-                      <span style={{ fontSize: 12, fontWeight: 500 }}>Enable</span>
-                    </Checkbox>
+                    <Tooltip title='Enable'>
+                      <Checkbox
+                        checked={value}
+                        className={show[index] ? undefined : appStyle.fromMdFlex}
+                        onChange={onChange}
+                      >
+                        <span style={{ fontSize: 12, fontWeight: 500 }}>E</span>
+                      </Checkbox>
+                    </Tooltip>
                   )}
                 />
 
@@ -325,7 +362,6 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                                 onChange={(e) =>
                                   field.onChange(sanitizePronunciation(e.target.value))
                                 }
-                                placeholder='UK (/.../)'
                                 onBlur={() => trigger()}
                                 onInput={(e) => {
                                   const input = e.target as HTMLInputElement
@@ -347,7 +383,6 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                                 onChange={(e) =>
                                   field.onChange(sanitizePronunciation(e.target.value))
                                 }
-                                placeholder='US (/.../)'
                                 onBlur={() => trigger()}
                                 onInput={(e) => {
                                   const input = e.target as HTMLInputElement

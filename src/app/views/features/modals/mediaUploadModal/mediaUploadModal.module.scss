@@ -6,14 +6,10 @@
 
 .sectionCard {
   background: var(--ant-color-bg-container);
-  border: 1px solid var(--ant-color-border-secondary);
+  border: 1px solid var(--ant-color-border);
   border-radius: 10px;
   padding: 16px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    border-color: var(--ant-color-border);
-  }
 }
 
 .sectionHeader {

@@ -7,12 +7,29 @@ import {
   FileTextOutlined,
   LinkOutlined,
   SoundOutlined,
-  LoadingOutlined,
   MinusOutlined,
+  FormatPainterOutlined,
+  DownOutlined,
+  AlignLeftOutlined,
+  GlobalOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { theme, Input, Row, Col, Button, Select, Flex, Switch, Tag, Typography, Spin } from 'antd'
+import {
+  theme,
+  Input,
+  Row,
+  Col,
+  Button,
+  Select,
+  Flex,
+  Switch,
+  Tag,
+  Typography,
+  Spin,
+  Dropdown,
+} from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { appSetting } from '@/config/appConfig'
 import { IMediaForm, ITracks } from '@/models/media.model'
@@ -29,6 +46,8 @@ import {
   geminiVocabClassifierService,
   geminiTranscriptService,
 } from '@/services/gemini'
+import { browserTranslatorService } from '@/services/browserTranslator.service'
+import { formatTranscriptIntoSentences } from '@/views/features/player/transcriptUtils'
 import { IClassifiedVocabItem } from '@/models/vocabClassification.model'
 import { useModal, useCurrentModal } from '@/context/modal.context'
 import styles from './mediaUploadModal.module.scss'
@@ -49,6 +68,8 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
   const [saveStatus, setSaveStatus] = useState<string>('')
   const [autoClassifyVocab, setAutoClassifyVocab] = useState<boolean>(true)
   const [isTranslating, setIsTranslating] = useState(false)
+  const [isBrowserTranslating, setIsBrowserTranslating] = useState(false)
+  const [isFormatting, setIsFormatting] = useState(false)
   const dispatch = useDispatch()
   const { updateModal, minimizeModal } = useModal()
   const currentModal = useCurrentModal()
@@ -124,6 +145,7 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
   }, [isEditing])
 
   const trackTitle = watch('title')
+  const srcUrl = watch('srcUrl')
   useEffect(() => {
     if (trackTitle?.trim()) {
       updateModal({
@@ -174,53 +196,149 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
 
     try {
       setIsTranslating(true)
-      updateModal({
-        isMinimized: true,
-        minimizeInfo: {
-          title: 'Dịch transcript',
-          tooltip: 'Gemini AI đang dịch transcript...',
-          status: 'processing',
-          icon: <TranslationOutlined spin style={{ color: '#1677ff' }} />,
-        },
-      })
-      message({
-        type: 'info',
-        content: 'Biểu mẫu đã thu nhỏ xuống nút tròn góc phải trong khi Gemini đang dịch...',
-        duration: 3,
-      })
       const result = await geminiTranscriptService.translateTranscript(transcript)
       if (result) {
         setValue('translation', result, { shouldValidate: true, shouldDirty: true })
-        updateModal({
-          minimizeInfo: {
-            title: 'Dịch transcript',
-            tooltip: 'Gemini đã dịch xong transcript!',
-            status: 'success',
-            icon: <SoundOutlined />,
-          },
-        })
         message({
           type: 'success',
-          content: 'Đã dịch transcript sang tiếng Việt thành công! Nhấn nút tròn để mở lại.',
+          content: 'Translated successfully! Click the circular button to reopen.',
           key: 'translating-transcript',
         })
       }
     } catch (err: any) {
-      updateModal({
-        minimizeInfo: {
-          title: 'Dịch transcript',
-          tooltip: 'Có lỗi xảy ra khi dịch transcript.',
-          status: 'error',
-          icon: <SoundOutlined />,
-        },
-      })
       message({
         type: 'error',
-        content: err?.message || 'Có lỗi xảy ra khi dịch transcript.',
+        content: err?.message || 'An error occurred while translating the transcript.',
         key: 'translating-transcript',
       })
     } finally {
       setIsTranslating(false)
+    }
+  }
+
+  // Handle translation from current transcript using browser API Translator
+  const handleTranslateFromTranscriptBrowser = async () => {
+    const transcript = (getValues('transcript') || '').trim()
+    if (!transcript) {
+      message({
+        type: 'warning',
+        content: 'Vui lòng nhập hoặc tạo nội dung Transcript trước khi dịch.',
+      })
+      return
+    }
+
+    try {
+      const support = await browserTranslatorService.checkSupport('en', 'vi')
+      if (!support.isSupported) {
+        message({
+          type: 'warning',
+          content:
+            support.message ||
+            'Trình duyệt chưa hỗ trợ Browser Translator API. Hãy dùng Chrome 131+ hoặc sử dụng nút "Dịch từ Transcript (AI)".',
+          duration: 6,
+        })
+        return
+      }
+
+      setIsBrowserTranslating(true)
+
+      const result = await browserTranslatorService.translateTranscript(transcript, {
+        sourceLanguage: 'en',
+        targetLanguage: 'vi',
+      })
+
+      if (result) {
+        setValue('translation', result, { shouldValidate: true, shouldDirty: true })
+        message({
+          type: 'success',
+          content: 'Translated Successfully!',
+          key: 'browser-translating',
+        })
+      }
+    } catch (err: any) {
+      message({
+        type: 'error',
+        content: err?.message || 'Có lỗi xảy ra khi dịch bằng Browser Translator.',
+        key: 'browser-translating',
+      })
+    } finally {
+      setIsBrowserTranslating(false)
+    }
+  }
+
+  // Fast client-side sentence formatting
+  const handleFastFormatTranscript = () => {
+    const transcript = (getValues('transcript') || '').trim()
+    if (!transcript) {
+      message({
+        type: 'warning',
+        content: 'Vui lòng nhập hoặc dán nội dung transcript trước khi Format.',
+      })
+      return
+    }
+
+    try {
+      const result = formatTranscriptIntoSentences(transcript)
+      if (result.formattedText) {
+        setValue('transcript', result.formattedText, { shouldValidate: true, shouldDirty: true })
+        message({
+          type: 'success',
+          content: `Đã định dạng lại transcript thành ${result.sentenceCount} câu hoàn chỉnh!`,
+        })
+
+        if (!result.hasPunctuation && result.sentenceCount > 0) {
+          message({
+            type: 'info',
+            content:
+              'Mẹo: Transcript gốc thiếu dấu câu. Bạn có thể nhấn mũi tên cạnh nút Format và chọn "Format bằng AI" để tự động thêm dấu câu chuẩn xác.',
+            duration: 5,
+          })
+        }
+      }
+    } catch (err: any) {
+      message({
+        type: 'error',
+        content: err?.message || 'Có lỗi xảy ra khi format transcript.',
+      })
+    }
+  }
+
+  // AI-assisted sentence formatting with Gemini
+  const handleAiFormatTranscript = async () => {
+    const transcript = (getValues('transcript') || '').trim()
+    if (!transcript) {
+      message({
+        type: 'warning',
+        content: 'Vui lòng nhập hoặc dán nội dung transcript trước khi Format.',
+      })
+      return
+    }
+
+    try {
+      setIsFormatting(true)
+      message({
+        type: 'info',
+        content: 'Gemini AI đang sắp xếp và chuẩn hóa các câu transcript theo mốc thời gian...',
+        duration: 3,
+        key: 'ai-formatting',
+      })
+      const result = await geminiTranscriptService.formatTranscriptWithAI(transcript)
+      if (result) {
+        setValue('transcript', result, { shouldValidate: true, shouldDirty: true })
+        message({
+          type: 'success',
+          content: 'Đã hoàn tất format transcript bằng Gemini AI!',
+          key: 'ai-formatting',
+        })
+      }
+    } catch (err: any) {
+      message({
+        type: 'error',
+        content: err?.message || 'Có lỗi xảy ra khi format bằng AI.',
+        key: 'ai-formatting',
+      })
+    } finally {
+      setIsFormatting(false)
     }
   }
 
@@ -530,14 +648,43 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
                     )}
                   </span>
 
-                  <Button
-                    type='primary'
-                    size='small'
-                    icon={<RobotOutlined />}
-                    onClick={() => setOpenGenerateModal(true)}
-                  >
-                    Tự động tạo (AI)
-                  </Button>
+                  <Flex gap={8} align='center'>
+                    <Dropdown.Button
+                      size='small'
+                      icon={<DownOutlined />}
+                      loading={isFormatting}
+                      onClick={handleFastFormatTranscript}
+                      menu={{
+                        items: [
+                          {
+                            key: 'fast',
+                            label: 'Format (Native)',
+                            icon: <AlignLeftOutlined />,
+                            onClick: handleFastFormatTranscript,
+                          },
+                          {
+                            key: 'ai',
+                            label: 'AI Format (Gemini)',
+                            icon: <RobotOutlined />,
+                            onClick: handleAiFormatTranscript,
+                          },
+                        ],
+                      }}
+                    >
+                      <FormatPainterOutlined /> Format
+                    </Dropdown.Button>
+
+                    {!srcUrl?.trim() && (
+                      <Button
+                        type='primary'
+                        size='small'
+                        icon={<RobotOutlined />}
+                        onClick={() => setOpenGenerateModal(true)}
+                      >
+                        AI Generate
+                      </Button>
+                    )}
+                  </Flex>
                 </div>
 
                 <Controller
@@ -553,7 +700,7 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
                 />
                 <div className={styles.helperText}>
                   Mỗi câu thoại nên bắt đầu bằng mốc thời gian dạng <code>0:00</code> hoặc{' '}
-                  <code>1:25</code> để đồng bộ Karaoke.
+                  <code>1:25</code> để đồng bộ.
                 </div>
               </div>
             </Col>
@@ -570,17 +717,36 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
                       </span>
                     )}
                   </span>
-
-                  <Button
-                    type='primary'
-                    ghost
-                    size='small'
-                    icon={isTranslating ? <LoadingOutlined /> : <TranslationOutlined />}
-                    loading={isTranslating}
-                    onClick={handleTranslateFromTranscript}
-                  >
-                    Dịch từ Transcript (AI)
-                  </Button>
+                  <Flex gap={8} align='center'>
+                    <Dropdown.Button
+                      size='small'
+                      icon={<DownOutlined />}
+                      onClick={handleTranslateFromTranscriptBrowser}
+                      menu={{
+                        items: [
+                          {
+                            key: 'browser',
+                            label: 'Translate (Native)',
+                            icon: <GlobalOutlined />,
+                            onClick: handleTranslateFromTranscriptBrowser,
+                          },
+                          {
+                            key: 'gemini',
+                            label: 'AI Translate (Gemini)',
+                            icon: <RobotOutlined />,
+                            onClick: handleTranslateFromTranscript,
+                          },
+                        ],
+                      }}
+                    >
+                      {isBrowserTranslating || isTranslating ? (
+                        <LoadingOutlined />
+                      ) : (
+                        <GlobalOutlined />
+                      )}{' '}
+                      Translate
+                    </Dropdown.Button>
+                  </Flex>
                 </div>
 
                 <Controller

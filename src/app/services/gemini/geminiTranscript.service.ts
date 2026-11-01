@@ -303,6 +303,62 @@ CRITICAL REQUIREMENTS:
     }
     throw lastError || new Error('Không thể dịch transcript bằng Gemini.')
   },
+
+  /**
+   * Reorganizes raw subtitle/transcript text into full, natural sentences with timestamps using Gemini AI.
+   * Useful when transcripts lack punctuation or have complex sentence breaks.
+   */
+  formatTranscriptWithAI: async (
+    transcript: string,
+    preferredModel?: TGeminiModel,
+  ): Promise<string> => {
+    const clean = transcript.trim()
+    if (!clean) return ''
+    const ai = getGeminiClient()
+
+    const systemInstruction = `You are an expert audio transcript editor and linguistic specialist.
+Your task is to reformat and reorganize the provided audio transcript into complete, grammatically sound sentences aligned with their starting timestamps.
+
+CRITICAL REQUIREMENTS:
+1. Merge fragmented subtitle lines into complete sentences.
+2. Each segment MUST begin with the timestamp marker (M:SS or H:MM:SS) of when that sentence began (e.g. 0:13).
+3. Under each timestamp marker, output the full sentence with proper grammar, punctuation (. ? !), and capitalization.
+4. Remove non-speech audio sound tags like (Laughter), [Applause], (Music), [Cheering], (Silence).
+5. Separate segments with a blank line.
+6. Do NOT invent new facts or alter the speaker's original meaning or vocabulary.
+7. Return ONLY the formatted transcript text with timestamps. Do not include markdown codeblocks or commentary.`
+
+    const modelCandidates = preferredModel
+      ? [preferredModel, ...CANDIDATE_GEMINI_MODELS.filter((m) => m !== preferredModel)]
+      : CANDIDATE_GEMINI_MODELS
+
+    let lastError: any = null
+    for (const model of modelCandidates) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: clean,
+          config: {
+            systemInstruction,
+            temperature: 0.2,
+          },
+        })
+        let text = response.text?.trim() || ''
+        text = text
+          .replace(/^```(?:text|markdown)?\s*/i, '')
+          .replace(/```\s*$/i, '')
+          .trim()
+        if (text) return text
+      } catch (err: any) {
+        lastError = err
+        console.warn(
+          `Gemini transcript formatting with ${model} failed, trying fallback:`,
+          err?.message || err,
+        )
+      }
+    }
+    throw lastError || new Error('Không thể định dạng transcript bằng Gemini.')
+  },
 }
 
 export const transcriptService = geminiTranscriptService

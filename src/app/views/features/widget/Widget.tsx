@@ -30,15 +30,13 @@ export const Widget: React.FC<PropsWithChildren & IProps> = ({ children, title, 
       )}
 
       <div
-        className='p-4 rounded-lg border transition-all duration-300'
+        className='rounded-lg transition-[border-color,box-shadow] duration-300'
         style={{
           padding: token.size,
           borderRadius: token.borderRadius,
           background: token.colorBgWidget,
           border: `1px solid ${token.colorBorder}`,
           boxShadow: token.boxShadow,
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
           ...styles?.content,
         }}
       >

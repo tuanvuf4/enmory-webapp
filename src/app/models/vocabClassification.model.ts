@@ -21,6 +21,7 @@ export interface IClassifiedVocabItem {
   meaning: string
   vietnamese: string
   context?: string
+  contextTranslation?: string
   notes?: string
 }
 

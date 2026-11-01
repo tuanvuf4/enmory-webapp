@@ -43,6 +43,7 @@ import {
 import {
   geminiVocabClassifierService,
   getTranscriptHash,
+  findFullSegmentForVocab,
 } from '@/services/gemini/geminiVocabClassifier.service'
 import { tracksApi } from '@/services/firebase/api/tracks.api'
 import { usePrompt, useItemModal } from '@/helpers/hooks'
@@ -132,8 +133,11 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
     return map
   }, [localItems])
 
-  // Parse transcript segments for timestamp seeking
-  const segments = useMemo(() => parseTranscript(transcript || ''), [transcript])
+  // Parse transcript segments for timestamp seeking and bilingual translation mapping
+  const segments = useMemo(
+    () => parseTranscript(transcript || '', track?.translation || ''),
+    [transcript, track?.translation],
+  )
 
   // Cache key based on trackId or transcript content hash
   const currentKey = useMemo(() => {
@@ -141,6 +145,19 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
     if (transcript) return getTranscriptHash(transcript)
     return ''
   }, [track?.id, transcript])
+
+  // Helper to ensure every classified item has the complete segment text and translation as context
+  const enrichItemsWithFullContext = (items: IClassifiedVocabItem[]): IClassifiedVocabItem[] => {
+    if (!segments || segments.length === 0 || !items || items.length === 0) return items
+    return items.map((it) => {
+      const match = findFullSegmentForVocab(it.text, it.context || '', segments)
+      return {
+        ...it,
+        context: match.text || it.context,
+        contextTranslation: match.translation || it.contextTranslation || '',
+      }
+    })
+  }
 
   // Hydrate classification data on track change
   useEffect(() => {
@@ -153,7 +170,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
     if (track?.vocabClassification && track.vocabClassification.length > 0) {
       setClassificationData({
         trackId: track.id,
-        items: track.vocabClassification,
+        items: enrichItemsWithFullContext(track.vocabClassification),
         summary: `Đã phân loại ${track.vocabClassification.length} từ vựng, cụm từ & collocation theo chuẩn CEFR.`,
         updatedAt: Date.now(),
       })
@@ -164,13 +181,16 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
     if (currentKey) {
       const cached = geminiVocabClassifierService.getCached(currentKey)
       if (cached && cached.items?.length > 0) {
-        setClassificationData(cached)
+        setClassificationData({
+          ...cached,
+          items: enrichItemsWithFullContext(cached.items),
+        })
         return
       }
     }
 
     setClassificationData(null)
-  }, [track?.id, track?.vocabClassification, transcript, currentKey])
+  }, [track?.id, track?.vocabClassification, transcript, currentKey, segments])
 
   // Perform AI Classification
   const handleClassify = async () => {
@@ -184,10 +204,20 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
 
     try {
       setLoading(true)
-      const res = await geminiVocabClassifierService.classifyTranscript(transcript, track?.id)
+      const res = await geminiVocabClassifierService.classifyTranscript(
+        transcript,
+        track?.id,
+        undefined,
+        track?.translation,
+      )
 
       if (res.isSuccess && res.content) {
-        setClassificationData(res.content)
+        const enrichedItems = enrichItemsWithFullContext(res.content.items)
+        const enrichedData = {
+          ...res.content,
+          items: enrichedItems,
+        }
+        setClassificationData(enrichedData)
         message({
           type: 'success',
           content: `Phân loại thành công ${res.content.items.length} từ vựng & cụm từ bằng Gemini!`,
@@ -198,13 +228,13 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
           dispatch(
             listeningAction.updateTrack({
               ...track,
-              vocabClassification: res.content.items,
+              vocabClassification: enrichedItems,
             } as ITracks),
           )
 
           try {
             await tracksApi.updateTrack(String(track.id), {
-              vocabClassification: res.content.items,
+              vocabClassification: enrichedItems,
             } as any)
           } catch (updateErr) {
             console.warn('[TranscriptVocabTabs] Firestore updateTrack failed:', updateErr)
@@ -318,7 +348,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
             ? [
                 {
                   origin: item.context,
-                  translation: '',
+                  translation: item.contextTranslation || '',
                 },
               ]
             : [],
@@ -363,13 +393,15 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
     if (!segments || segments.length === 0) return
 
     const cleanWord = item.text.toLowerCase().trim()
-    const cleanContext = (item.context || '').toLowerCase()
+    const cleanContext = (item.context || '').toLowerCase().trim()
 
-    // Find matching segment
+    // Find matching segment: exact context match first, then prefix, then word match
     let matchedSeg = segments.find(
       (s) =>
-        s.text.toLowerCase().includes(cleanWord) ||
-        (cleanContext && s.text.toLowerCase().includes(cleanContext.slice(0, 30))),
+        (cleanContext &&
+          (s.text.toLowerCase() === cleanContext ||
+            s.text.toLowerCase().includes(cleanContext.slice(0, 30)))) ||
+        s.text.toLowerCase().includes(cleanWord),
     )
 
     if (matchedSeg) {
@@ -503,6 +535,9 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
           <div className={styles.contextBox}>
             <div className={styles.contextLabel}>🎧 Ngữ cảnh trong bài nghe:</div>
             <div className={styles.contextText}>"{item.context}"</div>
+            {item.contextTranslation && (
+              <div className={styles.contextTranslation}>🇻🇳 "{item.contextTranslation}"</div>
+            )}
           </div>
         )}
 

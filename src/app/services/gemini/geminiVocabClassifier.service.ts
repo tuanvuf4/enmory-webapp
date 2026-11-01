@@ -12,8 +12,75 @@ import { resolveGeminiApiKey } from './geminiDictionary.service'
 import { resolveOpenAiApiKey } from '../openai/tts.service'
 import { DEFAULT_GEMINI_MODEL, GEMINI_MODELS, TGeminiModel } from './geminiModels'
 import { generateContentWithTracking } from './geminiTracker.service'
+import { parseTranscript } from '@/views/features/player/transcriptUtils'
 
 const STORAGE_PREFIX = 'enmory_transcript_vocab_'
+
+export interface ISegmentContextMatch {
+  text: string
+  translation?: string
+}
+
+/**
+ * Matches an item or context snippet against the list of full segments to retrieve the entire segment text and its translation.
+ */
+export const findFullSegmentForVocab = (
+  itemText: string,
+  contextSnippet: string,
+  segments: (string | { text: string; translation?: string })[],
+): ISegmentContextMatch => {
+  if (!segments || segments.length === 0) return { text: contextSnippet || '' }
+
+  const normalizedSegs: { text: string; translation?: string }[] = segments.map((s) =>
+    typeof s === 'string' ? { text: s } : s,
+  )
+
+  const cleanContext = (contextSnippet || '').trim().toLowerCase()
+  const cleanItem = (itemText || '').trim().toLowerCase()
+
+  // 1. Try finding by contextSnippet first (since Gemini's context snippet usually points directly to the sentence)
+  if (cleanContext) {
+    const matched = normalizedSegs.find((seg) => {
+      const segLower = seg.text.toLowerCase()
+      if (segLower.includes(cleanContext)) return true
+      if (cleanContext.length > 25) {
+        const head = cleanContext.slice(0, 25)
+        const tail = cleanContext.slice(-25)
+        if (segLower.includes(head) || segLower.includes(tail)) return true
+      }
+      return false
+    })
+    if (matched) return { text: matched.text.trim(), translation: matched.translation?.trim() }
+  }
+
+  // 2. If no match via contextSnippet, try matching itemText as a whole word
+  if (cleanItem) {
+    try {
+      const escaped = cleanItem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const wordRegex = new RegExp(`(^|\\W)${escaped}(\\W|$)`, 'i')
+      const matched = normalizedSegs.find((seg) => wordRegex.test(seg.text))
+      if (matched) return { text: matched.text.trim(), translation: matched.translation?.trim() }
+    } catch {
+      // Continue to next heuristic if regex construction failed
+    }
+
+    // 3. Fallback: Substring match of cleanItem in segment
+    const matched = normalizedSegs.find((seg) => seg.text.toLowerCase().includes(cleanItem))
+    if (matched) return { text: matched.text.trim(), translation: matched.translation?.trim() }
+
+    // 4. If item is a phrase or multi-word, check if the first 2 words appear in a segment
+    const words = cleanItem.split(/\s+/).filter(Boolean)
+    if (words.length > 1) {
+      const firstTwo = `${words[0]} ${words[1]}`
+      const matchedPhrase = normalizedSegs.find((seg) => seg.text.toLowerCase().includes(firstTwo))
+      if (matchedPhrase) {
+        return { text: matchedPhrase.text.trim(), translation: matchedPhrase.translation?.trim() }
+      }
+    }
+  }
+
+  return { text: contextSnippet || '' }
+}
 
 /**
  * Clean transcript text by removing timestamps (e.g. "0:00", "1:23") and HTML tags
@@ -151,6 +218,7 @@ export const geminiVocabClassifierService = {
     transcript: string,
     trackId?: string | number,
     preferredModel: TGeminiModel = DEFAULT_GEMINI_MODEL,
+    translation?: string,
   ): Promise<IHttpResponse<ITranscriptClassificationData>> => {
     try {
       const geminiApiKey = resolveGeminiApiKey()
@@ -205,7 +273,8 @@ REQUIREMENTS:
    - "phonetic": Accurate IPA pronunciation (e.g. "/ˈbɑːtl.nek/")
    - "meaning": Clear, concise English definition
    - "vietnamese": Natural, accurate Vietnamese translation of this meaning
-   - "context": The exact sentence or dialogue snippet from the transcript where this term appears
+   - "context": The ENTIRE, complete text of the audio segment from the transcript where this term appears. You MUST take the full segment text containing the term (do NOT shorten, truncate, or extract only a few words).
+   - "context_translation": Natural Vietnamese translation of this complete context segment
    - "notes": Optional brief usage note, preposition, or register note (in Vietnamese or English)
 
 Provide a rich set of items (aim for 15-35 distinct items covering all levels A1 to C2).
@@ -223,6 +292,7 @@ Return ONLY valid JSON matching this structure:
       "meaning": "A short daily team meeting to review progress and blockers",
       "vietnamese": "cuộc họp nhanh hàng ngày để cập nhật tiến độ",
       "context": "Alex: Good morning team, let's start the standup.",
+      "context_translation": "Alex: Chào buổi sáng cả đội, chúng ta bắt đầu cuộc họp nhanh nhé.",
       "notes": "Common in Agile/Scrum software development"
     }
   ]
@@ -317,12 +387,29 @@ Return ONLY valid JSON matching this structure:
           ? parsedResponse
           : []
 
+      // Extract full segment texts and translations from the original transcript
+      const segments = parseTranscript(transcript, translation)
+      const segmentList: (string | { text: string; translation?: string })[] =
+        segments.length > 0
+          ? segments
+          : transcript
+              .split(/\r?\n\s*\r?\n/)
+              .map((s) => ({ text: s.trim() }))
+              .filter((s) => s.text)
+
       const items: IClassifiedVocabItem[] = rawItems
         .filter((it) => it && (it.text || it.word))
         .map((it, idx) => {
           const text = (it.text || it.word || '').trim()
           const level = normalizeCefrLevel(it.level)
           const category = normalizeCategory(it.category || it.type)
+          const rawContext = (it.context || it.example || '').trim()
+          const aiContextTrans = (it.context_translation || it.contextTranslation || '').trim()
+
+          const match = findFullSegmentForVocab(text, rawContext, segmentList)
+          const fullContext = match.text || rawContext
+          const fullContextTrans = match.translation || aiContextTrans || ''
+
           return {
             id: it.id || `item_${idx}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
             text,
@@ -332,7 +419,8 @@ Return ONLY valid JSON matching this structure:
             phonetic: it.phonetic || '',
             meaning: (it.meaning || it.definition || '').trim(),
             vietnamese: (it.vietnamese || it.translation || '').trim(),
-            context: (it.context || it.example || '').trim(),
+            context: fullContext,
+            contextTranslation: fullContextTrans,
             notes: (it.notes || it.note || '').trim(),
           }
         })

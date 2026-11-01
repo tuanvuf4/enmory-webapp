@@ -383,6 +383,8 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
           const classifyRes = await geminiVocabClassifierService.classifyTranscript(
             currentTranscript,
             trackData?.id,
+            undefined,
+            data.translation,
           )
           if (classifyRes.isSuccess && classifyRes.content?.items?.length) {
             classifiedVocab = classifyRes.content.items

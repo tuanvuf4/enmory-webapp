@@ -2,16 +2,16 @@ import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
 import { useDeleteBlogCategory, useUpdateBlogCategory } from '@/core/hooks/useBlogCategories'
 import { DEFAULT_TAG_COLOR, DEFAULT_TAG_ORDER } from '@/models/tag.model'
 import {
-  Table,
   Button,
-  Space,
-  Popconfirm,
-  theme,
+  ColorPicker,
   Empty,
   Input,
   InputNumber,
-  ColorPicker,
+  Popconfirm,
+  Space,
+  Table,
   Tag,
+  theme,
 } from 'antd'
 import { EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import type { TableProps } from 'antd'

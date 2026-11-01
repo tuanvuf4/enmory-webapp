@@ -49,7 +49,7 @@ const SectionCard = ({ icon, title, description, children }: SectionCardProps) =
     <Card
       style={{
         borderRadius: token.borderRadiusLG,
-        border: `1px solid ${token.colorBorderSecondary}`,
+        border: `1px solid ${token.colorBorder}`,
         boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
         overflow: 'hidden',
       }}
@@ -62,7 +62,7 @@ const SectionCard = ({ icon, title, description, children }: SectionCardProps) =
           alignItems: 'center',
           gap: token.sizeSM,
           padding: `${token.sizeMD}px ${token.sizeLG}px`,
-          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+          borderBottom: `1px solid ${token.colorBorder}`,
           background: token.colorFillAlter,
         }}
       >
@@ -390,7 +390,7 @@ const Setting = () => {
                             justifyContent: 'space-between',
                             padding: `${token.sizeXS}px ${token.sizeSM}px`,
                             borderRadius: token.borderRadius,
-                            border: `1px solid ${isActive ? token.colorPrimary : token.colorBorderSecondary}`,
+                            border: `1px solid ${isActive ? token.colorPrimary : token.colorBorder}`,
                             background: isActive ? token.colorPrimaryBg : token.colorBgContainer,
                             cursor: 'pointer',
                             transition: 'all 0.2s',

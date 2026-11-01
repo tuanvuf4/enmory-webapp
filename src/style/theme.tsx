@@ -245,6 +245,8 @@ export const appTheme: ThemeConfig = {
       borderRadius: 14,
       colorBgContainer: '#ffffff',
       colorBorder: '#dddff2',
+      borderColor: '#dddff2',
+      headerSplitColor: '#dddff2',
     },
     Badge: {
       colorBgContainer: '#f0f0f0',
@@ -521,6 +523,8 @@ export const appDarkTheme: ThemeConfig = {
       borderRadius: 14,
       colorBgContainer: 'rgba(23, 27, 69, 0.8)',
       colorBorder: 'rgba(130, 115, 255, 0.14)',
+      borderColor: 'rgba(130, 115, 255, 0.14)',
+      headerSplitColor: 'rgba(130, 115, 255, 0.14)',
     },
     Badge: {
       colorBgContainer: 'rgba(130, 115, 255, 0.12)',

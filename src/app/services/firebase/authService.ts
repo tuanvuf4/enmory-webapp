@@ -466,7 +466,7 @@ export class FirebaseAuthService {
               !t?.name ||
               t.color === undefined ||
               t.order === undefined ||
-              t.value === undefined,
+              !t.value,
           )
         const needsBlogTagsSync =
           Array.isArray(rawConfig.blogTags) &&
@@ -476,7 +476,7 @@ export class FirebaseAuthService {
               !t?.name ||
               t.color === undefined ||
               t.order === undefined ||
-              t.value === undefined,
+              !t.value,
           )
 
         if (needsItemTagsSync || needsBlogTagsSync) {

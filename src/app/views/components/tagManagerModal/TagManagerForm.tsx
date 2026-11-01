@@ -64,6 +64,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
     () =>
       (allTags || [])
         .map((tag: any) => ({
+          ...tag,
           id: String(tag.id || tag.name || tag.value || ''),
           name: String(tag.name || tag.label || tag.value || '').trim(),
           value: tag.value !== undefined ? String(tag.value) : '',
@@ -120,15 +121,22 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
       const nextOrder =
         newTagOrder ?? (tagRows.length > 0 ? Math.max(...tagRows.map((t) => t.order ?? 1)) + 1 : 1)
 
+      const tagValue = name.trim().toLowerCase().replace(/\s+/g, '_')
+
       const response = await tagApi.createTag({
         name,
         color: newTagColor || DEFAULT_TAG_COLOR,
         order: nextOrder,
-        value: '',
+        value: tagValue,
       })
 
       if (!response.isSuccess) {
         message({ type: 'error', content: response.message || 'Failed to create tag' })
+        return
+      }
+
+      if (response.message === 'Tag already exists') {
+        message({ type: 'warning', content: 'Tag already exists' })
         return
       }
 
@@ -168,10 +176,13 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
 
     try {
       setTagSubmitting(true)
-      const response = await tagApi.updateTag(tag.id, {
+      const targetId = tag.name || tag.id
+      const response = await tagApi.updateTag(targetId, {
         name: nextName,
         color: editingTagColor || DEFAULT_TAG_COLOR,
         order: editingTagOrder,
+        // Khi update item tag, không update tag value (giữ nguyên tag.value)
+        value: tag.value,
       })
 
       if (!response.isSuccess) {
@@ -197,7 +208,8 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
   const handleDeleteTag = async (tag: ITagRow) => {
     try {
       setTagSubmitting(true)
-      const response = await tagApi.deleteTag(tag.id, tag.name)
+      const targetId = tag.name || tag.id
+      const response = await tagApi.deleteTag(targetId, tag.name)
 
       if (!response.isSuccess) {
         message({ type: 'error', content: response.message || 'Failed to delete tag' })
@@ -380,7 +392,12 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
   ]
 
   return (
-    <Flex vertical gap={token.size} style={{ marginTop: onClose ? token.size : 0, width: '100%' }}>
+    <Flex
+      vertical
+      gap={token.size}
+      style={{ marginTop: onClose ? token.size : 0, width: '100%' }}
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Create / Filter bar */}
       <Flex align='center' gap={token.size / 2} wrap='wrap'>
         <Input

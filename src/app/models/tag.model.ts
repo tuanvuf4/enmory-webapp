@@ -11,6 +11,13 @@ export const DEFAULT_TAG_COLOR = '#1890ff'
 export const DEFAULT_TAG_ORDER = 1
 export const DEFAULT_TAG_VALUE = ''
 
+export const formatTagValue = (name: string): string => {
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+}
+
 export const normalizeTag = (tag: any, defaultOrder = DEFAULT_TAG_ORDER): ITag | null => {
   if (!tag) return null
   const now = Date.now()
@@ -19,7 +26,7 @@ export const normalizeTag = (tag: any, defaultOrder = DEFAULT_TAG_ORDER): ITag |
     const trimmed = tag.trim()
     if (!trimmed) return null
     return {
-      value: DEFAULT_TAG_VALUE,
+      value: formatTagValue(trimmed),
       name: trimmed,
       color: DEFAULT_TAG_COLOR,
       order: defaultOrder,
@@ -31,8 +38,13 @@ export const normalizeTag = (tag: any, defaultOrder = DEFAULT_TAG_ORDER): ITag |
   const name = String(tag.name || tag.value || '').trim()
   if (!name) return null
 
+  const value =
+    tag.value !== undefined && String(tag.value).trim() !== ''
+      ? formatTagValue(tag.value)
+      : formatTagValue(name)
+
   return {
-    value: tag.value !== undefined ? String(tag.value) : DEFAULT_TAG_VALUE,
+    value,
     name,
     color: tag.color ? String(tag.color) : DEFAULT_TAG_COLOR,
     order: typeof tag.order === 'number' ? tag.order : defaultOrder,

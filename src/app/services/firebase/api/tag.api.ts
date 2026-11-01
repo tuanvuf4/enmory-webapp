@@ -7,6 +7,7 @@ import {
   ITagDto,
   DEFAULT_TAG_COLOR,
   DEFAULT_TAG_ORDER,
+  formatTagValue,
   normalizeTag,
   normalizeTagList,
 } from '@/models/tag.model'
@@ -188,7 +189,7 @@ const getTags = async (keyword = ''): Promise<IHttpResponse<ITagDto[]>> => {
     let tags: ITagDto[] = rawTags.map((tag) => ({
       ...tag,
       id: tag.name,
-      value: tag.name,
+      value: tag.value ? formatTagValue(tag.value) : formatTagValue(tag.name),
       value_lowercase: tag.name.toLowerCase(),
     }))
 
@@ -260,15 +261,22 @@ const createTag = async (
         content: {
           ...existing,
           id: existing.name,
-          value: existing.name,
+          value: existing.value ? formatTagValue(existing.value) : formatTagValue(existing.name),
           value_lowercase: existing.name.toLowerCase(),
         },
         statusCode: 409,
       }
     }
 
+    const tagValue =
+      typeof tagData === 'object' && tagData.value && String(tagData.value).trim() !== ''
+        ? formatTagValue(tagData.value)
+        : formatTagValue(normalized.name)
+
     const newTag: ITag = {
       ...normalized,
+      name: normalized.name,
+      value: tagValue,
       order:
         typeof tagData === 'object' && typeof tagData.order === 'number'
           ? tagData.order
@@ -288,7 +296,7 @@ const createTag = async (
       content: {
         ...newTag,
         id: newTag.name,
-        value: newTag.name,
+        value: newTag.value,
         value_lowercase: newTag.name.toLowerCase(),
       },
       statusCode: 201,
@@ -340,8 +348,10 @@ const createTags = async (
     normalizedList.forEach((tag) => {
       if (!currentLowers.has(tag.name.toLowerCase())) {
         maxOrder += 1
+        const tagValue = tag.value ? formatTagValue(tag.value) : formatTagValue(tag.name)
         tagsToAdd.push({
           ...tag,
+          value: tagValue,
           order: typeof tag.order === 'number' ? tag.order : maxOrder,
           created_date: Date.now(),
           last_update: Date.now(),
@@ -358,7 +368,7 @@ const createTags = async (
     const result: ITagDto[] = tagsToAdd.map((t) => ({
       ...t,
       id: t.name,
-      value: t.name,
+      value: t.value,
       value_lowercase: t.name.toLowerCase(),
     }))
 
@@ -446,11 +456,19 @@ const updateTag = async (
     }
 
     const existing = currentTags[oldIndex]
+    // Khi update item tag, không update item tag value - ưu tiên giữ nguyên existing.value
+    const tagValue =
+      existing.value && String(existing.value).trim() !== ''
+        ? existing.value
+        : nextTag.value !== undefined && String(nextTag.value).trim() !== ''
+          ? formatTagValue(nextTag.value)
+          : formatTagValue(newName)
+
     const mergedTag: ITag = {
       ...existing,
       ...nextTag,
       name: newName,
-      value: nextTag.value !== undefined ? String(nextTag.value) : (existing.value ?? ''),
+      value: tagValue,
       color: nextTag.color || existing.color || DEFAULT_TAG_COLOR,
       order: typeof nextTag.order === 'number' ? nextTag.order : (existing.order ?? 1),
       last_update: Date.now(),
@@ -471,7 +489,7 @@ const updateTag = async (
       content: {
         ...mergedTag,
         id: mergedTag.name,
-        value: mergedTag.name,
+        value: mergedTag.value,
         value_lowercase: mergedTag.name.toLowerCase(),
       },
       statusCode: 200,
@@ -540,6 +558,7 @@ const deleteTag = async (tagIdOrName: string, tagValue?: string): Promise<IHttpR
 }
 
 export const tagApi = {
+  formatTagValue,
   ensureTagsExist,
   createTags,
   getTags,

@@ -1,3 +1,4 @@
+import { TRole } from '@/models/index'
 import { ITag } from '@/models/tag.model'
 
 export enum EVN {
@@ -151,6 +152,7 @@ export const appSetting = {
     references: [],
     itemTags: [] as ITag[],
     blogTags: [] as ITag[],
+    role: 'user' as TRole,
   },
   options: [
     { value: 0, label: 0 },

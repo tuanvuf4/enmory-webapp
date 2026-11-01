@@ -43,7 +43,11 @@ export const useItemModal = () => {
     )
   }
 
-  const openItemModal = (mode: 'view' | 'edit' | 'add', data: IItem = initItem) => {
+  const openItemModal = (
+    mode: 'view' | 'edit' | 'add',
+    data: IItem = initItem,
+    onClose?: () => void,
+  ) => {
     if (mode === 'view') {
       openModal({
         title: null,
@@ -51,6 +55,7 @@ export const useItemModal = () => {
         footer: null,
         closable: false,
         content: <ViewItemModalContent initialData={data} onClose={closeModal} />,
+        onClose,
       })
     }
 
@@ -67,6 +72,7 @@ export const useItemModal = () => {
           icon: <BookOutlined />,
         },
         content: <ItemFormContext data={data} />,
+        onClose,
       })
     }
 
@@ -83,6 +89,7 @@ export const useItemModal = () => {
           icon: <BookOutlined />,
         },
         content: <ItemFormContext data={data} />,
+        onClose,
       })
     }
   }

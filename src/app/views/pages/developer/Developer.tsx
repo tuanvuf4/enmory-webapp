@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
-import { Navigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import {
   Card,
   Tabs,
@@ -31,6 +31,8 @@ import {
   CheckOutlined,
   CodeOutlined,
   DeleteOutlined,
+  EditOutlined,
+  SaveOutlined,
   ApiOutlined,
   ClearOutlined,
   ExclamationCircleOutlined,
@@ -40,8 +42,12 @@ import {
 } from '@ant-design/icons'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { useSelector } from '@/core/hooks'
-import { localDb } from '@/services/localDb'
+import { useDispatch, useSelector, checklistKeys, itemKeys } from '@/core/hooks'
+import { useQueryClient } from '@tanstack/react-query'
+import { iotdAction } from '@/store/reducers/iotd.reducer'
+import { invalidateSearchIndex, localDb } from '@/services/localDb'
+import { itemApi } from '@/services/firebase/api/item.api'
+import { useItemModal } from '@/helpers/hooks/useItemModal'
 import { extractExamplesFromItems } from '@/services/firebase/dbIntegration'
 import { IItem, IExample, IMeaning, ECategory } from '@/models/item.model'
 import { ISyncMeta } from '@/services/localDb/db'
@@ -58,11 +64,10 @@ export const Developer: React.FC = () => {
   const { token } = theme.useToken()
 
   // Guard: Dev mode only
-  if (!import.meta.env.DEV) {
-    return <Navigate to='/page_not_found' replace />
-  }
-
   const { user } = useSelector((state) => state.auth)
+  const dispatch = useDispatch()
+  const queryClient = useQueryClient()
+  const { openItemModal } = useItemModal()
   const geminiStats = useGeminiStats()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabFromQuery = searchParams.get('tab')
@@ -102,6 +107,10 @@ export const Developer: React.FC = () => {
   const [selectedRecordJson, setSelectedRecordJson] = useState<{ title: string; data: any } | null>(
     null,
   )
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [isBatchDeleting, setIsBatchDeleting] = useState<boolean>(false)
+  const [isEditingJson, setIsEditingJson] = useState<boolean>(false)
+  const [editingJsonText, setEditingJsonText] = useState<string>('')
 
   const [items, setItems] = useState<IItem[]>([])
   const [examples, setExamples] = useState<IExample[]>([])
@@ -130,6 +139,7 @@ export const Developer: React.FC = () => {
       setItems(loadedItems)
       setExamples(loadedExamples)
       setSyncMeta(loadedSyncMeta)
+      setSelectedRowKeys((prev) => prev.filter((k) => loadedItems.some((it) => it.id === k)))
     } catch (err) {
       console.error('Failed to load local database:', err)
       message.error(
@@ -143,6 +153,362 @@ export const Developer: React.FC = () => {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  const handleEditItem = useCallback(
+    (record: IItem) => {
+      const recordId = record.id
+      openItemModal('edit', record, () => {
+        loadData()
+        if (recordId && selectedItem?.id === recordId) {
+          localDb.items.get(recordId).then((fresh) => {
+            if (fresh) setSelectedItem(fresh)
+          })
+        }
+      })
+    },
+    [openItemModal, loadData, selectedItem?.id],
+  )
+
+  const deleteItemFromLocalDb = useCallback(async (record: IItem) => {
+    const recordId = record.id?.trim()
+    if (recordId) {
+      await localDb.items.delete(recordId)
+    }
+    // Delete any records with missing/empty id matching this item
+    await localDb.items
+      .filter((it) => {
+        if (recordId && it.id === recordId) return true
+        if (!recordId) {
+          const matchOrigin = (it.origin || '').trim() === (record.origin || '').trim()
+          const matchCreated = record.created_date ? it.created_date === record.created_date : true
+          const matchNoId = !it.id || !it.id.trim()
+          return matchOrigin && matchCreated && matchNoId
+        }
+        return false
+      })
+      .delete()
+  }, [])
+
+  const missingIdItems = useMemo(() => {
+    return items.filter((it) => !it.id || !String(it.id).trim())
+  }, [items])
+
+  const handleForceDeleteAllMissingIdItems = useCallback(() => {
+    const count = missingIdItems.length
+    if (count === 0) return
+
+    Modal.confirm({
+      title: `Force Delete toàn bộ ${count} item không có ID?`,
+      icon: <ExclamationCircleOutlined style={{ color: token.colorError }} />,
+      content: (
+        <div>
+          <p>
+            Hệ thống phát hiện <b>{count}</b> item có ID bị rỗng hoặc không tồn tại trong Local
+            Database.
+          </p>
+          <p style={{ color: token.colorError, fontWeight: 500, margin: 0 }}>
+            Thao tác Force Delete này sẽ quét toàn bộ IndexedDB và xóa triệt để các item lỗi này!
+          </p>
+        </div>
+      ),
+      okText: `Force Delete ${count} items`,
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        const hideLoading = message.loading(`Đang Force Delete ${count} items...`, 0)
+        try {
+          await localDb.items.filter((it) => !it.id || !String(it.id).trim()).delete()
+          invalidateSearchIndex()
+          await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+          await queryClient.invalidateQueries({ queryKey: checklistKeys.all })
+
+          hideLoading()
+          message.success(`Đã Force Delete thành công ${count} items không có ID!`)
+          await loadData()
+          setSelectedRowKeys([])
+        } catch (err: any) {
+          hideLoading()
+          console.error('Force delete error:', err)
+          message.error('Lỗi khi Force Delete: ' + (err?.message || String(err)))
+        }
+      },
+    })
+  }, [missingIdItems.length, token, queryClient, loadData])
+
+  const handleDeleteItem = useCallback(
+    (record: IItem, force = false) => {
+      const recordId = record.id?.trim()
+      const isMissingId = !recordId
+
+      // Case 1: Item has NO ID or force requested -> Direct Force Delete
+      if (isMissingId || force) {
+        Modal.confirm({
+          title: `Force Delete item "${record.origin || '(Không có origin)'}"?`,
+          icon: <ExclamationCircleOutlined style={{ color: token.colorError }} />,
+          content: (
+            <div>
+              <p style={{ color: token.colorError, fontWeight: 500 }}>
+                {isMissingId
+                  ? 'Item này không có ID trong cơ sở dữ liệu!'
+                  : `Xóa cưỡng chế item ID: ${recordId}`}
+              </p>
+              <p>
+                Hệ thống sẽ thực hiện <b>Force Delete</b> để xóa trực tiếp item này khỏi Local
+                Database (IndexedDB), bỏ qua các ràng buộc ID và kiểm tra Firebase.
+              </p>
+            </div>
+          ),
+          okText: 'Force Delete',
+          okType: 'danger',
+          cancelText: 'Hủy',
+          onOk: async () => {
+            try {
+              await deleteItemFromLocalDb(record)
+              invalidateSearchIndex()
+              await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+              await queryClient.invalidateQueries({ queryKey: checklistKeys.all })
+              if (recordId) {
+                queryClient.removeQueries({ queryKey: itemKeys.detail(recordId) })
+                dispatch(iotdAction.removeItem(recordId))
+              }
+              message.success(`Đã Force Delete item "${record.origin || ''}" thành công!`)
+              await loadData()
+              if (selectedItem?.origin === record.origin) {
+                setSelectedItem(null)
+              }
+            } catch (err: any) {
+              console.error('Force delete error:', err)
+              message.error('Lỗi khi Force Delete: ' + (err?.message || String(err)))
+            }
+          },
+        })
+        return
+      }
+
+      // Case 2: Standard delete with Firebase sync option
+      let onlyLocal = false
+      Modal.confirm({
+        title: `Xác nhận xóa từ vựng "${record.origin}"?`,
+        icon: <ExclamationCircleOutlined style={{ color: token.colorError }} />,
+        content: (
+          <div>
+            <p>
+              Bạn có chắc chắn muốn xóa từ vựng <b>{record.origin}</b> (ID: <code>{recordId}</code>
+              )?
+            </p>
+            {user?.uid ? (
+              <Checkbox
+                defaultChecked={false}
+                onChange={(e) => {
+                  onlyLocal = e.target.checked
+                }}
+                style={{ marginTop: 8 }}
+              >
+                Chỉ xóa trong Local DB (không xóa trên Firebase)
+              </Checkbox>
+            ) : (
+              <p style={{ color: token.colorWarning, fontSize: 12, margin: '8px 0 0 0' }}>
+                (Bạn chưa đăng nhập Firebase, item sẽ chỉ bị xóa khỏi Local DB)
+              </p>
+            )}
+          </div>
+        ),
+        okText: 'Xác nhận xóa',
+        okType: 'danger',
+        cancelText: 'Hủy',
+        onOk: async () => {
+          try {
+            if (!onlyLocal && user?.uid && recordId) {
+              try {
+                await itemApi.deleteItem(recordId, record.origin)
+              } catch (err: any) {
+                console.warn('Firebase deletion error:', err)
+                message.warning(
+                  'Không thể xóa trên Firebase (' +
+                    (err?.message || 'Lỗi') +
+                    '), đang xóa khỏi Local DB...',
+                )
+              }
+            }
+
+            await deleteItemFromLocalDb(record)
+            invalidateSearchIndex()
+            await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+            if (recordId) {
+              queryClient.removeQueries({ queryKey: itemKeys.detail(recordId) })
+              await queryClient.invalidateQueries({ queryKey: itemKeys.detail(recordId) })
+              dispatch(iotdAction.removeItem(recordId))
+            }
+            await queryClient.invalidateQueries({ queryKey: checklistKeys.all })
+
+            message.success(`Đã xóa từ vựng "${record.origin}" thành công!`)
+            await loadData()
+            if (recordId) {
+              setSelectedRowKeys((prev) => prev.filter((k) => k !== recordId))
+            }
+            if (selectedItem?.id === recordId) {
+              setSelectedItem(null)
+            }
+          } catch (error: any) {
+            console.error('Delete item error:', error)
+            message.error('Lỗi khi xóa item: ' + (error?.message || String(error)))
+          }
+        },
+      })
+    },
+    [
+      token,
+      user?.uid,
+      queryClient,
+      dispatch,
+      loadData,
+      selectedItem?.id,
+      selectedItem?.origin,
+      deleteItemFromLocalDb,
+    ],
+  )
+
+  const handleBatchDelete = useCallback(() => {
+    let onlyLocal = false
+    const count = selectedRowKeys.length
+    if (count === 0) return
+
+    Modal.confirm({
+      title: `Xác nhận xóa ${count} items đã chọn?`,
+      icon: <ExclamationCircleOutlined style={{ color: token.colorError }} />,
+      content: (
+        <div>
+          <p>
+            Bạn có chắc chắn muốn xóa <b>{count}</b> items đã chọn khỏi cơ sở dữ liệu?
+          </p>
+          {user?.uid ? (
+            <Checkbox
+              defaultChecked={false}
+              onChange={(e) => {
+                onlyLocal = e.target.checked
+              }}
+              style={{ marginTop: 8 }}
+            >
+              Chỉ xóa trong Local DB (không xóa trên Firebase)
+            </Checkbox>
+          ) : (
+            <p style={{ color: token.colorWarning, fontSize: 12, margin: '8px 0 0 0' }}>
+              (Bạn chưa đăng nhập Firebase, các items sẽ chỉ bị xóa khỏi Local DB)
+            </p>
+          )}
+        </div>
+      ),
+      okText: `Xác nhận xóa ${count} items`,
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        setIsBatchDeleting(true)
+        const hideLoading = message.loading(`Đang xóa ${count} items...`, 0)
+        try {
+          const keysToDelete = selectedRowKeys.map((k) => String(k))
+          for (const key of keysToDelete) {
+            if (key.startsWith('missing_id_')) {
+              const matched = items.find(
+                (it, idx) => `missing_id_${it.origin || ''}_${it.created_date || idx}` === key,
+              )
+              if (matched) {
+                await deleteItemFromLocalDb(matched)
+              } else {
+                await localDb.items.filter((it) => !it.id || !it.id.trim()).delete()
+              }
+            } else {
+              if (!onlyLocal && user?.uid) {
+                try {
+                  await itemApi.deleteItem(key)
+                } catch (e) {
+                  console.warn(`Failed to delete item ${key} from Firebase:`, e)
+                }
+              }
+              await localDb.items.delete(key)
+              queryClient.removeQueries({ queryKey: itemKeys.detail(key) })
+              dispatch(iotdAction.removeItem(key))
+            }
+          }
+          invalidateSearchIndex()
+          await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+          await queryClient.invalidateQueries({ queryKey: checklistKeys.all })
+
+          hideLoading()
+          message.success(`Đã xóa ${keysToDelete.length} items thành công!`)
+          setSelectedRowKeys([])
+          await loadData()
+        } catch (err: any) {
+          hideLoading()
+          console.error('Batch delete items error:', err)
+          message.error('Lỗi khi xóa hàng loạt: ' + (err?.message || String(err)))
+        } finally {
+          setIsBatchDeleting(false)
+        }
+      },
+    })
+  }, [
+    selectedRowKeys,
+    token,
+    user?.uid,
+    queryClient,
+    dispatch,
+    loadData,
+    items,
+    deleteItemFromLocalDb,
+  ])
+
+  const handleSaveJsonEdit = async () => {
+    try {
+      const parsed = JSON.parse(editingJsonText)
+      if (parsed.key !== undefined) {
+        await localDb.syncMeta.put(parsed as ISyncMeta)
+        message.success('Đã cập nhật SyncMeta thành công!')
+        setSelectedRecordJson({ title: String(parsed.key), data: parsed })
+        setIsEditingJson(false)
+        await loadData()
+        return
+      }
+
+      if (!parsed.id) {
+        message.error('Dữ liệu JSON của Item phải có trường id hợp lệ!')
+        return
+      }
+
+      const itemToSave = parsed as IItem
+      const itemId = String(parsed.id)
+
+      await localDb.items.put(itemToSave)
+      invalidateSearchIndex()
+
+      if (user?.uid) {
+        try {
+          await itemApi.updateItem(itemId, itemToSave)
+        } catch (e: any) {
+          console.warn('Firebase sync warning during JSON update:', e)
+          message.warning(
+            'Lưu Local DB thành công, nhưng không thể đồng bộ Firebase: ' + (e?.message || 'Lỗi'),
+          )
+        }
+      }
+
+      await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+      await queryClient.invalidateQueries({ queryKey: itemKeys.detail(itemId) })
+
+      message.success('Đã lưu thay đổi JSON thành công!')
+      setSelectedRecordJson({
+        title: itemToSave.origin || selectedRecordJson?.title || 'Item',
+        data: itemToSave,
+      })
+      setIsEditingJson(false)
+      await loadData()
+      if (selectedItem?.id === itemId) {
+        setSelectedItem(itemToSave)
+      }
+    } catch (e: any) {
+      console.error('JSON parse error:', e)
+      message.error('Lỗi định dạng JSON không hợp lệ: ' + (e?.message || String(e)))
+    }
+  }
 
   // Filter items by search keyword
   const filteredItems = useMemo(() => {
@@ -252,8 +618,19 @@ export const Developer: React.FC = () => {
           <Space direction='vertical' size={2}>
             <Space>
               <Text strong style={{ fontSize: 14, color: token.colorPrimary }}>
-                {text}
+                {text || (
+                  <Text italic type='secondary'>
+                    (No origin)
+                  </Text>
+                )}
               </Text>
+              {!record.id && (
+                <Tooltip title='Bản ghi này bị thiếu ID trong IndexedDB'>
+                  <Tag color='error' style={{ margin: 0, fontSize: 10 }}>
+                    NO ID
+                  </Tag>
+                </Tooltip>
+              )}
               {record.favorite && <StarFilled style={{ color: '#faad14' }} />}
             </Space>
             <Space size={4} wrap>
@@ -293,18 +670,23 @@ export const Developer: React.FC = () => {
           if (meanings.length === 0)
             return (
               <Text type='secondary' italic>
-                Chưa có nghĩa
+                No data
               </Text>
             )
           const first = meanings[0]
-          const text = first.definition || first.translation || ''
+          const text = first.definition || first.translation || 'No data'
           const typeLabel = getMeaningTypeLabel(first)
           return (
             <Space direction='vertical' size={2} style={{ maxWidth: '100%' }}>
-              <Text ellipsis={{ tooltip: text }}>
+              {/* <Text ellipsis={{ tooltip: text }}> */}
+              <Text
+                className={appStyle.inline}
+                ellipsis={{ tooltip: <span dangerouslySetInnerHTML={{ __html: text }} /> }}
+              >
                 {typeLabel ? <b>({typeLabel}) </b> : null}
-                {text}
+                <span dangerouslySetInnerHTML={{ __html: text }} />
               </Text>
+
               {meanings.length > 1 && (
                 <Text type='secondary' style={{ fontSize: 11 }}>
                   +{meanings.length - 1} nghĩa khác
@@ -372,25 +754,44 @@ export const Developer: React.FC = () => {
       {
         title: 'Thao tác',
         key: 'actions',
-        width: 110,
+        width: 145,
         align: 'center',
         render: (_: any, record: IItem) => (
-          <Space size={6}>
+          <Space size={4}>
             <Tooltip title='Xem chi tiết'>
               <Button size='small' icon={<EyeOutlined />} onClick={() => setSelectedItem(record)} />
+            </Tooltip>
+            <Tooltip title='Sửa từ vựng'>
+              <Button
+                size='small'
+                icon={<EditOutlined style={{ color: token.colorWarning }} />}
+                onClick={() => handleEditItem(record)}
+              />
+            </Tooltip>
+            <Tooltip title={!record.id ? 'Force Delete (Item không có ID)' : 'Xóa từ vựng'}>
+              <Button
+                size='small'
+                danger
+                type={!record.id ? 'primary' : 'default'}
+                icon={<DeleteOutlined />}
+                onClick={() => handleDeleteItem(record, !record.id)}
+              />
             </Tooltip>
             <Tooltip title='Xem raw JSON'>
               <Button
                 size='small'
                 icon={<CodeOutlined />}
-                onClick={() => setSelectedRecordJson({ title: record.origin, data: record })}
+                onClick={() => {
+                  setIsEditingJson(false)
+                  setSelectedRecordJson({ title: record.origin, data: record })
+                }}
               />
             </Tooltip>
           </Space>
         ),
       },
     ],
-    [token],
+    [token, handleEditItem, handleDeleteItem],
   )
 
   const renderItemExpanded = (record: IItem) => {
@@ -926,10 +1327,83 @@ export const Developer: React.FC = () => {
                         style={{ marginBottom: activeTab === 'all' ? 24 : 0 }}
                         size='small'
                       >
+                        {missingIdItems.length > 0 && (
+                          <div style={{ marginBottom: 12 }}>
+                            <Alert
+                              type='error'
+                              showIcon
+                              message={
+                                <Space
+                                  wrap
+                                  style={{ width: '100%', justifyContent: 'space-between' }}
+                                >
+                                  <span>
+                                    Phát hiện <b>{missingIdItems.length}</b> item bị lỗi thiếu ID
+                                    trong Local Database!
+                                  </span>
+                                  <Button
+                                    size='small'
+                                    danger
+                                    type='primary'
+                                    icon={<DeleteOutlined />}
+                                    onClick={handleForceDeleteAllMissingIdItems}
+                                  >
+                                    Force Delete toàn bộ {missingIdItems.length} item lỗi
+                                  </Button>
+                                </Space>
+                              }
+                            />
+                          </div>
+                        )}
+
+                        {selectedRowKeys.length > 0 && (
+                          <div style={{ marginBottom: 12 }}>
+                            <Alert
+                              type='warning'
+                              showIcon
+                              message={
+                                <Space
+                                  wrap
+                                  style={{ width: '100%', justifyContent: 'space-between' }}
+                                >
+                                  <span>
+                                    Đã chọn <b>{selectedRowKeys.length}</b> từ vựng
+                                  </span>
+                                  <Space>
+                                    <Button
+                                      size='small'
+                                      danger
+                                      type='primary'
+                                      icon={<DeleteOutlined />}
+                                      loading={isBatchDeleting}
+                                      onClick={handleBatchDelete}
+                                    >
+                                      Xóa {selectedRowKeys.length} mục đã chọn
+                                    </Button>
+                                    <Button
+                                      size='small'
+                                      onClick={() => setSelectedRowKeys([])}
+                                      disabled={isBatchDeleting}
+                                    >
+                                      Bỏ chọn
+                                    </Button>
+                                  </Space>
+                                </Space>
+                              }
+                            />
+                          </div>
+                        )}
                         <Table<IItem>
                           dataSource={filteredItems}
                           columns={itemColumns}
-                          rowKey='id'
+                          rowKey={(record, index) =>
+                            record.id ||
+                            `missing_id_${record.origin || ''}_${record.created_date || index}`
+                          }
+                          rowSelection={{
+                            selectedRowKeys,
+                            onChange: (keys) => setSelectedRowKeys(keys),
+                          }}
                           expandable={{
                             expandedRowRender: renderItemExpanded,
                             rowExpandable: () => true,
@@ -1029,6 +1503,29 @@ export const Developer: React.FC = () => {
                   onCancel={() => setSelectedItem(null)}
                   width={750}
                   footer={[
+                    <Button
+                      key='edit'
+                      icon={<EditOutlined style={{ color: token.colorWarning }} />}
+                      onClick={() => {
+                        if (selectedItem) {
+                          handleEditItem(selectedItem)
+                        }
+                      }}
+                    >
+                      Sửa
+                    </Button>,
+                    <Button
+                      key='delete'
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() => {
+                        if (selectedItem) {
+                          handleDeleteItem(selectedItem, !selectedItem.id)
+                        }
+                      }}
+                    >
+                      {!selectedItem?.id ? 'Force Delete' : 'Xóa'}
+                    </Button>,
                     <Button
                       key='copy'
                       icon={<CopyOutlined />}
@@ -1177,43 +1674,103 @@ export const Developer: React.FC = () => {
 
                 {/* Modal Raw JSON cho Record bất kỳ */}
                 <Modal
-                  title={`Dữ liệu JSON: ${selectedRecordJson?.title}`}
+                  title={
+                    <Space>
+                      <span>Dữ liệu JSON: {selectedRecordJson?.title}</span>
+                      {isEditingJson && <Tag color='orange'>Chế độ chỉnh sửa</Tag>}
+                    </Space>
+                  }
                   open={!!selectedRecordJson}
-                  onCancel={() => setSelectedRecordJson(null)}
-                  width={650}
-                  footer={[
-                    <Button
-                      key='copy'
-                      icon={<CopyOutlined />}
-                      onClick={() => {
-                        if (selectedRecordJson) {
-                          navigator.clipboard.writeText(
-                            JSON.stringify(selectedRecordJson.data, null, 2),
-                          )
-                          message.success('Đã sao chép JSON!')
-                        }
+                  onCancel={() => {
+                    setSelectedRecordJson(null)
+                    setIsEditingJson(false)
+                  }}
+                  width={680}
+                  footer={
+                    isEditingJson
+                      ? [
+                          <Button
+                            key='cancel-edit'
+                            onClick={() => {
+                              setIsEditingJson(false)
+                            }}
+                          >
+                            Hủy
+                          </Button>,
+                          <Button
+                            key='save-edit'
+                            type='primary'
+                            icon={<SaveOutlined />}
+                            onClick={handleSaveJsonEdit}
+                          >
+                            Lưu JSON
+                          </Button>,
+                        ]
+                      : [
+                          <Button
+                            key='edit'
+                            icon={<EditOutlined />}
+                            onClick={() => {
+                              setEditingJsonText(JSON.stringify(selectedRecordJson?.data, null, 2))
+                              setIsEditingJson(true)
+                            }}
+                          >
+                            Sửa JSON
+                          </Button>,
+                          <Button
+                            key='copy'
+                            icon={<CopyOutlined />}
+                            onClick={() => {
+                              if (selectedRecordJson) {
+                                navigator.clipboard.writeText(
+                                  JSON.stringify(selectedRecordJson.data, null, 2),
+                                )
+                                message.success('Đã sao chép JSON!')
+                              }
+                            }}
+                          >
+                            Copy JSON
+                          </Button>,
+                          <Button
+                            key='close'
+                            type='primary'
+                            onClick={() => {
+                              setSelectedRecordJson(null)
+                              setIsEditingJson(false)
+                            }}
+                          >
+                            Đóng
+                          </Button>,
+                        ]
+                  }
+                >
+                  {isEditingJson ? (
+                    <Input.TextArea
+                      rows={20}
+                      value={editingJsonText}
+                      onChange={(e) => setEditingJsonText(e.target.value)}
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                        backgroundColor: token.colorBgContainerDisabled || '#1f1f1f',
+                        color: token.colorText,
+                      }}
+                    />
+                  ) : (
+                    <pre
+                      style={{
+                        maxHeight: 500,
+                        overflow: 'auto',
+                        backgroundColor: token.colorBgContainerDisabled || '#1f1f1f',
+                        color: token.colorText,
+                        padding: 12,
+                        borderRadius: 6,
+                        fontSize: 12,
                       }}
                     >
-                      Copy JSON
-                    </Button>,
-                    <Button key='close' type='primary' onClick={() => setSelectedRecordJson(null)}>
-                      Đóng
-                    </Button>,
-                  ]}
-                >
-                  <pre
-                    style={{
-                      maxHeight: 500,
-                      overflow: 'auto',
-                      backgroundColor: token.colorBgContainerDisabled || '#1f1f1f',
-                      color: token.colorText,
-                      padding: 12,
-                      borderRadius: 6,
-                      fontSize: 12,
-                    }}
-                  >
-                    {JSON.stringify(selectedRecordJson?.data, null, 2)}
-                  </pre>
+                      {JSON.stringify(selectedRecordJson?.data, null, 2)}
+                    </pre>
+                  )}
                 </Modal>
               </>
             ),

@@ -6,6 +6,10 @@ import {
   DownOutlined,
   SunOutlined,
   MoonOutlined,
+  CodeOutlined,
+  PoweroffOutlined,
+  SettingOutlined,
+  UserOutlined,
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from '@/core/hooks'
 import { useAuthLogout } from '@/core/hooks/useAuthLogout'
@@ -16,7 +20,7 @@ import { theme, MenuProps, Row, Col, Button, Dropdown, Space, Layout } from 'ant
 import { useNavigate, Link } from 'react-router-dom'
 import logo from '@/assets/img/logo.png'
 import { MainMenu } from '../mainMenu/MainMenu'
-import { menu, addNewType } from './Menu'
+import { addNewType } from './Menu'
 import { useItemModal, useMediaUploadModal } from '@/helpers/hooks'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
@@ -69,6 +73,33 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
         break
     }
   }
+
+  const menu: MenuProps['items'] = [
+    {
+      key: 'profile',
+      label: 'Profile',
+      icon: <UserOutlined />,
+    },
+    {
+      key: 'setting',
+      label: 'Setting',
+      icon: <SettingOutlined />,
+    },
+    ...(import.meta.env.DEV || user?.configuration?.role === 'admin'
+      ? [
+          {
+            key: 'developer',
+            label: 'Developer',
+            icon: <CodeOutlined />,
+          },
+        ]
+      : []),
+    {
+      key: 'logout',
+      label: 'Log Out',
+      icon: <PoweroffOutlined />,
+    },
+  ]
 
   const menuProps = {
     items: menu,

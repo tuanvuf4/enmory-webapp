@@ -102,6 +102,7 @@ export class FirebaseAuthService {
         provider: 'email',
         configuration: {
           ...appSetting.meta,
+          role: 'user', // Default role for new users
         },
       }
 
@@ -153,6 +154,7 @@ export class FirebaseAuthService {
           provider: 'email',
           configuration: {
             ...appSetting.meta,
+            role: 'user',
           },
         }
 

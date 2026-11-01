@@ -6,7 +6,7 @@ export interface ILoginResponse {
   refresh_token: string
   token_type: string
 }
-
+export type TRole = 'admin' | 'moderator' | 'user'
 export interface IUserConfig<R = number[]> {
   numberOfWordsInStudySet: number
   numberOfPhraseInStudySet: number
@@ -21,6 +21,7 @@ export interface IUserConfig<R = number[]> {
   showPlayer: boolean
   itemTags?: ITag[]
   blogTags?: ITag[]
+  role: TRole
 }
 
 export interface IUser<R = number[]> {

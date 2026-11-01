@@ -51,17 +51,22 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
   }, [fields?.length, showMeanings])
 
   const meaningsValues = watch('meanings') || []
-  const hasCommonMeanings = fields.some((field, idx) =>
-    Boolean(meaningsValues[idx]?.common ?? (field as any).common),
-  )
   const commonCount = fields.filter((field, idx) =>
     Boolean(meaningsValues[idx]?.common ?? (field as any).common),
   ).length
-  const enableCount = fields.filter((field, idx) =>
-    Boolean(meaningsValues[idx]?.enable ?? (field as any).enable),
+  const enableCount = fields.filter(
+    (field, idx) => (meaningsValues[idx]?.enable ?? (field as any).enable) !== false,
   ).length
-  const totalCount = fields.length
-  const nonCommonCount = totalCount - commonCount
+
+  const visibleCount = useMemo(() => {
+    return fields.filter((field, idx) => {
+      const isCommon = Boolean(meaningsValues[idx]?.common ?? (field as any).common)
+      const isEnable = (meaningsValues[idx]?.enable ?? (field as any).enable) !== false
+      if (onlyCommon && !isCommon) return false
+      if (onlyEnable && !isEnable) return false
+      return true
+    }).length
+  }, [fields, meaningsValues, onlyCommon, onlyEnable])
 
   const typeOptions = useMemo(
     () =>
@@ -126,28 +131,32 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
           </Flex>
 
           <Flex align='center' gap={token.size / 2}>
-            {hasCommonMeanings && nonCommonCount > 0 && (
-              <Button
-                size='small'
-                type={onlyCommon ? 'primary' : 'default'}
-                ghost={onlyCommon}
-                onClick={() => setOnlyCommon((prev) => !prev)}
-                style={{ fontSize: 12, borderRadius: 6 }}
-              >
-                {`C (${commonCount})`}
-              </Button>
+            {(commonCount > 0 || onlyCommon) && (
+              <Tooltip title="Filter meanings: only show 'Common' meanings">
+                <Button
+                  size='small'
+                  type={onlyCommon ? 'primary' : 'default'}
+                  ghost={onlyCommon}
+                  onClick={() => setOnlyCommon((prev) => !prev)}
+                  style={{ fontSize: 12, borderRadius: 6 }}
+                >
+                  {`C (${commonCount})`}
+                </Button>
+              </Tooltip>
             )}
 
-            {enableCount > 0 && (
-              <Button
-                size='small'
-                type={onlyEnable ? 'primary' : 'default'}
-                ghost={onlyEnable}
-                onClick={() => setOnlyEnable((prev) => !prev)}
-                style={{ fontSize: 12, borderRadius: 6 }}
-              >
-                {`E (${enableCount})`}
-              </Button>
+            {(enableCount > 0 || onlyEnable) && (
+              <Tooltip title="Filter meanings: only show 'Enable' meanings">
+                <Button
+                  size='small'
+                  type={onlyEnable ? 'primary' : 'default'}
+                  ghost={onlyEnable}
+                  onClick={() => setOnlyEnable((prev) => !prev)}
+                  style={{ fontSize: 12, borderRadius: 6 }}
+                >
+                  {`E (${enableCount})`}
+                </Button>
+              </Tooltip>
             )}
 
             <Button size='small' type='primary' icon={<PlusOutlined />} onClick={handleAddMeaning}>
@@ -166,15 +175,36 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
         </div>
       )}
 
+      {fields.length > 0 && visibleCount === 0 && (
+        <div style={{ textAlign: 'center', padding: '24px 0', color: token.colorTextSecondary }}>
+          <p style={{ marginBottom: 12 }}>Không có định nghĩa nào phù hợp với bộ lọc.</p>
+          <Button
+            size='small'
+            onClick={() => {
+              setOnlyCommon(false)
+              setOnlyEnable(false)
+            }}
+          >
+            Bỏ lọc
+          </Button>
+        </div>
+      )}
+
       {fields.map((field, index) => {
         const isCommon = Boolean(meaningsValues[index]?.common ?? (field as any).common)
+        const isEnable = (meaningsValues[index]?.enable ?? (field as any).enable) !== false
 
-        // Prioritize common meaning: only show common meanings in ItemForm if onlyCommon is active
-        if (onlyCommon && hasCommonMeanings && !isCommon && !show[index]) {
+        // Filter meanings by Common (C)
+        if (onlyCommon && !isCommon) {
           return null
         }
 
-        const enable = watch(`meanings.${index}.enable`)
+        // Filter meanings by Enable (E)
+        if (onlyEnable && !isEnable) {
+          return null
+        }
+
+        const enable = isEnable
         const definition = watch(`meanings.${index}.definition`)
         const translation = watch(`meanings.${index}.translation`)
 

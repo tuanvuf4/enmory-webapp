@@ -334,6 +334,15 @@ export const LiveTranscript: React.FC = () => {
 
                 {player.showTranslation !== false && seg.translation && (
                   <div
+                    className={`${isBlur ? styles.transcriptBlurred : ''} ${
+                      isRevealed ? styles.transcriptRevealed : ''
+                    }`}
+                    onClick={(e) => {
+                      if (isBlur) {
+                        handleToggleReveal(i, e)
+                      }
+                    }}
+                    title={isBlur ? 'Nhấp vào để hé mở câu này' : undefined}
                     style={{
                       fontSize: 13,
                       fontStyle: 'italic',

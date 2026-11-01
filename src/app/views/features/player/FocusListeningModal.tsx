@@ -292,6 +292,44 @@ export const FocusListeningModal: React.FC = () => {
     )
   }
 
+  // Helper to render translation with blur status
+  const renderSegmentTranslation = (
+    translation: string,
+    index: number,
+    fontSize: number = 14,
+    marginTop: number = 4,
+  ) => {
+    const isRevealed = revealedSegments[index]
+    const isBlur = transcriptDisplayMode === 'blur' && !isRevealed
+
+    let textClass = ''
+    if (isBlur) textClass = styles.focusBlurred
+    if (isRevealed) textClass = styles.focusRevealed
+
+    return (
+      <div
+        className={`${styles.focusTextItem} ${textClass}`}
+        onClick={(e) => {
+          if (isBlur) {
+            handleToggleReveal(index, e)
+          }
+        }}
+        title={isBlur ? 'Nhấp để lật mở câu này' : undefined}
+        style={{
+          fontSize,
+          color: '#ffd43b',
+          fontStyle: 'italic',
+          marginTop,
+          opacity: 0.95,
+          lineHeight: 1.45,
+          textAlign: fontSize > 16 ? 'center' : undefined,
+        }}
+      >
+        {translation}
+      </div>
+    )
+  }
+
   return createPortal(
     <div ref={containerRef} className={styles.focusOverlay}>
       {/* ── Top Bar ──────────────────────────────────────────────────────── */}
@@ -380,21 +418,9 @@ export const FocusListeningModal: React.FC = () => {
                     {formatSegmentTime(currentSegment.timeSeconds)}
                   </span>
                   {renderSegmentText(currentSegment, activeIndex, true)}
-                  {player.showTranslation !== false && currentSegment.translation && (
-                    <div
-                      style={{
-                        fontSize: 20,
-                        color: '#ffd43b',
-                        fontStyle: 'italic',
-                        marginTop: 14,
-                        opacity: 0.95,
-                        lineHeight: 1.45,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {currentSegment.translation}
-                    </div>
-                  )}
+                  {player.showTranslation !== false &&
+                    currentSegment.translation &&
+                    renderSegmentTranslation(currentSegment.translation, activeIndex, 20, 14)}
                 </>
               ) : (
                 <span className={styles.focusPlaceholder}>Đang chuẩn bị phát...</span>
@@ -416,20 +442,9 @@ export const FocusListeningModal: React.FC = () => {
                   <span className={styles.focusTimeTag}>{formatSegmentTime(seg.timeSeconds)}</span>
                   <div className={styles.focusAllTextWrapper}>
                     {renderSegmentText(seg, i, isActive)}
-                    {player.showTranslation !== false && seg.translation && (
-                      <div
-                        style={{
-                          fontSize: 14,
-                          color: '#ffd43b',
-                          fontStyle: 'italic',
-                          marginTop: 4,
-                          opacity: 0.9,
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        {seg.translation}
-                      </div>
-                    )}
+                    {player.showTranslation !== false &&
+                      seg.translation &&
+                      renderSegmentTranslation(seg.translation, i, 14, 4)}
                   </div>
                 </div>
               )

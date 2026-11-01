@@ -20,6 +20,7 @@ import {
   Image,
   ImageInsertViaUrl,
   Alignment,
+  EditorConfig,
 } from 'ckeditor5'
 import { CKEditor } from '@ckeditor/ckeditor5-react'
 import {
@@ -32,7 +33,7 @@ import './textEditor.scss'
 import '../reviewableTextArea/ReviewableTextArea'
 import 'ckeditor5/ckeditor5.css'
 
-const CKEDITOR_CONFIG = {
+const CKEDITOR_CONFIG: EditorConfig = {
   plugins: [
     Essentials,
     Bold,
@@ -64,29 +65,31 @@ const CKEDITOR_CONFIG = {
       { model: 'heading6' as const, view: 'h6', title: 'Heading 6', class: 'ck-heading_heading6' },
     ],
   },
-  toolbar: [
-    'heading',
-    '|',
-    'bold',
-    'italic',
-    'strikethrough',
-    '|',
-    'insertTable',
-    '|',
-    'alignment',
-    '|',
-    'link',
-    'blockQuote',
-    'imageInsertViaUrl',
-    'insertImage',
-    'uploadImage',
-    '|',
-    'indent',
-    'outdent',
-    '|',
-    'numberedList',
-    'bulletedList',
-  ],
+  toolbar: {
+    shouldNotGroupWhenFull: true,
+    items: [
+      'heading',
+      '|',
+      'bold',
+      'italic',
+      '|',
+      'numberedList',
+      'bulletedList',
+      '|',
+      'alignment',
+      '|',
+      'insertTable',
+      '|',
+      'link',
+      'blockQuote',
+      'imageInsertViaUrl',
+      'insertImage',
+      'uploadImage',
+      '|',
+      'indent',
+      'outdent',
+    ],
+  },
 }
 
 const plainTextFromHtml = (html: string) => {

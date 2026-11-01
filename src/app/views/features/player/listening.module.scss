@@ -378,6 +378,22 @@
   }
 }
 
+.dockMobileOnly {
+  display: none !important;
+
+  @media screen and (max-width: 768px) {
+    display: inline-flex !important;
+  }
+}
+
+.dockDesktopOnly {
+  display: inline-flex !important;
+
+  @media screen and (max-width: 768px) {
+    display: none !important;
+  }
+}
+
 .dockBtnActive {
   color: #fab005 !important;
 }
@@ -790,9 +806,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 10px;
   flex-shrink: 0;
   margin-top: auto;
+  width: 100%;
 }
 
 .pipBtnSecondary {
@@ -805,7 +822,7 @@
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer;
-  padding: 8px !important;
+  padding: 6px !important;
   border-radius: 8px !important;
   transition:
     color 0.15s,
@@ -1252,8 +1269,20 @@
   }
 }
 
+.transcriptHidden {
+  opacity: 0;
+  user-select: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.3;
+  }
+}
+
 .transcriptRevealed {
   filter: none !important;
+  opacity: 1 !important;
   user-select: text;
 }
 @media screen and (max-width: 768px) {

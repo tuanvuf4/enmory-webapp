@@ -1371,7 +1371,22 @@ export const PlayerDock: React.FC = () => {
                   </div>
 
                   {activeSegmentTranslation && (
-                    <div className={styles.dockTranslation}>
+                    <div
+                      className={`${styles.dockTranslation} ${
+                        player.transcriptDisplayMode === 'blur'
+                          ? styles.transcriptBlurred
+                          : player.transcriptDisplayMode === 'hidden'
+                            ? styles.transcriptHidden
+                            : ''
+                      }`}
+                      onClick={() => {
+                        if (player.transcriptDisplayMode !== 'visible') {
+                          dispatch(
+                            listeningAction.updatePlayer({ transcriptDisplayMode: 'visible' }),
+                          )
+                        }
+                      }}
+                    >
                       <MarqueeText
                         isPlaying={playing}
                         textKey={`vi-${activeIndex}-${activeSegmentTranslation}`}
@@ -1483,14 +1498,44 @@ export const PlayerDock: React.FC = () => {
                 />
               </Tooltip>
 
-              {/* Loop Track */}
+              {/* Loop Track (Desktop only) */}
               <Tooltip title={loop ? 'Tắt lặp bài (Đang bật)' : 'Bật lặp bài'}>
                 <Button
                   type='text'
                   size='middle'
-                  className={`${styles.dockControlBtn} ${loop ? styles.dockBtnActive : ''}`}
+                  className={`${styles.dockControlBtn} ${styles.dockDesktopOnly} ${
+                    loop ? styles.dockBtnActive : ''
+                  }`}
                   icon={<ReloadOutlined style={{ fontSize: '18px' }} />}
                   onClick={handleToggleLoop}
+                />
+              </Tooltip>
+
+              {/* Blur Toggle (Mobile only - replaces Loop Track) */}
+              <Tooltip
+                title={
+                  player.transcriptDisplayMode === 'visible'
+                    ? 'Làm mờ chữ (Luyện nghe)'
+                    : 'Đang làm mờ chữ (Nhấp để hiện rõ)'
+                }
+              >
+                <Button
+                  type='text'
+                  size='middle'
+                  className={`${styles.dockControlBtn} ${styles.dockMobileOnly} ${
+                    player.transcriptDisplayMode === 'blur' ? styles.dockBtnActive : ''
+                  }`}
+                  icon={
+                    player.transcriptDisplayMode === 'visible' ? (
+                      <EyeOutlined style={{ fontSize: 18 }} />
+                    ) : (
+                      <EyeInvisibleOutlined style={{ fontSize: 18 }} />
+                    )
+                  }
+                  onClick={() => {
+                    const nextMode = player.transcriptDisplayMode === 'visible' ? 'blur' : 'visible'
+                    dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: nextMode }))
+                  }}
                 />
               </Tooltip>
             </div>
@@ -1685,7 +1730,20 @@ export const PlayerDock: React.FC = () => {
 
             {/* Karaoke text + Translation */}
             <div className={styles.pipContentWrapper}>
-              <div className={styles.pipKaraokeText}>
+              <div
+                className={`${styles.pipKaraokeText} ${
+                  player.transcriptDisplayMode === 'blur'
+                    ? styles.transcriptBlurred
+                    : player.transcriptDisplayMode === 'hidden'
+                      ? styles.transcriptHidden
+                      : ''
+                }`}
+                onClick={() => {
+                  if (player.transcriptDisplayMode !== 'visible') {
+                    dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: 'visible' }))
+                  }
+                }}
+              >
                 {activeSegmentText ? (
                   <KaraokeText text={activeSegmentText} progress={activeSegmentProgress} />
                 ) : (
@@ -1699,53 +1757,7 @@ export const PlayerDock: React.FC = () => {
 
             {/* Controls */}
             <div className={styles.pipControls}>
-              <Button
-                type='text'
-                title={'Previous'}
-                className={styles.pipBtnSecondary}
-                icon={<StepBackwardOutlined />}
-                onClick={onPrev}
-              />
-
-              <Button
-                type='text'
-                title={'-10s'}
-                className={styles.pipBtnSecondary}
-                icon={<FastBackwardOutlined />}
-                onClick={() => onSeekBy(-10)}
-              />
-
-              <Button
-                type='text'
-                className={styles.pipBtnPlay}
-                icon={
-                  playing ? (
-                    <PauseOutlined style={{ fontSize: '20px', color: '#054753' }} />
-                  ) : (
-                    <CaretRightFilled
-                      style={{ fontSize: '22px', color: '#054753', marginLeft: '3px' }}
-                    />
-                  )
-                }
-                onClick={playing ? handlePause : handlePlay}
-              />
-
-              <Button
-                type='text'
-                title={'+5s'}
-                className={styles.pipBtnSecondary}
-                icon={<FastForwardOutlined />}
-                onClick={() => onSeekBy(10)}
-              />
-
-              <Button
-                type='text'
-                title={'Next'}
-                className={styles.pipBtnSecondary}
-                icon={<StepForwardOutlined />}
-                onClick={onNext}
-              />
-
+              {/* Loop Segment 1 */}
               <Button
                 type='text'
                 title={
@@ -1753,7 +1765,7 @@ export const PlayerDock: React.FC = () => {
                 }
                 className={styles.pipBtnSecondary}
                 style={{
-                  color: loopSegment ? '#fab005 !important' : '#8ea5b0 !important',
+                  color: loopSegment ? '#fab005 !important' : undefined,
                 }}
                 icon={
                   <div
@@ -1780,6 +1792,84 @@ export const PlayerDock: React.FC = () => {
                   </div>
                 }
                 onClick={handleToggleLoopSegment}
+              />
+
+              {/* Previous */}
+              <Button
+                type='text'
+                title={'Bài trước'}
+                className={styles.pipBtnSecondary}
+                icon={<StepBackwardOutlined />}
+                onClick={onPrev}
+              />
+
+              {/* -10s */}
+              <Button
+                type='text'
+                title={'Lùi 10 giây'}
+                className={styles.pipBtnSecondary}
+                icon={<FastBackwardOutlined />}
+                onClick={() => onSeekBy(-10)}
+              />
+
+              {/* Play / Pause */}
+              <Button
+                type='text'
+                title={playing ? 'Tạm dừng' : 'Phát'}
+                className={styles.pipBtnPlay}
+                icon={
+                  playing ? (
+                    <PauseOutlined style={{ fontSize: '20px', color: '#054753' }} />
+                  ) : (
+                    <CaretRightFilled
+                      style={{ fontSize: '22px', color: '#054753', marginLeft: '3px' }}
+                    />
+                  )
+                }
+                onClick={playing ? handlePause : handlePlay}
+              />
+
+              {/* +10s */}
+              <Button
+                type='text'
+                title={'Tua nhanh 10 giây'}
+                className={styles.pipBtnSecondary}
+                icon={<FastForwardOutlined />}
+                onClick={() => onSeekBy(10)}
+              />
+
+              {/* Next */}
+              <Button
+                type='text'
+                title={'Bài tiếp'}
+                className={styles.pipBtnSecondary}
+                icon={<StepForwardOutlined />}
+                onClick={onNext}
+              />
+
+              {/* Blur Toggle */}
+              <Button
+                type='text'
+                title={
+                  player.transcriptDisplayMode === 'visible'
+                    ? 'Làm mờ chữ (Luyện nghe)'
+                    : 'Đang làm mờ chữ (Nhấp để hiện rõ)'
+                }
+                className={styles.pipBtnSecondary}
+                style={{
+                  color: player.transcriptDisplayMode === 'blur' ? '#fab005 !important' : undefined,
+                }}
+                icon={
+                  player.transcriptDisplayMode === 'visible' ? (
+                    <EyeOutlined style={{ fontSize: 18 }} />
+                  ) : (
+                    <EyeInvisibleOutlined style={{ fontSize: 18 }} />
+                  )
+                }
+                onClick={() => {
+                  const nextMode = player.transcriptDisplayMode === 'visible' ? 'blur' : 'visible'
+                  dispatch(listeningAction.updatePlayer({ transcriptDisplayMode: nextMode }))
+                }}
               />
             </div>
           </div>,

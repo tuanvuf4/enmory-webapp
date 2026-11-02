@@ -98,9 +98,16 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
     }
   }
 
-  const onReset = () => {
+  const onResetForm = () => {
+    location.pathname.includes('library')
+      ? setUrlParams(initSearchFormItem, true)
+      : onReset({ keyword: '' })
+  }
+
+  const onReset = (item?: Partial<IFormSearchItem>) => {
     reset({
       ...getValues(),
+      ...item,
       archive: initSearchFormItem.archive,
       favorite: initSearchFormItem.favorite,
       tags: initSearchFormItem.tags,
@@ -345,7 +352,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            onClick={() => setUrlParams(initSearchFormItem)}
+            onClick={() => onResetForm()}
           >
             <SyncOutlined />
           </Button>

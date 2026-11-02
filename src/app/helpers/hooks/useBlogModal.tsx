@@ -7,7 +7,7 @@ import { Tag } from 'antd'
 export const useBlogModal = () => {
   const { openModal, closeModal } = useModal()
 
-  const openBlogModal = (mode: 'edit' | 'add', data?: IBlogItem) => {
+  const openBlogModal = (mode: 'edit' | 'add', data?: IBlogItem, onSuccess?: () => void) => {
     if (mode === 'add') {
       const modalId = data?.id ? `blog-form-${data.id}` : 'blog-form-add'
       openModal({
@@ -27,6 +27,10 @@ export const useBlogModal = () => {
             data={data}
             onCancel={() => closeModal(modalId)}
             onClose={() => closeModal(modalId)}
+            onSuccess={() => {
+              closeModal(modalId)
+              onSuccess?.()
+            }}
           />
         ),
       })
@@ -51,6 +55,10 @@ export const useBlogModal = () => {
             data={data}
             onCancel={() => closeModal(modalId)}
             onClose={() => closeModal(modalId)}
+            onSuccess={() => {
+              closeModal(modalId)
+              onSuccess?.()
+            }}
           />
         ),
       })

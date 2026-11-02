@@ -39,17 +39,20 @@ import {
   EyeOutlined,
   StarFilled,
   ThunderboltOutlined,
+  PlusOutlined,
+  SyncOutlined,
 } from '@ant-design/icons'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
-import { useDispatch, useSelector, checklistKeys, itemKeys } from '@/core/hooks'
+import { useDispatch, useSelector, checklistKeys, itemKeys, useDeleteBlog } from '@/core/hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { invalidateSearchIndex, localDb } from '@/services/localDb'
 import { itemApi } from '@/services/firebase/api/item.api'
-import { doc, collection } from 'firebase/firestore'
+import { doc, collection, getDocs, query, where } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { useItemModal } from '@/helpers/hooks/useItemModal'
+import { useBlogModal } from '@/helpers/hooks/useBlogModal'
 import { IItem, IMeaning, ECategory } from '@/models/item.model'
 import { IBlogItem } from '@/models/blog.model'
 import { ISyncMeta } from '@/services/localDb/db'
@@ -72,6 +75,9 @@ export const Developer: React.FC = () => {
   const dispatch = useDispatch()
   const queryClient = useQueryClient()
   const { openItemModal } = useItemModal()
+  const { openBlogModal } = useBlogModal()
+  const { mutateAsync: deleteBlogMutation } = useDeleteBlog()
+  const [isSyncingBlogs, setIsSyncingBlogs] = useState<boolean>(false)
   const geminiStats = useGeminiStats()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabFromQuery = searchParams.get('tab')
@@ -113,6 +119,7 @@ export const Developer: React.FC = () => {
   )
   const [showFullJson, setShowFullJson] = useState<boolean>(false)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [filterByUser, setFilterByUser] = useState<boolean>(true)
   const [isBatchDeleting, setIsBatchDeleting] = useState<boolean>(false)
   const [isEditingJson, setIsEditingJson] = useState<boolean>(false)
   const [editingJsonText, setEditingJsonText] = useState<string>('')
@@ -141,8 +148,42 @@ export const Developer: React.FC = () => {
         localDb.syncMeta.toArray(),
       ])
 
+      // Auto-fetch blogs from Firestore if localDb has no blogs or fewer blogs
+      if (user?.uid) {
+        try {
+          const blogsRef = collection(db, dbCollections.blogs || dbCollections.articles)
+          const q = query(blogsRef, where('uid', '==', user.uid))
+          const snap = await getDocs(q)
+          if (!snap.empty) {
+            const cloudBlogs: IBlogItem[] = []
+            snap.forEach((d) => {
+              const data = d.data()
+              if (!data.is_deleted) {
+                cloudBlogs.push({
+                  ...data,
+                  id: d.id,
+                  uid: data.uid || user.uid,
+                  title: data.title || '(Không có tiêu đề)',
+                  description: data.description || '',
+                  tags: data.tags || [],
+                  created_date: data.created_date || 0,
+                  last_update: data.last_update || data.created_date || 0,
+                } as IBlogItem)
+              }
+            })
+            if (cloudBlogs.length > 0) {
+              await localDb.blogs.bulkPut(cloudBlogs)
+              const allFreshBlogs = await localDb.blogs.toArray()
+              loadedBlogs.splice(0, loadedBlogs.length, ...allFreshBlogs)
+            }
+          }
+        } catch (cloudErr) {
+          console.warn('Auto-sync blogs on load error:', cloudErr)
+        }
+      }
+
       setItems(loadedItems)
-      setBlogs(loadedBlogs)
+      setBlogs([...loadedBlogs])
       setSyncMeta(loadedSyncMeta)
       setSelectedRowKeys((prev) => prev.filter((k) => loadedItems.some((it) => it.id === k)))
     } catch (err) {
@@ -153,7 +194,109 @@ export const Developer: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [user?.uid])
+
+  const handleSyncBlogsFromCloud = useCallback(async () => {
+    setIsSyncingBlogs(true)
+    try {
+      const blogsRef = collection(db, dbCollections.blogs || dbCollections.articles)
+      let snap
+      if (user?.uid) {
+        try {
+          const q = query(blogsRef, where('uid', '==', user.uid))
+          snap = await getDocs(q)
+        } catch {
+          snap = await getDocs(blogsRef)
+        }
+      } else {
+        snap = await getDocs(blogsRef)
+      }
+
+      const cloudBlogs: IBlogItem[] = []
+      snap.forEach((d) => {
+        const data = d.data()
+        if (!data.is_deleted) {
+          cloudBlogs.push({
+            ...data,
+            id: d.id,
+            uid: data.uid || user?.uid,
+            title: data.title || '(Không có tiêu đề)',
+            description: data.description || '',
+            tags: data.tags || [],
+            created_date: data.created_date || 0,
+            last_update: data.last_update || data.created_date || 0,
+          } as IBlogItem)
+        }
+      })
+
+      if (cloudBlogs.length > 0) {
+        await localDb.blogs.bulkPut(cloudBlogs)
+      }
+      const updatedBlogs = await localDb.blogs.toArray()
+      setBlogs(updatedBlogs)
+      message.success(`Đã đồng bộ ${cloudBlogs.length} bài viết từ Firestore!`)
+    } catch (err: any) {
+      console.error('Lỗi khi đồng bộ blogs:', err)
+      message.error(
+        'Không thể đồng bộ bài viết từ Cloud: ' + (err?.message || 'Lỗi không xác định'),
+      )
+    } finally {
+      setIsSyncingBlogs(false)
+    }
+  }, [user?.uid])
+
+  const handleEditBlog = useCallback(
+    (record: IBlogItem) => {
+      openBlogModal('edit', record, () => {
+        loadData()
+      })
+    },
+    [openBlogModal, loadData],
+  )
+
+  const handleDeleteBlog = useCallback(
+    (record: IBlogItem) => {
+      const recordId = record.id?.trim()
+      Modal.confirm({
+        title: `Xác nhận xóa bài viết "${record.title || '(Không có tiêu đề)'}"?`,
+        icon: <ExclamationCircleOutlined style={{ color: token.colorError }} />,
+        content: (
+          <div>
+            <p>Hành động này sẽ xóa bài viết khỏi Local Database và Firebase Firestore.</p>
+            {recordId && (
+              <p style={{ fontSize: 12, color: token.colorTextSecondary }}>
+                Blog ID: <code>{recordId}</code>
+              </p>
+            )}
+          </div>
+        ),
+        okText: 'Xác nhận xóa',
+        okType: 'danger',
+        cancelText: 'Hủy',
+        onOk: async () => {
+          try {
+            if (recordId) {
+              await deleteBlogMutation(recordId)
+            } else {
+              await localDb.blogs.where('title').equals(record.title).delete()
+            }
+            message.success('Đã xóa bài viết thành công!')
+            await loadData()
+          } catch (err: any) {
+            console.error('Lỗi khi xóa bài viết:', err)
+            if (recordId) {
+              await localDb.blogs.delete(recordId)
+              await loadData()
+              message.warning('Đã xóa bài viết khỏi Local DB.')
+            } else {
+              message.error('Không thể xóa bài viết: ' + (err?.message || 'Lỗi không xác định'))
+            }
+          }
+        },
+      })
+    },
+    [deleteBlogMutation, loadData, token],
+  )
 
   useEffect(() => {
     loadData()
@@ -538,11 +681,22 @@ export const Developer: React.FC = () => {
     }
   }
 
+  // User-scoped items & blogs
+  const scopedItems = useMemo(() => {
+    if (!filterByUser || !user?.uid) return items
+    return items.filter((it) => it.uid === user.uid)
+  }, [items, filterByUser, user?.uid])
+
+  const scopedBlogs = useMemo(() => {
+    if (!filterByUser || !user?.uid) return blogs
+    return blogs.filter((b) => b.uid === user.uid)
+  }, [blogs, filterByUser, user?.uid])
+
   // Filter items by search keyword
   const filteredItems = useMemo(() => {
-    if (!searchKeyword.trim()) return items
+    if (!searchKeyword.trim()) return scopedItems
     const kw = searchKeyword.toLowerCase()
-    return items.filter((item) => {
+    return scopedItems.filter((item) => {
       const originMatch = (item.origin || '').toLowerCase().includes(kw)
       const tagsMatch = (item.tags || []).some((t) => (t || '').toLowerCase().includes(kw))
       const meaningMatch = (item.meanings || []).some(
@@ -552,19 +706,23 @@ export const Developer: React.FC = () => {
       )
       return originMatch || tagsMatch || meaningMatch
     })
-  }, [items, searchKeyword])
+  }, [scopedItems, searchKeyword])
 
   // Filter blogs by search keyword
   const filteredBlogs = useMemo(() => {
-    if (!searchKeyword.trim()) return blogs
+    if (!searchKeyword.trim()) return scopedBlogs
     const kw = searchKeyword.toLowerCase()
-    return blogs.filter(
+    return scopedBlogs.filter(
       (b) =>
         (b.title || '').toLowerCase().includes(kw) ||
         (b.description || '').toLowerCase().includes(kw) ||
-        (b.tags || []).some((t) => t.toLowerCase().includes(kw)),
+        (b.tags || []).some((t) =>
+          String(t || '')
+            .toLowerCase()
+            .includes(kw),
+        ),
     )
-  }, [blogs, searchKeyword])
+  }, [scopedBlogs, searchKeyword])
 
   // Filter syncMeta by search keyword
   const filteredSyncMeta = useMemo(() => {
@@ -954,21 +1112,43 @@ export const Developer: React.FC = () => {
         title: 'Tiêu đề',
         dataIndex: 'title',
         key: 'title',
-        render: (text: string) => <Text strong>{text || '-'}</Text>,
+        width: 240,
+        ellipsis: true,
+        render: (text: string) => (
+          <Tooltip title={text || '-'}>
+            <Text strong ellipsis style={{ maxWidth: 220, display: 'inline-block' }}>
+              {text || '-'}
+            </Text>
+          </Tooltip>
+        ),
       },
       {
         title: 'Mô tả',
         dataIndex: 'description',
         key: 'description',
-        width: '50%',
+        width: 320,
+        ellipsis: true,
         render: (text: string) => {
           if (!text) return '-'
-          const isLong = text.length > 500
-          const truncated = isLong ? `${text.slice(0, 500)}...` : text
+          const plainText = text
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;/g, ' ')
+            .trim()
+          if (!plainText) return '-'
+          const isLong = plainText.length > 90
+          const truncated = isLong ? `${plainText.slice(0, 90)}...` : plainText
           return (
-            <Tooltip title={() => <span dangerouslySetInnerHTML={{ __html: truncated }} />}>
-              <Text type='secondary' ellipsis style={{ maxWidth: 500, display: 'inline-block' }}>
-                <span dangerouslySetInnerHTML={{ __html: isLong ? truncated : text }} />
+            <Tooltip
+              title={
+                plainText.length > 90
+                  ? plainText.length > 400
+                    ? `${plainText.slice(0, 400)}...`
+                    : plainText
+                  : undefined
+              }
+            >
+              <Text type='secondary' ellipsis style={{ maxWidth: 300, display: 'inline-block' }}>
+                {truncated}
               </Text>
             </Tooltip>
           )
@@ -1012,25 +1192,42 @@ export const Developer: React.FC = () => {
       {
         title: 'Thao tác',
         key: 'actions',
-        width: 80,
+        width: 120,
         align: 'center',
         render: (_: any, record: IBlogItem) => (
-          <Tooltip title='Xem raw JSON'>
-            <Button
-              size='small'
-              icon={<CodeOutlined />}
-              onClick={() =>
-                setSelectedRecordJson({
-                  title: record.title || record.id || 'Blog',
-                  data: record,
-                })
-              }
-            />
-          </Tooltip>
+          <Space size={4}>
+            <Tooltip title='Sửa bài viết'>
+              <Button
+                size='small'
+                icon={<EditOutlined style={{ color: token.colorWarning }} />}
+                onClick={() => handleEditBlog(record)}
+              />
+            </Tooltip>
+            <Tooltip title='Xóa bài viết'>
+              <Button
+                size='small'
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDeleteBlog(record)}
+              />
+            </Tooltip>
+            <Tooltip title='Xem raw JSON'>
+              <Button
+                size='small'
+                icon={<CodeOutlined />}
+                onClick={() =>
+                  setSelectedRecordJson({
+                    title: record.title || record.id || 'Blog',
+                    data: record,
+                  })
+                }
+              />
+            </Tooltip>
+          </Space>
         ),
       },
     ],
-    [],
+    [token, handleEditBlog, handleDeleteBlog],
   )
 
   const syncMetaColumns = useMemo<TableColumnsType<ISyncMeta>>(
@@ -1293,12 +1490,14 @@ export const Developer: React.FC = () => {
                     >
                       <Statistic
                         title='Items (Bảng từ vựng)'
-                        value={items.length}
+                        value={scopedItems.length}
                         prefix={<DatabaseOutlined style={{ color: token.colorPrimary }} />}
                         suffix={
-                          searchKeyword && filteredItems.length !== items.length
+                          searchKeyword && filteredItems.length !== scopedItems.length
                             ? `(${filteredItems.length} tìm thấy)`
-                            : ''
+                            : filterByUser && user?.uid && scopedItems.length !== items.length
+                              ? `(${items.length} toàn bộ)`
+                              : ''
                         }
                       />
                     </Card>
@@ -1314,12 +1513,14 @@ export const Developer: React.FC = () => {
                     >
                       <Statistic
                         title='Blogs (Bảng bài viết)'
-                        value={blogs.length}
+                        value={scopedBlogs.length}
                         prefix={<CodeOutlined style={{ color: token.colorSuccess }} />}
                         suffix={
-                          searchKeyword && filteredBlogs.length !== blogs.length
+                          searchKeyword && filteredBlogs.length !== scopedBlogs.length
                             ? `(${filteredBlogs.length} tìm thấy)`
-                            : ''
+                            : filterByUser && user?.uid && scopedBlogs.length !== blogs.length
+                              ? `(${blogs.length} toàn bộ)`
+                              : ''
                         }
                       />
                     </Card>
@@ -1356,8 +1557,13 @@ export const Developer: React.FC = () => {
                     >
                       <Statistic
                         title='Tổng số bản ghi'
-                        value={items.length + blogs.length + syncMeta.length}
+                        value={scopedItems.length + scopedBlogs.length + syncMeta.length}
                         prefix={<DatabaseOutlined />}
+                        suffix={
+                          filterByUser && user?.uid
+                            ? `(${items.length + blogs.length + syncMeta.length} toàn bộ)`
+                            : ''
+                        }
                       />
                     </Card>
                   </Col>
@@ -1371,12 +1577,12 @@ export const Developer: React.FC = () => {
                         activeKey={activeTab}
                         onChange={(key) => setActiveTab(key as TableType)}
                         items={[
-                          { key: 'items', label: `items (${items.length})` },
-                          { key: 'blogs', label: `blogs (${blogs.length})` },
+                          { key: 'items', label: `items (${scopedItems.length})` },
+                          { key: 'blogs', label: `blogs (${scopedBlogs.length})` },
                           { key: 'syncMeta', label: `syncMeta (${syncMeta.length})` },
                           {
                             key: 'all',
-                            label: `Tất cả bảng (${items.length + blogs.length + syncMeta.length})`,
+                            label: `Tất cả bảng (${scopedItems.length + scopedBlogs.length + syncMeta.length})`,
                           },
                         ]}
                         style={{ marginBottom: 0 }}
@@ -1389,6 +1595,19 @@ export const Developer: React.FC = () => {
                         style={{ width: '100%', justifyContent: 'flex-end' }}
                         wrap
                       >
+                        {user?.uid && (
+                          <Checkbox
+                            checked={filterByUser}
+                            onChange={(e) => setFilterByUser(e.target.checked)}
+                            style={{ userSelect: 'none' }}
+                          >
+                            <Tooltip
+                              title={`Lọc dữ liệu theo tài khoản đang đăng nhập (${user.email || user.uid}). Bỏ chọn để xem toàn bộ dữ liệu trong Local DB.`}
+                            >
+                              <span>Chỉ tài khoản hiện tại</span>
+                            </Tooltip>
+                          </Checkbox>
+                        )}
                         <Input
                           placeholder='Tìm kiếm trong Local DB...'
                           prefix={<SearchOutlined />}
@@ -1535,11 +1754,38 @@ export const Developer: React.FC = () => {
                     {(activeTab === 'blogs' || activeTab === 'all') && (
                       <Card
                         title={
-                          <Space>
-                            <CodeOutlined style={{ color: token.colorSuccess }} />
-                            <span>Bảng Blogs</span>
-                            <Tag color='green'>{filteredBlogs.length} bài viết</Tag>
-                          </Space>
+                          <Row justify='space-between' align='middle' style={{ width: '100%' }}>
+                            <Col>
+                              <Space>
+                                <CodeOutlined style={{ color: token.colorSuccess }} />
+                                <span>Bảng Bài viết (Blogs)</span>
+                                <Tag color='green'>
+                                  {filteredBlogs.length} bài viết{' '}
+                                  {filterByUser && user?.uid ? '(của bạn)' : '(tất cả)'}
+                                </Tag>
+                              </Space>
+                            </Col>
+                            <Col>
+                              <Space>
+                                <Button
+                                  size='small'
+                                  icon={<SyncOutlined spin={isSyncingBlogs} />}
+                                  onClick={handleSyncBlogsFromCloud}
+                                  loading={isSyncingBlogs}
+                                >
+                                  Đồng bộ từ Cloud
+                                </Button>
+                                <Button
+                                  size='small'
+                                  type='primary'
+                                  icon={<PlusOutlined />}
+                                  onClick={() => openBlogModal('add', undefined, loadData)}
+                                >
+                                  Tạo bài viết
+                                </Button>
+                              </Space>
+                            </Col>
+                          </Row>
                         }
                         style={{ marginBottom: activeTab === 'all' ? 24 : 0 }}
                         size='small'
@@ -1548,6 +1794,7 @@ export const Developer: React.FC = () => {
                           dataSource={filteredBlogs}
                           columns={blogColumns}
                           rowKey='id'
+                          tableLayout='fixed'
                           pagination={{
                             pageSize: 15,
                             showSizeChanger: true,
@@ -1557,7 +1804,7 @@ export const Developer: React.FC = () => {
                           }}
                           size='small'
                           bordered
-                          scroll={{ x: 800 }}
+                          scroll={{ x: 1050 }}
                         />
                       </Card>
                     )}

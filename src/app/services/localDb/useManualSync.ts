@@ -4,9 +4,10 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSelector } from '@/core/hooks/redux'
 import { localDb } from './db'
-import { syncService, ISyncResult } from './syncService'
+import { syncService, ISyncResult, IUnsyncedRecord } from './syncService'
 import { itemKeys } from '@/core/hooks/useItems'
 import { blogKeys } from '@/core/hooks/useBlogs'
+import { refreshAiUsageFromCloud } from '@/services/gemini'
 
 export const useManualSync = () => {
   const { user } = useSelector((state) => state.auth)
@@ -19,6 +20,8 @@ export const useManualSync = () => {
   const [isLoadingServerCount, setIsLoadingServerCount] = useState<boolean>(false)
   const [serverBlogCount, setServerBlogCount] = useState<number | null>(null)
   const [isLoadingServerBlogCount, setIsLoadingServerBlogCount] = useState<boolean>(false)
+  const [unsyncedRecords, setUnsyncedRecords] = useState<IUnsyncedRecord[]>([])
+  const [lastSyncResult, setLastSyncResult] = useState<ISyncResult | null>(null)
 
   // Live counts from Dexie IndexedDB for currently logged in user
   const localItemCount = useLiveQuery(
@@ -91,7 +94,15 @@ export const useManualSync = () => {
     refreshLastSyncTime()
     refreshServerItemCount()
     refreshServerBlogCount()
-  }, [refreshLastSyncTime, refreshServerItemCount, refreshServerBlogCount])
+    if (user?.uid) {
+      syncService.getLastUnsyncedRecords(user.uid).then((records) => {
+        setUnsyncedRecords(records)
+      })
+    } else {
+      setUnsyncedRecords([])
+      setLastSyncResult(null)
+    }
+  }, [user?.uid, refreshLastSyncTime, refreshServerItemCount, refreshServerBlogCount])
 
   const syncNow = async (forceFull = false): Promise<ISyncResult | null> => {
     if (!user?.uid) {
@@ -110,9 +121,13 @@ export const useManualSync = () => {
         onProgress: (step) => setProgressText(step),
       })
 
+      setLastSyncResult(result)
+      setUnsyncedRecords(result.unsyncedRecords || [])
+
       await refreshLastSyncTime()
       await refreshServerItemCount()
       await refreshServerBlogCount()
+      await refreshAiUsageFromCloud().catch(() => null)
 
       // Refresh react-query caches so the UI reflects newly synced data
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
@@ -123,7 +138,14 @@ export const useManualSync = () => {
         ? `Downloaded ${result.updatedItems} items, ${result.updatedBlogs} blogs, and ${result.updatedExamples} examples.`
         : `Synced ${result.updatedItems} modified items, ${result.updatedBlogs} modified blogs, removed ${result.deletedItems} deleted items${result.deletedBlogs ? `, removed ${result.deletedBlogs} deleted blogs` : ''}.`
 
-      message.success(`Sync completed! ${details}`)
+      const unsyncedCount = result.unsyncedRecords?.length || 0
+      if (unsyncedCount > 0) {
+        message.warning(
+          `Sync completed with ${unsyncedCount} unsynced record(s). Check the table below.`,
+        )
+      } else {
+        message.success(`Sync completed! ${details}`)
+      }
       return result
     } catch (err: any) {
       console.error('Manual sync failed:', err)
@@ -141,6 +163,8 @@ export const useManualSync = () => {
     try {
       await syncService.clearLocalData(user.uid)
       await refreshLastSyncTime()
+      setUnsyncedRecords([])
+      setLastSyncResult(null)
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
       queryClient.invalidateQueries({ queryKey: blogKeys.lists() })
       queryClient.invalidateQueries({ queryKey: blogKeys.counts() })
@@ -166,5 +190,8 @@ export const useManualSync = () => {
     syncNow,
     clearLocalData,
     refreshLastSyncTime,
+    unsyncedRecords,
+    lastSyncResult,
+    setUnsyncedRecords,
   }
 }

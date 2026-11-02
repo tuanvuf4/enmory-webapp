@@ -1,6 +1,7 @@
 import React from 'react'
-import { Badge, Button, Flex, Progress, Tag, Typography, theme } from 'antd'
-import { ThunderboltOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
+import { Badge, Button, Flex, Progress, Tag, Tooltip, Typography, theme } from 'antd'
+import { CloudSyncOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { useGeminiLimits, useGeminiStats } from '@/services/gemini'
 
 interface IProps {
@@ -9,8 +10,13 @@ interface IProps {
 
 export const GeminiSidebarWidget: React.FC<IProps> = ({ isCollapsed }) => {
   const { token } = theme.useToken()
+  const navigate = useNavigate()
   const stats = useGeminiStats()
   const limits = useGeminiLimits()
+
+  const handleOpenDeveloper = () => {
+    navigate('/developer')
+  }
 
   const formatTokens = (num: number): string => {
     if (num >= 1_000_000) {
@@ -57,40 +63,47 @@ export const GeminiSidebarWidget: React.FC<IProps> = ({ isCollapsed }) => {
 
   if (isCollapsed) {
     return (
-      <Button
-        type='text'
-        style={{
-          width: '100%',
-          justifyContent: 'center',
-          borderRadius: token.borderRadiusLG,
-          height: 36,
-          paddingInline: 0,
-        }}
-        icon={
-          <Badge
-            count={stats.totalRequests}
-            overflowCount={999}
-            size='small'
-            offset={[4, -2]}
-            style={{
-              fontSize: 10,
-              backgroundColor: isNearLimit ? token.colorError : token.colorPrimary,
-            }}
-          >
-            <ThunderboltOutlined
+      <Tooltip
+        title={`AI Usage: ${formatTokens(stats.totalRequests)} requests (Đồng bộ tài khoản)`}
+        placement='right'
+      >
+        <Button
+          type='text'
+          onClick={handleOpenDeveloper}
+          style={{
+            width: '100%',
+            justifyContent: 'center',
+            borderRadius: token.borderRadiusLG,
+            height: 36,
+            paddingInline: 0,
+          }}
+          icon={
+            <Badge
+              count={stats.totalRequests}
+              overflowCount={999}
+              size='small'
+              offset={[4, -2]}
               style={{
-                color: isNearLimit ? token.colorError : token.colorPrimary,
-                fontSize: 16,
+                fontSize: 10,
+                backgroundColor: isNearLimit ? token.colorError : token.colorPrimary,
               }}
-            />
-          </Badge>
-        }
-      />
+            >
+              <ThunderboltOutlined
+                style={{
+                  color: isNearLimit ? token.colorError : token.colorPrimary,
+                  fontSize: 16,
+                }}
+              />
+            </Badge>
+          }
+        />
+      </Tooltip>
     )
   }
 
   return (
     <div
+      onClick={handleOpenDeveloper}
       style={{
         cursor: 'pointer',
         padding: '8px 12px',
@@ -113,20 +126,25 @@ export const GeminiSidebarWidget: React.FC<IProps> = ({ isCollapsed }) => {
             AI Usage
           </Typography.Text>
         </Flex>
-        {isNearLimit && (
-          <Tag
-            color='error'
-            style={{
-              fontSize: 10,
-              margin: 0,
-              paddingInline: 4,
-              lineHeight: '16px',
-              borderRadius: 4,
-            }}
-          >
-            Hạn mức
-          </Tag>
-        )}
+        <Flex align='center' gap={4}>
+          <Tooltip title='Dữ liệu AI đã đồng bộ trên đám mây (Cloud synced) theo tài khoản'>
+            <CloudSyncOutlined style={{ fontSize: 13, color: token.colorSuccess }} />
+          </Tooltip>
+          {isNearLimit && (
+            <Tag
+              color='error'
+              style={{
+                fontSize: 10,
+                margin: 0,
+                paddingInline: 4,
+                lineHeight: '16px',
+                borderRadius: 4,
+              }}
+            >
+              Hạn mức
+            </Tag>
+          )}
+        </Flex>
       </Flex>
 
       {/* Request Row */}

@@ -64,7 +64,10 @@ interface ItemFormProps {
   isEditMode?: boolean
 }
 
-export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem, isEditMode: propIsEditMode }) => {
+export const ItemForm: React.FC<ItemFormProps> = ({
+  item = initItem,
+  isEditMode: propIsEditMode,
+}) => {
   const { token } = theme.useToken()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAutofilling, setIsAutofilling] = useState(false)

@@ -30,7 +30,7 @@ import {
   Divider,
   Checkbox,
   Select,
-  Alert
+  Alert,
 } from 'antd'
 import clsx from 'clsx'
 import { useSelector } from '@/core/hooks'

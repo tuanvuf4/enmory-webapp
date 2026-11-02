@@ -6,6 +6,7 @@ import {
   generateContentWithTracking,
   IGeminiLimits,
   IGeminiRequestLog,
+  refreshAiUsageFromCloud,
   resetGeminiLimits,
   saveGeminiLimits,
   useGeminiLimits,
@@ -15,6 +16,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
+  CloudSyncOutlined,
   DeleteOutlined,
   DownloadOutlined,
   KeyOutlined,
@@ -147,18 +149,37 @@ export const GeminiUsageTab: React.FC = () => {
 
   // Average latency calculation
 
+  // Cloud refresh state
+  const [isCloudRefreshing, setIsCloudRefreshing] = useState(false)
+
+  const handleRefreshCloud = async () => {
+    setIsCloudRefreshing(true)
+    try {
+      const refreshed = await refreshAiUsageFromCloud()
+      if (refreshed) {
+        message.success('Đã làm mới dữ liệu AI usage từ Cloud thành công!')
+      } else {
+        message.info('Dữ liệu AI usage đã là mới nhất hoặc chưa đăng nhập.')
+      }
+    } catch {
+      message.error('Không thể đồng bộ dữ liệu AI từ Cloud.')
+    } finally {
+      setIsCloudRefreshing(false)
+    }
+  }
+
   // Reset stats handler
   const handleResetStats = () => {
     Modal.confirm({
       title: 'Reset Gemini API & Token Usage Stats?',
       icon: <DeleteOutlined style={{ color: token.colorError }} />,
       content:
-        'Thao tác này sẽ xoá sạch bộ đếm request, số token đã tiêu thụ và toàn bộ nhật ký request đã ghi lại trên thiết bị này.',
+        'Thao tác này sẽ xoá sạch bộ đếm request, số token đã tiêu thụ và toàn bộ nhật ký request đã ghi lại trên tài khoản (đồng bộ trên tất cả thiết bị).',
       okText: 'Xoá thống kê',
       okType: 'danger',
       cancelText: 'Huỷ',
-      onOk: () => {
-        clearGeminiStats()
+      onOk: async () => {
+        await clearGeminiStats()
         message.success('Đã làm mới dữ liệu thống kê Gemini API thành công!')
       },
     })
@@ -508,13 +529,14 @@ export const GeminiUsageTab: React.FC = () => {
     <Space direction='vertical' style={{ width: '100%' }} size={16}>
       {/* Alert Banner */}
       <Alert
-        message='Bộ đếm Tokens & Requests Google Gemini API'
+        message='Bộ đếm Tokens & Requests Google Gemini API (Cloud Synced)'
         description={
           <div>
             Theo dõi chính xác và đầy đủ số lượng request API, token đầu vào (prompt tokens), token
             đầu ra (candidates tokens), tổng token tiêu thụ, cùng phân tích theo từng model và chức
-            năng (Từ điển, Phát âm, Luyện nghe, Review câu dịch, TTS,...). Dữ liệu được cập nhật tự
-            động theo thời gian thực và lưu trữ cục bộ trên trình duyệt.
+            năng (Từ điển, Phát âm, Luyện nghe, Review câu dịch, TTS,...). Dữ liệu được đồng bộ hoá
+            thời gian thực qua Firestore theo tài khoản và phản ánh nhất quán trên tất cả các thiết
+            bị.
           </div>
         }
         type='info'
@@ -542,6 +564,13 @@ export const GeminiUsageTab: React.FC = () => {
           </Col>
           <Col>
             <Space wrap>
+              <Button
+                icon={<CloudSyncOutlined />}
+                loading={isCloudRefreshing}
+                onClick={handleRefreshCloud}
+              >
+                Đồng bộ Cloud
+              </Button>
               <Button icon={<SettingOutlined />} onClick={handleOpenLimitsModal}>
                 Cài đặt giới hạn
               </Button>

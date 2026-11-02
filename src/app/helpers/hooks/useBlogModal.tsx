@@ -22,7 +22,13 @@ export const useBlogModal = () => {
           tooltip: data?.title ? `Mở lại bài viết: ${data.title}` : 'Mở lại Blog Form',
           icon: <FileTextOutlined />,
         },
-        content: <BlogForm data={data} onCancel={() => closeModal(modalId)} onClose={() => closeModal(modalId)} />,
+        content: (
+          <BlogForm
+            data={data}
+            onCancel={() => closeModal(modalId)}
+            onClose={() => closeModal(modalId)}
+          />
+        ),
       })
     }
 
@@ -40,7 +46,13 @@ export const useBlogModal = () => {
           tooltip: data?.title ? `Mở lại bài viết: ${data.title}` : 'Mở lại Blog Form',
           icon: <FileTextOutlined />,
         },
-        content: <BlogForm data={data} onCancel={() => closeModal(modalId)} onClose={() => closeModal(modalId)} />,
+        content: (
+          <BlogForm
+            data={data}
+            onCancel={() => closeModal(modalId)}
+            onClose={() => closeModal(modalId)}
+          />
+        ),
       })
     }
   }

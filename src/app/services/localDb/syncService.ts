@@ -17,6 +17,16 @@ import { invalidateSearchIndex } from './searchEngine'
 import { hydrateItemsWithExamples } from '@/services/firebase/dbIntegration'
 
 const SYNC_META_PREFIX = 'last_sync_time_'
+const UNSYNCED_META_PREFIX = 'last_unsynced_records_'
+
+export interface IUnsyncedRecord {
+  id: string
+  type: 'item' | 'blog'
+  title: string
+  reason: string
+  updatedAt?: number
+  errorDetails?: string
+}
 
 export interface ISyncResult {
   isSuccess: boolean
@@ -30,6 +40,7 @@ export interface ISyncResult {
   totalBlogs: number
   timestamp: number
   isFullSync: boolean
+  unsyncedRecords: IUnsyncedRecord[]
   message?: string
 }
 
@@ -57,7 +68,16 @@ export const syncService = {
         const deletedCount = deletedSnap.data().count
         return Math.max(0, totalCount - deletedCount)
       } catch {
-        return totalCount
+        // Fallback to query all user items and count non-deleted docs to avoid composite index errors
+        const itemsQuery = query(itemsRef, where('uid', '==', uid))
+        const snapshot = await getDocs(itemsQuery)
+        let count = 0
+        snapshot.forEach((docSnap) => {
+          if (!docSnap.data().is_deleted) {
+            count++
+          }
+        })
+        return count
       }
     } catch (err) {
       console.warn('getCountFromServer failed, falling back to getDocs:', err)
@@ -142,9 +162,32 @@ export const syncService = {
       await localDb.items.where('uid').equals(uid).delete()
       await localDb.blogs.where('uid').equals(uid).delete()
       await localDb.syncMeta.delete(`${SYNC_META_PREFIX}${uid}`)
+      await localDb.syncMeta.delete(`${UNSYNCED_META_PREFIX}${uid}`)
     })
     localStorage.removeItem(`${SYNC_META_PREFIX}${uid}`)
+    localStorage.removeItem(`${UNSYNCED_META_PREFIX}${uid}`)
     invalidateSearchIndex()
+  },
+
+  /**
+   * Get cached unsynced records from last sync.
+   */
+  async getLastUnsyncedRecords(uid: string): Promise<IUnsyncedRecord[]> {
+    if (!uid) return []
+    const metaKey = `${UNSYNCED_META_PREFIX}${uid}`
+    const meta = await localDb.syncMeta.get(metaKey)
+    if (meta && Array.isArray(meta.value)) {
+      return meta.value
+    }
+    const localVal = localStorage.getItem(metaKey)
+    if (localVal) {
+      try {
+        return JSON.parse(localVal)
+      } catch {
+        return []
+      }
+    }
+    return []
   },
 
   /**
@@ -169,6 +212,7 @@ export const syncService = {
     let updatedItems = 0
     let deletedItems = 0
     let updatedExamples = 0
+    const unsyncedRecords: IUnsyncedRecord[] = []
 
     // ==========================================
     // 1. SYNC BLOGS
@@ -184,8 +228,37 @@ export const syncService = {
     const cloudBlogIds = new Set<string>()
 
     blogsSnapshot.forEach((docSnap) => {
-      const data = docSnap.data()
-      if (!(data as any).is_deleted) {
+      const data = docSnap.data() || {}
+      if ((data as any).is_deleted) {
+        return
+      }
+
+      const blogId = docSnap.id
+      const blogTitle = data.title || '(Untitled Blog)'
+
+      if (!blogId) {
+        unsyncedRecords.push({
+          id: 'unknown',
+          type: 'blog',
+          title: blogTitle,
+          reason: 'Missing document ID',
+          updatedAt: data.last_update || data.created_date,
+        })
+        return
+      }
+
+      if (!data.title || typeof data.title !== 'string' || !data.title.trim()) {
+        unsyncedRecords.push({
+          id: blogId,
+          type: 'blog',
+          title: '(No title)',
+          reason: 'Blog title is empty or missing',
+          updatedAt: data.last_update || data.created_date,
+        })
+        return
+      }
+
+      try {
         const blogItem = mapDocToBlogItem(docSnap)
         if (!blogItem.uid) {
           blogItem.uid = uid
@@ -194,6 +267,14 @@ export const syncService = {
         if (blogItem.id) {
           cloudBlogIds.add(blogItem.id)
         }
+      } catch (err: any) {
+        unsyncedRecords.push({
+          id: blogId,
+          type: 'blog',
+          title: blogTitle,
+          reason: `Failed to process blog data: ${err?.message || 'Invalid format'}`,
+          updatedAt: data.last_update || data.created_date,
+        })
       }
     })
 
@@ -215,12 +296,60 @@ export const syncService = {
       const itemsSnapshot = await getDocs(itemsQuery)
       const cloudItems: IItem[] = []
       itemsSnapshot.forEach((docSnap) => {
-        const data = docSnap.data()
-        if (!(data as any).is_deleted) {
-          cloudItems.push({ id: docSnap.id, ...data } as IItem)
+        const data = docSnap.data() || {}
+        if ((data as any).is_deleted) {
+          return
+        }
+
+        const itemId = docSnap.id
+        const itemOrigin = data.origin || '(No vocabulary origin)'
+
+        if (!itemId) {
+          unsyncedRecords.push({
+            id: 'unknown',
+            type: 'item',
+            title: itemOrigin,
+            reason: 'Missing document ID',
+            updatedAt: data.last_update || data.created_date,
+          })
+          return
+        }
+
+        if (!data.origin || typeof data.origin !== 'string' || !data.origin.trim()) {
+          unsyncedRecords.push({
+            id: itemId,
+            type: 'item',
+            title: '(Empty origin)',
+            reason: 'Item vocabulary origin word/phrase is empty or missing',
+            updatedAt: data.last_update || data.created_date,
+          })
+          return
+        }
+
+        try {
+          const itemObj = { id: itemId, ...data } as IItem
+          if (!itemObj.uid) {
+            itemObj.uid = uid
+          }
+          cloudItems.push(itemObj)
+        } catch (err: any) {
+          unsyncedRecords.push({
+            id: itemId,
+            type: 'item',
+            title: itemOrigin,
+            reason: `Failed to process item: ${err?.message || 'Invalid format'}`,
+            updatedAt: data.last_update || data.created_date,
+          })
         }
       })
-      allItemsToPut = await hydrateItemsWithExamples(cloudItems)
+
+      try {
+        allItemsToPut = await hydrateItemsWithExamples(cloudItems)
+      } catch (hydrateErr: any) {
+        console.warn('Hydration error, falling back to raw cloudItems:', hydrateErr)
+        allItemsToPut = cloudItems
+      }
+
       updatedItems = allItemsToPut.length
       updatedExamples = allItemsToPut.reduce(
         (sum, item) =>
@@ -242,15 +371,61 @@ export const syncService = {
       const cloudItemsToPut: IItem[] = []
 
       deltaItemsSnapshot.forEach((docSnap) => {
-        const data = docSnap.data()
+        const data = docSnap.data() || {}
         if ((data as any).is_deleted) {
           itemIdsToDelete.push(docSnap.id)
-        } else {
-          cloudItemsToPut.push({ id: docSnap.id, ...data } as IItem)
+          return
+        }
+
+        const itemId = docSnap.id
+        const itemOrigin = data.origin || '(No vocabulary origin)'
+
+        if (!itemId) {
+          unsyncedRecords.push({
+            id: 'unknown',
+            type: 'item',
+            title: itemOrigin,
+            reason: 'Missing document ID',
+            updatedAt: data.last_update || data.created_date,
+          })
+          return
+        }
+
+        if (!data.origin || typeof data.origin !== 'string' || !data.origin.trim()) {
+          unsyncedRecords.push({
+            id: itemId,
+            type: 'item',
+            title: '(Empty origin)',
+            reason: 'Item vocabulary origin word/phrase is empty or missing',
+            updatedAt: data.last_update || data.created_date,
+          })
+          return
+        }
+
+        try {
+          const itemObj = { id: itemId, ...data } as IItem
+          if (!itemObj.uid) {
+            itemObj.uid = uid
+          }
+          cloudItemsToPut.push(itemObj)
+        } catch (err: any) {
+          unsyncedRecords.push({
+            id: itemId,
+            type: 'item',
+            title: itemOrigin,
+            reason: `Failed to process item: ${err?.message || 'Invalid format'}`,
+            updatedAt: data.last_update || data.created_date,
+          })
         }
       })
 
-      allItemsToPut = await hydrateItemsWithExamples(cloudItemsToPut)
+      try {
+        allItemsToPut = await hydrateItemsWithExamples(cloudItemsToPut)
+      } catch (hydrateErr: any) {
+        console.warn('Hydration error, falling back to raw cloudItemsToPut:', hydrateErr)
+        allItemsToPut = cloudItemsToPut
+      }
+
       updatedItems = allItemsToPut.length
       updatedExamples = allItemsToPut.reduce(
         (sum, item) =>
@@ -335,11 +510,43 @@ export const syncService = {
       if (isFullSync) {
         await localDb.items.where('uid').equals(uid).delete()
         if (allItemsToPut.length > 0) {
-          await localDb.items.bulkPut(allItemsToPut)
+          try {
+            await localDb.items.bulkPut(allItemsToPut)
+          } catch (bulkErr: any) {
+            for (const item of allItemsToPut) {
+              try {
+                await localDb.items.put(item)
+              } catch (singleErr: any) {
+                unsyncedRecords.push({
+                  id: item.id || 'unknown',
+                  type: 'item',
+                  title: item.origin || '(Unknown Item)',
+                  reason: `Failed to save to local database: ${singleErr?.message || 'Storage error'}`,
+                  updatedAt: item.last_update,
+                })
+              }
+            }
+          }
         }
       } else {
         if (allItemsToPut.length > 0) {
-          await localDb.items.bulkPut(allItemsToPut)
+          try {
+            await localDb.items.bulkPut(allItemsToPut)
+          } catch (bulkErr: any) {
+            for (const item of allItemsToPut) {
+              try {
+                await localDb.items.put(item)
+              } catch (singleErr: any) {
+                unsyncedRecords.push({
+                  id: item.id || 'unknown',
+                  type: 'item',
+                  title: item.origin || '(Unknown Item)',
+                  reason: `Failed to save to local database: ${singleErr?.message || 'Storage error'}`,
+                  updatedAt: item.last_update,
+                })
+              }
+            }
+          }
         }
         if (itemIdsToDelete.length > 0) {
           await localDb.items.bulkDelete(itemIdsToDelete)
@@ -348,7 +555,23 @@ export const syncService = {
 
       // Put all active blogs into localDb
       if (cloudBlogs.length > 0) {
-        await localDb.blogs.bulkPut(cloudBlogs)
+        try {
+          await localDb.blogs.bulkPut(cloudBlogs)
+        } catch (bulkErr: any) {
+          for (const blog of cloudBlogs) {
+            try {
+              await localDb.blogs.put(blog)
+            } catch (singleErr: any) {
+              unsyncedRecords.push({
+                id: blog.id || 'unknown',
+                type: 'blog',
+                title: blog.title || '(Untitled Blog)',
+                reason: `Failed to save to local database: ${singleErr?.message || 'Storage error'}`,
+                updatedAt: blog.last_update,
+              })
+            }
+          }
+        }
       }
       if (blogIdsToDelete.length > 0) {
         await localDb.blogs.bulkDelete(blogIdsToDelete)
@@ -356,6 +579,79 @@ export const syncService = {
 
       await localDb.syncMeta.put({ key: `${SYNC_META_PREFIX}${uid}`, value: now })
     })
+
+    // Verify stored items in localDb
+    for (const item of allItemsToPut) {
+      if (item.id && !unsyncedRecords.some((u) => u.id === item.id)) {
+        const saved = await localDb.items.get(item.id)
+        if (!saved) {
+          unsyncedRecords.push({
+            id: item.id,
+            type: 'item',
+            title: item.origin || '(Unknown Item)',
+            reason: 'Item not found in local database after sync',
+            updatedAt: item.last_update,
+          })
+        }
+      }
+    }
+
+    // Verify stored blogs in localDb
+    for (const blog of cloudBlogs) {
+      if (blog.id && !unsyncedRecords.some((u) => u.id === blog.id)) {
+        const saved = await localDb.blogs.get(blog.id)
+        if (!saved) {
+          unsyncedRecords.push({
+            id: blog.id,
+            type: 'blog',
+            title: blog.title || '(Untitled Blog)',
+            reason: 'Blog not found in local database after sync',
+            updatedAt: blog.last_update,
+          })
+        }
+      }
+    }
+
+    // In delta sync, if server has items not in localDb, check which ones are missing
+    if (!isFullSync) {
+      const currentLocalItemCount = await localDb.items.where('uid').equals(uid).count()
+      const serverCount = await this.getServerItemCount(uid)
+      if (currentLocalItemCount < serverCount) {
+        options?.onProgress?.('Checking for missing server items...')
+        try {
+          const checkItemsQuery = query(
+            collection(db, dbCollections.items),
+            where('uid', '==', uid),
+          )
+          const checkSnapshot = await getDocs(checkItemsQuery)
+          for (const docSnap of checkSnapshot.docs) {
+            const data = docSnap.data() || {}
+            if (!data.is_deleted && !unsyncedRecords.some((u) => u.id === docSnap.id)) {
+              const existsLocally = await localDb.items.get(docSnap.id)
+              if (!existsLocally) {
+                unsyncedRecords.push({
+                  id: docSnap.id,
+                  type: 'item',
+                  title: data.origin || '(No vocabulary origin)',
+                  reason: 'Missing in local database (delta sync skipped; full sync recommended)',
+                  updatedAt: data.last_update || data.created_date,
+                })
+              }
+            }
+          }
+        } catch (checkErr) {
+          console.warn('Failed to check missing items during delta sync:', checkErr)
+        }
+      }
+    }
+
+    // Persist latest unsynced records to syncMeta and localStorage
+    try {
+      await localDb.syncMeta.put({ key: `${UNSYNCED_META_PREFIX}${uid}`, value: unsyncedRecords })
+      localStorage.setItem(`${UNSYNCED_META_PREFIX}${uid}`, JSON.stringify(unsyncedRecords))
+    } catch (metaErr) {
+      console.warn('Failed to persist unsynced records meta:', metaErr)
+    }
 
     localStorage.setItem(`${SYNC_META_PREFIX}${uid}`, now.toString())
     invalidateSearchIndex()
@@ -383,6 +679,7 @@ export const syncService = {
       totalBlogs,
       timestamp: now,
       isFullSync,
+      unsyncedRecords,
     }
   },
 

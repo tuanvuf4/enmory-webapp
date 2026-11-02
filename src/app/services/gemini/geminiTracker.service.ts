@@ -1,5 +1,8 @@
 import { GoogleGenAI } from '@google/genai'
 import { useEffect, useState } from 'react'
+import { doc, getDoc, setDoc, onSnapshot, increment } from 'firebase/firestore'
+import { db, dbCollections } from '@/config/firebaseConfig'
+import { firebaseAuthService } from '@/services/firebase/authService'
 
 export interface IGeminiRequestLog {
   id: string
@@ -52,6 +55,13 @@ const LIMITS_STORAGE_KEY = 'enmory_gemini_tracker_limits'
 const LIMITS_CHANGE_EVENT = 'enmory_gemini_limits_changed'
 const MAX_RECENT_LOGS = 100
 
+// Internal sync tracking
+let activeFirestoreUnsubscribe: (() => void) | null = null
+let currentSyncUid: string | null = null
+let isInitialized = false
+
+const getUsageDocRef = (uid: string) => doc(db, dbCollections.users, uid, 'stats', 'aiUsage')
+
 const defaultStats: IGeminiUsageStats = {
   totalRequests: 0,
   successRequests: 0,
@@ -88,21 +98,41 @@ export const getGeminiStats = (): IGeminiUsageStats => {
   }
 }
 
-export const saveGeminiStats = (stats: IGeminiUsageStats): void => {
+export const saveGeminiStats = (stats: IGeminiUsageStats, broadcast = true): void => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stats))
-    window.dispatchEvent(new CustomEvent(STATS_CHANGE_EVENT, { detail: stats }))
+    if (broadcast && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(STATS_CHANGE_EVENT, { detail: stats }))
+    }
   } catch (err) {
     console.error('Failed to save Gemini usage stats:', err)
   }
 }
 
-export const clearGeminiStats = (): void => {
+export const clearGeminiStats = async (): Promise<void> => {
   const reset: IGeminiUsageStats = {
     ...defaultStats,
     lastUpdated: Date.now(),
   }
   saveGeminiStats(reset)
+
+  try {
+    const uid = currentSyncUid || firebaseAuthService.getCurrentUser()?.uid
+    if (uid) {
+      const docRef = getUsageDocRef(uid)
+      await setDoc(
+        docRef,
+        {
+          ...defaultStats,
+          limits: getGeminiLimits(),
+          lastUpdated: Date.now(),
+        },
+        { merge: false },
+      )
+    }
+  } catch (err) {
+    console.warn('Failed to clear Gemini stats in Firestore:', err)
+  }
 }
 
 export const getGeminiLimits = (): IGeminiLimits => {
@@ -124,7 +154,7 @@ export const getGeminiLimits = (): IGeminiLimits => {
   }
 }
 
-export const saveGeminiLimits = (limits: Partial<IGeminiLimits>): IGeminiLimits => {
+export const saveGeminiLimits = async (limits: Partial<IGeminiLimits>): Promise<IGeminiLimits> => {
   try {
     const current = getGeminiLimits()
     const updated: IGeminiLimits = {
@@ -133,7 +163,16 @@ export const saveGeminiLimits = (limits: Partial<IGeminiLimits>): IGeminiLimits 
       maxTokens: Number(limits.maxTokens) > 0 ? Number(limits.maxTokens) : current.maxTokens,
     }
     localStorage.setItem(LIMITS_STORAGE_KEY, JSON.stringify(updated))
-    window.dispatchEvent(new CustomEvent(LIMITS_CHANGE_EVENT, { detail: updated }))
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(LIMITS_CHANGE_EVENT, { detail: updated }))
+    }
+
+    const uid = currentSyncUid || firebaseAuthService.getCurrentUser()?.uid
+    if (uid) {
+      const docRef = getUsageDocRef(uid)
+      await setDoc(docRef, { limits: updated }, { merge: true })
+    }
+
     return updated
   } catch (err) {
     console.error('Failed to save Gemini limits:', err)
@@ -141,7 +180,7 @@ export const saveGeminiLimits = (limits: Partial<IGeminiLimits>): IGeminiLimits 
   }
 }
 
-export const resetGeminiLimits = (): IGeminiLimits => {
+export const resetGeminiLimits = async (): Promise<IGeminiLimits> => {
   return saveGeminiLimits(DEFAULT_GEMINI_LIMITS)
 }
 
@@ -168,6 +207,39 @@ const updateStatItem = (
     promptTokens: current.promptTokens + promptTokens,
     candidatesTokens: current.candidatesTokens + candidatesTokens,
     totalTokens: current.totalTokens + totalTokens,
+  }
+}
+
+const syncGeminiCallToCloud = async (
+  logEntry: IGeminiRequestLog,
+  updatedLogs: IGeminiRequestLog[],
+  updatedByModel: Record<string, IGeminiStatItem>,
+  updatedByService: Record<string, IGeminiStatItem>,
+  isSuccess: boolean,
+): Promise<void> => {
+  try {
+    const uid = currentSyncUid || firebaseAuthService.getCurrentUser()?.uid
+    if (!uid) return
+
+    const docRef = getUsageDocRef(uid)
+    await setDoc(
+      docRef,
+      {
+        totalRequests: increment(1),
+        successRequests: increment(isSuccess ? 1 : 0),
+        failedRequests: increment(isSuccess ? 0 : 1),
+        promptTokens: increment(logEntry.promptTokens),
+        candidatesTokens: increment(logEntry.candidatesTokens),
+        totalTokens: increment(logEntry.totalTokens),
+        byModel: updatedByModel,
+        byService: updatedByService,
+        recentLogs: updatedLogs,
+        lastUpdated: Date.now(),
+      },
+      { merge: true },
+    )
+  } catch (err) {
+    console.warn('Failed to sync Gemini call to Firestore:', err)
   }
 }
 
@@ -233,7 +305,168 @@ export const recordGeminiCall = (
   }
 
   saveGeminiStats(newStats)
+
+  // Push to cloud in background without blocking
+  syncGeminiCallToCloud(logEntry, updatedLogs, updatedByModel, updatedByService, isSuccess)
+
   return logEntry
+}
+
+/**
+ * Force pull latest AI usage metrics from Firestore
+ */
+export const refreshAiUsageFromCloud = async (): Promise<IGeminiUsageStats | null> => {
+  try {
+    const uid = currentSyncUid || firebaseAuthService.getCurrentUser()?.uid
+    if (!uid) return null
+
+    const docRef = getUsageDocRef(uid)
+    const snapshot = await getDoc(docRef)
+    if (snapshot.exists()) {
+      const data = snapshot.data()
+      const remoteStats: IGeminiUsageStats = {
+        totalRequests: Number(data.totalRequests) || 0,
+        successRequests: Number(data.successRequests) || 0,
+        failedRequests: Number(data.failedRequests) || 0,
+        promptTokens: Number(data.promptTokens) || 0,
+        candidatesTokens: Number(data.candidatesTokens) || 0,
+        totalTokens: Number(data.totalTokens) || 0,
+        byModel: data.byModel || {},
+        byService: data.byService || {},
+        recentLogs: Array.isArray(data.recentLogs) ? data.recentLogs : [],
+        lastUpdated: Number(data.lastUpdated) || Date.now(),
+      }
+
+      saveGeminiStats(remoteStats, true)
+
+      if (data.limits) {
+        const remoteLimits: IGeminiLimits = {
+          maxRequests:
+            Number(data.limits.maxRequests) > 0
+              ? Number(data.limits.maxRequests)
+              : DEFAULT_GEMINI_LIMITS.maxRequests,
+          maxTokens:
+            Number(data.limits.maxTokens) > 0
+              ? Number(data.limits.maxTokens)
+              : DEFAULT_GEMINI_LIMITS.maxTokens,
+        }
+        localStorage.setItem(LIMITS_STORAGE_KEY, JSON.stringify(remoteLimits))
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent(LIMITS_CHANGE_EVENT, { detail: remoteLimits }))
+        }
+      }
+
+      return remoteStats
+    }
+  } catch (err) {
+    console.warn('Failed to refresh AI usage from Firestore:', err)
+  }
+  return null
+}
+
+/**
+ * Initializes real-time listener to Firestore to keep AI usage metrics synced across devices
+ */
+export const initGeminiTrackerSync = (): (() => void) => {
+  if (typeof window === 'undefined' || isInitialized) {
+    return () => {}
+  }
+  isInitialized = true
+
+  const authUnsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
+    const uid = user?.uid || null
+
+    if (uid === currentSyncUid && activeFirestoreUnsubscribe) {
+      return
+    }
+
+    if (activeFirestoreUnsubscribe) {
+      activeFirestoreUnsubscribe()
+      activeFirestoreUnsubscribe = null
+    }
+
+    currentSyncUid = uid
+    if (!uid) {
+      return
+    }
+
+    try {
+      const docRef = getUsageDocRef(uid)
+
+      activeFirestoreUnsubscribe = onSnapshot(
+        docRef,
+        async (snapshot) => {
+          if (!snapshot.exists()) {
+            // First time this user connects: migrate local stats if they have any
+            const localStats = getGeminiStats()
+            const localLimits = getGeminiLimits()
+            try {
+              await setDoc(docRef, {
+                ...localStats,
+                limits: localLimits,
+                lastUpdated: Date.now(),
+              })
+            } catch (err) {
+              console.warn('Failed to initialize AI stats document in Firestore:', err)
+            }
+            return
+          }
+
+          const data = snapshot.data()
+          if (!data) return
+
+          const remoteStats: IGeminiUsageStats = {
+            totalRequests: Number(data.totalRequests) || 0,
+            successRequests: Number(data.successRequests) || 0,
+            failedRequests: Number(data.failedRequests) || 0,
+            promptTokens: Number(data.promptTokens) || 0,
+            candidatesTokens: Number(data.candidatesTokens) || 0,
+            totalTokens: Number(data.totalTokens) || 0,
+            byModel: data.byModel || {},
+            byService: data.byService || {},
+            recentLogs: Array.isArray(data.recentLogs) ? data.recentLogs : [],
+            lastUpdated: Number(data.lastUpdated) || Date.now(),
+          }
+
+          saveGeminiStats(remoteStats, true)
+
+          if (data.limits) {
+            const remoteLimits: IGeminiLimits = {
+              maxRequests:
+                Number(data.limits.maxRequests) > 0
+                  ? Number(data.limits.maxRequests)
+                  : DEFAULT_GEMINI_LIMITS.maxRequests,
+              maxTokens:
+                Number(data.limits.maxTokens) > 0
+                  ? Number(data.limits.maxTokens)
+                  : DEFAULT_GEMINI_LIMITS.maxTokens,
+            }
+            localStorage.setItem(LIMITS_STORAGE_KEY, JSON.stringify(remoteLimits))
+            window.dispatchEvent(new CustomEvent(LIMITS_CHANGE_EVENT, { detail: remoteLimits }))
+          }
+        },
+        (error) => {
+          console.warn('Gemini stats Firestore onSnapshot error:', error)
+        },
+      )
+    } catch (err) {
+      console.warn('Failed to setup Firestore onSnapshot for Gemini stats:', err)
+    }
+  })
+
+  return () => {
+    if (activeFirestoreUnsubscribe) {
+      activeFirestoreUnsubscribe()
+      activeFirestoreUnsubscribe = null
+    }
+    authUnsubscribe()
+    isInitialized = false
+  }
+}
+
+// Automatically initialize cloud sync in browser environments
+if (typeof window !== 'undefined') {
+  initGeminiTrackerSync()
 }
 
 /**
@@ -347,6 +580,8 @@ export const geminiTrackerService = {
   getLimits: getGeminiLimits,
   saveLimits: saveGeminiLimits,
   resetLimits: resetGeminiLimits,
+  refreshFromCloud: refreshAiUsageFromCloud,
+  initSync: initGeminiTrackerSync,
   useGeminiLimits,
   generateContentWithTracking,
 }

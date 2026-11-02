@@ -194,4 +194,3 @@ export const useSpeechRecognition = (lang: string = 'en-US'): IUseSpeechRecognit
     ],
   )
 }
-

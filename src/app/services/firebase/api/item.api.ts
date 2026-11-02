@@ -561,18 +561,18 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
       randomIndex: Math.random(), // For efficient random queries
     }
     delete (newItem as any).quiz
-    console.log(`*** newItem *** `, newItem);
-    
+    console.log(`*** newItem *** `, newItem)
+
     const itemsRef = collection(db, dbCollections.items)
     const docRef = await addDoc(itemsRef, sanitizeItemForFirestore(newItem))
-    console.log(`*** docRef *** `, docRef);
+    console.log(`*** docRef *** `, docRef)
     const createdItem = {
       ...newItem,
       id: docRef.id,
     } as unknown as IItem
     delete (createdItem as any).quiz
 
-    console.log(`*** createdItem *** `, createdItem);
+    console.log(`*** createdItem *** `, createdItem)
 
     // Modify local DB as well
     try {

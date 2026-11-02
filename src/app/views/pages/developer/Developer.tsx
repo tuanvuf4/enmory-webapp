@@ -111,6 +111,7 @@ export const Developer: React.FC = () => {
   const [selectedRecordJson, setSelectedRecordJson] = useState<{ title: string; data: any } | null>(
     null,
   )
+  const [showFullJson, setShowFullJson] = useState<boolean>(false)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [isBatchDeleting, setIsBatchDeleting] = useState<boolean>(false)
   const [isEditingJson, setIsEditingJson] = useState<boolean>(false)
@@ -619,6 +620,17 @@ export const Developer: React.FC = () => {
     message.success(`Downloaded ${filename}`)
   }
 
+  const formattedRecordJson = useMemo(() => {
+    if (!selectedRecordJson?.data) return ''
+    try {
+      return JSON.stringify(selectedRecordJson.data, null, 2)
+    } catch (err: any) {
+      return `[Lỗi chuyển đổi dữ liệu thành JSON: ${err?.message || String(err)}]`
+    }
+  }, [selectedRecordJson])
+
+  const isHugeRecordJson = formattedRecordJson.length > 30000
+
   const getMeaningTypeLabel = (m: IMeaning) => {
     if (m.typeId !== undefined) {
       return getType(m.typeId).abbr || getType(m.typeId).origin
@@ -778,7 +790,9 @@ export const Developer: React.FC = () => {
         sorter: (a, b) => (b.last_update || 0) - (a.last_update || 0),
         render: (ts?: number) =>
           ts ? (
-            <span style={{ fontSize: 12 }}>{moment(ts).format(appSetting.dateTimeSecondFormat)}</span>
+            <span style={{ fontSize: 12 }}>
+              {moment(ts).format(appSetting.dateTimeSecondFormat)}
+            </span>
           ) : (
             '-'
           ),
@@ -946,7 +960,19 @@ export const Developer: React.FC = () => {
         title: 'Mô tả',
         dataIndex: 'description',
         key: 'description',
-        render: (text: string) => (text ? <Text type='secondary' ellipsis>{text}</Text> : '-'),
+        width: '50%',
+        render: (text: string) => {
+          if (!text) return '-'
+          const isLong = text.length > 500
+          const truncated = isLong ? `${text.slice(0, 500)}...` : text
+          return (
+            <Tooltip title={() => <span dangerouslySetInnerHTML={{ __html: truncated }} />}>
+              <Text type='secondary' ellipsis style={{ maxWidth: 500, display: 'inline-block' }}>
+                <span dangerouslySetInnerHTML={{ __html: isLong ? truncated : text }} />
+              </Text>
+            </Tooltip>
+          )
+        },
       },
       {
         title: 'Thẻ (Tags)',
@@ -975,7 +1001,9 @@ export const Developer: React.FC = () => {
         render: (_: any, record: IBlogItem) => {
           const ts = record.last_update || record.created_date
           return ts ? (
-            <span style={{ fontSize: 12 }}>{new Date(ts).toLocaleDateString()}</span>
+            <span style={{ fontSize: 12 }}>
+              {moment(ts).format(appSetting.dateTimeSecondFormat)}
+            </span>
           ) : (
             '-'
           )
@@ -1027,7 +1055,53 @@ export const Developer: React.FC = () => {
               </Space>
             )
           }
-          return typeof val === 'object' ? JSON.stringify(val) : String(val)
+
+          if (typeof val === 'object' && val !== null) {
+            const isArr = Array.isArray(val)
+            const count = isArr ? val.length : Object.keys(val).length
+            let preview = ''
+            try {
+              preview = JSON.stringify(val)
+            } catch {
+              preview = '[Không thể serialize Object/Array]'
+            }
+            const isLong = preview.length > 120
+            const displayPreview = isLong ? `${preview.slice(0, 120)}...` : preview
+
+            return (
+              <Space align='center' size={8} style={{ maxWidth: '100%' }}>
+                <Tag color={isArr ? 'blue' : 'purple'} style={{ margin: 0 }}>
+                  {isArr ? `Array [${count}]` : `Object {${count}}`}
+                </Tag>
+                <Text
+                  type='secondary'
+                  ellipsis
+                  style={{
+                    maxWidth: 420,
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                  }}
+                  title={
+                    isLong ? `${preview.slice(0, 400)}... (Bấm nút code để xem đầy đủ)` : preview
+                  }
+                >
+                  {displayPreview}
+                </Text>
+              </Space>
+            )
+          }
+
+          const strVal = String(val ?? '')
+          const isLong = strVal.length > 120
+          return (
+            <Text
+              ellipsis
+              style={{ maxWidth: 450 }}
+              title={isLong ? `${strVal.slice(0, 300)}...` : strVal}
+            >
+              {isLong ? `${strVal.slice(0, 120)}...` : strVal}
+            </Text>
+          )
         },
       },
       {
@@ -1432,9 +1506,9 @@ export const Developer: React.FC = () => {
                         <Table<IItem>
                           dataSource={filteredItems}
                           columns={itemColumns}
-                          rowKey={(record, index) =>
+                          rowKey={(record) =>
                             record.id ||
-                            `missing_id_${record.origin || ''}_${record.created_date || index}`
+                            `missing_id_${record.origin || ''}_${record.created_date || ''}`
                           }
                           rowSelection={{
                             selectedRowKeys,
@@ -1512,6 +1586,7 @@ export const Developer: React.FC = () => {
                           }}
                           size='small'
                           bordered
+                          scroll={{ x: 750 }}
                         />
                       </Card>
                     )}
@@ -1711,17 +1786,23 @@ export const Developer: React.FC = () => {
                 {/* Modal Raw JSON cho Record bất kỳ */}
                 <Modal
                   title={
-                    <Space>
+                    <Space wrap>
                       <span>Dữ liệu JSON: {selectedRecordJson?.title}</span>
                       {isEditingJson && <Tag color='orange'>Chế độ chỉnh sửa</Tag>}
+                      {isHugeRecordJson && (
+                        <Tag color='warning'>
+                          ~{Math.round(formattedRecordJson.length / 1024)} KB
+                        </Tag>
+                      )}
                     </Space>
                   }
                   open={!!selectedRecordJson}
                   onCancel={() => {
                     setSelectedRecordJson(null)
                     setIsEditingJson(false)
+                    setShowFullJson(false)
                   }}
-                  width={680}
+                  width={750}
                   footer={
                     isEditingJson
                       ? [
@@ -1747,20 +1828,41 @@ export const Developer: React.FC = () => {
                             key='edit'
                             icon={<EditOutlined />}
                             onClick={() => {
-                              setEditingJsonText(JSON.stringify(selectedRecordJson?.data, null, 2))
+                              setEditingJsonText(formattedRecordJson)
                               setIsEditingJson(true)
                             }}
                           >
                             Sửa JSON
                           </Button>,
                           <Button
+                            key='download'
+                            icon={<DownloadOutlined />}
+                            onClick={() => {
+                              try {
+                                const blob = new Blob([formattedRecordJson], {
+                                  type: 'application/json',
+                                })
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = url
+                                a.download = `${selectedRecordJson?.title || 'record'}.json`
+                                document.body.appendChild(a)
+                                a.click()
+                                document.body.removeChild(a)
+                                URL.revokeObjectURL(url)
+                              } catch {
+                                message.error('Không thể tạo file tải về')
+                              }
+                            }}
+                          >
+                            Tải file JSON
+                          </Button>,
+                          <Button
                             key='copy'
                             icon={<CopyOutlined />}
                             onClick={() => {
-                              if (selectedRecordJson) {
-                                navigator.clipboard.writeText(
-                                  JSON.stringify(selectedRecordJson.data, null, 2),
-                                )
+                              if (formattedRecordJson) {
+                                navigator.clipboard.writeText(formattedRecordJson)
                                 message.success('Đã sao chép JSON!')
                               }
                             }}
@@ -1773,6 +1875,7 @@ export const Developer: React.FC = () => {
                             onClick={() => {
                               setSelectedRecordJson(null)
                               setIsEditingJson(false)
+                              setShowFullJson(false)
                             }}
                           >
                             Đóng
@@ -1781,31 +1884,68 @@ export const Developer: React.FC = () => {
                   }
                 >
                   {isEditingJson ? (
-                    <Input.TextArea
-                      rows={20}
-                      value={editingJsonText}
-                      onChange={(e) => setEditingJsonText(e.target.value)}
-                      style={{
-                        fontFamily: 'monospace',
-                        fontSize: 12,
-                        backgroundColor: token.colorBgContainerDisabled || '#1f1f1f',
-                        color: token.colorText,
-                      }}
-                    />
+                    <>
+                      {isHugeRecordJson && (
+                        <Alert
+                          type='warning'
+                          showIcon
+                          style={{ marginBottom: 12 }}
+                          message='Cảnh báo dữ liệu lớn'
+                          description='Dữ liệu này có kích thước rất lớn, chỉnh sửa trực tiếp trong trình duyệt có thể gây giật lag.'
+                        />
+                      )}
+                      <Input.TextArea
+                        rows={20}
+                        value={editingJsonText}
+                        onChange={(e) => setEditingJsonText(e.target.value)}
+                        style={{
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                          backgroundColor: token.colorBgContainerDisabled || '#1f1f1f',
+                          color: token.colorText,
+                        }}
+                      />
+                    </>
                   ) : (
-                    <pre
-                      style={{
-                        maxHeight: 500,
-                        overflow: 'auto',
-                        backgroundColor: token.colorBgContainerDisabled || '#1f1f1f',
-                        color: token.colorText,
-                        padding: 12,
-                        borderRadius: 6,
-                        fontSize: 12,
-                      }}
-                    >
-                      {JSON.stringify(selectedRecordJson?.data, null, 2)}
-                    </pre>
+                    <>
+                      {isHugeRecordJson && (
+                        <Alert
+                          type='warning'
+                          showIcon
+                          style={{ marginBottom: 12 }}
+                          message={`Dữ liệu JSON lớn (~${Math.round(formattedRecordJson.length / 1024)} KB)`}
+                          description={
+                            <Space direction='vertical' size={4}>
+                              <span>
+                                {showFullJson
+                                  ? 'Đang hiển thị toàn bộ nội dung JSON (có thể gây giật lag).'
+                                  : 'Đã giới hạn hiển thị 30,000 ký tự đầu để giao diện luôn mượt mà. Bạn có thể Copy hoặc Tải file JSON về máy.'}
+                              </span>
+                              <Button size='small' onClick={() => setShowFullJson(!showFullJson)}>
+                                {showFullJson ? 'Thu gọn hiển thị' : 'Hiển thị toàn bộ dữ liệu'}
+                              </Button>
+                            </Space>
+                          }
+                        />
+                      )}
+                      <pre
+                        style={{
+                          maxHeight: 500,
+                          overflow: 'auto',
+                          backgroundColor: token.colorBgContainerDisabled || '#1f1f1f',
+                          color: token.colorText,
+                          padding: 12,
+                          borderRadius: 6,
+                          fontSize: 12,
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-all',
+                        }}
+                      >
+                        {isHugeRecordJson && !showFullJson
+                          ? `${formattedRecordJson.slice(0, 30000)}\n\n/* ... Đã ẩn ${formattedRecordJson.length - 30000} ký tự còn lại để tối ưu UI ... */`
+                          : formattedRecordJson}
+                      </pre>
+                    </>
                   )}
                 </Modal>
               </>
@@ -1962,6 +2102,7 @@ export const Developer: React.FC = () => {
                           pagination={{ pageSize: 5 }}
                           size='small'
                           bordered
+                          scroll={{ x: 750 }}
                         />
                       </div>
                     )}

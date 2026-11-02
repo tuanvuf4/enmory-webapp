@@ -13,13 +13,13 @@ import {
   Button,
   AutoComplete,
   Input,
-  Tag,
   Tooltip,
   Flex,
   Space,
   Skeleton,
   Segmented,
   Badge,
+  Typography,
 } from 'antd'
 import { PropsWithChildren, useState, useEffect, useCallback, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
@@ -68,6 +68,8 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
 
   const size = user?.configuration?.numberOfExampleReview ?? 10
 
+  const { Text } = Typography
+
   // Load pinned IDs for current user on mount or user change
   useEffect(() => {
     dispatch(exampleAction.loadPinnedIds(user?.uid))
@@ -93,16 +95,17 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
 
   const { options } = useAutoComplete(autoCompleteFilters, 'example')
 
-  const formattedOptions = useMemo(() => {
-    return (options || []).map((opt) => ({
-      ...opt,
-      label: cleanLabel(String(opt.label || opt.value || '')),
-    }))
-  }, [options])
-
-  const onSelect = (option: any) => {
-    if (option) {
-      const selectedText = cleanLabel(String(option.value || option.label || ''))
+  const onSelect = (value: string, option: any) => {
+    const textToClean =
+      typeof value === 'string'
+        ? value
+        : typeof option?.value === 'string'
+          ? option.value
+          : typeof option?.origin === 'string'
+            ? option.origin
+            : ''
+    const selectedText = cleanLabel(textToClean)
+    if (selectedText) {
       setValue('query', selectedText)
       onSubmit({ query: selectedText })
     }
@@ -299,7 +302,6 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
                     prefix={<SearchOutlined style={{ color: token.colorTextSecondary }} />}
                     placeholder='Tìm câu ví dụ hoặc từ vựng...'
                     className={styles.searchExampleInput}
-                    // allowClear
                     suffix={
                       <CloseCircleOutlined
                         style={{ fontSize: 16, cursor: 'pointer' }}
@@ -309,8 +311,8 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
                   />
                 }
                 filterOption={false}
-                options={formattedOptions}
-                onSelect={(_, o) => onSelect(o)}
+                options={options}
+                onSelect={(val, o) => onSelect(val, o)}
                 onChange={(text) => onChange(text)}
               />
             )
@@ -384,32 +386,20 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
         <>
           {/* Active Search status badge */}
           {activeSearch && (
-            <Flex
-              justify='space-between'
-              align='center'
-              style={{ marginBottom: token.size * 0.75, padding: '0 2px' }}
+            <div
+              style={{
+                color: token.colorTextSecondary,
+                marginBottom: token.size / 2,
+              }}
             >
-              <Space size={6} wrap>
-                <span style={{ fontSize: 13, color: token.colorTextSecondary }}>
-                  Kết quả tìm kiếm:
-                </span>
-                <Tag
-                  color='processing'
-                  style={{ whiteSpace: 'normal' }}
-                  closable
-                  onClose={handleClearSearch}
-                >
-                  {activeSearch}
-                </Tag>
-                <span style={{ fontSize: 12, color: token.colorTextDescription }}>
-                  ({examples.length} câu tìm thấy)
-                </span>
-              </Space>
+              <Text style={{ fontSize: 14 }}>Search result: </Text>
 
-              <Button size='small' type='link' onClick={handleClearSearch} style={{ padding: 0 }}>
-                Xóa tìm kiếm
-              </Button>
-            </Flex>
+              <Text style={{ color: token.colorTextDescription }}>
+                <Text style={{ color: token.colorText, fontWeight: 600, fontSize: 18 }}>
+                  {activeSearch}
+                </Text>
+              </Text>
+            </div>
           )}
 
           {/* Loading Skeletons */}

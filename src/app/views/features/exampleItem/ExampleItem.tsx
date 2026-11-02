@@ -2,8 +2,6 @@ import {
   MoreOutlined,
   SoundOutlined,
   BookOutlined,
-  PushpinOutlined,
-  PushpinFilled,
   EyeInvisibleOutlined,
   EyeOutlined,
   BulbOutlined,
@@ -145,7 +143,7 @@ export const ExampleItem: React.FC<IProps> = ({
             <h2 className={styles.origin} dangerouslySetInnerHTML={{ __html: data.origin }} />
 
             <Flex align='center' gap={2} style={{ flexShrink: 0 }}>
-              {onTogglePin && (
+              {/* {onTogglePin && (
                 <Tooltip title={isPinned ? 'Bỏ ghim câu này' : 'Ghim câu ví dụ'}>
                   <Button
                     size='small'
@@ -164,7 +162,7 @@ export const ExampleItem: React.FC<IProps> = ({
                     className={styles.btnActions}
                   />
                 </Tooltip>
-              )}
+              )} */}
 
               <Tooltip title={isSpeaking ? 'Đang phát âm...' : 'Nghe phát âm chuẩn'}>
                 <Button

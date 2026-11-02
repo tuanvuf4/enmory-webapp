@@ -36,35 +36,6 @@ export const removeUndefinedFields = <T>(obj: T): T => {
 }
 
 /**
- * Extract all IExample objects from a list of IItem objects.
- * Used for extracting examples embedded in items without querying any examples collection.
- */
-export const extractExamplesFromItems = (items: IItem[]): IExample[] => {
-  const examplesById = new Map<string, IExample>()
-
-  for (const item of items) {
-    for (const meaning of item.meanings || []) {
-      for (const example of (meaning.examples || []) as unknown[]) {
-        if (typeof example === 'object' && example !== null) {
-          const ex = example as IExample
-          // Only extract if example has non-empty origin to avoid overwriting valid examples with stubs
-          if (ex.origin && ex.origin.trim()) {
-            if (ex.id) {
-              examplesById.set(ex.id, ex)
-            } else {
-              const fallbackKey = `${item.id || ''}_${ex.origin}`
-              examplesById.set(fallbackKey, { ...ex, id: fallbackKey })
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return Array.from(examplesById.values())
-}
-
-/**
  * Sanitizes an item payload before writing to Firestore, ensuring:
  * 1. Meanings and embedded examples are clean and conform to IMeaning / IExample.
  * 2. Examples are kept as full IExample objects (NOT string IDs).
@@ -111,13 +82,13 @@ export const sanitizeItemForFirestore = (item: Partial<IItem>): any => {
 
 /**
  * Hydrates items that contain string example IDs or empty example stubs.
- * Ensures items have valid structure without querying Firestore or localDb examples.
+ * Ensures items have valid structure without querying Firestore.
  */
 export const hydrateItemsWithExamples = async (items: IItem[]): Promise<IItem[]> => {
   if (!items || items.length === 0) return items
 
   // Examples are already embedded directly in items.
-  // Return items with quiz removed without querying any examples table/collection.
+  // Return items with quiz removed.
   return items.map((item) => {
     const { quiz: _quiz, ...cleanItem } = item as any
     return cleanItem as IItem

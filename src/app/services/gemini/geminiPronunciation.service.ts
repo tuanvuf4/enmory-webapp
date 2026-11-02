@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai'
 import { IHttpResponse } from '@/models/http.model'
 import { resolveGeminiApiKey } from './geminiDictionary.service'
-import { CANDIDATE_GEMINI_MODELS, DEFAULT_SPEECH_EVAL_MODEL, TGeminiModel } from './geminiModels'
+import { DEFAULT_SPEECH_EVAL_MODEL, TGeminiModel } from './geminiModels'
 import { generateContentWithTracking } from './geminiTracker.service'
 
 export interface IWordEvaluation {
@@ -165,6 +165,11 @@ Listen carefully to the student's attached audio recording and provide a compreh
 
 Also transcribe accurately what you heard the student say in the audio.
 
+CRITICAL RULES FOR PERFORMANCE & SPEED:
+- Keep all feedback concise (1-2 sentences per field).
+- For "wordsReview", ONLY return words that need improvement (status is "imprecise" or "incorrect"). Do NOT include words that were pronounced well to prevent unnecessary token generation latency. If all words were pronounced well, return "wordsReview": [].
+- Provide at most 2 short actionable tips.
+
 Return ONLY a valid JSON object matching this schema exactly (no outside markdown text):
 {
   "overallScore": 85,
@@ -173,41 +178,44 @@ Return ONLY a valid JSON object matching this schema exactly (no outside markdow
   "techniques": {
     "linking": {
       "score": 80,
-      "feedback": "Nhận xét tiếng Việt về kỹ thuật nối âm của người học",
-      "details": "Chỉ rõ từ nào đã nối tốt và cặp từ nào bị đứt quãng hoặc cần cải thiện"
+      "feedback": "Nhận xét ngắn về kỹ thuật nối âm",
+      "details": "Chỉ rõ cặp từ nối tốt hoặc bị đứt quãng"
     },
     "stress": {
       "score": 85,
-      "feedback": "Nhận xét tiếng Việt về trọng âm câu và từ",
-      "details": "Chỉ rõ từ nội dung nào đã nhấn tốt, từ nào chưa giảm âm đúng"
+      "feedback": "Nhận xét ngắn về trọng âm câu và từ",
+      "details": "Từ nội dung đã nhấn tốt hoặc chưa giảm âm"
     },
     "intonation": {
       "score": 80,
-      "feedback": "Nhận xét tiếng Việt về độ lên/xuống giọng và cảm xúc",
-      "details": "Độ chuẩn của âm điệu cuối câu (lên giọng hay xuống giọng)"
+      "feedback": "Nhận xét ngắn về ngữ điệu",
+      "details": "Độ chuẩn âm điệu cuối câu"
     },
     "shadowing": {
       "score": 90,
-      "feedback": "Nhận xét tiếng Việt về độ trôi chảy, nhịp điệu và ngắt nghỉ theo cụm",
-      "details": "Tốc độ nói, sự ngắt nghỉ tự nhiên theo cụm nghĩa"
+      "feedback": "Nhận xét ngắn về độ trôi chảy & ngắt nghỉ",
+      "details": "Tốc độ nói, ngắt nghỉ theo cụm nghĩa"
     }
   },
   "wordsReview": [
     {
-      "word": "wordName",
-      "status": "correct" | "imprecise" | "incorrect",
+      "word": "impreciseOrIncorrectWord",
+      "status": "imprecise" | "incorrect",
       "ipa": "/.../",
-      "note": "Ghi chú ngắn bằng tiếng Việt về cách phát âm từ này (âm cuối, nguyên âm...)"
+      "note": "Ghi chú ngắn về cách sửa từ này"
     }
   ],
   "actionableTips": [
-    "Mẹo 1 bằng tiếng Việt ngắn gọn, dễ thực hiện",
-    "Mẹo 2 bằng tiếng Việt"
+    "Mẹo 1 ngắn gọn",
+    "Mẹo 2 ngắn gọn"
   ]
 }`
 
       const preferred = params.preferredModel || DEFAULT_SPEECH_EVAL_MODEL
-      const modelCandidates = [preferred, ...CANDIDATE_GEMINI_MODELS.filter((m) => m !== preferred)]
+      // Ưu tiên các model phản hồi audio nhanh nhất
+      const modelCandidates: TGeminiModel[] = Array.from(
+        new Set([preferred, 'gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-3.8-flash']),
+      )
 
       const ai = new GoogleGenAI({ apiKey })
       let lastError: any = null
@@ -236,7 +244,8 @@ Return ONLY a valid JSON object matching this schema exactly (no outside markdow
             ],
             config: {
               responseMimeType: 'application/json',
-              temperature: 0.2,
+              temperature: 0.1,
+              maxOutputTokens: 800,
             },
           })
 

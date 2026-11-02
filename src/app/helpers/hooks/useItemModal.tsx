@@ -23,7 +23,7 @@ const ViewItemModalContent: React.FC<IViewItemModalContentProps> = ({ initialDat
 export const useItemModal = () => {
   const { openModal, closeModal } = useModal()
 
-  const ItemFormContext = ({ data }: { data: IItem }) => {
+  const ItemFormContext = ({ data, isEditMode }: { data: IItem; isEditMode?: boolean }) => {
     const sortedMeanings = data?.meanings
       ? [...data.meanings].sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0))
       : []
@@ -38,7 +38,7 @@ export const useItemModal = () => {
 
     return (
       <FormProvider {...methods}>
-        <ItemForm item={{ ...data, meanings: sortedMeanings }} />
+        <ItemForm item={{ ...data, meanings: sortedMeanings }} isEditMode={isEditMode} />
       </FormProvider>
     )
   }
@@ -49,18 +49,27 @@ export const useItemModal = () => {
     onClose?: () => void,
   ) => {
     if (mode === 'view') {
+      const modalId = data?.id ? `item-view-${data.id}` : undefined
       openModal({
+        id: modalId,
         title: null,
         width: 800,
         footer: null,
         closable: false,
-        content: <ViewItemModalContent initialData={data} onClose={closeModal} />,
+        content: <ViewItemModalContent initialData={data} onClose={() => closeModal(modalId)} />,
         onClose,
       })
     }
 
     if (mode === 'add') {
+      const modalId = data?.id
+        ? `item-form-${data.id}`
+        : data?.origin
+          ? `item-form-add-${data.origin.trim().toLowerCase()}`
+          : 'item-form-add'
+
       openModal({
+        id: modalId,
         title: 'Item Form',
         tag: <Tag color={'green'}>CREATE</Tag>,
         width: 800,
@@ -71,13 +80,16 @@ export const useItemModal = () => {
           tooltip: data?.origin ? `Mở lại biểu mẫu: ${data.origin}` : 'Mở lại Item Form',
           icon: <BookOutlined />,
         },
-        content: <ItemFormContext data={data} />,
+        content: <ItemFormContext data={data} isEditMode={false} />,
         onClose,
       })
     }
 
     if (mode === 'edit') {
+      const modalId = data?.id ? `item-form-${data.id}` : 'item-form-edit'
+
       openModal({
+        id: modalId,
         title: 'Item Form',
         tag: <Tag color={'yellow'}>UPDATE</Tag>,
         width: 800,
@@ -88,7 +100,7 @@ export const useItemModal = () => {
           tooltip: data?.origin ? `Mở lại biểu mẫu: ${data.origin}` : 'Mở lại Item Form',
           icon: <BookOutlined />,
         },
-        content: <ItemFormContext data={data} />,
+        content: <ItemFormContext data={data} isEditMode={true} />,
         onClose,
       })
     }

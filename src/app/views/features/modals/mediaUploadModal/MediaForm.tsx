@@ -139,24 +139,38 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
   const isEditing = !!trackData?.id
 
   useEffect(() => {
-    updateModal({
-      tag: isEditing ? <Tag color={'yellow'}>UPDATE</Tag> : <Tag color={'green'}>CREATE</Tag>,
-    })
-  }, [isEditing])
+    updateModal(
+      {
+        tag: isEditing ? <Tag color={'yellow'}>UPDATE</Tag> : <Tag color={'green'}>CREATE</Tag>,
+      },
+      currentModal?.modalId,
+    )
+  }, [isEditing, currentModal?.modalId])
 
   const trackTitle = watch('title')
   const srcUrl = watch('srcUrl')
   useEffect(() => {
     if (trackTitle?.trim()) {
-      updateModal({
-        minimizeInfo: {
+      if (currentModal?.updateMinimizeInfo) {
+        currentModal.updateMinimizeInfo({
           title: `Track: ${trackTitle.trim()}`,
           tooltip: `Mở lại bài nghe: ${trackTitle.trim()}`,
           icon: <SoundOutlined />,
-        },
-      })
+        })
+      } else {
+        updateModal(
+          {
+            minimizeInfo: {
+              title: `Track: ${trackTitle.trim()}`,
+              tooltip: `Mở lại bài nghe: ${trackTitle.trim()}`,
+              icon: <SoundOutlined />,
+            },
+          },
+          currentModal?.modalId,
+        )
+      }
     }
-  }, [trackTitle])
+  }, [trackTitle, currentModal])
 
   const handleApplyGeneratedTranscript = (data: {
     title: string

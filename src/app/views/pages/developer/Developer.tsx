@@ -47,18 +47,22 @@ import { useQueryClient } from '@tanstack/react-query'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { invalidateSearchIndex, localDb } from '@/services/localDb'
 import { itemApi } from '@/services/firebase/api/item.api'
+import { doc, collection } from 'firebase/firestore'
+import { db, dbCollections } from '@/config/firebaseConfig'
 import { useItemModal } from '@/helpers/hooks/useItemModal'
-import { extractExamplesFromItems } from '@/services/firebase/dbIntegration'
-import { IItem, IExample, IMeaning, ECategory } from '@/models/item.model'
+import { IItem, IMeaning, ECategory } from '@/models/item.model'
+import { IBlogItem } from '@/models/blog.model'
 import { ISyncMeta } from '@/services/localDb/db'
 import { getCategory, getType } from '@/helpers/item'
 import { GeminiUsageTab } from './GeminiUsageTab'
 import { useGeminiStats } from '@/services/gemini'
 import styles from './developer.module.scss'
+import { appSetting } from '@/config/index'
+import moment from 'moment'
 
 const { Text, Paragraph } = Typography
 
-type TableType = 'all' | 'items' | 'examples' | 'syncMeta'
+type TableType = 'all' | 'items' | 'blogs' | 'syncMeta'
 
 export const Developer: React.FC = () => {
   const { token } = theme.useToken()
@@ -113,7 +117,7 @@ export const Developer: React.FC = () => {
   const [editingJsonText, setEditingJsonText] = useState<string>('')
 
   const [items, setItems] = useState<IItem[]>([])
-  const [examples, setExamples] = useState<IExample[]>([])
+  const [blogs, setBlogs] = useState<IBlogItem[]>([])
   const [syncMeta, setSyncMeta] = useState<ISyncMeta[]>([])
 
   // ================= Firebase Maintenance State =================
@@ -130,14 +134,14 @@ export const Developer: React.FC = () => {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [loadedItems, loadedSyncMeta] = await Promise.all([
+      const [loadedItems, loadedBlogs, loadedSyncMeta] = await Promise.all([
         localDb.items.toArray(),
+        localDb.blogs.toArray(),
         localDb.syncMeta.toArray(),
       ])
-      const loadedExamples = extractExamplesFromItems(loadedItems)
 
       setItems(loadedItems)
-      setExamples(loadedExamples)
+      setBlogs(loadedBlogs)
       setSyncMeta(loadedSyncMeta)
       setSelectedRowKeys((prev) => prev.filter((k) => loadedItems.some((it) => it.id === k)))
     } catch (err) {
@@ -163,13 +167,21 @@ export const Developer: React.FC = () => {
           localDb.items.get(recordId).then((fresh) => {
             if (fresh) setSelectedItem(fresh)
           })
+        } else if (selectedItem?.origin === record.origin) {
+          localDb.items
+            .where('origin')
+            .equals(record.origin)
+            .first()
+            .then((fresh) => {
+              if (fresh) setSelectedItem(fresh)
+            })
         }
       })
     },
-    [openItemModal, loadData, selectedItem?.id],
+    [openItemModal, loadData, selectedItem?.id, selectedItem?.origin],
   )
 
-  const deleteItemFromLocalDb = useCallback(async (record: IItem) => {
+  const deleteItemFromLocalDb = useCallback(async (record: Partial<IItem>) => {
     const recordId = record.id?.trim()
     if (recordId) {
       await localDb.items.delete(recordId)
@@ -469,13 +481,28 @@ export const Developer: React.FC = () => {
         return
       }
 
-      if (!parsed.id) {
-        message.error('Dữ liệu JSON của Item phải có trường id hợp lệ!')
+      if (parsed.title !== undefined && parsed.description !== undefined) {
+        await localDb.blogs.put(parsed as IBlogItem)
+        message.success('Đã cập nhật Blog thành công!')
+        setSelectedRecordJson({ title: String(parsed.title), data: parsed })
+        setIsEditingJson(false)
+        await loadData()
         return
       }
 
       const itemToSave = parsed as IItem
-      const itemId = String(parsed.id)
+      let itemId = parsed.id ? String(parsed.id).trim() : ''
+
+      if (!itemId) {
+        // Auto-generate a new ID if item had no ID
+        itemId = doc(collection(db, dbCollections.items)).id
+        itemToSave.id = itemId
+
+        // Delete the old un-identified record from localDb
+        if (selectedRecordJson?.data) {
+          await deleteItemFromLocalDb(selectedRecordJson.data as Partial<IItem>)
+        }
+      }
 
       await localDb.items.put(itemToSave)
       invalidateSearchIndex()
@@ -526,16 +553,17 @@ export const Developer: React.FC = () => {
     })
   }, [items, searchKeyword])
 
-  // Filter examples by search keyword
-  const filteredExamples = useMemo(() => {
-    if (!searchKeyword.trim()) return examples
+  // Filter blogs by search keyword
+  const filteredBlogs = useMemo(() => {
+    if (!searchKeyword.trim()) return blogs
     const kw = searchKeyword.toLowerCase()
-    return examples.filter(
-      (ex) =>
-        (ex.origin || '').toLowerCase().includes(kw) ||
-        (ex.translation || '').toLowerCase().includes(kw),
+    return blogs.filter(
+      (b) =>
+        (b.title || '').toLowerCase().includes(kw) ||
+        (b.description || '').toLowerCase().includes(kw) ||
+        (b.tags || []).some((t) => t.toLowerCase().includes(kw)),
     )
-  }, [examples, searchKeyword])
+  }, [blogs, searchKeyword])
 
   // Filter syncMeta by search keyword
   const filteredSyncMeta = useMemo(() => {
@@ -549,8 +577,8 @@ export const Developer: React.FC = () => {
     switch (activeTab) {
       case 'items':
         return filteredItems
-      case 'examples':
-        return filteredExamples
+      case 'blogs':
+        return filteredBlogs
       case 'syncMeta':
         return filteredSyncMeta
       case 'all':
@@ -560,15 +588,15 @@ export const Developer: React.FC = () => {
           _exported_at: new Date().toISOString(),
           _counts: {
             items: filteredItems.length,
-            examples: filteredExamples.length,
+            blogs: filteredBlogs.length,
             syncMeta: filteredSyncMeta.length,
           },
           items: filteredItems,
-          examples: filteredExamples,
+          blogs: filteredBlogs,
           syncMeta: filteredSyncMeta,
         }
     }
-  }, [activeTab, filteredItems, filteredExamples, filteredSyncMeta])
+  }, [activeTab, filteredItems, filteredBlogs, filteredSyncMeta])
 
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(activeDataset, null, 2))
@@ -749,7 +777,11 @@ export const Developer: React.FC = () => {
         width: 120,
         sorter: (a, b) => (b.last_update || 0) - (a.last_update || 0),
         render: (ts?: number) =>
-          ts ? <span style={{ fontSize: 12 }}>{new Date(ts).toLocaleDateString()}</span> : '-',
+          ts ? (
+            <span style={{ fontSize: 12 }}>{moment(ts).format(appSetting.dateTimeSecondFormat)}</span>
+          ) : (
+            '-'
+          ),
       },
       {
         title: 'Thao tác',
@@ -895,7 +927,7 @@ export const Developer: React.FC = () => {
     )
   }
 
-  const exampleColumns = useMemo<TableColumnsType<IExample>>(
+  const blogColumns = useMemo<TableColumnsType<IBlogItem>>(
     () => [
       {
         title: '#',
@@ -905,30 +937,34 @@ export const Developer: React.FC = () => {
         render: (_: any, __: any, index: number) => index + 1,
       },
       {
-        title: 'Mục từ (Item)',
-        dataIndex: 'itemOrigin',
-        key: 'itemOrigin',
-        width: 140,
-        render: (text: string) => (text ? <Tag color='blue'>{text}</Tag> : '-'),
-      },
-      {
-        title: 'Ví dụ (Origin)',
-        dataIndex: 'origin',
-        key: 'origin',
+        title: 'Tiêu đề',
+        dataIndex: 'title',
+        key: 'title',
         render: (text: string) => <Text strong>{text || '-'}</Text>,
       },
       {
-        title: 'Dịch nghĩa',
-        dataIndex: 'translation',
-        key: 'translation',
-        render: (text: string) => <Text>{text || '-'}</Text>,
+        title: 'Mô tả',
+        dataIndex: 'description',
+        key: 'description',
+        render: (text: string) => (text ? <Text type='secondary' ellipsis>{text}</Text> : '-'),
       },
       {
-        title: 'Ghi chú',
-        dataIndex: 'note',
-        key: 'note',
-        width: 200,
-        render: (text: string) => (text ? <Text type='secondary'>{text}</Text> : '-'),
+        title: 'Thẻ (Tags)',
+        dataIndex: 'tags',
+        key: 'tags',
+        width: 180,
+        render: (tags: string[]) =>
+          tags && tags.length > 0 ? (
+            <Space wrap size={[0, 4]}>
+              {tags.map((t) => (
+                <Tag key={t} color='blue'>
+                  {t}
+                </Tag>
+              ))}
+            </Space>
+          ) : (
+            '-'
+          ),
       },
       {
         title: 'Cập nhật',
@@ -936,7 +972,7 @@ export const Developer: React.FC = () => {
         width: 140,
         sorter: (a, b) =>
           (b.last_update || b.created_date || 0) - (a.last_update || a.created_date || 0),
-        render: (_: any, record: IExample) => {
+        render: (_: any, record: IBlogItem) => {
           const ts = record.last_update || record.created_date
           return ts ? (
             <span style={{ fontSize: 12 }}>{new Date(ts).toLocaleDateString()}</span>
@@ -950,14 +986,14 @@ export const Developer: React.FC = () => {
         key: 'actions',
         width: 80,
         align: 'center',
-        render: (_: any, record: IExample) => (
+        render: (_: any, record: IBlogItem) => (
           <Tooltip title='Xem raw JSON'>
             <Button
               size='small'
               icon={<CodeOutlined />}
               onClick={() =>
                 setSelectedRecordJson({
-                  title: record.origin || record.id || 'Example',
+                  title: record.title || record.id || 'Blog',
                   data: record,
                 })
               }
@@ -1197,18 +1233,18 @@ export const Developer: React.FC = () => {
                     <Card
                       size='small'
                       hoverable
-                      onClick={() => setActiveTab('examples')}
+                      onClick={() => setActiveTab('blogs')}
                       style={{
-                        borderColor: activeTab === 'examples' ? token.colorSuccess : undefined,
+                        borderColor: activeTab === 'blogs' ? token.colorSuccess : undefined,
                       }}
                     >
                       <Statistic
-                        title='Examples (Câu ví dụ)'
-                        value={examples.length}
+                        title='Blogs (Bảng bài viết)'
+                        value={blogs.length}
                         prefix={<CodeOutlined style={{ color: token.colorSuccess }} />}
                         suffix={
-                          searchKeyword && filteredExamples.length !== examples.length
-                            ? `(${filteredExamples.length} tìm thấy)`
+                          searchKeyword && filteredBlogs.length !== blogs.length
+                            ? `(${filteredBlogs.length} tìm thấy)`
                             : ''
                         }
                       />
@@ -1246,7 +1282,7 @@ export const Developer: React.FC = () => {
                     >
                       <Statistic
                         title='Tổng số bản ghi'
-                        value={items.length + examples.length + syncMeta.length}
+                        value={items.length + blogs.length + syncMeta.length}
                         prefix={<DatabaseOutlined />}
                       />
                     </Card>
@@ -1262,11 +1298,11 @@ export const Developer: React.FC = () => {
                         onChange={(key) => setActiveTab(key as TableType)}
                         items={[
                           { key: 'items', label: `items (${items.length})` },
-                          { key: 'examples', label: `examples (${examples.length})` },
+                          { key: 'blogs', label: `blogs (${blogs.length})` },
                           { key: 'syncMeta', label: `syncMeta (${syncMeta.length})` },
                           {
                             key: 'all',
-                            label: `Tất cả bảng (${items.length + examples.length + syncMeta.length})`,
+                            label: `Tất cả bảng (${items.length + blogs.length + syncMeta.length})`,
                           },
                         ]}
                         style={{ marginBottom: 0 }}
@@ -1422,28 +1458,28 @@ export const Developer: React.FC = () => {
                       </Card>
                     )}
 
-                    {(activeTab === 'examples' || activeTab === 'all') && (
+                    {(activeTab === 'blogs' || activeTab === 'all') && (
                       <Card
                         title={
                           <Space>
                             <CodeOutlined style={{ color: token.colorSuccess }} />
-                            <span>Bảng Examples</span>
-                            <Tag color='green'>{filteredExamples.length} câu ví dụ</Tag>
+                            <span>Bảng Blogs</span>
+                            <Tag color='green'>{filteredBlogs.length} bài viết</Tag>
                           </Space>
                         }
                         style={{ marginBottom: activeTab === 'all' ? 24 : 0 }}
                         size='small'
                       >
-                        <Table<IExample>
-                          dataSource={filteredExamples}
-                          columns={exampleColumns}
+                        <Table<IBlogItem>
+                          dataSource={filteredBlogs}
+                          columns={blogColumns}
                           rowKey='id'
                           pagination={{
                             pageSize: 15,
                             showSizeChanger: true,
                             pageSizeOptions: ['10', '15', '30', '50', '100'],
                             showTotal: (total, range) =>
-                              `${range[0]}-${range[1]} trên tổng số ${total} examples`,
+                              `${range[0]}-${range[1]} trên tổng số ${total} blogs`,
                           }}
                           size='small'
                           bordered

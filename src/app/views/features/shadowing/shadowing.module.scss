@@ -74,7 +74,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 12px 12px;
+  padding: 12px 0;
 }
 
 :global(.dark) .visualizerBox {
@@ -350,6 +350,85 @@
   height: 38px;
   border-radius: 20px;
   outline: none;
+}
+
+/* ── Instant Client-Side Speech Box ── */
+.instantSpeechBox {
+  width: 100%;
+  background: rgba(22, 119, 255, 0.04);
+  border: 1px dashed rgba(22, 119, 255, 0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+:global(.dark) .instantSpeechBox {
+  background: rgba(22, 119, 255, 0.08);
+  border-color: rgba(22, 119, 255, 0.4);
+}
+
+.instantWordsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+/* ── Dynamic Evaluating Step Box ── */
+.evaluatingBox {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(22, 119, 255, 0.04) 0%, rgba(114, 46, 209, 0.05) 100%);
+  border: 1px solid rgba(22, 119, 255, 0.15);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  animation: fadeIn 0.3s ease;
+}
+
+:global(.dark) .evaluatingBox {
+  background: linear-gradient(135deg, rgba(22, 119, 255, 0.08) 0%, rgba(114, 46, 209, 0.1) 100%);
+  border-color: rgba(22, 119, 255, 0.25);
+}
+
+.evaluatingStepRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1677ff;
+}
+
+.evaluatingTip {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.4;
+  border-top: 1px dashed rgba(0, 0, 0, 0.06);
+  padding-top: 8px;
+}
+
+:global(.dark) .evaluatingTip {
+  color: #a6a6a6;
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── AI Evaluation Result Box ── */

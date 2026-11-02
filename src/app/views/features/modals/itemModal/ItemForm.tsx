@@ -23,6 +23,7 @@ import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { usePrompt } from '@/helpers/hooks'
 import { TagSelect } from '@/views/components'
 import { itemApi, tagApi } from '@/services/firebase'
+import { localDb } from '@/services/localDb'
 import { collection, doc, Timestamp } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { removeLineBreaks, sanitizePronunciation } from '@/core/utils'
@@ -60,9 +61,10 @@ import moment from 'moment'
 
 interface ItemFormProps {
   item: IItem
+  isEditMode?: boolean
 }
 
-export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
+export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem, isEditMode: propIsEditMode }) => {
   const { token } = theme.useToken()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAutofilling, setIsAutofilling] = useState(false)
@@ -122,15 +124,26 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
   useEffect(() => {
     if (origin?.trim()) {
-      updateModal({
-        minimizeInfo: {
+      if (currentModal?.updateMinimizeInfo) {
+        currentModal.updateMinimizeInfo({
           title: `Item: ${origin.trim()}`,
           tooltip: `Mở lại biểu mẫu: ${origin.trim()}`,
           icon: <BookOutlined />,
-        },
-      })
+        })
+      } else {
+        updateModal(
+          {
+            minimizeInfo: {
+              title: `Item: ${origin.trim()}`,
+              tooltip: `Mở lại biểu mẫu: ${origin.trim()}`,
+              icon: <BookOutlined />,
+            },
+          },
+          currentModal?.modalId,
+        )
+      }
     }
-  }, [origin])
+  }, [origin, currentModal])
 
   const currentItemRef = useRef<IItem>(currentItem)
   currentItemRef.current = currentItem
@@ -142,7 +155,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
   const loadedOriginRef = useRef<string>(item?.origin || '')
 
   useEffect(() => {
-    if (item?.id) {
+    if (item?.id || (propIsEditMode && item)) {
       loadedItemIdRef.current = item.id
       loadedOriginRef.current = item.origin || ''
       if (item?.meanings) {
@@ -157,7 +170,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         currentItemRef.current = item
       }
     }
-  }, [item])
+  }, [item, propIsEditMode])
 
   // Re-validate origin promptly when autocomplete search completes or options update
   const prevOptionsRef = useRef(options)
@@ -370,7 +383,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         relation: data.relation || [],
         meanings: sortedMeanings,
       }
-      const targetId =
+      let targetId =
         dataSubmit.id ||
         data?.id ||
         getValues('id') ||
@@ -378,6 +391,28 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         currentItemRef.current?.id ||
         currentItem?.id ||
         item?.id
+
+      const isMissingIdUpdate = isEditing && !targetId
+
+      if (isMissingIdUpdate) {
+        // Generate a new Firestore doc ID for this existing item
+        targetId = doc(collection(db, dbCollections.items)).id
+        dataSubmit.id = targetId
+
+        // Delete the old un-identified record from localDb so we don't have duplicate records
+        try {
+          await localDb.items
+            .filter((it) => {
+              const matchOrigin = (it.origin || '').trim() === (item.origin || '').trim()
+              const matchCreated = item.created_date ? it.created_date === item.created_date : true
+              const matchNoId = !it.id || !it.id.trim()
+              return matchOrigin && matchCreated && matchNoId
+            })
+            .delete()
+        } catch (cleanupErr) {
+          console.warn('Failed to cleanup old missing-id item in localDb:', cleanupErr)
+        }
+      }
 
       if (targetId) {
         dataSubmit.id = String(targetId)
@@ -428,8 +463,12 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             }
 
             reset({ ...initItem })
-            closeModal()
-            notification({ type: 'success', message: 'Update item successful!' })
+            if (currentModal?.close) {
+              currentModal.close()
+            } else {
+              closeModal(currentModal?.modalId)
+            }
+            notification({ type: 'success', message: 'Updated item successful!' })
             // refresh list in library
             await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
           }
@@ -455,8 +494,12 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
 
             reset({ ...initItem })
-            closeModal()
-            notification({ type: 'success', message: 'Create a item successful!' })
+            if (currentModal?.close) {
+              currentModal.close()
+            } else {
+              closeModal(currentModal?.modalId)
+            }
+            notification({ type: 'success', message: 'Item created successful!' })
           }
         } catch (error) {
           notification({ type: 'error', message: JSON.stringify(error) })
@@ -543,15 +586,19 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
   const runAutofill = async (originWord: string, sourceName: string = 'Google') => {
     setIsAutofilling(true)
-    updateModal({
-      isMinimized: false,
-      minimizeInfo: {
-        title: `Item: ${originWord}`,
-        tooltip: `Gemini đang phân tích "${originWord}"...`,
-        status: 'processing',
-        icon: <ThunderboltOutlined spin style={{ color: '#722ed1' }} />,
+    const modalId = currentModal?.modalId
+    updateModal(
+      {
+        isMinimized: false,
+        minimizeInfo: {
+          title: `Item: ${originWord}`,
+          tooltip: `Gemini đang phân tích "${originWord}"...`,
+          status: 'processing',
+          icon: <ThunderboltOutlined spin style={{ color: '#722ed1' }} />,
+        },
       },
-    })
+      modalId,
+    )
     notification({
       type: 'info',
       message: `Gemini đang phân tích "${originWord}"...`,
@@ -565,14 +612,17 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
         undefined,
       )
       if (!resp.isSuccess || !resp.content) {
-        updateModal({
-          minimizeInfo: {
-            title: `Item: ${originWord}`,
-            tooltip: `Không thể lấy dữ liệu từ ${sourceName}.`,
-            status: 'error',
-            icon: <BookOutlined />,
+        updateModal(
+          {
+            minimizeInfo: {
+              title: `Item: ${originWord}`,
+              tooltip: `Không thể lấy dữ liệu từ ${sourceName}.`,
+              status: 'error',
+              icon: <BookOutlined />,
+            },
           },
-        })
+          modalId,
+        )
         notification({
           type: 'error',
           message: resp.message || `Failed to fetch dictionary data from ${sourceName}.`,
@@ -582,14 +632,17 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
 
       await applyAutofillData(originWord, resp.content)
 
-      updateModal({
-        minimizeInfo: {
-          title: `Item: ${originWord}`,
-          tooltip: `Gemini đã phân tích xong "${originWord}"!`,
-          status: 'success',
-          icon: <BookOutlined />,
+      updateModal(
+        {
+          minimizeInfo: {
+            title: `Item: ${originWord}`,
+            tooltip: `Gemini đã phân tích xong "${originWord}"!`,
+            status: 'success',
+            icon: <BookOutlined />,
+          },
         },
-      })
+        modalId,
+      )
 
       notification({
         type: 'success',
@@ -598,14 +651,17 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
       })
     } catch (error: any) {
       console.error('Auto-fill error:', error)
-      updateModal({
-        minimizeInfo: {
-          title: `Item: ${originWord}`,
-          tooltip: `Lỗi khi tra từ "${originWord}".`,
-          status: 'error',
-          icon: <BookOutlined />,
+      updateModal(
+        {
+          minimizeInfo: {
+            title: `Item: ${originWord}`,
+            tooltip: `Lỗi khi tra từ "${originWord}".`,
+            status: 'error',
+            icon: <BookOutlined />,
+          },
         },
-      })
+        modalId,
+      )
       notification({
         type: 'error',
         message: error?.message || `Error occurred during ${sourceName} auto-fill.`,
@@ -785,7 +841,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
     }
   }
 
-  const handleCancel = useCallback(() => closeModal(), [closeModal])
+  const handleCancel = useCallback(
+    () => (currentModal?.close ? currentModal.close() : closeModal(currentModal?.modalId)),
+    [closeModal, currentModal],
+  )
 
   const handleTagUpdated = useCallback(
     (previousValue: string, nextValue: string) => {
@@ -858,14 +917,20 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
     onSubmit,
   ])
 
-  const isEditing = !!(currentItem?.id || item?.id || loadedItemIdRef.current || getValues('id'))
+  const isEditing =
+    propIsEditMode !== undefined
+      ? propIsEditMode
+      : !!(currentItem?.id || item?.id || loadedItemIdRef.current || getValues('id'))
   const currentLevel = watch('level') || 0
 
   useEffect(() => {
-    updateModal({
-      tag: isEditing ? <Tag color={'yellow'}>UPDATE</Tag> : <Tag color={'green'}>CREATE</Tag>,
-    })
-  }, [isEditing])
+    updateModal(
+      {
+        tag: isEditing ? <Tag color={'yellow'}>UPDATE</Tag> : <Tag color={'green'}>CREATE</Tag>,
+      },
+      currentModal?.modalId,
+    )
+  }, [isEditing, currentModal?.modalId])
 
   const handleSaveMeaning = useCallback(() => {
     handleSubmit(onSubmit)()

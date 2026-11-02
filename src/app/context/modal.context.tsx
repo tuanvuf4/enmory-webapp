@@ -45,6 +45,7 @@ export interface ModalContextType {
   minimizeModal: (id?: string, minimizeInfo?: ModalMinimizeInfo) => void
   restoreModal: (id?: string) => void
   isModalMinimized: (id?: string) => boolean
+  isModalOpen: (id?: string) => boolean
 }
 
 const ModalContext = createContext<ModalContextType | undefined>(undefined)
@@ -55,10 +56,40 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({})
 
   const { token } = theme.useToken()
+  // const { notification } = usePrompt()
 
   const openModal = (config: ModalConfig): string => {
     const id = config.id || Math.random().toString(36).substring(7)
-    setModals((prev) => [...prev, { ...config, id, isMinimized: !!config.isMinimized }])
+
+    const existingIndex = modals.findIndex((m) => m.id === id)
+    if (existingIndex >= 0) {
+      const existing = modals[existingIndex]
+      if (existing.isMinimized) {
+        restoreModal(id)
+      }
+
+      // const formTitle =
+      //   existing.minimizeInfo?.title ||
+      //   (typeof existing.title === 'string' ? existing.title : undefined) ||
+      //   (typeof config.title === 'string' ? config.title : undefined) ||
+      //   'Biểu mẫu'
+
+      // notification({
+      //   type: 'warning',
+      //   message: `${formTitle} đang được mở!`,
+      //   description: existing.isMinimized
+      //     ? 'Biểu mẫu đã được khôi phục từ trạng thái thu nhỏ.'
+      //     : undefined,
+      // })
+      return id
+    }
+
+    setModals((prev) => {
+      if (prev.some((m) => m.id === id)) {
+        return prev
+      }
+      return [...prev, { ...config, id, isMinimized: !!config.isMinimized }]
+    })
     return id
   }
 
@@ -72,9 +103,20 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
     } else {
       setModals((prev) => {
         if (prev.length === 0) return prev
-        const last = prev[prev.length - 1]
-        last?.onClose?.()
-        return prev.slice(0, -1)
+        // Prioritize closing the topmost active (non-minimized) modal
+        let targetIndex = -1
+        for (let i = prev.length - 1; i >= 0; i--) {
+          if (!prev[i].isMinimized) {
+            targetIndex = i
+            break
+          }
+        }
+        if (targetIndex === -1) {
+          targetIndex = prev.length - 1
+        }
+        const target = prev[targetIndex]
+        target?.onClose?.()
+        return prev.filter((_, idx) => idx !== targetIndex)
       })
     }
   }
@@ -138,10 +180,12 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
       if (targetIndex >= 0) {
         const target = next[targetIndex]
         target.onMinimizeChange?.(false)
-        next[targetIndex] = {
+        const restored = {
           ...target,
           isMinimized: false,
         }
+        next.splice(targetIndex, 1)
+        next.push(restored)
       }
       return next
     })
@@ -153,6 +197,13 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
       return !!modal?.isMinimized
     }
     return !!modals[modals.length - 1]?.isMinimized
+  }
+
+  const isModalOpen = (id?: string): boolean => {
+    if (id) {
+      return modals.some((m) => m.id === id)
+    }
+    return modals.length > 0
   }
 
   const handleOk = async (id: string) => {
@@ -209,6 +260,7 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
         minimizeModal,
         restoreModal,
         isModalMinimized,
+        isModalOpen,
       }}
     >
       {children}

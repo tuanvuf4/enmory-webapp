@@ -261,7 +261,7 @@ export const Item: React.FC<IProps> = ({
           mutateDeleteItem(id, {
             onSuccess: () => {
               onDeleteSuccess?.()
-              notification({ type: 'success', message: 'Item deleted successfully!' })
+              notification({ type: 'success', message: 'Deleted item successfully!' })
             },
           })
         } catch (error) {

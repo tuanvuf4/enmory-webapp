@@ -13,6 +13,7 @@ import {
   RedoOutlined,
   RobotOutlined,
   StopOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons'
 import {
   Button,
@@ -29,8 +30,7 @@ import {
   Divider,
   Checkbox,
   Select,
-  Alert,
-  Spin,
+  Alert
 } from 'antd'
 import clsx from 'clsx'
 import { useSelector } from '@/core/hooks'
@@ -42,9 +42,14 @@ import {
   DEFAULT_SPEECH_EVAL_MODEL,
   IPronunciationEvaluationResult,
 } from '@/services/gemini'
-import { useAudioRecorder } from '@/helpers/hooks'
+import {
+  useAudioRecorder,
+  useSpeechRecognition,
+  computeInstantSpeechStats,
+  IInstantSpeechStats,
+} from '@/helpers/hooks'
 import { IExample } from '@/models/item.model'
-import styles from './pronunciation.module.scss'
+import styles from './shadowing.module.scss'
 
 const { Text, Title } = Typography
 
@@ -273,7 +278,7 @@ interface IPronunciationSession {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const PronunciationPractice: React.FC = () => {
+export const Shadowing: React.FC = () => {
   const { token } = theme.useToken()
   const { user } = useSelector((state) => state.auth)
 
@@ -355,6 +360,46 @@ export const PronunciationPractice: React.FC = () => {
   const [evalResult, setEvalResult] = useState<IPronunciationEvaluationResult | null>(null)
   const [evalError, setEvalError] = useState<string | null>(null)
 
+  // Web Speech API: Nhận diện giọng nói tức thời tại client (<200ms)
+  const {
+    isSupported: isSpeechSupported,
+    transcript: speechTranscript,
+    interimTranscript: speechInterimTranscript,
+    startListening: startSpeechListening,
+    stopListening: stopSpeechListening,
+    resetTranscript: resetSpeechTranscript,
+  } = useSpeechRecognition('en-US')
+  const [instantStats, setInstantStats] = useState<IInstantSpeechStats | null>(null)
+  const [finalInstantTranscript, setFinalInstantTranscript] = useState<string>('')
+
+  // Dynamic step animation cho trải nghiệm chờ AI
+  const [evalStepIndex, setEvalStepIndex] = useState(0)
+  const evalIdRef = useRef(0)
+  const lastEvaluatedBlobRef = useRef<Blob | null>(null)
+
+  const EVAL_STEPS = useMemo(
+    () => [
+      'Đang phân tích âm thanh & nhận diện giọng nói...',
+      'Đang kiểm tra kỹ thuật nối âm (Connected Speech)...',
+      'Đang đo lường trọng âm câu & giảm âm (Stress)...',
+      'Đang đánh giá ngữ điệu (Intonation) & độ lưu loát...',
+    ],
+    [],
+  )
+
+  useEffect(() => {
+    let interval: any = null
+    if (isEvaluating) {
+      setEvalStepIndex(0)
+      interval = setInterval(() => {
+        setEvalStepIndex((prev) => (prev + 1) % EVAL_STEPS.length)
+      }, 1000)
+    }
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [isEvaluating, EVAL_STEPS.length])
+
   // Hook thu âm audio
   const {
     isRecording,
@@ -366,6 +411,24 @@ export const PronunciationPractice: React.FC = () => {
     stopRecording,
     resetRecording,
   } = useAudioRecorder(60)
+
+  // Reset toàn bộ bản ghi âm và kết quả tức thì
+  const handleFullResetRecording = useCallback(() => {
+    evalIdRef.current++
+    lastEvaluatedBlobRef.current = null
+    resetRecording()
+    resetSpeechTranscript()
+    setInstantStats(null)
+    setFinalInstantTranscript('')
+    setEvalResult(null)
+    setEvalError(null)
+    setIsEvaluating(false)
+  }, [resetRecording, resetSpeechTranscript])
+
+  const handleFullResetRecordingRef = useRef(handleFullResetRecording)
+  useEffect(() => {
+    handleFullResetRecordingRef.current = handleFullResetRecording
+  }, [handleFullResetRecording])
 
   const currentExample = examples[currentIndex]
   const plainOrigin = useMemo(() => stripHtml(currentExample?.origin), [currentExample])
@@ -412,7 +475,7 @@ export const PronunciationPractice: React.FC = () => {
       setShadowChunk(null)
       setEvalResult(null)
       setEvalError(null)
-      resetRecording()
+      handleFullResetRecordingRef.current()
 
       const key = getPronunciationSessionKey(user?.uid)
 
@@ -499,12 +562,12 @@ export const PronunciationPractice: React.FC = () => {
           }
         }
       } catch (err) {
-        console.error('PronunciationPractice fetch error:', err)
+        console.error('Shadowing fetch error:', err)
       } finally {
         setLoading(false)
       }
     },
-    [resetRecording, user?.uid],
+    [user?.uid],
   )
 
   useEffect(() => {
@@ -543,57 +606,108 @@ export const PronunciationPractice: React.FC = () => {
     handleStop()
     setRevealed(false)
     setShadowChunk(null)
-    setEvalResult(null)
-    setEvalError(null)
-    resetRecording()
+    handleFullResetRecording()
     setCurrentIndex((prev) => {
       const nextIdx = (prev + 1) % Math.max(examples.length, 1)
       saveSession({ currentIndex: nextIdx, items: examples })
       return nextIdx
     })
-  }, [examples, handleStop, resetRecording, saveSession])
+  }, [examples, handleStop, handleFullResetRecording, saveSession])
 
   const handlePrev = useCallback(() => {
     handleStop()
     setRevealed(false)
     setShadowChunk(null)
-    setEvalResult(null)
-    setEvalError(null)
-    resetRecording()
+    handleFullResetRecording()
     setCurrentIndex((prev) => {
       const prevIdx = (prev - 1 + examples.length) % Math.max(examples.length, 1)
       saveSession({ currentIndex: prevIdx, items: examples })
       return prevIdx
     })
-  }, [examples, handleStop, resetRecording, saveSession])
+  }, [examples, handleStop, handleFullResetRecording, saveSession])
 
-  // Phát từng chunk (Shadowing)
+  // Khởi động thu âm và nhận diện giọng nói tức thời song song
+  const handleStartRecording = useCallback(async () => {
+    handleFullResetRecording()
+    if (isSpeechSupported) {
+      startSpeechListening()
+    }
+    await startRecording()
+  }, [handleFullResetRecording, isSpeechSupported, startSpeechListening, startRecording])
+
+  // Dừng thu âm và chốt kết quả client STT
+  const handleStopRecording = useCallback(() => {
+    stopRecording()
+    if (isSpeechSupported) {
+      stopSpeechListening()
+    }
+  }, [isSpeechSupported, stopSpeechListening, stopRecording])
 
   // Gửi audio tới Gemini model để nhận xét và đánh giá
-  const handleEvaluateAudio = useCallback(async () => {
-    if (!audioBlob || isEvaluating) return
-    setIsEvaluating(true)
-    setEvalError(null)
-    try {
-      const response = await geminiPronunciationService.evaluateAudio({
-        audioBlob,
-        originalText: plainOrigin,
-        translation: plainTranslation,
-        preferredModel: DEFAULT_SPEECH_EVAL_MODEL,
-      })
+  const handleEvaluateAudio = useCallback(
+    async (blobToEval?: Blob) => {
+      const targetBlob = blobToEval || audioBlob
+      if (!targetBlob || isEvaluating) return
 
-      if (response.isSuccess && response.content) {
-        setEvalResult(response.content)
-      } else {
-        setEvalError(response.message || 'Không thể đánh giá lúc này. Vui lòng thử lại.')
+      const currentEvalId = ++evalIdRef.current
+      setIsEvaluating(true)
+      setEvalError(null)
+
+      try {
+        const response = await geminiPronunciationService.evaluateAudio({
+          audioBlob: targetBlob,
+          originalText: plainOrigin,
+          translation: plainTranslation,
+          preferredModel: DEFAULT_SPEECH_EVAL_MODEL,
+        })
+
+        // Tránh race condition khi người học đã chuyển câu hoặc ghi âm lại
+        if (evalIdRef.current !== currentEvalId) return
+
+        if (response.isSuccess && response.content) {
+          setEvalResult(response.content)
+        } else {
+          setEvalError(response.message || 'Không thể đánh giá lúc này. Vui lòng thử lại.')
+        }
+      } catch (err: any) {
+        if (evalIdRef.current !== currentEvalId) return
+        console.error('Audio evaluation error:', err)
+        setEvalError(err?.message || 'Có lỗi xảy ra khi gửi.')
+      } finally {
+        if (evalIdRef.current === currentEvalId) {
+          setIsEvaluating(false)
+        }
       }
-    } catch (err: any) {
-      console.error('Audio evaluation error:', err)
-      setEvalError(err?.message || 'Có lỗi xảy ra khi gửi.')
-    } finally {
-      setIsEvaluating(false)
+    },
+    [audioBlob, isEvaluating, plainOrigin, plainTranslation],
+  )
+
+  const plainOriginRef = useRef(plainOrigin)
+  plainOriginRef.current = plainOrigin
+
+  const recordingDurationRef = useRef(recordingDuration)
+  recordingDurationRef.current = recordingDuration
+
+  const speechTranscriptRef = useRef('')
+  speechTranscriptRef.current = speechTranscript || speechInterimTranscript
+
+  // Phản hồi nhận diện giọng nói tức thì ngay tại client (< 200ms) khi kết thúc thu âm
+  useEffect(() => {
+    if (audioBlob && !isRecording && audioBlob !== lastEvaluatedBlobRef.current) {
+      lastEvaluatedBlobRef.current = audioBlob
+
+      const currentTranscript = speechTranscriptRef.current
+      if (currentTranscript) {
+        const stats = computeInstantSpeechStats(
+          currentTranscript,
+          plainOriginRef.current,
+          recordingDurationRef.current,
+        )
+        setInstantStats(stats)
+        setFinalInstantTranscript(currentTranscript)
+      }
     }
-  }, [audioBlob, isEvaluating, plainOrigin, plainTranslation])
+  }, [audioBlob, isRecording])
 
   const randomTip = useMemo(() => TIPS[Math.floor(Math.random() * TIPS.length)], [currentIndex])
 
@@ -756,10 +870,6 @@ export const PronunciationPractice: React.FC = () => {
                           >
                             {t.tone === 'up' ? '↗' : '↘'}
                           </span>
-                        )}
-                        {/* Trọng âm: Chấm đỏ trên từ nhấn */}
-                        {activeTechniques.stress && t.isStressed && (
-                          <span className={styles.stressDot} />
                         )}
                       </div>
 
@@ -926,7 +1036,7 @@ export const PronunciationPractice: React.FC = () => {
                     danger
                     size='large'
                     icon={<AudioOutlined />}
-                    onClick={startRecording}
+                    onClick={handleStartRecording}
                     style={{ borderRadius: 24, paddingLeft: 24, paddingRight: 24, height: 42 }}
                   >
                     Bắt đầu thu âm giọng bạn
@@ -953,11 +1063,29 @@ export const PronunciationPractice: React.FC = () => {
                     </Tag>
                   </Flex>
 
+                  {/* Real-time transcript preview trong lúc thu âm */}
+                  {isSpeechSupported && (
+                    <Text
+                      type='secondary'
+                      style={{
+                        fontSize: 12,
+                        fontStyle: 'italic',
+                        maxWidth: 420,
+                        textAlign: 'center',
+                        color: token.colorPrimary,
+                      }}
+                    >
+                      {speechInterimTranscript || speechTranscript
+                        ? `"${speechInterimTranscript || speechTranscript}"`
+                        : '🎙️ Hãy đọc to câu mẫu ở trên...'}
+                    </Text>
+                  )}
+
                   <Button
                     type='primary'
                     danger
                     icon={<StopOutlined />}
-                    onClick={stopRecording}
+                    onClick={handleStopRecording}
                     style={{ borderRadius: 20 }}
                   >
                     Dừng thu âm
@@ -970,10 +1098,44 @@ export const PronunciationPractice: React.FC = () => {
                 <Flex vertical align='center' gap={12} style={{ width: '100%' }}>
                   <audio controls src={audioUrl} className={styles.audioPlayer} />
 
+                  {/* ⚡ Phản hồi tức thì ngay tại client (< 200ms) */}
+                  {instantStats && finalInstantTranscript && (
+                    <div className={styles.instantSpeechBox}>
+                      <Flex justify='space-between' align='center' wrap='wrap' gap={6}>
+                        <Flex align='center' gap={6}>
+                          <ThunderboltOutlined style={{ color: '#fa8c16' }} />
+                          <Text strong style={{ fontSize: 12 }}>
+                            Nhận diện tức thì (Client Speech):
+                          </Text>
+                        </Flex>
+                        <Space size={6}>
+                          <Tag
+                            color={
+                              instantStats.matchPercentage >= 80
+                                ? 'success'
+                                : instantStats.matchPercentage >= 50
+                                  ? 'warning'
+                                  : 'error'
+                            }
+                            style={{ borderRadius: 6, fontWeight: 700 }}
+                          >
+                            {instantStats.matchPercentage}% khớp từ
+                          </Tag>
+                          <Tag color='cyan' style={{ borderRadius: 6, fontSize: 11 }}>
+                            ~{instantStats.wpm} WPM (tốc độ đọc)
+                          </Tag>
+                        </Space>
+                      </Flex>
+                      <Text type='secondary' style={{ fontSize: 12, fontStyle: 'italic' }}>
+                        "{finalInstantTranscript}"
+                      </Text>
+                    </div>
+                  )}
+
                   <Flex gap={8} wrap='wrap' justify='center'>
                     <Button
                       icon={<RedoOutlined />}
-                      onClick={resetRecording}
+                      onClick={handleFullResetRecording}
                       disabled={isEvaluating}
                       style={{ fontSize: 12 }}
                     >
@@ -983,29 +1145,50 @@ export const PronunciationPractice: React.FC = () => {
                     <Button
                       type='primary'
                       icon={isEvaluating ? <SyncOutlined spin /> : <RobotOutlined />}
-                      onClick={handleEvaluateAudio}
+                      onClick={() => handleEvaluateAudio()}
                       loading={isEvaluating}
+                      disabled={isEvaluating}
                       style={{
                         background: 'linear-gradient(90deg, #1677ff 0%, #722ed1 100%)',
                         borderColor: '#1677ff',
                         fontWeight: 600,
                       }}
                     >
-                      {isEvaluating ? 'Gemini đang phân tích...' : 'AI Chấm điểm & Nhận xét'}
+                      {isEvaluating
+                        ? 'AI đang phân tích...'
+                        : evalResult
+                          ? 'AI Đánh giá lại'
+                          : 'AI Đánh giá'}
                     </Button>
                   </Flex>
                 </Flex>
               )}
             </div>
 
-            {/* Loading spinner */}
+            {/* Trạng thái tiến trình AI sinh động thay vì spinner chặn màn hình */}
             {isEvaluating && (
-              <Flex vertical align='center' justify='center' gap={12} style={{ padding: '24px 0' }}>
-                <Spin size='large' />
-                <Text style={{ fontSize: 13, color: token.colorPrimary }}>
-                  AI đang lắng nghe và đánh giá phát âm...
-                </Text>
-              </Flex>
+              <div className={styles.evaluatingBox}>
+                <div className={styles.evaluatingStepRow}>
+                  <LoadingOutlined spin style={{ fontSize: 16 }} />
+                  <span>{EVAL_STEPS[evalStepIndex]}</span>
+                </div>
+                <Progress
+                  percent={Math.min(95, (evalStepIndex + 1) * 25)}
+                  showInfo={false}
+                  strokeColor={{
+                    '0%': '#1677ff',
+                    '100%': '#722ed1',
+                  }}
+                  size={['100%', 4]}
+                  status='active'
+                />
+                <div className={styles.evaluatingTip}>
+                  <BulbOutlined style={{ color: '#faad14', marginTop: 1, flexShrink: 0 }} />
+                  <span>
+                    <strong>Mẹo hữu ích:</strong> {randomTip}
+                  </span>
+                </div>
+              </div>
             )}
 
             {/* Thông báo lỗi AI */}
@@ -1163,7 +1346,7 @@ export const PronunciationPractice: React.FC = () => {
                 </div>
 
                 {/* Từ vựng cần lưu ý */}
-                {evalResult.wordsReview && evalResult.wordsReview.length > 0 && (
+                {evalResult.wordsReview && evalResult.wordsReview.length > 0 ? (
                   <div>
                     <Text strong style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
                       Từ cần cải thiện phát âm:
@@ -1190,6 +1373,14 @@ export const PronunciationPractice: React.FC = () => {
                       ))}
                     </div>
                   </div>
+                ) : (
+                  <Alert
+                    type='success'
+                    showIcon
+                    message='Phát âm các từ rất chuẩn xác! 🎉'
+                    description='AI không ghi nhận từ nào bị phát âm sai hoặc lỗi phụ âm/nguyên âm nghiêm trọng.'
+                    style={{ fontSize: 12, padding: '8px 12px' }}
+                  />
                 )}
 
                 {/* Lời khuyên hành động */}

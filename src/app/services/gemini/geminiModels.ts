@@ -89,28 +89,28 @@ export const GEMINI_TRANSCRIPT_MODELS = GEMINI_MODEL_OPTIONS
  */
 export const GEMINI_SPEECH_EVAL_MODELS: IGeminiModelOption[] = [
   {
+    value: 'gemini-2.5-flash',
+    label: 'Gemini 2.5 Flash (Phản hồi cực nhanh - Khuyên dùng)',
+    desc: 'Xử lý âm thanh đa phương thức siêu nhanh, giảm độ trễ tối đa và ổn định',
+  },
+  {
+    value: 'gemini-3.5-flash',
+    label: 'Gemini 3.5 Flash (Cân bằng)',
+    desc: 'Tốc độ phản hồi tốt, tiết kiệm token',
+  },
+  {
     value: 'gemini-3.8-flash',
-    label: 'Gemini 3.8 Flash (Tối ưu nhất)',
-    desc: 'Suy luận âm thanh đa phương thức vượt trội, nhận diện nối âm, trọng âm, ngữ điệu chính xác nhất',
+    label: 'Gemini 3.8 Flash (Chuyên sâu)',
+    desc: 'Suy luận âm thanh đa phương thức sâu sắc, nhận diện nối âm, trọng âm, ngữ điệu chi tiết',
   },
   {
     value: 'gemini-3.6-flash',
     label: 'Gemini 3.6 Flash (Tiêu chuẩn)',
     desc: 'Cân bằng giữa tốc độ phân tích và độ chính xác ngữ âm',
   },
-  {
-    value: 'gemini-2.5-flash',
-    label: 'Gemini 2.5 Flash (Ổn định)',
-    desc: 'Đa phương thức thế hệ 2.5, ổn định và xử lý audio mượt mà',
-  },
-  {
-    value: 'gemini-3.5-flash',
-    label: 'Gemini 3.5 Flash (Tiết kiệm)',
-    desc: 'Tốc độ phản hồi cực nhanh, tiết kiệm token',
-  },
 ]
 
-export const DEFAULT_SPEECH_EVAL_MODEL: TGeminiModel = 'gemini-3.8-flash'
+export const DEFAULT_SPEECH_EVAL_MODEL: TGeminiModel = 'gemini-2.5-flash'
 
 /**
  * Danh sách Gemini TTS Models chuẩn hóa chuyên biệt cho tạo âm thanh (speech/audio):

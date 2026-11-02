@@ -9,7 +9,9 @@ export const useBlogModal = () => {
 
   const openBlogModal = (mode: 'edit' | 'add', data?: IBlogItem) => {
     if (mode === 'add') {
+      const modalId = data?.id ? `blog-form-${data.id}` : 'blog-form-add'
       openModal({
+        id: modalId,
         title: 'Blog Form',
         tag: <Tag color={'green'}>CREATE</Tag>,
         width: 880,
@@ -20,12 +22,14 @@ export const useBlogModal = () => {
           tooltip: data?.title ? `Mở lại bài viết: ${data.title}` : 'Mở lại Blog Form',
           icon: <FileTextOutlined />,
         },
-        content: <BlogForm data={data} onCancel={closeModal} onClose={closeModal} />,
+        content: <BlogForm data={data} onCancel={() => closeModal(modalId)} onClose={() => closeModal(modalId)} />,
       })
     }
 
     if (mode === 'edit') {
+      const modalId = data?.id ? `blog-form-${data.id}` : 'blog-form-edit'
       openModal({
+        id: modalId,
         title: 'Blog Form',
         tag: <Tag color={'yellow'}>UPDATE</Tag>,
         width: 880,
@@ -36,7 +40,7 @@ export const useBlogModal = () => {
           tooltip: data?.title ? `Mở lại bài viết: ${data.title}` : 'Mở lại Blog Form',
           icon: <FileTextOutlined />,
         },
-        content: <BlogForm data={data} onCancel={closeModal} onClose={closeModal} />,
+        content: <BlogForm data={data} onCancel={() => closeModal(modalId)} onClose={() => closeModal(modalId)} />,
       })
     }
   }

@@ -1514,7 +1514,7 @@ export const DicTran: React.FC<IDicTranProps> = ({
               </Button>
 
               {sourceText && (
-                <div>
+                <div className={'text-center'}>
                   <Button
                     type='link'
                     size='small'

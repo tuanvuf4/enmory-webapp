@@ -73,10 +73,13 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
   const isPending = isCreating || isUpdating
 
   useEffect(() => {
-    updateModal({
-      tag: isEditing ? <Tag color='gold'>CẬP NHẬT</Tag> : <Tag color='green'>TẠO MỚI</Tag>,
-    })
-  }, [isEditing])
+    updateModal(
+      {
+        tag: isEditing ? <Tag color='gold'>CẬP NHẬT</Tag> : <Tag color='green'>TẠO MỚI</Tag>,
+      },
+      currentModal?.modalId,
+    )
+  }, [isEditing, currentModal?.modalId])
 
   const initialTags = useMemo(() => {
     if (data?.tags && Array.isArray(data.tags) && data.tags.length > 0) {
@@ -121,15 +124,26 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
 
   useEffect(() => {
     if (title?.trim()) {
-      updateModal({
-        minimizeInfo: {
+      if (currentModal?.updateMinimizeInfo) {
+        currentModal.updateMinimizeInfo({
           title: `Blog: ${title.trim()}`,
           tooltip: `Mở lại bài viết: ${title.trim()}`,
           icon: <FileTextOutlined />,
-        },
-      })
+        })
+      } else {
+        updateModal(
+          {
+            minimizeInfo: {
+              title: `Blog: ${title.trim()}`,
+              tooltip: `Mở lại bài viết: ${title.trim()}`,
+              icon: <FileTextOutlined />,
+            },
+          },
+          currentModal?.modalId,
+        )
+      }
     }
-  }, [title])
+  }, [title, currentModal])
 
   useEffect(() => {
     if (data) {

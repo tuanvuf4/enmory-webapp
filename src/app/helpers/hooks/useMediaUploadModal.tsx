@@ -12,7 +12,9 @@ export const useMediaUploadModal = () => {
     trackData?: ITracks,
     onConfirm?: (track: ITracks) => void,
   ) => {
+    const modalId = trackData?.id ? `media-form-${trackData.id}` : 'media-form-add'
     openModal({
+      id: modalId,
       title: 'Media Form',
       tag: mode === 'edit' ? <Tag color={'yellow'}>UPDATE</Tag> : <Tag color={'green'}>CREATE</Tag>,
       width: 1000,
@@ -28,9 +30,9 @@ export const useMediaUploadModal = () => {
           trackData={trackData}
           onConfirm={(track) => {
             onConfirm?.(track)
-            closeModal()
+            closeModal(modalId)
           }}
-          onCancel={closeModal}
+          onCancel={() => closeModal(modalId)}
         />
       ),
     })

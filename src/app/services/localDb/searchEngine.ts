@@ -256,11 +256,6 @@ export const invalidateSearchIndex = () => {
   cachedIndexItemsSignature = ''
 }
 
-export const populateItemExamples = async (items: IItem[]): Promise<IItem[]> => {
-  // Examples are already embedded in items; return items directly without querying localDb.examples
-  return items
-}
-
 /**
  * Executes an optimized local search and filter query against IndexedDB.
  * Blends precision matching (origin, translation, definition), Vietnamese tone-insensitivity,
@@ -534,12 +529,11 @@ export const queryLocalItems = async (
   const page = Math.min(params.page || 0, Math.max(0, totalPage - 1))
 
   const pagedItems = filtered.slice(page * size, (page + 1) * size)
-  const populatedItems = await populateItemExamples(pagedItems)
 
   return {
     isSuccess: true,
     message: 'Items fetched from local database',
-    content: populatedItems,
+    content: pagedItems,
     paging: {
       page,
       size,

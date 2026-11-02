@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie'
-import { IItem, IExample } from '@/models/item.model'
+import { IItem } from '@/models/item.model'
 import { IBlogItem } from '@/models/blog.model'
 
 export interface ISyncMeta {
@@ -44,7 +44,6 @@ export interface ITranslationHistoryItem {
 
 export class EnmoryDatabase extends Dexie {
   items!: Table<IItem, string>
-  examples!: Table<IExample, string>
   blogs!: Table<IBlogItem, string>
   syncMeta!: Table<ISyncMeta, string>
   audioCache!: Table<ICachedAudio, string>
@@ -74,6 +73,9 @@ export class EnmoryDatabase extends Dexie {
     this.version(6).stores({
       tags: null,
       blogs: 'id, uid, created_date, last_update, *tags',
+    })
+    this.version(7).stores({
+      examples: null,
     })
   }
 }

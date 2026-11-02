@@ -12,7 +12,7 @@ import {
   getDoc,
   doc,
   addDoc,
-  updateDoc,
+  setDoc,
   deleteDoc,
   writeBatch,
   Timestamp,
@@ -561,14 +561,18 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
       randomIndex: Math.random(), // For efficient random queries
     }
     delete (newItem as any).quiz
-
+    console.log(`*** newItem *** `, newItem);
+    
     const itemsRef = collection(db, dbCollections.items)
     const docRef = await addDoc(itemsRef, sanitizeItemForFirestore(newItem))
+    console.log(`*** docRef *** `, docRef);
     const createdItem = {
-      id: docRef.id,
       ...newItem,
+      id: docRef.id,
     } as unknown as IItem
     delete (createdItem as any).quiz
+
+    console.log(`*** createdItem *** `, createdItem);
 
     // Modify local DB as well
     try {
@@ -735,7 +739,7 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
       const itemDocRef = doc(db, dbCollections.items, id)
       const { id: _docId, quiz: _quiz, ...firestorePayload } = updateData
       delete firestorePayload.quiz
-      await updateDoc(itemDocRef, sanitizeItemForFirestore(firestorePayload))
+      await setDoc(itemDocRef, sanitizeItemForFirestore(firestorePayload), { merge: true })
     } catch (firebaseErr) {
       console.error('Failed to update item in Firestore:', firebaseErr)
     }

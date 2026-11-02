@@ -1,8 +1,5 @@
-import { GoogleGenAI } from '@google/genai'
 import { IHttpResponse } from '@/models/http.model'
-import { resolveGeminiApiKey } from './geminiDictionary.service'
-import { GEMINI_MODELS } from './geminiModels'
-import { generateContentWithTracking } from './geminiTracker.service'
+import { generateContentWithFallback } from './geminiCore.service'
 
 export interface IReviewSuggestion {
   issue: 'grammar' | 'spelling' | 'word-choice' | 'punctuation' | 'style'
@@ -70,17 +67,6 @@ export const geminiReviewSentenceService = {
     params: IReviewSentenceRequest,
   ): Promise<IHttpResponse<IReviewSentenceResponse>> => {
     try {
-      const apiKey = resolveGeminiApiKey()
-      if (!apiKey) {
-        return {
-          isSuccess: false,
-          content: null as any,
-          message:
-            'Gemini API key is not configured. Please add VITE_GEMINI_API_KEY in your .env or save it in localStorage ("gemini_api_key").',
-          statusCode: 400,
-        }
-      }
-
       const cleanText = params.text.trim()
       if (!cleanText) {
         return {
@@ -90,8 +76,6 @@ export const geminiReviewSentenceService = {
           statusCode: 400,
         }
       }
-
-      const ai = new GoogleGenAI({ apiKey })
 
       const prompt = `You are an expert English grammar, spelling, and writing assistant. Review the following sentence for grammar, spelling, punctuation, word choice, and stylistic issues.
 
@@ -121,35 +105,19 @@ JSON Schema:
   "score": 90
 }`
 
-      let lastError: any = null
-      let responseText = ''
+      const { text } = await generateContentWithFallback({
+        serviceName: 'Sentence Review',
+        category: 'general',
+        requestParams: {
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            temperature: 0.2,
+          },
+        },
+      })
 
-      for (const model of GEMINI_MODELS) {
-        try {
-          const response = await generateContentWithTracking(ai, 'Sentence Review', {
-            model,
-            contents: prompt,
-            config: {
-              responseMimeType: 'application/json',
-              temperature: 0.2,
-            },
-          })
-
-          if (response.text) {
-            responseText = response.text
-            break
-          }
-        } catch (err) {
-          lastError = err
-          console.warn(`Gemini review failed with model ${model}, trying next...`, err)
-        }
-      }
-
-      if (!responseText) {
-        throw lastError || new Error('No response from Gemini review models')
-      }
-
-      const reviewResult = parseReviewResponse(responseText, cleanText)
+      const reviewResult = parseReviewResponse(text, cleanText)
 
       return {
         isSuccess: true,

@@ -22,6 +22,7 @@ export interface IUserConfig<R = number[]> {
   itemTags?: ITag[]
   blogTags?: ITag[]
   role: TRole
+  defaultAiModel?: string
 }
 
 export interface IUser<R = number[]> {

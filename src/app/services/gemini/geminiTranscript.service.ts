@@ -1,12 +1,10 @@
-import { GoogleGenAI } from '@google/genai'
 import { IHttpResponse } from '@/models/http.model'
-import { resolveGeminiApiKey } from './geminiDictionary.service'
 import {
   type TGeminiModel,
   GEMINI_TRANSCRIPT_MODELS,
   CANDIDATE_GEMINI_MODELS,
 } from './geminiModels'
-import { generateContentWithTracking } from './geminiTracker.service'
+import { generateContentWithFallback } from './geminiCore.service'
 
 export type { TGeminiModel }
 export { GEMINI_TRANSCRIPT_MODELS, CANDIDATE_GEMINI_MODELS }
@@ -22,17 +20,6 @@ export interface IGenerateTranscriptResponse {
   generatedPrompt?: string
 }
 
-const getGeminiClient = () => {
-  const apiKey = resolveGeminiApiKey()
-  if (!apiKey) {
-    throw new Error(
-      'Gemini API key chưa được cấu hình. Vui lòng cấu hình VITE_GEMINI_API_KEY trong file .env hoặc lưu vào localStorage ("gemini_api_key").',
-    )
-  }
-
-  return new GoogleGenAI({ apiKey })
-}
-
 export const geminiTranscriptService = {
   /**
    * Step 1: Use Gemini to create an optimized generation prompt based on the user's description.
@@ -41,8 +28,6 @@ export const geminiTranscriptService = {
     description: string,
     preferredModel?: TGeminiModel,
   ): Promise<string> => {
-    const ai = getGeminiClient()
-
     const promptGeneratorInstruction = `You are an expert English language educator and AI prompt engineer.
 Your task is to take a user's description/requirements for an English listening practice audio and create a detailed, highly effective system prompt that will be used to generate a realistic English conversation transcript with timestamp markers.
 
@@ -60,36 +45,24 @@ The prompt you generate should instruct the AI model to:
 
 Return ONLY the generated prompt text, ready to be sent to an AI model. Do not include markdown meta-commentary.`
 
-    let lastError: any = null
-    const modelCandidates = preferredModel
-      ? [preferredModel, ...CANDIDATE_GEMINI_MODELS.filter((m) => m !== preferredModel)]
-      : CANDIDATE_GEMINI_MODELS
+    const { text } = await generateContentWithFallback({
+      serviceName: 'Transcript Prompt Generation',
+      preferredModel,
+      category: 'general',
+      requestParams: {
+        contents: `Description: "${description || DEFAULT_TRANSCRIPT_DESCRIPTION}"\n\nGenerate the complete prompt based on this description.`,
+        config: {
+          systemInstruction: promptGeneratorInstruction,
+          temperature: 0.7,
+        },
+      },
+    })
 
-    for (const model of modelCandidates) {
-      try {
-        const response = await generateContentWithTracking(ai, 'Transcript Prompt Generation', {
-          model,
-          contents: `Description: "${description || DEFAULT_TRANSCRIPT_DESCRIPTION}"\n\nGenerate the complete prompt based on this description.`,
-          config: {
-            systemInstruction: promptGeneratorInstruction,
-            temperature: 0.7,
-          },
-        })
-
-        const text = response.text?.trim()
-        if (text) {
-          return text
-        }
-      } catch (err: any) {
-        lastError = err
-        console.warn(
-          `Gemini model ${model} failed for prompt generation, trying fallback:`,
-          err?.message || err,
-        )
-      }
+    const clean = text?.trim()
+    if (!clean) {
+      throw new Error('Không thể tạo prompt từ Gemini. Vui lòng thử lại.')
     }
-
-    throw lastError || new Error('Không thể tạo prompt từ Gemini. Vui lòng thử lại.')
+    return clean
   },
 
   /**
@@ -99,8 +72,6 @@ Return ONLY the generated prompt text, ready to be sent to an AI model. Do not i
     generatedPrompt: string,
     preferredModel?: TGeminiModel,
   ): Promise<IGenerateTranscriptResponse> => {
-    const ai = getGeminiClient()
-
     const systemInstruction = `You are a professional audio scriptwriter and English curriculum designer.
 Generate the English listening practice script following the user's prompt strictly.
 
@@ -119,48 +90,34 @@ You MUST return a JSON object with this exact schema:
   "translation": "0:00\\nAlex: ...\\n\\n0:25\\nSarah: ...\\n\\n..."
 }`
 
-    let lastError: any = null
+    const { text } = await generateContentWithFallback({
+      serviceName: 'Transcript Script Generation',
+      preferredModel,
+      category: 'general',
+      requestParams: {
+        contents: generatedPrompt,
+        config: {
+          systemInstruction,
+          responseMimeType: 'application/json',
+          temperature: 0.7,
+        },
+      },
+    })
 
-    const modelCandidates = preferredModel
-      ? [preferredModel, ...CANDIDATE_GEMINI_MODELS.filter((m) => m !== preferredModel)]
-      : CANDIDATE_GEMINI_MODELS
+    const rawText = text?.trim() || '{}'
+    const cleanJson = rawText
+      .replace(/^```json\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .trim()
+    const parsed = JSON.parse(cleanJson)
 
-    for (const model of modelCandidates) {
-      try {
-        const response = await generateContentWithTracking(ai, 'Transcript Script Generation', {
-          model,
-          contents: generatedPrompt,
-          config: {
-            systemInstruction,
-            responseMimeType: 'application/json',
-            temperature: 0.7,
-          },
-        })
-
-        const rawText = response.text?.trim() || '{}'
-        const cleanJson = rawText
-          .replace(/^```json\s*/i, '')
-          .replace(/```\s*$/i, '')
-          .trim()
-        const parsed = JSON.parse(cleanJson)
-
-        return {
-          title: parsed.title || 'Frontend Developer Daily Communication & Meetings',
-          description: parsed.description || '',
-          transcript: parsed.transcript || '',
-          translation: parsed.translation || '',
-          generatedPrompt,
-        }
-      } catch (err: any) {
-        lastError = err
-        console.warn(
-          `Gemini model ${model} failed for transcript generation, trying fallback:`,
-          err?.message || err,
-        )
-      }
+    return {
+      title: parsed.title || 'Frontend Developer Daily Communication & Meetings',
+      description: parsed.description || '',
+      transcript: parsed.transcript || '',
+      translation: parsed.translation || '',
+      generatedPrompt,
     }
-
-    throw lastError || new Error('Không thể tạo transcript từ Gemini. Vui lòng thử lại.')
   },
 
   /**
@@ -216,38 +173,25 @@ You MUST return a JSON object with this exact schema:
   translateSentence: async (sentence: string, preferredModel?: TGeminiModel): Promise<string> => {
     const clean = sentence.trim()
     if (!clean) return ''
-    const ai = getGeminiClient()
 
     const systemInstruction = `You are an expert bilingual English-Vietnamese translator.
 Translate the following English sentence into natural, fluent Vietnamese suitable for an English language learner.
 Return ONLY the Vietnamese translation text. Do not include quotes, markdown formatting, explanations, or notes.`
 
-    const modelCandidates = preferredModel
-      ? [preferredModel, ...CANDIDATE_GEMINI_MODELS.filter((m) => m !== preferredModel)]
-      : CANDIDATE_GEMINI_MODELS
+    const { text } = await generateContentWithFallback({
+      serviceName: 'Transcript Sentence Translation',
+      preferredModel,
+      category: 'general',
+      requestParams: {
+        contents: `Translate to Vietnamese: "${clean}"`,
+        config: {
+          systemInstruction,
+          temperature: 0.3,
+        },
+      },
+    })
 
-    let lastError: any = null
-    for (const model of modelCandidates) {
-      try {
-        const response = await ai.models.generateContent({
-          model,
-          contents: `Translate to Vietnamese: "${clean}"`,
-          config: {
-            systemInstruction,
-            temperature: 0.3,
-          },
-        })
-        const text = response.text?.trim()
-        if (text) return text
-      } catch (err: any) {
-        lastError = err
-        console.warn(
-          `Gemini translation with ${model} failed, trying fallback:`,
-          err?.message || err,
-        )
-      }
-    }
-    throw lastError || new Error('Không thể dịch câu bằng Gemini.')
+    return text?.trim() || ''
   },
 
   /**
@@ -260,7 +204,6 @@ Return ONLY the Vietnamese translation text. Do not include quotes, markdown for
   ): Promise<string> => {
     const clean = transcript.trim()
     if (!clean) return ''
-    const ai = getGeminiClient()
 
     const systemInstruction = `You are an expert bilingual English-Vietnamese translator and curriculum designer.
 Translate the following English audio transcript into natural, fluent Vietnamese.
@@ -272,36 +215,25 @@ CRITICAL REQUIREMENTS:
 4. Separate segments with a blank line.
 5. Return ONLY the translated transcript text with timestamps. Do not include markdown codeblocks or commentary.`
 
-    const modelCandidates = preferredModel
-      ? [preferredModel, ...CANDIDATE_GEMINI_MODELS.filter((m) => m !== preferredModel)]
-      : CANDIDATE_GEMINI_MODELS
+    const { text } = await generateContentWithFallback({
+      serviceName: 'Transcript Batch Translation',
+      preferredModel,
+      category: 'general',
+      requestParams: {
+        contents: clean,
+        config: {
+          systemInstruction,
+          temperature: 0.3,
+        },
+      },
+    })
 
-    let lastError: any = null
-    for (const model of modelCandidates) {
-      try {
-        const response = await ai.models.generateContent({
-          model,
-          contents: clean,
-          config: {
-            systemInstruction,
-            temperature: 0.3,
-          },
-        })
-        let text = response.text?.trim() || ''
-        text = text
-          .replace(/^```(?:text|markdown)?\s*/i, '')
-          .replace(/```\s*$/i, '')
-          .trim()
-        if (text) return text
-      } catch (err: any) {
-        lastError = err
-        console.warn(
-          `Gemini transcript translation with ${model} failed, trying fallback:`,
-          err?.message || err,
-        )
-      }
-    }
-    throw lastError || new Error('Không thể dịch transcript bằng Gemini.')
+    let result = text?.trim() || ''
+    result = result
+      .replace(/^```(?:text|markdown)?\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .trim()
+    return result
   },
 
   /**
@@ -314,7 +246,6 @@ CRITICAL REQUIREMENTS:
   ): Promise<string> => {
     const clean = transcript.trim()
     if (!clean) return ''
-    const ai = getGeminiClient()
 
     const systemInstruction = `You are an expert audio transcript editor and linguistic specialist.
 Your task is to reformat and reorganize the provided audio transcript into complete, grammatically sound sentences aligned with their starting timestamps.
@@ -328,36 +259,25 @@ CRITICAL REQUIREMENTS:
 6. Do NOT invent new facts or alter the speaker's original meaning or vocabulary.
 7. Return ONLY the formatted transcript text with timestamps. Do not include markdown codeblocks or commentary.`
 
-    const modelCandidates = preferredModel
-      ? [preferredModel, ...CANDIDATE_GEMINI_MODELS.filter((m) => m !== preferredModel)]
-      : CANDIDATE_GEMINI_MODELS
+    const { text } = await generateContentWithFallback({
+      serviceName: 'Transcript AI Formatting',
+      preferredModel,
+      category: 'general',
+      requestParams: {
+        contents: clean,
+        config: {
+          systemInstruction,
+          temperature: 0.2,
+        },
+      },
+    })
 
-    let lastError: any = null
-    for (const model of modelCandidates) {
-      try {
-        const response = await ai.models.generateContent({
-          model,
-          contents: clean,
-          config: {
-            systemInstruction,
-            temperature: 0.2,
-          },
-        })
-        let text = response.text?.trim() || ''
-        text = text
-          .replace(/^```(?:text|markdown)?\s*/i, '')
-          .replace(/```\s*$/i, '')
-          .trim()
-        if (text) return text
-      } catch (err: any) {
-        lastError = err
-        console.warn(
-          `Gemini transcript formatting with ${model} failed, trying fallback:`,
-          err?.message || err,
-        )
-      }
-    }
-    throw lastError || new Error('Không thể định dạng transcript bằng Gemini.')
+    let result = text?.trim() || ''
+    result = result
+      .replace(/^```(?:text|markdown)?\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .trim()
+    return result
   },
 }
 

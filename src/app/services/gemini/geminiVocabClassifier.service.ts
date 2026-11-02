@@ -1,4 +1,3 @@
-import { GoogleGenAI } from '@google/genai'
 import OpenAI from 'openai'
 import { IHttpResponse } from '@/models/http.model'
 import {
@@ -10,8 +9,8 @@ import {
 } from '@/models/vocabClassification.model'
 import { resolveGeminiApiKey } from './geminiDictionary.service'
 import { resolveOpenAiApiKey } from '../openai/tts.service'
-import { DEFAULT_GEMINI_MODEL, GEMINI_MODELS, TGeminiModel } from './geminiModels'
-import { generateContentWithTracking } from './geminiTracker.service'
+import { DEFAULT_GEMINI_MODEL, TGeminiModel } from './geminiModels'
+import { generateContentWithFallback } from './geminiCore.service'
 import { parseTranscript } from '@/views/features/player/transcriptUtils'
 
 const STORAGE_PREFIX = 'enmory_transcript_vocab_'
@@ -301,43 +300,31 @@ Return ONLY valid JSON matching this structure:
       let lastError: any = null
       let parsedResponse: any = null
 
-      // 1. Try Gemini
+      // 1. Try Gemini with resilient fallback
       if (geminiApiKey) {
         try {
-          const ai = new GoogleGenAI({ apiKey: geminiApiKey })
-          const targetModel = preferredModel || DEFAULT_GEMINI_MODEL
-          const modelCandidates = [targetModel, ...GEMINI_MODELS.filter((m) => m !== targetModel)]
+          const { text } = await generateContentWithFallback({
+            serviceName: 'Vocabulary Classifier',
+            preferredModel,
+            category: 'general',
+            requestParams: {
+              contents: prompt,
+              config: {
+                responseMimeType: 'application/json',
+                temperature: 0.2,
+              },
+            },
+          })
 
-          for (const model of modelCandidates) {
-            try {
-              const response = await generateContentWithTracking(ai, 'Vocabulary Classifier', {
-                model,
-                contents: prompt,
-                config: {
-                  responseMimeType: 'application/json',
-                  temperature: 0.2,
-                },
-              })
-
-              const responseText = response.text || ''
-              if (responseText) {
-                const raw = safeParseJson(responseText)
-                if (raw && (Array.isArray(raw.items) || Array.isArray(raw))) {
-                  parsedResponse = raw
-                  break
-                }
-              }
-            } catch (modelErr: any) {
-              lastError = modelErr
-              console.warn(
-                `[VocabClassifier] Gemini model ${model} failed, trying fallback:`,
-                modelErr?.message || modelErr,
-              )
+          if (text) {
+            const raw = safeParseJson(text)
+            if (raw && (Array.isArray(raw.items) || Array.isArray(raw))) {
+              parsedResponse = raw
             }
           }
-        } catch (err) {
-          lastError = err
-          console.warn('[VocabClassifier] Gemini client initialization or request failed:', err)
+        } catch (geminiErr: any) {
+          lastError = geminiErr
+          console.warn('[VocabClassifier] Gemini fallback chain failed:', geminiErr)
         }
       }
 

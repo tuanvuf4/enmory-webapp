@@ -16,6 +16,7 @@ import {
   Divider,
   Typography,
   Badge,
+  Tooltip,
 } from 'antd'
 import {
   BookOutlined,
@@ -25,12 +26,18 @@ import {
   TagsOutlined,
   AppstoreOutlined,
   SaveOutlined,
+  RobotOutlined,
 } from '@ant-design/icons'
 import { useForm, Controller } from 'react-hook-form'
 import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import { usePrompt } from '@/helpers/hooks'
 import { TagManagerForm, BlogTagManagerForm } from '@/views/components'
+import {
+  GEMINI_MODEL_OPTIONS,
+  setUserDefaultAiModel,
+  DEFAULT_USER_AI_MODEL,
+} from '@/services/gemini'
 
 const { Text } = Typography
 
@@ -174,6 +181,9 @@ const Setting = () => {
     setIsLoading(true)
     try {
       const sanitizedData = sanitizeConfig(data)
+      if (sanitizedData.defaultAiModel) {
+        setUserDefaultAiModel(sanitizedData.defaultAiModel as any)
+      }
       const result = await apiUser.updateUserConfig(sanitizedData)
 
       if (result.isSuccess) {
@@ -418,6 +428,43 @@ const Setting = () => {
                   </div>
                 )}
               />
+            </SectionCard>
+
+            {/* ── AI Preferences & Resilient Fallback ── */}
+            <SectionCard
+              icon={<RobotOutlined />}
+              title='Trí tuệ nhân tạo (AI Engine)'
+              description='Cấu hình mô hình AI mặc định và cơ chế tự động chuyển đổi khi vượt hạn mức Free Tier'
+            >
+              <SettingRow
+                label='Mô hình AI mặc định'
+                hint='Mô hình được ưu tiên gọi đầu tiên. Nếu gặp giới hạn request (Rate Limit 429 trên gói Free Tier), hệ thống sẽ tự động gọi ngầm các model khác (3.8 Flash, 3.5 Flash, 2.5 Flash...) cho đến khi thành công.'
+                last
+              >
+                <Controller
+                  name='defaultAiModel'
+                  control={control}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      value={value || DEFAULT_USER_AI_MODEL}
+                      onChange={(val) => {
+                        onChange(val)
+                        setUserDefaultAiModel(val as any)
+                      }}
+                      options={GEMINI_MODEL_OPTIONS.map((opt) => ({
+                        value: opt.value,
+                        label: (
+                          <Tooltip title={opt.desc} placement='topLeft'>
+                            <div style={{ fontWeight: 600 }}>{opt.label}</div>
+                          </Tooltip>
+                        ),
+                      }))}
+                      style={{ width: 280 }}
+                      popupMatchSelectWidth={340}
+                    />
+                  )}
+                />
+              </SettingRow>
             </SectionCard>
 
             {/* ── Item Tags ── */}

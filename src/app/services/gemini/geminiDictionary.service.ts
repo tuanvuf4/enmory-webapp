@@ -1,11 +1,23 @@
-import { GoogleGenAI } from '@google/genai'
 import OpenAI from 'openai'
 import { ECategory, EType } from '@/models/item.model'
 import { IHttpResponse } from '@/models/http.model'
 import { sanitizePronunciation } from '@/core/utils'
-import { DEFAULT_AUTOFILL_MODEL, GEMINI_MODELS, TGeminiModel } from './geminiModels'
+import { DEFAULT_AUTOFILL_MODEL, TGeminiModel } from './geminiModels'
 import { resolveOpenAiApiKey } from '../openai/tts.service'
-import { generateContentWithTracking } from './geminiTracker.service'
+import {
+  generateContentWithFallback,
+  resolveGeminiApiKey,
+  resolveGeminiApiKeys,
+  getAvailableGeminiKeys,
+  markGeminiKeyRateLimited,
+} from './geminiCore.service'
+
+export {
+  resolveGeminiApiKey,
+  resolveGeminiApiKeys,
+  getAvailableGeminiKeys,
+  markGeminiKeyRateLimited,
+}
 
 export interface IDictionaryAutofillData {
   catId: ECategory
@@ -35,16 +47,6 @@ export interface IDictionaryAutofillData {
 }
 
 export type IOxfordAutofillData = IDictionaryAutofillData
-
-export const resolveGeminiApiKey = (): string => {
-  return (
-    localStorage.getItem('gemini_api_key') ||
-    localStorage.getItem('geminiApiKey') ||
-    localStorage.getItem('enmory_gemini_api_key') ||
-    import.meta.env.VITE_GEMINI_API_KEY ||
-    ''
-  ).trim()
-}
 
 export const formatHtmlList = (
   content: string | undefined,
@@ -327,43 +329,31 @@ Return ONLY valid JSON matching this schema:
       let lastError: any = null
       let parsed: IOxfordAutofillData | null = null
 
-      // 1. Try Gemini models first if key available
+      // 1. Try Gemini models with resilient fallback first if key available
       if (geminiApiKey) {
         try {
-          const ai = new GoogleGenAI({ apiKey: geminiApiKey })
-          const targetModel = preferredModel || DEFAULT_AUTOFILL_MODEL
-          const modelCandidates = [targetModel, ...GEMINI_MODELS.filter((m) => m !== targetModel)]
+          const { text } = await generateContentWithFallback({
+            serviceName: 'Dictionary Autofill',
+            preferredModel: preferredModel || DEFAULT_AUTOFILL_MODEL,
+            category: 'general',
+            requestParams: {
+              contents: prompt,
+              config: {
+                responseMimeType: 'application/json',
+                temperature: 0.2,
+              },
+            },
+          })
 
-          for (const model of modelCandidates) {
-            try {
-              const response = await generateContentWithTracking(ai, 'Dictionary Autofill', {
-                model,
-                contents: prompt,
-                config: {
-                  responseMimeType: 'application/json',
-                  temperature: 0.2,
-                },
-              })
-
-              const text = response.text || ''
-              if (text) {
-                const raw = safeParseJson(text)
-                if (raw) {
-                  parsed = normalizeDictionaryData(raw, trimmed)
-                  break
-                }
-              }
-            } catch (err: any) {
-              lastError = err
-              console.warn(
-                `[Dictionary] Gemini model ${model} failed, trying next candidate...`,
-                err?.message || err,
-              )
+          if (text) {
+            const raw = safeParseJson(text)
+            if (raw) {
+              parsed = normalizeDictionaryData(raw, trimmed)
             }
           }
-        } catch (geminiInitErr: any) {
-          lastError = geminiInitErr
-          console.warn('[Dictionary] Gemini initialization failed:', geminiInitErr?.message)
+        } catch (geminiErr: any) {
+          lastError = geminiErr
+          console.warn('[Dictionary] Gemini fallback chain failed:', geminiErr?.message)
         }
       }
 

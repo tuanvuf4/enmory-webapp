@@ -1,4 +1,5 @@
 export * from './geminiModels'
+export * from './geminiCore.service'
 export * from './geminiDictionary.service'
 export * from './geminiTranscript.service'
 export * from './geminiTts.service'

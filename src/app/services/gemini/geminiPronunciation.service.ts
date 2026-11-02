@@ -1,8 +1,6 @@
-import { GoogleGenAI } from '@google/genai'
 import { IHttpResponse } from '@/models/http.model'
-import { resolveGeminiApiKey } from './geminiDictionary.service'
-import { DEFAULT_SPEECH_EVAL_MODEL, TGeminiModel } from './geminiModels'
-import { generateContentWithTracking } from './geminiTracker.service'
+import { TGeminiModel } from './geminiModels'
+import { generateContentWithFallback, isRateLimitError } from './geminiCore.service'
 
 export interface IWordEvaluation {
   word: string
@@ -71,52 +69,157 @@ const normalizeMimeType = (mimeType?: string): string => {
 }
 
 /**
- * Parse an toàn kết quả JSON từ Gemini
+ * Vá chuỗi JSON bị ngắt ngang do giới hạn output tokens
  */
-const safeParseJson = (text: string): IPronunciationEvaluationResult | null => {
+const repairTruncatedJson = (jsonStr: string): string => {
+  let str = jsonStr.trim()
+  // Loại bỏ các trailing comma
+  str = str.replace(/,\s*([}\]])/g, '$1')
+
+  const openBraces = (str.match(/\{/g) || []).length
+  const closeBraces = (str.match(/\}/g) || []).length
+  const openBrackets = (str.match(/\[/g) || []).length
+  const closeBrackets = (str.match(/\]/g) || []).length
+
+  if (openBraces > closeBraces || openBrackets > closeBrackets) {
+    // Đóng dấu ngoặc kép nếu đang mở dở
+    const quotes = (str.match(/"/g) || []).length
+    if (quotes % 2 !== 0) {
+      str += '"'
+    }
+    // Xóa dấu phẩy lửng ở cuối
+    str = str.replace(/,\s*$/, '')
+
+    // Đóng các ngoặc vuông và ngoặc nhọn còn thiếu
+    for (let i = 0; i < openBrackets - closeBrackets; i++) {
+      str += ']'
+    }
+    for (let i = 0; i < openBraces - closeBraces; i++) {
+      str += '}'
+    }
+  }
+
+  return str
+}
+
+/**
+ * Chuẩn hóa dữ liệu đánh giá từ object thô của Gemini
+ */
+const normalizeEvaluationResult = (raw: any): IPronunciationEvaluationResult | null => {
+  if (!raw || typeof raw !== 'object') return null
+
+  // Chấp nhận overallScore dù là số hay chuỗi, hoặc các alias
+  const rawScore = raw.overallScore ?? raw.overall_score ?? raw.score ?? raw.totalScore
+  const overallScore = Number(rawScore)
+  if (isNaN(overallScore)) return null
+
+  const getTechnique = (tech: any, fallbackName: string): ITechniqueEvaluation => {
+    if (tech && typeof tech === 'object') {
+      return {
+        score: Math.min(100, Math.max(0, Math.round(Number(tech.score) || 75))),
+        feedback: String(tech.feedback || tech.comment || `Kỹ thuật ${fallbackName} đạt yêu cầu`),
+        details: tech.details ? String(tech.details) : undefined,
+      }
+    }
+    return {
+      score: 75,
+      feedback: `Kỹ thuật ${fallbackName} tương đối tốt`,
+    }
+  }
+
+  const rawTech = raw.techniques || {}
+
+  return {
+    overallScore: Math.min(100, Math.max(0, Math.round(overallScore))),
+    transcribedText: String(raw.transcribedText || raw.transcribed_text || raw.transcript || ''),
+    overallFeedback: String(
+      raw.overallFeedback ||
+        raw.overall_feedback ||
+        raw.feedback ||
+        'Bạn đã hoàn thành tốt phần phát âm câu luyện tập!',
+    ),
+    techniques: {
+      linking: getTechnique(rawTech.linking || rawTech.connected_speech, 'nối âm'),
+      stress: getTechnique(rawTech.stress || rawTech.word_stress, 'trọng âm'),
+      intonation: getTechnique(rawTech.intonation, 'ngữ điệu'),
+      shadowing: getTechnique(rawTech.shadowing || rawTech.fluency, 'shadowing'),
+    },
+    wordsReview: Array.isArray(raw.wordsReview || raw.words_review)
+      ? (raw.wordsReview || raw.words_review).map((w: any) => ({
+          word: String(w.word || ''),
+          status: w.status === 'imprecise' || w.status === 'incorrect' ? w.status : 'imprecise',
+          ipa: w.ipa ? String(w.ipa) : undefined,
+          note: w.note ? String(w.note) : undefined,
+        }))
+      : [],
+    actionableTips: Array.isArray(raw.actionableTips || raw.actionable_tips || raw.tips)
+      ? (raw.actionableTips || raw.actionable_tips || raw.tips).map(String)
+      : ['Luyện tập phát âm đều đặn để cải thiện độ tự nhiên.'],
+  }
+}
+
+/**
+ * Parse an toàn kết quả JSON từ Gemini với cơ chế tự phục hồi
+ */
+export const safeParseJson = (text: string): IPronunciationEvaluationResult | null => {
   if (!text) return null
   const trimmed = text.trim()
 
+  // 1. Thử parse trực tiếp
   try {
-    return JSON.parse(trimmed)
-  } catch {
-    // Trích xuất từ markdown block nếu có
-    try {
-      const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
-      if (match && match[1]) {
-        return JSON.parse(match[1].trim())
-      }
-      const first = trimmed.indexOf('{')
-      const last = trimmed.lastIndexOf('}')
-      if (first !== -1 && last !== -1 && last > first) {
-        return JSON.parse(trimmed.slice(first, last + 1))
-      }
-    } catch (e) {
-      console.warn('[PronunciationEvaluation] safeParseJson extraction failed:', e)
+    const raw = JSON.parse(trimmed)
+    const norm = normalizeEvaluationResult(raw)
+    if (norm) return norm
+  } catch {}
+
+  // 2. Trích xuất từ markdown codeblock (```json ... ```)
+  try {
+    const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+    if (match && match[1]) {
+      const raw = JSON.parse(match[1].trim())
+      const norm = normalizeEvaluationResult(raw)
+      if (norm) return norm
     }
+  } catch {}
+
+  // 3. Trích xuất giữa ngoặc { đầu tiên và } cuối cùng
+  try {
+    const first = trimmed.indexOf('{')
+    const last = trimmed.lastIndexOf('}')
+    if (first !== -1 && last !== -1 && last > first) {
+      const extracted = trimmed.slice(first, last + 1)
+      const raw = JSON.parse(extracted)
+      const norm = normalizeEvaluationResult(raw)
+      if (norm) return norm
+    }
+  } catch {}
+
+  // 4. Thử tự phục hồi chuỗi JSON bị ngắt ngang (Truncated JSON repair)
+  try {
+    const first = trimmed.indexOf('{')
+    if (first !== -1) {
+      const candidate = trimmed.slice(first)
+      const repaired = repairTruncatedJson(candidate)
+      const raw = JSON.parse(repaired)
+      const norm = normalizeEvaluationResult(raw)
+      if (norm) return norm
+    }
+  } catch (e) {
+    console.warn('[PronunciationEvaluation] safeParseJson repair extraction failed:', e)
   }
+
   return null
 }
 
 export const geminiPronunciationService = {
   /**
    * Đánh giá và nhận xét thu âm phát âm tiếng Anh toàn diện qua Gemini AI
+   * Hỗ trợ tự động chuyển model ngầm (silent fallback) khi chạm hạn mức Free tier (429) hoặc khi model sinh format lỗi
    */
   evaluateAudio: async (
     params: IEvaluatePronunciationParams,
   ): Promise<IHttpResponse<IPronunciationEvaluationResult>> => {
     try {
-      const apiKey = resolveGeminiApiKey()
-      if (!apiKey) {
-        return {
-          isSuccess: false,
-          content: null,
-          message:
-            'Chưa cấu hình Gemini API Key. Vui lòng thêm VITE_GEMINI_API_KEY trong file .env hoặc lưu vào cài đặt.',
-          statusCode: 400,
-        }
-      }
-
       const cleanOriginal = (params.originalText || '').trim()
       const cleanTranslation = (params.translation || '').trim()
 
@@ -169,6 +272,7 @@ CRITICAL RULES FOR PERFORMANCE & SPEED:
 - Keep all feedback concise (1-2 sentences per field).
 - For "wordsReview", ONLY return words that need improvement (status is "imprecise" or "incorrect"). Do NOT include words that were pronounced well to prevent unnecessary token generation latency. If all words were pronounced well, return "wordsReview": [].
 - Provide at most 2 short actionable tips.
+- Scores must be numbers between 0 and 100.
 
 Return ONLY a valid JSON object matching this schema exactly (no outside markdown text):
 {
@@ -211,84 +315,63 @@ Return ONLY a valid JSON object matching this schema exactly (no outside markdow
   ]
 }`
 
-      const preferred = params.preferredModel || DEFAULT_SPEECH_EVAL_MODEL
-      // Ưu tiên các model phản hồi audio nhanh nhất
-      const modelCandidates: TGeminiModel[] = Array.from(
-        new Set([preferred, 'gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-3.8-flash']),
-      )
-
-      const ai = new GoogleGenAI({ apiKey })
-      let lastError: any = null
-      let parsedResult: IPronunciationEvaluationResult | null = null
-      let successModel: string = preferred
-
-      for (const model of modelCandidates) {
-        try {
-          const response = await generateContentWithTracking(ai, 'Pronunciation Evaluation', {
-            model,
-            contents: [
-              {
-                role: 'user',
-                parts: [
-                  {
-                    inlineData: {
-                      mimeType,
-                      data: base64Data,
-                    },
+      const { text, modelUsed } = await generateContentWithFallback({
+        serviceName: 'Pronunciation Evaluation',
+        preferredModel: params.preferredModel,
+        category: 'speech',
+        validateResponse: (candidateText: string) => {
+          // Xác thực nếu response parse được thành kết quả hợp lệ, nếu không sẽ gọi ngầm model tiếp theo
+          return safeParseJson(candidateText) !== null
+        },
+        requestParams: {
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  inlineData: {
+                    mimeType,
+                    data: base64Data,
                   },
-                  {
-                    text: prompt,
-                  },
-                ],
-              },
-            ],
-            config: {
-              responseMimeType: 'application/json',
-              temperature: 0.1,
-              maxOutputTokens: 800,
+                },
+                {
+                  text: prompt,
+                },
+              ],
             },
-          })
+          ],
+          config: {
+            responseMimeType: 'application/json',
+            temperature: 0.1,
+            maxOutputTokens: 2048, // Tăng token tránh bị cắt ngang dở dang
+          },
+        },
+      })
 
-          const text = response.text || ''
-          if (text) {
-            const parsed = safeParseJson(text)
-            if (parsed && typeof parsed.overallScore === 'number') {
-              parsedResult = {
-                ...parsed,
-                modelUsed: model,
-              }
-              successModel = model
-              break
-            }
-          }
-        } catch (err: any) {
-          lastError = err
-          console.warn(
-            `[PronunciationEvaluation] Model ${model} failed, attempting next fallback...`,
-            err,
-          )
-        }
-      }
-
-      if (!parsedResult) {
-        throw lastError || new Error('Không thể phân tích dữ liệu âm thanh từ các mô hình Gemini.')
+      const parsed = safeParseJson(text)
+      if (!parsed) {
+        throw new Error('Dữ liệu phân tích ngữ âm từ Gemini trả về không đúng định dạng JSON.')
       }
 
       return {
         isSuccess: true,
-        content: parsedResult,
-        message: `Đánh giá phát âm thành công qua ${successModel}`,
+        content: {
+          ...parsed,
+          modelUsed,
+        },
+        message: `Đánh giá phát âm thành công qua ${modelUsed}`,
         statusCode: 200,
       }
     } catch (error: any) {
       console.error('[PronunciationEvaluation] Error:', error)
+      const is429 = isRateLimitError(error)
       return {
         isSuccess: false,
         content: null,
         message:
           error?.message ||
           'Không thể hoàn thành đánh giá thu âm phát âm vào lúc này. Vui lòng thử lại.',
-        statusCode: 500,
+        statusCode: is429 ? 429 : 500,
       }
     }
   },

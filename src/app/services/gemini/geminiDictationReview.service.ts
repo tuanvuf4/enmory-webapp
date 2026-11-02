@@ -1,10 +1,8 @@
-import { GoogleGenAI } from '@google/genai'
 import OpenAI from 'openai'
 import { IHttpResponse } from '@/models/http.model'
 import { resolveGeminiApiKey } from './geminiDictionary.service'
 import { resolveOpenAiApiKey } from '../openai/tts.service'
-import { GEMINI_MODELS } from './geminiModels'
-import { generateContentWithTracking } from './geminiTracker.service'
+import { generateContentWithFallback } from './geminiCore.service'
 
 export interface IDictationAiReviewRequest {
   originalText: string
@@ -113,37 +111,30 @@ Return ONLY valid JSON matching this schema:
       let lastError: any = null
       let parsed: IDictationAiReviewResponse | null = null
 
-      // 1. Try Gemini
+      // 1. Try Gemini with resilient fallback
       if (geminiApiKey) {
         try {
-          const ai = new GoogleGenAI({ apiKey: geminiApiKey })
-          for (const model of GEMINI_MODELS) {
-            try {
-              const response = await generateContentWithTracking(ai, 'Dictation Review', {
-                model,
-                contents: prompt,
-                config: {
-                  responseMimeType: 'application/json',
-                  temperature: 0.2,
-                },
-              })
+          const { text } = await generateContentWithFallback({
+            serviceName: 'Dictation Review',
+            category: 'general',
+            requestParams: {
+              contents: prompt,
+              config: {
+                responseMimeType: 'application/json',
+                temperature: 0.2,
+              },
+            },
+          })
 
-              const text = response.text || ''
-              if (text) {
-                const res = safeParseJson(text)
-                if (res) {
-                  parsed = res
-                  break
-                }
-              }
-            } catch (err: any) {
-              lastError = err
-              console.warn(`[DictationReview] Gemini model ${model} failed, trying next...`, err)
+          if (text) {
+            const res = safeParseJson(text)
+            if (res) {
+              parsed = res
             }
           }
-        } catch (geminiInitErr: any) {
-          lastError = geminiInitErr
-          console.warn('[DictationReview] Gemini init failed:', geminiInitErr)
+        } catch (geminiErr: any) {
+          lastError = geminiErr
+          console.warn('[DictationReview] Gemini fallback chain failed:', geminiErr)
         }
       }
 

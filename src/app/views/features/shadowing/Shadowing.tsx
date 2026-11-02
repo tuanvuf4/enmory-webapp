@@ -39,7 +39,6 @@ import { exampleApi } from '@/services/firebase/api/example.api'
 import {
   geminiTtsService,
   geminiPronunciationService,
-  DEFAULT_SPEECH_EVAL_MODEL,
   IPronunciationEvaluationResult,
 } from '@/services/gemini'
 import {
@@ -359,6 +358,15 @@ export const Shadowing: React.FC = () => {
   const [isEvaluating, setIsEvaluating] = useState(false)
   const [evalResult, setEvalResult] = useState<IPronunciationEvaluationResult | null>(null)
   const [evalError, setEvalError] = useState<string | null>(null)
+  const [cooldownSeconds, setCooldownSeconds] = useState(0)
+
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return
+    const timer = setInterval(() => {
+      setCooldownSeconds((prev) => (prev > 1 ? prev - 1 : 0))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [cooldownSeconds])
 
   // Web Speech API: Nhận diện giọng nói tức thời tại client (<200ms)
   const {
@@ -658,7 +666,6 @@ export const Shadowing: React.FC = () => {
           audioBlob: targetBlob,
           originalText: plainOrigin,
           translation: plainTranslation,
-          preferredModel: DEFAULT_SPEECH_EVAL_MODEL,
         })
 
         // Tránh race condition khi người học đã chuyển câu hoặc ghi âm lại
@@ -666,8 +673,12 @@ export const Shadowing: React.FC = () => {
 
         if (response.isSuccess && response.content) {
           setEvalResult(response.content)
+          setCooldownSeconds(0)
         } else {
           setEvalError(response.message || 'Không thể đánh giá lúc này. Vui lòng thử lại.')
+          if (response.statusCode === 429) {
+            setCooldownSeconds(15)
+          }
         }
       } catch (err: any) {
         if (evalIdRef.current !== currentEvalId) return
@@ -1147,7 +1158,7 @@ export const Shadowing: React.FC = () => {
                       icon={isEvaluating ? <SyncOutlined spin /> : <RobotOutlined />}
                       onClick={() => handleEvaluateAudio()}
                       loading={isEvaluating}
-                      disabled={isEvaluating}
+                      disabled={isEvaluating || cooldownSeconds > 0}
                       style={{
                         background: 'linear-gradient(90deg, #1677ff 0%, #722ed1 100%)',
                         borderColor: '#1677ff',
@@ -1156,9 +1167,11 @@ export const Shadowing: React.FC = () => {
                     >
                       {isEvaluating
                         ? 'AI đang phân tích...'
-                        : evalResult
-                          ? 'AI Đánh giá lại'
-                          : 'AI Đánh giá'}
+                        : cooldownSeconds > 0
+                          ? `Chờ thử lại (${cooldownSeconds}s)`
+                          : evalResult
+                            ? 'AI Đánh giá lại'
+                            : 'AI Đánh giá'}
                     </Button>
                   </Flex>
                 </Flex>

@@ -154,6 +154,7 @@ export const appSetting = {
     itemTags: [] as ITag[],
     blogTags: [] as ITag[],
     role: 'user' as TRole,
+    defaultAiModel: 'gemini-3.8-flash',
   },
   options: [
     { value: 0, label: 0 },

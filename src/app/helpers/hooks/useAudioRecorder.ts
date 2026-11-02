@@ -102,8 +102,17 @@ export const useAudioRecorder = (maxDurationSeconds: number = 60): IUseAudioReco
       mediaStreamRef.current = stream
 
       const mimeType = getSupportedMimeType()
-      const options: MediaRecorderOptions = mimeType ? { mimeType } : {}
-      const recorder = new MediaRecorder(stream, options)
+      let recorder: MediaRecorder
+      try {
+        const options: MediaRecorderOptions = {
+          ...(mimeType ? { mimeType } : {}),
+          audioBitsPerSecond: 32000, // Tối ưu kích thước audio giọng nói (~32kbps), giảm tải token cho AI
+        }
+        recorder = new MediaRecorder(stream, options)
+      } catch {
+        const fallbackOptions: MediaRecorderOptions = mimeType ? { mimeType } : {}
+        recorder = new MediaRecorder(stream, fallbackOptions)
+      }
       mediaRecorderRef.current = recorder
       audioChunksRef.current = []
 

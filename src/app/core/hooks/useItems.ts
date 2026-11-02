@@ -66,6 +66,9 @@ export const useCreateItem = () => {
       if (response?.content && response.content.id) {
         localDb.items.put(response.content)
         invalidateSearchIndex()
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('enmory:item-updated', { detail: response.content }))
+        }
       }
       // Invalidate all item lists to refetch with new item
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
@@ -110,6 +113,9 @@ export const useUpdateItem = () => {
       if (response?.content && response.content.id) {
         await localDb.items.put(response.content)
         invalidateSearchIndex()
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('enmory:item-updated', { detail: response.content }))
+        }
         queryClient.setQueryData(itemKeys.detail(variables.id), response.content)
       }
       // Invalidate lists and detail to refetch

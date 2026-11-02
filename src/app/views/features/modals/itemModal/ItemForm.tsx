@@ -1258,12 +1258,17 @@ export const ItemForm: React.FC<ItemFormProps> = ({ item = initItem }) => {
             size={'middle'}
             icon={<MinusOutlined />}
             onClick={handleMinimize}
-            disabled={isSubmitting || isCreating || isUpdating}
           >
             Minimize
           </Button>
 
-          <Button type={'default'} size={'middle'} style={{ minWidth: 80 }} onClick={handleCancel}>
+          <Button
+            type={'default'}
+            size={'middle'}
+            style={{ minWidth: 80 }}
+            disabled={isSubmitting || isCreating || isUpdating}
+            onClick={handleCancel}
+          >
             Cancel
           </Button>
 

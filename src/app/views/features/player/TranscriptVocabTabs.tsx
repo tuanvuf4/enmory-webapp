@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Tabs,
   Badge,
@@ -111,27 +111,101 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
     useState<ITranscriptClassificationData | null>(null)
 
   // Real-time query of user's vocabulary items from Dexie localDb
-  const localItems = useLiveQuery(async () => {
+  // Pass Dexie promise directly without async wrapper to preserve PSD Zone change tracking
+  const liveItems = useLiveQuery(() => localDb.items.toArray(), [], [])
+  const [localDbItems, setLocalDbItems] = useState<IItem[]>([])
+  const [extraSavedMap, setExtraSavedMap] = useState<Map<string, IItem>>(new Map())
+
+  // Helper to normalize word key for lookup (stripping edge punctuation/quotes)
+  const normalizeWordKey = useCallback((text: string) => {
+    return text
+      .trim()
+      .toLowerCase()
+      .replace(/^[.,/#!$%^&*;:{}=\-_`~()'"\s]+|[.,/#!$%^&*;:{}=\-_`~()'"\s]+$/g, '')
+  }, [])
+
+  // Manual fallback reader for localDb to ensure instant sync even if liveQuery is delayed
+  const refreshLocalItems = useCallback(async () => {
     try {
-      return await localDb.items.toArray()
+      const items = await localDb.items.toArray()
+      if (items && items.length > 0) {
+        setLocalDbItems(items)
+      }
     } catch (err) {
       console.warn('Error reading localDb.items in TranscriptVocabTabs:', err)
-      return []
     }
   }, [])
+
+  useEffect(() => {
+    refreshLocalItems()
+  }, [refreshLocalItems])
+
+  // Listen to item created/updated events across the application
+  useEffect(() => {
+    const handleItemUpdated = (e: Event) => {
+      const customEvt = e as CustomEvent<IItem>
+      const item = customEvt.detail
+      if (item && item.origin) {
+        setExtraSavedMap((prev) => {
+          const next = new Map(prev)
+          const key = item.origin.trim().toLowerCase()
+          next.set(key, item)
+          const normalized = normalizeWordKey(item.origin)
+          if (normalized) next.set(normalized, item)
+          return next
+        })
+      }
+      refreshLocalItems()
+    }
+
+    window.addEventListener('enmory:item-updated', handleItemUpdated)
+    return () => window.removeEventListener('enmory:item-updated', handleItemUpdated)
+  }, [normalizeWordKey, refreshLocalItems])
 
   // Create a map of existing items by lowercased origin for fast O(1) lookups
   const existingItemsMap = useMemo(() => {
     const map = new Map<string, IItem>()
-    if (localItems && localItems.length > 0) {
-      for (const it of localItems) {
+    const list = liveItems && liveItems.length > 0 ? liveItems : localDbItems
+    if (list && list.length > 0) {
+      for (const it of list) {
         if (it.origin) {
-          map.set(it.origin.trim().toLowerCase(), it)
+          const rawKey = it.origin.trim().toLowerCase()
+          map.set(rawKey, it)
+          const normKey = normalizeWordKey(it.origin)
+          if (normKey) map.set(normKey, it)
         }
       }
     }
+    // Also include extra saved items from current session
+    for (const [k, it] of extraSavedMap.entries()) {
+      map.set(k, it)
+    }
     return map
-  }, [localItems])
+  }, [liveItems, localDbItems, extraSavedMap, normalizeWordKey])
+
+  // Check if an item text is saved in user's vocabulary
+  const checkIsItemSaved = useCallback(
+    (text: string): boolean => {
+      if (!text) return false
+      const raw = text.trim().toLowerCase()
+      if (existingItemsMap.has(raw)) return true
+      const norm = normalizeWordKey(text)
+      return norm ? existingItemsMap.has(norm) : false
+    },
+    [existingItemsMap, normalizeWordKey],
+  )
+
+  // Retrieve existing item by text
+  const getExistingItem = useCallback(
+    (text: string): IItem | undefined => {
+      if (!text) return undefined
+      const raw = text.trim().toLowerCase()
+      if (existingItemsMap.has(raw)) return existingItemsMap.get(raw)
+      const norm = normalizeWordKey(text)
+      return norm ? existingItemsMap.get(norm) : undefined
+    },
+    [existingItemsMap, normalizeWordKey],
+  )
 
   // Parse transcript segments for timestamp seeking and bilingual translation mapping
   const segments = useMemo(
@@ -321,46 +395,52 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
 
   // Add item to personal vocabulary
   const handleAddToVocabulary = (item: IClassifiedVocabItem) => {
-    openItemModal('add', {
-      ...initItem,
-      origin: item.text.trim(),
-      catId: mapCategoryToECategory(item.category),
-      level: mapLevelToNumber(item.level),
-      tags: [item.level.toUpperCase()],
-      meanings: [
-        {
-          typeId: EType.NOUN,
-          common: true,
-          enable: true,
-          pronunciation: {
-            us: sanitizePronunciation(item.phonetic),
-            uk: '',
-            common: sanitizePronunciation(item.phonetic),
+    openItemModal(
+      'add',
+      {
+        ...initItem,
+        origin: item.text.trim(),
+        catId: mapCategoryToECategory(item.category),
+        level: mapLevelToNumber(item.level),
+        tags: [item.level.toUpperCase()],
+        meanings: [
+          {
+            typeId: EType.NOUN,
+            common: true,
+            enable: true,
+            pronunciation: {
+              us: sanitizePronunciation(item.phonetic),
+              uk: '',
+              common: sanitizePronunciation(item.phonetic),
+            },
+            note: item.notes || '',
+            definition: item.meaning || '',
+            translation: item.vietnamese || '',
+            grammar: '',
+            collocations: item.category === 'collocation' ? item.text : '',
+            synonyms: [],
+            antonyms: [],
+            examples: item.context
+              ? [
+                  {
+                    origin: item.context,
+                    translation: item.contextTranslation || '',
+                  },
+                ]
+              : [],
           },
-          note: item.notes || '',
-          definition: item.meaning || '',
-          translation: item.vietnamese || '',
-          grammar: '',
-          collocations: item.category === 'collocation' ? item.text : '',
-          synonyms: [],
-          antonyms: [],
-          examples: item.context
-            ? [
-                {
-                  origin: item.context,
-                  translation: item.contextTranslation || '',
-                },
-              ]
-            : [],
-        },
-      ],
-    })
+        ],
+      },
+      () => {
+        // Modal onClose: refresh localDb and check if item was added
+        refreshLocalItems()
+      },
+    )
   }
 
   // View existing item in vocabulary modal
   const handleViewVocabulary = async (item: IClassifiedVocabItem) => {
-    const cleanText = item.text.trim().toLowerCase()
-    let target = existingItemsMap.get(cleanText)
+    let target = getExistingItem(item.text)
 
     if (!target) {
       try {
@@ -476,8 +556,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
     const levelColor = CEFR_LEVEL_COLORS[item.level] || token.colorPrimary
     const catColor = CATEGORY_COLORS[item.category] || 'default'
 
-    const cleanText = item.text.trim().toLowerCase()
-    const existingItem = existingItemsMap.get(cleanText)
+    const existingItem = getExistingItem(item.text)
     const isSaved = !!existingItem
 
     return (
@@ -610,7 +689,7 @@ export const TranscriptVocabTabs: React.FC<ITranscriptVocabTabsProps> = ({ track
   const renderVocabChip = (item: IClassifiedVocabItem) => {
     const levelColor = CEFR_LEVEL_COLORS[item.level] || token.colorPrimary
     const catColor = CATEGORY_COLORS[item.category] || 'default'
-    const isSaved = existingItemsMap.has(item.text.trim().toLowerCase())
+    const isSaved = checkIsItemSaved(item.text)
 
     return (
       <Popover

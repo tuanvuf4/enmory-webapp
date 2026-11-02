@@ -574,6 +574,9 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
     try {
       await localDb.items.put(createdItem)
       invalidateSearchIndex()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('enmory:item-updated', { detail: createdItem }))
+      }
     } catch (localErr) {
       console.warn('Failed to save created item to localDb:', localErr)
     }
@@ -718,6 +721,9 @@ const updateItem = async (id: string, item: Partial<IItem>): Promise<IHttpRespon
       delete (updatedItem as any).quiz
       await localDb.items.put(updatedItem)
       invalidateSearchIndex()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('enmory:item-updated', { detail: updatedItem }))
+      }
     } catch (localErr) {
       console.warn('Failed to update item in localDb:', localErr)
       updatedItem = { ...updateData, id, uid: updateData.uid || currentUser.uid } as IItem

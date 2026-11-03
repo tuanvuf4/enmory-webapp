@@ -115,7 +115,7 @@ export const Item: React.FC<IProps> = ({
     setShowAllMeanings(false)
   }, [data?.id])
 
-  const { displayMeanings, hasMoreMeanings } = useMemo(() => {
+  const { displayMeanings, hasMoreMeanings, hiddenCount } = useMemo(() => {
     if (!data?.meanings || data.meanings.length === 0) {
       return { displayMeanings: [], hasMoreMeanings: false, hiddenCount: 0 }
     }
@@ -582,7 +582,7 @@ export const Item: React.FC<IProps> = ({
               onClick={() => setShowAllMeanings((prev) => !prev)}
               className={styles.toggleMeaningsBtn}
             >
-              {showAllMeanings ? 'Collapse' : 'Expand'}
+              {showAllMeanings ? 'Collapse' : `Expand (+${hiddenCount})`}
             </Button>
           )}
         </Flex>

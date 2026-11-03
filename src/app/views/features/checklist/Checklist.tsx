@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   theme,
   Progress,
@@ -11,6 +11,7 @@ import {
   Popconfirm,
   Dropdown,
   Tag,
+  Pagination,
 } from 'antd'
 import {
   DeleteOutlined,
@@ -33,6 +34,8 @@ import styles from './checklist.module.scss'
 
 type FilterType = 'all' | 'active' | 'completed'
 
+const PAGE_SIZE = 10
+
 export const Checklist: React.FC = () => {
   const { token } = theme.useToken()
   const dispatch = useDispatch()
@@ -51,6 +54,7 @@ export const Checklist: React.FC = () => {
 
   const [filter, setFilter] = useState<FilterType>('all')
   const [isPracticing, setIsPracticing] = useState<boolean>(false)
+  const [currentPage, setCurrentPage] = useState<number>(1)
 
   const total = checklist.length
   const completed = checklist.filter((item) => item.isCompleted).length
@@ -211,11 +215,27 @@ export const Checklist: React.FC = () => {
     }
   }
 
-  const filteredItems = checklist.filter((item) => {
-    if (filter === 'active') return !item.isCompleted
-    if (filter === 'completed') return item.isCompleted
-    return true
-  })
+  const filteredItems = useMemo(() => {
+    return checklist.filter((item) => {
+      if (filter === 'active') return !item.isCompleted
+      if (filter === 'completed') return item.isCompleted
+      return true
+    })
+  }, [checklist, filter])
+
+  const totalPages = Math.ceil(filteredItems.length / PAGE_SIZE) || 1
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages)
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [totalPages, currentPage])
+
+  const paginatedItems = useMemo(() => {
+    const start = (safeCurrentPage - 1) * PAGE_SIZE
+    return filteredItems.slice(start, start + PAGE_SIZE)
+  }, [filteredItems, safeCurrentPage])
 
   if (isLoading) {
     return (
@@ -237,7 +257,10 @@ export const Checklist: React.FC = () => {
             <Segmented
               size='small'
               value={filter}
-              onChange={(val) => setFilter(val as FilterType)}
+              onChange={(val) => {
+                setFilter(val as FilterType)
+                setCurrentPage(1)
+              }}
               options={[
                 { label: `All (${total})`, value: 'all' },
                 { label: `To Learn (${toLearn})`, value: 'active' },
@@ -351,109 +374,124 @@ export const Checklist: React.FC = () => {
           />
         </div>
       ) : (
-        <div className='flex flex-col gap-2'>
-          {filteredItems.map((item: IChecklistItem) => {
-            const id = item.checklistId || item.id || ''
-            const hasMeaning = hasValidMeaning(item)
-            const quickMeaning =
-              item.meanings?.[0]?.translation || item.meanings?.[0]?.definition || ''
-            const categoryLabel =
-              item.catId !== undefined ? getCategory(item.catId as ECategory) : null
+        <>
+          <div className='flex flex-col gap-2'>
+            {paginatedItems.map((item: IChecklistItem) => {
+              const id = item.checklistId || item.id || ''
+              const hasMeaning = hasValidMeaning(item)
+              const quickMeaning =
+                item.meanings?.[0]?.translation || item.meanings?.[0]?.definition || ''
+              const categoryLabel =
+                item.catId !== undefined ? getCategory(item.catId as ECategory) : null
 
-            return (
-              <div
-                key={id}
-                className={`${styles.itemCard} ${item.isCompleted ? styles.completed : ''}`}
-                style={{
-                  backgroundColor: token.colorBgContainer,
-                  borderColor: item.isCompleted ? token.colorBorderSecondary : token.colorBorder,
-                }}
-                onClick={() => openItemModal('view', item)}
-              >
-                <div className={styles.itemHeader}>
-                  <div className={styles.itemLeft}>
-                    <div onClick={(e) => e.stopPropagation()} className='flex items-center'>
-                      <Checkbox
-                        checked={item.isCompleted}
-                        onChange={(e) => toggleItem(id, e.target.checked)}
-                      />
-                    </div>
-
-                    <div>
-                      <div>
-                        <span className={styles.wordOrigin} style={{ color: token.colorText }}>
-                          {item.origin}
-                        </span>
-
-                        {categoryLabel && (
-                          <Tag
-                            className={styles.categoryTag}
-                            color='default'
-                            style={{
-                              backgroundColor: token.colorFillAlter,
-                              borderColor: token.colorBorderSecondary,
-                              color: token.colorTextTertiary,
-                              marginLeft: 8,
-                            }}
-                          >
-                            {categoryLabel}
-                          </Tag>
-                        )}
+              return (
+                <div
+                  key={id}
+                  className={`${styles.itemCard} ${item.isCompleted ? styles.completed : ''}`}
+                  style={{
+                    backgroundColor: token.colorBgContainer,
+                    borderColor: item.isCompleted ? token.colorBorderSecondary : token.colorBorder,
+                  }}
+                  onClick={() => openItemModal('view', item)}
+                >
+                  <div className={styles.itemHeader}>
+                    <div className={styles.itemLeft}>
+                      <div onClick={(e) => e.stopPropagation()} className='flex items-center'>
+                        <Checkbox
+                          checked={item.isCompleted}
+                          onChange={(e) => toggleItem(id, e.target.checked)}
+                        />
                       </div>
+
                       <div>
-                        {!hasMeaning && (
-                          <Tooltip title='This word does not have a definition or Vietnamese meaning, it will not appear in practice exercises.'>
+                        <div>
+                          <span className={styles.wordOrigin} style={{ color: token.colorText }}>
+                            {item.origin}
+                          </span>
+
+                          {categoryLabel && (
                             <Tag
-                              color='warning'
+                              className={styles.categoryTag}
+                              color='default'
                               style={{
-                                margin: 0,
-                                fontSize: 11,
-                                padding: '0 4px',
-                                lineHeight: '18px',
+                                backgroundColor: token.colorFillAlter,
+                                borderColor: token.colorBorderSecondary,
+                                color: token.colorTextTertiary,
+                                marginLeft: 8,
                               }}
                             >
-                              No Meaning
+                              {categoryLabel}
                             </Tag>
-                          </Tooltip>
-                        )}
+                          )}
+                        </div>
+                        <div>
+                          {!hasMeaning && (
+                            <Tooltip title='This word does not have a definition or Vietnamese meaning, it will not appear in practice exercises.'>
+                              <Tag
+                                color='warning'
+                                style={{
+                                  margin: 0,
+                                  fontSize: 11,
+                                  padding: '0 4px',
+                                  lineHeight: '18px',
+                                }}
+                              >
+                                No Meaning
+                              </Tag>
+                            </Tooltip>
+                          )}
 
-                        {hasMeaning && quickMeaning && (
-                          <div
-                            className={styles.quickMeaning}
-                            style={{ color: token.colorTextSecondary }}
-                            title={quickMeaning}
-                            dangerouslySetInnerHTML={{ __html: quickMeaning }}
-                          />
-                        )}
+                          {hasMeaning && quickMeaning && (
+                            <div
+                              className={styles.quickMeaning}
+                              style={{ color: token.colorTextSecondary }}
+                              title={quickMeaning}
+                              dangerouslySetInnerHTML={{ __html: quickMeaning }}
+                            />
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
-                    <Tooltip title='Edit'>
-                      <Button
-                        type='text'
-                        size='small'
-                        icon={<EditOutlined style={{ color: token.palette?.gold?.[7] }} />}
-                        onClick={() => openItemModal('edit', item)}
-                      />
-                    </Tooltip>
+                    <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
+                      <Tooltip title='Edit'>
+                        <Button
+                          type='text'
+                          size='small'
+                          icon={<EditOutlined style={{ color: token.palette?.gold?.[7] }} />}
+                          onClick={() => openItemModal('edit', item)}
+                        />
+                      </Tooltip>
 
-                    <Tooltip title='Delete'>
-                      <Button
-                        type='text'
-                        size='small'
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleDelete(item)}
-                      />
-                    </Tooltip>
+                      <Tooltip title='Delete'>
+                        <Button
+                          type='text'
+                          size='small'
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={() => handleDelete(item)}
+                        />
+                      </Tooltip>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+
+          {filteredItems.length > PAGE_SIZE && (
+            <div className={styles.paginationWrapper}>
+              <Pagination
+                current={safeCurrentPage}
+                pageSize={PAGE_SIZE}
+                total={filteredItems.length}
+                onChange={(page) => setCurrentPage(page)}
+                showSizeChanger={false}
+                size='small'
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   )

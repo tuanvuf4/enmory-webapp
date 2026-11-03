@@ -12,7 +12,7 @@ import { orderByOptions, orderOptions } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { ECategory } from '@/models/item.model'
 import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select, Flex } from 'antd'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { useLocation } from 'react-router-dom'
 import { NotFound, TagSelect } from '@/views/components'
@@ -79,7 +79,52 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
     false,
   )
 
+  const trimmedKeyword = (keyword || '').trim()
+
+  const hasExactMatch = useMemo(() => {
+    if (!trimmedKeyword) return true
+    return options.some(
+      (opt) =>
+        (opt.origin || opt.value || '').trim().toLowerCase() === trimmedKeyword.toLowerCase(),
+    )
+  }, [options, trimmedKeyword])
+
+  const searchOptions = useMemo(() => {
+    if (!trimmedKeyword || hasExactMatch || options.length === 0) {
+      return options
+    }
+
+    const addOption: BaseOptionType = {
+      key: '__ADD_NEW_ITEM__',
+      id: '__ADD_NEW_ITEM__',
+      value: trimmedKeyword,
+      origin: trimmedKeyword,
+      isAddOption: true,
+      label: (
+        <NotFound
+          label={<span style={{ color: token.colorText }}>Add this item</span>}
+          onClickBtn={() => {
+            openItemModal('add', {
+              ...initItem,
+              origin: getValues('keyword'),
+            })
+          }}
+        />
+      ),
+    }
+
+    return [...options, addOption]
+  }, [options, trimmedKeyword, hasExactMatch, token])
+
   const onSelect = async (value: string, option: BaseOptionType) => {
+    if (option.id === '__ADD_NEW_ITEM__' || (option as any).isAddOption) {
+      openItemModal('add', {
+        ...initItem,
+        origin: trimmedKeyword || value,
+      })
+      return
+    }
+
     if (location.pathname.includes('library')) {
       setUrlParams({ ...urlParams, keyword: value }, true)
     } else {
@@ -184,7 +229,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                     borderRadius: '999px',
                   }}
                   filterOption={false}
-                  options={options}
+                  options={searchOptions}
                   onSelect={async (value, option) => await onSelect(value, option)}
                   onChange={(text) => onChange(text)}
                 />

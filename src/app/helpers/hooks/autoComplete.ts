@@ -18,7 +18,7 @@ import { BaseOptionType } from 'antd/es/select'
 
 type searchType = 'item' | 'example' | 'tag'
 
-const mapItemToOption = (item: IItem, kw: string): BaseOptionType => {
+const mapItemToOption = (item: IItem, kw: string, index?: number): BaseOptionType => {
   const matchedMeaning = findBestMatchingMeaning(item, kw)
   const typeInfo = matchedMeaning ? getType(matchedMeaning.typeId) : null
   const typeAbbr = typeInfo && typeInfo.abbr !== 'all' ? typeInfo.abbr : ''
@@ -29,7 +29,10 @@ const mapItemToOption = (item: IItem, kw: string): BaseOptionType => {
     matchedMeaning?.definition || item.meanings?.[0]?.definition || '',
   )
 
+  const optionKey = item.id ? `${item.id}_${index ?? 0}` : `${item.origin}_${index ?? 0}`
+
   return {
+    key: optionKey,
     id: item.id,
     value: item.origin,
     origin: item.origin,
@@ -134,10 +137,11 @@ const mapItemToOption = (item: IItem, kw: string): BaseOptionType => {
   }
 }
 
-const mapExampleToOption = (example: IExample): BaseOptionType => {
+const mapExampleToOption = (example: IExample, index?: number): BaseOptionType => {
   const cleanOrig = cleanSearchText(example.origin || '')
   const cleanTrans = cleanSearchText(example.translation || '')
   return {
+    key: example.id ? `${example.id}_${index ?? 0}` : `${cleanOrig}_${index ?? 0}`,
     id: `${example.id}`,
     value: cleanOrig,
     origin: cleanOrig,
@@ -209,7 +213,8 @@ export const useAutoComplete = (
           .then((response) => {
             if (response.content && response.content.length > 0) {
               setOptions(
-                response.content.map((tag) => ({
+                response.content.map((tag, index) => ({
+                  key: `${tag.id || tag.value}_${index}`,
                   id: tag.id,
                   label: tag.value,
                   value: tag.value,
@@ -239,7 +244,7 @@ export const useAutoComplete = (
                   setOptions(
                     res.content
                       .slice(0, appSetting.numberItemOfAutoComplete)
-                      .map((item) => mapItemToOption(item, trimmedKeyword)),
+                      .map((item, index) => mapItemToOption(item, trimmedKeyword, index)),
                   )
                 } else {
                   setOptions([])
@@ -259,7 +264,7 @@ export const useAutoComplete = (
                 setOptions(
                   response.content
                     .slice(0, appSetting.numberItemOfAutoComplete)
-                    .map((item) => mapItemToOption(item, trimmedKeyword)),
+                    .map((item, index) => mapItemToOption(item, trimmedKeyword, index)),
                 )
               } else setOptions([])
             })
@@ -278,7 +283,7 @@ export const useAutoComplete = (
                 setOptions(
                   response.content
                     .slice(0, appSetting.numberItemOfAutoComplete)
-                    .map((example) => mapExampleToOption(example)),
+                    .map((example, index) => mapExampleToOption(example, index)),
                 )
               } else setOptions([])
             })

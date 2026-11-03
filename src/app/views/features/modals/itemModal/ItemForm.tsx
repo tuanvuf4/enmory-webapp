@@ -5,6 +5,7 @@ import { appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { isGroupWord } from '@/helpers/validate'
 import { ECategory, EType, IItem, IExample, IMeaning } from '@/models/item.model'
+import { categories as defaultCategories } from '@/constant/item'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { authAction } from '@/store/reducers/auth.reducer'
@@ -82,6 +83,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   const { user } = useSelector((state) => state.auth)
   const { categories } = useSelector((state) => state.setting)
   const { list } = useSelector((state) => state.studySet)
+
+  const categoryOptions = useMemo(() => {
+    const list = categories && categories.length > 0 ? categories : defaultCategories
+    return list.filter((item) => item.value !== ECategory.ALL)
+  }, [categories])
 
   // React Query mutations
   const { isPending: isCreating, mutateAsync: createMutation } = useCreateItem()
@@ -957,7 +963,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                   ref={ref}
                   className={styles.categorySelect}
                   onChange={onChange}
-                  options={categories}
+                  options={categoryOptions}
                   value={value}
                   defaultValue={ECategory.WORD}
                   size='middle'

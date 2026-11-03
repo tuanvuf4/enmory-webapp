@@ -572,8 +572,6 @@ const createItem = async (item: IItem): Promise<IHttpResponse<IItem>> => {
     } as unknown as IItem
     delete (createdItem as any).quiz
 
-    console.log(`*** createdItem *** `, createdItem)
-
     // Modify local DB as well
     try {
       await localDb.items.put(createdItem)

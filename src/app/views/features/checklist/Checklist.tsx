@@ -8,10 +8,10 @@ import {
   Spin,
   Segmented,
   Tooltip,
-  Popconfirm,
   Dropdown,
   Tag,
   Pagination,
+  Input,
 } from 'antd'
 import {
   DeleteOutlined,
@@ -22,7 +22,11 @@ import {
   UndoOutlined,
   PlayCircleOutlined,
   EditOutlined,
+  SearchOutlined,
+  FilterOutlined,
+  DownOutlined,
 } from '@ant-design/icons'
+import clsx from 'clsx'
 import { useChecklist, useDispatch } from '@/core/hooks'
 import { IChecklistItem } from '@/models/checklist.model'
 import { useItemModal, usePrompt } from '@/helpers/hooks'
@@ -45,25 +49,71 @@ export const Checklist: React.FC = () => {
     toggleItem,
     removeItem,
     clearCompleted,
-    isClearingCompleted,
     clearAll,
     setAllCompletion,
   } = useChecklist()
   const { openItemModal } = useItemModal()
   const { message, confirm } = usePrompt()
 
-  const [filter, setFilter] = useState<FilterType>('all')
+  const [filter, setFilter] = useState<FilterType>('active')
   const [isPracticing, setIsPracticing] = useState<boolean>(false)
   const [currentPage, setCurrentPage] = useState<number>(1)
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [selectedCat, setSelectedCat] = useState<ECategory>(ECategory.ALL)
 
   const total = checklist.length
   const completed = checklist.filter((item) => item.isCompleted).length
   const toLearn = total - completed
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0
 
+  const categoryCounts = useMemo(() => {
+    const counts: Record<number, number> = {}
+    checklist.forEach((item) => {
+      const cat = item.catId !== undefined ? Number(item.catId) : ECategory.WORD
+      counts[cat] = (counts[cat] || 0) + 1
+    })
+    return counts
+  }, [checklist])
+
+  const categoryList = useMemo(
+    () => [
+      { label: 'All', value: ECategory.ALL },
+      { label: 'Word', value: ECategory.WORD },
+      { label: 'Phrase', value: ECategory.PHRASE },
+      { label: 'Idiom', value: ECategory.IDIOM },
+      { label: 'Slang', value: ECategory.SLANG },
+      { label: 'Collocation', value: ECategory.COLLOCATION },
+      { label: 'Sentence', value: ECategory.SENTENCE },
+    ],
+    [],
+  )
+
+  const categoryMenuItems = useMemo(() => {
+    return categoryList.map((cat) => {
+      const count = cat.value === ECategory.ALL ? checklist.length : categoryCounts[cat.value] || 0
+
+      return {
+        key: String(cat.value),
+        label: (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 16,
+              minWidth: 120,
+            }}
+          >
+            <span>{cat.label}</span>
+            <span style={{ fontSize: 11, opacity: 0.65, fontWeight: 500 }}>{count}</span>
+          </div>
+        ),
+      }
+    })
+  }, [categoryCounts, checklist.length, categoryList])
+
   // Filter items that have at least one valid definition/translation
   const validChecklist = checklist.filter(hasValidMeaning)
-  const validToLearn = validChecklist.filter((item) => !item.isCompleted).length
 
   const handleDelete = async (item: IChecklistItem) => {
     const id = item.checklistId || item.id || ''
@@ -216,12 +266,32 @@ export const Checklist: React.FC = () => {
   }
 
   const filteredItems = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
     return checklist.filter((item) => {
-      if (filter === 'active') return !item.isCompleted
-      if (filter === 'completed') return item.isCompleted
+      // 1. Completion status filter
+      if (filter === 'active' && item.isCompleted) return false
+      if (filter === 'completed' && !item.isCompleted) return false
+
+      // 2. Category filter
+      if (selectedCat !== ECategory.ALL) {
+        const itemCat = item.catId !== undefined ? Number(item.catId) : ECategory.WORD
+        if (itemCat !== selectedCat) return false
+      }
+
+      // 3. Search query filter
+      if (q) {
+        const originMatch = (item.origin || '').toLowerCase().includes(q)
+        const meaningMatch = (item.meanings || []).some(
+          (m) =>
+            (m.translation || '').toLowerCase().includes(q) ||
+            (m.definition || '').toLowerCase().includes(q),
+        )
+        return originMatch || meaningMatch
+      }
+
       return true
     })
-  }, [checklist, filter])
+  }, [checklist, filter, selectedCat, searchQuery])
 
   const totalPages = Math.ceil(filteredItems.length / PAGE_SIZE) || 1
   const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages)
@@ -249,13 +319,116 @@ export const Checklist: React.FC = () => {
     <div className={styles.container}>
       {total > 0 && (
         <div className={styles.header}>
-          <div className={styles.statsRow}>
-            <span className={styles.statsText} style={{ color: token.colorTextSecondary }}>
-              Remembered <b style={{ color: token.colorPrimary }}>{completed}</b> of {total} items
-            </span>
+          {/* Row 1: Remembered progress (Left) & Actions (Right) */}
+          <div className={styles.topRow}>
+            <div className={styles.progressContainer}>
+              <div className={styles.progressHeader}>
+                <span className={styles.rememberedText}>
+                  <strong>{completed}</strong> / {total} remembered
+                </span>
+                <span className={styles.percentText}>{percent}%</span>
+              </div>
 
+              <Progress
+                percent={percent}
+                showInfo={false}
+                strokeColor={token.colorPrimary}
+                trailColor='rgba(255, 255, 255, 0.08)'
+                size={['100%', 5]}
+                className={styles.progressBar}
+              />
+            </div>
+
+            <div className={styles.topActions}>
+              <Dropdown
+                trigger={['click']}
+                menu={{
+                  items: [
+                    {
+                      key: 'practice-all',
+                      icon: <PlayCircleOutlined />,
+                      label: `Practice all defined (${validChecklist.length} items)`,
+                      disabled: validChecklist.length === 0,
+                      onClick: () => handleStartPractice(validChecklist),
+                    },
+                    {
+                      key: 'mark-all-done',
+                      icon: <CheckSquareOutlined />,
+                      label: 'Mark all as remembered',
+                      disabled: total === 0 || toLearn === 0,
+                      onClick: () => handleSetAllCompletion(true),
+                    },
+                    {
+                      key: 'reset-all',
+                      icon: <UndoOutlined />,
+                      label: 'Reset all to uncompleted',
+                      disabled: total === 0 || completed === 0,
+                      onClick: () => handleSetAllCompletion(false),
+                    },
+                    ...(completed > 0
+                      ? [
+                          { type: 'divider' as const },
+                          {
+                            key: 'clear-completed',
+                            icon: <ClearOutlined />,
+                            label: `Clear Done (${completed} items)`,
+                            onClick: () => {
+                              confirm({
+                                title: 'Clear Completed Items?',
+                                content: `Remove ${completed} remembered item(s) from your checklist?`,
+                                okText: 'Clear',
+                                okType: 'danger',
+                                onOk: handleClearCompleted,
+                              })
+                            },
+                          },
+                        ]
+                      : []),
+                    { type: 'divider' as const },
+                    {
+                      key: 'clear-all',
+                      icon: <DeleteOutlined />,
+                      danger: true,
+                      label: 'Clear entire checklist',
+                      disabled: total === 0,
+                      onClick: () => {
+                        confirm({
+                          title: 'Clear Entire Checklist?',
+                          content: 'Are you sure you want to remove all items from your checklist?',
+                          okText: 'Clear All',
+                          okType: 'danger',
+                          onOk: handleClearAll,
+                        })
+                      },
+                    },
+                  ],
+                }}
+              >
+                <Button
+                  type={'text'}
+                  className={styles.moreBtn}
+                  icon={<MoreOutlined />}
+                  title='More actions'
+                />
+              </Dropdown>
+
+              <Button
+                type='primary'
+                icon={<ThunderboltFilled style={{ color: '#ffc107', fontSize: 14 }} />}
+                loading={isPracticing}
+                disabled={validChecklist.length === 0}
+                onClick={() => handleStartPractice()}
+              >
+                Practice {toLearn > 0 ? `(${toLearn})` : `(${total})`}
+              </Button>
+            </div>
+          </div>
+
+          {/* Row 2: Filter Tabs (Left) & Search + Category Filter (Right) */}
+          <div className={styles.filterRow}>
             <Segmented
               size='small'
+              className={styles.filterSegmented}
               value={filter}
               onChange={(val) => {
                 setFilter(val as FilterType)
@@ -263,93 +436,49 @@ export const Checklist: React.FC = () => {
               }}
               options={[
                 { label: `All (${total})`, value: 'all' },
-                { label: `To Learn (${toLearn})`, value: 'active' },
+                { label: `Progress (${toLearn})`, value: 'active' },
                 { label: `Done (${completed})`, value: 'completed' },
               ]}
             />
-          </div>
 
-          <Progress
-            percent={percent}
-            status={percent === 100 ? 'success' : 'active'}
-            strokeColor={percent === 100 ? token.colorSuccess : token.colorPrimary}
-          />
+            <div className={styles.filterControls}>
+              <Input
+                className={styles.searchInput}
+                prefix={<SearchOutlined className={styles.searchIcon} />}
+                placeholder='Search'
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setCurrentPage(1)
+                }}
+                allowClear
+              />
 
-          {/* Action Bar for Study Set Practice & Cleaning */}
-          <div className={styles.actionBar}>
-            <Button
-              type='primary'
-              icon={<ThunderboltFilled />}
-              loading={isPracticing}
-              disabled={validChecklist.length === 0}
-              onClick={() => handleStartPractice()}
-              className={styles.practiceBtn}
-            >
-              Practice ({validToLearn > 0 ? validToLearn : validChecklist.length})
-            </Button>
-
-            {completed > 0 && (
-              <Popconfirm
-                title='Clear Completed Items?'
-                description={`Remove ${completed} remembered item(s) from your checklist?`}
-                okText='Clear'
-                cancelText='Cancel'
-                okButtonProps={{ danger: true, loading: isClearingCompleted }}
-                onConfirm={handleClearCompleted}
+              <Dropdown
+                trigger={['click']}
+                menu={{
+                  items: categoryMenuItems,
+                  selectedKeys: [String(selectedCat)],
+                  onClick: ({ key }) => {
+                    setSelectedCat(Number(key))
+                    setCurrentPage(1)
+                  },
+                }}
               >
-                <Button danger icon={<ClearOutlined />} loading={isClearingCompleted}>
-                  Clear Done ({completed})
+                <Button
+                  className={clsx(
+                    styles.filterCatBtn,
+                    selectedCat !== ECategory.ALL && styles.filterCatActive,
+                  )}
+                  icon={<FilterOutlined style={{ fontSize: 13 }} />}
+                >
+                  <span className={styles.filterCatLabel}>
+                    {selectedCat === ECategory.ALL ? 'Category' : getCategory(selectedCat)}
+                  </span>
+                  <DownOutlined className={styles.filterCatDown} />
                 </Button>
-              </Popconfirm>
-            )}
-
-            <Dropdown
-              trigger={['click']}
-              menu={{
-                items: [
-                  {
-                    key: 'practice-all',
-                    icon: <PlayCircleOutlined />,
-                    label: `Practice all defined (${validChecklist.length} items)`,
-                    disabled: validChecklist.length === 0,
-                    onClick: () => handleStartPractice(validChecklist),
-                  },
-                  {
-                    key: 'mark-all-done',
-                    icon: <CheckSquareOutlined />,
-                    label: 'Mark all as remembered',
-                    disabled: total === 0 || toLearn === 0,
-                    onClick: () => handleSetAllCompletion(true),
-                  },
-                  {
-                    key: 'reset-all',
-                    icon: <UndoOutlined />,
-                    label: 'Reset all to uncompleted',
-                    disabled: total === 0 || completed === 0,
-                    onClick: () => handleSetAllCompletion(false),
-                  },
-                  { type: 'divider' },
-                  {
-                    key: 'clear-all',
-                    icon: <DeleteOutlined />,
-                    danger: true,
-                    label: 'Clear entire checklist',
-                    disabled: total === 0,
-                    onClick: () => {
-                      confirm({
-                        title: 'Clear Entire Checklist?',
-                        content: 'Are you sure you want to remove all items from your checklist?',
-                        okText: 'Clear All',
-                        okType: 'danger',
-                        onOk: handleClearAll,
-                      })
-                    },
-                  },
-                ],
-              }}
-            >
-              <Button icon={<MoreOutlined />} title='More actions' />
-            </Dropdown>
+              </Dropdown>
+            </div>
           </div>
         </div>
       )}
@@ -365,6 +494,10 @@ export const Checklist: React.FC = () => {
                   <br />
                   Click <b>...</b> on any item card and select <b>Add to checklist</b>.
                 </span>
+              ) : searchQuery ? (
+                <span>No items found matching "{searchQuery}".</span>
+              ) : selectedCat !== ECategory.ALL ? (
+                <span>No items found in category "{getCategory(selectedCat)}".</span>
               ) : filter === 'active' ? (
                 <span>🎉 Great job! You have remembered all items in your checklist.</span>
               ) : (

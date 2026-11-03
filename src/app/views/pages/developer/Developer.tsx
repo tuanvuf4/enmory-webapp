@@ -1738,7 +1738,7 @@ export const Developer: React.FC = () => {
                             rowExpandable: () => true,
                           }}
                           pagination={{
-                            pageSize: 15,
+                            defaultPageSize: 15,
                             showSizeChanger: true,
                             pageSizeOptions: ['10', '15', '30', '50', '100'],
                             showTotal: (total, range) =>
@@ -1796,7 +1796,7 @@ export const Developer: React.FC = () => {
                           rowKey='id'
                           tableLayout='fixed'
                           pagination={{
-                            pageSize: 15,
+                            defaultPageSize: 15,
                             showSizeChanger: true,
                             pageSizeOptions: ['10', '15', '30', '50', '100'],
                             showTotal: (total, range) =>
@@ -1825,7 +1825,7 @@ export const Developer: React.FC = () => {
                           columns={syncMetaColumns}
                           rowKey='key'
                           pagination={{
-                            pageSize: 15,
+                            defaultPageSize: 15,
                             showSizeChanger: true,
                             pageSizeOptions: ['10', '15', '30', '50'],
                             showTotal: (total, range) =>
@@ -2346,7 +2346,7 @@ export const Developer: React.FC = () => {
                             },
                           ]}
                           rowKey='id'
-                          pagination={{ pageSize: 5 }}
+                          pagination={{ defaultPageSize: 5 }}
                           size='small'
                           bordered
                           scroll={{ x: 750 }}

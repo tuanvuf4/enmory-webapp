@@ -311,3 +311,10 @@ a.ck.ck-button:not(.ck-disabled):hover {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
   border-color: rgba(139, 110, 247, 0.4);
 }
+
+/* ==========================================================================
+   Ant Segmented global border
+   ========================================================================== */
+.ant-segmented {
+  border: 1px solid var(--ant-color-border);
+}

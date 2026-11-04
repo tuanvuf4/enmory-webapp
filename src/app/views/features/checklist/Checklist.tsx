@@ -12,6 +12,8 @@ import {
   Tag,
   Pagination,
   Input,
+  Badge,
+  Space,
 } from 'antd'
 import {
   DeleteOutlined,
@@ -405,8 +407,8 @@ export const Checklist: React.FC = () => {
                 }}
               >
                 <Button
-                  type={'text'}
-                  className={styles.moreBtn}
+                  size={'middle'}
+                  type={'default'}
                   icon={<MoreOutlined />}
                   title='More actions'
                 />
@@ -435,9 +437,87 @@ export const Checklist: React.FC = () => {
                 setCurrentPage(1)
               }}
               options={[
-                { label: `All (${total})`, value: 'all' },
-                { label: `Progress (${toLearn})`, value: 'active' },
-                { label: `Done (${completed})`, value: 'completed' },
+                {
+                  label: (
+                    <Space
+                      size={6}
+                      align='center'
+                      style={{ width: '100%', justifyContent: 'center' }}
+                    >
+                      <span>All</span>
+                      <Badge
+                        count={total}
+                        showZero
+                        overflowCount={999}
+                        style={{
+                          backgroundColor: token.colorPrimary,
+                          color: token.colorWhite,
+                          fontSize: 11,
+                          lineHeight: '16px',
+                          height: 16,
+                          minWidth: 16,
+                          padding: '0 5px',
+                          boxShadow: 'none',
+                        }}
+                      />
+                    </Space>
+                  ),
+                  value: 'all',
+                },
+                {
+                  label: (
+                    <Space
+                      size={6}
+                      align='center'
+                      style={{ width: '100%', justifyContent: 'center' }}
+                    >
+                      <span>Progress</span>
+                      <Badge
+                        count={toLearn}
+                        showZero
+                        overflowCount={999}
+                        style={{
+                          backgroundColor: token.colorWarning,
+                          color: token.colorWhite,
+                          fontSize: 11,
+                          lineHeight: '16px',
+                          height: 16,
+                          minWidth: 16,
+                          padding: '0 5px',
+                          boxShadow: 'none',
+                        }}
+                      />
+                    </Space>
+                  ),
+                  value: 'active',
+                },
+                {
+                  label: (
+                    <Space
+                      size={6}
+                      align='center'
+                      style={{ width: '100%', justifyContent: 'center' }}
+                    >
+                      <span>Done</span>
+                      <Badge
+                        count={completed}
+                        showZero
+                        overflowCount={999}
+                        style={{
+                          backgroundColor: token.colorSuccess,
+                          color: token.colorWhite,
+                          fontSize: 11,
+                          lineHeight: '16px',
+                          height: 16,
+                          minWidth: 16,
+                          padding: '0 5px',
+                          boxShadow: 'none',
+                        }}
+                      />
+                    </Space>
+                  ),
+                  value: 'completed',
+                },
               ]}
             />
 
@@ -466,10 +546,7 @@ export const Checklist: React.FC = () => {
                 }}
               >
                 <Button
-                  className={clsx(
-                    styles.filterCatBtn,
-                    selectedCat !== ECategory.ALL && styles.filterCatActive,
-                  )}
+                  className={clsx(selectedCat !== ECategory.ALL && styles.filterCatActive)}
                   icon={<FilterOutlined style={{ fontSize: 13 }} />}
                 >
                   <span className={styles.filterCatLabel}>

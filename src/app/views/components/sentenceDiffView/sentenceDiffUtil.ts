@@ -16,64 +16,140 @@ export interface IDictationResult {
   extraCount: number
 }
 
-// Common English contractions normalization
-const CONTRACTIONS: Record<string, string> = {
-  "aren't": 'are not',
-  "can't": 'cannot',
-  "couldn't": 'could not',
-  "didn't": 'did not',
-  "doesn't": 'does not',
-  "don't": 'do not',
-  "hadn't": 'had not',
-  "hasn't": 'has not',
-  "haven't": 'have not',
-  "he'd": 'he would',
-  "he'll": 'he will',
-  "he's": 'he is',
-  "i'd": 'i would',
-  "i'll": 'i will',
-  "i'm": 'i am',
-  "i've": 'i have',
-  "isn't": 'is not',
-  "it's": 'it is',
-  "let's": 'let us',
-  "she'd": 'she would',
-  "she'll": 'she will',
-  "she's": 'she is',
-  "shouldn't": 'should not',
-  "that's": 'that is',
-  "there's": 'there is',
-  "they'd": 'they would',
-  "they'll": 'they will',
-  "they're": 'they are',
-  "they've": 'they have',
-  "wasn't": 'was not',
-  "we'd": 'we would',
-  "we'll": 'we will',
-  "we're": 'we are',
-  "we've": 'we have',
-  "weren't": 'were not',
-  "what's": 'what is',
-  "where's": 'where is',
-  "who's": 'who is',
-  "won't": 'will not',
-  "wouldn't": 'would not',
-  "you'd": 'you would',
-  "you'll": 'you will',
-  "you're": 'you are',
-  "you've": 'you have',
+// Normalizes apostrophe variations (curly quotes, backticks, accents, HTML entities) to ASCII single quote (')
+export const normalizeApostrophes = (str: string): string => {
+  if (!str) return ''
+  return str.replace(/(&#39;|&apos;|&#039;)/g, "'").replace(/[’‘ʼʻ`´]/g, "'")
 }
+
+// Comprehensive English contractions mapping (supports contractions with or without apostrophe, and their expansions)
+export const CONTRACTIONS_MAP: Record<string, string[]> = {
+  "aren't": ['are not'],
+  "can't": ['cannot', 'can not'],
+  "couldn't": ['could not'],
+  "could've": ['could have'],
+  "didn't": ['did not'],
+  "doesn't": ['does not'],
+  "don't": ['do not'],
+  "hadn't": ['had not'],
+  "hasn't": ['has not'],
+  "haven't": ['have not'],
+  "he'd": ['he would', 'he had'],
+  "he'll": ['he will'],
+  "he's": ['he is', 'he has'],
+  "how's": ['how is', 'how has'],
+  "how'd": ['how did', 'how would'],
+  "i'd": ['i would', 'i had'],
+  "i'll": ['i will'],
+  "i'm": ['i am'],
+  "i've": ['i have'],
+  "isn't": ['is not'],
+  "it'd": ['it would', 'it had'],
+  "it'll": ['it will'],
+  "it's": ['it is', 'it has'],
+  "let's": ['let us'],
+  "might've": ['might have'],
+  "mustn't": ['must not'],
+  "must've": ['must have'],
+  "needn't": ['need not'],
+  "she'd": ['she would', 'she had'],
+  "she'll": ['she will'],
+  "she's": ['she is', 'she has'],
+  "shouldn't": ['should not'],
+  "should've": ['should have'],
+  "that'd": ['that would', 'that had'],
+  "that'll": ['that will'],
+  "that's": ['that is', 'that has'],
+  "there'd": ['there would', 'there had'],
+  "there'll": ['there will'],
+  "there's": ['there is', 'there has'],
+  "they'd": ['they would', 'they had'],
+  "they'll": ['they will'],
+  "they're": ['they are'],
+  "they've": ['they have'],
+  "wasn't": ['was not'],
+  "we'd": ['we would', 'we had'],
+  "we'll": ['we will'],
+  "we're": ['we are'],
+  "we've": ['we have'],
+  "weren't": ['were not'],
+  "what'd": ['what did'],
+  "what'll": ['what will'],
+  "what're": ['what are'],
+  "what's": ['what is', 'what has'],
+  "where'd": ['where did'],
+  "where's": ['where is', 'where has'],
+  "who'd": ['who would', 'who had'],
+  "who'll": ['who will'],
+  "who're": ['who are'],
+  "who's": ['who is', 'who has'],
+  "why's": ['why is', 'why has'],
+  "won't": ['will not'],
+  "wouldn't": ['would not'],
+  "would've": ['would have'],
+  "you'd": ['you would', 'you had'],
+  "you'll": ['you will'],
+  "you're": ['you are'],
+  "you've": ['you have'],
+  "ain't": ['is not', 'are not', 'am not'],
+  "y'all": ['you all'],
+  cannot: ['can not'],
+}
+
+// Backward compatible single-expansion map
+export const CONTRACTIONS: Record<string, string> = Object.fromEntries(
+  Object.entries(CONTRACTIONS_MAP).map(([k, v]) => [k, v[0]]),
+)
 
 export const cleanPunctuation = (str: string): string => {
-  return str.replace(/[.,/#!$%^&*;:{}=\-_`~()?"'’]/g, '').trim()
+  return normalizeApostrophes(str)
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()?"'’]/g, '')
+    .trim()
 }
 
-const normalizeWord = (word: string): string => {
-  const lower = word.toLowerCase().trim()
-  return CONTRACTIONS[lower] || lower
+/**
+ * Normalizes a single word token:
+ * 1. Unifies all apostrophes to ASCII '
+ * 2. Lowercases and trims
+ * 3. Strips surrounding punctuation (e.g. "(He's)," -> "he's", "I'm!" -> "i'm")
+ */
+export const normalizeWordToken = (word: string): string => {
+  if (!word) return ''
+  const normalized = normalizeApostrophes(word).toLowerCase().trim()
+  return normalized.replace(/^[^a-z0-9']+|[^a-z0-9']+$/gi, '')
 }
 
-const levenshteinDistance = (a: string, b: string): number => {
+/**
+ * Strips all non-alphanumeric characters (including apostrophes) for flexible matching.
+ * e.g. "I'm" -> "im", "He's" -> "hes", "don't" -> "dont"
+ */
+export const stripToAlphanumeric = (word: string): string => {
+  return normalizeWordToken(word).replace(/[^a-z0-9]/gi, '')
+}
+
+/**
+ * Returns possible expansions for a token if it is a contraction.
+ * Supports both apostrophe form ("i'm") and non-apostrophe typing ("im", "hes", "dont").
+ */
+export const getContractionExpansions = (token: string): string[] => {
+  const norm = normalizeWordToken(token)
+  if (!norm) return []
+  if (CONTRACTIONS_MAP[norm]) return CONTRACTIONS_MAP[norm]
+
+  // Check without apostrophe (e.g. user typed "im", "hes", "dont", "cant")
+  const stripped = stripToAlphanumeric(norm)
+  if (!stripped) return []
+
+  for (const [key, expansions] of Object.entries(CONTRACTIONS_MAP)) {
+    if (key.replace(/'/g, '') === stripped) {
+      return expansions
+    }
+  }
+
+  return []
+}
+
+export const levenshteinDistance = (a: string, b: string): number => {
   const matrix: number[][] = []
 
   for (let i = 0; i <= b.length; i++) {
@@ -101,28 +177,85 @@ const levenshteinDistance = (a: string, b: string): number => {
   return matrix[b.length][a.length]
 }
 
-const isExactWordMatch = (orig: string, user: string): boolean => {
-  const cOrig = cleanPunctuation(normalizeWord(orig))
-  const cUser = cleanPunctuation(normalizeWord(user))
-  return cOrig === cUser
+/**
+ * 1-to-1 exact word match:
+ * - Direct match after normalization (e.g. "I'm" vs "I'm", "I’m" vs "I'm", "I'm," vs "I'm")
+ * - Match without apostrophe (e.g. "I'm" vs "Im", "He's" vs "Hes")
+ * - 1-word contraction equivalence (e.g. "can't" vs "cannot")
+ */
+export const isExactWordMatch = (orig: string, user: string): boolean => {
+  const normOrig = normalizeWordToken(orig)
+  const normUser = normalizeWordToken(user)
+  if (!normOrig || !normUser) return false
+
+  // 1. Exact match with apostrophe preserved
+  if (normOrig === normUser) return true
+
+  // 2. Match without apostrophes (e.g. "I'm" vs "Im", "He's" vs "Hes")
+  const strippedOrig = stripToAlphanumeric(normOrig)
+  const strippedUser = stripToAlphanumeric(normUser)
+  if (strippedOrig && strippedOrig === strippedUser) return true
+
+  // 3. 1-token contraction equivalence (e.g. "can't" vs "cannot", "cant" vs "cannot")
+  const expOrig = getContractionExpansions(normOrig)
+  if (expOrig.includes(normUser) || expOrig.includes(strippedUser)) return true
+
+  const expUser = getContractionExpansions(normUser)
+  if (expUser.includes(normOrig) || expUser.includes(strippedOrig)) return true
+
+  return false
 }
 
-const isTypoMatch = (orig: string, user: string): boolean => {
-  const cOrig = cleanPunctuation(normalizeWord(orig))
-  const cUser = cleanPunctuation(normalizeWord(user))
-  if (cOrig === cUser) return true
+/**
+ * Checks if a single orig token (contraction) matches two consecutive user tokens (expanded).
+ * e.g. orig = "I'm", user1 = "I", user2 = "am" -> true
+ * e.g. orig = "He's", user1 = "He", user2 = "is" -> true
+ */
+export const isContraction1to2 = (orig: string, user1: string, user2: string): boolean => {
+  const normOrig = normalizeWordToken(orig)
+  const normUser1 = normalizeWordToken(user1)
+  const normUser2 = normalizeWordToken(user2)
+  if (!normOrig || !normUser1 || !normUser2) return false
 
-  const dist = levenshteinDistance(cOrig, cUser)
+  const combinedUser = `${normUser1} ${normUser2}`
+  const expansions = getContractionExpansions(normOrig)
+  return expansions.includes(combinedUser)
+}
+
+/**
+ * Checks if two consecutive orig tokens (expanded) match a single user token (contraction).
+ * e.g. orig1 = "I", orig2 = "am", user = "I'm" -> true
+ * e.g. orig1 = "He", orig2 = "is", user = "He's" -> true
+ */
+export const isContraction2to1 = (orig1: string, orig2: string, user: string): boolean => {
+  const normOrig1 = normalizeWordToken(orig1)
+  const normOrig2 = normalizeWordToken(orig2)
+  const normUser = normalizeWordToken(user)
+  if (!normOrig1 || !normOrig2 || !normUser) return false
+
+  const combinedOrig = `${normOrig1} ${normOrig2}`
+  const expansions = getContractionExpansions(normUser)
+  return expansions.includes(combinedOrig)
+}
+
+export const isTypoMatch = (orig: string, user: string): boolean => {
+  const strippedOrig = stripToAlphanumeric(orig)
+  const strippedUser = stripToAlphanumeric(user)
+  if (!strippedOrig || !strippedUser) return false
+  if (strippedOrig === strippedUser) return true
+
+  const dist = levenshteinDistance(strippedOrig, strippedUser)
   // Short words (<= 3 chars) need exact match
-  if (cOrig.length <= 3) return false
+  if (strippedOrig.length <= 3) return false
   // Medium words (4-6 chars) allow 1 char difference
-  if (cOrig.length <= 6) return dist <= 1
+  if (strippedOrig.length <= 6) return dist <= 1
   // Longer words (> 6 chars) allow 2 chars difference
   return dist <= 2
 }
 
 /**
- * Evaluates sentence alignment using Longest Common Subsequence (LCS) with typo tolerance.
+ * Evaluates sentence alignment using Longest Common Subsequence (LCS)
+ * with support for contractions (1-to-1, 1-to-2, 2-to-1) and typo tolerance.
  */
 export const evaluateSentenceDiff = (
   originalSentence: string,
@@ -161,18 +294,30 @@ export const evaluateSentenceDiff = (
     }
   }
 
-  // 2D DP matrix for LCS
+  // 2D DP matrix for LCS with multi-token contraction transitions
   const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0))
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
+      let maxVal = Math.max(dp[i - 1][j], dp[i][j - 1])
+
       if (isExactWordMatch(origTokens[i - 1], userTokens[j - 1])) {
-        dp[i][j] = dp[i - 1][j - 1] + 2 // higher weight for exact match
+        maxVal = Math.max(maxVal, dp[i - 1][j - 1] + 2) // higher weight for exact match
       } else if (isTypoMatch(origTokens[i - 1], userTokens[j - 1])) {
-        dp[i][j] = dp[i - 1][j - 1] + 1 // typo match
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+        maxVal = Math.max(maxVal, dp[i - 1][j - 1] + 1) // typo match
       }
+
+      // Check 1-to-2 contraction match (orig 1 word, user 2 words, e.g. "I'm" -> "I am")
+      if (j >= 2 && isContraction1to2(origTokens[i - 1], userTokens[j - 2], userTokens[j - 1])) {
+        maxVal = Math.max(maxVal, dp[i - 1][j - 2] + 2)
+      }
+
+      // Check 2-to-1 contraction match (orig 2 words, user 1 word, e.g. "He is" -> "He's")
+      if (i >= 2 && isContraction2to1(origTokens[i - 2], origTokens[i - 1], userTokens[j - 1])) {
+        maxVal = Math.max(maxVal, dp[i - 2][j - 1] + 2)
+      }
+
+      dp[i][j] = maxVal
     }
   }
 
@@ -185,7 +330,13 @@ export const evaluateSentenceDiff = (
   let extraCount = 0
 
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && isExactWordMatch(origTokens[i - 1], userTokens[j - 1])) {
+    // 1. Priority: Exact 1-to-1 match
+    if (
+      i > 0 &&
+      j > 0 &&
+      isExactWordMatch(origTokens[i - 1], userTokens[j - 1]) &&
+      dp[i][j] === dp[i - 1][j - 1] + 2
+    ) {
       aligned.unshift({
         word: origTokens[i - 1],
         isCorrect: true,
@@ -195,7 +346,49 @@ export const evaluateSentenceDiff = (
       exactMatches++
       i--
       j--
-    } else if (
+    }
+    // 2. Priority: 1-to-2 contraction match (Orig 1 word, User 2 words)
+    else if (
+      i > 0 &&
+      j >= 2 &&
+      isContraction1to2(origTokens[i - 1], userTokens[j - 2], userTokens[j - 1]) &&
+      dp[i][j] === dp[i - 1][j - 2] + 2
+    ) {
+      aligned.unshift({
+        word: origTokens[i - 1],
+        isCorrect: true,
+        status: 'correct',
+        userWord: `${userTokens[j - 2]} ${userTokens[j - 1]}`,
+      })
+      exactMatches++
+      i--
+      j -= 2
+    }
+    // 3. Priority: 2-to-1 contraction match (Orig 2 words, User 1 word)
+    else if (
+      i >= 2 &&
+      j > 0 &&
+      isContraction2to1(origTokens[i - 2], origTokens[i - 1], userTokens[j - 1]) &&
+      dp[i][j] === dp[i - 2][j - 1] + 2
+    ) {
+      aligned.unshift({
+        word: origTokens[i - 1],
+        isCorrect: true,
+        status: 'correct',
+        userWord: userTokens[j - 1],
+      })
+      aligned.unshift({
+        word: origTokens[i - 2],
+        isCorrect: true,
+        status: 'correct',
+        userWord: userTokens[j - 1],
+      })
+      exactMatches += 2
+      i -= 2
+      j--
+    }
+    // 4. Priority: Typo 1-to-1 match
+    else if (
       i > 0 &&
       j > 0 &&
       isTypoMatch(origTokens[i - 1], userTokens[j - 1]) &&
@@ -210,7 +403,9 @@ export const evaluateSentenceDiff = (
       typoMatches++
       i--
       j--
-    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+    }
+    // 5. Extra user word
+    else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
       aligned.unshift({
         word: userTokens[j - 1],
         isCorrect: false,
@@ -219,7 +414,9 @@ export const evaluateSentenceDiff = (
       })
       extraCount++
       j--
-    } else if (i > 0) {
+    }
+    // 6. Missing orig word
+    else if (i > 0) {
       aligned.unshift({
         word: origTokens[i - 1],
         isCorrect: false,

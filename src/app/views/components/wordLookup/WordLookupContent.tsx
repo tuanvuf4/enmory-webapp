@@ -1,17 +1,15 @@
 import React from 'react'
 import { Button, Tag, theme } from 'antd'
-import { SoundOutlined, SearchOutlined, PlusOutlined, EyeOutlined } from '@ant-design/icons'
+import { SoundOutlined, PlusOutlined, EyeOutlined } from '@ant-design/icons'
 import { IWordLookupContentProps } from './types'
 import styles from './wordLookup.module.scss'
 import appStyle from '@/style/appStyle.module.scss'
 
 export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
   data,
-  isLookingUpAi = false,
   isSavingToLibrary = false,
   isPlayingAudio = false,
   onPlayAudio,
-  onAiLookup,
   onAddToLibrary,
   onViewItem,
   className,
@@ -62,15 +60,6 @@ export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
           <span className='text-xs' style={{ color: token.colorTextSecondary }}>
             This item has no meaning.
           </span>
-          <Button
-            size='small'
-            type='primary'
-            icon={<SearchOutlined />}
-            onClick={onAiLookup}
-            loading={isLookingUpAi}
-          >
-            Tra nghĩa AI
-          </Button>
         </div>
       )}
 
@@ -78,7 +67,7 @@ export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
       {data.definition && (
         <div
           className='text-xs'
-          style={{ color: token.colorTextSecondary, maxHeight: 60 }}
+          style={{ color: token.colorTextSecondary }}
           dangerouslySetInnerHTML={{ __html: data.definition }}
         />
       )}
@@ -87,7 +76,7 @@ export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
       {data.grammar && (
         <div
           className='text-xs'
-          style={{ color: token.colorTextSecondary, maxHeight: 60 }}
+          style={{ color: token.colorTextSecondary }}
           dangerouslySetInnerHTML={{ __html: data.grammar }}
         />
       )}
@@ -96,7 +85,7 @@ export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
       {data.note && (
         <div
           className='text-xs italic'
-          style={{ color: token.colorTextSecondary, maxHeight: 60 }}
+          style={{ color: token.colorTextSecondary }}
           dangerouslySetInnerHTML={{ __html: data.note }}
         />
       )}

@@ -62,11 +62,11 @@ export const useItemModal = () => {
     }
 
     if (mode === 'add') {
-      const modalId = data?.id
-        ? `item-form-${data.id}`
-        : data?.origin
-          ? `item-form-add-${data.origin.trim().toLowerCase()}`
-          : 'item-form-add'
+      const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
+      const originSlug = data?.origin
+        ? `-${data.origin.trim().toLowerCase().replace(/\s+/g, '-')}`
+        : ''
+      const modalId = `item-form-add${originSlug}-${uniqueSuffix}`
 
       openModal({
         id: modalId,

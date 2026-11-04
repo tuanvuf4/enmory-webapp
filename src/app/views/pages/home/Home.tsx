@@ -3,16 +3,13 @@ import { useItem, usePrefetchAllIotd, useSelector } from '@/core/hooks'
 import { Example } from '@/views/features/example/Example'
 import { StudySet } from '@/views/features/studySet/StudySet'
 import { Checklist } from '@/views/features/checklist'
-import { Dictation } from '@/views/features/dictation'
 import { Widget } from '@/views/features/widget/Widget'
 import { theme, Space, Row, Col, Skeleton } from 'antd'
 import { Item } from '@/views/features/item/Item'
 
 import { IIotdDoc } from '@/models/item.model'
 import { Link } from 'react-router-dom'
-
-import { Translator } from '@/views/features/translator'
-import { Shadowing } from '@/views/features'
+import { Dictation, Shadowing } from '@/views/features'
 
 interface IIotdItemCardProps {
   iotd?: IIotdDoc | null
@@ -89,10 +86,6 @@ const Home = () => {
               <Space direction='vertical' size={token.size * 1.5} style={{ width: '100%' }}>
                 <Widget title={`Study Set`}>
                   <StudySet />
-                </Widget>
-
-                <Widget title={'Translator'}>
-                  <Translator />
                 </Widget>
 
                 <Widget title={'Examples'}>

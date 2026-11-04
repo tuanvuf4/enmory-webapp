@@ -8,7 +8,7 @@ import { Timestamp } from 'firebase/firestore'
  * If origin has 2+ space-separated words, it's a PHRASE
  * Otherwise, it's a WORD
  */
-const getDefaultCategoryFromOrigin = (origin: string): ECategory => {
+export const getDefaultCategoryFromOrigin = (origin: string): ECategory => {
   if (!origin) return ECategory.WORD
 
   const wordCount = origin.trim().split(/\s+/).length
@@ -19,7 +19,7 @@ const getDefaultCategoryFromOrigin = (origin: string): ECategory => {
  * Extract all related item names from form data
  * Returns an array of unique item names to validate
  */
-const extractRelatedItemNames = (data: IItem): string[] => {
+export const extractRelatedItemNames = (data: IItem): string[] => {
   const relatedNames = new Set<string>()
 
   // Add word_family items
@@ -77,7 +77,7 @@ const extractRelatedItemNames = (data: IItem): string[] => {
  * Check which related items already exist in the database
  * Returns a map of item names to their IDs (undefined if not found)
  */
-const checkExistingItems = async (
+export const checkExistingItems = async (
   itemNames: string[],
 ): Promise<Map<string, string | undefined>> => {
   const existingItemsMap = new Map<string, string | undefined>()
@@ -125,7 +125,7 @@ const checkExistingItems = async (
 /**
  * Create a new item for a related word/phrase
  */
-const createRelatedItem = async (
+export const createRelatedItem = async (
   itemName: string,
   uid?: string,
 ): Promise<{ name: string; id: string }> => {
@@ -156,46 +156,9 @@ const createRelatedItem = async (
 }
 
 /**
- * Validate and auto-create missing related items
- * This function:
- * 1. Extracts all related item names from the form data
- * 2. Checks which items already exist
- * 3. Creates missing items automatically
- * 4. Returns a complete map of item names to their IDs
+ * Check existing items without creating new ones
  */
-export const validateAndCreateRelatedItems = async (
-  data: IItem,
-  uid?: string,
-): Promise<Map<string, string>> => {
-  const relatedNames = extractRelatedItemNames(data)
-
-  if (relatedNames.length === 0) {
-    return new Map()
-  }
-
-  // Check which items already exist
-  const existingItemsMap = await checkExistingItems(relatedNames)
-
-  // Identify missing items
-  const missingNames = relatedNames.filter((name) => !existingItemsMap.get(name))
-
-  // Create missing items
-  if (missingNames.length > 0) {
-    const createPromises = missingNames.map((name) => createRelatedItem(name, uid))
-    const createdItems = await Promise.all(createPromises)
-
-    createdItems.forEach(({ name, id }) => {
-      existingItemsMap.set(name, id)
-    })
-  }
-
-  // Filter out undefined values and return only valid entries
-  const validItemsMap = new Map<string, string>()
-  existingItemsMap.forEach((id, name) => {
-    if (id) {
-      validItemsMap.set(name, id)
-    }
-  })
-
-  return validItemsMap
+export const validateAndCreateRelatedItems = async (): Promise<Map<string, string>> => {
+  // Do not auto-create items for related names (Synonyms, Antonyms, Relation, Word Family)
+  return new Map()
 }

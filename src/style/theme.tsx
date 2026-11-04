@@ -281,6 +281,10 @@ export const appTheme: ThemeConfig = {
       colorTextHeading: '#1a1c36',
       colorText: '#373a5a',
     },
+    Segmented: {
+      // @ts-ignore
+      colorBorder: '#dddff2',
+    },
   },
 }
 
@@ -583,6 +587,10 @@ export const appDarkTheme: ThemeConfig = {
       colorError: '#ff7875',
       colorTextHeading: '#eceeff',
       colorText: '#c8caee',
+    },
+    Segmented: {
+      // @ts-ignore
+      colorBorder: 'rgba(130, 115, 255, 0.14)',
     },
   },
 }

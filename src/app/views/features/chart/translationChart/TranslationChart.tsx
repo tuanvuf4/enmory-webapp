@@ -273,13 +273,7 @@ export const TranslationChart: React.FC<IProps> = ({ title = 'Translator' }) => 
             ) : (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={
-                  <span>
-                    Chưa có lịch sử luyện dịch câu.
-                    <br />
-                    Hãy luyện tập với widget <b>Translator</b> trên Trang chủ!
-                  </span>
-                }
+                description={<span>Chưa có lịch sử luyện dịch câu.</span>}
               />
             )}
           </div>

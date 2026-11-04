@@ -5,6 +5,10 @@
   flex-direction: column;
   gap: 8px;
   font-size: 13px;
+
+  ul li {
+    display: list-item;
+  }
 }
 
 .interactiveWord {
@@ -20,4 +24,3 @@
     color: var(--ant-color-primary, #6366f1);
   }
 }
-

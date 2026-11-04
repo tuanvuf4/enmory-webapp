@@ -31,7 +31,6 @@ import { removeLineBreaks, sanitizePronunciation } from '@/core/utils'
 import { itemKeys, useCreateItem, useUpdateItem } from '@/core/hooks/useItems'
 import { useModal, useCurrentModal } from '@/context/modal.context'
 import { useQueryClient } from '@tanstack/react-query'
-import { validateAndCreateRelatedItems } from './itemValidation'
 import {
   geminiDictionaryService,
   resolveGeminiApiKey,
@@ -215,82 +214,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     })
   }
 
-  const normalizeUniqueWords = (words: string[] = []) => {
-    return filterWordsExcludingOrigin(words)
-  }
-
-  const isSameWordFamily = (left: string[] = [], right: string[] = []) => {
-    const normalize = (values: string[]) =>
-      Array.from(new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean))).sort()
-
-    const leftNormalized = normalize(left)
-    const rightNormalized = normalize(right)
-
-    if (leftNormalized.length !== rightNormalized.length) return false
-
-    return leftNormalized.every((value, index) => value === rightNormalized[index])
-  }
-
-  const syncWordFamilyNetwork = async (savedItem: IItem) => {
-    const baseOrigin = String(savedItem.origin || '').trim()
-    if (!baseOrigin) return
-
-    const initialFamily = normalizeUniqueWords(savedItem.word_family || []).filter(
-      (word) => word.toLowerCase() !== baseOrigin.toLowerCase(),
-    )
-
-    if (initialFamily.length === 0) return
-
-    const networkWords = normalizeUniqueWords([baseOrigin, ...initialFamily])
-
-    const fetchedItems = await Promise.all(
-      networkWords.map(async (word) => {
-        const response = await itemApi.getItems(
-          {
-            keyword: word,
-            page: 0,
-            size: 1,
-            exact: true,
-          },
-          undefined,
-        )
-
-        if (response.isSuccess && response.content && response.content.length > 0) {
-          return response.content[0]
-        }
-
-        return null
-      }),
-    )
-
-    const existingItems = fetchedItems.filter((item): item is IItem => !!item && !!item.id)
-
-    await Promise.all(
-      existingItems.map(async (networkItem) => {
-        const currentOrigin = String(networkItem.origin || '').trim()
-        if (!currentOrigin) return
-
-        const expectedFamily = networkWords.filter(
-          (word) => word.toLowerCase() !== currentOrigin.toLowerCase(),
-        )
-
-        if (isSameWordFamily(networkItem.word_family || [], expectedFamily)) return
-
-        await itemApi.updateItem(String(networkItem.id), {
-          word_family: expectedFamily,
-        })
-      }),
-    )
-  }
-
   const onSubmit = async (data: IItem) => {
     setIsSubmitting(true)
 
     try {
       try {
-        // Validate and auto-create missing related items before API call
-        await validateAndCreateRelatedItems(data, user?.uid)
-
         // Ensure all tags in data.tags exist in the tags collection (auto-create missing tags)
         const normalizedTags = Array.from(
           new Set((data.tags || []).map((tag) => String(tag || '').trim()).filter(Boolean)),
@@ -335,10 +263,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
 
         setValue('tags', data.tags)
       } catch (error) {
-        console.error('Error validating related items or syncing tags:', error)
+        console.error('Error syncing tags:', error)
         notification({
           type: 'error',
-          message: 'Failed to validate related items or sync tags. Please try again.',
+          message: 'Failed to sync tags. Please try again.',
         })
         return
       }
@@ -432,15 +360,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({
           })
 
           if (isSuccess && content) {
-            try {
-              await syncWordFamilyNetwork(content)
-            } catch (error: any) {
-              notification({
-                type: 'warning',
-                message: error?.message || 'Failed to sync word family network',
-              })
-            }
-
             const itemUpdated = content
             // update item in study set
             if (itemUpdated && list.find((item) => item.id === itemUpdated.id)) {
@@ -486,19 +405,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         }
       } else {
         try {
-          const { isSuccess, content } = await createMutation(dataSubmit)
+          const { isSuccess } = await createMutation(dataSubmit)
           if (isSuccess) {
-            if (content) {
-              try {
-                await syncWordFamilyNetwork(content)
-              } catch (error: any) {
-                notification({
-                  type: 'warning',
-                  message: error?.message || 'Failed to sync word family network',
-                })
-              }
-            }
-
             // refresh list in library
             await queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
 
@@ -1257,17 +1165,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                   <span className={styles.relationItemTitle}>
                     <ApartmentOutlined /> Gia đình từ (Word Family)
                   </span>
-                  <span className={styles.relationHint}>Đồng bộ tự động</span>
+                  <span className={styles.relationHint}>Các từ cùng gốc</span>
                 </div>
                 <Controller
                   control={control}
                   name='word_family'
                   render={({ field }) => (
-                    <InputTag
-                      tags={field.value || []}
-                      allowSpace={false}
-                      onChange={field.onChange}
-                    />
+                    <InputTag tags={field.value || []} onChange={field.onChange} />
                   )}
                 />
               </div>

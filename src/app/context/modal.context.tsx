@@ -88,7 +88,20 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
       if (prev.some((m) => m.id === id)) {
         return prev
       }
-      return [...prev, { ...config, id, isMinimized: !!config.isMinimized }]
+
+      // If new modal is not minimized, minimize any currently active modals
+      // so the new modal takes focus cleanly without stacking modal masks
+      const updatedPrev = config.isMinimized
+        ? prev
+        : prev.map((m) => {
+            if (!m.isMinimized) {
+              m.onMinimizeChange?.(true)
+              return { ...m, isMinimized: true }
+            }
+            return m
+          })
+
+      return [...updatedPrev, { ...config, id, isMinimized: !!config.isMinimized }]
     })
     return id
   }
@@ -185,7 +198,18 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
           isMinimized: false,
         }
         next.splice(targetIndex, 1)
-        next.push(restored)
+
+        // Minimize any other currently active modal so only the restored modal is active
+        const finalized = next.map((m) => {
+          if (!m.isMinimized) {
+            m.onMinimizeChange?.(true)
+            return { ...m, isMinimized: true }
+          }
+          return m
+        })
+
+        finalized.push(restored)
+        return finalized
       }
       return next
     })

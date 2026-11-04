@@ -59,7 +59,7 @@ import { ISyncMeta } from '@/services/localDb/db'
 import { getCategory, getType } from '@/helpers/item'
 import { GeminiUsageTab } from './GeminiUsageTab'
 import { useGeminiStats } from '@/services/gemini'
-import styles from './developer.module.scss'
+import './developer.module.scss'
 import { appSetting } from '@/config/index'
 import moment from 'moment'
 
@@ -941,11 +941,26 @@ export const Developer: React.FC = () => {
         },
       },
       {
+        title: 'Ngày tạo',
+        dataIndex: 'created_date',
+        key: 'created_date',
+        width: 140,
+        sorter: (a, b) => (a.created_date || 0) - (b.created_date || 0),
+        render: (ts?: number) =>
+          ts ? (
+            <span style={{ fontSize: 12 }}>
+              {moment(ts).format(appSetting.dateTimeSecondFormat)}
+            </span>
+          ) : (
+            '-'
+          ),
+      },
+      {
         title: 'Cập nhật',
         dataIndex: 'last_update',
         key: 'last_update',
-        width: 120,
-        sorter: (a, b) => (b.last_update || 0) - (a.last_update || 0),
+        width: 140,
+        sorter: (a, b) => (a.last_update || 0) - (b.last_update || 0),
         render: (ts?: number) =>
           ts ? (
             <span style={{ fontSize: 12 }}>
@@ -997,107 +1012,6 @@ export const Developer: React.FC = () => {
     ],
     [token, handleEditItem, handleDeleteItem],
   )
-
-  const renderItemExpanded = (record: IItem) => {
-    return (
-      <div
-        style={{
-          padding: '12px 16px',
-          backgroundColor: token.colorBgContainerDisabled || '#fafafa',
-          borderRadius: 6,
-          border: `1px solid ${token.colorBorderSecondary}`,
-        }}
-      >
-        <Row gutter={[16, 12]}>
-          <Col span={24}>
-            <Text strong>Tất cả nghĩa ({record.meanings?.length || 0}):</Text>
-            {(record.meanings || []).map((m, idx) => (
-              <div
-                key={idx}
-                className={styles.noTextEditor}
-                style={{
-                  marginTop: 6,
-                  paddingLeft: 8,
-                  borderLeft: `2px solid ${token.colorPrimary}`,
-                }}
-              >
-                <Space size={8} wrap>
-                  {getMeaningTypeLabel(m) ? (
-                    <Tag color='purple'>{getMeaningTypeLabel(m)}</Tag>
-                  ) : null}
-
-                  {m.definition && <div dangerouslySetInnerHTML={{ __html: m.definition }} />}
-
-                  {m.translation && <div dangerouslySetInnerHTML={{ __html: m.translation }} />}
-                </Space>
-
-                {m.examples && m.examples.length > 0 && (
-                  <div style={{ marginTop: 4, paddingLeft: 8 }}>
-                    <Text type='secondary' style={{ fontSize: 12 }}>
-                      Ví dụ:
-                    </Text>
-                    {m.examples.map((ex, eIdx) => (
-                      <div key={eIdx} style={{ fontSize: 12, color: token.colorTextSecondary }}>
-                        •{' '}
-                        {typeof ex === 'string'
-                          ? ex
-                          : `${ex.origin}${ex.translation ? ` — ${ex.translation}` : ''}`}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </Col>
-
-          {((record.forms && record.forms.length > 0) ||
-            (record.collocations && record.collocations.length > 0) ||
-            (record.word_family && record.word_family.length > 0)) && (
-            <Col span={24}>
-              <Space wrap size={16}>
-                {record.forms && record.forms.length > 0 && (
-                  <div>
-                    <Text type='secondary' style={{ fontSize: 12 }}>
-                      Forms:{' '}
-                    </Text>
-                    {record.forms.map((f) => (
-                      <Tag key={f}>{f}</Tag>
-                    ))}
-                  </div>
-                )}
-                {record.collocations && record.collocations.length > 0 && (
-                  <div>
-                    <Text type='secondary' style={{ fontSize: 12 }}>
-                      Collocations:{' '}
-                    </Text>
-                    {record.collocations.map((c) => (
-                      <Tag key={c}>{c}</Tag>
-                    ))}
-                  </div>
-                )}
-                {record.word_family && record.word_family.length > 0 && (
-                  <div>
-                    <Text type='secondary' style={{ fontSize: 12 }}>
-                      Word Family:{' '}
-                    </Text>
-                    {record.word_family.map((wf) => (
-                      <Tag key={wf}>{wf}</Tag>
-                    ))}
-                  </div>
-                )}
-              </Space>
-            </Col>
-          )}
-
-          <Col span={24}>
-            <Text type='secondary' style={{ fontSize: 11 }}>
-              ID: <code>{record.id}</code> | UID: <code>{record.uid || 'N/A'}</code>
-            </Text>
-          </Col>
-        </Row>
-      </div>
-    )
-  }
 
   const blogColumns = useMemo<TableColumnsType<IBlogItem>>(
     () => [
@@ -1173,11 +1087,26 @@ export const Developer: React.FC = () => {
           ),
       },
       {
+        title: 'Ngày tạo',
+        dataIndex: 'created_date',
+        key: 'created_date',
+        width: 140,
+        sorter: (a, b) => (a.created_date || 0) - (b.created_date || 0),
+        render: (ts?: number) =>
+          ts ? (
+            <span style={{ fontSize: 12 }}>
+              {moment(ts).format(appSetting.dateTimeSecondFormat)}
+            </span>
+          ) : (
+            '-'
+          ),
+      },
+      {
         title: 'Cập nhật',
         key: 'dates',
         width: 140,
         sorter: (a, b) =>
-          (b.last_update || b.created_date || 0) - (a.last_update || a.created_date || 0),
+          (a.last_update || a.created_date || 0) - (b.last_update || b.created_date || 0),
         render: (_: any, record: IBlogItem) => {
           const ts = record.last_update || record.created_date
           return ts ? (
@@ -1418,10 +1347,7 @@ export const Developer: React.FC = () => {
   }
 
   return (
-    <div
-      className={appStyle.container}
-      style={{ maxWidth: '100%', margin: '0 auto', paddingBottom: 40 }}
-    >
+    <div className={appStyle.containerFluid}>
       <div
         style={{
           display: 'flex',
@@ -1733,10 +1659,6 @@ export const Developer: React.FC = () => {
                             selectedRowKeys,
                             onChange: (keys) => setSelectedRowKeys(keys),
                           }}
-                          expandable={{
-                            expandedRowRender: renderItemExpanded,
-                            rowExpandable: () => true,
-                          }}
                           pagination={{
                             defaultPageSize: 15,
                             showSizeChanger: true,
@@ -1746,7 +1668,7 @@ export const Developer: React.FC = () => {
                           }}
                           size='small'
                           bordered
-                          scroll={{ x: 1000 }}
+                          scroll={{ x: 1150 }}
                         />
                       </Card>
                     )}
@@ -1804,7 +1726,7 @@ export const Developer: React.FC = () => {
                           }}
                           size='small'
                           bordered
-                          scroll={{ x: 1050 }}
+                          scroll={{ x: 1200 }}
                         />
                       </Card>
                     )}

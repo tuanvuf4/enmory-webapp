@@ -52,11 +52,15 @@ export const DiffWordTag: React.FC<IDiffWordTagProps> = ({
         ? token.colorErrorBorder
         : token.colorBorder
 
+  const tooltipTitle =
+    item.userWord && item.userWord !== item.word ? `Bạn đã nhập: "${item.userWord}"` : undefined
+
   const tagContent = (
     <span
       className={`${styles.diffWordTag} ${compact ? styles.diffWordTagCompact : ''} ${
         isExtra ? styles.diffExtraTag : ''
       } ${className || ''}`}
+      title={tooltipTitle}
       style={{
         backgroundColor: bgColor,
         color: textColor,

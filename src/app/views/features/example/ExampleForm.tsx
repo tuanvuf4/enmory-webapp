@@ -13,7 +13,7 @@ import styles from './example.module.scss'
 import { initExampleData } from '@/constant/example'
 import { ReviewableTextArea } from '@/views/components'
 import { removeLineBreaks } from '@/core/utils'
-import { Translator } from '../translator'
+import { Dictation } from '../dictation'
 
 interface IProps {
   data?: IExample
@@ -30,9 +30,9 @@ export const ExampleForm: React.FC<PropsWithChildren & IProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  // Delegate Translation practice mode to the dedicated Translator component
+  // Delegate practice mode to the Dictation component
   if (mode === ExampleMode.Translation) {
-    return <Translator initialExample={data} onCancel={onCancel} onSuccess={onSuccess} />
+    return <Dictation initialExample={data} onCancel={onCancel} onSuccess={onSuccess} />
   }
 
   const { token } = theme.useToken()

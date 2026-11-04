@@ -279,7 +279,7 @@ export const ListeningChart: React.FC<IProps> = ({ title = 'Dictation' }) => {
                   <span>
                     Chưa có lịch sử luyện nghe.
                     <br />
-                    Hãy luyện tập với widget <b>Dictation</b> trên Trang chủ!
+                    Hãy luyện tập với tính năng <b>Dictation</b>!
                   </span>
                 }
               />

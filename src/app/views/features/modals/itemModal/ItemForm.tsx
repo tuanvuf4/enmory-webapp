@@ -861,7 +861,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         <div className={styles.cardHeader}>
           <Flex align='center' gap={token.size / 2}>
             <BookOutlined style={{ color: token.colorPrimary, fontSize: 18 }} />
-            <span className={styles.sectionTitle}>Thông tin từ vựng</span>
+            <span className={styles.sectionTitle}>Information</span>
 
             <Controller
               control={control}
@@ -879,7 +879,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               )}
             />
           </Flex>
-          <Flex align='center' gap={token.size / 2} wrap='wrap'>
+
+          <Flex align='center' justify={'space-between'} gap={token.size / 2} wrap='wrap'>
             <Tooltip title='Tra cứu từ vựng'>
               <Button
                 htmlType='button'
@@ -966,11 +967,18 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                       onChange(nextValue)
 
                       const currentCat = getValues('catId')
-                      const isGroup = isGroupWord(nextValue)
-                      if (isGroup && currentCat === ECategory.WORD) {
-                        setValue('catId', ECategory.PHRASE)
-                      } else if (!isGroup && currentCat === ECategory.PHRASE) {
-                        setValue('catId', ECategory.WORD)
+                      const trimmed = (nextValue || '').trim()
+                      if (trimmed.length > 50) {
+                        setValue('catId', ECategory.SENTENCE)
+                      } else {
+                        const isGroup = isGroupWord(nextValue)
+                        if (currentCat === ECategory.SENTENCE) {
+                          setValue('catId', isGroup ? ECategory.PHRASE : ECategory.WORD)
+                        } else if (isGroup && currentCat === ECategory.WORD) {
+                          setValue('catId', ECategory.PHRASE)
+                        } else if (!isGroup && currentCat === ECategory.PHRASE) {
+                          setValue('catId', ECategory.WORD)
+                        }
                       }
 
                       // If input becomes empty, or if an error was already displayed, validate immediately

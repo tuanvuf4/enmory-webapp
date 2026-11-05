@@ -16,6 +16,7 @@ import clsx from 'clsx'
 import { speakSentence } from '@/helpers/mics'
 import { getCategory } from '@/helpers/item'
 import { useState } from 'react'
+import { useShadowingModal } from '@/helpers/hooks'
 
 interface IProps {
   groupAction?: boolean
@@ -70,8 +71,10 @@ export const ExampleItem: React.FC<IProps> = ({
   const { token } = theme.useToken()
   const [isRevealed, setIsRevealed] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const { openShadowingModal } = useShadowingModal()
 
   const handleMenuClick: MenuProps['onClick'] = (e) => {
+    if (e.key === 'speak') openShadowingModal([data])
     if (e.key === '1') onEdit?.()
     if (e.key === '2') onDelete?.()
     if (e.key === '3') {

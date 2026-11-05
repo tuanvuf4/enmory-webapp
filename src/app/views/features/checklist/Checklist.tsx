@@ -27,11 +27,12 @@ import {
   SearchOutlined,
   FilterOutlined,
   DownOutlined,
+  AudioOutlined,
 } from '@ant-design/icons'
 import clsx from 'clsx'
 import { useChecklist, useDispatch } from '@/core/hooks'
 import { IChecklistItem } from '@/models/checklist.model'
-import { useItemModal, usePrompt } from '@/helpers/hooks'
+import { useItemModal, usePrompt, useShadowingModal } from '@/helpers/hooks'
 import { getCategory, hasValidMeaning } from '@/helpers/item'
 import { itemApi } from '@/services/firebase/api/item.api'
 import { studySetAction } from '@/store/reducers/studySet.reducer'
@@ -55,6 +56,7 @@ export const Checklist: React.FC = () => {
     setAllCompletion,
   } = useChecklist()
   const { openItemModal } = useItemModal()
+  const { openShadowingModal } = useShadowingModal()
   const { message, confirm } = usePrompt()
 
   const [filter, setFilter] = useState<FilterType>('active')
@@ -664,24 +666,35 @@ export const Checklist: React.FC = () => {
                     </div>
 
                     <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
-                      <Tooltip title='Edit'>
-                        <Button
-                          type='text'
-                          size='small'
-                          icon={<EditOutlined style={{ color: token.palette?.gold?.[7] }} />}
-                          onClick={() => openItemModal('edit', item)}
-                        />
-                      </Tooltip>
-
-                      <Tooltip title='Delete'>
-                        <Button
-                          type='text'
-                          size='small'
-                          danger
-                          icon={<DeleteOutlined />}
-                          onClick={() => handleDelete(item)}
-                        />
-                      </Tooltip>
+                      <Dropdown
+                        trigger={['click']}
+                        placement='bottomRight'
+                        menu={{
+                          items: [
+                            {
+                              key: 'speak',
+                              icon: <AudioOutlined />,
+                              label: 'Speak',
+                              onClick: () => openShadowingModal([item]),
+                            },
+                            {
+                              key: 'edit',
+                              icon: <EditOutlined style={{ color: token.palette?.gold?.[7] }} />,
+                              label: 'Edit',
+                              onClick: () => openItemModal('edit', item),
+                            },
+                            {
+                              key: 'delete',
+                              danger: true,
+                              icon: <DeleteOutlined />,
+                              label: 'Delete',
+                              onClick: () => handleDelete(item),
+                            },
+                          ],
+                        }}
+                      >
+                        <Button type='text' size='small' icon={<MoreOutlined />} />
+                      </Dropdown>
                     </div>
                   </div>
                 </div>

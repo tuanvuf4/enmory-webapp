@@ -42,6 +42,26 @@ export interface ITranslationHistoryItem {
   direction?: 'vi-en' | 'en-vi'
 }
 
+export interface IErrorApiRequest {
+  id: string
+  url: string
+  baseURL?: string
+  method: string // GET, POST, PUT, DELETE, PATCH, etc.
+  headers?: Record<string, any>
+  params?: any
+  body?: any
+  status?: number
+  statusText?: string
+  errorMessage: string
+  errorDetails?: any
+  responseBody?: any
+  timestamp: number
+  retryCount: number
+  lastRetryAt?: number
+  lastStatus: 'failed' | 'success' | 'pending' | 'retrying'
+  source?: 'axios' | 'fetch' | 'manual' | 'simulation'
+}
+
 export class EnmoryDatabase extends Dexie {
   items!: Table<IItem, string>
   blogs!: Table<IBlogItem, string>
@@ -49,6 +69,7 @@ export class EnmoryDatabase extends Dexie {
   audioCache!: Table<ICachedAudio, string>
   listeningHistory!: Table<IListeningHistoryItem, number>
   translationHistory!: Table<ITranslationHistoryItem, number>
+  errorApiRequests!: Table<IErrorApiRequest, string>
 
   constructor() {
     super('EnmoryLocalDB')
@@ -76,6 +97,9 @@ export class EnmoryDatabase extends Dexie {
     })
     this.version(7).stores({
       examples: null,
+    })
+    this.version(8).stores({
+      errorApiRequests: 'id, url, method, status, timestamp, lastStatus, source',
     })
   }
 }

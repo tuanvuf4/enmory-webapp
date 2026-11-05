@@ -237,6 +237,53 @@ CRITICAL REQUIREMENTS:
   },
 
   /**
+   * Translates an article, blog post, or rich text content into natural Vietnamese.
+   * If content contains HTML markup, preserves all HTML tags, structure, and headings.
+   */
+  translateArticle: async (content: string, preferredModel?: TGeminiModel): Promise<string> => {
+    const clean = content.trim()
+    if (!clean) return ''
+
+    const isHtml = /<[a-z][\s\S]*>/i.test(clean)
+
+    const systemInstruction = isHtml
+      ? `You are an expert bilingual English-Vietnamese translator and editor.
+Translate the following English article/blog post into natural, fluent Vietnamese.
+
+CRITICAL REQUIREMENTS:
+1. Preserve all HTML structure, tags (e.g. <h1>, <h2>, <p>, <ul>, <li>, <strong>, <em>, <blockquote>, <table>, <a>, <img>), and attribute structures exactly as in the original.
+2. Only translate the human-readable text contents inside the tags. Do NOT translate tag names, class names, or URLs.
+3. Return ONLY the translated HTML content without markdown code block fences (\`\`\`html) or any conversational introduction.`
+      : `You are an expert bilingual English-Vietnamese translator and editor.
+Translate the following English article/blog post into natural, fluent Vietnamese.
+
+CRITICAL REQUIREMENTS:
+1. Preserve paragraph breaks, bullet points, and formatting structure.
+2. Translate accurately and idiomatically.
+3. Return ONLY the translated text without markdown code block fences (\`\`\`) or commentary.`
+
+    const { text } = await generateContentWithFallback({
+      serviceName: 'Article Batch Translation',
+      preferredModel,
+      category: 'general',
+      requestParams: {
+        contents: clean,
+        config: {
+          systemInstruction,
+          temperature: 0.3,
+        },
+      },
+    })
+
+    let result = text?.trim() || ''
+    result = result
+      .replace(/^```(?:html|text|markdown)?\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .trim()
+    return result
+  },
+
+  /**
    * Reorganizes raw subtitle/transcript text into full, natural sentences with timestamps using Gemini AI.
    * Useful when transcripts lack punctuation or have complex sentence breaks.
    */

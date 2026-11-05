@@ -5,6 +5,7 @@ import {
   CopyOutlined,
   PushpinOutlined,
   PushpinFilled,
+  AudioOutlined,
 } from '@ant-design/icons'
 import { ItemType } from 'antd/es/menu/interface'
 
@@ -41,6 +42,10 @@ export const getActionMenuExample = (isPinned = false): ItemType[] => [
         icon={isPinned ? <PushpinFilled /> : <PushpinOutlined />}
       />
     ),
+  },
+  {
+    key: 'speak',
+    label: <ActionItemExtension label='Speak' icon={<AudioOutlined />} />,
   },
   {
     key: 1,

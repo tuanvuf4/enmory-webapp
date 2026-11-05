@@ -25,10 +25,14 @@ export interface IClassifiedVocabItem {
   notes?: string
 }
 
-export interface ITranscriptClassificationData {
+export interface IContentClassificationData {
+  id?: string | number
   trackId?: string | number
+  snippet?: string
   transcriptSnippet?: string
   summary?: string
   items: IClassifiedVocabItem[]
   updatedAt: number
 }
+
+export type ITranscriptClassificationData = IContentClassificationData

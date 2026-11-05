@@ -151,10 +151,12 @@ export const mapDocToBlogItem = (docSnap: any): IBlogItem => {
     uid: data.uid,
     title: data.title,
     description: data.description,
+    translation: data.translation || '',
     relation: data.relation || [],
     tags,
     created_date,
     last_update,
+    vocabClassification: data.vocabClassification || [],
   } as IBlogItem
 }
 
@@ -277,11 +279,15 @@ export const blogApi = {
       const blogData: Record<string, any> = {
         title: data.title,
         description: data.description,
+        translation: data.translation || '',
         relation: data.relation || [],
         tags,
         uid: currentUser.uid,
         created_date,
         last_update,
+      }
+      if (data.vocabClassification) {
+        blogData.vocabClassification = data.vocabClassification
       }
 
       // 1. Create in Firestore
@@ -429,14 +435,24 @@ export const blogApi = {
         }
       }
 
+      const existingBlog = await localDb.blogs.get(id)
+      const translation =
+        data.translation !== undefined ? data.translation : existingBlog?.translation || ''
+
       const now = Timestamp.now().toMillis()
       const tags = normalizeArticleTags(data)
       const blogData: Record<string, any> = {
         title: data.title,
         description: data.description,
+        translation,
         relation: data.relation || [],
         tags,
         last_update: now,
+      }
+      if (data.vocabClassification !== undefined) {
+        blogData.vocabClassification = data.vocabClassification
+      } else if (existingBlog?.vocabClassification) {
+        blogData.vocabClassification = existingBlog.vocabClassification
       }
 
       // 1. Update in Firestore
@@ -448,10 +464,12 @@ export const blogApi = {
         uid: currentUser.uid,
         title: data.title,
         description: data.description,
+        translation,
         relation: data.relation || [],
         tags,
-        created_date: extractCreatedDate(data),
+        created_date: extractCreatedDate(data) || existingBlog?.created_date,
         last_update: now,
+        vocabClassification: blogData.vocabClassification,
       } as IBlogItem
 
       // 2. Update in Local DB

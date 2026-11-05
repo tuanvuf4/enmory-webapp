@@ -9,6 +9,7 @@ import {
   StarFilled,
   SyncOutlined,
   CheckSquareOutlined,
+  AudioOutlined,
 } from '@ant-design/icons'
 import { ItemType } from 'antd/es/menu/interface'
 import { IItem } from '@/models/item.model'
@@ -46,6 +47,10 @@ export const getActionMenuItem = (data: IItem | undefined, isInChecklist = false
     {
       key: '1',
       label: <ActionItem label='Edit' icon={<EditOutlined />} />,
+    },
+    {
+      key: 'speak',
+      label: <ActionItem label='Speak' icon={<AudioOutlined />} />,
     },
     {
       key: '2',

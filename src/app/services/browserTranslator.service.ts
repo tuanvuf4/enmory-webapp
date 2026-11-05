@@ -162,6 +162,69 @@ export const browserTranslatorService = {
   },
 
   /**
+   * Translate HTML or rich text while preserving HTML tags, hierarchy and formatting.
+   */
+  translateHtml: async (
+    html: string,
+    sourceLanguage = 'en',
+    targetLanguage = 'vi',
+  ): Promise<string> => {
+    const clean = html.trim()
+    if (!clean) return ''
+
+    // If no HTML tags detected, fallback directly to plain text translation
+    if (!/<[a-z][\s\S]*>/i.test(clean)) {
+      return await browserTranslatorService.translateText(clean, sourceLanguage, targetLanguage)
+    }
+
+    const translator = await browserTranslatorService.createTranslatorInstance(
+      sourceLanguage,
+      targetLanguage,
+    )
+
+    try {
+      if (typeof document !== 'undefined') {
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(clean, 'text/html')
+        const body = doc.body
+
+        // Walk all text nodes and translate only their text values
+        const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, null)
+        const textNodes: Text[] = []
+        let node: Text | null
+        while ((node = walker.nextNode() as Text | null)) {
+          if (node.nodeValue?.trim()) {
+            textNodes.push(node)
+          }
+        }
+
+        for (const tNode of textNodes) {
+          const original = tNode.nodeValue || ''
+          const trimmed = original.trim()
+          if (trimmed) {
+            try {
+              const trans = await translator.translate(trimmed)
+              const leadingWs = original.match(/^\s*/)?.[0] || ''
+              const trailingWs = original.match(/\s*$/)?.[0] || ''
+              tNode.nodeValue = `${leadingWs}${trans}${trailingWs}`
+            } catch (nodeErr) {
+              console.warn('[BrowserTranslator] Failed to translate node:', trimmed, nodeErr)
+            }
+          }
+        }
+
+        return body.innerHTML
+      }
+
+      return await translator.translate(clean)
+    } finally {
+      if (typeof translator.destroy === 'function') {
+        translator.destroy()
+      }
+    }
+  },
+
+  /**
    * Translates an entire transcript with timestamps using browser Translator API.
    * Preserves each segment timestamp marker so the resulting translation stays 100% in sync.
    */

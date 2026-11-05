@@ -8,7 +8,7 @@ import {
   checklistKeys,
 } from '@/core/hooks'
 import { localDb, invalidateSearchIndex } from '@/services/localDb'
-import { useItemModal, usePrompt } from '@/helpers/hooks'
+import { useItemModal, usePrompt, useShadowingModal } from '@/helpers/hooks'
 import { getCategory, isDefect } from '@/helpers/item'
 import { EViewMode } from '@/models/app.model'
 import { ECategory, IItem } from '@/models/item.model'
@@ -100,6 +100,7 @@ export const Item: React.FC<IProps> = ({
   const dispatch = useDispatch()
 
   const { openItemModal } = useItemModal()
+  const { openShadowingModal } = useShadowingModal()
 
   const { mutate: mutateDeleteItem } = useDeleteItem()
 
@@ -151,6 +152,10 @@ export const Item: React.FC<IProps> = ({
       case '1':
         await onEdit(data.id || '')
         onEditSuccess?.()
+        break
+
+      case 'speak':
+        openShadowingModal([data])
         break
 
       case '2':

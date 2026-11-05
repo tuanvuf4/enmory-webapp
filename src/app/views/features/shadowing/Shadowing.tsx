@@ -47,7 +47,8 @@ import {
   computeInstantSpeechStats,
   IInstantSpeechStats,
 } from '@/helpers/hooks'
-import { IExample } from '@/models/item.model'
+import { IExample, IItem } from '@/models/item.model'
+import { IChecklistItem } from '@/models/checklist.model'
 import styles from './shadowing.module.scss'
 
 const { Text, Title } = Typography
@@ -275,9 +276,65 @@ interface IPronunciationSession {
   updatedAt: number
 }
 
+export type TShadowingItem = IItem | IExample | IChecklistItem
+
+export const normalizeToExamples = (
+  items?: TShadowingItem | TShadowingItem[] | null,
+): IExample[] => {
+  if (!items) return []
+
+  const list = Array.isArray(items) ? items : [items]
+  if (list.length === 0) return []
+
+  const result: IExample[] = []
+
+  for (const item of list) {
+    if (!item) continue
+
+    // If it's already an IExample (has translation and no meanings array)
+    if (
+      'translation' in item &&
+      typeof (item as any).translation === 'string' &&
+      !('meanings' in item)
+    ) {
+      result.push(item as IExample)
+      continue
+    }
+
+    const asItem = item as IItem | IChecklistItem
+    const meanings = asItem.meanings || []
+    const primaryMeaning = meanings.find((m) => m.common) || meanings[0]
+    const translation = primaryMeaning?.translation || primaryMeaning?.definition || ''
+
+    const mainExample: IExample = {
+      id: ('checklistId' in asItem ? asItem.checklistId : asItem.id) || '',
+      origin: asItem.origin || '',
+      translation,
+      itemOrigin: asItem.origin,
+    }
+    result.push(mainExample)
+  }
+
+  return result
+}
+
+export interface ShadowingProps {
+  items?: TShadowingItem[] | TShadowingItem
+  initialItems?: TShadowingItem[] | TShadowingItem
+  exposeReload?: (reloadFn: () => void) => void
+  onReload?: () => void | Promise<void>
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const Shadowing: React.FC = () => {
+export const Shadowing: React.FC<ShadowingProps> = ({
+  items,
+  initialItems,
+  exposeReload,
+  onReload,
+}) => {
+  const rawItems = items || initialItems
+  const normalizedItems = useMemo(() => normalizeToExamples(rawItems), [rawItems])
   const { token } = theme.useToken()
   const { user } = useSelector((state) => state.auth)
 
@@ -295,7 +352,7 @@ export const Shadowing: React.FC = () => {
     }
   })
 
-  const [examples, setExamples] = useState<IExample[]>([])
+  const [examples, setExamples] = useState<IExample[]>(() => normalizedItems)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [speaking, setSpeaking] = useState(false)
@@ -451,6 +508,7 @@ export const Shadowing: React.FC = () => {
   // Lưu session (danh sách câu và câu hiện tại) vào localDb & localStorage
   const saveSession = useCallback(
     async (patch: { items?: IExample[]; currentIndex?: number }) => {
+      if (normalizedItems.length > 0) return
       try {
         const key = getPronunciationSessionKey(user?.uid)
         const cur = stateRef.current
@@ -472,7 +530,7 @@ export const Shadowing: React.FC = () => {
         console.warn('Failed to save pronunciation session:', err)
       }
     },
-    [user?.uid],
+    [user?.uid, normalizedItems],
   )
 
   // Fetch hoặc phục hồi session câu ví dụ
@@ -484,6 +542,13 @@ export const Shadowing: React.FC = () => {
       setEvalResult(null)
       setEvalError(null)
       handleFullResetRecordingRef.current()
+
+      if (normalizedItems.length > 0) {
+        setExamples(normalizedItems)
+        setCurrentIndex(0)
+        setLoading(false)
+        return
+      }
 
       const key = getPronunciationSessionKey(user?.uid)
 
@@ -575,12 +640,36 @@ export const Shadowing: React.FC = () => {
         setLoading(false)
       }
     },
-    [user?.uid],
+    [user?.uid, normalizedItems],
   )
 
+  const reload = useCallback(() => {
+    if (onReload) {
+      onReload()
+      return
+    }
+    fetchExamples(true)
+  }, [onReload, fetchExamples])
+
   useEffect(() => {
+    if (exposeReload) {
+      exposeReload(reload)
+    }
+  }, [exposeReload, reload])
+
+  useEffect(() => {
+    if (normalizedItems.length > 0) {
+      setExamples(normalizedItems)
+      setCurrentIndex(0)
+      setRevealed(false)
+      setShadowChunk(null)
+      setEvalResult(null)
+      setEvalError(null)
+      handleFullResetRecordingRef.current()
+      return
+    }
     fetchExamples(false)
-  }, [fetchExamples])
+  }, [normalizedItems, fetchExamples])
 
   // Phát âm toàn câu hoặc 1 đoạn với Gemini TTS
   const handleSpeak = useCallback(
@@ -778,9 +867,11 @@ export const Shadowing: React.FC = () => {
               <Title level={5} style={{ margin: 0, fontSize: 15 }}>
                 Luyện Nói & Ngữ Âm
               </Title>
-              <Text type='secondary' style={{ fontSize: 12 }}>
-                {currentIndex + 1}/{examples.length}
-              </Text>
+              {examples.length > 0 && (
+                <Text type='secondary' style={{ fontSize: 12 }}>
+                  {currentIndex + 1}/{examples.length}
+                </Text>
+              )}
             </Flex>
 
             <Flex gap={4} align='center'>
@@ -792,12 +883,14 @@ export const Shadowing: React.FC = () => {
                   onClick={() => setShowTip((p) => !p)}
                 />
               </Tooltip>
-              <Button
-                size='small'
-                icon={<SyncOutlined spin={loading} />}
-                onClick={() => fetchExamples(true)}
-                type='text'
-              />
+              {(normalizedItems.length !== 1 || Boolean(onReload)) && (
+                <Button
+                  size='small'
+                  icon={<SyncOutlined spin={loading} />}
+                  onClick={reload}
+                  type='text'
+                />
+              )}
             </Flex>
           </Flex>
 

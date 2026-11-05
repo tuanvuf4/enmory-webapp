@@ -1,7 +1,6 @@
 @use '@style/vars' as *;
 
 .vocabContainer {
-  margin-top: $size * 1.5;
   border-radius: 12px;
   border: 1px solid var(--ant-color-border);
   background: var(--ant-color-bg-container, #ffffff);
@@ -268,4 +267,3 @@
   font-size: 11px;
   letter-spacing: 0.5px;
 }
-

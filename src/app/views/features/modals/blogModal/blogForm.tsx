@@ -10,12 +10,29 @@ import {
 } from '@/core/hooks'
 import { blogKeys } from '@/core/hooks/useBlogs'
 import { IBlogItem } from '@/models/blog.model'
+import { IClassifiedVocabItem } from '@/models/vocabClassification.model'
+import { VocabClassificationTabs } from '@/views/features/vocabClassification'
 import { TextEditor, InputTag, TagSelect } from '@/views/components'
-import { theme, Input, Button, Row, Col, Tag, Segmented, Space, Typography, Flex } from 'antd'
+import {
+  theme,
+  Input,
+  Button,
+  Row,
+  Col,
+  Tag,
+  Segmented,
+  Space,
+  Typography,
+  Flex,
+  Badge,
+  Dropdown,
+} from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePrompt } from '@/helpers/hooks'
 import { useModal, useCurrentModal } from '@/context/modal.context'
+import { browserTranslatorService } from '@/services/browserTranslator.service'
+import { geminiTranscriptService } from '@/services/gemini'
 import {
   FileTextOutlined,
   MinusOutlined,
@@ -27,6 +44,12 @@ import {
   ReadOutlined,
   CalendarOutlined,
   ThunderboltOutlined,
+  BookOutlined,
+  DownOutlined,
+  GlobalOutlined,
+  RobotOutlined,
+  LoadingOutlined,
+  TranslationOutlined,
 } from '@ant-design/icons'
 import clsx from 'clsx'
 import moment from 'moment'
@@ -57,10 +80,23 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
     }
   }
 
-  const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor')
+  const [activeTab, setActiveTab] = useState<'editor' | 'preview' | 'vocab'>('editor')
+  const [isTranslating, setIsTranslating] = useState(false)
+  const [isBrowserTranslating, setIsBrowserTranslating] = useState(false)
+  const [previewMode, setPreviewMode] = useState<'original' | 'bilingual' | 'translation'>(
+    'original',
+  )
 
   const { mutate: createBlog, isPending: isCreating } = useCreateBlog()
-  const { mutate: updateBlog, isPending: isUpdating } = useUpdateBlog()
+  const {
+    mutate: updateBlog,
+    mutateAsync: updateBlogAsync,
+    isPending: isUpdating,
+  } = useUpdateBlog()
+
+  const [classifiedItems, setClassifiedItems] = useState<IClassifiedVocabItem[] | undefined>(
+    data?.vocabClassification,
+  )
 
   const { mutateAsync: createCategoryMutation } = useCreateBlogCategory()
   const { mutateAsync: updateCategoryMutation } = useUpdateBlogCategory()
@@ -100,6 +136,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
     defaultValues: {
       title: data?.title || '',
       description: data?.description || '',
+      translation: data?.translation || '',
       relation: data?.relation || [],
       tags: initialTags,
     },
@@ -107,6 +144,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
 
   const title = watch('title')
   const description = watch('description')
+  const translation = watch('translation')
   const tags = watch('tags')
   const relation = watch('relation')
 
@@ -150,9 +188,11 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
       reset({
         title: data.title || '',
         description: data.description || '',
+        translation: data.translation || '',
         relation: data.relation || [],
         tags: initialTags,
       })
+      setClassifiedItems(data.vocabClassification)
     }
   }, [data, initialTags, reset])
 
@@ -172,13 +212,105 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
     )
   }
 
+  // Handle translation from current description using browser API Translator (Native)
+  const handleTranslateFromDescriptionBrowser = async () => {
+    const content = (getValues('description') || '').trim()
+    if (!content || content === '<p></p>') {
+      message({
+        type: 'warning',
+        content: 'Vui lòng nhập nội dung bài viết trước khi dịch.',
+      })
+      return
+    }
+
+    try {
+      const support = await browserTranslatorService.checkSupport('en', 'vi')
+      if (!support.isSupported) {
+        message({
+          type: 'warning',
+          content:
+            support.message ||
+            'Trình duyệt chưa hỗ trợ Browser Translator API. Hãy dùng Chrome 131+ hoặc sử dụng nút "AI Translate (Gemini)".',
+          duration: 6,
+        })
+        return
+      }
+
+      setIsBrowserTranslating(true)
+      message({
+        type: 'info',
+        content: 'Đang dịch bài viết...',
+        key: 'browser-translating',
+      })
+
+      const result = await browserTranslatorService.translateHtml(content, 'en', 'vi')
+      if (result) {
+        setValue('translation', result, { shouldValidate: true, shouldDirty: true })
+        message({
+          type: 'success',
+          content: 'Dịch bài viết thành công!',
+          key: 'browser-translating',
+        })
+      }
+    } catch (err: any) {
+      message({
+        type: 'error',
+        content: err?.message || 'Có lỗi xảy ra khi dịch',
+        key: 'browser-translating',
+      })
+    } finally {
+      setIsBrowserTranslating(false)
+    }
+  }
+
+  // Handle translation from current description using Gemini AI
+  const handleTranslateFromDescriptionGemini = async () => {
+    const content = (getValues('description') || '').trim()
+    if (!content || content === '<p></p>') {
+      message({
+        type: 'warning',
+        content: 'Vui lòng nhập nội dung bài viết trước khi dịch.',
+      })
+      return
+    }
+
+    try {
+      setIsTranslating(true)
+      message({
+        type: 'info',
+        content: 'Gemini AI đang dịch bài viết sang tiếng Việt (bảo toàn định dạng)...',
+        key: 'ai-translating',
+        duration: 4,
+      })
+      const result = await geminiTranscriptService.translateArticle(content)
+      if (result) {
+        setValue('translation', result, { shouldValidate: true, shouldDirty: true })
+        message({
+          type: 'success',
+          content: 'Dịch bài viết bằng Gemini AI thành công!',
+          key: 'ai-translating',
+        })
+      }
+    } catch (err: any) {
+      message({
+        type: 'error',
+        content: err?.message || 'Có lỗi xảy ra khi dịch bài viết bằng Gemini AI.',
+        key: 'ai-translating',
+      })
+    } finally {
+      setIsTranslating(false)
+    }
+  }
+
   const onSubmit = (values: IBlogItem) => {
     const dataSubmit: IBlogItem = {
       title: values.title.trim(),
       description: values.description,
+      translation: values.translation || '',
       relation: values.relation || [],
       tags: values.tags || [],
       created_date: data?.created_date,
+      vocabClassification: classifiedItems || data?.vocabClassification,
     }
 
     if (isEditing && data?.id) {
@@ -239,11 +371,23 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
             <span style={{ color: token.colorTextTertiary }}>|</span>
             <span style={{ marginLeft: 6 }}>{stats.chars.toLocaleString()} ký tự</span>
           </div>
+          {classifiedItems && classifiedItems.length > 0 && (
+            <div
+              className={styles.statItem}
+              style={{ cursor: 'pointer' }}
+              onClick={() => setActiveTab('vocab')}
+            >
+              <BookOutlined style={{ color: token.colorSuccess }} />
+              <span>
+                <strong>{classifiedItems.length}</strong> từ vựng CEFR
+              </span>
+            </div>
+          )}
         </Flex>
 
         <Segmented
           value={activeTab}
-          onChange={(val) => setActiveTab(val as 'editor' | 'preview')}
+          onChange={(val) => setActiveTab(val as 'editor' | 'preview' | 'vocab')}
           options={[
             {
               value: 'editor',
@@ -251,6 +395,22 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
                 <Space size={6}>
                   <EditOutlined />
                   <span>Soạn thảo</span>
+                </Space>
+              ),
+            },
+            {
+              value: 'vocab',
+              label: (
+                <Space size={6}>
+                  <BookOutlined />
+                  <span>Từ vựng</span>
+                  {classifiedItems && classifiedItems.length > 0 && (
+                    <Badge
+                      count={classifiedItems.length}
+                      overflowCount={999}
+                      style={{ backgroundColor: token.colorSuccess }}
+                    />
+                  )}
                 </Space>
               ),
             },
@@ -394,41 +554,157 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
         </Col>
       </Row>
 
-      {/* Editor or Live Preview View */}
-      {activeTab === 'editor' ? (
-        <div className={styles.fieldCard}>
-          <div className={styles.fieldLabel}>
-            <Flex align='center' gap={6}>
-              <EditOutlined style={{ color: token.colorPrimary }} />
-              <span>
-                Nội dung bài viết <span style={{ color: token.colorError }}>*</span>
-              </span>
-            </Flex>
-            <Text type='secondary' style={{ fontSize: 12, fontWeight: 400 }}>
-              Hỗ trợ Rich Text, bảng biểu, hình ảnh & AI review câu
-            </Text>
-          </div>
+      {/* Editor View (kept mounted to preserve TextEditor state and cursor) */}
+      <div
+        className={styles.fieldCard}
+        style={{ display: activeTab === 'editor' ? 'block' : 'none' }}
+      >
+        <Row gutter={[16, 16]}>
+          {/* Column 1: Original Content */}
+          <Col xs={24} lg={12}>
+            <div className={styles.fieldLabel}>
+              <Flex align='center' gap={6}>
+                <EditOutlined style={{ color: token.colorPrimary }} />
+                <span>
+                  Nội dung bài viết (Gốc) <span style={{ color: token.colorError }}>*</span>
+                </span>
+              </Flex>
+              <Flex align='center' gap={8}>
+                <Button
+                  size='small'
+                  icon={<BookOutlined style={{ color: token.colorPrimary }} />}
+                  onClick={() => setActiveTab('vocab')}
+                >
+                  {classifiedItems && classifiedItems.length > 0
+                    ? `Từ vựng (${classifiedItems.length})`
+                    : 'Phân loại từ vựng'}
+                </Button>
+              </Flex>
+            </div>
 
-          <Controller
-            control={control}
-            name='description'
-            rules={{ required: 'Vui lòng nhập nội dung bài viết' }}
-            render={({ field: { onChange, value } }) => (
-              <>
+            <Controller
+              control={control}
+              name='description'
+              rules={{ required: 'Vui lòng nhập nội dung bài viết' }}
+              render={({ field: { onChange, value } }) => (
+                <>
+                  <div className={styles.editorWrapper}>
+                    <TextEditor content={value} onChange={onChange} />
+                  </div>
+                  {errors.description && (
+                    <div style={{ color: token.colorError, fontSize: 12, marginTop: 6 }}>
+                      {errors.description.message}
+                    </div>
+                  )}
+                </>
+              )}
+            />
+          </Col>
+
+          {/* Column 2: Vietnamese Translation */}
+          <Col xs={24} lg={12}>
+            <div className={styles.fieldLabel}>
+              <Flex align='center' gap={6}>
+                <TranslationOutlined style={{ color: token.colorSuccess }} />
+                <span>Bản dịch bài viết (Song ngữ)</span>
+              </Flex>
+
+              <Flex gap={8} align='center'>
+                <Dropdown.Button
+                  size='small'
+                  icon={<DownOutlined />}
+                  onClick={handleTranslateFromDescriptionBrowser}
+                  menu={{
+                    items: [
+                      {
+                        key: 'browser',
+                        label: 'Translate (Native)',
+                        icon: <GlobalOutlined />,
+                        onClick: handleTranslateFromDescriptionBrowser,
+                      },
+                      {
+                        key: 'gemini',
+                        label: 'AI Translate (Gemini)',
+                        icon: <RobotOutlined />,
+                        onClick: handleTranslateFromDescriptionGemini,
+                      },
+                    ],
+                  }}
+                >
+                  {isBrowserTranslating || isTranslating ? <LoadingOutlined /> : <GlobalOutlined />}{' '}
+                  Translate
+                </Dropdown.Button>
+              </Flex>
+            </div>
+
+            <Controller
+              control={control}
+              name='translation'
+              render={({ field: { onChange, value } }) => (
                 <div className={styles.editorWrapper}>
                   <TextEditor content={value} onChange={onChange} />
                 </div>
-                {errors.description && (
-                  <div style={{ color: token.colorError, fontSize: 12, marginTop: 6 }}>
-                    {errors.description.message}
-                  </div>
-                )}
-              </>
-            )}
+              )}
+            />
+            <Text type='secondary' style={{ fontSize: 11, marginTop: 4, display: 'block' }}>
+              Bản dịch giúp hiển thị song ngữ và hỗ trợ AI ánh xạ ngữ cảnh tiếng Việt cho từ vựng
+              CEFR.
+            </Text>
+          </Col>
+        </Row>
+      </div>
+
+      {/* Vocabulary Classification View */}
+      {activeTab === 'vocab' && (
+        <div className={styles.fieldCard}>
+          <div className={styles.fieldLabel}>
+            <Flex align='center' gap={6}>
+              <BookOutlined style={{ color: token.colorPrimary }} />
+              <span>Phân loại từ vựng theo CEFR (A1 → C2)</span>
+            </Flex>
+            <Text type='secondary' style={{ fontSize: 12, fontWeight: 400 }}>
+              AI Gemini tự động phân tích bài viết và phân loại từ, cụm từ, collocation
+            </Text>
+          </div>
+
+          <VocabClassificationTabs
+            contentId={data?.id}
+            content={description || ''}
+            contentType='blog'
+            title={title}
+            translation={translation}
+            initialItems={classifiedItems}
+            onSave={async (items) => {
+              setClassifiedItems(items)
+              if (data?.id) {
+                try {
+                  await updateBlogAsync({
+                    id: data.id,
+                    data: {
+                      ...data,
+                      vocabClassification: items,
+                      translation: translation || data.translation || '',
+                    },
+                  })
+                  queryClient.invalidateQueries({ queryKey: blogKeys.detail(data.id) })
+                  queryClient.invalidateQueries({ queryKey: blogKeys.lists() })
+                  message({
+                    type: 'success',
+                    content: 'Đã lưu danh sách từ vựng vào bài viết!',
+                  })
+                } catch (err) {
+                  console.warn('[BlogForm] Auto-save vocabClassification failed:', err)
+                }
+              }
+            }}
+            contextLabel='📖 Ngữ cảnh trong bài viết'
+            emptyText='Chưa phân loại từ vựng cho bài viết này'
           />
         </div>
-      ) : (
-        /* Live Preview Mode */
+      )}
+
+      {/* Live Preview Mode */}
+      {activeTab === 'preview' && (
         <div className={styles.previewWrapper}>
           <div className={styles.previewTitle}>
             {title?.trim() || <span style={{ opacity: 0.5 }}>Chưa có tiêu đề bài viết</span>}
@@ -463,11 +739,86 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
             )}
           </div>
 
+          {/* Segmented view mode for preview when translation is available */}
+          {description && translation && (
+            <div style={{ marginBottom: 14 }}>
+              <Segmented
+                size='small'
+                value={previewMode}
+                onChange={(val) => setPreviewMode(val as 'original' | 'bilingual' | 'translation')}
+                options={[
+                  { label: 'Bài gốc', value: 'original' },
+                  { label: 'Song ngữ', value: 'bilingual' },
+                  { label: 'Bản dịch', value: 'translation' },
+                ]}
+              />
+            </div>
+          )}
+
           {description ? (
-            <div
-              className={clsx(appStyle.blog, appStyle.article, styles.previewContent)}
-              dangerouslySetInnerHTML={{ __html: description }}
-            />
+            <>
+              {classifiedItems && classifiedItems.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <VocabClassificationTabs
+                    contentId={data?.id}
+                    content={description || ''}
+                    contentType='blog'
+                    title={title}
+                    translation={translation}
+                    initialItems={classifiedItems}
+                    onSave={(items) => setClassifiedItems(items)}
+                    contextLabel='📖 Ngữ cảnh trong bài viết'
+                  />
+                </div>
+              )}
+
+              {previewMode === 'bilingual' && translation ? (
+                <Row gutter={[20, 20]}>
+                  <Col xs={24} lg={12}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: 13,
+                        marginBottom: 8,
+                        color: token.colorPrimary,
+                      }}
+                    >
+                      🇺🇸 Bài viết gốc
+                    </div>
+                    <div
+                      className={clsx(appStyle.blog, appStyle.article, styles.previewContent)}
+                      dangerouslySetInnerHTML={{ __html: description }}
+                    />
+                  </Col>
+                  <Col xs={24} lg={12}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: 13,
+                        marginBottom: 8,
+                        color: token.colorSuccess,
+                      }}
+                    >
+                      🇻🇳 Bản dịch tiếng Việt
+                    </div>
+                    <div
+                      className={clsx(appStyle.blog, appStyle.article, styles.previewContent)}
+                      dangerouslySetInnerHTML={{ __html: translation }}
+                    />
+                  </Col>
+                </Row>
+              ) : previewMode === 'translation' && translation ? (
+                <div
+                  className={clsx(appStyle.blog, appStyle.article, styles.previewContent)}
+                  dangerouslySetInnerHTML={{ __html: translation }}
+                />
+              ) : (
+                <div
+                  className={clsx(appStyle.blog, appStyle.article, styles.previewContent)}
+                  dangerouslySetInnerHTML={{ __html: description }}
+                />
+              )}
+            </>
           ) : (
             <div className={styles.emptyPreview}>
               <ReadOutlined style={{ fontSize: 36, marginBottom: 8 }} />

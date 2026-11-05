@@ -58,14 +58,17 @@ import { IBlogItem } from '@/models/blog.model'
 import { ISyncMeta } from '@/services/localDb/db'
 import { getCategory, getType } from '@/helpers/item'
 import { GeminiUsageTab } from './GeminiUsageTab'
+import { ApiErrorRequestsTab } from './ApiErrorRequestsTab'
 import { useGeminiStats } from '@/services/gemini'
+import { IErrorApiRequest } from '@/services/localDb/db'
+import { ERROR_API_REQUESTS_CHANGED_EVENT } from '@/services/localDb/errorApiRequests.service'
 import './developer.module.scss'
 import { appSetting } from '@/config/index'
 import moment from 'moment'
 
 const { Text, Paragraph } = Typography
 
-type TableType = 'all' | 'items' | 'blogs' | 'syncMeta'
+type TableType = 'items' | 'blogs' | 'syncMeta' | 'errorApiRequests'
 
 export const Developer: React.FC = () => {
   const { token } = theme.useToken()
@@ -82,10 +85,16 @@ export const Developer: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const tabFromQuery = searchParams.get('tab')
 
-  // Main page tab: 'local-db' | 'firebase-tools' | 'gemini-tracker'
+  // Main page tab: 'local-db' | 'firebase-tools' | 'gemini-tracker' | 'api-errors'
   const [mainTab, setMainTab] = useState<string>(() => {
     if (tabFromQuery === 'gemini' || tabFromQuery === 'gemini-tracker') return 'gemini-tracker'
     if (tabFromQuery === 'firebase' || tabFromQuery === 'firebase-tools') return 'firebase-tools'
+    if (
+      tabFromQuery === 'api-errors' ||
+      tabFromQuery === 'errors' ||
+      tabFromQuery === 'error-requests'
+    )
+      return 'api-errors'
     return 'local-db'
   })
 
@@ -94,6 +103,12 @@ export const Developer: React.FC = () => {
       setMainTab('gemini-tracker')
     } else if (tabFromQuery === 'firebase' || tabFromQuery === 'firebase-tools') {
       setMainTab('firebase-tools')
+    } else if (
+      tabFromQuery === 'api-errors' ||
+      tabFromQuery === 'errors' ||
+      tabFromQuery === 'error-requests'
+    ) {
+      setMainTab('api-errors')
     }
   }, [tabFromQuery])
 
@@ -103,6 +118,8 @@ export const Developer: React.FC = () => {
       setSearchParams({ tab: 'gemini' })
     } else if (key === 'firebase-tools') {
       setSearchParams({ tab: 'firebase' })
+    } else if (key === 'api-errors') {
+      setSearchParams({ tab: 'api-errors' })
     } else {
       setSearchParams({})
     }
@@ -127,6 +144,7 @@ export const Developer: React.FC = () => {
   const [items, setItems] = useState<IItem[]>([])
   const [blogs, setBlogs] = useState<IBlogItem[]>([])
   const [syncMeta, setSyncMeta] = useState<ISyncMeta[]>([])
+  const [errorRequests, setErrorRequests] = useState<IErrorApiRequest[]>([])
 
   // ================= Firebase Maintenance State =================
 
@@ -142,10 +160,11 @@ export const Developer: React.FC = () => {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [loadedItems, loadedBlogs, loadedSyncMeta] = await Promise.all([
+      const [loadedItems, loadedBlogs, loadedSyncMeta, loadedErrorRequests] = await Promise.all([
         localDb.items.toArray(),
         localDb.blogs.toArray(),
         localDb.syncMeta.toArray(),
+        localDb.errorApiRequests.toArray(),
       ])
 
       // Auto-fetch blogs from Firestore if localDb has no blogs or fewer blogs
@@ -185,6 +204,7 @@ export const Developer: React.FC = () => {
       setItems(loadedItems)
       setBlogs([...loadedBlogs])
       setSyncMeta(loadedSyncMeta)
+      setErrorRequests(loadedErrorRequests.sort((a, b) => b.timestamp - a.timestamp))
       setSelectedRowKeys((prev) => prev.filter((k) => loadedItems.some((it) => it.id === k)))
     } catch (err) {
       console.error('Failed to load local database:', err)
@@ -195,6 +215,21 @@ export const Developer: React.FC = () => {
       setLoading(false)
     }
   }, [user?.uid])
+
+  useEffect(() => {
+    const refreshErrors = async () => {
+      try {
+        const errs = await localDb.errorApiRequests.toArray()
+        setErrorRequests(errs.sort((a, b) => b.timestamp - a.timestamp))
+      } catch (e) {
+        console.error('Failed to refresh error requests:', e)
+      }
+    }
+    window.addEventListener(ERROR_API_REQUESTS_CHANGED_EVENT, refreshErrors)
+    return () => {
+      window.removeEventListener(ERROR_API_REQUESTS_CHANGED_EVENT, refreshErrors)
+    }
+  }, [])
 
   const handleSyncBlogsFromCloud = useCallback(async () => {
     setIsSyncingBlogs(true)
@@ -740,22 +775,12 @@ export const Developer: React.FC = () => {
         return filteredBlogs
       case 'syncMeta':
         return filteredSyncMeta
-      case 'all':
+      case 'errorApiRequests':
+        return errorRequests
       default:
-        return {
-          _database: 'EnmoryLocalDB',
-          _exported_at: new Date().toISOString(),
-          _counts: {
-            items: filteredItems.length,
-            blogs: filteredBlogs.length,
-            syncMeta: filteredSyncMeta.length,
-          },
-          items: filteredItems,
-          blogs: filteredBlogs,
-          syncMeta: filteredSyncMeta,
-        }
+        return filteredItems
     }
-  }, [activeTab, filteredItems, filteredBlogs, filteredSyncMeta])
+  }, [activeTab, filteredItems, filteredBlogs, filteredSyncMeta, errorRequests])
 
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(activeDataset, null, 2))
@@ -1405,7 +1430,7 @@ export const Developer: React.FC = () => {
 
                 {/* Summary Statistics */}
                 <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-                  <Col xs={24} sm={8} md={6}>
+                  <Col xs={24} sm={12} md={6}>
                     <Card
                       size='small'
                       hoverable
@@ -1428,7 +1453,7 @@ export const Developer: React.FC = () => {
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} sm={8} md={6}>
+                  <Col xs={24} sm={12} md={6}>
                     <Card
                       size='small'
                       hoverable
@@ -1451,7 +1476,7 @@ export const Developer: React.FC = () => {
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} sm={8} md={6}>
+                  <Col xs={24} sm={12} md={6}>
                     <Card
                       size='small'
                       hoverable
@@ -1472,22 +1497,23 @@ export const Developer: React.FC = () => {
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} sm={24} md={6}>
+                  <Col xs={24} sm={12} md={6}>
                     <Card
                       size='small'
                       hoverable
-                      onClick={() => setActiveTab('all')}
+                      onClick={() => setActiveTab('errorApiRequests')}
                       style={{
-                        borderColor: activeTab === 'all' ? token.colorInfo : undefined,
+                        borderColor:
+                          activeTab === 'errorApiRequests' ? token.colorError : undefined,
                       }}
                     >
                       <Statistic
-                        title='Tổng số bản ghi'
-                        value={scopedItems.length + scopedBlogs.length + syncMeta.length}
-                        prefix={<DatabaseOutlined />}
+                        title='API Errors (Yêu cầu lỗi)'
+                        value={errorRequests.length}
+                        prefix={<ApiOutlined style={{ color: token.colorError }} />}
                         suffix={
-                          filterByUser && user?.uid
-                            ? `(${items.length + blogs.length + syncMeta.length} toàn bộ)`
+                          errorRequests.filter((r) => r.lastStatus === 'failed').length > 0
+                            ? `(${errorRequests.filter((r) => r.lastStatus === 'failed').length} thất bại)`
                             : ''
                         }
                       />
@@ -1507,8 +1533,8 @@ export const Developer: React.FC = () => {
                           { key: 'blogs', label: `blogs (${scopedBlogs.length})` },
                           { key: 'syncMeta', label: `syncMeta (${syncMeta.length})` },
                           {
-                            key: 'all',
-                            label: `Tất cả bảng (${scopedItems.length + scopedBlogs.length + syncMeta.length})`,
+                            key: 'errorApiRequests',
+                            label: `API Errors (${errorRequests.length})`,
                           },
                         ]}
                         style={{ marginBottom: 0 }}
@@ -1570,7 +1596,7 @@ export const Developer: React.FC = () => {
                   </Card>
                 ) : (
                   <>
-                    {(activeTab === 'items' || activeTab === 'all') && (
+                    {activeTab === 'items' && (
                       <Card
                         title={
                           <Space>
@@ -1579,7 +1605,6 @@ export const Developer: React.FC = () => {
                             <Tag color='blue'>{filteredItems.length} từ vựng</Tag>
                           </Space>
                         }
-                        style={{ marginBottom: activeTab === 'all' ? 24 : 0 }}
                         size='small'
                       >
                         {missingIdItems.length > 0 && (
@@ -1673,7 +1698,7 @@ export const Developer: React.FC = () => {
                       </Card>
                     )}
 
-                    {(activeTab === 'blogs' || activeTab === 'all') && (
+                    {activeTab === 'blogs' && (
                       <Card
                         title={
                           <Row justify='space-between' align='middle' style={{ width: '100%' }}>
@@ -1709,7 +1734,6 @@ export const Developer: React.FC = () => {
                             </Col>
                           </Row>
                         }
-                        style={{ marginBottom: activeTab === 'all' ? 24 : 0 }}
                         size='small'
                       >
                         <Table<IBlogItem>
@@ -1731,7 +1755,7 @@ export const Developer: React.FC = () => {
                       </Card>
                     )}
 
-                    {(activeTab === 'syncMeta' || activeTab === 'all') && (
+                    {activeTab === 'syncMeta' && (
                       <Card
                         title={
                           <Space>
@@ -1757,6 +1781,21 @@ export const Developer: React.FC = () => {
                           bordered
                           scroll={{ x: 750 }}
                         />
+                      </Card>
+                    )}
+
+                    {activeTab === 'errorApiRequests' && (
+                      <Card
+                        title={
+                          <Space>
+                            <ApiOutlined style={{ color: token.colorError }} />
+                            <span>Bảng Yêu cầu API lỗi (errorApiRequests)</span>
+                            <Tag color='red'>{errorRequests.length} yêu cầu lỗi</Tag>
+                          </Space>
+                        }
+                        size='small'
+                      >
+                        <ApiErrorRequestsTab />
                       </Card>
                     )}
                   </>
@@ -2303,6 +2342,31 @@ export const Developer: React.FC = () => {
               </Space>
             ),
             children: <GeminiUsageTab />,
+          },
+          {
+            key: 'api-errors',
+            label: (
+              <Space>
+                <ApiOutlined
+                  style={{ color: errorRequests.length > 0 ? token.colorError : undefined }}
+                />
+                <span>API Error Requests</span>
+                {errorRequests.length > 0 && (
+                  <Tag
+                    color='error'
+                    style={{
+                      margin: 0,
+                      fontSize: 11,
+                      borderRadius: 10,
+                      padding: '0 6px',
+                    }}
+                  >
+                    {errorRequests.length} lỗi
+                  </Tag>
+                )}
+              </Space>
+            ),
+            children: <ApiErrorRequestsTab />,
           },
         ]}
       />

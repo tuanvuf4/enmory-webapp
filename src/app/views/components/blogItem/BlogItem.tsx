@@ -1,4 +1,5 @@
 import { IBlogItem } from '@/models/blog.model'
+import { formatBlogCategoryValue } from '@/services/firebase/api/blogCategories.api'
 import { appSetting } from '@/config/index'
 import moment from 'moment'
 import { useNavigate } from 'react-router-dom'
@@ -57,7 +58,16 @@ export const BlogItem = ({
   const cats = user?.configuration?.blogTags || []
 
   const getSelectedTagName = (tag: string) => {
-    return cats.find((i) => i.value === tag)?.name
+    const normalizedTarget = formatBlogCategoryValue(tag)
+    return (
+      cats.find(
+        (i) =>
+          i.value === tag ||
+          i.name === tag ||
+          formatBlogCategoryValue(i.value) === normalizedTarget ||
+          formatBlogCategoryValue(i.name) === normalizedTarget,
+      )?.name || tag
+    )
   }
 
   if (compact) {
@@ -92,7 +102,7 @@ export const BlogItem = ({
                   style={{ margin: 0, fontSize: token.fontSizeSM }}
                   onClick={(e) => handleTagClick(tag, e)}
                 >
-                  {tag}
+                  {getSelectedTagName(tag)}
                 </Tag>
               ))}
               {tags.length > 4 && (

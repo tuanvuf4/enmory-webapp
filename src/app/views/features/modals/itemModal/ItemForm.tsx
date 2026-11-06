@@ -5,6 +5,7 @@ import { appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { isGroupWord } from '@/helpers/validate'
 import { ECategory, EType, IItem, IExample, IMeaning } from '@/models/item.model'
+import { formatTagValue } from '@/models/tag.model'
 import { categories as defaultCategories } from '@/constant/item'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { settingAction } from '@/store/reducers/setting.reducer'
@@ -243,7 +244,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                 latestTags.map((tag) => ({
                   id: tag.name,
                   label: tag.name,
-                  value: tag.name,
+                  value: tag.value ? formatTagValue(tag.value) : formatTagValue(tag.name),
                   color: tag.color,
                   order: tag.order,
                 })),

@@ -27,21 +27,6 @@ export interface IListeningHistoryItem {
   voice?: string
 }
 
-export interface ITranslationHistoryItem {
-  id?: number
-  uid?: string
-  date: string // YYYY-MM-DD
-  timestamp: number
-  sentenceId?: string
-  exampleId?: string
-  sourceText?: string
-  targetText?: string
-  userText?: string
-  accuracy: number
-  isPerfect: boolean
-  direction?: 'vi-en' | 'en-vi'
-}
-
 export interface IErrorApiRequest {
   id: string
   url: string
@@ -68,7 +53,6 @@ export class EnmoryDatabase extends Dexie {
   syncMeta!: Table<ISyncMeta, string>
   audioCache!: Table<ICachedAudio, string>
   listeningHistory!: Table<IListeningHistoryItem, number>
-  translationHistory!: Table<ITranslationHistoryItem, number>
   errorApiRequests!: Table<IErrorApiRequest, string>
 
   constructor() {
@@ -100,6 +84,9 @@ export class EnmoryDatabase extends Dexie {
     })
     this.version(8).stores({
       errorApiRequests: 'id, url, method, status, timestamp, lastStatus, source',
+    })
+    this.version(9).stores({
+      translationHistory: null,
     })
   }
 }

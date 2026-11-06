@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   theme,
   Button,
@@ -48,7 +48,12 @@ import {
   geminiTranslationReviewService,
   ITranslationReviewResponse,
 } from '@/services/gemini'
-import { SentenceDiffView, evaluateDictation, IDictationResult } from '@/views/components'
+import {
+  SentenceDiffView,
+  evaluateDictation,
+  IDictationResult,
+  removeParenthesesText,
+} from '@/views/components'
 import { shuffleArray } from '@/helpers/mics'
 import { useSelector, useChecklist, itemKeys } from '@/core/hooks'
 import { useItemModal } from '@/helpers/hooks'
@@ -219,7 +224,8 @@ export const Dictation: React.FC<IDictationProps> = ({
   // Scrambled word tags for Hint (deduplicated so each word appears once)
   const scrambledWords = useMemo(() => {
     if (!targetText) return []
-    const tokens = targetText
+    const cleanTarget = removeParenthesesText(targetText)
+    const tokens = cleanTarget
       .split(/\s+/)
       .map((w) => w.trim())
       .filter(Boolean)

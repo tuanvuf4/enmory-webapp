@@ -3,6 +3,7 @@ import {
   ITag,
   DEFAULT_TAG_COLOR,
   DEFAULT_TAG_ORDER,
+  formatTagValue,
   normalizeTag,
   normalizeTagList,
 } from '@/models/tag.model'
@@ -24,13 +25,10 @@ export interface IBlogCategory extends ITag {
 }
 
 /**
- * Format blog category name into value slug (e.g. "Tech Talk" => 'tech_talk')
+ * Format blog category name into value slug (e.g. "Tech Talk" => 'tech_talk', "Daily Stand-up" => 'daily_stand_up')
  */
 export const formatBlogCategoryValue = (name: string): string => {
-  return String(name || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '_')
+  return formatTagValue(name)
 }
 
 export interface IBlogCategoryResponse<T> {

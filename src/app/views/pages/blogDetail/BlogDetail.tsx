@@ -13,6 +13,7 @@ import clsx from 'clsx'
 import { Widget } from '@/views/features/widget/Widget'
 import { VocabClassificationTabs } from '@/views/features/vocabClassification'
 import { IClassifiedVocabItem } from '@/models/vocabClassification.model'
+import { formatBlogCategoryValue } from '@/services/firebase/api/blogCategories.api'
 
 export interface BlogDetailProps {
   id?: string
@@ -71,9 +72,16 @@ export const BlogDetail: React.FC<BlogDetailProps> = ({ id: propId }) => {
   }, [blog?.description, blog?.translation])
 
   const getTagName = (tag: string) => {
-    const item = tags.find((i) => i.value === tag)
+    const normalizedTarget = formatBlogCategoryValue(tag)
+    const item = tags.find(
+      (i) =>
+        i.value === tag ||
+        i.name === tag ||
+        formatBlogCategoryValue(i.value) === normalizedTarget ||
+        formatBlogCategoryValue(i.name) === normalizedTarget,
+    )
     if (item) return item.name
-    return ''
+    return tag
   }
 
   const handleBack = () => {

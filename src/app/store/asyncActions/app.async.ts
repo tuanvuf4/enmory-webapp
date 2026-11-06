@@ -1,6 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import { commonApi } from '@/services/firebase/api/common.api'
 import { tagApi } from '@/services/firebase/api/tag.api'
+import { formatTagValue } from '@/models/tag.model'
 import { IIotdRequest } from '@/models/item.model'
 
 const fetchCategories = createAsyncThunk('categories/fetchCategories', async () => {
@@ -37,7 +38,7 @@ const fetchTags = createAsyncThunk('tags/fetchTags', async () => {
         tags.content?.map((tag) => ({
           id: tag.name,
           label: tag.name,
-          value: tag.name,
+          value: tag.value ? formatTagValue(tag.value) : formatTagValue(tag.name),
           name: tag.name,
           color: tag.color,
           order: tag.order,

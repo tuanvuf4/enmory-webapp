@@ -3,6 +3,7 @@ import { addDoc, collection, doc, Timestamp, updateDoc, writeBatch } from 'fireb
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { IBlogItem } from '@/models/blog.model'
 import { firebaseAuthService } from '@/services/firebase/authService'
+import { formatBlogCategoryValue } from '@/services/firebase/api/blogCategories.api'
 import { localDb } from '@/services/localDb/db'
 
 export interface IBlogResponse<T> {
@@ -27,7 +28,7 @@ export interface IBlogRequestParams {
 export type IArticleRequestParams = IBlogRequestParams
 
 /**
- * Helper to generate tag variations for querying (e.g. 'tech_blog' -> ['tech_blog', 'tech blog', 'Tech Blog', 'Tech blog'])
+ * Helper to generate tag variations for querying (e.g. 'Daily Stand-up' -> ['Daily Stand-up', 'daily_stand_up', 'daily_stand-up', 'Daily Stand up'])
  */
 export const getTagVariants = (tag: string): string[] => {
   const clean = tag.trim()
@@ -36,12 +37,16 @@ export const getTagVariants = (tag: string): string[] => {
   const variants = new Set<string>()
   variants.add(clean)
 
-  // slugified: 'tech_blog'
-  const slug = clean.toLowerCase().replace(/\s+/g, '_')
-  variants.add(slug)
+  // formatted slug: 'daily_stand_up'
+  const formatted = formatBlogCategoryValue(clean)
+  if (formatted) variants.add(formatted)
+
+  // legacy space-only slug: 'tech_blog'
+  const legacySlug = clean.toLowerCase().replace(/\s+/g, '_')
+  variants.add(legacySlug)
 
   // space-separated: 'tech blog'
-  const withSpaces = clean.replace(/_/g, ' ').replace(/-/g, ' ')
+  const withSpaces = clean.replace(/[_\-]+/g, ' ')
   variants.add(withSpaces)
 
   // Title Case: 'Tech Blog'
@@ -53,7 +58,7 @@ export const getTagVariants = (tag: string): string[] => {
   variants.add(capFirst)
 
   // hyphenated: 'tech-blog'
-  variants.add(clean.replace(/_/g, '-'))
+  variants.add(clean.replace(/[_\s]+/g, '-'))
 
   return Array.from(variants).filter(Boolean)
 }

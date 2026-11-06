@@ -15,7 +15,8 @@ export const formatTagValue = (name: string): string => {
   return String(name || '')
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, '_')
+    .replace(/[^\p{L}\p{N}]+/gu, '_')
+    .replace(/^_+|_+$/g, '')
 }
 
 export const normalizeTag = (tag: any, defaultOrder = DEFAULT_TAG_ORDER): ITag | null => {

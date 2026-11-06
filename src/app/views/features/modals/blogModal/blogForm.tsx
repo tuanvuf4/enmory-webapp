@@ -10,6 +10,7 @@ import {
 } from '@/core/hooks'
 import { blogKeys } from '@/core/hooks/useBlogs'
 import { IBlogItem } from '@/models/blog.model'
+import { formatBlogCategoryValue } from '@/services/firebase/api/blogCategories.api'
 import { IClassifiedVocabItem } from '@/models/vocabClassification.model'
 import { VocabClassificationTabs } from '@/views/features/vocabClassification'
 import { TextEditor, InputTag, TagSelect } from '@/views/components'
@@ -40,7 +41,7 @@ import {
   BranchesOutlined,
   EditOutlined,
   EyeOutlined,
-  ClockCircleOutlined,
+  EyeInvisibleOutlined,
   ReadOutlined,
   CalendarOutlined,
   ThunderboltOutlined,
@@ -80,7 +81,8 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
     }
   }
 
-  const [activeTab, setActiveTab] = useState<'editor' | 'preview' | 'vocab'>('editor')
+  const [isPreview, setIsPreview] = useState(false)
+  const [showTranslation, setShowTranslation] = useState(true)
   const [isTranslating, setIsTranslating] = useState(false)
   const [isBrowserTranslating, setIsBrowserTranslating] = useState(false)
   const [previewMode, setPreviewMode] = useState<'original' | 'bilingual' | 'translation'>(
@@ -362,12 +364,6 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
             </span>
           </div>
           <div className={styles.statItem}>
-            <ClockCircleOutlined style={{ color: token.colorWarning }} />
-            <span>
-              ~<strong>{stats.readingTimeMinutes}</strong> phút đọc
-            </span>
-          </div>
-          <div className={styles.statItem}>
             <span style={{ color: token.colorTextTertiary }}>|</span>
             <span style={{ marginLeft: 6 }}>{stats.chars.toLocaleString()} ký tự</span>
           </div>
@@ -375,7 +371,16 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
             <div
               className={styles.statItem}
               style={{ cursor: 'pointer' }}
-              onClick={() => setActiveTab('vocab')}
+              onClick={() => {
+                if (isPreview) {
+                  setIsPreview(false)
+                  setTimeout(() => {
+                    document.getElementById('vocab-section')?.scrollIntoView({ behavior: 'smooth' })
+                  }, 100)
+                } else {
+                  document.getElementById('vocab-section')?.scrollIntoView({ behavior: 'smooth' })
+                }
+              }}
             >
               <BookOutlined style={{ color: token.colorSuccess }} />
               <span>
@@ -385,46 +390,25 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
           )}
         </Flex>
 
-        <Segmented
-          value={activeTab}
-          onChange={(val) => setActiveTab(val as 'editor' | 'preview' | 'vocab')}
-          options={[
-            {
-              value: 'editor',
-              label: (
-                <Space size={6}>
-                  <EditOutlined />
-                  <span>Soạn thảo</span>
-                </Space>
-              ),
-            },
-            {
-              value: 'vocab',
-              label: (
-                <Space size={6}>
-                  <BookOutlined />
-                  <span>Từ vựng</span>
-                  {classifiedItems && classifiedItems.length > 0 && (
-                    <Badge
-                      count={classifiedItems.length}
-                      overflowCount={999}
-                      style={{ backgroundColor: token.colorSuccess }}
-                    />
-                  )}
-                </Space>
-              ),
-            },
-            {
-              value: 'preview',
-              label: (
-                <Space size={6}>
-                  <EyeOutlined />
-                  <span>Xem trước</span>
-                </Space>
-              ),
-            },
-          ]}
-        />
+        <Flex align='center' gap={8}>
+          {!isPreview ? (
+            <>
+              <Button
+                icon={showTranslation ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                onClick={() => setShowTranslation((prev) => !prev)}
+              >
+                {showTranslation ? 'Ẩn dịch' : 'Hiện dịch'}
+              </Button>
+              <Button icon={<EyeOutlined />} onClick={() => setIsPreview(true)}>
+                Xem trước
+              </Button>
+            </>
+          ) : (
+            <Button type='primary' icon={<EditOutlined />} onClick={() => setIsPreview(false)}>
+              Soạn thảo
+            </Button>
+          )}
+        </Flex>
       </div>
 
       {/* Title Field */}
@@ -494,20 +478,23 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
                   value={field.value || []}
                   onChange={field.onChange}
                   onCreateItem={async (name) => {
+                    const categoryValue = formatBlogCategoryValue(name)
                     const res = await createCategoryMutation({
                       name,
-                      value: name.trim().toLowerCase().replace(/\s+/g, '_'),
+                      value: categoryValue,
                     })
                     queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
-                    return res?.name || name
+                    const targetValue = res?.value || categoryValue
+                    return { id: targetValue, value: targetValue, label: res?.name || name }
                   }}
                   onUpdateItem={async (id, newName) => {
                     const existingCat = cats.find((c) => c.name === id || c.value === id)
+                    const categoryValue = existingCat?.value || formatBlogCategoryValue(newName)
                     await updateCategoryMutation({
                       id,
                       data: {
                         name: newName,
-                        value: existingCat?.value || id,
+                        value: categoryValue,
                       },
                     })
                     queryClient.invalidateQueries({ queryKey: blogCategoryKeys.lists() })
@@ -555,30 +542,16 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
       </Row>
 
       {/* Editor View (kept mounted to preserve TextEditor state and cursor) */}
-      <div
-        className={styles.fieldCard}
-        style={{ display: activeTab === 'editor' ? 'block' : 'none' }}
-      >
+      <div className={styles.fieldCard} style={{ display: !isPreview ? 'block' : 'none' }}>
         <Row gutter={[16, 16]}>
           {/* Column 1: Original Content */}
-          <Col xs={24} lg={12}>
+          <Col xs={24} lg={showTranslation ? 12 : 24}>
             <div className={styles.fieldLabel}>
               <Flex align='center' gap={6}>
                 <EditOutlined style={{ color: token.colorPrimary }} />
                 <span>
                   Nội dung bài viết (Gốc) <span style={{ color: token.colorError }}>*</span>
                 </span>
-              </Flex>
-              <Flex align='center' gap={8}>
-                <Button
-                  size='small'
-                  icon={<BookOutlined style={{ color: token.colorPrimary }} />}
-                  onClick={() => setActiveTab('vocab')}
-                >
-                  {classifiedItems && classifiedItems.length > 0
-                    ? `Từ vựng (${classifiedItems.length})`
-                    : 'Phân loại từ vựng'}
-                </Button>
               </Flex>
             </div>
 
@@ -602,7 +575,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
           </Col>
 
           {/* Column 2: Vietnamese Translation */}
-          <Col xs={24} lg={12}>
+          <Col xs={24} lg={12} style={{ display: showTranslation ? undefined : 'none' }}>
             <div className={styles.fieldLabel}>
               <Flex align='center' gap={6}>
                 <TranslationOutlined style={{ color: token.colorSuccess }} />
@@ -654,57 +627,66 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
         </Row>
       </div>
 
-      {/* Vocabulary Classification View */}
-      {activeTab === 'vocab' && (
-        <div className={styles.fieldCard}>
-          <div className={styles.fieldLabel}>
-            <Flex align='center' gap={6}>
-              <BookOutlined style={{ color: token.colorPrimary }} />
-              <span>Phân loại từ vựng theo CEFR (A1 → C2)</span>
-            </Flex>
-            <Text type='secondary' style={{ fontSize: 12, fontWeight: 400 }}>
-              AI Gemini tự động phân tích bài viết và phân loại từ, cụm từ, collocation
-            </Text>
-          </div>
-
-          <VocabClassificationTabs
-            contentId={data?.id}
-            content={description || ''}
-            contentType='blog'
-            title={title}
-            translation={translation}
-            initialItems={classifiedItems}
-            onSave={async (items) => {
-              setClassifiedItems(items)
-              if (data?.id) {
-                try {
-                  await updateBlogAsync({
-                    id: data.id,
-                    data: {
-                      ...data,
-                      vocabClassification: items,
-                      translation: translation || data.translation || '',
-                    },
-                  })
-                  queryClient.invalidateQueries({ queryKey: blogKeys.detail(data.id) })
-                  queryClient.invalidateQueries({ queryKey: blogKeys.lists() })
-                  message({
-                    type: 'success',
-                    content: 'Đã lưu danh sách từ vựng vào bài viết!',
-                  })
-                } catch (err) {
-                  console.warn('[BlogForm] Auto-save vocabClassification failed:', err)
-                }
-              }
-            }}
-            contextLabel='📖 Ngữ cảnh trong bài viết'
-            emptyText='Chưa phân loại từ vựng cho bài viết này'
-          />
+      {/* Vocabulary Classification Section */}
+      <div
+        id='vocab-section'
+        className={styles.fieldCard}
+        style={{ display: !isPreview ? 'block' : 'none' }}
+      >
+        <div className={styles.fieldLabel}>
+          <Flex align='center' gap={6}>
+            <BookOutlined style={{ color: token.colorPrimary }} />
+            <span>Phân loại từ vựng theo CEFR (A1 → C2)</span>
+            {classifiedItems && classifiedItems.length > 0 && (
+              <Badge
+                count={classifiedItems.length}
+                overflowCount={999}
+                style={{ backgroundColor: token.colorSuccess }}
+              />
+            )}
+          </Flex>
+          <Text type='secondary' style={{ fontSize: 12, fontWeight: 400 }}>
+            AI Gemini tự động phân tích bài viết và phân loại từ, cụm từ, collocation
+          </Text>
         </div>
-      )}
+
+        <VocabClassificationTabs
+          contentId={data?.id}
+          content={description || ''}
+          contentType='blog'
+          title={title}
+          translation={translation}
+          initialItems={classifiedItems}
+          onSave={async (items) => {
+            setClassifiedItems(items)
+            if (data?.id) {
+              try {
+                await updateBlogAsync({
+                  id: data.id,
+                  data: {
+                    ...data,
+                    vocabClassification: items,
+                    translation: translation || data.translation || '',
+                  },
+                })
+                queryClient.invalidateQueries({ queryKey: blogKeys.detail(data.id) })
+                queryClient.invalidateQueries({ queryKey: blogKeys.lists() })
+                message({
+                  type: 'success',
+                  content: 'Đã lưu danh sách từ vựng vào bài viết!',
+                })
+              } catch (err) {
+                console.warn('[BlogForm] Auto-save vocabClassification failed:', err)
+              }
+            }
+          }}
+          contextLabel='📖 Ngữ cảnh trong bài viết'
+          emptyText='Chưa phân loại từ vựng cho bài viết này'
+        />
+      </div>
 
       {/* Live Preview Mode */}
-      {activeTab === 'preview' && (
+      {isPreview && (
         <div className={styles.previewWrapper}>
           <div className={styles.previewTitle}>
             {title?.trim() || <span style={{ opacity: 0.5 }}>Chưa có tiêu đề bài viết</span>}
@@ -823,7 +805,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
             <div className={styles.emptyPreview}>
               <ReadOutlined style={{ fontSize: 36, marginBottom: 8 }} />
               <p>Chưa có nội dung bài viết để xem trước.</p>
-              <Button type='link' onClick={() => setActiveTab('editor')}>
+              <Button type='link' onClick={() => setIsPreview(false)}>
                 Quay lại soạn thảo ngay
               </Button>
             </div>

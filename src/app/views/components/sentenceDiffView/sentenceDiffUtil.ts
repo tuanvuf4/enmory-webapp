@@ -22,6 +22,66 @@ export const normalizeApostrophes = (str: string): string => {
   return str.replace(/(&#39;|&apos;|&#039;)/g, "'").replace(/[’‘ʼʻ`´]/g, "'")
 }
 
+// Normalizes double quote variations (curly quotes, entities, etc.) to standard ASCII double quote (")
+export const normalizeDoubleQuotes = (str: string): string => {
+  if (!str) return ''
+  return str
+    .replace(/(&quot;|&#34;|&ldquo;|&rdquo;|&#8220;|&#8221;)/g, '"')
+    .replace(/[“”„‟«»]/g, '"')
+}
+
+// Regex matching text inside parentheses (round brackets): (...) or （...）
+export const PARENTHESES_REGEX = /[(\uff08][^)\uff09]*?(?:[)\uff09]|$)/g
+
+/**
+ * Extracts words that appear inside parentheses (...) from a sentence.
+ * Returns a Set of normalized word tokens.
+ */
+export const extractParenthesesWordTokens = (sentence: string): Set<string> => {
+  const parenWords = new Set<string>()
+  if (!sentence) return parenWords
+
+  const matches = sentence.match(PARENTHESES_REGEX)
+  if (!matches) return parenWords
+
+  for (const match of matches) {
+    const inner = match.replace(/^[(\uff08]+|[)\uff09]+$/g, '')
+    const tokens = inner.split(/\s+/).filter(Boolean)
+    for (const t of tokens) {
+      const norm = normalizeWordToken(t)
+      if (norm) {
+        parenWords.add(norm)
+        const stripped = stripToAlphanumeric(norm)
+        if (stripped) parenWords.add(stripped)
+      }
+    }
+  }
+
+  return parenWords
+}
+
+/**
+ * Strips parenthesized text (...) from a sentence for dictation comparison.
+ * If removing parenthesized text leaves no words (i.e. the entire sentence
+ * was inside parentheses), it preserves the inner words and strips only the parentheses.
+ */
+export const removeParenthesesText = (text: string): string => {
+  if (!text) return ''
+
+  const withoutParen = text.replace(PARENTHESES_REGEX, ' ').trim()
+
+  // If text without parentheses still has alphanumeric content (words), return it
+  if (stripToAlphanumeric(withoutParen)) {
+    return withoutParen.replace(/\s+/g, ' ')
+  }
+
+  // Otherwise, the entire sentence was inside parentheses, so keep text and strip parentheses only
+  return text
+    .replace(/[()\uff08\uff09]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 // Comprehensive English contractions mapping (supports contractions with or without apostrophe, and their expansions)
 export const CONTRACTIONS_MAP: Record<string, string[]> = {
   "aren't": ['are not'],
@@ -102,8 +162,8 @@ export const CONTRACTIONS: Record<string, string> = Object.fromEntries(
 )
 
 export const cleanPunctuation = (str: string): string => {
-  return normalizeApostrophes(str)
-    .replace(/[.,/#!$%^&*;:{}=\-_`~()?"'’]/g, '')
+  return normalizeApostrophes(normalizeDoubleQuotes(str))
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()?"'’“”„‟«»]/g, '')
     .trim()
 }
 
@@ -261,8 +321,25 @@ export const evaluateSentenceDiff = (
   originalSentence: string,
   userSentence: string,
 ): IDictationResult => {
-  const origTokens = (originalSentence || '').trim().split(/\s+/).filter(Boolean)
-  const userTokens = (userSentence || '').trim().split(/\s+/).filter(Boolean)
+  // Extract words that appear inside parentheses (...) in the original sentence
+  // so that if the user happens to type them without parentheses, they won't be penalized as extra words.
+  const origParenWords = extractParenthesesWordTokens(originalSentence || '')
+
+  // Remove parenthesized text (...) from both sentences for comparison (as they represent explanations/notes)
+  const cleanOriginal = removeParenthesesText(originalSentence || '')
+  const cleanUser = removeParenthesesText(userSentence || '')
+
+  const origTokens = cleanOriginal
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.trim())
+    .filter((w) => Boolean(stripToAlphanumeric(w)))
+
+  const userTokens = cleanUser
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.trim())
+    .filter((w) => Boolean(stripToAlphanumeric(w)))
 
   const m = origTokens.length
   const n = userTokens.length
@@ -406,14 +483,26 @@ export const evaluateSentenceDiff = (
     }
     // 5. Extra user word
     else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-      aligned.unshift({
-        word: userTokens[j - 1],
-        isCorrect: false,
-        status: 'extra',
-        userWord: userTokens[j - 1],
-      })
-      extraCount++
-      j--
+      const extraWord = userTokens[j - 1]
+      const normExtra = normalizeWordToken(extraWord)
+      const strippedExtra = stripToAlphanumeric(extraWord)
+
+      // If user typed a word that was in the original parenthesized text, do not penalize as extra
+      if (
+        (normExtra && origParenWords.has(normExtra)) ||
+        (strippedExtra && origParenWords.has(strippedExtra))
+      ) {
+        j--
+      } else {
+        aligned.unshift({
+          word: extraWord,
+          isCorrect: false,
+          status: 'extra',
+          userWord: extraWord,
+        })
+        extraCount++
+        j--
+      }
     }
     // 6. Missing orig word
     else if (i > 0) {

@@ -4,83 +4,208 @@ export interface ITranscriptSegment {
   translation?: string
 }
 
-/**
- * Matches lines that contain ONLY a timestamp.
- * Supports: M:SS, MM:SS, H:MM:SS
- * Example: "19:26", "1:23:45"
- */
-const TIMESTAMP_RE = /^(\d+):(\d{2})(?::(\d{2}))?$/
+export function parseTimeToSeconds(hOrM: string, mOrS: string, sOpt?: string): number {
+  if (sOpt !== undefined) {
+    return parseInt(hOrM, 10) * 3600 + parseInt(mOrS, 10) * 60 + parseInt(sOpt, 10)
+  }
+  return parseInt(hOrM, 10) * 60 + parseInt(mOrS, 10)
+}
+
+export const TIMESTAMP_LINE_RE =
+  /^\[?(\d+):(\d{2})(?::(\d{2}))?(?:\.\d+|\,\d+)?\]?(?:\s*(?:-->|-)\s*\[?(\d+):(\d{2})(?::(\d{2}))?(?:\.\d+|\,\d+)?\]?)?$/
+
+export const TIMESTAMP_PREFIX_RE = /^\[?(\d+):(\d{2})(?::(\d{2}))?(?:\.\d+|\,\d+)?\]?[\s\-:]+(.+)$/
 
 /**
- * Parses a plain-text transcript with timestamp markers into segments.
- * Optionally merges a parallel Vietnamese translation transcript mapped by timestamp or sequence.
+ * Parses lines of text into segments with timestamps.
+ * Supports various formats: 0:00, 00:00, [0:00], (0:00), SRT, WebVTT, millisecond stamps, and inline prefix stamps.
  */
-export function parseTranscript(transcript: string, translation?: string): ITranscriptSegment[] {
-  if (!transcript?.trim()) return []
+export function parseSegmentsOnly(text: string): ITranscriptSegment[] {
+  if (!text?.trim()) return []
 
   const segments: ITranscriptSegment[] = []
+  const lines = text.split(/\r?\n/)
+
   let currentTime: number | null = null
   let currentLines: string[] = []
 
   const flush = () => {
     if (currentTime !== null) {
-      const text = currentLines.join('\n').trim()
-      if (text) segments.push({ timeSeconds: currentTime, text })
+      const segText = currentLines.join('\n').trim()
+      if (segText) {
+        segments.push({ timeSeconds: currentTime, text: segText })
+      }
     }
+    currentLines = []
   }
 
-  for (const rawLine of transcript.split('\n')) {
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i]
     const line = rawLine.trim()
-    const match = line.match(TIMESTAMP_RE)
+    if (!line) continue
 
-    if (match) {
+    // Skip WebVTT header or metadata
+    if (/^(?:WEBVTT|NOTE\b|Kind:|Language:)/i.test(line)) continue
+
+    // Pure timestamp line
+    const lineTimeMatch = line.match(TIMESTAMP_LINE_RE)
+    if (lineTimeMatch) {
       flush()
-      currentTime =
-        match[3] !== undefined
-          ? parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseInt(match[3])
-          : parseInt(match[1]) * 60 + parseInt(match[2])
-      currentLines = []
-    } else if (currentTime !== null && line) {
+      currentTime = parseTimeToSeconds(lineTimeMatch[1], lineTimeMatch[2], lineTimeMatch[3])
+      continue
+    }
+
+    // SRT sequence numbers (e.g. "1", "2") followed by timestamp line
+    if (/^\d+$/.test(line)) {
+      let nextIdx = i + 1
+      while (nextIdx < lines.length && !lines[nextIdx].trim()) {
+        nextIdx++
+      }
+      if (nextIdx < lines.length && TIMESTAMP_LINE_RE.test(lines[nextIdx].trim())) {
+        continue
+      }
+    }
+
+    // Line starting with timestamp prefix (e.g. "[00:15] Hello" or "0:15 - Hello")
+    const prefixMatch = line.match(TIMESTAMP_PREFIX_RE)
+    if (prefixMatch) {
+      flush()
+      currentTime = parseTimeToSeconds(prefixMatch[1], prefixMatch[2], prefixMatch[3])
+      currentLines.push(prefixMatch[4].trim())
+      continue
+    }
+
+    // Text content line
+    if (currentTime !== null) {
       currentLines.push(line)
     }
   }
 
   flush()
+  return segments
+}
 
-  // Match and attach translation if provided
-  if (translation?.trim() && segments.length > 0) {
-    const transSegments = parseTranscript(translation)
-    if (transSegments.length > 0) {
-      const hasCloseTimestamps = transSegments.some((ts) =>
-        segments.some((s) => Math.abs(s.timeSeconds - ts.timeSeconds) <= 2),
-      )
+/**
+ * Accurately merges translation into transcript segments without duplicating sentences.
+ */
+function attachTranslation(segments: ITranscriptSegment[], translation: string): void {
+  if (!translation?.trim() || segments.length === 0) return
+
+  const transSegments = parseSegmentsOnly(translation)
+
+  // Case 1: Translation contains timestamp markers
+  if (transSegments.length > 0) {
+    // 1.1: Exact 1-to-1 match in segment count (standard AI generation, batch translation, or aligned subtitles)
+    if (segments.length === transSegments.length) {
+      segments.forEach((seg, idx) => {
+        seg.translation = transSegments[idx].text
+      })
+      return
+    }
+
+    // 1.2: Translation has MORE segments than transcript
+    // (e.g. transcript was formatted into complete sentences, while translation has raw subtitle fragments)
+    if (transSegments.length > segments.length) {
+      const buckets: string[][] = segments.map(() => [])
+
+      transSegments.forEach((ts) => {
+        // Find which transcript segment window this translation timestamp belongs to
+        let assignedIdx = 0
+        for (let i = 0; i < segments.length; i++) {
+          const nextTime = i < segments.length - 1 ? segments[i + 1].timeSeconds : Infinity
+          if (ts.timeSeconds < nextTime) {
+            assignedIdx = i
+            break
+          }
+          assignedIdx = i
+        }
+        buckets[assignedIdx].push(ts.text)
+      })
 
       segments.forEach((seg, idx) => {
-        if (hasCloseTimestamps) {
-          const match = transSegments.find((ts) => Math.abs(ts.timeSeconds - seg.timeSeconds) <= 2)
-          if (match) {
-            seg.translation = match.text
-            return
-          }
-        }
-        if (transSegments[idx]) {
-          seg.translation = transSegments[idx].text
+        if (buckets[idx].length > 0) {
+          seg.translation = buckets[idx].join(' ').trim()
         }
       })
-    } else {
-      // Translation might be lines without timestamps
-      const lines = translation
-        .split('\n')
-        .map((l) => l.trim())
-        .filter(Boolean)
-      if (lines.length > 0) {
-        segments.forEach((seg, idx) => {
-          if (lines[idx]) {
-            seg.translation = lines[idx]
-          }
-        })
-      }
+      return
     }
+
+    // 1.3: Translation has FEWER segments than transcript
+    // (e.g. translation has full sentences, while transcript has broken subtitle fragments)
+    // Map monotonically to closest segment start without duplicating across fragments
+    let lastMatchedIdx = -1
+    transSegments.forEach((ts) => {
+      let bestIdx = -1
+      let minDiff = Infinity
+
+      for (let i = lastMatchedIdx + 1; i < segments.length; i++) {
+        const diff = Math.abs(segments[i].timeSeconds - ts.timeSeconds)
+        if (diff < minDiff) {
+          minDiff = diff
+          bestIdx = i
+        }
+        if (segments[i].timeSeconds > ts.timeSeconds && diff > minDiff) {
+          break
+        }
+      }
+
+      if (bestIdx !== -1) {
+        segments[bestIdx].translation = ts.text
+        lastMatchedIdx = bestIdx
+      }
+    })
+    return
+  }
+
+  // Case 2: Translation is plain text without timestamps
+  const lines = translation
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+
+  if (lines.length === 0) return
+
+  // If number of non-empty lines matches number of segments
+  if (lines.length === segments.length) {
+    segments.forEach((seg, idx) => {
+      seg.translation = lines[idx]
+    })
+    return
+  }
+
+  // If translation is a single block/paragraph, split into sentences
+  let candidateSentences = lines
+  if (lines.length === 1 && segments.length > 1) {
+    const splitSentences = lines[0]
+      .split(/(?<=[.?!…])\s+/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+    if (splitSentences.length > 1) {
+      candidateSentences = splitSentences
+    }
+  }
+
+  // Assign at most one translation sentence per segment (never duplicate)
+  segments.forEach((seg, idx) => {
+    if (idx < candidateSentences.length) {
+      seg.translation = candidateSentences[idx]
+    }
+  })
+}
+
+/**
+ * Parses a plain-text transcript with timestamp markers into segments.
+ * Optionally merges a parallel Vietnamese translation transcript mapped by timestamp or sequence.
+ * Guarantees zero duplicate translation sentences across segments.
+ */
+export function parseTranscript(transcript: string, translation?: string): ITranscriptSegment[] {
+  if (!transcript?.trim()) return []
+
+  const segments = parseSegmentsOnly(transcript)
+  if (segments.length === 0) return []
+
+  if (translation?.trim()) {
+    attachTranslation(segments, translation)
   }
 
   return segments
@@ -239,22 +364,10 @@ function isSentenceEnding(text: string): boolean {
   return true
 }
 
-function parseTimeToSeconds(hOrM: string, mOrS: string, sOpt?: string): number {
-  if (sOpt !== undefined) {
-    return parseInt(hOrM, 10) * 3600 + parseInt(mOrS, 10) * 60 + parseInt(sOpt, 10)
-  }
-  return parseInt(hOrM, 10) * 60 + parseInt(mOrS, 10)
-}
-
 interface IRawFragment {
   timeSeconds: number
   text: string
 }
-
-const TIMESTAMP_LINE_RE =
-  /^\[?(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.\d+|\,\d+)?\]?(?:\s*(?:-->|-)\s*\[?(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.\d+|\,\d+)?\]?)?$/
-
-const TIMESTAMP_PREFIX_RE = /^\[?(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.\d+|\,\d+)?\]?[\s\-:]+(.+)$/
 
 function parseRawFragments(transcript: string): IRawFragment[] {
   const fragments: IRawFragment[] = []

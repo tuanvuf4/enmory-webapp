@@ -88,11 +88,12 @@ export const TagSelect: React.FC<ITagSelectProps> = ({
     () =>
       (allTags || [])
         .map((tag: any) => {
-          const val = String(tag.name || tag.label || tag.value || '').trim()
+          const label = String(tag.label || tag.name || tag.value || '').trim()
+          const val = String(tag.value || tag.name || tag.label || '').trim()
           return {
-            id: tag.id || val,
-            label: val,
-            value: val,
+            id: tag.id || label || val,
+            label: label || val,
+            value: val || label,
             color: tag.color,
           }
         })
@@ -233,11 +234,13 @@ export const TagSelect: React.FC<ITagSelectProps> = ({
       })
       await dispatch(actionAsyncApp.fetchTags() as any)
 
+      const createdValue = response.content?.value || itemName
+
       if (autoSelectCreated) {
         if (isSingle) {
-          onChange?.(itemName)
+          onChange?.(createdValue)
         } else {
-          const nextValues = Array.from(new Set([...valueArray, itemName]))
+          const nextValues = Array.from(new Set([...valueArray, createdValue]))
           onChange?.(nextValues)
         }
       }

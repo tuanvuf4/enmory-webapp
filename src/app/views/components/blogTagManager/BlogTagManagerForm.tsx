@@ -10,7 +10,11 @@ import { usePrompt } from '@/helpers/hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { blogCategoryKeys, useBlogCategories } from '@/core/hooks/useBlogCategories'
 import { blogKeys } from '@/core/hooks/useBlogs'
-import { blogCategoriesApi, IBlogCategory } from '@/services/firebase/api/blogCategories.api'
+import {
+  blogCategoriesApi,
+  IBlogCategory,
+  formatBlogCategoryValue,
+} from '@/services/firebase/api/blogCategories.api'
 import { DEFAULT_TAG_COLOR, DEFAULT_TAG_ORDER } from '@/models/tag.model'
 import { authAction } from '@/store/reducers/auth.reducer'
 import {
@@ -130,7 +134,7 @@ export const BlogTagManagerForm: React.FC<BlogTagManagerFormProps> = ({
         newCategoryOrder ??
         (categoryRows.length > 0 ? Math.max(...categoryRows.map((c) => c.order ?? 1)) + 1 : 1)
 
-      const categoryValue = name.trim().toLowerCase().replace(/\s+/g, '_')
+      const categoryValue = formatBlogCategoryValue(name)
 
       const response = await blogCategoriesApi.createCategory({
         name,
@@ -189,8 +193,8 @@ export const BlogTagManagerForm: React.FC<BlogTagManagerFormProps> = ({
         name: nextName,
         color: editingCategoryColor || DEFAULT_TAG_COLOR,
         order: editingCategoryOrder,
-        // Khi update blog tag, không update blog tag value (giữ nguyên cat.value)
-        value: cat.value,
+        // Format category value if missing or update with normalized format
+        value: cat.value ? formatBlogCategoryValue(cat.value) : formatBlogCategoryValue(nextName),
       })
 
       if (!response.isSuccess) {

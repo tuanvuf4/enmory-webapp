@@ -10,7 +10,7 @@ import { usePrompt } from '@/helpers/hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { itemKeys } from '@/core/hooks/useItems'
 import { tagApi } from '@/services/firebase'
-import { ITag, DEFAULT_TAG_COLOR, DEFAULT_TAG_ORDER } from '@/models/tag.model'
+import { ITag, DEFAULT_TAG_COLOR, DEFAULT_TAG_ORDER, formatTagValue } from '@/models/tag.model'
 import { actionAsyncApp } from '@/store/asyncActions'
 import { authAction } from '@/store/reducers/auth.reducer'
 import {
@@ -121,7 +121,7 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
       const nextOrder =
         newTagOrder ?? (tagRows.length > 0 ? Math.max(...tagRows.map((t) => t.order ?? 1)) + 1 : 1)
 
-      const tagValue = name.trim().toLowerCase().replace(/\s+/g, '_')
+      const tagValue = formatTagValue(name)
 
       const response = await tagApi.createTag({
         name,
@@ -181,8 +181,8 @@ export const TagManagerForm: React.FC<ITagManagerFormProps> = ({
         name: nextName,
         color: editingTagColor || DEFAULT_TAG_COLOR,
         order: editingTagOrder,
-        // Khi update item tag, không update tag value (giữ nguyên tag.value)
-        value: tag.value,
+        // Format tag value if missing or update with normalized format
+        value: tag.value ? formatTagValue(tag.value) : formatTagValue(nextName),
       })
 
       if (!response.isSuccess) {

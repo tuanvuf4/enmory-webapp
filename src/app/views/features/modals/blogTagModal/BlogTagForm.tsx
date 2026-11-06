@@ -1,5 +1,5 @@
 import { useCreateBlogCategory, useUpdateBlogCategory } from '@/core/hooks/useBlogCategories'
-import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
+import { IBlogCategory, formatBlogCategoryValue } from '@/services/firebase/api/blogCategories.api'
 import { theme, Input, InputNumber, Button, Flex, ColorPicker } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import type { Color } from 'antd/es/color-picker'
@@ -67,10 +67,10 @@ export const BlogTagForm: React.FC<BlogTagFormProps> = ({
       // Khi update blog tag, không update blog tag value (giữ nguyên data?.value)
       value:
         isEditing && (data?.value || '').trim()
-          ? data.value
+          ? formatBlogCategoryValue(data.value)
           : values.value?.trim()
-            ? values.value.trim().toLowerCase().replace(/\s+/g, '_')
-            : tagName.toLowerCase().replace(/\s+/g, '_'),
+            ? formatBlogCategoryValue(values.value)
+            : formatBlogCategoryValue(tagName),
     }
     const targetId = data?.id || data?.name
     if (isEditing && targetId) {

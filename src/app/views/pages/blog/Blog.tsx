@@ -25,7 +25,7 @@ import { useBlogs, useBlogsCount, useSelector } from '@/core/hooks'
 import { usePrompt } from '@/helpers/hooks'
 import { useBlogCategoryModal } from '@/helpers/hooks/useBlogCategoryModal'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
-import { IBlogCategory } from '@/services/firebase/api/blogCategories.api'
+import { IBlogCategory, formatBlogCategoryValue } from '@/services/firebase/api/blogCategories.api'
 import appStyle from '@/style/appStyle.module.scss'
 import { NotFound, PageTitle } from '@/views/components'
 import { BlogTagList } from '@/views/components/blogTagList/BlogTagList'
@@ -107,18 +107,22 @@ export const Blog = () => {
   }
 
   const getCatValue = (cat: { name: string; value?: string }) => {
-    return cat.value || cat.name.trim().toLowerCase().replace(/\s+/g, '_') || cat.name
+    return cat.value || formatBlogCategoryValue(cat.name) || cat.name
   }
 
   const isCatChecked = (cat: { name: string; value?: string }) => {
     if (!selectedTag) return false
     const catVal = getCatValue(cat)
     const s = selectedTag.trim().toLowerCase()
+    const sFormatted = formatBlogCategoryValue(selectedTag)
     return (
       s === catVal.toLowerCase() ||
       s === cat.name.trim().toLowerCase() ||
       s === (cat.value || '').trim().toLowerCase() ||
-      s === cat.name.trim().toLowerCase().replace(/\s+/g, '_')
+      s === formatBlogCategoryValue(cat.name) ||
+      s === cat.name.trim().toLowerCase().replace(/\s+/g, '_') ||
+      sFormatted === (cat.value || '').trim().toLowerCase() ||
+      sFormatted === formatBlogCategoryValue(cat.name)
     )
   }
 

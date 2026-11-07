@@ -201,8 +201,8 @@ export const Developer: React.FC = () => {
         }
       }
 
-      setItems(loadedItems)
-      setBlogs([...loadedBlogs])
+      setItems(loadedItems.sort((a, b) => (b.created_date || 0) - (a.created_date || 0)))
+      setBlogs([...loadedBlogs].sort((a, b) => (b.created_date || 0) - (a.created_date || 0)))
       setSyncMeta(loadedSyncMeta)
       setErrorRequests(loadedErrorRequests.sort((a, b) => b.timestamp - a.timestamp))
       setSelectedRowKeys((prev) => prev.filter((k) => loadedItems.some((it) => it.id === k)))
@@ -268,7 +268,7 @@ export const Developer: React.FC = () => {
         await localDb.blogs.bulkPut(cloudBlogs)
       }
       const updatedBlogs = await localDb.blogs.toArray()
-      setBlogs(updatedBlogs)
+      setBlogs(updatedBlogs.sort((a, b) => (b.created_date || 0) - (a.created_date || 0)))
       message.success(`Đã đồng bộ ${cloudBlogs.length} bài viết từ Firestore!`)
     } catch (err: any) {
       console.error('Lỗi khi đồng bộ blogs:', err)
@@ -718,13 +718,13 @@ export const Developer: React.FC = () => {
 
   // User-scoped items & blogs
   const scopedItems = useMemo(() => {
-    if (!filterByUser || !user?.uid) return items
-    return items.filter((it) => it.uid === user.uid)
+    const list = !filterByUser || !user?.uid ? items : items.filter((it) => it.uid === user.uid)
+    return [...list].sort((a, b) => (b.created_date || 0) - (a.created_date || 0))
   }, [items, filterByUser, user?.uid])
 
   const scopedBlogs = useMemo(() => {
-    if (!filterByUser || !user?.uid) return blogs
-    return blogs.filter((b) => b.uid === user.uid)
+    const list = !filterByUser || !user?.uid ? blogs : blogs.filter((b) => b.uid === user.uid)
+    return [...list].sort((a, b) => (b.created_date || 0) - (a.created_date || 0))
   }, [blogs, filterByUser, user?.uid])
 
   // Filter items by search keyword
@@ -970,6 +970,7 @@ export const Developer: React.FC = () => {
         dataIndex: 'created_date',
         key: 'created_date',
         width: 140,
+        defaultSortOrder: 'descend',
         sorter: (a, b) => (a.created_date || 0) - (b.created_date || 0),
         render: (ts?: number) =>
           ts ? (
@@ -1116,6 +1117,7 @@ export const Developer: React.FC = () => {
         dataIndex: 'created_date',
         key: 'created_date',
         width: 140,
+        defaultSortOrder: 'descend',
         sorter: (a, b) => (a.created_date || 0) - (b.created_date || 0),
         render: (ts?: number) =>
           ts ? (
@@ -1332,7 +1334,9 @@ export const Developer: React.FC = () => {
         message.success(result.message)
         setPurgeStatus(result.message)
         if (result.deletedItems && result.deletedItems.length > 0) {
-          setPurgedItems(result.deletedItems)
+          setPurgedItems(
+            [...result.deletedItems].sort((a, b) => (b.deleted_date || 0) - (a.deleted_date || 0)),
+          )
           await loadData()
         }
       } else {
@@ -1443,13 +1447,6 @@ export const Developer: React.FC = () => {
                         title='Items (Bảng từ vựng)'
                         value={scopedItems.length}
                         prefix={<DatabaseOutlined style={{ color: token.colorPrimary }} />}
-                        suffix={
-                          searchKeyword && filteredItems.length !== scopedItems.length
-                            ? `(${filteredItems.length} tìm thấy)`
-                            : filterByUser && user?.uid && scopedItems.length !== items.length
-                              ? `(${items.length} toàn bộ)`
-                              : ''
-                        }
                       />
                     </Card>
                   </Col>
@@ -1466,13 +1463,6 @@ export const Developer: React.FC = () => {
                         title='Blogs (Bảng bài viết)'
                         value={scopedBlogs.length}
                         prefix={<CodeOutlined style={{ color: token.colorSuccess }} />}
-                        suffix={
-                          searchKeyword && filteredBlogs.length !== scopedBlogs.length
-                            ? `(${filteredBlogs.length} tìm thấy)`
-                            : filterByUser && user?.uid && scopedBlogs.length !== blogs.length
-                              ? `(${blogs.length} toàn bộ)`
-                              : ''
-                        }
                       />
                     </Card>
                   </Col>
@@ -2295,6 +2285,8 @@ export const Developer: React.FC = () => {
                               dataIndex: 'deleted_date',
                               key: 'deleted_date',
                               width: '25%',
+                              defaultSortOrder: 'descend',
+                              sorter: (a, b) => (a.deleted_date || 0) - (b.deleted_date || 0),
                               render: (val?: number) =>
                                 val ? new Date(val).toLocaleString() : 'N/A',
                             },

@@ -130,6 +130,21 @@
   }
 }
 
+.aiAutofillBtnSuccess {
+  background: #f6ffed !important;
+  border: 1px solid #b7eb8f !important;
+  color: #52c41a !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.25) !important;
+
+  &:hover:not(:disabled) {
+    background: #d9f7be !important;
+    border-color: #95de64 !important;
+    color: #389e0d !important;
+    box-shadow: 0 4px 12px rgba(82, 196, 26, 0.35) !important;
+  }
+}
+
 .originInputWrapper {
   display: flex;
   flex-direction: column;

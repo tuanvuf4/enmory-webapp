@@ -57,6 +57,8 @@ import {
   ShareAltOutlined,
   UpCircleFilled,
   DownCircleFilled,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons'
 import moment from 'moment'
 
@@ -72,9 +74,26 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   const { token } = theme.useToken()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAutofilling, setIsAutofilling] = useState(false)
+  const [autofillSuccess, setAutofillSuccess] = useState(false)
+  const autofillTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [isLoadingItem, setIsLoadingItem] = useState(false)
   const [currentItem, setCurrentItem] = useState<IItem>(item)
   const [showMeanings, setShowMeanings] = useState<boolean>(true)
+  const [isEditMode, setIsEditMode] = useState<boolean>(Boolean(propIsEditMode || item?.id))
+
+  useEffect(() => {
+    return () => {
+      if (autofillTimeoutRef.current) {
+        clearTimeout(autofillTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (propIsEditMode !== undefined) {
+      setIsEditMode(propIsEditMode)
+    }
+  }, [propIsEditMode])
 
   const { notification, confirm } = usePrompt()
 
@@ -122,6 +141,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({
 
   const { closeModal, updateModal, minimizeModal } = useModal()
   const currentModal = useCurrentModal()
+  const currentModalRef = useRef(currentModal)
+  currentModalRef.current = currentModal
 
   const handleMinimize = () => {
     if (currentModal?.minimize) {
@@ -131,28 +152,61 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     }
   }
 
+  const prevOriginRef = useRef<string | undefined>(origin)
   useEffect(() => {
-    if (origin?.trim()) {
-      if (currentModal?.updateMinimizeInfo) {
-        currentModal.updateMinimizeInfo({
-          title: `Item: ${origin.trim()}`,
-          tooltip: `Mở lại biểu mẫu: ${origin.trim()}`,
-          icon: <BookOutlined />,
-        })
+    if (isAutofilling) return
+    if (!origin?.trim()) return
+
+    if (prevOriginRef.current !== origin) {
+      prevOriginRef.current = origin
+      if (autofillSuccess) {
+        setAutofillSuccess(false)
+        if (autofillTimeoutRef.current) {
+          clearTimeout(autofillTimeoutRef.current)
+          autofillTimeoutRef.current = null
+        }
+      }
+      const targetId = currentModalRef.current?.modalId || currentModal?.modalId
+      const defaultInfo = {
+        title: `Item: ${origin.trim()}`,
+        tooltip: `Mở lại biểu mẫu: ${origin.trim()}`,
+        icon: <BookOutlined />,
+        status: 'default' as const,
+      }
+      if (currentModalRef.current?.updateMinimizeInfo) {
+        currentModalRef.current.updateMinimizeInfo(defaultInfo)
       } else {
         updateModal(
           {
-            minimizeInfo: {
-              title: `Item: ${origin.trim()}`,
-              tooltip: `Mở lại biểu mẫu: ${origin.trim()}`,
-              icon: <BookOutlined />,
-            },
+            minimizeInfo: defaultInfo,
           },
-          currentModal?.modalId,
+          targetId,
         )
       }
     }
-  }, [origin, currentModal])
+  }, [origin, isAutofilling, autofillSuccess, currentModal, updateModal])
+
+  const prevMinimizedRef = useRef<boolean | undefined>(currentModal?.isMinimized)
+  useEffect(() => {
+    // Khi modal được mở lại từ trạng thái thu nhỏ (minimized -> unminimized),
+    // đưa trạng thái minimizeInfo về mặc định sau khi người dùng đã mở xem kết quả
+    if (prevMinimizedRef.current === true && !currentModal?.isMinimized) {
+      const targetId = currentModalRef.current?.modalId || currentModal?.modalId
+      const currentOriginVal = (getValues('origin') || origin || '').trim()
+      const defaultInfo = {
+        title: currentOriginVal ? `Item: ${currentOriginVal}` : 'Item Form',
+        tooltip: currentOriginVal ? `Mở lại biểu mẫu: ${currentOriginVal}` : 'Mở lại biểu mẫu',
+        icon: <BookOutlined />,
+        status: 'default' as const,
+      }
+      if (currentModalRef.current?.updateMinimizeInfo) {
+        currentModalRef.current.updateMinimizeInfo(defaultInfo)
+      } else {
+        updateModal({ minimizeInfo: defaultInfo }, targetId)
+      }
+    }
+    prevMinimizedRef.current = currentModal?.isMinimized
+  }, [currentModal?.isMinimized, origin, getValues, updateModal])
 
   const currentItemRef = useRef<IItem>(currentItem)
   currentItemRef.current = currentItem
@@ -167,6 +221,9 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     if (item?.id || (propIsEditMode && item)) {
       loadedItemIdRef.current = item.id
       loadedOriginRef.current = item.origin || ''
+      if (item?.id || propIsEditMode) {
+        setIsEditMode(true)
+      }
       if (item?.meanings) {
         const sortedMeanings = [...item.meanings].sort(
           (a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0),
@@ -503,20 +560,24 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   }
 
   const runAutofill = async (originWord: string, sourceName: string = 'Google') => {
+    if (autofillTimeoutRef.current) {
+      clearTimeout(autofillTimeoutRef.current)
+      autofillTimeoutRef.current = null
+    }
+    setAutofillSuccess(false)
     setIsAutofilling(true)
-    const modalId = currentModal?.modalId
-    updateModal(
-      {
-        isMinimized: false,
-        minimizeInfo: {
-          title: `Item: ${originWord}`,
-          tooltip: `Gemini đang phân tích "${originWord}"...`,
-          status: 'processing',
-          icon: <ThunderboltOutlined spin style={{ color: '#722ed1' }} />,
-        },
-      },
-      modalId,
-    )
+    const targetModalId = currentModalRef.current?.modalId || currentModal?.modalId
+    const processingInfo = {
+      title: `Item: ${originWord}`,
+      tooltip: `Gemini đang phân tích "${originWord}"...`,
+      status: 'processing' as const,
+      icon: <ThunderboltOutlined spin style={{ color: '#722ed1' }} />,
+    }
+    if (currentModalRef.current?.updateMinimizeInfo) {
+      currentModalRef.current.updateMinimizeInfo(processingInfo)
+    } else {
+      updateModal({ minimizeInfo: processingInfo }, targetModalId)
+    }
     notification({
       type: 'info',
       message: `Gemini đang phân tích "${originWord}"...`,
@@ -530,17 +591,18 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         undefined,
       )
       if (!resp.isSuccess || !resp.content) {
-        updateModal(
-          {
-            minimizeInfo: {
-              title: `Item: ${originWord}`,
-              tooltip: `Không thể lấy dữ liệu từ ${sourceName}.`,
-              status: 'error',
-              icon: <BookOutlined />,
-            },
-          },
-          modalId,
-        )
+        setAutofillSuccess(false)
+        const errorInfo = {
+          title: `Item: ${originWord}`,
+          tooltip: `Không thể lấy dữ liệu từ ${sourceName}.`,
+          status: 'error' as const,
+          icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
+        }
+        if (currentModalRef.current?.updateMinimizeInfo) {
+          currentModalRef.current.updateMinimizeInfo(errorInfo)
+        } else {
+          updateModal({ minimizeInfo: errorInfo }, targetModalId)
+        }
         notification({
           type: 'error',
           message: resp.message || `Failed to fetch dictionary data from ${sourceName}.`,
@@ -549,18 +611,25 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       }
 
       await applyAutofillData(originWord, resp.content)
+      prevOriginRef.current = originWord
+      setAutofillSuccess(true)
 
-      updateModal(
-        {
-          minimizeInfo: {
-            title: `Item: ${originWord}`,
-            tooltip: `Gemini đã phân tích xong "${originWord}"!`,
-            status: 'success',
-            icon: <BookOutlined />,
-          },
-        },
-        modalId,
-      )
+      const successInfo = {
+        title: `Item: ${originWord}`,
+        tooltip: `Gemini đã phân tích xong "${originWord}"!`,
+        status: 'success' as const,
+        icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
+      }
+      if (currentModalRef.current?.updateMinimizeInfo) {
+        currentModalRef.current.updateMinimizeInfo(successInfo)
+      } else {
+        updateModal({ minimizeInfo: successInfo }, targetModalId)
+      }
+
+      // Trả nút Auto Fill bên trong form về bình thường sau 3.5s (Float button giữ nguyên tích xanh cho tới khi mở lại modal)
+      autofillTimeoutRef.current = setTimeout(() => {
+        setAutofillSuccess(false)
+      }, 3500)
 
       notification({
         type: 'success',
@@ -569,17 +638,18 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       })
     } catch (error: any) {
       console.error('Auto-fill error:', error)
-      updateModal(
-        {
-          minimizeInfo: {
-            title: `Item: ${originWord}`,
-            tooltip: `Lỗi khi tra từ "${originWord}".`,
-            status: 'error',
-            icon: <BookOutlined />,
-          },
-        },
-        modalId,
-      )
+      setAutofillSuccess(false)
+      const errorInfo = {
+        title: `Item: ${originWord}`,
+        tooltip: `Lỗi khi tra từ "${originWord}".`,
+        status: 'error' as const,
+        icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
+      }
+      if (currentModalRef.current?.updateMinimizeInfo) {
+        currentModalRef.current.updateMinimizeInfo(errorInfo)
+      } else {
+        updateModal({ minimizeInfo: errorInfo }, targetModalId)
+      }
       notification({
         type: 'error',
         message: error?.message || `Error occurred during ${sourceName} auto-fill.`,
@@ -590,6 +660,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   }
 
   const handleAutoFill = async (sourceName: string = 'Google') => {
+    setAutofillSuccess(false)
     const currentOrigin = (getValues('origin') || '').trim()
     if (!currentOrigin) {
       notification({
@@ -740,9 +811,17 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       loadedOriginRef.current = (filledItem.origin || currentOrigin).trim()
       currentItemRef.current = filledItem
       setCurrentItem(filledItem)
+      setIsEditMode(true)
       setValue('id', finalItemId)
       reset(filledItem)
       await trigger()
+
+      updateModal(
+        {
+          tag: <Tag color={'yellow'}>UPDATE</Tag>,
+        },
+        currentModalRef.current?.modalId || currentModal?.modalId,
+      )
 
       notification({
         type: 'success',
@@ -835,10 +914,14 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     onSubmit,
   ])
 
-  const isEditing =
-    propIsEditMode !== undefined
-      ? propIsEditMode
-      : !!(currentItem?.id || item?.id || loadedItemIdRef.current || getValues('id'))
+  const watchedId = watch('id')
+  const isEditing = Boolean(
+    isEditMode ||
+    currentItem?.id ||
+    item?.id ||
+    loadedItemIdRef.current ||
+    watchedId
+  )
   const currentLevel = watch('level') || 0
 
   useEffect(() => {
@@ -846,7 +929,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       {
         tag: isEditing ? <Tag color={'yellow'}>UPDATE</Tag> : <Tag color={'green'}>CREATE</Tag>,
       },
-      currentModal?.modalId,
+      currentModalRef.current?.modalId || currentModal?.modalId,
     )
   }, [isEditing, currentModal?.modalId])
 
@@ -882,17 +965,17 @@ export const ItemForm: React.FC<ItemFormProps> = ({
           </Flex>
 
           <Flex align='center' justify={'space-between'} gap={token.size / 2} wrap='wrap'>
-            <Tooltip title='Tra cứu từ vựng'>
+            <Tooltip title={autofillSuccess ? 'Đã nạp xong từ điển!' : 'Tra cứu từ vựng'}>
               <Button
                 htmlType='button'
                 type='primary'
-                className={styles.aiAutofillBtn}
+                className={clsx(styles.aiAutofillBtn, autofillSuccess && styles.aiAutofillBtnSuccess)}
                 loading={isAutofilling}
-                icon={<ThunderboltOutlined />}
+                icon={autofillSuccess ? <CheckCircleOutlined style={{ color: '#52c41a' }} /> : <ThunderboltOutlined />}
                 disabled={!origin?.trim() || isAutofilling}
                 onClick={() => handleAutoFill('Google')}
               >
-                {isAutofilling ? 'Đang phân tích...' : 'Auto Fill'}
+                {isAutofilling ? 'Đang phân tích...' : autofillSuccess ? 'Đã nạp xong!' : 'Auto Fill'}
               </Button>
             </Tooltip>
           </Flex>
@@ -1231,9 +1314,9 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                 />
               )}
 
-            {item?.last_update && isEditing && (
+            {(currentItem?.last_update || item?.last_update) && isEditing && (
               <Typography.Text type='secondary' style={{ fontSize: 12 }}>
-                Last update: {moment(item.last_update).fromNow()}
+                Last update: {moment(currentItem?.last_update || item?.last_update).fromNow()}
               </Typography.Text>
             )}
           </Flex>

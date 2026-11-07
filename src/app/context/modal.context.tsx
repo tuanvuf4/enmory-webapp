@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, PropsWithChildren, ReactNode } from 'react'
-import { Modal, ModalProps, FloatButton, Flex, theme } from 'antd'
+import { Modal, ModalProps, FloatButton, Flex, theme, FloatButtonProps } from 'antd'
 import {
   CloseSquareOutlined,
   CloseOutlined,
@@ -91,7 +91,7 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
       // If new modal is not minimized, minimize any currently active modals
       // so the new modal takes focus cleanly without stacking modal masks
-      const updatedPrev = config.isMinimized
+      const updatedPrev: ModalConfig[] = config.isMinimized
         ? prev
         : prev.map((m) => {
             if (!m.isMinimized) {
@@ -101,7 +101,8 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
             return m
           })
 
-      return [...updatedPrev, { ...config, id, isMinimized: !!config.isMinimized }]
+      const newModal: ModalConfig = { ...config, id, isMinimized: !!config.isMinimized }
+      return [...updatedPrev, newModal]
     })
     return id
   }
@@ -138,16 +139,24 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
     setModals((prev) => {
       if (prev.length === 0) return prev
       const next = [...prev]
-      const targetIndex = id ? next.findIndex((m) => m.id === id) : next.length - 1
+      let targetIndex = id ? next.findIndex((m) => m.id === id) : next.length - 1
+      if (targetIndex < 0 && next.length > 0) {
+        targetIndex = next.length - 1
+      }
       if (targetIndex >= 0) {
-        next[targetIndex] = {
+        const mergedMinimizeInfo: ModalMinimizeInfo | undefined = config.minimizeInfo
+          ? {
+              ...(next[targetIndex].minimizeInfo || {}),
+              ...config.minimizeInfo,
+            }
+          : next[targetIndex].minimizeInfo
+
+        const updated: ModalConfig = {
           ...next[targetIndex],
           ...config,
-          minimizeInfo: {
-            ...next[targetIndex].minimizeInfo,
-            ...config.minimizeInfo,
-          },
+          minimizeInfo: mergedMinimizeInfo,
         }
+        next[targetIndex] = updated
       }
       return next
     })
@@ -157,18 +166,27 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
     setModals((prev) => {
       if (prev.length === 0) return prev
       const next = [...prev]
-      const targetIndex = id ? next.findIndex((m) => m.id === id) : next.length - 1
+      let targetIndex = id ? next.findIndex((m) => m.id === id) : next.length - 1
+      if (targetIndex < 0 && next.length > 0) {
+        targetIndex = next.length - 1
+      }
       if (targetIndex >= 0) {
         const target = next[targetIndex]
         target.onMinimizeChange?.(true)
-        next[targetIndex] = {
+        const mergedMinimizeInfo: ModalMinimizeInfo | undefined =
+          minimizeInfo || target.minimizeInfo
+            ? {
+                ...(target.minimizeInfo || {}),
+                ...(minimizeInfo || {}),
+              }
+            : undefined
+
+        const updated: ModalConfig = {
           ...target,
           isMinimized: true,
-          minimizeInfo: {
-            ...target.minimizeInfo,
-            ...minimizeInfo,
-          },
+          minimizeInfo: mergedMinimizeInfo,
         }
+        next[targetIndex] = updated
       }
       return next
     })
@@ -181,7 +199,8 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
       let targetIndex = -1
       if (id) {
         targetIndex = next.findIndex((m) => m.id === id)
-      } else {
+      }
+      if (targetIndex < 0) {
         for (let i = next.length - 1; i >= 0; i--) {
           if (next[i].isMinimized) {
             targetIndex = i
@@ -193,14 +212,24 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
       if (targetIndex >= 0) {
         const target = next[targetIndex]
         target.onMinimizeChange?.(false)
-        const restored = {
+
+        const restoredStatus =
+          target.minimizeInfo?.status === 'processing' ? 'processing' : 'default'
+
+        const restored: ModalConfig = {
           ...target,
           isMinimized: false,
+          minimizeInfo: target.minimizeInfo
+            ? {
+                ...target.minimizeInfo,
+                status: restoredStatus,
+              }
+            : undefined,
         }
         next.splice(targetIndex, 1)
 
         // Minimize any other currently active modal so only the restored modal is active
-        const finalized = next.map((m) => {
+        const finalized: ModalConfig[] = next.map((m) => {
           if (!m.isMinimized) {
             m.onMinimizeChange?.(true)
             return { ...m, isMinimized: true }
@@ -253,12 +282,25 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
     setModals((prev) => prev.filter((m) => m.id !== id))
   }
 
-  const renderTitle = (config: ModalConfig) => {
-    if (!config.title && !config.tag && !config.minimizeInfo?.icon) return config.title
+  const renderTitle = (config: ModalConfig): ReactNode => {
+    if (!config.title && !config.tag && !config.minimizeInfo?.icon && !config.minimizeInfo?.status) return config.title
+
+    const isProcessing = config.minimizeInfo?.status === 'processing'
+    const isSuccess = config.minimizeInfo?.status === 'success'
+    const isError = config.minimizeInfo?.status === 'error'
+
+    let titleIcon: ReactNode = config.minimizeInfo?.icon
+    if (isProcessing) {
+      titleIcon = <LoadingOutlined style={{ color: '#1677ff', fontSize: 16 }} />
+    } else if (isSuccess) {
+      titleIcon = <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 16 }} />
+    } else if (isError) {
+      titleIcon = <CloseCircleOutlined style={{ color: '#ff4d4f', fontSize: 16 }} />
+    }
 
     return (
       <Flex align={'center'} gap={8} style={{ overflow: 'hidden' }}>
-        {config.minimizeInfo?.icon}
+        {titleIcon}
         <span
           style={{
             overflow: 'hidden',
@@ -296,8 +338,12 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
             open={!isHidden}
             forceRender={true}
             destroyOnHidden={false}
-            onOk={() => handleOk(config.id!)}
-            onCancel={() => handleCancel(config.id!)}
+            onOk={() => {
+              void handleOk(config.id!)
+            }}
+            onCancel={() => {
+              handleCancel(config.id!)
+            }}
             confirmLoading={loadingMap[config.id!] || false}
             closeIcon={<CloseSquareOutlined />}
             keyboard={false}
@@ -325,7 +371,7 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
                 updateMinimizeInfo: (info) =>
                   updateModal(
                     {
-                      minimizeInfo: { ...config.minimizeInfo, ...info },
+                      minimizeInfo: info,
                     },
                     config.id,
                   ),
@@ -354,19 +400,19 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
             let iconNode: ReactNode = m.minimizeInfo?.icon || <FormOutlined />
             if (isProcessing) {
-              iconNode = <LoadingOutlined style={{ color: '#1677ff' }} />
+              iconNode = <LoadingOutlined style={{ color: '#1677ff', fontSize: 20 }} />
             } else if (isSuccess) {
-              iconNode = <CheckCircleOutlined style={{ color: '#52c41a' }} />
+              iconNode = <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 20 }} />
             } else if (isError) {
-              iconNode = <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+              iconNode = <CloseCircleOutlined style={{ color: '#ff4d4f', fontSize: 20 }} />
             }
 
-            const badgeProps = isProcessing
-              ? { dot: true, status: 'processing' as const }
+            const badgeProps: FloatButtonProps['badge'] = isProcessing
+              ? { dot: true, color: '#1677ff' }
               : isSuccess
-                ? { dot: true, status: 'success' as const }
+                ? { dot: true, color: '#52c41a' }
                 : isError
-                  ? { dot: true, status: 'error' as const }
+                  ? { dot: true, color: '#ff4d4f' }
                   : undefined
 
             const tooltipContent = (
@@ -403,7 +449,10 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
                 badge={badgeProps}
                 type={isProcessing ? 'primary' : 'default'}
                 style={{ borderColor: token.colorBorder }}
-                tooltip={tooltipContent}
+                tooltip={{
+                  placement: 'left',
+                  title: tooltipContent,
+                }}
                 onClick={() => restoreModal(m.id)}
               />
             )

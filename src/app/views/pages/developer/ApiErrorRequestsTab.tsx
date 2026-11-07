@@ -481,6 +481,7 @@ export const ApiErrorRequestsTab: React.FC = () => {
         dataIndex: 'timestamp',
         key: 'timestamp',
         width: 145,
+        defaultSortOrder: 'descend',
         sorter: (a, b) => a.timestamp - b.timestamp,
         render: (ts: number, record: IErrorApiRequest) => (
           <Tooltip

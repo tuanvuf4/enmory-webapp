@@ -450,6 +450,8 @@ export const GeminiUsageTab: React.FC = () => {
       dataIndex: 'timestamp',
       key: 'timestamp',
       width: 140,
+      defaultSortOrder: 'descend',
+      sorter: (a, b) => a.timestamp - b.timestamp,
       render: (ts: number) => (
         <Tooltip title={moment(ts).format('YYYY-MM-DD HH:mm:ss')}>
           <Text style={{ fontSize: 12 }}>{moment(ts).fromNow()}</Text>

@@ -283,7 +283,8 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }
 
   const renderTitle = (config: ModalConfig): ReactNode => {
-    if (!config.title && !config.tag && !config.minimizeInfo?.icon && !config.minimizeInfo?.status) return config.title
+    if (!config.title && !config.tag && !config.minimizeInfo?.icon && !config.minimizeInfo?.status)
+      return config.title
 
     const isProcessing = config.minimizeInfo?.status === 'processing'
     const isSuccess = config.minimizeInfo?.status === 'success'

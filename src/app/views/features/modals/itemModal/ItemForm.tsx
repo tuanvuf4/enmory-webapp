@@ -916,11 +916,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
 
   const watchedId = watch('id')
   const isEditing = Boolean(
-    isEditMode ||
-    currentItem?.id ||
-    item?.id ||
-    loadedItemIdRef.current ||
-    watchedId
+    isEditMode || currentItem?.id || item?.id || loadedItemIdRef.current || watchedId,
   )
   const currentLevel = watch('level') || 0
 
@@ -969,13 +965,26 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               <Button
                 htmlType='button'
                 type='primary'
-                className={clsx(styles.aiAutofillBtn, autofillSuccess && styles.aiAutofillBtnSuccess)}
+                className={clsx(
+                  styles.aiAutofillBtn,
+                  autofillSuccess && styles.aiAutofillBtnSuccess,
+                )}
                 loading={isAutofilling}
-                icon={autofillSuccess ? <CheckCircleOutlined style={{ color: '#52c41a' }} /> : <ThunderboltOutlined />}
+                icon={
+                  autofillSuccess ? (
+                    <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                  ) : (
+                    <ThunderboltOutlined />
+                  )
+                }
                 disabled={!origin?.trim() || isAutofilling}
                 onClick={() => handleAutoFill('Google')}
               >
-                {isAutofilling ? 'Đang phân tích...' : autofillSuccess ? 'Đã nạp xong!' : 'Auto Fill'}
+                {isAutofilling
+                  ? 'Đang phân tích...'
+                  : autofillSuccess
+                    ? 'Đã nạp xong!'
+                    : 'Auto Fill'}
               </Button>
             </Tooltip>
           </Flex>

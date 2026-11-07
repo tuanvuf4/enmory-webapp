@@ -150,11 +150,11 @@ export const useDeleteArticle = useDeleteBlog
 /**
  * Fetch total count of blogs exclusively from localDb
  */
-export const useBlogsCount = (tag?: string, enabled = true) => {
+export const useBlogsCount = (tag?: string, keyword?: string, enabled = true) => {
   return useQuery({
-    queryKey: [...blogKeys.counts(), tag],
+    queryKey: [...blogKeys.counts(), tag, keyword],
     queryFn: async () => {
-      return await blogApi.getBlogsCount(tag)
+      return await blogApi.getBlogsCount(tag, keyword)
     },
     enabled,
     refetchOnWindowFocus: false,

@@ -5,6 +5,7 @@ import { IBlogItem } from '@/models/blog.model'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { formatBlogCategoryValue } from '@/services/firebase/api/blogCategories.api'
 import { localDb } from '@/services/localDb/db'
+import { removeVietnameseTones } from '@/core/utils/character.util'
 
 export interface IBlogResponse<T> {
   isSuccess: boolean
@@ -205,11 +206,36 @@ export const blogApi = {
       // Filter by keyword if provided
       if (params.keyword) {
         const kw = params.keyword.trim().toLowerCase()
-        userBlogs = userBlogs.filter(
-          (b) =>
-            (b.title || '').toLowerCase().includes(kw) ||
-            (b.description || '').toLowerCase().includes(kw),
-        )
+        const kwFolded = removeVietnameseTones(kw).toLowerCase()
+        userBlogs = userBlogs.filter((b) => {
+          const title = (b.title || '').toLowerCase()
+          const desc = (b.description || '').toLowerCase()
+          const trans = (b.translation || '').toLowerCase()
+          const tags = (b.tags || []).map((t) => String(t).toLowerCase())
+          const relations = (b.relation || []).map((r) => String(r).toLowerCase())
+
+          const directMatch =
+            title.includes(kw) ||
+            desc.includes(kw) ||
+            trans.includes(kw) ||
+            tags.some((t) => t.includes(kw)) ||
+            relations.some((r) => r.includes(kw))
+
+          if (directMatch) return true
+
+          if (kwFolded) {
+            const titleFolded = removeVietnameseTones(title).toLowerCase()
+            const descFolded = removeVietnameseTones(desc).toLowerCase()
+            const transFolded = removeVietnameseTones(trans).toLowerCase()
+            return (
+              titleFolded.includes(kwFolded) ||
+              descFolded.includes(kwFolded) ||
+              transFolded.includes(kwFolded)
+            )
+          }
+
+          return false
+        })
       }
 
       // Sort
@@ -340,7 +366,7 @@ export const blogApi = {
   /**
    * Get total count of blogs for current user exclusively from localDb
    */
-  async getBlogsCount(tag?: string): Promise<number> {
+  async getBlogsCount(tag?: string, keyword?: string): Promise<number> {
     try {
       let currentUser = firebaseAuthService.getCurrentUser()
       if (!currentUser) {
@@ -359,6 +385,41 @@ export const blogApi = {
           return bTags.some((t) => variants.includes(t))
         })
       }
+
+      if (keyword) {
+        const kw = keyword.trim().toLowerCase()
+        const kwFolded = removeVietnameseTones(kw).toLowerCase()
+        userBlogs = userBlogs.filter((b) => {
+          const title = (b.title || '').toLowerCase()
+          const desc = (b.description || '').toLowerCase()
+          const trans = (b.translation || '').toLowerCase()
+          const tags = (b.tags || []).map((t) => String(t).toLowerCase())
+          const relations = (b.relation || []).map((r) => String(r).toLowerCase())
+
+          const directMatch =
+            title.includes(kw) ||
+            desc.includes(kw) ||
+            trans.includes(kw) ||
+            tags.some((t) => t.includes(kw)) ||
+            relations.some((r) => r.includes(kw))
+
+          if (directMatch) return true
+
+          if (kwFolded) {
+            const titleFolded = removeVietnameseTones(title).toLowerCase()
+            const descFolded = removeVietnameseTones(desc).toLowerCase()
+            const transFolded = removeVietnameseTones(trans).toLowerCase()
+            return (
+              titleFolded.includes(kwFolded) ||
+              descFolded.includes(kwFolded) ||
+              transFolded.includes(kwFolded)
+            )
+          }
+
+          return false
+        })
+      }
+
       return userBlogs.length
     } catch (error) {
       console.error('Error counting blogs from localDb:', error)
@@ -369,8 +430,8 @@ export const blogApi = {
   /**
    * Alias for getBlogsCount
    */
-  async getArticlesCount(tag?: string): Promise<number> {
-    return this.getBlogsCount(tag)
+  async getArticlesCount(tag?: string, keyword?: string): Promise<number> {
+    return this.getBlogsCount(tag, keyword)
   },
 
   /**

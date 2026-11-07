@@ -87,7 +87,7 @@ export const BlogItem = ({
           <Text
             strong
             className='cursor-pointer'
-            style={{ fontSize: token.fontSizeLG, lineHeight: 1.4 }}
+            style={{ fontSize: token.fontSizeHeading4, lineHeight: 1.4 }}
             onClick={() => navigate(`/blog?id=${id}`)}
           >
             {title}
@@ -163,7 +163,7 @@ export const BlogItem = ({
         <Text
           strong
           className='cursor-pointer'
-          style={{ fontSize: token.fontSizeLG, lineHeight: 1.4, flex: 1 }}
+          style={{ fontSize: token.fontSizeHeading4, lineHeight: 1.4, flex: 1 }}
           onClick={() => navigate(`/blog?id=${id}`)}
         >
           {title}

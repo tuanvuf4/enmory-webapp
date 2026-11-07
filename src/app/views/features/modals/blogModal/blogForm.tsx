@@ -82,7 +82,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
   }
 
   const [isPreview, setIsPreview] = useState(false)
-  const [showTranslation, setShowTranslation] = useState(true)
+  const [showTranslation, setShowTranslation] = useState(false)
   const [isTranslating, setIsTranslating] = useState(false)
   const [isBrowserTranslating, setIsBrowserTranslating] = useState(false)
   const [previewMode, setPreviewMode] = useState<'original' | 'bilingual' | 'translation'>(
@@ -541,6 +541,64 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
         </Col>
       </Row>
 
+      {/* Vocabulary Classification Section */}
+      <div
+        id='vocab-section'
+        className={styles.fieldCard}
+        style={{ display: !isPreview ? 'block' : 'none' }}
+      >
+        <div className={styles.fieldLabel}>
+          <Flex align='center' gap={6}>
+            <BookOutlined style={{ color: token.colorPrimary }} />
+            <span>Phân loại từ vựng theo CEFR (A1 → C2)</span>
+            {classifiedItems && classifiedItems.length > 0 && (
+              <Badge
+                count={classifiedItems.length}
+                overflowCount={999}
+                style={{ backgroundColor: token.colorSuccess }}
+              />
+            )}
+          </Flex>
+          <Text type='secondary' style={{ fontSize: 12, fontWeight: 400 }}>
+            AI Gemini tự động phân tích bài viết và phân loại từ, cụm từ, collocation
+          </Text>
+        </div>
+
+        <VocabClassificationTabs
+          contentId={data?.id}
+          content={description || ''}
+          contentType='blog'
+          title={title}
+          translation={translation}
+          initialItems={classifiedItems}
+          onSave={async (items) => {
+            setClassifiedItems(items)
+            if (data?.id) {
+              try {
+                await updateBlogAsync({
+                  id: data.id,
+                  data: {
+                    ...data,
+                    vocabClassification: items,
+                    translation: translation || data.translation || '',
+                  },
+                })
+                queryClient.invalidateQueries({ queryKey: blogKeys.detail(data.id) })
+                queryClient.invalidateQueries({ queryKey: blogKeys.lists() })
+                message({
+                  type: 'success',
+                  content: 'Đã lưu danh sách từ vựng vào bài viết!',
+                })
+              } catch (err) {
+                console.warn('[BlogForm] Auto-save vocabClassification failed:', err)
+              }
+            }
+          }}
+          contextLabel='📖 Ngữ cảnh trong bài viết'
+          emptyText='Chưa phân loại từ vựng cho bài viết này'
+        />
+      </div>
+
       {/* Editor View (kept mounted to preserve TextEditor state and cursor) */}
       <div className={styles.fieldCard} style={{ display: !isPreview ? 'block' : 'none' }}>
         <Row gutter={[16, 16]}>
@@ -625,64 +683,6 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
             </Text>
           </Col>
         </Row>
-      </div>
-
-      {/* Vocabulary Classification Section */}
-      <div
-        id='vocab-section'
-        className={styles.fieldCard}
-        style={{ display: !isPreview ? 'block' : 'none' }}
-      >
-        <div className={styles.fieldLabel}>
-          <Flex align='center' gap={6}>
-            <BookOutlined style={{ color: token.colorPrimary }} />
-            <span>Phân loại từ vựng theo CEFR (A1 → C2)</span>
-            {classifiedItems && classifiedItems.length > 0 && (
-              <Badge
-                count={classifiedItems.length}
-                overflowCount={999}
-                style={{ backgroundColor: token.colorSuccess }}
-              />
-            )}
-          </Flex>
-          <Text type='secondary' style={{ fontSize: 12, fontWeight: 400 }}>
-            AI Gemini tự động phân tích bài viết và phân loại từ, cụm từ, collocation
-          </Text>
-        </div>
-
-        <VocabClassificationTabs
-          contentId={data?.id}
-          content={description || ''}
-          contentType='blog'
-          title={title}
-          translation={translation}
-          initialItems={classifiedItems}
-          onSave={async (items) => {
-            setClassifiedItems(items)
-            if (data?.id) {
-              try {
-                await updateBlogAsync({
-                  id: data.id,
-                  data: {
-                    ...data,
-                    vocabClassification: items,
-                    translation: translation || data.translation || '',
-                  },
-                })
-                queryClient.invalidateQueries({ queryKey: blogKeys.detail(data.id) })
-                queryClient.invalidateQueries({ queryKey: blogKeys.lists() })
-                message({
-                  type: 'success',
-                  content: 'Đã lưu danh sách từ vựng vào bài viết!',
-                })
-              } catch (err) {
-                console.warn('[BlogForm] Auto-save vocabClassification failed:', err)
-              }
-            }
-          }}
-          contextLabel='📖 Ngữ cảnh trong bài viết'
-          emptyText='Chưa phân loại từ vựng cho bài viết này'
-        />
       </div>
 
       {/* Live Preview Mode */}

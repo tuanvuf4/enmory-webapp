@@ -202,15 +202,17 @@ export const BlogDetail: React.FC<BlogDetailProps> = ({ id: propId }) => {
 
               <Flex vertical gap={token.size}>
                 {/* Classification of blog content into words, phrases, collocations by difficulty A1 -> C2 */}
-                <VocabClassificationTabs
-                  contentId={blog.id}
-                  content={blog.description || ''}
-                  contentType='blog'
-                  title={blog.title}
-                  translation={blog.translation}
-                  initialItems={blog.vocabClassification}
-                  onSave={handleSaveClassification}
-                />
+                {blog.vocabClassification && blog.vocabClassification.length > 0 && (
+                  <VocabClassificationTabs
+                    contentId={blog.id}
+                    content={blog.description || ''}
+                    contentType='blog'
+                    title={blog.title}
+                    translation={blog.translation}
+                    initialItems={blog.vocabClassification}
+                    onSave={handleSaveClassification}
+                  />
+                )}
 
                 {/* View mode switcher if translation is available */}
                 {blog.description && blog.translation && (

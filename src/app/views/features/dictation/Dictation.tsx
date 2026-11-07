@@ -59,6 +59,7 @@ import { useSelector, useChecklist, itemKeys } from '@/core/hooks'
 import { useItemModal } from '@/helpers/hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { listeningStatsService, localDb, invalidateSearchIndex } from '@/services/localDb'
+import appStyle from '@/style/appStyle.module.scss'
 import styles from './dictation.module.scss'
 
 export interface IDictationQuestionRecord {
@@ -1412,7 +1413,7 @@ export const Dictation: React.FC<IDictationProps> = ({
             type='primary'
             size='large'
             shape='round'
-            icon={<SoundOutlined className={isPlaying ? styles.soundIconPlaying : undefined} />}
+            icon={<SoundOutlined className={isPlaying ? appStyle.soundPlaying : undefined} />}
             onClick={() => handlePlayAudio(targetText)}
             style={{ fontSize: 14, minWidth: 160 }}
           >
@@ -1624,7 +1625,7 @@ export const Dictation: React.FC<IDictationProps> = ({
                   type='primary'
                   shape='circle'
                   icon={
-                    <SoundOutlined className={isPlaying ? styles.soundIconPlaying : undefined} />
+                    <SoundOutlined className={isPlaying ? appStyle.soundPlaying : undefined} />
                   }
                   onClick={() => handlePlayAudio(targetText)}
                   size='small'

@@ -1,50 +1,51 @@
-import { isItemDue, getDueDurationText } from '@/services/srs/srs.service'
 import {
+  checklistKeys,
   itemKeys,
+  useChecklist,
   useDeleteItem,
   useDispatch,
   useSelector,
-  useChecklist,
-  checklistKeys,
 } from '@/core/hooks'
-import { localDb, invalidateSearchIndex } from '@/services/localDb'
 import { useItemModal, usePrompt, useShadowingModal } from '@/helpers/hooks'
 import { getCategory, isDefect } from '@/helpers/item'
+import { speakWord } from '@/helpers/mics'
 import { EViewMode } from '@/models/app.model'
+import { IHttpResponse } from '@/models/http.model'
 import { ECategory, IItem } from '@/models/item.model'
 import { itemApi } from '@/services/firebase/api/item.api'
+import { invalidateSearchIndex, localDb } from '@/services/localDb'
+import { getDueDurationText, isItemDue } from '@/services/srs/srs.service'
+import { actionAsyncApp } from '@/store/asyncActions'
+import { iotdAction } from '@/store/reducers/iotd.reducer'
+import { studySetAction } from '@/store/reducers/studySet.reducer'
+import appStyle from '@/style/appStyle.module.scss'
 import { Level, Tags } from '@/views/components'
 import {
-  MoreOutlined,
-  ReloadOutlined,
-  HeartFilled,
-  HeartOutlined,
   BookOutlined,
-  ClockCircleOutlined,
-  SoundOutlined,
+  CheckOutlined,
   CheckSquareFilled,
   CheckSquareOutlined,
-  UserOutlined,
-  DownOutlined,
-  UpOutlined,
+  ClockCircleOutlined,
   CopyOutlined,
-  CheckOutlined,
+  DownOutlined,
+  HeartFilled,
+  HeartOutlined,
+  MoreOutlined,
+  ReloadOutlined,
+  SoundOutlined,
+  UpOutlined,
+  UserOutlined,
 } from '@ant-design/icons'
-import { Button, Dropdown, Flex, MenuProps, Skeleton, theme, Tag, Tooltip } from 'antd'
+import { useQueryClient } from '@tanstack/react-query'
+import { Button, Dropdown, Flex, MenuProps, Skeleton, Tag, theme, Tooltip } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import clsx from 'clsx'
 import React, { useEffect, useMemo, useState } from 'react'
+import { initItem } from '../modals'
 import { Reference } from '../references/References'
 import { getActionMenuItem } from './ActionMenuItem'
 import { MeaningItem } from './MeaningItem'
 import styles from './item.module.scss'
-import { actionAsyncApp } from '@/store/asyncActions'
-import { useQueryClient } from '@tanstack/react-query'
-import { studySetAction } from '@/store/reducers/studySet.reducer'
-import { iotdAction } from '@/store/reducers/iotd.reducer'
-import { IHttpResponse } from '@/models/http.model'
-import { initItem } from '../modals'
-import { speakWord } from '@/helpers/mics'
 
 interface IProps {
   action?: boolean
@@ -350,9 +351,16 @@ export const Item: React.FC<IProps> = ({
     setSpin(false)
   }
 
+  const [isSpeakingOrigin, setIsSpeakingOrigin] = useState(false)
+
   const handleQuickSpeak = (e: React.MouseEvent) => {
     e.stopPropagation()
-    speakWord(data.origin)
+    if (!data?.origin) return
+    setIsSpeakingOrigin(true)
+    speakWord(data.origin, 'en-GB', 0.8, {
+      onEnd: () => setIsSpeakingOrigin(false),
+      onError: () => setIsSpeakingOrigin(false),
+    })
   }
 
   const [isCopied, setIsCopied] = useState(false)
@@ -429,8 +437,17 @@ export const Item: React.FC<IProps> = ({
                 </Button>
               </Tooltip>
 
-              <Button type={'text'} className={styles.titleAudioBtn} onClick={handleQuickSpeak}>
-                <SoundOutlined />
+              <Button
+                type={'text'}
+                className={clsx(
+                  styles.titleAudioBtn,
+                  isSpeakingOrigin && styles.titleAudioBtnPlaying
+                )}
+                onClick={handleQuickSpeak}
+              >
+                <SoundOutlined
+                  className={isSpeakingOrigin ? appStyle.soundPlaying : undefined}
+                />
               </Button>
             </div>
 

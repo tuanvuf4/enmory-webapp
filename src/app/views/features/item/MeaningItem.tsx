@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import {
   SoundOutlined,
   StarFilled,
@@ -13,6 +14,7 @@ import { Tags } from '@/views/components'
 import { Tag, Tooltip } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import styles from './item.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 import clsx from 'clsx'
 import { speakWord, speakSentence } from '@/helpers/mics'
 import { sanitizePronunciation } from '@/core/utils'
@@ -56,6 +58,15 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
   const cleanUk = sanitizePronunciation(pronunciation.uk)
   const cleanUs = sanitizePronunciation(pronunciation.us)
   const cleanCommon = sanitizePronunciation(pronunciation.common)
+  const [speakingType, setSpeakingType] = useState<string | null>(null)
+
+  const handlePlayWord = (lang: string, type: string) => {
+    setSpeakingType(type)
+    speakWord(origin, lang, 0.8, {
+      onEnd: () => setSpeakingType(null),
+      onError: () => setSpeakingType(null),
+    })
+  }
 
   if (catId === ECategory.WORD && (cleanUs || cleanUk)) {
     return (
@@ -64,12 +75,18 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
           <Tooltip title='Phát âm tiếng Anh - Anh (UK)'>
             <button
               type='button'
-              className={clsx(styles.audioPill, styles.audioPillUk)}
-              onClick={() => speakWord(origin, 'en-GB')}
+              className={clsx(
+                styles.audioPill,
+                styles.audioPillUk,
+                speakingType === 'us' && styles.audioPillPlaying,
+              )}
+              onClick={() => handlePlayWord('en-GB', 'uk')}
             >
               <span className={styles.accentLabel}>UK</span>
               <span className={styles.phoneticText}>{cleanUk}</span>
-              <SoundOutlined className={styles.audioIcon} />
+              <SoundOutlined
+                className={clsx(styles.audioIcon, speakingType === 'us' && appStyle.soundPlaying)}
+              />
             </button>
           </Tooltip>
         )}
@@ -79,11 +96,11 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
             <button
               type='button'
               className={clsx(styles.audioPill, styles.audioPillUs)}
-              onClick={() => speakWord(origin, 'en-US')}
+              onClick={() => handlePlayWord('en-US', 'us')}
             >
               <span className={styles.accentLabel}>US</span>
               <span className={styles.phoneticText}>{cleanUs}</span>
-              <SoundOutlined className={styles.audioIcon} />
+              <SoundOutlined className={clsx(styles.audioIcon, appStyle.soundPlaying)} />
             </button>
           </Tooltip>
         )}
@@ -97,11 +114,13 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
         <Tooltip title='Nghe phát âm'>
           <button
             type='button'
-            className={styles.audioPill}
-            onClick={() => speakWord(origin, 'en-US')}
+            className={clsx(styles.audioPill, speakingType === 'common' && styles.audioPillPlaying)}
+            onClick={() => handlePlayWord('en-US', 'common')}
           >
             <span className={styles.phoneticText}>{cleanCommon}</span>
-            <SoundOutlined className={styles.audioIcon} />
+            <SoundOutlined
+              className={clsx(styles.audioIcon, speakingType === 'common' && appStyle.soundPlaying)}
+            />
           </button>
         </Tooltip>
       </div>
@@ -113,6 +132,15 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
 
 export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin }) => {
   const navigate = useNavigate()
+  const [speakingExampleIdx, setSpeakingExampleIdx] = useState<number | null>(null)
+
+  const handleSpeakExample = (text: string, idx: number) => {
+    setSpeakingExampleIdx(idx)
+    speakSentence(text, {
+      onEnd: () => setSpeakingExampleIdx(null),
+      onError: () => setSpeakingExampleIdx(null),
+    })
+  }
 
   const onSearch = (keyword: string) => {
     const params = new URLSearchParams()
@@ -231,11 +259,15 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin })
                       <Tooltip title='Nghe câu ví dụ'>
                         <button
                           type='button'
-                          className={styles.exampleAudioBtn}
-                          onClick={() => speakSentence(plainOrigin)}
+                          className={clsx(styles.exampleAudioBtn)}
+                          onClick={() => handleSpeakExample(plainOrigin, key)}
                           aria-label='Phát âm ví dụ'
                         >
-                          <SoundOutlined />
+                          <SoundOutlined
+                            className={
+                              speakingExampleIdx === key ? appStyle.soundPlaying : undefined
+                            }
+                          />
                         </button>
                       </Tooltip>
                     )}

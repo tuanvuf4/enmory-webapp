@@ -173,7 +173,7 @@ export const ExampleItem: React.FC<IProps> = ({
                   type='text'
                   icon={
                     <SoundOutlined
-                      className={isSpeaking ? styles.audioPlaying : undefined}
+                      className={isSpeaking ? appStyle.soundPlaying : undefined}
                       style={{ fontSize: 15 }}
                     />
                   }

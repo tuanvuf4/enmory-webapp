@@ -47,6 +47,7 @@ import {
 import { usePrompt, useItemModal } from '@/helpers/hooks'
 import { initItem } from '@/views/features/modals/itemModal/data'
 import { sanitizePronunciation } from '@/core/utils'
+import appStyle from '@/style/appStyle.module.scss'
 import styles from './vocabClassificationTabs.module.scss'
 
 export const CEFR_LEVEL_COLORS: Record<TCEFRLevel, string> = {
@@ -571,9 +572,10 @@ export const VocabClassificationTabs: React.FC<IVocabClassificationTabsProps> = 
                 type='text'
                 size='small'
                 icon={
-                  <SoundOutlined style={{ color: isSpeaking ? token.colorPrimary : undefined }} />
+                  <SoundOutlined
+                    className={isSpeaking ? appStyle.soundPlaying : undefined}
+                  />
                 }
-                loading={isSpeaking}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleSpeak(item.text, item.id)

@@ -19,15 +19,24 @@ export function shuffleArray<T>(array: T[]): T[] {
 /**
  * Pronounces a word using Google Gemini TTS.
  */
-export const speakWord = (origin: string, _lang = 'en-GB', _rate = 0.8) => {
-  if (!origin) return
-  geminiTtsService
+export const speakWord = async (
+  origin: string,
+  _lang = 'en-GB',
+  _rate = 0.8,
+  options?: ISpeakSentenceOptions
+) => {
+  if (!origin) return Promise.resolve()
+  return geminiTtsService
     .playSpeech(origin, {
       voice: 'Aoede',
-      playbackRate: 1.0,
+      playbackRate: options?.rate ?? 1.0,
+      onStart: options?.onStart,
+      onEnd: options?.onEnd,
+      onError: options?.onError,
     })
     .catch((err) => {
       console.warn('Gemini TTS speakWord error:', err)
+      options?.onError?.(err)
     })
 }
 

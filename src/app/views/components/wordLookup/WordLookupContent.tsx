@@ -33,7 +33,11 @@ export const WordLookupContent: React.FC<IWordLookupContentProps> = ({
         <Button
           type='text'
           size='small'
-          icon={<SoundOutlined spin={isPlayingAudio} />}
+          icon={
+            <SoundOutlined
+              className={isPlayingAudio ? appStyle.soundPlaying : undefined}
+            />
+          }
           onClick={onPlayAudio}
         />
       </div>

@@ -194,26 +194,6 @@
   border-left: 3px solid var(--ant-color-primary) !important;
 }
 
-.audioPlaying {
-  color: var(--ant-color-primary) !important;
-  animation: audioPulse 1.2s infinite ease-in-out;
-}
-
-@keyframes audioPulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.15);
-    opacity: 0.75;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
 .maskWrapper {
   position: relative;
   border-radius: 6px;

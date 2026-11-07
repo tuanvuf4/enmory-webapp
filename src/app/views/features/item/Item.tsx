@@ -441,13 +441,11 @@ export const Item: React.FC<IProps> = ({
                 type={'text'}
                 className={clsx(
                   styles.titleAudioBtn,
-                  isSpeakingOrigin && styles.titleAudioBtnPlaying
+                  isSpeakingOrigin && styles.titleAudioBtnPlaying,
                 )}
                 onClick={handleQuickSpeak}
               >
-                <SoundOutlined
-                  className={isSpeakingOrigin ? appStyle.soundPlaying : undefined}
-                />
+                <SoundOutlined className={isSpeakingOrigin ? appStyle.soundPlaying : undefined} />
               </Button>
             </div>
 

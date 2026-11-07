@@ -1624,9 +1624,7 @@ export const Dictation: React.FC<IDictationProps> = ({
                 <Button
                   type='primary'
                   shape='circle'
-                  icon={
-                    <SoundOutlined className={isPlaying ? appStyle.soundPlaying : undefined} />
-                  }
+                  icon={<SoundOutlined className={isPlaying ? appStyle.soundPlaying : undefined} />}
                   onClick={() => handlePlayAudio(targetText)}
                   size='small'
                 />

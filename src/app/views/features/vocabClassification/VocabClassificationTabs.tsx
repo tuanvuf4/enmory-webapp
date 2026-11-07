@@ -571,11 +571,7 @@ export const VocabClassificationTabs: React.FC<IVocabClassificationTabsProps> = 
               <Button
                 type='text'
                 size='small'
-                icon={
-                  <SoundOutlined
-                    className={isSpeaking ? appStyle.soundPlaying : undefined}
-                  />
-                }
+                icon={<SoundOutlined className={isSpeaking ? appStyle.soundPlaying : undefined} />}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleSpeak(item.text, item.id)

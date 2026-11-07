@@ -23,7 +23,7 @@ export const speakWord = async (
   origin: string,
   _lang = 'en-GB',
   _rate = 0.8,
-  options?: ISpeakSentenceOptions
+  options?: ISpeakSentenceOptions,
 ) => {
   if (!origin) return Promise.resolve()
   return geminiTtsService

@@ -389,6 +389,7 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                               <Input
                                 {...field}
                                 value={sanitizePronunciation(field.value)}
+                                placeholder='UK'
                                 onChange={(e) =>
                                   field.onChange(sanitizePronunciation(e.target.value))
                                 }
@@ -410,6 +411,7 @@ export const MeaningItemForm = memo<IProps>(({ catType, showMeanings = true }) =
                               <Input
                                 {...field}
                                 value={sanitizePronunciation(field.value)}
+                                placeholder='US'
                                 onChange={(e) =>
                                   field.onChange(sanitizePronunciation(e.target.value))
                                 }

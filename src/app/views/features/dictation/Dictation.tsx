@@ -1613,14 +1613,17 @@ export const Dictation: React.FC<IDictationProps> = ({
               CÂU CHUẨN THAM KHẢO:
             </Text>
             <div className={styles.referenceBox}>
-              <div className={styles.referenceContent}>{targetText}</div>
-              <Space size='small' direction='vertical' align='center'>
+              <div className={styles.referenceContent}>
+                {targetText}
                 <Button
                   shape='circle'
                   icon={<CopyOutlined />}
                   onClick={handleCopyReference}
+                  style={{ marginLeft: token.size / 2 }}
                   size='small'
                 />
+              </div>
+              <Space size='small' direction='vertical' align='center'>
                 <Button
                   type='primary'
                   shape='circle'

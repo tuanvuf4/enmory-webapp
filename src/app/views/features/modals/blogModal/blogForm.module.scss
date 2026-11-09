@@ -136,6 +136,7 @@
   -webkit-backdrop-filter: blur(12px);
   margin-top: 8px;
   gap: 12px;
+  flex-wrap: wrap;
 
   :global([data-theme='dark']) & {
     background: rgba(18, 22, 54, 0.92);

@@ -134,9 +134,9 @@ export const AppHeader = ({ styles: customStyles }: IAppHeader) => {
         minWidth: 320,
         width: '100%',
         lineHeight: '60px',
+        backgroundColor: token.colorBgLayout,
         borderBottom: `1px solid ${token.colorBorder}`,
         zIndex: 999,
-        backdropFilter: 'blur(24px)',
       }}
       className='sticky top-0 left-0 w-full !p-0'
     >

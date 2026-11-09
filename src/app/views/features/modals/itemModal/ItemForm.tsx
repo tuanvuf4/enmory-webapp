@@ -14,7 +14,7 @@ import { studySetAction } from '@/store/reducers/studySet.reducer'
 import { exampleAction } from '@/store/reducers/example.reducer'
 import { InputTag, Level, ReviewableTextArea } from '@/views/components'
 import { Reference } from '@/views/features/references/References'
-import { theme, Select, Button, Flex, Alert, Tooltip, Tag, Typography } from 'antd'
+import { theme, Select, Button, Flex, Alert, Tooltip, Tag, Typography, Space } from 'antd'
 import clsx from 'clsx'
 import { useEffect, Suspense, useState, useCallback, useMemo, useRef } from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
@@ -938,10 +938,12 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       <input type='hidden' {...register('id')} />
       {/* ── CARD 1: MAIN VOCABULARY TERM & AI AUTOFILL ── */}
       <div className={styles.sectionCard}>
-        <div className={styles.cardHeader}>
-          <Flex align='center' gap={token.size / 2}>
-            <BookOutlined style={{ color: token.colorPrimary, fontSize: 18 }} />
-            <span className={styles.sectionTitle}>Information</span>
+        <Space direction={'vertical'} size={token.size / 2} style={{ width: '100%' }}>
+          <Flex align='center' gap={token.size}>
+            <Flex align='center' gap={token.size / 2}>
+              <BookOutlined style={{ color: token.colorPrimary, fontSize: 18 }} />
+              <span className={styles.sectionTitle}>Thông tin từ vựng:</span>
+            </Flex>
 
             <Controller
               control={control}
@@ -960,7 +962,143 @@ export const ItemForm: React.FC<ItemFormProps> = ({
             />
           </Flex>
 
-          <Flex align='center' justify={'space-between'} gap={token.size / 2} wrap='wrap'>
+          <Flex align='flex-start' justify={'flex-start'} gap={token.size / 2}>
+            <div className={styles.originInputWrapper}>
+              <Controller
+                control={control}
+                name='origin'
+                rules={{
+                  required: {
+                    value: true,
+                    message: msgErrors.required,
+                  },
+                  validate: {
+                    required: (value) => {
+                      if (!value || !value.trim()) {
+                        return msgErrors.required
+                      }
+                      return true
+                    },
+                    existed: (value) => {
+                      const trimmedValue = (value || '').trim()
+                      if (!trimmedValue) return true
+
+                      const activeItem = currentItemRef.current || currentItem
+                      const currentId =
+                        getValues('id') || loadedItemIdRef.current || activeItem?.id || item?.id
+                      const originalOrigin = (
+                        loadedOriginRef.current ||
+                        activeItem?.origin ||
+                        item?.origin ||
+                        ''
+                      )
+                        .trim()
+                        .toLowerCase()
+
+                      const valLower = trimmedValue.toLowerCase()
+
+                      // 1. If editing this item and the origin hasn't changed, it's valid
+                      if (originalOrigin && valLower === originalOrigin) {
+                        return true
+                      }
+
+                      // 2. Check against options
+                      const currentOptions = optionsRef.current || options || []
+                      const existsInOptions = currentOptions.some((opt) => {
+                        // Do not treat self as duplicate when editing
+                        if (currentId && opt.id && String(opt.id) === String(currentId)) {
+                          return false
+                        }
+                        const optOrigin = String(opt.origin || opt.value || '')
+                          .trim()
+                          .toLowerCase()
+                        return optOrigin === valLower
+                      })
+
+                      if (!existsInOptions) return true
+
+                      return msgErrors.existed
+                    },
+                  },
+                }}
+                render={({ field: { onChange, value }, fieldState: { invalid } }) => {
+                  return (
+                    <>
+                      <ReviewableTextArea
+                        className={clsx(appStyle.full, styles.originTextArea)}
+                        value={value}
+                        placeholder=''
+                        autoSize={{ minRows: 1, maxRows: 3 }}
+                        onChange={(nextValue) => {
+                          onChange(nextValue)
+
+                          const currentCat = getValues('catId')
+                          const trimmed = (nextValue || '').trim()
+                          if (trimmed.length > 50) {
+                            setValue('catId', ECategory.SENTENCE)
+                          } else {
+                            const isGroup = isGroupWord(nextValue)
+                            if (currentCat === ECategory.SENTENCE) {
+                              setValue('catId', isGroup ? ECategory.PHRASE : ECategory.WORD)
+                            } else if (isGroup && currentCat === ECategory.WORD) {
+                              setValue('catId', ECategory.PHRASE)
+                            } else if (!isGroup && currentCat === ECategory.PHRASE) {
+                              setValue('catId', ECategory.WORD)
+                            }
+                          }
+
+                          // If input becomes empty, or if an error was already displayed, validate immediately
+                          if (!nextValue?.trim() || errors.origin) {
+                            trigger('origin')
+                          }
+                        }}
+                        onBlur={() => trigger('origin')}
+                        language='en'
+                        enableReview={true}
+                      />
+
+                      {invalid && errors.origin?.type !== 'existed' && (
+                        <Alert
+                          type='error'
+                          showIcon
+                          message={errors.origin?.message as string}
+                          banner
+                          style={{ borderRadius: 8, marginTop: 4 }}
+                        />
+                      )}
+
+                      {invalid && errors.origin?.type === 'existed' && (
+                        <Alert
+                          type='error'
+                          showIcon
+                          style={{ borderRadius: 8, marginTop: 6 }}
+                          message={
+                            <Flex align='center' justify='space-between' wrap='wrap' gap={8}>
+                              <span>
+                                {(errors.origin?.message as string) ||
+                                  'Từ này đã có trong từ điển của bạn.'}
+                              </span>
+                              <Button
+                                type='primary'
+                                size='small'
+                                icon={<DownloadOutlined />}
+                                loading={isLoadingItem}
+                                disabled={isLoadingItem}
+                                onClick={handleLoadExistingItem}
+                                htmlType='button'
+                              >
+                                Load
+                              </Button>
+                            </Flex>
+                          }
+                        />
+                      )}
+                    </>
+                  )
+                }}
+              />
+            </div>
+
             <Tooltip title={autofillSuccess ? 'Đã nạp xong từ điển!' : 'Tra cứu từ vựng'}>
               <Button
                 htmlType='button'
@@ -988,153 +1126,17 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               </Button>
             </Tooltip>
           </Flex>
-        </div>
 
-        <div className={styles.originInputWrapper}>
-          <Controller
-            control={control}
-            name='origin'
-            rules={{
-              required: {
-                value: true,
-                message: msgErrors.required,
-              },
-              validate: {
-                required: (value) => {
-                  if (!value || !value.trim()) {
-                    return msgErrors.required
-                  }
-                  return true
-                },
-                existed: (value) => {
-                  const trimmedValue = (value || '').trim()
-                  if (!trimmedValue) return true
-
-                  const activeItem = currentItemRef.current || currentItem
-                  const currentId =
-                    getValues('id') || loadedItemIdRef.current || activeItem?.id || item?.id
-                  const originalOrigin = (
-                    loadedOriginRef.current ||
-                    activeItem?.origin ||
-                    item?.origin ||
-                    ''
-                  )
-                    .trim()
-                    .toLowerCase()
-
-                  const valLower = trimmedValue.toLowerCase()
-
-                  // 1. If editing this item and the origin hasn't changed, it's valid
-                  if (originalOrigin && valLower === originalOrigin) {
-                    return true
-                  }
-
-                  // 2. Check against options
-                  const currentOptions = optionsRef.current || options || []
-                  const existsInOptions = currentOptions.some((opt) => {
-                    // Do not treat self as duplicate when editing
-                    if (currentId && opt.id && String(opt.id) === String(currentId)) {
-                      return false
-                    }
-                    const optOrigin = String(opt.origin || opt.value || '')
-                      .trim()
-                      .toLowerCase()
-                    return optOrigin === valLower
-                  })
-
-                  if (!existsInOptions) return true
-
-                  return msgErrors.existed
-                },
-              },
-            }}
-            render={({ field: { onChange, value }, fieldState: { invalid } }) => {
-              return (
-                <>
-                  <ReviewableTextArea
-                    className={clsx(appStyle.full, styles.originTextArea)}
-                    value={value}
-                    placeholder='Original (Nhập từ, cụm từ, câu)...'
-                    autoSize={{ minRows: 1, maxRows: 3 }}
-                    onChange={(nextValue) => {
-                      onChange(nextValue)
-
-                      const currentCat = getValues('catId')
-                      const trimmed = (nextValue || '').trim()
-                      if (trimmed.length > 50) {
-                        setValue('catId', ECategory.SENTENCE)
-                      } else {
-                        const isGroup = isGroupWord(nextValue)
-                        if (currentCat === ECategory.SENTENCE) {
-                          setValue('catId', isGroup ? ECategory.PHRASE : ECategory.WORD)
-                        } else if (isGroup && currentCat === ECategory.WORD) {
-                          setValue('catId', ECategory.PHRASE)
-                        } else if (!isGroup && currentCat === ECategory.PHRASE) {
-                          setValue('catId', ECategory.WORD)
-                        }
-                      }
-
-                      // If input becomes empty, or if an error was already displayed, validate immediately
-                      if (!nextValue?.trim() || errors.origin) {
-                        trigger('origin')
-                      }
-                    }}
-                    onBlur={() => trigger('origin')}
-                    language='en'
-                    enableReview={true}
-                  />
-
-                  {invalid && errors.origin?.type !== 'existed' && (
-                    <Alert
-                      type='error'
-                      showIcon
-                      message={errors.origin?.message as string}
-                      banner
-                      style={{ borderRadius: 8, marginTop: 4 }}
-                    />
-                  )}
-
-                  {invalid && errors.origin?.type === 'existed' && (
-                    <Alert
-                      type='error'
-                      showIcon
-                      style={{ borderRadius: 8, marginTop: 6 }}
-                      message={
-                        <Flex align='center' justify='space-between' wrap='wrap' gap={8}>
-                          <span>
-                            {(errors.origin?.message as string) ||
-                              'Từ này đã có trong từ điển của bạn.'}
-                          </span>
-                          <Button
-                            type='primary'
-                            size='small'
-                            icon={<DownloadOutlined />}
-                            loading={isLoadingItem}
-                            disabled={isLoadingItem}
-                            onClick={handleLoadExistingItem}
-                            htmlType='button'
-                          >
-                            Load
-                          </Button>
-                        </Flex>
-                      }
-                    />
-                  )}
-                </>
-              )
-            }}
-          />
-        </div>
-
-        {origin && (
-          <div className={styles.referenceBar}>
-            <Flex align='center' gap={6} className={styles.referenceLabel}>
-              <CompassOutlined />
-              <span>Nguồn tra cứu:</span>
-            </Flex>
-            <Reference origin={origin} />
-          </div>
-        )}
+          {origin && (
+            <div className={styles.referenceBar}>
+              <Flex align='center' gap={6} className={styles.referenceLabel}>
+                <CompassOutlined />
+                <span>Nguồn tra cứu:</span>
+              </Flex>
+              <Reference origin={origin} />
+            </div>
+          )}
+        </Space>
       </div>
 
       {/* ── CARD 2: METADATA, MASTERY & TAGS ── */}

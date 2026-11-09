@@ -1034,7 +1034,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
 
                           const currentCat = getValues('catId')
                           const trimmed = (nextValue || '').trim()
-                          if (trimmed.length > 50) {
+                          if (trimmed.length > 40) {
                             setValue('catId', ECategory.SENTENCE)
                           } else {
                             const isGroup = isGroupWord(nextValue)

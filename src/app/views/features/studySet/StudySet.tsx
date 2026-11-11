@@ -745,7 +745,7 @@ export const StudySet: React.FC = () => {
                       ))}
                       {dueStats.byLevel[0] > 0 && (
                         <Tag color='red'>
-                          Mới / Level 0: <b>{dueStats.byLevel[0]}</b>
+                          Level 0: <b>{dueStats.byLevel[0]}</b>
                         </Tag>
                       )}
                       {dueStats.byLevel[1] > 0 && (

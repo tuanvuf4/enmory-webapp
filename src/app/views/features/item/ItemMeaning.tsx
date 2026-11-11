@@ -136,7 +136,7 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
   return null
 }
 
-export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin }) => {
+export const ItemMeaning: React.FC<IMeaningProps> = ({ catId, meaning, origin }) => {
   const navigate = useNavigate()
   const [speakingExampleIdx, setSpeakingExampleIdx] = useState<number | null>(null)
 
@@ -293,3 +293,5 @@ export const MeaningItem: React.FC<IMeaningProps> = ({ catId, meaning, origin })
     </div>
   )
 }
+
+export const MeaningItem = ItemMeaning

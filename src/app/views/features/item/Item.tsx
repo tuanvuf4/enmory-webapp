@@ -44,7 +44,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { initItem } from '../modals'
 import { Reference } from '../references/References'
 import { getActionMenuItem } from './ActionMenuItem'
-import { MeaningItem } from './MeaningItem'
+import { ItemMeaning } from './ItemMeaning'
 import styles from './item.module.scss'
 
 interface IProps {
@@ -585,7 +585,7 @@ export const Item: React.FC<IProps> = ({
           {displayMeanings &&
             displayMeanings.length > 0 &&
             displayMeanings.map((meaning, key) => (
-              <MeaningItem
+              <ItemMeaning
                 key={meaning.id || key}
                 meaning={meaning}
                 catId={data.catId as ECategory}

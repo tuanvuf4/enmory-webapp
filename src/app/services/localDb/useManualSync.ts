@@ -134,9 +134,17 @@ export const useManualSync = () => {
       queryClient.invalidateQueries({ queryKey: blogKeys.lists() })
       queryClient.invalidateQueries({ queryKey: blogKeys.counts() })
 
+      const hasAnyChanges =
+        result.updatedItems > 0 ||
+        result.updatedBlogs > 0 ||
+        result.deletedItems > 0 ||
+        Boolean(result.deletedBlogs && result.deletedBlogs > 0)
+
       const details = result.isFullSync
         ? `Downloaded ${result.updatedItems} items, ${result.updatedBlogs} blogs, and ${result.updatedExamples} examples.`
-        : `Synced ${result.updatedItems} modified items, ${result.updatedBlogs} modified blogs, removed ${result.deletedItems} deleted items${result.deletedBlogs ? `, removed ${result.deletedBlogs} deleted blogs` : ''}.`
+        : hasAnyChanges
+          ? `Synced ${result.updatedItems} modified items, ${result.updatedBlogs} modified blogs, removed ${result.deletedItems} deleted items${result.deletedBlogs ? `, removed ${result.deletedBlogs} deleted blogs` : ''}.`
+          : 'All items and blogs are already up to date.'
 
       const unsyncedCount = result.unsyncedRecords?.length || 0
       if (unsyncedCount > 0) {

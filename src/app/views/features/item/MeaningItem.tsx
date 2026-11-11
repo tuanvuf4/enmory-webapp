@@ -78,14 +78,14 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
               className={clsx(
                 styles.audioPill,
                 styles.audioPillUk,
-                speakingType === 'us' && styles.audioPillPlaying,
+                speakingType === 'uk' && styles.audioPillPlaying,
               )}
               onClick={() => handlePlayWord('en-GB', 'uk')}
             >
               <span className={styles.accentLabel}>UK</span>
               <span className={styles.phoneticText}>{cleanUk}</span>
               <SoundOutlined
-                className={clsx(styles.audioIcon, speakingType === 'us' && appStyle.soundPlaying)}
+                className={clsx(styles.audioIcon, speakingType === 'uk' && appStyle.soundPlaying)}
               />
             </button>
           </Tooltip>
@@ -95,12 +95,18 @@ const Pronunciation = ({ catId, origin, meaning }: IMeaningProps) => {
           <Tooltip title='Phát âm tiếng Anh - Mỹ (US)'>
             <button
               type='button'
-              className={clsx(styles.audioPill, styles.audioPillUs)}
+              className={clsx(
+                styles.audioPill,
+                styles.audioPillUs,
+                speakingType === 'us' && styles.audioPillPlaying,
+              )}
               onClick={() => handlePlayWord('en-US', 'us')}
             >
               <span className={styles.accentLabel}>US</span>
               <span className={styles.phoneticText}>{cleanUs}</span>
-              <SoundOutlined className={clsx(styles.audioIcon, appStyle.soundPlaying)} />
+              <SoundOutlined
+                className={clsx(styles.audioIcon, speakingType === 'us' && appStyle.soundPlaying)}
+              />
             </button>
           </Tooltip>
         )}

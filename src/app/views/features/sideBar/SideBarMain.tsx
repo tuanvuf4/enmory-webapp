@@ -97,12 +97,7 @@ export const SideBarMain: React.FC = () => {
 
       {/* ── Bottom Actions ── */}
       <div style={{ padding: isCollapsed ? '8px 6px' : '8px 12px' }}>
-        <Divider style={{ margin: '0 0 10px 0', opacity: 0.5 }} />
-
         <Flex vertical gap={6} align={isCollapsed ? 'center' : 'stretch'}>
-          {/* Gemini API Usage Widget */}
-          <GeminiSidebarWidget isCollapsed={isCollapsed} />
-
           {/* Sync Button */}
           {isAuth && (
             <Tooltip
@@ -177,6 +172,11 @@ export const SideBarMain: React.FC = () => {
               )}
             </Button>
           </Tooltip>
+
+          <Divider style={{ margin: '0 0 10px 0', opacity: 0.5 }} />
+
+          {/* Gemini API Usage Widget */}
+          <GeminiSidebarWidget isCollapsed={isCollapsed} />
         </Flex>
 
         {/* ── User Profile Card ── */}

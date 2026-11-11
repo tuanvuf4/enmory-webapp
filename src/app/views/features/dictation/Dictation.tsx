@@ -941,7 +941,7 @@ export const Dictation: React.FC<IDictationProps> = ({
   const handleCopyReference = () => {
     if (targetText) {
       navigator.clipboard.writeText(targetText)
-      message.success('Đã sao chép câu mẫu!')
+      message.success('Copied!')
     }
   }
 
@@ -1416,9 +1416,7 @@ export const Dictation: React.FC<IDictationProps> = ({
             icon={<SoundOutlined className={isPlaying ? appStyle.soundPlaying : undefined} />}
             onClick={() => handlePlayAudio(targetText)}
             style={{ fontSize: 14, minWidth: 160 }}
-          >
-            {isPlaying ? '' : 'Play'}
-          </Button>
+          />
 
           {sourceText && (
             <div className={'text-center'}>
@@ -1613,22 +1611,19 @@ export const Dictation: React.FC<IDictationProps> = ({
               CÂU CHUẨN THAM KHẢO:
             </Text>
             <div className={styles.referenceBox}>
-              <div className={styles.referenceContent}>
-                {targetText}
-                <Button
-                  shape='circle'
-                  icon={<CopyOutlined />}
-                  onClick={handleCopyReference}
-                  style={{ marginLeft: token.size / 2 }}
-                  size='small'
-                />
-              </div>
+              <div className={styles.referenceContent}>{targetText}</div>
               <Space size='small' direction='vertical' align='center'>
                 <Button
                   type='primary'
                   shape='circle'
                   icon={<SoundOutlined className={isPlaying ? appStyle.soundPlaying : undefined} />}
                   onClick={() => handlePlayAudio(targetText)}
+                  size='small'
+                />
+                <Button
+                  shape='circle'
+                  icon={<CopyOutlined />}
+                  onClick={handleCopyReference}
                   size='small'
                 />
               </Space>

@@ -888,6 +888,7 @@ export const Developer: React.FC = () => {
         title: 'Định nghĩa / Dịch nghĩa',
         key: 'meanings',
         ellipsis: true,
+        width: 300,
         render: (_: any, record: IItem) => {
           const meanings = record.meanings || []
           if (meanings.length === 0)
@@ -939,7 +940,7 @@ export const Developer: React.FC = () => {
         },
       },
       {
-        title: 'Trạng thái SRS',
+        title: 'SRS Status',
         key: 'srs',
         width: 140,
         render: (_: any, record: IItem) => {

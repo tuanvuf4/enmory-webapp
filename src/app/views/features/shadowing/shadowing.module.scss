@@ -174,20 +174,8 @@
 }
 
 .tokenSpeaking {
-  animation: tokenPulse 0.7s ease-in-out infinite alternate;
   background: rgba(22, 119, 255, 0.12);
   border-radius: 4px;
-}
-
-@keyframes tokenPulse {
-  from {
-    transform: scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: scale(1.05);
-    opacity: 0.75;
-  }
 }
 
 /* Chunk divider for Shadowing */

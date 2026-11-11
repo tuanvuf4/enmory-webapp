@@ -284,6 +284,37 @@ export const syncService = {
       .map((b) => b.id!)
       .filter((id) => id && !cloudBlogIds.has(id))
 
+    const existingLocalBlogMap = new Map<string, IBlogItem>(
+      existingLocalBlogs.map((b) => [b.id!, b]),
+    )
+
+    const isBlogModified = (cloud: IBlogItem, local?: IBlogItem): boolean => {
+      if (!local) return true
+      const cloudTime = cloud.last_update || cloud.created_date || 0
+      const localTime = local.last_update || local.created_date || 0
+      if (cloudTime !== localTime) return true
+      if (cloud.title !== local.title) return true
+      if (cloud.description !== local.description) return true
+      if (cloud.translation !== local.translation) return true
+      if (JSON.stringify(cloud.tags || []) !== JSON.stringify(local.tags || [])) return true
+      if (JSON.stringify(cloud.relation || []) !== JSON.stringify(local.relation || [])) return true
+      if (
+        JSON.stringify(cloud.vocabClassification || []) !==
+        JSON.stringify(local.vocabClassification || [])
+      )
+        return true
+      return false
+    }
+
+    const modifiedBlogs = isFullSync
+      ? cloudBlogs
+      : cloudBlogs.filter((cloudBlog) => {
+          const localBlog = existingLocalBlogMap.get(cloudBlog.id!)
+          return isBlogModified(cloudBlog, localBlog)
+        })
+
+    const updatedBlogs = modifiedBlogs.length
+
     // ==========================================
     // 2. SYNC ITEMS
     // ==========================================
@@ -553,12 +584,13 @@ export const syncService = {
         }
       }
 
-      // Put all active blogs into localDb
-      if (cloudBlogs.length > 0) {
+      // Put blogs into localDb (all blogs if full sync, or only modified/added blogs in delta sync)
+      const blogsToPut = isFullSync ? cloudBlogs : modifiedBlogs
+      if (blogsToPut.length > 0) {
         try {
-          await localDb.blogs.bulkPut(cloudBlogs)
+          await localDb.blogs.bulkPut(blogsToPut)
         } catch (bulkErr: any) {
-          for (const blog of cloudBlogs) {
+          for (const blog of blogsToPut) {
             try {
               await localDb.blogs.put(blog)
             } catch (singleErr: any) {
@@ -597,7 +629,8 @@ export const syncService = {
     }
 
     // Verify stored blogs in localDb
-    for (const blog of cloudBlogs) {
+    const blogsToVerify = isFullSync ? cloudBlogs : modifiedBlogs
+    for (const blog of blogsToVerify) {
       if (blog.id && !unsyncedRecords.some((u) => u.id === blog.id)) {
         const saved = await localDb.blogs.get(blog.id)
         if (!saved) {
@@ -672,7 +705,7 @@ export const syncService = {
       updatedItems,
       deletedItems,
       updatedExamples,
-      updatedBlogs: cloudBlogs.length,
+      updatedBlogs,
       deletedBlogs: blogIdsToDelete.length,
       totalItems,
       totalExamples,

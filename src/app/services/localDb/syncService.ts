@@ -358,7 +358,7 @@ export const syncService = {
         }
 
         try {
-          const itemObj = { id: itemId, ...data } as IItem
+          const itemObj = { ...data, id: itemId } as IItem
           if (!itemObj.uid) {
             itemObj.uid = uid
           }
@@ -434,7 +434,7 @@ export const syncService = {
         }
 
         try {
-          const itemObj = { id: itemId, ...data } as IItem
+          const itemObj = { ...data, id: itemId } as IItem
           if (!itemObj.uid) {
             itemObj.uid = uid
           }

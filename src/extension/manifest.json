@@ -10,7 +10,8 @@
     "declarativeContent",
     "contextMenus",
     "identity",
-    "identity.email"
+    "identity.email",
+    "notifications"
   ],
   "background": {
     "service_worker": "background.js"
@@ -21,7 +22,10 @@
       "matches": ["http://*/*", "https://*/*"]
     }
   ],
-  "host_permissions": ["https://generativelanguage.googleapis.com/*"],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/*",
+    "https://firestore.googleapis.com/*"
+  ],
   "icons": {
     "16": "logo192.png",
     "32": "logo192.png",

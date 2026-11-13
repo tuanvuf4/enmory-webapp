@@ -632,27 +632,304 @@ if (document.documentElement.dataset.appType === 'WEB_APP') {
   window.addEventListener('scroll', positionReviewUI, true)
   window.addEventListener('resize', positionReviewUI)
 
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    // Reserved for future extension-driven commands.
+  // =========================================================================
+  // In-Page Enmory Integration (Context Menu Triggered + Toast Notifications)
+  // =========================================================================
+
+  let currentSelectionText = ''
+  let currentSentenceContext = ''
+
+  const ENMORY_LOGO_SVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FBBF24" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+
+  // Ensure extension toast style animations are injected into the page once
+  const ensureExtensionStyles = () => {
+    if (document.getElementById('enmory-extension-custom-styles')) return
+    const styleEl = document.createElement('style')
+    styleEl.id = 'enmory-extension-custom-styles'
+    styleEl.textContent = `
+      @keyframes enmorySlideInRight {
+        from { opacity: 0; transform: translateX(40px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes enmoryFadeOut {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(-8px); }
+      }
+      #enmory-toast-container {
+        all: initial;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 2147483647;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+      }
+      .enmory-toast-card {
+        pointer-events: auto;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+        border: 1px solid rgba(99, 102, 241, 0.35);
+        border-radius: 12px;
+        padding: 13px 18px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 4px 10px rgba(79, 70, 229, 0.2);
+        max-width: 380px;
+        animation: enmorySlideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        box-sizing: border-box;
+      }
+      .enmory-toast-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .enmory-toast-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #38bdf8;
+      }
+      .enmory-toast-close {
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 16px;
+        line-height: 1;
+        padding: 2px;
+      }
+      .enmory-toast-close:hover {
+        color: #ffffff;
+      }
+      .enmory-toast-origin {
+        font-size: 15px;
+        font-weight: 700;
+        color: #f1f5f9;
+        margin-top: 1px;
+      }
+      .enmory-toast-detail {
+        font-size: 13px;
+        color: #cbd5e1;
+        line-height: 1.45;
+      }
+      .enmory-toast-meanings-list {
+        font-size: 12.5px;
+        color: #e2e8f0;
+        margin: 2px 0;
+        padding-left: 18px;
+      }
+      .enmory-toast-meanings-list li {
+        margin-bottom: 2px;
+      }
+      .enmory-toast-example {
+        font-size: 12px;
+        font-style: italic;
+        color: #94a3b8;
+        background: rgba(255, 255, 255, 0.06);
+        padding: 5px 9px;
+        border-radius: 6px;
+        margin-top: 3px;
+        border-left: 2px solid #6366f1;
+        line-height: 1.35;
+      }
+      .enmory-toast-footer {
+        font-size: 11.5px;
+        color: #4ade80;
+        font-weight: 600;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+    `
+    document.head.appendChild(styleEl)
+  }
+
+  // Extract sentence context around selected text
+  const extractSentenceContext = (selection) => {
+    try {
+      if (!selection || !selection.anchorNode) return ''
+      const anchorNode = selection.anchorNode
+      const parentElement =
+        anchorNode.nodeType === Node.TEXT_NODE ? anchorNode.parentElement : anchorNode
+      if (!parentElement) return ''
+
+      const block =
+        parentElement.closest(
+          'p, li, blockquote, div, article, section, td, h1, h2, h3, h4, h5, h6',
+        ) || parentElement
+      const blockText = (block.innerText || block.textContent || '').replace(/\s+/g, ' ').trim()
+      const selectedStr = selection.toString().trim()
+      if (!blockText || !selectedStr) return ''
+
+      // Split into sentences using punctuation boundaries
+      const sentences = blockText.split(/(?<=[.!?])\s+/)
+      const matchingSentence = sentences.find((s) => s.includes(selectedStr))
+      if (matchingSentence) {
+        return matchingSentence.trim()
+      }
+
+      // Fallback: window around selection
+      const idx = blockText.indexOf(selectedStr)
+      if (idx !== -1) {
+        const start = Math.max(0, idx - 80)
+        const end = Math.min(blockText.length, idx + selectedStr.length + 80)
+        return blockText.substring(start, end).trim()
+      }
+
+      return blockText.slice(0, 180).trim()
+    } catch (e) {
+      return ''
+    }
+  }
+
+  // In-page Toast Notifications
+  const showEnmoryToast = ({ type = 'success', title, origin, detail, example, subtext }) => {
+    ensureExtensionStyles()
+    let container = document.getElementById('enmory-toast-container')
+    if (!container) {
+      container = document.createElement('div')
+      container.id = 'enmory-toast-container'
+      document.body.appendChild(container)
+    }
+
+    const toast = document.createElement('div')
+    toast.className = 'enmory-toast-card'
+
+    const titleColor = type === 'error' ? '#ef4444' : type === 'info' ? '#38bdf8' : '#4ade80'
+    const statusIcon = type === 'error' ? '✕' : '✓'
+
+    toast.innerHTML = `
+      <div class="enmory-toast-header">
+        <span class="enmory-toast-title" style="color: ${titleColor}">
+          ${ENMORY_LOGO_SVG} ${title || 'Enmory'}
+        </span>
+        <span class="enmory-toast-close">&times;</span>
+      </div>
+      ${origin ? `<div class="enmory-toast-origin">${origin}</div>` : ''}
+      ${detail ? `<div class="enmory-toast-detail">${detail}</div>` : ''}
+      ${example ? `<div class="enmory-toast-example">“${example}”</div>` : ''}
+      <div class="enmory-toast-footer">
+        ${statusIcon} ${subtext || 'Đã lưu vào Local DB & Firestore'}
+      </div>
+    `
+
+    toast.querySelector('.enmory-toast-close').addEventListener('click', () => {
+      toast.remove()
+    })
+
+    container.appendChild(toast)
+
+    setTimeout(() => {
+      toast.style.animation = 'enmoryFadeOut 0.3s forwards'
+      setTimeout(() => toast.remove(), 300)
+    }, 5000)
+  }
+
+  // Listen to selection changes to track current selection and sentence context
+  document.addEventListener('mouseup', () => {
+    setTimeout(() => {
+      const selection = window.getSelection()
+      const rawText = selection?.toString() || ''
+      const selectedText = normalizeSelection(rawText)
+
+      if (selectedText.length) {
+        currentSelectionText = selectedText
+        currentSentenceContext = extractSentenceContext(selection)
+
+        // Legacy message for manual form popup
+        safeSendMessage({
+          addOrigin: 'addOrigin',
+          value: selectedText,
+          catId: getCategoryIdFromSelection(selectedText),
+        })
+      }
+    }, 20)
   })
 
-  document.addEventListener('mouseup', async () => {
-    const selectedText = normalizeSelection(document.getSelection()?.toString() || '')
+  // Listen to background messages
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // 1. Context query from background when context menu is clicked
+    if (request?.action === 'getSelectionContext') {
+      const selection = window.getSelection()
+      const text =
+        normalizeSelection(selection?.toString() || '') || currentSelectionText
+      const ctx = extractSentenceContext(selection) || currentSentenceContext
+      sendResponse({ origin: text, sentenceContext: ctx })
+      return false
+    }
 
-    if (selectedText.length) {
-      safeSendMessage({
-        addOrigin: 'addOrigin',
-        value: selectedText,
-        catId: getCategoryIdFromSelection(selectedText),
+    // 2. Loading started
+    if (request?.action === 'quickAddStarted') {
+      showEnmoryToast({
+        type: 'info',
+        title: 'Enmory AI',
+        origin: request.origin,
+        detail: 'Đang phân tích tất cả các nghĩa bằng Gemini AI...',
+        subtext: 'Đang lấy dữ liệu từ điển & ngữ cảnh...',
       })
+      return false
+    }
+
+    // 3. Quick add completed
+    if (request?.action === 'quickAddSuccess') {
+      const item = request.item || {}
+      const meanings = item.meanings || []
+
+      // Build readable detail of all extracted meanings
+      let detailHtml = ''
+      if (meanings.length === 1) {
+        detailHtml = `Nghĩa: <strong>${meanings[0].translation || ''}</strong>`
+      } else if (meanings.length > 1) {
+        const listItems = meanings
+          .slice(0, 4)
+          .map((m) => `<li>${m.translation || m.definition || ''}</li>`)
+          .join('')
+        detailHtml = `<div>Đã tìm thấy <strong>${meanings.length} nghĩa</strong>:</div><ul class="enmory-toast-meanings-list">${listItems}</ul>`
+      }
+
+      // First example (the contextual sentence)
+      const firstEx =
+        meanings[0]?.examples?.[0]?.origin ||
+        item.examples?.[0]?.origin ||
+        currentSentenceContext ||
+        ''
+
+      const isUpdated = Boolean(item.isUpdated)
+      const preservedCount = item.preservedExamplesCount || 0
+      const toastTitle = isUpdated ? 'Đã cập nhật từ vựng!' : 'Đã nạp vào Enmory!'
+      const toastSubtext = isUpdated
+        ? `Ghi đè nghĩa mới & giữ lại ${preservedCount} câu ví dụ cũ (Local DB & Firestore)`
+        : 'Đã lưu vào cả Local DB & Firestore'
+
+      showEnmoryToast({
+        type: 'success',
+        title: toastTitle,
+        origin: item.origin,
+        detail: detailHtml,
+        example: firstEx,
+        subtext: toastSubtext,
+      })
+      return false
+    }
+
+    // 4. Quick add error
+    if (request?.action === 'quickAddError') {
+      showEnmoryToast({
+        type: 'error',
+        title: 'Lỗi nạp từ vựng',
+        detail: request.error || 'Thao tác không thành công',
+        subtext: 'Bạn có thể dùng chuột phải -> Mở form thủ công để thử lại',
+      })
+      return false
     }
   })
-
-  // chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  //   if (request.showPopup === 'showPopup') {
-  //     chrome.action.openPopup().then((resp) => {
-  //       console.log(`openPopup: `, resp)
-  //     })
-  //   }
-  // })
 }
+

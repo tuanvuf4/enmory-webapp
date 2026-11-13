@@ -19,6 +19,13 @@ export const useAuthInit = () => {
     const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
       if (user) {
         dispatch(checkAuthState() as any)
+        if (typeof chrome !== 'undefined' && chrome?.storage?.local) {
+          chrome.storage.local.set({ enmory_uid: user.uid, enmory_email: user.email })
+        }
+      } else {
+        if (typeof chrome !== 'undefined' && chrome?.storage?.local) {
+          chrome.storage.local.remove(['enmory_uid', 'enmory_email'])
+        }
       }
     })
 

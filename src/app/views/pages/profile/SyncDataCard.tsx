@@ -5,13 +5,13 @@ import {
   Space,
   Typography,
   Tag,
-  Row,
-  Col,
   Popconfirm,
   Alert,
   Tooltip,
   Table,
   Input,
+  Flex,
+  Grid,
   theme,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -22,7 +22,6 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   DatabaseOutlined,
-  MobileOutlined,
   ReloadOutlined,
   ReadOutlined,
   SearchOutlined,
@@ -32,9 +31,28 @@ import { useManualSync, IUnsyncedRecord } from '@/services/localDb'
 import moment from 'moment'
 
 const { Text } = Typography
+const { useBreakpoint } = Grid
+
+interface ISyncSummary {
+  key: string
+  type: 'item' | 'blog'
+  title: string
+  description: string
+  icon: React.ReactNode
+  tagColor: string
+  unit: string
+  localCount: number
+  serverCount: number | null
+  isLoadingServer: boolean
+  diffCount: number
+  hasDiff: boolean
+  refreshServer: () => void
+}
 
 export const SyncDataCard: React.FC = () => {
   const { token } = theme.useToken()
+  const screens = useBreakpoint()
+
   const {
     isSyncing,
     progressText,
@@ -47,6 +65,7 @@ export const SyncDataCard: React.FC = () => {
     serverBlogCount,
     isLoadingServerBlogCount,
     refreshServerBlogCount,
+    refreshAllServerCounts,
     syncNow,
     clearLocalData,
     unsyncedRecords = [],
@@ -67,6 +86,220 @@ export const SyncDataCard: React.FC = () => {
   const totalNewCount =
     (diffItemCount > 0 ? diffItemCount : 0) + (diffBlogCount > 0 ? diffBlogCount : 0)
 
+  const summaryData = useMemo<ISyncSummary[]>(
+    () => [
+      {
+        key: 'items',
+        type: 'item',
+        title: 'Vocabulary Items',
+        description: 'Cards & Vocabulary list',
+        icon: <DatabaseOutlined style={{ color: token.colorPrimary, fontSize: 16 }} />,
+        tagColor: 'blue',
+        unit: 'items',
+        localCount: localItemCount,
+        serverCount: serverItemCount,
+        isLoadingServer: isLoadingServerCount,
+        diffCount: diffItemCount,
+        hasDiff: hasItemDiff,
+        refreshServer: refreshServerItemCount,
+      },
+      {
+        key: 'blogs',
+        type: 'blog',
+        title: 'Blogs & Articles',
+        description: 'Posts & Reading material',
+        icon: <ReadOutlined style={{ color: '#722ed1', fontSize: 16 }} />,
+        tagColor: 'purple',
+        unit: 'articles',
+        localCount: localBlogCount,
+        serverCount: serverBlogCount,
+        isLoadingServer: isLoadingServerBlogCount,
+        diffCount: diffBlogCount,
+        hasDiff: hasBlogDiff,
+        refreshServer: refreshServerBlogCount,
+      },
+    ],
+    [
+      token.colorPrimary,
+      localItemCount,
+      serverItemCount,
+      isLoadingServerCount,
+      diffItemCount,
+      hasItemDiff,
+      refreshServerItemCount,
+      localBlogCount,
+      serverBlogCount,
+      isLoadingServerBlogCount,
+      diffBlogCount,
+      hasBlogDiff,
+      refreshServerBlogCount,
+    ],
+  )
+
+  const summaryColumns: ColumnsType<ISyncSummary> = [
+    {
+      title: 'Data Type',
+      dataIndex: 'title',
+      key: 'title',
+      minWidth: 160,
+      render: (_, record) => (
+        <Space size={10} align='center'>
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: token.borderRadiusSM,
+              backgroundColor: record.type === 'item' ? token.colorPrimaryBg : '#f9f0ff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            {record.icon}
+          </div>
+          <div>
+            <Text strong style={{ fontSize: 13, display: 'block', lineHeight: 1.3 }}>
+              {record.title}
+            </Text>
+            <Text type='secondary' style={{ fontSize: 11 }}>
+              {record.description}
+            </Text>
+          </div>
+        </Space>
+      ),
+    },
+    {
+      title: 'Local DB',
+      dataIndex: 'localCount',
+      key: 'localCount',
+      width: 130,
+      render: (count: number, record) => (
+        <Tag
+          color={record.tagColor}
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            padding: '3px 10px',
+            borderRadius: token.borderRadiusSM,
+            margin: 0,
+          }}
+        >
+          {count.toLocaleString()} {record.unit}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Cloud Server',
+      dataIndex: 'serverCount',
+      key: 'serverCount',
+      minWidth: 160,
+      render: (_, record) => {
+        if (record.isLoadingServer) {
+          return (
+            <Tag color='default' style={{ padding: '3px 8px', margin: 0 }}>
+              <SyncOutlined spin /> Checking...
+            </Tag>
+          )
+        }
+        if (record.serverCount !== null) {
+          return (
+            <Space size={6} wrap align='center'>
+              <Tag
+                color={record.serverCount === record.localCount ? 'green' : 'orange'}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  padding: '3px 10px',
+                  borderRadius: token.borderRadiusSM,
+                  margin: 0,
+                }}
+              >
+                {record.serverCount.toLocaleString()} {record.unit}
+              </Tag>
+              {record.hasDiff && (
+                <Tag
+                  color={record.diffCount > 0 ? 'warning' : 'default'}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    padding: '1px 6px',
+                    margin: 0,
+                  }}
+                >
+                  {record.diffCount > 0 ? `+${record.diffCount} new` : `${record.diffCount}`}
+                </Tag>
+              )}
+            </Space>
+          )
+        }
+        return (
+          <Tag color='error' style={{ margin: 0 }}>
+            Unavailable
+          </Tag>
+        )
+      },
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      width: 150,
+      render: (_, record) => {
+        if (isSyncing) {
+          return (
+            <Tag color='processing' icon={<SyncOutlined spin />}>
+              Syncing...
+            </Tag>
+          )
+        }
+        if (record.hasDiff) {
+          return (
+            <Tag color='warning' icon={<ExclamationCircleOutlined />}>
+              {record.diffCount > 0 ? `${record.diffCount} New Available` : 'Out of sync'}
+            </Tag>
+          )
+        }
+        if (record.serverCount === null) {
+          return (
+            <Tag color='default' icon={<ExclamationCircleOutlined />}>
+              Unknown
+            </Tag>
+          )
+        }
+        if (lastSyncTime) {
+          return (
+            <Tag color='success' icon={<CheckCircleOutlined />}>
+              Up to Date
+            </Tag>
+          )
+        }
+        return (
+          <Tag color='default' icon={<ExclamationCircleOutlined />}>
+            Not Synced
+          </Tag>
+        )
+      },
+    },
+    {
+      title: '',
+      key: 'action',
+      width: 50,
+      align: 'center',
+      render: (_, record) => (
+        <Tooltip title={`Refresh server ${record.unit} count`}>
+          <Button
+            type='text'
+            size='small'
+            shape='circle'
+            icon={<ReloadOutlined spin={record.isLoadingServer} style={{ fontSize: 12 }} />}
+            onClick={record.refreshServer}
+            disabled={record.isLoadingServer || isSyncing}
+          />
+        </Tooltip>
+      ),
+    },
+  ]
+
   const filteredRecords = useMemo(() => {
     if (!searchText.trim()) return unsyncedRecords
     const query = searchText.toLowerCase()
@@ -83,7 +316,7 @@ export const SyncDataCard: React.FC = () => {
       title: 'Type',
       dataIndex: 'type',
       key: 'type',
-      width: 100,
+      width: 90,
       filters: [
         { text: 'Item', value: 'item' },
         { text: 'Blog', value: 'blog' },
@@ -171,9 +404,9 @@ export const SyncDataCard: React.FC = () => {
     if (lastSyncTime) {
       return (
         <Text italic style={{ fontSize: 12 }}>
-          {lastSyncTime
-            ? `${moment(lastSyncTime).format('MMM D, YYYY h:mm A')} (${moment(lastSyncTime).fromNow()})`
-            : 'Never'}
+          {screens.xs
+            ? moment(lastSyncTime).fromNow()
+            : `${moment(lastSyncTime).format('MMM D, YYYY h:mm A')} (${moment(lastSyncTime).fromNow()})`}
         </Text>
       )
     }
@@ -187,194 +420,53 @@ export const SyncDataCard: React.FC = () => {
   return (
     <Card
       title={
-        <Space align='center'>
+        <Space align='center' size={8}>
           <DatabaseOutlined style={{ color: token.colorPrimary, fontSize: 18 }} />
-          <span>Database</span>
+          <span>Database Sync</span>
+          <span>{getSyncTag()}</span>
         </Space>
       }
-      extra={getSyncTag()}
+      extra={
+        <Space size={screens.xs ? 4 : 8} wrap align='center'>
+          <Tooltip title='Check server counts'>
+            <Button
+              type='text'
+              size='small'
+              icon={<ReloadOutlined spin={isLoadingServerCount || isLoadingServerBlogCount} />}
+              onClick={refreshAllServerCounts}
+              disabled={isLoadingServerCount || isLoadingServerBlogCount || isSyncing}
+            >
+              {!screens.xs && 'Check Updates'}
+            </Button>
+          </Tooltip>
+        </Space>
+      }
     >
-      <Row
-        gutter={[token.size, token.size]}
+      {/* Overview Table comparing Local DB and Cloud Server */}
+      <div
         style={{
-          backgroundColor: token.colorFillAlter,
-          padding: token.size,
-          borderRadius: token.borderRadius,
+          border: `1px solid ${token.colorBorderSecondary}`,
+          borderRadius: token.borderRadiusLG,
+          overflow: 'hidden',
           marginBottom: token.size,
+          backgroundColor: token.colorBgContainer,
         }}
       >
-        {/* Row 1: Items info + Last Synced */}
-        <Col xs={24} sm={8}>
-          <Text type='secondary'>Items in Local DB:</Text>
-          <div style={{ marginTop: 4 }}>
-            <Tag color='blue' style={{ fontSize: 14, padding: '2px 10px' }}>
-              {localItemCount} items
-            </Tag>
-          </div>
-        </Col>
-
-        <Col xs={24} sm={8}>
-          <Space align='center' size={4}>
-            <Text type='secondary'>Items on Server:</Text>
-            <Tooltip title='Refresh server items count'>
-              <Button
-                type='text'
-                size='small'
-                shape='circle'
-                icon={<ReloadOutlined spin={isLoadingServerCount} style={{ fontSize: 11 }} />}
-                onClick={refreshServerItemCount}
-                disabled={isLoadingServerCount || isSyncing}
-                style={{
-                  width: 20,
-                  height: 20,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              />
-            </Tooltip>
-          </Space>
-          <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            {isLoadingServerCount ? (
-              <Tag color='default' style={{ fontSize: 14, padding: '2px 10px' }}>
-                <SyncOutlined spin /> Checking...
-              </Tag>
-            ) : serverItemCount !== null ? (
-              <>
-                <Tag
-                  color={serverItemCount === localItemCount ? 'green' : 'orange'}
-                  style={{ fontSize: 14, padding: '2px 10px' }}
-                >
-                  {serverItemCount} items
-                </Tag>
-                {hasItemDiff && (
-                  <Tag color={diffItemCount > 0 ? 'warning' : 'default'} style={{ fontSize: 12 }}>
-                    {diffItemCount > 0 ? `+${diffItemCount} new` : `${diffItemCount}`}
-                  </Tag>
-                )}
-              </>
-            ) : (
-              <Tag color='error' style={{ fontSize: 14, padding: '2px 10px' }}>
-                Unavailable
-              </Tag>
-            )}
-          </div>
-        </Col>
-
-        <Col xs={24} sm={8}>
-          <Text type='secondary'>Sync Status:</Text>
-          <div style={{ marginTop: 4 }}>
-            {isSyncing ? (
-              <Tag color='processing' icon={<SyncOutlined spin />}>
-                Syncing...
-              </Tag>
-            ) : hasItemDiff ? (
-              <Tag color='warning' icon={<ExclamationCircleOutlined />}>
-                Updates Available
-              </Tag>
-            ) : lastSyncTime ? (
-              <Tag color='success' icon={<CheckCircleOutlined />}>
-                All Up to Date
-              </Tag>
-            ) : (
-              <Tag color='warning' icon={<ExclamationCircleOutlined />}>
-                Not Synced
-              </Tag>
-            )}
-          </div>
-        </Col>
-
-        {/* Row 2: Blog info + Status */}
-        <Col xs={24} sm={8}>
-          <Space align='center' size={4}>
-            <ReadOutlined style={{ color: token.colorPrimary, fontSize: 13 }} />
-            <Text type='secondary'>Blogs in Local DB:</Text>
-          </Space>
-          <div style={{ marginTop: 4 }}>
-            <Tag color='purple' style={{ fontSize: 14, padding: '2px 10px' }}>
-              {localBlogCount} blogs
-            </Tag>
-          </div>
-        </Col>
-
-        <Col xs={24} sm={8}>
-          <Space align='center' size={4}>
-            <ReadOutlined style={{ color: token.colorPrimary, fontSize: 13 }} />
-            <Text type='secondary'>Blogs on Server:</Text>
-            <Tooltip title='Refresh server blogs count'>
-              <Button
-                type='text'
-                size='small'
-                shape='circle'
-                icon={<ReloadOutlined spin={isLoadingServerBlogCount} style={{ fontSize: 11 }} />}
-                onClick={refreshServerBlogCount}
-                disabled={isLoadingServerBlogCount || isSyncing}
-                style={{
-                  width: 20,
-                  height: 20,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              />
-            </Tooltip>
-          </Space>
-          <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            {isLoadingServerBlogCount ? (
-              <Tag color='default' style={{ fontSize: 14, padding: '2px 10px' }}>
-                <SyncOutlined spin /> Checking...
-              </Tag>
-            ) : serverBlogCount !== null ? (
-              <>
-                <Tag
-                  color={serverBlogCount === localBlogCount ? 'green' : 'orange'}
-                  style={{ fontSize: 14, padding: '2px 10px' }}
-                >
-                  {serverBlogCount} blogs
-                </Tag>
-                {hasBlogDiff && (
-                  <Tag color={diffBlogCount > 0 ? 'warning' : 'default'} style={{ fontSize: 12 }}>
-                    {diffBlogCount > 0 ? `+${diffBlogCount} new` : `${diffBlogCount}`}
-                  </Tag>
-                )}
-              </>
-            ) : (
-              <Tag color='error' style={{ fontSize: 14, padding: '2px 10px' }}>
-                Unavailable
-              </Tag>
-            )}
-          </div>
-        </Col>
-
-        <Col xs={24} sm={8}>
-          <Text type='secondary'>Sync Status:</Text>
-          <div style={{ marginTop: 4 }}>
-            {isSyncing ? (
-              <Tag color='processing' icon={<SyncOutlined spin />}>
-                Syncing...
-              </Tag>
-            ) : hasDiff ? (
-              <Tag color='warning' icon={<ExclamationCircleOutlined />}>
-                Updates Available
-              </Tag>
-            ) : lastSyncTime ? (
-              <Tag color='success' icon={<CheckCircleOutlined />}>
-                All Up to Date
-              </Tag>
-            ) : (
-              <Tag color='warning' icon={<ExclamationCircleOutlined />}>
-                Not Synced
-              </Tag>
-            )}
-          </div>
-        </Col>
-      </Row>
+        <Table<ISyncSummary>
+          dataSource={summaryData}
+          columns={summaryColumns}
+          pagination={false}
+          size={screens.xs ? 'small' : 'middle'}
+          rowKey='key'
+          scroll={{ x: 560 }}
+        />
+      </div>
 
       {hasDiff && !isSyncing && (
         <Alert
           type='warning'
           showIcon
-          style={{ marginBottom: token.size }}
+          style={{ marginBottom: token.size, borderRadius: token.borderRadiusSM }}
           message={
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {hasItemDiff && (
@@ -405,28 +497,39 @@ export const SyncDataCard: React.FC = () => {
                   )}
                 </div>
               )}
-              <div>Sync is recommended to keep your items and blogs up to date.</div>
+              <Text type='secondary' style={{ fontSize: 12 }}>
+                Sync is recommended to keep your items and blogs up to date.
+              </Text>
             </div>
           }
         />
       )}
 
       {isSyncing && progressText && (
-        <div style={{ marginBottom: token.size }}>
-          <Space>
-            <SyncOutlined spin style={{ color: token.colorPrimary }} />
-            <Text style={{ color: token.colorPrimary }}>{progressText}</Text>
-          </Space>
-        </div>
+        <Alert
+          type='info'
+          showIcon
+          icon={<SyncOutlined spin />}
+          message={progressText}
+          style={{ marginBottom: token.size, borderRadius: token.borderRadiusSM }}
+        />
       )}
 
-      <Space wrap size={token.size / 2} style={{ width: '100%', justifyContent: 'space-between' }}>
-        <Space wrap size={token.size / 2}>
+      {/* Action buttons with responsive wrapping */}
+      <Flex
+        wrap='wrap'
+        gap={token.size / 2}
+        justify='space-between'
+        align='center'
+        style={{ width: '100%' }}
+      >
+        <Flex wrap='wrap' gap={token.size / 2} style={{ width: screens.xs ? '100%' : 'auto' }}>
           <Button
             type='primary'
             icon={<CloudSyncOutlined spin={isSyncing} />}
             loading={isSyncing}
             onClick={() => syncNow(false)}
+            style={{ flex: screens.xs ? 1 : 'initial' }}
           >
             Sync {totalNewCount > 0 ? `(${totalNewCount} new)` : ''}
           </Button>
@@ -436,16 +539,19 @@ export const SyncDataCard: React.FC = () => {
             icon={<SyncOutlined />}
             loading={isSyncing}
             onClick={() => syncNow(true)}
+            style={{ flex: screens.xs ? 1 : 'initial' }}
           >
             Full Sync
           </Button>
-        </Space>
+        </Flex>
 
-        <Space wrap size={token.size / 2}>
-          <Tag icon={<MobileOutlined />} color='default'>
-            Mobile Ready
-          </Tag>
-
+        <Flex
+          wrap='wrap'
+          gap={token.size / 2}
+          align='center'
+          justify={screens.xs ? 'space-between' : 'flex-end'}
+          style={{ width: screens.xs ? '100%' : 'auto' }}
+        >
           {(localItemCount > 0 || localBlogCount > 0) && (
             <Popconfirm
               title='Clear local database?'
@@ -455,12 +561,12 @@ export const SyncDataCard: React.FC = () => {
               onConfirm={clearLocalData}
             >
               <Button danger type='text' icon={<DeleteOutlined />}>
-                Clear
+                Clear Local DB
               </Button>
             </Popconfirm>
           )}
-        </Space>
-      </Space>
+        </Flex>
+      </Flex>
 
       {/* Table of items and blogs that cannot sync */}
       {(lastSyncResult || unsyncedRecords.length > 0) && (
@@ -470,7 +576,7 @@ export const SyncDataCard: React.FC = () => {
               size='small'
               type='inner'
               title={
-                <Space align='center'>
+                <Space align='center' size={6}>
                   <ExclamationCircleOutlined style={{ color: token.colorError, fontSize: 16 }} />
                   <span>
                     Cannot Sync Records (
@@ -482,7 +588,7 @@ export const SyncDataCard: React.FC = () => {
                 </Space>
               }
               extra={
-                <Space size={6}>
+                <Space size={6} wrap>
                   <Tag color='blue'>
                     {unsyncedRecords.filter((r) => r.type === 'item').length} Items
                   </Tag>
@@ -514,7 +620,7 @@ export const SyncDataCard: React.FC = () => {
                     onChange={(e) => setSearchText(e.target.value)}
                     allowClear
                     size='small'
-                    style={{ maxWidth: 350 }}
+                    style={{ width: screens.xs ? '100%' : 320 }}
                   />
                 </div>
               )}

@@ -1,4 +1,4 @@
-import { Button, Col, Flex, Input, Row, Space, theme } from 'antd'
+import { Button, Card, Col, Flex, Input, Row, Space, theme } from 'antd'
 import appStyle from '@/style/appStyle.module.scss'
 import { useSelector } from '@/core/hooks/redux'
 import { useState } from 'react'
@@ -8,6 +8,7 @@ import { usePrompt } from '@/helpers/hooks'
 
 import { SyncDataCard } from './SyncDataCard'
 import Statistic from '../statistic/Statistic'
+import { ProfileOutlined } from '@ant-design/icons'
 
 const Profile = () => {
   const { message } = usePrompt()
@@ -58,71 +59,79 @@ const Profile = () => {
 
   return (
     <div className={appStyle.container}>
-      <h2 className={clsx(appStyle.pageTitle)}>Hello, {user?.firstName + ' ' + user?.lastName}</h2>
-
       <div className={clsx(appStyle.bodyContent)}>
-        <Statistic />
-
         <Row gutter={[token.size * 1.5, token.size * 1.5]} style={{ marginTop: token.size * 1.5 }}>
           <Col xs={24} md={8}>
-            <Space direction={'vertical'} size={token.size} className={clsx(appStyle.boxItem)}>
-              <Flex justify={'flex-start'} align={'center'} className={`w-full`} gap={token.size}>
-                <div>
-                  <img src={user?.photoURL} style={{ maxWidth: '200px' }} alt='' />
-                </div>
-
-                <div>
-                  <h2
-                    style={{
-                      fontSize: token.fontSizeHeading2,
-                      margin: 0,
-                    }}
-                  >
-                    Hello, {user?.firstName + ' ' + user?.lastName}
-                  </h2>
-
-                  <h4
-                    style={{
-                      fontSize: token.fontSizeHeading4,
-                      margin: 0,
-                    }}
-                  >
-                    {user?.email}
-                  </h4>
-                </div>
-              </Flex>
-
-              {user?.provider === 'google' && (
-                <Space direction='vertical' style={{ width: '100%' }} size={token.size / 2}>
-                  <p style={{ margin: 0 }}>Enable login using the email/password</p>
-                  <Row gutter={[token.size / 2, token.size / 2]} align='middle'>
-                    <Col xs={24} md={16}>
-                      <Input.Password
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder='Password'
-                      />
-                    </Col>
-                    <Col xs={24} md={8}>
-                      <Button
-                        type='default'
-                        onClick={handleEnableEmailPassword}
-                        loading={isLoading}
-                        style={{ minWidth: '100%' }}
-                      >
-                        Link account
-                      </Button>
-                    </Col>
-                  </Row>
+            <Card
+              style={{ height: '100%' }}
+              title={
+                <Space align='center' size={8}>
+                  <ProfileOutlined style={{ color: token.colorPrimary, fontSize: 18 }} />
+                  <span>User Information</span>
                 </Space>
-              )}
-            </Space>
+              }
+            >
+              <Space direction={'vertical'} size={token.size}>
+                <Flex justify={'flex-start'} align={'center'} className={`w-full`} gap={token.size}>
+                  <div>
+                    <img src={user?.photoURL} style={{ maxWidth: '200px' }} alt='' />
+                  </div>
+
+                  <div>
+                    <h2
+                      style={{
+                        fontSize: token.fontSizeHeading2,
+                        margin: 0,
+                      }}
+                    >
+                      Hello, {user?.firstName + ' ' + user?.lastName}
+                    </h2>
+
+                    <h4
+                      style={{
+                        fontSize: token.fontSizeHeading4,
+                        margin: 0,
+                      }}
+                    >
+                      {user?.email}
+                    </h4>
+                  </div>
+                </Flex>
+
+                {user?.provider === 'google' && (
+                  <Space direction='vertical' style={{ width: '100%' }} size={token.size / 2}>
+                    <p style={{ margin: 0 }}>Enable login using the email/password</p>
+                    <Row gutter={[token.size / 2, token.size / 2]} align='middle'>
+                      <Col xs={24} md={16}>
+                        <Input.Password
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder='Password'
+                        />
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <Button
+                          type='default'
+                          onClick={handleEnableEmailPassword}
+                          loading={isLoading}
+                          style={{ minWidth: '100%' }}
+                        >
+                          Link account
+                        </Button>
+                      </Col>
+                    </Row>
+                  </Space>
+                )}
+              </Space>
+            </Card>
           </Col>
 
           <Col xs={24} md={16}>
             <SyncDataCard />
           </Col>
         </Row>
+
+        <Statistic />
       </div>
     </div>
   )

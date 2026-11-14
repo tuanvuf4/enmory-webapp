@@ -145,7 +145,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
               Data Updates Available
             </Title>
             <Text type='secondary' style={{ fontSize: 12, fontWeight: 'normal' }}>
-              Changes detected between your local data and cloud
+              Keep your data and cloud in sync
             </Text>
           </Flex>
         </Flex>
@@ -163,11 +163,6 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
           />
         ) : (
           <>
-            <Text type='secondary' style={{ display: 'block', marginBottom: 16, fontSize: 13 }}>
-              We noticed newer or updated vocabulary cards and blogs in the cloud. Sync now to keep
-              your study materials up to date.
-            </Text>
-
             <Flex vertical gap={12}>
               {/* Vocabulary Items Section */}
               <div

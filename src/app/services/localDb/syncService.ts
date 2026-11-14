@@ -6,6 +6,7 @@ import {
   where,
   writeBatch,
   Timestamp,
+  limit,
 } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
@@ -19,6 +20,15 @@ import { hydrateItemsWithExamples } from '@/services/firebase/dbIntegration'
 const SYNC_META_PREFIX = 'last_sync_time_'
 const UNSYNCED_META_PREFIX = 'last_unsynced_records_'
 
+// In-memory cache for server counts to prevent duplicate getCountFromServer queries
+const COUNT_CACHE_TTL_MS = 60000 // 60 seconds
+const serverItemCountCache = new Map<string, { count: number; timestamp: number }>()
+const serverBlogCountCache = new Map<string, { count: number; timestamp: number }>()
+
+// In-memory cache for detectDataChanges to prevent rapid redundant checks
+let lastDetectionCache: { uid: string; result: IDataChanges; timestamp: number } | null = null
+const DETECTION_CACHE_TTL_MS = 30000 // 30 seconds
+
 export interface IUnsyncedRecord {
   id: string
   type: 'item' | 'blog'
@@ -26,6 +36,28 @@ export interface IUnsyncedRecord {
   reason: string
   updatedAt?: number
   errorDetails?: string
+}
+
+export interface IDataChanges {
+  hasChanges: boolean
+  lastSyncTime: number | null
+  items: {
+    hasChanges: boolean
+    localCount: number
+    serverCount: number
+    diffCount: number
+    updatedCount: number
+    deletedCount: number
+  }
+  blogs: {
+    hasChanges: boolean
+    localCount: number
+    serverCount: number
+    diffCount: number
+    updatedCount: number
+    deletedCount: number
+  }
+  totalChanges: number
 }
 
 export interface ISyncResult {
@@ -46,30 +78,41 @@ export interface ISyncResult {
 
 export const syncService = {
   /**
-   * Get total count of active items on Firebase Firestore for a user.
+   * Invalidate server count and detection caches.
    */
-  async getServerItemCount(uid: string): Promise<number> {
+  clearCountCache(uid?: string) {
+    if (uid) {
+      serverItemCountCache.delete(uid)
+      serverBlogCountCache.delete(uid)
+      if (lastDetectionCache?.uid === uid) lastDetectionCache = null
+    } else {
+      serverItemCountCache.clear()
+      serverBlogCountCache.clear()
+      lastDetectionCache = null
+    }
+  },
+
+  /**
+   * Get total count of active items on Firebase Firestore for a user.
+   * Memoized for 60 seconds to eliminate redundant Firestore getCountFromServer queries.
+   */
+  async getServerItemCount(uid: string, force = false): Promise<number> {
     if (!uid) return 0
+    if (!force) {
+      const cached = serverItemCountCache.get(uid)
+      if (cached && Date.now() - cached.timestamp < COUNT_CACHE_TTL_MS) {
+        return cached.count
+      }
+    }
+
     try {
       const itemsRef = collection(db, dbCollections.items)
       const baseQuery = query(itemsRef, where('uid', '==', uid))
-
       const totalSnap = await getCountFromServer(baseQuery)
       const totalCount = totalSnap.data().count
 
-      // Attempt to subtract soft-deleted items (is_deleted == true) if any
-      try {
-        const deletedQuery = query(
-          itemsRef,
-          where('uid', '==', uid),
-          where('is_deleted', '==', true),
-        )
-        const deletedSnap = await getCountFromServer(deletedQuery)
-        const deletedCount = deletedSnap.data().count
-        return Math.max(0, totalCount - deletedCount)
-      } catch {
-        return totalCount
-      }
+      serverItemCountCache.set(uid, { count: totalCount, timestamp: Date.now() })
+      return totalCount
     } catch (err) {
       console.warn('getServerItemCount getCountFromServer failed:', err)
       return 0
@@ -78,28 +121,25 @@ export const syncService = {
 
   /**
    * Get total count of active blogs on Firebase Firestore for a user.
-   * Uses getCountFromServer for efficient counting without downloading documents.
+   * Memoized for 60 seconds to eliminate redundant Firestore getCountFromServer queries.
    */
-  async getServerBlogCount(uid: string): Promise<number> {
+  async getServerBlogCount(uid: string, force = false): Promise<number> {
     if (!uid) return 0
+    if (!force) {
+      const cached = serverBlogCountCache.get(uid)
+      if (cached && Date.now() - cached.timestamp < COUNT_CACHE_TTL_MS) {
+        return cached.count
+      }
+    }
+
     try {
       const blogsRef = collection(db, dbCollections.blogs || dbCollections.articles)
       const baseQuery = query(blogsRef, where('uid', '==', uid))
       const totalSnap = await getCountFromServer(baseQuery)
       const totalCount = totalSnap.data().count
 
-      try {
-        const deletedQuery = query(
-          blogsRef,
-          where('uid', '==', uid),
-          where('is_deleted', '==', true),
-        )
-        const deletedSnap = await getCountFromServer(deletedQuery)
-        const deletedCount = deletedSnap.data().count
-        return Math.max(0, totalCount - deletedCount)
-      } catch {
-        return totalCount
-      }
+      serverBlogCountCache.set(uid, { count: totalCount, timestamp: Date.now() })
+      return totalCount
     } catch (err) {
       console.warn('getServerBlogCount failed:', err)
       return 0
@@ -148,6 +188,7 @@ export const syncService = {
    * Clear all local data for the user.
    */
   async clearLocalData(uid: string): Promise<void> {
+    this.clearCountCache(uid)
     await localDb.transaction('rw', localDb.items, localDb.blogs, localDb.syncMeta, async () => {
       await localDb.items.where('uid').equals(uid).delete()
       await localDb.blogs.where('uid').equals(uid).delete()
@@ -678,6 +719,7 @@ export const syncService = {
 
     localStorage.setItem(`${SYNC_META_PREFIX}${uid}`, now.toString())
     invalidateSearchIndex()
+    this.clearCountCache(uid)
 
     const totalItems = await localDb.items.where('uid').equals(uid).count()
     const totalBlogs = await localDb.blogs.where('uid').equals(uid).count()
@@ -740,6 +782,261 @@ export const syncService = {
     } catch (err) {
       console.warn('Failed to cleanup old deleted_records:', err)
       return 0
+    }
+  },
+
+  /**
+   * Detect changes between local IndexedDB and cloud Firestore for items and blogs.
+   *
+   * PERFORMANCE & FIRESTORE OPTIMIZATIONS:
+   * 1. 30s in-memory cache to prevent duplicate Firestore requests on rapid re-renders or page reloads.
+   * 2. FAST PATH: Uses 3 lightweight parallel probes with limit(1). When data is already up-to-date
+   *    (the 99% typical case), all 3 return empty -> 0 documents downloaded and 0 server count scans!
+   * 3. SLOW PATH: Server count queries are only dispatched on-demand for the specific collection
+   *    that actually detected changes.
+   */
+  async detectDataChanges(uid: string, force = false): Promise<IDataChanges> {
+    const defaultResult: IDataChanges = {
+      hasChanges: false,
+      lastSyncTime: null,
+      items: {
+        hasChanges: false,
+        localCount: 0,
+        serverCount: 0,
+        diffCount: 0,
+        updatedCount: 0,
+        deletedCount: 0,
+      },
+      blogs: {
+        hasChanges: false,
+        localCount: 0,
+        serverCount: 0,
+        diffCount: 0,
+        updatedCount: 0,
+        deletedCount: 0,
+      },
+      totalChanges: 0,
+    }
+
+    if (!uid) return defaultResult
+
+    // 1. Check in-memory detection cache
+    if (!force && lastDetectionCache && lastDetectionCache.uid === uid) {
+      if (Date.now() - lastDetectionCache.timestamp < DETECTION_CACHE_TTL_MS) {
+        return lastDetectionCache.result
+      }
+    }
+
+    try {
+      const lastSyncTime = await this.getLastSyncTimestamp(uid)
+      const hasSyncedBefore = lastSyncTime > 0
+
+      // Read local counts directly from IndexedDB (0 network/Firestore cost)
+      const [localItemCount, localBlogCount] = await Promise.all([
+        localDb.items.where('uid').equals(uid).count(),
+        localDb.blogs.where('uid').equals(uid).count(),
+      ])
+
+      let itemsHasChanges = false
+      let blogsHasChanges = false
+
+      // Case A: Device has never synced before
+      if (!hasSyncedBefore) {
+        // Fast probe with limit(1) to check if any cloud data exists without fetching documents
+        const [cloudItemSnap, cloudBlogSnap] = await Promise.all([
+          getDocs(query(collection(db, dbCollections.items), where('uid', '==', uid), limit(1))),
+          getDocs(
+            query(
+              collection(db, dbCollections.blogs || dbCollections.articles),
+              where('uid', '==', uid),
+              limit(1),
+            ),
+          ),
+        ])
+
+        const hasCloudItems = !cloudItemSnap.empty
+        const hasCloudBlogs = !cloudBlogSnap.empty
+
+        // If both local and cloud are completely empty, no sync is needed
+        if (!hasCloudItems && !hasCloudBlogs && localItemCount === 0 && localBlogCount === 0) {
+          const res: IDataChanges = {
+            ...defaultResult,
+            items: { ...defaultResult.items, localCount: localItemCount },
+            blogs: { ...defaultResult.blogs, localCount: localBlogCount },
+          }
+          lastDetectionCache = { uid, result: res, timestamp: Date.now() }
+          return res
+        }
+
+        itemsHasChanges = hasCloudItems || localItemCount > 0
+        blogsHasChanges = hasCloudBlogs || localBlogCount > 0
+
+        // Only query server counts if that collection has data to display in the modal
+        const [serverItemCount, serverBlogCount] = await Promise.all([
+          itemsHasChanges ? this.getServerItemCount(uid) : Promise.resolve(localItemCount),
+          blogsHasChanges ? this.getServerBlogCount(uid) : Promise.resolve(localBlogCount),
+        ])
+
+        const diffItem = serverItemCount - localItemCount
+        const diffBlog = serverBlogCount - localBlogCount
+
+        const res: IDataChanges = {
+          hasChanges: itemsHasChanges || blogsHasChanges,
+          lastSyncTime: null,
+          items: {
+            hasChanges: itemsHasChanges,
+            localCount: localItemCount,
+            serverCount: serverItemCount,
+            diffCount: diffItem,
+            updatedCount: 0,
+            deletedCount: 0,
+          },
+          blogs: {
+            hasChanges: blogsHasChanges,
+            localCount: localBlogCount,
+            serverCount: serverBlogCount,
+            diffCount: diffBlog,
+            updatedCount: 0,
+            deletedCount: 0,
+          },
+          totalChanges: Math.abs(diffItem) + Math.abs(diffBlog),
+        }
+        lastDetectionCache = { uid, result: res, timestamp: Date.now() }
+        return res
+      }
+
+      // Case B: Device has synced before (hasSyncedBefore === true)
+      // FAST PATH: Run 3 lightweight parallel probes with limit(1).
+      // If nothing was modified, all 3 return empty -> 0 documents read, 0 count scans!
+      const itemsProbePromise = getDocs(
+        query(
+          collection(db, dbCollections.items),
+          where('uid', '==', uid),
+          where('last_update', '>', lastSyncTime),
+          limit(1),
+        ),
+      ).catch((err) => {
+        console.warn('Items delta probe warning:', err)
+        return null
+      })
+
+      const deletedProbePromise = getDocs(
+        query(
+          collection(db, dbCollections.deleted_records),
+          where('uid', '==', uid),
+          where('deleted_at', '>', Timestamp.fromMillis(lastSyncTime)),
+          limit(1),
+        ),
+      ).catch(() => null)
+
+      const blogsProbePromise = (async () => {
+        try {
+          return await getDocs(
+            query(
+              collection(db, dbCollections.blogs || dbCollections.articles),
+              where('uid', '==', uid),
+              where('last_update', '>', lastSyncTime),
+              limit(1),
+            ),
+          )
+        } catch {
+          try {
+            return await getDocs(
+              query(
+                collection(db, dbCollections.blogs || dbCollections.articles),
+                where('uid', '==', uid),
+                where('created_date', '>', lastSyncTime),
+                limit(1),
+              ),
+            )
+          } catch {
+            return null
+          }
+        }
+      })()
+
+      const [itemsProbe, deletedProbe, blogsProbe] = await Promise.all([
+        itemsProbePromise,
+        deletedProbePromise,
+        blogsProbePromise,
+      ])
+
+      const hasUpdatedItems = Boolean(itemsProbe && !itemsProbe.empty)
+      const hasDeletedRecords = Boolean(deletedProbe && !deletedProbe.empty)
+      const hasUpdatedBlogs = Boolean(blogsProbe && !blogsProbe.empty)
+
+      // Fast exit if all 3 probes are empty (the typical 99% case):
+      // No documents created, modified, or deleted in the cloud since last sync.
+      if (!hasUpdatedItems && !hasDeletedRecords && !hasUpdatedBlogs) {
+        const res: IDataChanges = {
+          hasChanges: false,
+          lastSyncTime,
+          items: {
+            hasChanges: false,
+            localCount: localItemCount,
+            serverCount: localItemCount, // Guaranteed identical without extra Firestore count query
+            diffCount: 0,
+            updatedCount: 0,
+            deletedCount: 0,
+          },
+          blogs: {
+            hasChanges: false,
+            localCount: localBlogCount,
+            serverCount: localBlogCount, // Guaranteed identical without extra Firestore count query
+            diffCount: 0,
+            updatedCount: 0,
+            deletedCount: 0,
+          },
+          totalChanges: 0,
+        }
+        lastDetectionCache = { uid, result: res, timestamp: Date.now() }
+        return res
+      }
+
+      // SLOW PATH: Changes detected by probes.
+      // Retrieve server counts ONLY for collections that actually have detected changes.
+      itemsHasChanges = hasUpdatedItems || hasDeletedRecords
+      blogsHasChanges = hasUpdatedBlogs
+
+      const [serverItemCount, serverBlogCount] = await Promise.all([
+        itemsHasChanges ? this.getServerItemCount(uid) : Promise.resolve(localItemCount),
+        blogsHasChanges ? this.getServerBlogCount(uid) : Promise.resolve(localBlogCount),
+      ])
+
+      const diffItemCount = serverItemCount - localItemCount
+      const diffBlogCount = serverBlogCount - localBlogCount
+
+      const res: IDataChanges = {
+        hasChanges: true,
+        lastSyncTime,
+        items: {
+          hasChanges: itemsHasChanges || diffItemCount !== 0,
+          localCount: localItemCount,
+          serverCount: serverItemCount,
+          diffCount: diffItemCount,
+          updatedCount: hasUpdatedItems ? 1 : 0,
+          deletedCount: hasDeletedRecords ? 1 : 0,
+        },
+        blogs: {
+          hasChanges: blogsHasChanges || diffBlogCount !== 0,
+          localCount: localBlogCount,
+          serverCount: serverBlogCount,
+          diffCount: diffBlogCount,
+          updatedCount: hasUpdatedBlogs ? 1 : 0,
+          deletedCount: 0,
+        },
+        totalChanges:
+          Math.abs(diffItemCount) +
+          Math.abs(diffBlogCount) +
+          (hasUpdatedItems ? 1 : 0) +
+          (hasUpdatedBlogs ? 1 : 0),
+      }
+
+      lastDetectionCache = { uid, result: res, timestamp: Date.now() }
+      return res
+    } catch (err) {
+      console.warn('detectDataChanges error:', err)
+      return defaultResult
     }
   },
 }

@@ -9,6 +9,7 @@ import { useCategories, useTypes } from '@/core/hooks/useCommon'
 import { settingAction } from '@/store/reducers/setting.reducer'
 import { actionAsyncApp } from '@/store/asyncActions'
 import { useLoading } from './helpers'
+import { SyncChangeModal } from '@/views/features/modals'
 
 export const App = () => {
   const [isInitializing, setIsInitializing] = useState(true)
@@ -75,6 +76,7 @@ export const App = () => {
   return (
     <AppLayout>
       <RouterElement />
+      <SyncChangeModal />
     </AppLayout>
   )
 }

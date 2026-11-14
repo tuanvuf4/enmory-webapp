@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSelector } from '@/core/hooks/redux'
 import { localDb } from './db'
-import { syncService, ISyncResult, IUnsyncedRecord } from './syncService'
+import { syncService, ISyncResult, IUnsyncedRecord, IDataChanges } from './syncService'
 import { itemKeys } from '@/core/hooks/useItems'
 import { blogKeys } from '@/core/hooks/useBlogs'
 import { refreshAiUsageFromCloud } from '@/services/gemini'
@@ -109,7 +109,13 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
       setUnsyncedRecords([])
       setLastSyncResult(null)
     }
-  }, [user?.uid, refreshLastSyncTime, refreshServerItemCount, refreshServerBlogCount, autoFetchServerCounts])
+  }, [
+    user?.uid,
+    refreshLastSyncTime,
+    refreshServerItemCount,
+    refreshServerBlogCount,
+    autoFetchServerCounts,
+  ])
 
   const syncNow = async (forceFull = false): Promise<ISyncResult | null> => {
     if (!user?.uid) {
@@ -191,6 +197,11 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     }
   }
 
+  const checkChanges = useCallback(async (): Promise<IDataChanges | null> => {
+    if (!user?.uid) return null
+    return await syncService.detectDataChanges(user.uid)
+  }, [user?.uid])
+
   return {
     isSyncing,
     progressText,
@@ -207,6 +218,8 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     syncNow,
     clearLocalData,
     refreshLastSyncTime,
+    checkChanges,
+    detectDataChanges: checkChanges,
     unsyncedRecords,
     lastSyncResult,
     setUnsyncedRecords,

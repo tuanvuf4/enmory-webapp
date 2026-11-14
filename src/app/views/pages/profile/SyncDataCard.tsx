@@ -70,7 +70,7 @@ export const SyncDataCard: React.FC = () => {
     clearLocalData,
     unsyncedRecords = [],
     lastSyncResult,
-  } = useManualSync()
+  } = useManualSync({ autoFetchServerCounts: true })
 
   const [searchText, setSearchText] = useState('')
 

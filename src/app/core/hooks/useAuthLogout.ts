@@ -23,6 +23,10 @@ export const useAuthLogout = () => {
         await firebaseAuthService.signOut()
       }
 
+      if (typeof chrome !== 'undefined' && chrome?.storage?.local) {
+        chrome.storage.local.remove(['enmory_uid', 'enmory_email'])
+      }
+
       // Clear app state
       dispatch(authAction.logOut())
 

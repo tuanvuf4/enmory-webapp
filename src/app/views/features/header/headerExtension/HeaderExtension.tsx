@@ -37,6 +37,9 @@ export const HeaderExtension: React.FC<IHeaderExt> = ({ isAuth, onPageChange }) 
     } catch (error) {
       console.error('[HeaderExtension] Logout error:', error)
     } finally {
+      if (typeof chrome !== 'undefined' && chrome?.storage?.local) {
+        chrome.storage.local.remove(['enmory_uid', 'enmory_email'])
+      }
       // Clear Redux state so the popup falls back to the login screen
       dispatch(authAction.logOut())
       dispatch(studySetAction.resetStudySet())

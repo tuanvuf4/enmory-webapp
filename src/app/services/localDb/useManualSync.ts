@@ -9,7 +9,12 @@ import { itemKeys } from '@/core/hooks/useItems'
 import { blogKeys } from '@/core/hooks/useBlogs'
 import { refreshAiUsageFromCloud } from '@/services/gemini'
 
-export const useManualSync = () => {
+export interface IUseManualSyncOptions {
+  autoFetchServerCounts?: boolean
+}
+
+export const useManualSync = (options?: IUseManualSyncOptions) => {
+  const autoFetchServerCounts = options?.autoFetchServerCounts ?? false
   const { user } = useSelector((state) => state.auth)
   const queryClient = useQueryClient()
 
@@ -92,8 +97,10 @@ export const useManualSync = () => {
 
   useEffect(() => {
     refreshLastSyncTime()
-    refreshServerItemCount()
-    refreshServerBlogCount()
+    if (autoFetchServerCounts) {
+      refreshServerItemCount()
+      refreshServerBlogCount()
+    }
     if (user?.uid) {
       syncService.getLastUnsyncedRecords(user.uid).then((records) => {
         setUnsyncedRecords(records)
@@ -102,7 +109,7 @@ export const useManualSync = () => {
       setUnsyncedRecords([])
       setLastSyncResult(null)
     }
-  }, [user?.uid, refreshLastSyncTime, refreshServerItemCount, refreshServerBlogCount])
+  }, [user?.uid, refreshLastSyncTime, refreshServerItemCount, refreshServerBlogCount, autoFetchServerCounts])
 
   const syncNow = async (forceFull = false): Promise<ISyncResult | null> => {
     if (!user?.uid) {
@@ -125,8 +132,10 @@ export const useManualSync = () => {
       setUnsyncedRecords(result.unsyncedRecords || [])
 
       await refreshLastSyncTime()
-      await refreshServerItemCount()
-      await refreshServerBlogCount()
+      if (autoFetchServerCounts) {
+        await refreshServerItemCount()
+        await refreshServerBlogCount()
+      }
       await refreshAiUsageFromCloud().catch(() => null)
 
       // Refresh react-query caches so the UI reflects newly synced data

@@ -58,16 +58,21 @@ Builds the web version using `.env.web` configuration.
 ### Chrome Extension
 
 ```bash
+# Production build
 npm run build:ext
+
+# Testing build
+npm run build:ext:test
 ```
 
-Builds the extension version using `.env.ext` configuration.
+Builds the extension version using `.env.ext` (production) or `.env.ext.test` (testing) configuration.
 
 ## Environment Files
 
 - `.env` - Local development (default)
 - `.env.web` - Web production build
-- `.env.ext` - Chrome extension build
+- `.env.ext` - Chrome extension production build
+- `.env.ext.test` - Chrome extension testing build
 
 **Important:** Never commit actual `.env` files to git. They contain sensitive API keys.
 

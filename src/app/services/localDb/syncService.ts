@@ -68,48 +68,38 @@ export const syncService = {
         const deletedCount = deletedSnap.data().count
         return Math.max(0, totalCount - deletedCount)
       } catch {
-        // Fallback to query all user items and count non-deleted docs to avoid composite index errors
-        const itemsQuery = query(itemsRef, where('uid', '==', uid))
-        const snapshot = await getDocs(itemsQuery)
-        let count = 0
-        snapshot.forEach((docSnap) => {
-          if (!docSnap.data().is_deleted) {
-            count++
-          }
-        })
-        return count
+        return totalCount
       }
     } catch (err) {
-      console.warn('getCountFromServer failed, falling back to getDocs:', err)
-      const itemsQuery = query(collection(db, dbCollections.items), where('uid', '==', uid))
-      const snapshot = await getDocs(itemsQuery)
-      let count = 0
-      snapshot.forEach((docSnap) => {
-        if (!docSnap.data().is_deleted) {
-          count++
-        }
-      })
-      return count
+      console.warn('getServerItemCount getCountFromServer failed:', err)
+      return 0
     }
   },
 
   /**
    * Get total count of active blogs on Firebase Firestore for a user.
-   * Directly queries all user blogs to accurately account for any soft-deleted records.
+   * Uses getCountFromServer for efficient counting without downloading documents.
    */
   async getServerBlogCount(uid: string): Promise<number> {
     if (!uid) return 0
     try {
       const blogsRef = collection(db, dbCollections.blogs || dbCollections.articles)
-      const blogsQuery = query(blogsRef, where('uid', '==', uid))
-      const snapshot = await getDocs(blogsQuery)
-      let count = 0
-      snapshot.forEach((docSnap) => {
-        if (!docSnap.data().is_deleted) {
-          count++
-        }
-      })
-      return count
+      const baseQuery = query(blogsRef, where('uid', '==', uid))
+      const totalSnap = await getCountFromServer(baseQuery)
+      const totalCount = totalSnap.data().count
+
+      try {
+        const deletedQuery = query(
+          blogsRef,
+          where('uid', '==', uid),
+          where('is_deleted', '==', true),
+        )
+        const deletedSnap = await getCountFromServer(deletedQuery)
+        const deletedCount = deletedSnap.data().count
+        return Math.max(0, totalCount - deletedCount)
+      } catch {
+        return totalCount
+      }
     } catch (err) {
       console.warn('getServerBlogCount failed:', err)
       return 0

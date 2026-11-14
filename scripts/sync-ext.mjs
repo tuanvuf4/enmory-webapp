@@ -13,7 +13,6 @@ mkdirSync(publicExtDir, { recursive: true })
 const key = String(process.env.VITE_GEMINI_API_KEY || '').trim()
 const firebaseApiKey = String(process.env.VITE_FIREBASE_API_KEY || '').trim()
 const firebaseProjectId = String(process.env.VITE_FIREBASE_PROJECT_ID || 'enmory-21593').trim()
-const defaultUid = String(process.env.ENMORY_UID || '').trim()
 
 const configContent = `self.__ENMORY_EXTENSION_CONFIG__ = ${JSON.stringify({
   geminiApiKey: key,
@@ -21,7 +20,6 @@ const configContent = `self.__ENMORY_EXTENSION_CONFIG__ = ${JSON.stringify({
     apiKey: firebaseApiKey,
     projectId: firebaseProjectId,
   },
-  defaultUid: defaultUid,
 })};\n`
 
 writeFileSync(path.join(publicExtDir, 'extension-config.js'), configContent)

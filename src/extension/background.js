@@ -23,7 +23,6 @@ const EXT_CONFIG = self.__ENMORY_EXTENSION_CONFIG__ || {}
 const BUILD_TIME_GEMINI_API_KEY = EXT_CONFIG.geminiApiKey || ''
 const BUILD_TIME_FIREBASE_PROJECT_ID = EXT_CONFIG.firebase?.projectId || 'enmory-21593'
 const BUILD_TIME_FIREBASE_API_KEY = EXT_CONFIG.firebase?.apiKey || 'AIzaSyD1M98BLfltwGQx5vh3uQ8ZVHnBk3oKU7k'
-const BUILD_TIME_DEFAULT_UID = EXT_CONFIG.defaultUid || 'zdSNTrF4JFbDzxEyVFK3n5Rv6w62'
 
 const normalizeSelection = (value = '') => value.replace(/\s+/g, ' ').trim()
 
@@ -104,7 +103,7 @@ const getResolvedUid = async () => {
   } catch (e) {
     // ignore
   }
-  return BUILD_TIME_DEFAULT_UID
+  return ''
 }
 
 const reviewSentence = async (text) => {
@@ -286,7 +285,7 @@ function saveToIndexedDb(item) {
   })
 }
 
-/** Find existing item in Local IndexedDB */
+/** Find existing item in Local IndexedDB (strictly local-only, 0 Firestore requests) */
 function findExistingInLocalDb(originWord, uid) {
   return new Promise((resolve) => {
     try {
@@ -302,10 +301,14 @@ function findExistingInLocalDb(originWord, uid) {
         try {
           const tx = db.transaction(['items'], 'readonly')
           const store = tx.objectStore('items')
-          const cursorReq = store.openCursor()
+          const source =
+            store.indexNames && store.indexNames.contains('uid') && uid
+              ? store.index('uid').openCursor(IDBKeyRange.only(uid))
+              : store.openCursor()
+
           const norm = originWord.trim().toLowerCase()
 
-          cursorReq.onsuccess = (ev) => {
+          source.onsuccess = (ev) => {
             const cursor = ev.target.result
             if (cursor) {
               const item = cursor.value
@@ -321,7 +324,7 @@ function findExistingInLocalDb(originWord, uid) {
               resolve(null)
             }
           }
-          cursorReq.onerror = () => {
+          source.onerror = () => {
             db.close()
             resolve(null)
           }
@@ -336,71 +339,29 @@ function findExistingInLocalDb(originWord, uid) {
   })
 }
 
-/** Query existing item in Firestore by origin and uid */
-async function queryFirestoreExisting(originWord, uid) {
-  try {
-    const projectId = BUILD_TIME_FIREBASE_PROJECT_ID
-    const apiKey = BUILD_TIME_FIREBASE_API_KEY
-    const url = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:runQuery?key=${encodeURIComponent(apiKey)}`
-
-    const queryBody = {
-      structuredQuery: {
-        from: [{ collectionId: 'items' }],
-        where: {
-          fieldFilter: {
-            field: { fieldPath: 'uid' },
-            op: 'EQUAL',
-            value: { stringValue: uid },
-          },
-        },
-        limit: 100,
-      },
-    }
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(queryBody),
-    })
-
-    if (!res.ok) return null
-    const results = await res.json()
-    const norm = originWord.trim().toLowerCase()
-
-    for (const r of results) {
-      if (r?.document?.fields) {
-        const item = fromFirestoreFields(r.document.fields)
-        const docId = r.document.name?.split('/')?.pop()
-        item.id = docId
-        if (String(item.origin || '').trim().toLowerCase() === norm) {
-          return item
-        }
-      }
-    }
-    return null
-  } catch (err) {
-    return null
-  }
-}
-
-/** Look for existing item: check local IndexedDB first, then Firestore */
+/** Look for existing item: strictly local IndexedDB check (0 Firestore queries) */
 async function findExistingItem(originWord, uid) {
-  const localMatch = await findExistingInLocalDb(originWord, uid)
-  if (localMatch) return localMatch
-  return await queryFirestoreExisting(originWord, uid)
+  return await findExistingInLocalDb(originWord, uid)
 }
 
-/** Save new item to Google Cloud Firestore via REST API */
+/** Save new item to Google Cloud Firestore via REST API in a SINGLE request */
 async function saveToFirestore(item) {
   const projectId = BUILD_TIME_FIREBASE_PROJECT_ID
   const apiKey = BUILD_TIME_FIREBASE_API_KEY
-  const url = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/items?key=${encodeURIComponent(apiKey)}`
 
-  // Strip temporary id before sending so Firestore generates the canonical Document ID
-  const itemToPost = { ...item }
-  delete itemToPost.id
+  // Pre-generate document ID so item.id and meanings are all populated in 1 single write
+  const docId = item.id || generateFirestoreAutoId()
+  item.id = docId
+  if (Array.isArray(item.meanings)) {
+    item.meanings.forEach((m) => {
+      m.itemId = docId
+    })
+  }
 
-  const fields = toFirestoreFields(itemToPost)
+  // Create directly with documentId query parameter (eliminates the need for a secondary PATCH request)
+  const url = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/items?documentId=${encodeURIComponent(docId)}&key=${encodeURIComponent(apiKey)}`
+
+  const fields = toFirestoreFields(item)
 
   const res = await fetch(url, {
     method: 'POST',
@@ -414,25 +375,6 @@ async function saveToFirestore(item) {
     const errorText = await res.text()
     throw new Error(`Firestore save failed (${res.status}): ${errorText}`)
   }
-
-  const createdDoc = await res.json()
-  const docId = createdDoc?.name ? createdDoc.name.split('/').pop() : ''
-  if (!docId) {
-    throw new Error('Firestore không trả về Document ID')
-  }
-
-  // Update id & meanings inside Firestore document to match the generated Document ID
-  const patchUrl = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/items/${encodeURIComponent(docId)}?updateMask.fieldPaths=id&updateMask.fieldPaths=meanings&key=${encodeURIComponent(apiKey)}`
-  await fetch(patchUrl, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      fields: {
-        id: { stringValue: docId },
-        meanings: toFirestoreValue(item.meanings),
-      },
-    }),
-  }).catch((err) => console.warn('[Enmory] Patch id & meanings field warning:', err))
 
   return docId
 }
@@ -619,6 +561,9 @@ async function handleQuickAddVocab(origin, sentenceContext = '', pageUrl = '') {
 
   const defaultCatId = getCategoryIdFromSelection(cleanOrigin)
   const uid = await getResolvedUid()
+  if (!uid) {
+    throw new Error('Chưa đăng nhập. Vui lòng đăng nhập vào Enmory để sử dụng tính năng này.')
+  }
 
   // 1. Check if word already exists in Local DB or Firestore
   const existingItem = await findExistingItem(cleanOrigin, uid)
@@ -848,10 +793,17 @@ async function handleQuickAddVocab(origin, sentenceContext = '', pageUrl = '') {
 
 // =========================================================================
 // Context Menus (Manual Add + Quick Add)
+// Only visible when user is logged in (enmory_uid is present)
 // =========================================================================
-const createAllContextMenus = async () => {
+const updateContextMenuVisibility = async () => {
   try {
+    const uid = await getResolvedUid()
     await chrome.contextMenus.removeAll()
+
+    if (!uid) {
+      // User is not logged in: do not show Enmory in context menu
+      return
+    }
 
     // 1. Quick Add (AI Auto-Save without opening form)
     chrome.contextMenus.create({
@@ -869,15 +821,44 @@ const createAllContextMenus = async () => {
       contexts: ['selection'],
     })
   } catch (e) {
-    console.warn('[Enmory] Context menu creation error:', e)
+    console.warn('[Enmory] Context menu update error:', e)
   }
 }
 
+// Initial check when background script initializes
+updateContextMenuVisibility()
+
 chrome.runtime.onInstalled.addListener(() => {
-  createAllContextMenus()
+  updateContextMenuVisibility()
+})
+
+chrome.runtime.onStartup.addListener(() => {
+  updateContextMenuVisibility()
+})
+
+// Dynamically add/remove context menus when user logs in or out
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if ((areaName === 'local' || areaName === 'sync') && changes.enmory_uid) {
+    updateContextMenuVisibility()
+  }
 })
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  const uid = await getResolvedUid()
+  if (!uid) {
+    await updateContextMenuVisibility()
+    if (chrome.windows) {
+      chrome.windows.create({
+        url: 'index.html',
+        type: 'popup',
+        focused: true,
+        width: 530,
+        height: 750,
+        top: 0,
+      })
+    }
+    return
+  }
   const origin = normalizeSelection(info.selectionText)
   const catId = getCategoryIdFromSelection(origin)
 

@@ -34,7 +34,6 @@ import {
   EditOutlined,
   SaveOutlined,
   ApiOutlined,
-  ClearOutlined,
   ExclamationCircleOutlined,
   EyeOutlined,
   StarFilled,
@@ -59,6 +58,7 @@ import { ISyncMeta } from '@/services/localDb/db'
 import { getCategory, getType } from '@/helpers/item'
 import { GeminiUsageTab } from './GeminiUsageTab'
 import { ApiErrorRequestsTab } from './ApiErrorRequestsTab'
+import { UnsyncableServerItemsCard } from './UnsyncableServerItemsCard'
 import { useGeminiStats } from '@/services/gemini'
 import { IErrorApiRequest } from '@/services/localDb/db'
 import { ERROR_API_REQUESTS_CHANGED_EVENT } from '@/services/localDb/errorApiRequests.service'
@@ -150,12 +150,6 @@ export const Developer: React.FC = () => {
 
   const [isRemovingLegacyFields, setIsRemovingLegacyFields] = useState<boolean>(false)
   const [removeLegacyFieldsStatus, setRemoveLegacyFieldsStatus] = useState<string>('')
-  const [isPurging, setIsPurging] = useState<boolean>(false)
-  const [purgeStatus, setPurgeStatus] = useState<string>('')
-  const [purgeOnlyCurrentUser, setPurgeOnlyCurrentUser] = useState<boolean>(true)
-  const [purgedItems, setPurgedItems] = useState<
-    { id: string; origin: string; uid?: string; deleted_date?: number }[]
-  >([])
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -177,18 +171,16 @@ export const Developer: React.FC = () => {
             const cloudBlogs: IBlogItem[] = []
             snap.forEach((d) => {
               const data = d.data()
-              if (!data.is_deleted) {
-                cloudBlogs.push({
-                  ...data,
-                  id: d.id,
-                  uid: data.uid || user.uid,
-                  title: data.title || '(Không có tiêu đề)',
-                  description: data.description || '',
-                  tags: data.tags || [],
-                  created_date: data.created_date || 0,
-                  last_update: data.last_update || data.created_date || 0,
-                } as IBlogItem)
-              }
+              cloudBlogs.push({
+                ...data,
+                id: d.id,
+                uid: data.uid || user.uid,
+                title: data.title || '(Không có tiêu đề)',
+                description: data.description || '',
+                tags: data.tags || [],
+                created_date: data.created_date || 0,
+                last_update: data.last_update || data.created_date || 0,
+              } as IBlogItem)
             })
             if (cloudBlogs.length > 0) {
               await localDb.blogs.bulkPut(cloudBlogs)
@@ -250,18 +242,16 @@ export const Developer: React.FC = () => {
       const cloudBlogs: IBlogItem[] = []
       snap.forEach((d) => {
         const data = d.data()
-        if (!data.is_deleted) {
-          cloudBlogs.push({
-            ...data,
-            id: d.id,
-            uid: data.uid || user?.uid,
-            title: data.title || '(Không có tiêu đề)',
-            description: data.description || '',
-            tags: data.tags || [],
-            created_date: data.created_date || 0,
-            last_update: data.last_update || data.created_date || 0,
-          } as IBlogItem)
-        }
+        cloudBlogs.push({
+          ...data,
+          id: d.id,
+          uid: data.uid || user?.uid,
+          title: data.title || '(Không có tiêu đề)',
+          description: data.description || '',
+          tags: data.tags || [],
+          created_date: data.created_date || 0,
+          last_update: data.last_update || data.created_date || 0,
+        } as IBlogItem)
       })
 
       if (cloudBlogs.length > 0) {
@@ -1315,67 +1305,6 @@ export const Developer: React.FC = () => {
     }
   }
 
-  const handlePurgeDeletedItems = async () => {
-    setIsPurging(true)
-    setPurgeStatus('Starting purge of soft-deleted items...')
-    setPurgedItems([])
-    try {
-      const currentUser = user
-      if (!currentUser) {
-        throw new Error('You must be logged in to modify data.')
-      }
-
-      const { purgeDeletedItemsFromFirebaseDb } = await import('@/services/firebase/dbIntegration')
-      const result = await purgeDeletedItemsFromFirebaseDb({
-        uid: purgeOnlyCurrentUser ? currentUser.uid : undefined,
-        onProgress: (status) => setPurgeStatus(status),
-      })
-
-      if (result.isSuccess) {
-        message.success(result.message)
-        setPurgeStatus(result.message)
-        if (result.deletedItems && result.deletedItems.length > 0) {
-          setPurgedItems(
-            [...result.deletedItems].sort((a, b) => (b.deleted_date || 0) - (a.deleted_date || 0)),
-          )
-          await loadData()
-        }
-      } else {
-        message.error(result.message)
-        setPurgeStatus(result.message)
-      }
-    } catch (error) {
-      console.error('Purge deleted items error:', error)
-      message.error(error instanceof Error ? error.message : 'Failed to purge soft-deleted items')
-      setPurgeStatus('Failed to purge soft-deleted items. Check console for details.')
-    } finally {
-      setIsPurging(false)
-    }
-  }
-
-  const confirmPurgeDeletedItems = () => {
-    Modal.confirm({
-      title: 'Permanently Delete Soft-Deleted Items (is_deleted = true)?',
-      icon: <ExclamationCircleOutlined style={{ color: token.colorError }} />,
-      content: (
-        <div>
-          <p>
-            This action will permanently delete all items from Firebase Firestore where{' '}
-            <code>is_deleted = true</code>
-            {purgeOnlyCurrentUser ? ' for your account' : ' for ALL users'}.
-          </p>
-          <p style={{ color: token.colorError, margin: 0, fontWeight: 500 }}>
-            This operation cannot be undone!
-          </p>
-        </div>
-      ),
-      okText: 'Yes, Purge Items',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      onOk: () => handlePurgeDeletedItems(),
-    })
-  }
-
   return (
     <div className={appStyle.containerFluid}>
       <div
@@ -2176,7 +2105,10 @@ export const Developer: React.FC = () => {
                   />
                 )}
 
-                {/* 1. Remove Legacy Fields */}
+                {/* 1. Unsyncable Server Items Management */}
+                <UnsyncableServerItemsCard />
+
+                {/* 2. Remove Legacy Fields */}
                 <Card
                   title={
                     <Space>
@@ -2208,104 +2140,6 @@ export const Developer: React.FC = () => {
                         type={removeLegacyFieldsStatus.includes('Failed') ? 'error' : 'info'}
                         showIcon
                       />
-                    )}
-                  </Space>
-                </Card>
-
-                {/* 2. Purge Soft-Deleted Items (is_deleted = true) */}
-                <Card
-                  title={
-                    <Space>
-                      <ClearOutlined style={{ color: token.colorError }} />
-                      <span>Permanently Delete Soft-Deleted Items (is_deleted = true)</span>
-                    </Space>
-                  }
-                  size='small'
-                >
-                  <Paragraph type='secondary'>
-                    Scans the Firestore <code>items</code> collection for documents marked as{' '}
-                    <code>is_deleted = true</code>, permanently deletes them from Firestore to clean
-                    up storage, purges them from local IndexedDB cache, and removes corresponding
-                    checklist entries.
-                  </Paragraph>
-                  <Space direction='vertical' style={{ width: '100%' }} size={12}>
-                    <Checkbox
-                      checked={purgeOnlyCurrentUser}
-                      onChange={(e) => setPurgeOnlyCurrentUser(e.target.checked)}
-                    >
-                      Only delete items belonging to current user ({user?.email || 'N/A'})
-                    </Checkbox>
-
-                    <Button
-                      type='primary'
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={confirmPurgeDeletedItems}
-                      loading={isPurging}
-                      disabled={!user}
-                    >
-                      Purge Soft-Deleted Items (is_deleted = true)
-                    </Button>
-
-                    {purgeStatus && (
-                      <Alert
-                        message={purgeStatus}
-                        type={
-                          purgeStatus.includes('failed') ||
-                          purgeStatus.includes('Error') ||
-                          purgeStatus.includes('Failed')
-                            ? 'error'
-                            : 'info'
-                        }
-                        showIcon
-                      />
-                    )}
-
-                    {purgedItems.length > 0 && (
-                      <div style={{ marginTop: 12, width: '100%' }}>
-                        <h4 style={{ marginBottom: 8, color: token.colorText }}>
-                          Permanently Deleted Items ({purgedItems.length}):
-                        </h4>
-                        <Table
-                          dataSource={purgedItems}
-                          columns={[
-                            {
-                              title: 'ID',
-                              dataIndex: 'id',
-                              key: 'id',
-                              width: '25%',
-                            },
-                            {
-                              title: 'Origin',
-                              dataIndex: 'origin',
-                              key: 'origin',
-                              width: '35%',
-                            },
-                            {
-                              title: 'Deleted Date',
-                              dataIndex: 'deleted_date',
-                              key: 'deleted_date',
-                              width: '25%',
-                              defaultSortOrder: 'descend',
-                              sorter: (a, b) => (a.deleted_date || 0) - (b.deleted_date || 0),
-                              render: (val?: number) =>
-                                val ? new Date(val).toLocaleString() : 'N/A',
-                            },
-                            {
-                              title: 'UID',
-                              dataIndex: 'uid',
-                              key: 'uid',
-                              width: '15%',
-                              render: (val?: string) => (val ? `${val.slice(0, 8)}...` : 'N/A'),
-                            },
-                          ]}
-                          rowKey='id'
-                          pagination={{ defaultPageSize: 5 }}
-                          size='small'
-                          bordered
-                          scroll={{ x: 750 }}
-                        />
-                      </div>
                     )}
                   </Space>
                 </Card>

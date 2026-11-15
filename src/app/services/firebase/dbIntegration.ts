@@ -1,18 +1,15 @@
 import {
   collection,
   deleteField,
-  doc,
   getDocs,
   query,
   where,
   writeBatch,
-  Timestamp,
 } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { IExample, IItem, IMeaning } from '@/models/item.model'
-import { localDb, invalidateSearchIndex } from '@/services/localDb'
+import { localDb } from '@/services/localDb'
 
-const FIRESTORE_IN_QUERY_LIMIT = 30
 const FIRESTORE_BATCH_WRITE_LIMIT = 400
 
 /**
@@ -368,160 +365,18 @@ export interface IPurgeDeletedItemsResult {
 }
 
 /**
- * Permanently deletes (purges) all items marked with is_deleted = true from Firebase Firestore.
- * Also cleans up local IndexedDB cache and any orphaned checklist entries for those items.
+ * Obsolete legacy function (kept for backwards compatibility).
  */
-export const purgeDeletedItemsFromFirebaseDb = async (options?: {
+export const purgeDeletedItemsFromFirebaseDb = async (_options?: {
   uid?: string
   onProgress?: (message: string, current?: number, total?: number) => void
 }): Promise<IPurgeDeletedItemsResult> => {
-  const result: IPurgeDeletedItemsResult = {
-    isSuccess: false,
+  return {
+    isSuccess: true,
     totalScanned: 0,
     itemsDeleted: 0,
     errors: [],
-    message: '',
+    message: 'Soft-delete has been deprecated. No items to purge.',
     deletedItems: [],
-  }
-
-  try {
-    options?.onProgress?.('Fetching soft-deleted items from Firestore (is_deleted = true)...')
-
-    // Query Firestore for documents where is_deleted == true
-    const deletedQuery = query(collection(db, dbCollections.items), where('is_deleted', '==', true))
-
-    const snapshot = await getDocs(deletedQuery)
-    result.totalScanned = snapshot.size
-
-    // Filter by uid if specified
-    const docsToDelete = snapshot.docs.filter((docSnap) => {
-      if (!options?.uid) return true
-      return docSnap.data().uid === options.uid
-    })
-
-    if (docsToDelete.length === 0) {
-      result.isSuccess = true
-      result.message = options?.uid
-        ? 'No items with is_deleted = true found for the current user in Firestore.'
-        : 'No items with is_deleted = true found in Firestore.'
-      options?.onProgress?.(result.message)
-      return result
-    }
-
-    options?.onProgress?.(
-      `Found ${docsToDelete.length} soft-deleted items. Permanently deleting documents from Firestore...`,
-      0,
-      docsToDelete.length,
-    )
-
-    const deletedIds: string[] = []
-    const deletedDetails: Array<{
-      id: string
-      origin: string
-      uid?: string
-      deleted_date?: number
-    }> = []
-
-    let currentBatch = writeBatch(db)
-    let batchCount = 0
-    let processedCount = 0
-
-    for (const docSnap of docsToDelete) {
-      const data = docSnap.data()
-      deletedIds.push(docSnap.id)
-      deletedDetails.push({
-        id: docSnap.id,
-        origin: data.origin || '(no origin)',
-        uid: data.uid || '',
-        deleted_date: data.deleted_date || data.last_update,
-      })
-
-      currentBatch.delete(docSnap.ref)
-      batchCount++
-
-      const itemUid = data.uid || options?.uid || ''
-      if (itemUid) {
-        const deletedRecordRef = doc(db, dbCollections.deleted_records, `${itemUid}_${docSnap.id}`)
-        currentBatch.set(deletedRecordRef, {
-          uid: itemUid,
-          recordId: docSnap.id,
-          origin: data.origin || '',
-          collectionName: dbCollections.items,
-          deleted_at: Timestamp.now(),
-        })
-        batchCount++
-      }
-
-      processedCount++
-      result.itemsDeleted++
-
-      if (batchCount >= FIRESTORE_BATCH_WRITE_LIMIT) {
-        options?.onProgress?.(
-          `Deleting from Firestore: ${processedCount}/${docsToDelete.length}...`,
-          processedCount,
-          docsToDelete.length,
-        )
-        await currentBatch.commit()
-        currentBatch = writeBatch(db)
-        batchCount = 0
-      }
-    }
-
-    if (batchCount > 0) {
-      await currentBatch.commit()
-    }
-
-    result.deletedItems = deletedDetails
-
-    // Clean up local IndexedDB if any of these deleted items are still cached
-    try {
-      if (deletedIds.length > 0) {
-        await localDb.items.bulkDelete(deletedIds)
-        invalidateSearchIndex()
-      }
-    } catch (localErr) {
-      console.warn('Failed to clean up purged items in localDb:', localErr)
-    }
-
-    // Clean up any checklist entries referencing these purged item IDs
-    try {
-      options?.onProgress?.('Cleaning up corresponding checklist entries...')
-      for (let i = 0; i < deletedIds.length; i += FIRESTORE_IN_QUERY_LIMIT) {
-        const chunk = deletedIds.slice(i, i + FIRESTORE_IN_QUERY_LIMIT)
-        const clQuery = query(
-          collection(db, dbCollections.checklists),
-          where('itemId', 'in', chunk),
-        )
-        const clSnapshot = await getDocs(clQuery)
-        if (!clSnapshot.empty) {
-          let clBatch = writeBatch(db)
-          let clCount = 0
-          for (const clDoc of clSnapshot.docs) {
-            clBatch.delete(clDoc.ref)
-            clCount++
-            if (clCount >= FIRESTORE_BATCH_WRITE_LIMIT) {
-              await clBatch.commit()
-              clBatch = writeBatch(db)
-              clCount = 0
-            }
-          }
-          if (clCount > 0) {
-            await clBatch.commit()
-          }
-        }
-      }
-    } catch (clErr) {
-      console.warn('Failed to clean up checklist references for purged items:', clErr)
-    }
-
-    result.isSuccess = true
-    result.message = `Successfully permanently deleted ${result.itemsDeleted} items (is_deleted = true) from Firebase Firestore.`
-    options?.onProgress?.(result.message)
-    return result
-  } catch (error: any) {
-    console.error('Failed to purge deleted items from Firebase DB:', error)
-    result.errors.push(error.message || String(error))
-    result.message = error.message || 'Failed to purge soft-deleted items'
-    return result
   }
 }

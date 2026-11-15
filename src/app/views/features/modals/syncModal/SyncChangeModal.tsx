@@ -7,13 +7,15 @@ import {
   CheckCircleOutlined,
   SyncOutlined,
   ClockCircleOutlined,
-  ExclamationCircleOutlined,
 } from '@ant-design/icons'
 import { useSelector } from '@/core/hooks/redux'
 import { syncService, IDataChanges, useManualSync } from '@/services/localDb'
 import moment from 'moment'
 
 const { Text, Title } = Typography
+
+const SESSION_CHECKED_KEY = 'enmory_sync_checked_session'
+const SESSION_DISMISSED_KEY = 'enmory_sync_dismissed_session'
 
 export interface SyncChangeModalProps {
   open?: boolean
@@ -39,16 +41,24 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
 
   const { isSyncing, progressText, syncNow } = useManualSync()
 
-  // Detect data changes on initial page load
+  // Detect data changes on initial page load (only once per session)
   useEffect(() => {
     if (!isAuth || !user?.uid) return
-    if (hasCheckedInitialRef.current || isCheckingRef.current) return
+    if (
+      hasCheckedInitialRef.current ||
+      isCheckingRef.current ||
+      sessionStorage.getItem(SESSION_CHECKED_KEY) === 'true' ||
+      sessionStorage.getItem(SESSION_DISMISSED_KEY) === 'true'
+    ) {
+      return
+    }
 
     const runDetection = async () => {
       isCheckingRef.current = true
       try {
         const detected = await syncService.detectDataChanges(user.uid)
         hasCheckedInitialRef.current = true
+        sessionStorage.setItem(SESSION_CHECKED_KEY, 'true')
 
         if (detected.hasChanges) {
           setChanges(detected)
@@ -61,13 +71,14 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
       }
     }
 
-    // Brief timeout so Redux, router, and Dexie DB are completely mounted and idle
-    const timer = setTimeout(runDetection, 800)
+    // Delay slightly so initial rendering and local IndexedDB are completely ready
+    const timer = setTimeout(runDetection, 1200)
     return () => clearTimeout(timer)
   }, [isAuth, user?.uid])
 
   const handleClose = () => {
     if (isSyncing) return
+    sessionStorage.setItem(SESSION_DISMISSED_KEY, 'true')
     if (isControlled) {
       controlledOnClose?.()
     } else {
@@ -80,6 +91,8 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
     try {
       const result = await syncNow()
       if (result && result.isSuccess) {
+        sessionStorage.removeItem(SESSION_DISMISSED_KEY)
+        sessionStorage.setItem(SESSION_CHECKED_KEY, 'true')
         setSyncSuccess(true)
         setTimeout(() => {
           handleClose()
@@ -106,7 +119,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
       closable={!isSyncing}
       maskClosable={!isSyncing}
       centered
-      width={520}
+      width={500}
       destroyOnClose={false}
       footer={
         <Flex justify='flex-end' gap={8} style={{ paddingTop: 8 }}>
@@ -145,7 +158,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
               Data Updates Available
             </Title>
             <Text type='secondary' style={{ fontSize: 12, fontWeight: 'normal' }}>
-              Keep your data and cloud in sync
+              Updates detected in your cloud database
             </Text>
           </Flex>
         </Flex>
@@ -163,6 +176,11 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
           />
         ) : (
           <>
+            <Text type='secondary' style={{ display: 'block', marginBottom: 16, fontSize: 13 }}>
+              New or updated vocabulary cards and blogs were found in the cloud. Sync now to update
+              your local library.
+            </Text>
+
             <Flex vertical gap={12}>
               {/* Vocabulary Items Section */}
               <div
@@ -193,40 +211,16 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                         Vocabulary Items
                       </Text>
                       <Text type='secondary' style={{ fontSize: 11 }}>
-                        Local: {changes?.items.localCount ?? 0} | Cloud:{' '}
-                        {changes?.items.serverCount ?? 0}
+                        Local: {changes?.items.localCount ?? 0} items
                       </Text>
                     </div>
                   </Space>
 
                   <Space size={6} wrap>
                     {changes?.items.hasChanges ? (
-                      <>
-                        {changes.items.diffCount > 0 && (
-                          <Tag color='blue' style={{ margin: 0, fontWeight: 500 }}>
-                            +{changes.items.diffCount} new
-                          </Tag>
-                        )}
-                        {changes.items.diffCount < 0 && (
-                          <Tag color='orange' style={{ margin: 0, fontWeight: 500 }}>
-                            {Math.abs(changes.items.diffCount)} removed
-                          </Tag>
-                        )}
-                        {changes.items.updatedCount > 0 && (
-                          <Tag color='cyan' style={{ margin: 0, fontWeight: 500 }}>
-                            {changes.items.updatedCount} modified
-                          </Tag>
-                        )}
-                        {changes.items.diffCount === 0 && changes.items.updatedCount === 0 && (
-                          <Tag
-                            color='warning'
-                            icon={<ExclamationCircleOutlined />}
-                            style={{ margin: 0, fontWeight: 500 }}
-                          >
-                            Out of sync
-                          </Tag>
-                        )}
-                      </>
+                      <Tag color='blue' style={{ margin: 0, fontWeight: 500 }}>
+                        Updates available
+                      </Tag>
                     ) : (
                       <Tag
                         color='success'
@@ -269,40 +263,16 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                         Blogs & Articles
                       </Text>
                       <Text type='secondary' style={{ fontSize: 11 }}>
-                        Local: {changes?.blogs.localCount ?? 0} | Cloud:{' '}
-                        {changes?.blogs.serverCount ?? 0}
+                        Local: {changes?.blogs.localCount ?? 0} articles
                       </Text>
                     </div>
                   </Space>
 
                   <Space size={6} wrap>
                     {changes?.blogs.hasChanges ? (
-                      <>
-                        {changes.blogs.diffCount > 0 && (
-                          <Tag color='purple' style={{ margin: 0, fontWeight: 500 }}>
-                            +{changes.blogs.diffCount} new
-                          </Tag>
-                        )}
-                        {changes.blogs.diffCount < 0 && (
-                          <Tag color='orange' style={{ margin: 0, fontWeight: 500 }}>
-                            {Math.abs(changes.blogs.diffCount)} removed
-                          </Tag>
-                        )}
-                        {changes.blogs.updatedCount > 0 && (
-                          <Tag color='cyan' style={{ margin: 0, fontWeight: 500 }}>
-                            {changes.blogs.updatedCount} modified
-                          </Tag>
-                        )}
-                        {changes.blogs.diffCount === 0 && changes.blogs.updatedCount === 0 && (
-                          <Tag
-                            color='warning'
-                            icon={<ExclamationCircleOutlined />}
-                            style={{ margin: 0, fontWeight: 500 }}
-                          >
-                            Out of sync
-                          </Tag>
-                        )}
-                      </>
+                      <Tag color='purple' style={{ margin: 0, fontWeight: 500 }}>
+                        Updates available
+                      </Tag>
                     ) : (
                       <Tag
                         color='success'

@@ -14,6 +14,7 @@ import {
   Input,
   Badge,
   Space,
+  Alert,
 } from 'antd'
 import {
   DeleteOutlined,
@@ -49,6 +50,8 @@ export const Checklist: React.FC = () => {
   const {
     checklist,
     isLoading,
+    isError,
+    refetch,
     toggleItem,
     removeItem,
     clearCompleted,
@@ -314,7 +317,27 @@ export const Checklist: React.FC = () => {
   if (isLoading) {
     return (
       <div className='flex justify-center items-center p-6'>
-        <Spin children='Loading...' />
+        <Spin tip='Loading...' />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className='p-4'>
+        <Alert
+          type='error'
+          message='Không thể tải Checklist'
+          description={
+            <Space direction='vertical' style={{ marginTop: 8 }}>
+              <span>Đã xảy ra lỗi trong quá trình tải dữ liệu Checklist.</span>
+              <Button size='small' type='primary' onClick={() => refetch()}>
+                Thử lại
+              </Button>
+            </Space>
+          }
+          showIcon
+        />
       </div>
     )
   }

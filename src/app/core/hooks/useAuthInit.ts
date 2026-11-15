@@ -7,9 +7,12 @@ import { useEffect } from 'react'
 import { useDispatch } from '@/core/hooks/redux'
 import { checkAuthState } from '@/store/reducers/auth.reducer'
 import { firebaseAuthService } from '@/services/firebase/authService'
+import { useQueryClient } from '@tanstack/react-query'
+import { checklistKeys } from './useChecklist'
 
 export const useAuthInit = () => {
   const dispatch = useDispatch()
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     // Fetch user profile and configuration on initial load to reduce synchronization requests
@@ -19,10 +22,12 @@ export const useAuthInit = () => {
     const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
       if (user) {
         dispatch(checkAuthState() as any)
+        queryClient.invalidateQueries({ queryKey: checklistKeys.all })
         if (typeof chrome !== 'undefined' && chrome?.storage?.local) {
           chrome.storage.local.set({ enmory_uid: user.uid, enmory_email: user.email })
         }
       } else {
+        queryClient.setQueryData(checklistKeys.all, [])
         if (typeof chrome !== 'undefined' && chrome?.storage?.local) {
           chrome.storage.local.remove(['enmory_uid', 'enmory_email'])
         }
@@ -32,5 +37,5 @@ export const useAuthInit = () => {
     return () => {
       unsubscribe()
     }
-  }, [dispatch])
+  }, [dispatch, queryClient])
 }

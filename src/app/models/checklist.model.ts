@@ -5,6 +5,7 @@ export interface IChecklistDoc {
   checklistId?: string
   uid: string
   itemId: string
+  origin?: string
   isCompleted: boolean
   added_date: number
   last_update?: number

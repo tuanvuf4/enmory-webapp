@@ -14,9 +14,6 @@ import moment from 'moment'
 
 const { Text, Title } = Typography
 
-const SESSION_CHECKED_KEY = 'enmory_sync_checked_session'
-const SESSION_DISMISSED_KEY = 'enmory_sync_dismissed_session'
-
 export interface SyncChangeModalProps {
   open?: boolean
   onClose?: () => void
@@ -41,24 +38,18 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
 
   const { isSyncing, progressText, syncNow } = useManualSync()
 
-  // Detect data changes on initial page load (only once per session)
+  // Detect data changes on initial page load / reload
   useEffect(() => {
     if (!isAuth || !user?.uid) return
-    if (
-      hasCheckedInitialRef.current ||
-      isCheckingRef.current ||
-      sessionStorage.getItem(SESSION_CHECKED_KEY) === 'true' ||
-      sessionStorage.getItem(SESSION_DISMISSED_KEY) === 'true'
-    ) {
+    if (hasCheckedInitialRef.current || isCheckingRef.current) {
       return
     }
 
     const runDetection = async () => {
       isCheckingRef.current = true
       try {
-        const detected = await syncService.detectDataChanges(user.uid)
+        const detected = await syncService.detectDataChanges(user.uid, true)
         hasCheckedInitialRef.current = true
-        sessionStorage.setItem(SESSION_CHECKED_KEY, 'true')
 
         if (detected.hasChanges) {
           setChanges(detected)
@@ -78,7 +69,6 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
 
   const handleClose = () => {
     if (isSyncing) return
-    sessionStorage.setItem(SESSION_DISMISSED_KEY, 'true')
     if (isControlled) {
       controlledOnClose?.()
     } else {
@@ -91,8 +81,6 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
     try {
       const result = await syncNow(mode)
       if (result && result.isSuccess) {
-        sessionStorage.removeItem(SESSION_DISMISSED_KEY)
-        sessionStorage.setItem(SESSION_CHECKED_KEY, 'true')
         setSyncSuccess(true)
         setTimeout(() => {
           handleClose()

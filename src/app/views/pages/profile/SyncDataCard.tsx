@@ -42,6 +42,8 @@ interface ISyncSummary {
   tagColor: string
   unit: string
   localCount: number
+  isLoadingLocal: boolean
+  refreshLocal: () => void
   serverCount: number | null
   isLoadingServer: boolean
   diffCount: number
@@ -58,14 +60,18 @@ export const SyncDataCard: React.FC = () => {
     progressText,
     lastSyncTime,
     localItemCount,
+    isLoadingLocalCount,
+    refreshLocalItemCount,
     serverItemCount,
     isLoadingServerCount,
     refreshServerItemCount,
     localBlogCount,
+    isLoadingLocalBlogCount,
+    refreshLocalBlogCount,
     serverBlogCount,
     isLoadingServerBlogCount,
     refreshServerBlogCount,
-    refreshAllServerCounts,
+    refreshAllCounts,
     syncNow,
     clearLocalData,
     unsyncedRecords = [],
@@ -83,8 +89,6 @@ export const SyncDataCard: React.FC = () => {
   const diffBlogCount = serverBlogCount !== null ? serverBlogCount - localBlogCount : 0
 
   const hasDiff = hasItemDiff || hasBlogDiff
-  const totalNewCount =
-    (diffItemCount > 0 ? diffItemCount : 0) + (diffBlogCount > 0 ? diffBlogCount : 0)
 
   const summaryData = useMemo<ISyncSummary[]>(
     () => [
@@ -97,11 +101,13 @@ export const SyncDataCard: React.FC = () => {
         tagColor: 'blue',
         unit: 'items',
         localCount: localItemCount,
+        isLoadingLocal: isLoadingLocalCount,
+        refreshLocal: refreshLocalItemCount,
         serverCount: serverItemCount,
         isLoadingServer: isLoadingServerCount,
         diffCount: diffItemCount,
         hasDiff: hasItemDiff,
-        refreshServer: refreshServerItemCount,
+        refreshServer: () => refreshServerItemCount(true),
       },
       {
         key: 'blogs',
@@ -112,22 +118,28 @@ export const SyncDataCard: React.FC = () => {
         tagColor: 'purple',
         unit: 'articles',
         localCount: localBlogCount,
+        isLoadingLocal: isLoadingLocalBlogCount,
+        refreshLocal: refreshLocalBlogCount,
         serverCount: serverBlogCount,
         isLoadingServer: isLoadingServerBlogCount,
         diffCount: diffBlogCount,
         hasDiff: hasBlogDiff,
-        refreshServer: refreshServerBlogCount,
+        refreshServer: () => refreshServerBlogCount(true),
       },
     ],
     [
       token.colorPrimary,
       localItemCount,
+      isLoadingLocalCount,
+      refreshLocalItemCount,
       serverItemCount,
       isLoadingServerCount,
       diffItemCount,
       hasItemDiff,
       refreshServerItemCount,
       localBlogCount,
+      isLoadingLocalBlogCount,
+      refreshLocalBlogCount,
       serverBlogCount,
       isLoadingServerBlogCount,
       diffBlogCount,
@@ -173,20 +185,31 @@ export const SyncDataCard: React.FC = () => {
       title: 'Local',
       dataIndex: 'localCount',
       key: 'localCount',
-      width: 120,
+      minWidth: 140,
       render: (count: number, record) => (
-        <Tag
-          color={record.tagColor}
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            padding: '3px 10px',
-            borderRadius: token.borderRadiusSM,
-            margin: 0,
-          }}
-        >
-          {count.toLocaleString()}
-        </Tag>
+        <Space size={6} wrap align='center'>
+          <Tag
+            color={record.tagColor}
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              padding: '3px 10px',
+              borderRadius: token.borderRadiusSM,
+              margin: 0,
+            }}
+          >
+            {record.isLoadingLocal ? <SyncOutlined spin /> : count.toLocaleString()}
+          </Tag>
+          <Tooltip title={`Refresh local ${record.type === 'item' ? 'items' : 'blogs'} count`}>
+            <Button
+              size='small'
+              shape='circle'
+              icon={<ReloadOutlined spin={record.isLoadingLocal} style={{ fontSize: 13 }} />}
+              onClick={record.refreshLocal}
+              disabled={record.isLoadingLocal || isSyncing}
+            />
+          </Tooltip>
+        </Space>
       ),
     },
     {
@@ -231,6 +254,26 @@ export const SyncDataCard: React.FC = () => {
                 </Tag>
               )}
 
+              <Tooltip title={`Refresh server ${record.type === 'item' ? 'items' : 'blogs'} count`}>
+                <Button
+                  size='small'
+                  shape='circle'
+                  icon={<ReloadOutlined spin={record.isLoadingServer} style={{ fontSize: 13 }} />}
+                  onClick={record.refreshServer}
+                  disabled={record.isLoadingServer || isSyncing}
+                />
+              </Tooltip>
+            </Space>
+          )
+        }
+        return (
+          <Space size={6} wrap align='center'>
+            <Tag color='error' style={{ margin: 0 }}>
+              Unavailable
+            </Tag>
+            <Tooltip
+              title={`Retry fetching server ${record.type === 'item' ? 'items' : 'blogs'} count`}
+            >
               <Button
                 size='small'
                 shape='circle'
@@ -238,13 +281,8 @@ export const SyncDataCard: React.FC = () => {
                 onClick={record.refreshServer}
                 disabled={record.isLoadingServer || isSyncing}
               />
-            </Space>
-          )
-        }
-        return (
-          <Tag color='error' style={{ margin: 0 }}>
-            Unavailable
-          </Tag>
+            </Tooltip>
+          </Space>
         )
       },
     },
@@ -448,13 +486,28 @@ export const SyncDataCard: React.FC = () => {
       }
       extra={
         <Space size={screens.xs ? 4 : 8} wrap align='center'>
-          <Tooltip title='Check server counts'>
+          <Tooltip title='Refresh server and local counts'>
             <Button
               type='text'
               size='small'
-              icon={<ReloadOutlined spin={isLoadingServerCount || isLoadingServerBlogCount} />}
-              onClick={refreshAllServerCounts}
-              disabled={isLoadingServerCount || isLoadingServerBlogCount || isSyncing}
+              icon={
+                <ReloadOutlined
+                  spin={
+                    isLoadingServerCount ||
+                    isLoadingServerBlogCount ||
+                    isLoadingLocalCount ||
+                    isLoadingLocalBlogCount
+                  }
+                />
+              }
+              onClick={() => refreshAllCounts(true)}
+              disabled={
+                isLoadingServerCount ||
+                isLoadingServerBlogCount ||
+                isLoadingLocalCount ||
+                isLoadingLocalBlogCount ||
+                isSyncing
+              }
             >
               {!screens.xs && 'Check Updates'}
             </Button>
@@ -551,7 +604,7 @@ export const SyncDataCard: React.FC = () => {
             onClick={() => syncNow('sync')}
             style={{ flex: screens.xs ? 1 : 'initial' }}
           >
-            Sync (Chỉ thay đổi) {totalNewCount > 0 ? `(${totalNewCount} mới)` : ''}
+            Sync
           </Button>
 
           <Button
@@ -561,7 +614,7 @@ export const SyncDataCard: React.FC = () => {
             onClick={() => syncNow('full-sync')}
             style={{ flex: screens.xs ? 1 : 'initial' }}
           >
-            Full Sync (Toàn bộ)
+            Full Sync
           </Button>
         </Flex>
 

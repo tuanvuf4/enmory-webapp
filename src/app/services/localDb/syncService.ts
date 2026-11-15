@@ -147,7 +147,7 @@ export const syncService = {
       return activeCount
     } catch (err) {
       console.warn('getServerItemCount getCountFromServer failed:', err)
-      return 0
+      throw err
     }
   },
 
@@ -174,7 +174,7 @@ export const syncService = {
       return activeCount
     } catch (err) {
       console.warn('getServerBlogCount failed:', err)
-      return 0
+      throw err
     }
   },
 

@@ -15,6 +15,7 @@ import {
 import { itemKeys } from '@/core/hooks/useItems'
 import { blogKeys } from '@/core/hooks/useBlogs'
 import { refreshAiUsageFromCloud } from '@/services/gemini'
+import { firebaseAuthService } from '@/services/firebase/authService'
 
 export interface IUseManualSyncOptions {
   autoFetchServerCounts?: boolean
@@ -35,81 +36,239 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
   const [unsyncedRecords, setUnsyncedRecords] = useState<IUnsyncedRecord[]>([])
   const [lastSyncResult, setLastSyncResult] = useState<ISyncResult | null>(null)
 
-  // Live counts from Dexie IndexedDB for currently logged in user
-  const localItemCount = useLiveQuery(
-    () => (user?.uid ? localDb.items.where('uid').equals(user.uid).count() : 0),
+  // Manual local count states and loading indicators
+  const [localRefreshTick, setLocalRefreshTick] = useState<number>(0)
+  const [isLoadingLocalCount, setIsLoadingLocalCount] = useState<boolean>(false)
+  const [isLoadingLocalBlogCount, setIsLoadingLocalBlogCount] = useState<boolean>(false)
+  const [manualLocalItemCount, setManualLocalItemCount] = useState<number | null>(null)
+  const [manualLocalBlogCount, setManualLocalBlogCount] = useState<number | null>(null)
+
+  const getEffectiveUid = useCallback(
+    () => user?.uid || firebaseAuthService.getCurrentUser()?.uid || null,
     [user?.uid],
+  )
+
+  // Live counts from Dexie IndexedDB for currently logged in user
+  const liveLocalItemCount = useLiveQuery(
+    async () => {
+      const uid = getEffectiveUid()
+      if (uid) {
+        const count = await localDb.items.where('uid').equals(uid).count()
+        if (count === 0) {
+          const total = await localDb.items.count()
+          if (total > 0) {
+            const noUidCount = await localDb.items.filter((it) => !it.uid).count()
+            if (noUidCount > 0) return noUidCount
+          }
+        }
+        return count
+      }
+      return await localDb.items.count()
+    },
+    [user?.uid, localRefreshTick, getEffectiveUid],
     0,
   )
 
-  const localBlogCount = useLiveQuery(
-    () => (user?.uid ? localDb.blogs.where('uid').equals(user.uid).count() : 0),
-    [user?.uid],
+  const liveLocalBlogCount = useLiveQuery(
+    async () => {
+      const uid = getEffectiveUid()
+      if (uid) {
+        const count = await localDb.blogs.where('uid').equals(uid).count()
+        if (count === 0) {
+          const total = await localDb.blogs.count()
+          if (total > 0) {
+            const noUidCount = await localDb.blogs.filter((it) => !it.uid).count()
+            if (noUidCount > 0) return noUidCount
+          }
+        }
+        return count
+      }
+      return await localDb.blogs.count()
+    },
+    [user?.uid, localRefreshTick, getEffectiveUid],
     0,
   )
+
+  useEffect(() => {
+    if (liveLocalItemCount !== undefined && liveLocalItemCount !== null) {
+      setManualLocalItemCount(liveLocalItemCount)
+    }
+  }, [liveLocalItemCount])
+
+  useEffect(() => {
+    if (liveLocalBlogCount !== undefined && liveLocalBlogCount !== null) {
+      setManualLocalBlogCount(liveLocalBlogCount)
+    }
+  }, [liveLocalBlogCount])
+
+  const localItemCount =
+    manualLocalItemCount !== null ? manualLocalItemCount : (liveLocalItemCount ?? 0)
+  const localBlogCount =
+    manualLocalBlogCount !== null ? manualLocalBlogCount : (liveLocalBlogCount ?? 0)
+
+  // Refresh local item count directly from IndexedDB
+  const refreshLocalItemCount = useCallback(async () => {
+    setIsLoadingLocalCount(true)
+    try {
+      const uid = getEffectiveUid()
+      let count = 0
+      if (uid) {
+        count = await localDb.items.where('uid').equals(uid).count()
+        if (count === 0) {
+          const total = await localDb.items.count()
+          if (total > 0) {
+            const noUidCount = await localDb.items.filter((it) => !it.uid).count()
+            if (noUidCount > 0) count = noUidCount
+          }
+        }
+      } else {
+        count = await localDb.items.count()
+      }
+      setManualLocalItemCount(count)
+      setLocalRefreshTick((t) => t + 1)
+      return count
+    } catch (err) {
+      console.warn('Failed to refresh local item count:', err)
+      return 0
+    } finally {
+      setIsLoadingLocalCount(false)
+    }
+  }, [getEffectiveUid])
+
+  // Refresh local blog count directly from IndexedDB
+  const refreshLocalBlogCount = useCallback(async () => {
+    setIsLoadingLocalBlogCount(true)
+    try {
+      const uid = getEffectiveUid()
+      let count = 0
+      if (uid) {
+        count = await localDb.blogs.where('uid').equals(uid).count()
+        if (count === 0) {
+          const total = await localDb.blogs.count()
+          if (total > 0) {
+            const noUidCount = await localDb.blogs.filter((it) => !it.uid).count()
+            if (noUidCount > 0) count = noUidCount
+          }
+        }
+      } else {
+        count = await localDb.blogs.count()
+      }
+      setManualLocalBlogCount(count)
+      setLocalRefreshTick((t) => t + 1)
+      return count
+    } catch (err) {
+      console.warn('Failed to refresh local blog count:', err)
+      return 0
+    } finally {
+      setIsLoadingLocalBlogCount(false)
+    }
+  }, [getEffectiveUid])
+
+  const refreshAllLocalCounts = useCallback(async () => {
+    await Promise.all([refreshLocalItemCount(), refreshLocalBlogCount()])
+  }, [refreshLocalItemCount, refreshLocalBlogCount])
 
   // Load last sync time
   const refreshLastSyncTime = useCallback(async () => {
-    if (user?.uid) {
-      const ts = await syncService.getLastSyncTimestamp(user.uid)
+    const uid = getEffectiveUid()
+    if (uid) {
+      const ts = await syncService.getLastSyncTimestamp(uid)
       setLastSyncTime(ts > 0 ? ts : null)
     } else {
       setLastSyncTime(null)
     }
-  }, [user?.uid])
+  }, [getEffectiveUid])
 
   // Count items from server
-  const refreshServerItemCount = useCallback(async () => {
-    if (!user?.uid) {
-      setServerItemCount(null)
-      setIsLoadingServerCount(false)
-      return
-    }
+  const refreshServerItemCount = useCallback(
+    async (force = true) => {
+      const uid = getEffectiveUid()
+      if (!uid) {
+        setServerItemCount(null)
+        setIsLoadingServerCount(false)
+        return
+      }
 
-    setIsLoadingServerCount(true)
-    try {
-      const count = await syncService.getServerItemCount(user.uid)
-      setServerItemCount(count)
-    } catch (err) {
-      console.warn('Failed to fetch server item count:', err)
-      setServerItemCount(null)
-    } finally {
-      setIsLoadingServerCount(false)
-    }
-  }, [user?.uid])
+      setIsLoadingServerCount(true)
+      try {
+        if (force) {
+          syncService.clearCountCache(uid)
+        }
+        const count = await syncService.getServerItemCount(uid, force)
+        setServerItemCount(count)
+      } catch (err) {
+        console.warn('Failed to fetch server item count:', err)
+        setServerItemCount(null)
+      } finally {
+        setIsLoadingServerCount(false)
+      }
+    },
+    [getEffectiveUid],
+  )
 
   // Count blogs from server
-  const refreshServerBlogCount = useCallback(async () => {
-    if (!user?.uid) {
-      setServerBlogCount(null)
-      setIsLoadingServerBlogCount(false)
-      return
-    }
+  const refreshServerBlogCount = useCallback(
+    async (force = true) => {
+      const uid = getEffectiveUid()
+      if (!uid) {
+        setServerBlogCount(null)
+        setIsLoadingServerBlogCount(false)
+        return
+      }
 
-    setIsLoadingServerBlogCount(true)
-    try {
-      const count = await syncService.getServerBlogCount(user.uid)
-      setServerBlogCount(count)
-    } catch (err) {
-      console.warn('Failed to fetch server blog count:', err)
-      setServerBlogCount(null)
-    } finally {
-      setIsLoadingServerBlogCount(false)
-    }
-  }, [user?.uid])
+      setIsLoadingServerBlogCount(true)
+      try {
+        if (force) {
+          syncService.clearCountCache(uid)
+        }
+        const count = await syncService.getServerBlogCount(uid, force)
+        setServerBlogCount(count)
+      } catch (err) {
+        console.warn('Failed to fetch server blog count:', err)
+        setServerBlogCount(null)
+      } finally {
+        setIsLoadingServerBlogCount(false)
+      }
+    },
+    [getEffectiveUid],
+  )
 
-  const refreshAllServerCounts = useCallback(async () => {
-    await Promise.all([refreshServerItemCount(), refreshServerBlogCount()])
-  }, [refreshServerItemCount, refreshServerBlogCount])
+  const refreshAllServerCounts = useCallback(
+    async (force = true) => {
+      await Promise.all([refreshServerItemCount(force), refreshServerBlogCount(force)])
+    },
+    [refreshServerItemCount, refreshServerBlogCount],
+  )
+
+  const refreshAllCounts = useCallback(
+    async (force = true) => {
+      await Promise.all([
+        refreshServerItemCount(force),
+        refreshServerBlogCount(force),
+        refreshLocalItemCount(),
+        refreshLocalBlogCount(),
+        refreshLastSyncTime(),
+      ])
+    },
+    [
+      refreshServerItemCount,
+      refreshServerBlogCount,
+      refreshLocalItemCount,
+      refreshLocalBlogCount,
+      refreshLastSyncTime,
+    ],
+  )
 
   useEffect(() => {
+    const uid = getEffectiveUid()
     refreshLastSyncTime()
-    if (autoFetchServerCounts) {
-      refreshServerItemCount()
-      refreshServerBlogCount()
+    refreshAllLocalCounts()
+    if (autoFetchServerCounts && uid) {
+      refreshServerItemCount(false)
+      refreshServerBlogCount(false)
     }
-    if (user?.uid) {
-      syncService.getLastUnsyncedRecords(user.uid).then((records) => {
+    if (uid) {
+      syncService.getLastUnsyncedRecords(uid).then((records) => {
         setUnsyncedRecords(records)
       })
     } else {
@@ -118,10 +277,36 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     }
   }, [
     user?.uid,
+    getEffectiveUid,
     refreshLastSyncTime,
+    refreshAllLocalCounts,
     refreshServerItemCount,
     refreshServerBlogCount,
     autoFetchServerCounts,
+  ])
+
+  // React to Firebase auth state changes (e.g. on page refresh when user restores from storage)
+  useEffect(() => {
+    const unsubscribe = firebaseAuthService.onAuthStateChanged((fbUser) => {
+      if (fbUser?.uid) {
+        refreshLastSyncTime()
+        refreshAllLocalCounts()
+        if (autoFetchServerCounts) {
+          refreshServerItemCount(false)
+          refreshServerBlogCount(false)
+        }
+        syncService.getLastUnsyncedRecords(fbUser.uid).then((records) => {
+          setUnsyncedRecords(records)
+        })
+      }
+    })
+    return () => unsubscribe()
+  }, [
+    refreshLastSyncTime,
+    refreshAllLocalCounts,
+    autoFetchServerCounts,
+    refreshServerItemCount,
+    refreshServerBlogCount,
   ])
 
   const syncNow = useCallback(
@@ -167,9 +352,10 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
         setUnsyncedRecords(result.unsyncedRecords || [])
 
         await refreshLastSyncTime()
+        await refreshAllLocalCounts()
         if (autoFetchServerCounts) {
-          if (type === 'all' || type === 'item') await refreshServerItemCount()
-          if (type === 'all' || type === 'blog') await refreshServerBlogCount()
+          if (type === 'all' || type === 'item') await refreshServerItemCount(true)
+          if (type === 'all' || type === 'blog') await refreshServerBlogCount(true)
         }
         await refreshAiUsageFromCloud().catch(() => null)
 
@@ -218,8 +404,10 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     },
     [
       user?.uid,
+      getEffectiveUid,
       autoFetchServerCounts,
       refreshLastSyncTime,
+      refreshAllLocalCounts,
       refreshServerItemCount,
       refreshServerBlogCount,
       queryClient,
@@ -230,11 +418,13 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
   const fullSync = useCallback(() => syncNow('full-sync'), [syncNow])
 
   const clearLocalData = async () => {
-    if (!user?.uid) return
+    const uid = getEffectiveUid()
+    if (!uid) return
 
     try {
-      await syncService.clearLocalData(user.uid)
+      await syncService.clearLocalData(uid)
       await refreshLastSyncTime()
+      await refreshAllLocalCounts()
       setUnsyncedRecords([])
       setLastSyncResult(null)
       queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
@@ -247,23 +437,30 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
   }
 
   const checkChanges = useCallback(async (): Promise<IDataChanges | null> => {
-    if (!user?.uid) return null
-    return await syncService.detectDataChanges(user.uid)
-  }, [user?.uid])
+    const uid = getEffectiveUid()
+    if (!uid) return null
+    return await syncService.detectDataChanges(uid)
+  }, [getEffectiveUid])
 
   return {
     isSyncing,
     progressText,
     lastSyncTime,
     localItemCount: localItemCount ?? 0,
+    isLoadingLocalCount,
+    refreshLocalItemCount,
+    localBlogCount: localBlogCount ?? 0,
+    isLoadingLocalBlogCount,
+    refreshLocalBlogCount,
+    refreshAllLocalCounts,
     serverItemCount,
     isLoadingServerCount,
     refreshServerItemCount,
-    localBlogCount: localBlogCount ?? 0,
     serverBlogCount,
     isLoadingServerBlogCount,
     refreshServerBlogCount,
     refreshAllServerCounts,
+    refreshAllCounts,
     syncNow,
     syncDelta,
     fullSync,

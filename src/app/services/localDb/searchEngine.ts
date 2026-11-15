@@ -1,4 +1,3 @@
-import MiniSearch from 'minisearch'
 import { IItem, IExample, IMeaning } from '@/models/item.model'
 import type { IItemRequestParams } from '@/services/firebase/api/item.api'
 import type { IExampleQuery } from '@/models/example.model'
@@ -129,137 +128,17 @@ export const findBestMatchingMeaning = (item: IItem, keyword?: string): IMeaning
   return bestM
 }
 
-let cachedSearchIndex: MiniSearch<IItem> | null = null
-let cachedIndexItemsSignature = ''
-
-/**
- * Builds or retrieves the MiniSearch inverted index for the user items.
- * Uses index caching keyed by item collection signature to avoid redundant re-indexing on every keystroke.
- */
-export const getOrBuildSearchIndex = (items: IItem[], uid?: string): MiniSearch<IItem> => {
-  const validItems = items.filter((item): item is IItem & { id: string } => !!item.id)
-  const itemsSignature = `${uid || ''}_${validItems.length}_${validItems[0]?.id || ''}_${validItems[validItems.length - 1]?.id || ''}`
-
-  if (cachedSearchIndex && cachedIndexItemsSignature === itemsSignature) {
-    return cachedSearchIndex
-  }
-
-  const miniSearch = new MiniSearch<IItem>({
-    fields: [
-      'origin',
-      'originFolded',
-      'translations',
-      'translationsFolded',
-      'definitions',
-      'definitionsFolded',
-      'tagsText',
-      'otherText',
-    ],
-    storeFields: ['id'],
-    searchOptions: {
-      prefix: true,
-      fuzzy: (term) => (term.length > 3 ? 0.2 : 0),
-      boost: {
-        origin: 10,
-        originFolded: 7,
-        translations: 6,
-        translationsFolded: 4.5,
-        definitions: 3.5,
-        definitionsFolded: 2.5,
-        tagsText: 1.5,
-        otherText: 1,
-      },
-      combineWith: 'AND',
-    },
-    extractField: (document: IItem, fieldName: string) => {
-      switch (fieldName) {
-        case 'origin':
-          return cleanSearchText(document.origin || '').toLowerCase()
-        case 'originFolded':
-          return removeVietnameseTones(cleanSearchText(document.origin || ''))
-        case 'translations':
-          return (document.meanings || [])
-            .map((m) => cleanSearchText(m.translation || '').toLowerCase())
-            .filter(Boolean)
-            .join(' ')
-        case 'translationsFolded':
-          return (document.meanings || [])
-            .map((m) => removeVietnameseTones(cleanSearchText(m.translation || '')))
-            .filter(Boolean)
-            .join(' ')
-        case 'definitions':
-          return (document.meanings || [])
-            .map((m) => cleanSearchText(m.definition || '').toLowerCase())
-            .filter(Boolean)
-            .join(' ')
-        case 'definitionsFolded':
-          return (document.meanings || [])
-            .map((m) => removeVietnameseTones(cleanSearchText(m.definition || '')))
-            .filter(Boolean)
-            .join(' ')
-        case 'tagsText': {
-          const t1 = (document.tags || []).map((t) =>
-            String(t || '')
-              .replace(/^#+/, '')
-              .trim()
-              .toLowerCase(),
-          )
-          const t2 = (document.tags_lowercase || []).map((t) =>
-            String(t || '')
-              .replace(/^#+/, '')
-              .trim()
-              .toLowerCase(),
-          )
-          return Array.from(new Set([...t1, ...t2]))
-            .filter(Boolean)
-            .join(' ')
-        }
-        case 'otherText': {
-          const textParts: string[] = []
-          if (document.forms?.length) textParts.push(document.forms.join(' '))
-          if (document.word_family?.length) textParts.push(document.word_family.join(' '))
-          if (document.collocations?.length) textParts.push(document.collocations.join(' '))
-          for (const m of document.meanings || []) {
-            if (m.note) textParts.push(cleanSearchText(m.note))
-            if (m.collocations) textParts.push(cleanSearchText(m.collocations))
-            if (m.synonyms?.length) textParts.push(m.synonyms.join(' '))
-            if (m.antonyms?.length) textParts.push(m.antonyms.join(' '))
-            for (const ex of (m.examples || []) as any[]) {
-              if (typeof ex === 'string') textParts.push(cleanSearchText(ex))
-              else if (ex && typeof ex === 'object') {
-                if (ex.origin) textParts.push(cleanSearchText(ex.origin))
-                if (ex.translation) textParts.push(cleanSearchText(ex.translation))
-              }
-            }
-          }
-          return textParts.join(' ').toLowerCase()
-        }
-        default:
-          return (document as any)[fieldName] || ''
-      }
-    },
-  })
-
-  miniSearch.addAll(validItems)
-
-  cachedSearchIndex = miniSearch
-  cachedIndexItemsSignature = itemsSignature
-
-  return miniSearch
-}
-
 /**
  * Invalidate the search index cache (e.g. after database updates/sync)
+ * Kept for backward compatibility.
  */
 export const invalidateSearchIndex = () => {
-  cachedSearchIndex = null
-  cachedIndexItemsSignature = ''
+  // No-op: search queries directly evaluate origin, translation, and definition
 }
 
 /**
  * Executes an optimized local search and filter query against IndexedDB.
- * Blends precision matching (origin, translation, definition), Vietnamese tone-insensitivity,
- * and MiniSearch full-text relevance scoring.
+ * Precision matching across origin, translation, and definition with Vietnamese tone-insensitivity.
  */
 export const queryLocalItems = async (
   params: IItemRequestParams,
@@ -269,7 +148,7 @@ export const queryLocalItems = async (
   const allItems = await localDb.items.toArray()
   const rawItems = uid ? allItems.filter((item) => !item.uid || item.uid === uid) : allItems
 
-  // 2. Keyword Search & Precision Ranking
+  // 2. Keyword Search & Precision Ranking (Origin, Translation, Definition only)
   let candidateItems = rawItems
   const rawKeyword = (params.keyword || '').trim()
 
@@ -284,17 +163,6 @@ export const queryLocalItems = async (
         return origLower === lowerKw || origFolded === foldedKw
       })
     } else {
-      const searchIndex = getOrBuildSearchIndex(rawItems, uid)
-      let miniSearchResults = searchIndex.search(rawKeyword)
-      if (miniSearchResults.length === 0 && rawKeyword.includes(' ')) {
-        miniSearchResults = searchIndex.search(rawKeyword, { combineWith: 'OR' })
-      }
-
-      const scoreMap = new Map<string, number>()
-      miniSearchResults.forEach((res) => {
-        scoreMap.set(res.id, res.score)
-      })
-
       const scoredItems: { item: IItem; score: number }[] = []
 
       for (const item of rawItems) {
@@ -306,7 +174,7 @@ export const queryLocalItems = async (
 
         let itemScore = 0
         let hasMatch = false
-        let matchType: 'origin' | 'translation' | 'definition' | 'other' = 'other'
+        let matchType: 'origin' | 'translation' | 'definition' | 'none' = 'none'
 
         // A. Match against origin
         if (origLower === lowerKw) {
@@ -426,19 +294,12 @@ export const queryLocalItems = async (
         if (bestDefScore > 0) {
           itemScore += bestDefScore
           hasMatch = true
-          if (matchType === 'other') {
+          if (matchType === 'none') {
             matchType = 'definition'
           }
         }
 
-        // D. MiniSearch score contribution
-        const msScore = scoreMap.get(item.id) || 0
-        if (msScore > 0) {
-          itemScore += Math.min(250, msScore * 10)
-          hasMatch = true
-        }
-
-        // E. Proximity tie-breaker for origin matches
+        // D. Proximity tie-breaker for origin matches
         if (matchType === 'origin' || origLower.includes(lowerKw)) {
           const lenDiff = Math.abs(origLower.length - lowerKw.length)
           itemScore += Math.max(0, 30 - lenDiff)

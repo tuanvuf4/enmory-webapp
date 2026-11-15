@@ -9,7 +9,7 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons'
 import { useSelector } from '@/core/hooks/redux'
-import { syncService, IDataChanges, useManualSync } from '@/services/localDb'
+import { syncService, IDataChanges, useManualSync, SyncMode } from '@/services/localDb'
 import moment from 'moment'
 
 const { Text, Title } = Typography
@@ -86,10 +86,10 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
     }
   }
 
-  const handleSync = async () => {
+  const handleSync = async (mode: SyncMode = 'sync') => {
     if (isSyncing) return
     try {
-      const result = await syncNow()
+      const result = await syncNow(mode)
       if (result && result.isSuccess) {
         sessionStorage.removeItem(SESSION_DISMISSED_KEY)
         sessionStorage.setItem(SESSION_CHECKED_KEY, 'true')
@@ -122,18 +122,27 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
       width={500}
       destroyOnClose={false}
       footer={
-        <Flex justify='flex-end' gap={8} style={{ paddingTop: 8 }}>
+        <Flex justify='flex-end' gap={8} style={{ paddingTop: 8 }} wrap='wrap'>
           <Button onClick={handleClose} disabled={isSyncing}>
-            Later
+            Để sau
+          </Button>
+          <Button
+            type='default'
+            icon={<SyncOutlined />}
+            loading={isSyncing}
+            disabled={syncSuccess}
+            onClick={() => handleSync('full-sync')}
+          >
+            Full Sync (Toàn bộ)
           </Button>
           <Button
             type='primary'
             icon={isSyncing ? <SyncOutlined spin /> : <CloudSyncOutlined />}
             loading={isSyncing}
             disabled={syncSuccess}
-            onClick={handleSync}
+            onClick={() => handleSync('sync')}
           >
-            {isSyncing ? 'Syncing...' : 'Sync Data'}
+            {isSyncing ? 'Đang đồng bộ...' : 'Sync (Chỉ thay đổi)'}
           </Button>
         </Flex>
       }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import {
   Card,
   Table,
@@ -93,8 +93,6 @@ export const UnsyncableServerItemsCard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false)
   const [searchKeyword, setSearchKeyword] = useState<string>('')
   const [onlyCurrentUser, setOnlyCurrentUser] = useState<boolean>(true)
-  const [checkMissingInLocalDb, setCheckMissingInLocalDb] = useState<boolean>(true)
-  const [checkMissingOnServer, setCheckMissingOnServer] = useState<boolean>(true)
   const [categoryFilter, setCategoryFilter] = useState<
     'all' | 'local-only' | 'server-only' | 'schema-error'
   >('all')
@@ -108,19 +106,30 @@ export const UnsyncableServerItemsCard: React.FC = () => {
   // Computed counts for filters & quick badges
   const localOnlyCount = useMemo(() => {
     return items.filter(
-      (it) => it.source === 'local-db-only' || it.reason.includes('chưa có trên Firestore'),
+      (it) =>
+        it.source === 'local-db-only' ||
+        it.reason.includes('thiếu trên Server') ||
+        it.reason.includes('chưa có trên Firestore') ||
+        it.reason.includes('chưa sync lên Cloud'),
     ).length
   }, [items])
 
   const missingInLocalCount = useMemo(() => {
-    return items.filter((it) => it.reason.includes('chưa được sync vào Local Database')).length
+    return items.filter(
+      (it) =>
+        it.reason.includes('thiếu trong Local DB') ||
+        it.reason.includes('chưa được sync vào Local Database'),
+    ).length
   }, [items])
 
   const schemaErrorCount = useMemo(() => {
     return items.filter(
       (it) =>
         it.source !== 'local-db-only' &&
+        !it.reason.includes('thiếu trên Server') &&
         !it.reason.includes('chưa có trên Firestore') &&
+        !it.reason.includes('chưa sync lên Cloud') &&
+        !it.reason.includes('thiếu trong Local DB') &&
         !it.reason.includes('chưa được sync vào Local Database'),
     ).length
   }, [items])
@@ -142,8 +151,9 @@ export const UnsyncableServerItemsCard: React.FC = () => {
   const [editTranslation, setEditTranslation] = useState<string>('')
   const [editJsonText, setEditJsonText] = useState<string>('')
   const [isSaving, setIsSaving] = useState<boolean>(false)
+  const [hasScanned, setHasScanned] = useState<boolean>(false)
 
-  // Load unsynced items from syncMeta cache first
+  // Load unsynced items from syncMeta cache manually (without scanning Firestore)
   const loadCachedUnsyncedRecords = useCallback(async () => {
     if (!user?.uid) return
     try {
@@ -167,15 +177,15 @@ export const UnsyncableServerItemsCard: React.FC = () => {
           prev.forEach((it) => map.set(it.id, it))
           return Array.from(map.values())
         })
+        setHasScanned(true)
+        message.info(`Đã tải ${cachedItems.length} item lỗi từ bộ nhớ cache gần nhất.`)
+      } else {
+        message.info('Không có item lỗi nào trong bộ nhớ cache.')
       }
     } catch (err) {
       console.warn('Failed to load cached unsynced records:', err)
     }
   }, [user?.uid])
-
-  useEffect(() => {
-    loadCachedUnsyncedRecords()
-  }, [loadCachedUnsyncedRecords])
 
   // Full Firestore Scan for Unsyncable Items
   const handleScanServer = useCallback(async () => {
@@ -287,9 +297,9 @@ export const UnsyncableServerItemsCard: React.FC = () => {
           reasons.push('meanings không phải dạng mảng')
         }
 
-        // Check 7: Active in Firestore but missing in local IndexedDB
-        if (checkMissingInLocalDb && !localIds.has(id)) {
-          reasons.push('Có trên Server nhưng chưa được sync vào Local Database')
+        // Check 7: Active in Firestore but missing in local IndexedDB (always active)
+        if (!localIds.has(id)) {
+          reasons.push('Có trên Server nhưng thiếu trong Local DB')
         }
 
         // Check 8: Missing or invalid last_update timestamp
@@ -326,16 +336,38 @@ export const UnsyncableServerItemsCard: React.FC = () => {
         }
       })
 
-      // Check local DB items that are missing or unsynced on Firestore
-      if (checkMissingOnServer) {
-        for (const localItem of localItemsList) {
-          const id = localItem.id
-          if (!id) {
-            // Local item without ID
+      // Check local DB items that are missing or unsynced on Firestore (always active)
+      for (const localItem of localItemsList) {
+        const id = localItem.id
+        if (!id) {
+          // Local item without ID
+          foundItems.push({
+            id: 'local-no-id-' + Math.random().toString(36).substring(2, 8),
+            origin: localItem.origin || '(Không có origin)',
+            reason: 'Item trong Local DB bị thiếu ID (không thể đồng bộ lên Firestore)',
+            catId: localItem.catId,
+            level: localItem.level,
+            uid: localItem.uid || user.uid,
+            tags: localItem.tags || [],
+            tags_lowercase: localItem.tags_lowercase,
+            meanings: localItem.meanings || [],
+            created_date: localItem.created_date,
+            last_update: localItem.last_update,
+            rawData: localItem,
+            source: 'local-db-only',
+          })
+          continue
+        }
+
+        const serverDoc = serverDocMap.get(id)
+        if (!serverDoc) {
+          // Document does NOT exist in Firestore at all (Local only)
+          if (!foundIds.has(id)) {
+            foundIds.add(id)
             foundItems.push({
-              id: 'local-no-id-' + Math.random().toString(36).substring(2, 8),
+              id,
               origin: localItem.origin || '(Không có origin)',
-              reason: 'Item trong Local DB bị thiếu ID (không thể đồng bộ lên Firestore)',
+              reason: 'Có trong Local DB nhưng thiếu trên Server (chưa sync lên Cloud)',
               catId: localItem.catId,
               level: localItem.level,
               uid: localItem.uid || user.uid,
@@ -347,30 +379,6 @@ export const UnsyncableServerItemsCard: React.FC = () => {
               rawData: localItem,
               source: 'local-db-only',
             })
-            continue
-          }
-
-          const serverDoc = serverDocMap.get(id)
-          if (!serverDoc) {
-            // Document does NOT exist in Firestore at all (Local only)
-            if (!foundIds.has(id)) {
-              foundIds.add(id)
-              foundItems.push({
-                id,
-                origin: localItem.origin || '(Không có origin)',
-                reason: 'Có trong Local DB nhưng chưa có trên Firestore (chưa được sync lên Server)',
-                catId: localItem.catId,
-                level: localItem.level,
-                uid: localItem.uid || user.uid,
-                tags: localItem.tags || [],
-                tags_lowercase: localItem.tags_lowercase,
-                meanings: localItem.meanings || [],
-                created_date: localItem.created_date,
-                last_update: localItem.last_update,
-                rawData: localItem,
-                source: 'local-db-only',
-              })
-            }
           }
         }
       }
@@ -386,7 +394,11 @@ export const UnsyncableServerItemsCard: React.FC = () => {
         message.success('Tuyệt vời! Không phát hiện item nào bị lỗi đồng bộ trên Server.')
       } else {
         const localUnsynced = foundItems.filter(
-          (it) => it.source === 'local-db-only' || it.reason.includes('chưa có trên Firestore'),
+          (it) =>
+            it.source === 'local-db-only' ||
+            it.reason.includes('thiếu trên Server') ||
+            it.reason.includes('chưa có trên Firestore') ||
+            it.reason.includes('chưa sync lên Cloud'),
         ).length
         if (localUnsynced > 0) {
           message.warning(
@@ -397,6 +409,7 @@ export const UnsyncableServerItemsCard: React.FC = () => {
             `Đã tìm thấy ${foundItems.length} item có lỗi không thể đồng bộ trên Server.`,
           )
         }
+        setHasScanned(true)
       }
     } catch (err: any) {
       console.error('Scan Firestore failed:', err)
@@ -404,31 +417,33 @@ export const UnsyncableServerItemsCard: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }, [user, onlyCurrentUser, checkMissingInLocalDb, checkMissingOnServer])
-
-  // Auto scan on initial mount
-  const hasAutoScannedRef = React.useRef(false)
-  useEffect(() => {
-    if (user?.uid && !hasAutoScannedRef.current) {
-      hasAutoScannedRef.current = true
-      handleScanServer()
-    }
-  }, [user?.uid, handleScanServer])
+  }, [user, onlyCurrentUser])
 
   // Filter items based on search keyword and category filter
   const filteredItems = useMemo(() => {
     let result = items
     if (categoryFilter === 'local-only') {
       result = result.filter(
-        (it) => it.source === 'local-db-only' || it.reason.includes('chưa có trên Firestore'),
+        (it) =>
+          it.source === 'local-db-only' ||
+          it.reason.includes('thiếu trên Server') ||
+          it.reason.includes('chưa có trên Firestore') ||
+          it.reason.includes('chưa sync lên Cloud'),
       )
     } else if (categoryFilter === 'server-only') {
-      result = result.filter((it) => it.reason.includes('chưa được sync vào Local Database'))
+      result = result.filter(
+        (it) =>
+          it.reason.includes('thiếu trong Local DB') ||
+          it.reason.includes('chưa được sync vào Local Database'),
+      )
     } else if (categoryFilter === 'schema-error') {
       result = result.filter(
         (it) =>
           it.source !== 'local-db-only' &&
+          !it.reason.includes('thiếu trên Server') &&
           !it.reason.includes('chưa có trên Firestore') &&
+          !it.reason.includes('chưa sync lên Cloud') &&
+          !it.reason.includes('thiếu trong Local DB') &&
           !it.reason.includes('chưa được sync vào Local Database'),
       )
     }
@@ -631,7 +646,12 @@ export const UnsyncableServerItemsCard: React.FC = () => {
         const hideLoading = message.loading(`Đang xóa item ${record.id}...`, 0)
         try {
           // Delete from Firestore if id is valid and not local-only
-          if (!isLocalOnly && record.id && record.id !== 'unknown' && !record.id.startsWith('local-no-id-')) {
+          if (
+            !isLocalOnly &&
+            record.id &&
+            record.id !== 'unknown' &&
+            !record.id.startsWith('local-no-id-')
+          ) {
             await deleteDoc(doc(db, dbCollections.items, record.id))
 
             // Record into deleted_records
@@ -671,7 +691,9 @@ export const UnsyncableServerItemsCard: React.FC = () => {
               ? {
                   ...prev,
                   localCount: Math.max(0, prev.localCount - 1),
-                  activeServer: isLocalOnly ? prev.activeServer : Math.max(0, prev.activeServer - 1),
+                  activeServer: isLocalOnly
+                    ? prev.activeServer
+                    : Math.max(0, prev.activeServer - 1),
                 }
               : null,
           )
@@ -878,7 +900,11 @@ export const UnsyncableServerItemsCard: React.FC = () => {
   // Push all local items that are missing on server to Firestore
   const handlePushAllLocalToFirestore = () => {
     const localOnlyItems = items.filter(
-      (it) => it.source === 'local-db-only' || it.reason.includes('chưa có trên Firestore'),
+      (it) =>
+        it.source === 'local-db-only' ||
+        it.reason.includes('thiếu trên Server') ||
+        it.reason.includes('chưa có trên Firestore') ||
+        it.reason.includes('chưa sync lên Cloud'),
     )
     if (localOnlyItems.length === 0) return
 
@@ -888,8 +914,8 @@ export const UnsyncableServerItemsCard: React.FC = () => {
       content: (
         <div>
           <Paragraph>
-            Thao tác này sẽ đồng bộ toàn bộ <b>{localOnlyItems.length}</b> item đang có trong Local DB
-            nhưng chưa có trên Server lên <b>Firebase Firestore</b>.
+            Thao tác này sẽ đồng bộ toàn bộ <b>{localOnlyItems.length}</b> item đang có trong Local
+            DB nhưng chưa có trên Server lên <b>Firebase Firestore</b>.
           </Paragraph>
           <Paragraph type='secondary'>
             Sau khi đẩy, số lượng item trên Cloud Server và Local DB sẽ khớp nhau hoàn toàn.
@@ -1027,8 +1053,10 @@ export const UnsyncableServerItemsCard: React.FC = () => {
 
   // Pull all items missing in local DB from server
   const handlePullAllToLocalDb = () => {
-    const missingInLocal = items.filter((it) =>
-      it.reason.includes('chưa được sync vào Local Database'),
+    const missingInLocal = items.filter(
+      (it) =>
+        it.reason.includes('thiếu trong Local DB') ||
+        it.reason.includes('chưa được sync vào Local Database'),
     )
     if (missingInLocal.length === 0) return
 
@@ -1275,39 +1303,84 @@ export const UnsyncableServerItemsCard: React.FC = () => {
       title: 'Lý do không thể sync / Tình trạng',
       dataIndex: 'reason',
       key: 'reason',
+      width: 340,
       render: (reason: string, record) => {
-        const isLocalOnly =
-          record.source === 'local-db-only' ||
-          reason.includes('chưa có trên Firestore') ||
-          reason.includes('Local DB')
-        const isServerMissingInLocal = reason.includes('chưa được sync vào Local Database')
-
-        let tagColor = 'error'
-        let icon: React.ReactNode = <ExclamationCircleOutlined />
-
-        if (isLocalOnly) {
-          tagColor = 'orange'
-          icon = <CloudUploadOutlined />
-        } else if (isServerMissingInLocal) {
-          tagColor = 'blue'
-          icon = <DownloadOutlined />
-        }
+        const parts = reason
+          ? reason
+              .split('; ')
+              .map((p) => p.trim())
+              .filter(Boolean)
+          : []
 
         return (
-          <Space direction='vertical' size={2} style={{ maxWidth: '100%' }}>
-            <Tag
-              color={tagColor}
-              icon={icon}
-              style={{
-                whiteSpace: 'normal',
-                wordBreak: 'break-word',
-                padding: '3px 8px',
-                fontSize: 12,
-                lineHeight: 1.4,
-              }}
-            >
-              {reason}
-            </Tag>
+          <Space direction='vertical' size={4} style={{ width: '100%' }}>
+            {parts.map((p, idx) => {
+              const isLocalMissingOnServer =
+                record.source === 'local-db-only' ||
+                p.includes('thiếu trên Server') ||
+                p.includes('chưa có trên Firestore') ||
+                p.includes('chưa sync lên Cloud') ||
+                p.includes('Item trong Local DB bị thiếu ID')
+
+              const isServerMissingInLocal =
+                p.includes('thiếu trong Local DB') ||
+                p.includes('chưa được sync vào Local Database')
+
+              if (isLocalMissingOnServer) {
+                return (
+                  <Tag
+                    key={idx}
+                    color='orange'
+                    icon={<CloudUploadOutlined />}
+                    style={{
+                      whiteSpace: 'normal',
+                      wordBreak: 'break-word',
+                      padding: '3px 8px',
+                      fontSize: 12,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {p}
+                  </Tag>
+                )
+              }
+
+              if (isServerMissingInLocal) {
+                return (
+                  <Tag
+                    key={idx}
+                    color='blue'
+                    icon={<DownloadOutlined />}
+                    style={{
+                      whiteSpace: 'normal',
+                      wordBreak: 'break-word',
+                      padding: '3px 8px',
+                      fontSize: 12,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {p}
+                  </Tag>
+                )
+              }
+
+              return (
+                <Tag
+                  key={idx}
+                  color='error'
+                  icon={<ExclamationCircleOutlined />}
+                  style={{
+                    whiteSpace: 'normal',
+                    wordBreak: 'break-word',
+                    padding: '3px 8px',
+                    fontSize: 12,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {p}
+                </Tag>
+              )
+            })}
             {record.reasonDetails && (
               <Text type='secondary' style={{ fontSize: 11 }}>
                 {record.reasonDetails}
@@ -1355,8 +1428,13 @@ export const UnsyncableServerItemsCard: React.FC = () => {
       fixed: 'right',
       render: (_, record) => {
         const isLocalOnly =
-          record.source === 'local-db-only' || record.reason.includes('chưa có trên Firestore')
-        const isServerMissingInLocal = record.reason.includes('chưa được sync vào Local Database')
+          record.source === 'local-db-only' ||
+          record.reason.includes('thiếu trên Server') ||
+          record.reason.includes('chưa có trên Firestore') ||
+          record.reason.includes('chưa sync lên Cloud')
+        const isServerMissingInLocal =
+          record.reason.includes('thiếu trong Local DB') ||
+          record.reason.includes('chưa được sync vào Local Database')
         return (
           <Space size={6}>
             <Tooltip title='Xem chi tiết / Raw JSON'>
@@ -1443,7 +1521,7 @@ export const UnsyncableServerItemsCard: React.FC = () => {
                 loading={loading}
                 disabled={!user}
               >
-                Quét Firestore (Scan Server)
+                Scan
               </Button>
               <Button
                 icon={<ReloadOutlined />}
@@ -1503,18 +1581,6 @@ export const UnsyncableServerItemsCard: React.FC = () => {
           >
             Chỉ quét item của tài khoản hiện tại ({user?.email || 'N/A'})
           </Checkbox>
-          <Checkbox
-            checked={checkMissingInLocalDb}
-            onChange={(e) => setCheckMissingInLocalDb(e.target.checked)}
-          >
-            Hiện item có trên Server nhưng thiếu trong Local DB
-          </Checkbox>
-          <Checkbox
-            checked={checkMissingOnServer}
-            onChange={(e) => setCheckMissingOnServer(e.target.checked)}
-          >
-            Hiện item có trong Local DB nhưng thiếu trên Server (chưa sync lên Cloud)
-          </Checkbox>
         </Space>
 
         {/* Quick category filter tags */}
@@ -1568,18 +1634,18 @@ export const UnsyncableServerItemsCard: React.FC = () => {
               <Space direction='vertical' style={{ width: '100%' }} size={6}>
                 <Space wrap align='center'>
                   <span>
-                    <b>Tổng quan dữ liệu:</b> Firestore có <b>{serverStats.totalServer}</b> documents |
-                    Local IndexedDB có <b>{serverStats.localCount}</b> items
+                    <b>Tổng quan dữ liệu:</b> Firestore có <b>{serverStats.totalServer}</b>{' '}
+                    documents | Local IndexedDB có <b>{serverStats.localCount}</b> items
                     {serverStats.localCount > serverStats.activeServer && (
                       <Tag color='orange' style={{ marginLeft: 6 }}>
-                        Local nhiều hơn Server{' '}
-                        {serverStats.localCount - serverStats.activeServer} item
+                        Local nhiều hơn Server {serverStats.localCount - serverStats.activeServer}{' '}
+                        item
                       </Tag>
                     )}
                     {serverStats.activeServer > serverStats.localCount && (
                       <Tag color='cyan' style={{ marginLeft: 6 }}>
-                        Server nhiều hơn Local{' '}
-                        {serverStats.activeServer - serverStats.localCount} item
+                        Server nhiều hơn Local {serverStats.activeServer - serverStats.localCount}{' '}
+                        item
                       </Tag>
                     )}
                     .
@@ -1636,11 +1702,23 @@ export const UnsyncableServerItemsCard: React.FC = () => {
         scroll={{ x: 950 }}
         locale={{
           emptyText: (
-            <div style={{ padding: '24px 0', textAlign: 'center' }}>
-              <CheckCircleOutlined style={{ fontSize: 32, color: token.colorSuccess }} />
-              <div style={{ marginTop: 8, color: token.colorTextSecondary }}>
-                Không có item nào bị lỗi đồng bộ. Bấm <b>"Quét Firestore"</b> để kiểm tra mới nhất.
-              </div>
+            <div style={{ padding: '32px 0', textAlign: 'center' }}>
+              {hasScanned ? (
+                <>
+                  <CheckCircleOutlined style={{ fontSize: 32, color: token.colorSuccess }} />
+                  <div style={{ marginTop: 8, color: token.colorTextSecondary }}>
+                    Không có item nào bị lỗi đồng bộ hoặc lệch dữ liệu.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <SearchOutlined style={{ fontSize: 32, color: token.colorPrimary }} />
+                  <div style={{ marginTop: 8, color: token.colorTextSecondary }}>
+                    Chưa quét dữ liệu. Bấm nút <b>"Scan"</b> để bắt đầu kiểm tra item không thể đồng
+                    bộ.
+                  </div>
+                </>
+              )}
             </div>
           ),
         }}

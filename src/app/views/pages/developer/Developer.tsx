@@ -40,15 +40,16 @@ import {
   ThunderboltOutlined,
   PlusOutlined,
   SyncOutlined,
+  CloudSyncOutlined,
 } from '@ant-design/icons'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
 import { useDispatch, useSelector, checklistKeys, itemKeys, useDeleteBlog } from '@/core/hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
-import { invalidateSearchIndex, localDb } from '@/services/localDb'
+import { invalidateSearchIndex, localDb, syncService, SyncMode } from '@/services/localDb'
 import { itemApi } from '@/services/firebase/api/item.api'
-import { doc, collection, getDocs, query, where } from 'firebase/firestore'
+import { doc, collection } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { useItemModal } from '@/helpers/hooks/useItemModal'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
@@ -59,6 +60,7 @@ import { getCategory, getType } from '@/helpers/item'
 import { GeminiUsageTab } from './GeminiUsageTab'
 import { ApiErrorRequestsTab } from './ApiErrorRequestsTab'
 import { UnsyncableServerItemsCard } from './UnsyncableServerItemsCard'
+import { RemoveLegacyFieldsCard } from './RemoveLegacyFieldsCard'
 import { useGeminiStats } from '@/services/gemini'
 import { IErrorApiRequest } from '@/services/localDb/db'
 import { ERROR_API_REQUESTS_CHANGED_EVENT } from '@/services/localDb/errorApiRequests.service'
@@ -66,7 +68,7 @@ import './developer.module.scss'
 import { appSetting } from '@/config/index'
 import moment from 'moment'
 
-const { Text, Paragraph } = Typography
+const { Text } = Typography
 
 type TableType = 'items' | 'blogs' | 'syncMeta' | 'errorApiRequests'
 
@@ -146,11 +148,6 @@ export const Developer: React.FC = () => {
   const [syncMeta, setSyncMeta] = useState<ISyncMeta[]>([])
   const [errorRequests, setErrorRequests] = useState<IErrorApiRequest[]>([])
 
-  // ================= Firebase Maintenance State =================
-
-  const [isRemovingLegacyFields, setIsRemovingLegacyFields] = useState<boolean>(false)
-  const [removeLegacyFieldsStatus, setRemoveLegacyFieldsStatus] = useState<string>('')
-
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
@@ -160,38 +157,6 @@ export const Developer: React.FC = () => {
         localDb.syncMeta.toArray(),
         localDb.errorApiRequests.toArray(),
       ])
-
-      // Auto-fetch blogs from Firestore if localDb has no blogs or fewer blogs
-      if (user?.uid) {
-        try {
-          const blogsRef = collection(db, dbCollections.blogs || dbCollections.articles)
-          const q = query(blogsRef, where('uid', '==', user.uid))
-          const snap = await getDocs(q)
-          if (!snap.empty) {
-            const cloudBlogs: IBlogItem[] = []
-            snap.forEach((d) => {
-              const data = d.data()
-              cloudBlogs.push({
-                ...data,
-                id: d.id,
-                uid: data.uid || user.uid,
-                title: data.title || '(Không có tiêu đề)',
-                description: data.description || '',
-                tags: data.tags || [],
-                created_date: data.created_date || 0,
-                last_update: data.last_update || data.created_date || 0,
-              } as IBlogItem)
-            })
-            if (cloudBlogs.length > 0) {
-              await localDb.blogs.bulkPut(cloudBlogs)
-              const allFreshBlogs = await localDb.blogs.toArray()
-              loadedBlogs.splice(0, loadedBlogs.length, ...allFreshBlogs)
-            }
-          }
-        } catch (cloudErr) {
-          console.warn('Auto-sync blogs on load error:', cloudErr)
-        }
-      }
 
       setItems(loadedItems.sort((a, b) => (b.created_date || 0) - (a.created_date || 0)))
       setBlogs([...loadedBlogs].sort((a, b) => (b.created_date || 0) - (a.created_date || 0)))
@@ -206,7 +171,7 @@ export const Developer: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }, [user?.uid])
+  }, [])
 
   useEffect(() => {
     const refreshErrors = async () => {
@@ -223,43 +188,18 @@ export const Developer: React.FC = () => {
     }
   }, [])
 
-  const handleSyncBlogsFromCloud = useCallback(async () => {
+  const handleSyncBlogsFromCloud = useCallback(async (mode: SyncMode = 'sync') => {
     setIsSyncingBlogs(true)
     try {
-      const blogsRef = collection(db, dbCollections.blogs || dbCollections.articles)
-      let snap
-      if (user?.uid) {
-        try {
-          const q = query(blogsRef, where('uid', '==', user.uid))
-          snap = await getDocs(q)
-        } catch {
-          snap = await getDocs(blogsRef)
-        }
-      } else {
-        snap = await getDocs(blogsRef)
-      }
-
-      const cloudBlogs: IBlogItem[] = []
-      snap.forEach((d) => {
-        const data = d.data()
-        cloudBlogs.push({
-          ...data,
-          id: d.id,
-          uid: data.uid || user?.uid,
-          title: data.title || '(Không có tiêu đề)',
-          description: data.description || '',
-          tags: data.tags || [],
-          created_date: data.created_date || 0,
-          last_update: data.last_update || data.created_date || 0,
-        } as IBlogItem)
-      })
-
-      if (cloudBlogs.length > 0) {
-        await localDb.blogs.bulkPut(cloudBlogs)
-      }
+      const isFull = mode === 'full-sync'
+      const res = await syncService.sync({ mode })
       const updatedBlogs = await localDb.blogs.toArray()
       setBlogs(updatedBlogs.sort((a, b) => (b.created_date || 0) - (a.created_date || 0)))
-      message.success(`Đã đồng bộ ${cloudBlogs.length} bài viết từ Firestore!`)
+      message.success(
+        isFull
+          ? `Full Sync thành công: Đã tải toàn bộ ${res.updatedBlogs} bài viết từ Cloud!`
+          : `Đồng bộ thành công: ${res.updatedBlogs} bài viết thay đổi${res.deletedBlogs ? `, xóa ${res.deletedBlogs} bài đã xóa` : ''}!`,
+      )
     } catch (err: any) {
       console.error('Lỗi khi đồng bộ blogs:', err)
       message.error(
@@ -268,7 +208,7 @@ export const Developer: React.FC = () => {
     } finally {
       setIsSyncingBlogs(false)
     }
-  }, [user?.uid])
+  }, [])
 
   const handleEditBlog = useCallback(
     (record: IBlogItem) => {
@@ -1273,38 +1213,6 @@ export const Developer: React.FC = () => {
     [],
   )
 
-  // ================= Firebase Maintenance Handlers =================
-  const handleRemoveLegacyFields = async () => {
-    setIsRemovingLegacyFields(true)
-    setRemoveLegacyFieldsStatus('Starting legacy fields (keywords & origin_lowercase) removal...')
-    try {
-      const currentUser = user
-      if (!currentUser) {
-        throw new Error('You must be logged in to modify data.')
-      }
-
-      const { removeLegacyFieldsFromFirebaseDb } = await import('@/services/firebase/dbIntegration')
-      const result = await removeLegacyFieldsFromFirebaseDb({
-        uid: currentUser.uid,
-        onProgress: (status) => setRemoveLegacyFieldsStatus(status),
-      })
-
-      if (result.isSuccess) {
-        message.success(result.message)
-        setRemoveLegacyFieldsStatus(result.message)
-      } else {
-        message.error(result.message)
-        setRemoveLegacyFieldsStatus(result.message)
-      }
-    } catch (error) {
-      console.error('Remove legacy fields error:', error)
-      message.error(error instanceof Error ? error.message : 'Failed to remove legacy fields')
-      setRemoveLegacyFieldsStatus('Failed to remove legacy fields. Check console for details.')
-    } finally {
-      setIsRemovingLegacyFields(false)
-    }
-  }
-
   return (
     <div className={appStyle.containerFluid}>
       <div
@@ -1637,10 +1545,18 @@ export const Developer: React.FC = () => {
                                 <Button
                                   size='small'
                                   icon={<SyncOutlined spin={isSyncingBlogs} />}
-                                  onClick={handleSyncBlogsFromCloud}
+                                  onClick={() => handleSyncBlogsFromCloud('sync')}
                                   loading={isSyncingBlogs}
                                 >
-                                  Đồng bộ từ Cloud
+                                  Đồng bộ thay đổi
+                                </Button>
+                                <Button
+                                  size='small'
+                                  icon={<CloudSyncOutlined />}
+                                  onClick={() => handleSyncBlogsFromCloud('full-sync')}
+                                  loading={isSyncingBlogs}
+                                >
+                                  Full Sync từ Cloud
                                 </Button>
                                 <Button
                                   size='small'
@@ -2108,41 +2024,8 @@ export const Developer: React.FC = () => {
                 {/* 1. Unsyncable Server Items Management */}
                 <UnsyncableServerItemsCard />
 
-                {/* 2. Remove Legacy Fields */}
-                <Card
-                  title={
-                    <Space>
-                      <DeleteOutlined style={{ color: token.colorError }} />
-                      <span>Remove Legacy Fields from Items</span>
-                    </Space>
-                  }
-                  size='small'
-                >
-                  <Paragraph type='secondary'>
-                    Removes obsolete fields (such as <code>keywords</code> and{' '}
-                    <code>origin_lowercase</code>) from all items in Firestore to keep documents
-                    lean and adhere to current schema standards.
-                  </Paragraph>
-                  <Space direction='vertical' style={{ width: '100%' }}>
-                    <Button
-                      type='default'
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={handleRemoveLegacyFields}
-                      loading={isRemovingLegacyFields}
-                      disabled={!user}
-                    >
-                      Remove Legacy Fields (keywords & origin_lowercase)
-                    </Button>
-                    {removeLegacyFieldsStatus && (
-                      <Alert
-                        message={removeLegacyFieldsStatus}
-                        type={removeLegacyFieldsStatus.includes('Failed') ? 'error' : 'info'}
-                        showIcon
-                      />
-                    )}
-                  </Space>
-                </Card>
+                {/* 2. Remove Legacy Fields (Deep Field Cleanup for Items & Articles) */}
+                <RemoveLegacyFieldsCard />
               </Space>
             ),
           },

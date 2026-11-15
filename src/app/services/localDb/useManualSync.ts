@@ -4,7 +4,14 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSelector } from '@/core/hooks/redux'
 import { localDb } from './db'
-import { syncService, ISyncResult, IUnsyncedRecord, IDataChanges } from './syncService'
+import {
+  syncService,
+  ISyncResult,
+  IUnsyncedRecord,
+  IDataChanges,
+  SyncMode,
+  SyncType,
+} from './syncService'
 import { itemKeys } from '@/core/hooks/useItems'
 import { blogKeys } from '@/core/hooks/useBlogs'
 import { refreshAiUsageFromCloud } from '@/services/gemini'
@@ -117,68 +124,110 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     autoFetchServerCounts,
   ])
 
-  const syncNow = async (forceFull = false): Promise<ISyncResult | null> => {
-    if (!user?.uid) {
-      message.warning('Please log in before syncing.')
-      return null
-    }
+  const syncNow = useCallback(
+    async (
+      modeOrForceFull: SyncMode | boolean = 'sync',
+      type: SyncType = 'all',
+    ): Promise<ISyncResult | null> => {
+      const mode: SyncMode =
+        typeof modeOrForceFull === 'string'
+          ? modeOrForceFull
+          : modeOrForceFull === true
+            ? 'full-sync'
+            : 'sync'
+      const isFullSync = mode === 'full-sync'
 
-    setIsSyncing(true)
-    setProgressText(
-      forceFull ? 'Starting full sync for items & blogs...' : 'Connecting to cloud...',
-    )
-
-    try {
-      const result = await syncService.sync({
-        forceFull,
-        onProgress: (step) => setProgressText(step),
-      })
-
-      setLastSyncResult(result)
-      setUnsyncedRecords(result.unsyncedRecords || [])
-
-      await refreshLastSyncTime()
-      if (autoFetchServerCounts) {
-        await refreshServerItemCount()
-        await refreshServerBlogCount()
+      if (!user?.uid) {
+        message.warning('Please log in before syncing.')
+        return null
       }
-      await refreshAiUsageFromCloud().catch(() => null)
 
-      // Refresh react-query caches so the UI reflects newly synced data
-      queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
-      queryClient.invalidateQueries({ queryKey: blogKeys.lists() })
-      queryClient.invalidateQueries({ queryKey: blogKeys.counts() })
+      setIsSyncing(true)
+      const targetLabel =
+        type === 'item'
+          ? 'từ vựng (Items)'
+          : type === 'blog'
+            ? 'bài viết (Blogs)'
+            : 'dữ liệu (Items & Blogs)'
 
-      const hasAnyChanges =
-        result.updatedItems > 0 ||
-        result.updatedBlogs > 0 ||
-        result.deletedItems > 0 ||
-        Boolean(result.deletedBlogs && result.deletedBlogs > 0)
+      setProgressText(
+        isFullSync
+          ? `Bắt đầu Full Sync ${targetLabel} (tải toàn bộ từ Cloud)...`
+          : `Đang kết nối Cloud (chỉ đồng bộ thay đổi ${targetLabel})...`,
+      )
 
-      const details = result.isFullSync
-        ? `Downloaded ${result.updatedItems} items, ${result.updatedBlogs} blogs, and ${result.updatedExamples} examples.`
-        : hasAnyChanges
-          ? `Synced ${result.updatedItems} modified items, ${result.updatedBlogs} modified blogs, removed ${result.deletedItems} deleted items${result.deletedBlogs ? `, removed ${result.deletedBlogs} deleted blogs` : ''}.`
-          : 'All items and blogs are already up to date.'
+      try {
+        const result = await syncService.sync({
+          mode,
+          type,
+          onProgress: (step) => setProgressText(step),
+        })
 
-      const unsyncedCount = result.unsyncedRecords?.length || 0
-      if (unsyncedCount > 0) {
-        message.warning(
-          `Sync completed with ${unsyncedCount} unsynced record(s). Check the table below.`,
-        )
-      } else {
-        message.success(`Sync completed! ${details}`)
+        setLastSyncResult(result)
+        setUnsyncedRecords(result.unsyncedRecords || [])
+
+        await refreshLastSyncTime()
+        if (autoFetchServerCounts) {
+          if (type === 'all' || type === 'item') await refreshServerItemCount()
+          if (type === 'all' || type === 'blog') await refreshServerBlogCount()
+        }
+        await refreshAiUsageFromCloud().catch(() => null)
+
+        // Refresh react-query caches so the UI reflects newly synced data
+        if (type === 'all' || type === 'item') {
+          queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+        }
+        if (type === 'all' || type === 'blog') {
+          queryClient.invalidateQueries({ queryKey: blogKeys.lists() })
+          queryClient.invalidateQueries({ queryKey: blogKeys.counts() })
+        }
+
+        const hasAnyChanges =
+          result.updatedItems > 0 ||
+          result.updatedBlogs > 0 ||
+          result.deletedItems > 0 ||
+          Boolean(result.deletedBlogs && result.deletedBlogs > 0)
+
+        const details = result.isFullSync
+          ? type === 'item'
+            ? `Đã tải toàn bộ ${result.updatedItems} items và ${result.updatedExamples} ví dụ.`
+            : type === 'blog'
+              ? `Đã tải toàn bộ ${result.updatedBlogs} bài viết.`
+              : `Đã tải toàn bộ ${result.updatedItems} items, ${result.updatedBlogs} bài viết, và ${result.updatedExamples} ví dụ.`
+          : hasAnyChanges
+            ? `Đã đồng bộ ${result.updatedItems} items thay đổi, ${result.updatedBlogs} bài viết thay đổi, xóa ${result.deletedItems} items${result.deletedBlogs ? `, xóa ${result.deletedBlogs} bài viết` : ''}.`
+            : `Tất cả ${targetLabel} đã được cập nhật mới nhất.`
+
+        const unsyncedCount = result.unsyncedRecords?.length || 0
+        if (unsyncedCount > 0) {
+          message.warning(
+            `Đồng bộ hoàn tất với ${unsyncedCount} bản ghi lỗi schema chưa thể sync. Kiểm tra bảng bên dưới.`,
+          )
+        } else {
+          message.success(`Đồng bộ hoàn tất! ${details}`)
+        }
+        return result
+      } catch (err: any) {
+        console.error('Manual sync failed:', err)
+        message.error(`Đồng bộ thất bại: ${err.message || 'Lỗi mạng'}`)
+        return null
+      } finally {
+        setIsSyncing(false)
+        setProgressText('')
       }
-      return result
-    } catch (err: any) {
-      console.error('Manual sync failed:', err)
-      message.error(`Sync failed: ${err.message || 'Network error'}`)
-      return null
-    } finally {
-      setIsSyncing(false)
-      setProgressText('')
-    }
-  }
+    },
+    [
+      user?.uid,
+      autoFetchServerCounts,
+      refreshLastSyncTime,
+      refreshServerItemCount,
+      refreshServerBlogCount,
+      queryClient,
+    ],
+  )
+
+  const syncDelta = useCallback(() => syncNow('sync'), [syncNow])
+  const fullSync = useCallback(() => syncNow('full-sync'), [syncNow])
 
   const clearLocalData = async () => {
     if (!user?.uid) return
@@ -216,6 +265,8 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     refreshServerBlogCount,
     refreshAllServerCounts,
     syncNow,
+    syncDelta,
+    fullSync,
     clearLocalData,
     refreshLastSyncTime,
     checkChanges,

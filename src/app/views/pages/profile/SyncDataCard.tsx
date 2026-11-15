@@ -91,8 +91,8 @@ export const SyncDataCard: React.FC = () => {
       {
         key: 'items',
         type: 'item',
-        title: 'Vocabulary Items',
-        description: 'Cards & Vocabulary list',
+        title: 'Items',
+        description: 'Vocabulary',
         icon: <DatabaseOutlined style={{ color: token.colorPrimary, fontSize: 16 }} />,
         tagColor: 'blue',
         unit: 'items',
@@ -106,8 +106,8 @@ export const SyncDataCard: React.FC = () => {
       {
         key: 'blogs',
         type: 'blog',
-        title: 'Blogs & Articles',
-        description: 'Posts & Reading material',
+        title: 'Articles',
+        description: 'Blog',
         icon: <ReadOutlined style={{ color: '#722ed1', fontSize: 16 }} />,
         tagColor: 'purple',
         unit: 'articles',
@@ -170,10 +170,10 @@ export const SyncDataCard: React.FC = () => {
       ),
     },
     {
-      title: 'Local DB',
+      title: 'Local',
       dataIndex: 'localCount',
       key: 'localCount',
-      width: 130,
+      width: 120,
       render: (count: number, record) => (
         <Tag
           color={record.tagColor}
@@ -185,15 +185,15 @@ export const SyncDataCard: React.FC = () => {
             margin: 0,
           }}
         >
-          {count.toLocaleString()} {record.unit}
+          {count.toLocaleString()}
         </Tag>
       ),
     },
     {
-      title: 'Cloud Server',
+      title: 'Cloud',
       dataIndex: 'serverCount',
       key: 'serverCount',
-      minWidth: 160,
+      minWidth: 150,
       render: (_, record) => {
         if (record.isLoadingServer) {
           return (
@@ -215,7 +215,7 @@ export const SyncDataCard: React.FC = () => {
                   margin: 0,
                 }}
               >
-                {record.serverCount.toLocaleString()} {record.unit}
+                {record.serverCount.toLocaleString()}
               </Tag>
               {record.hasDiff && (
                 <Tag
@@ -230,6 +230,14 @@ export const SyncDataCard: React.FC = () => {
                   {record.diffCount > 0 ? `+${record.diffCount} new` : `${record.diffCount}`}
                 </Tag>
               )}
+
+              <Button
+                size='small'
+                shape='circle'
+                icon={<ReloadOutlined spin={record.isLoadingServer} style={{ fontSize: 13 }} />}
+                onClick={record.refreshServer}
+                disabled={record.isLoadingServer || isSyncing}
+              />
             </Space>
           )
         }
@@ -243,7 +251,7 @@ export const SyncDataCard: React.FC = () => {
     {
       title: 'Status',
       key: 'status',
-      width: 150,
+      width: 120,
       render: (_, record) => {
         if (isSyncing) {
           return (
@@ -281,21 +289,33 @@ export const SyncDataCard: React.FC = () => {
       },
     },
     {
-      title: '',
+      title: 'Action',
       key: 'action',
-      width: 50,
-      align: 'center',
+      width: 250,
+      align: 'right',
       render: (_, record) => (
-        <Tooltip title={`Refresh server ${record.unit} count`}>
+        <Space size={6} wrap align='center'>
           <Button
-            type='text'
             size='small'
-            shape='circle'
-            icon={<ReloadOutlined spin={record.isLoadingServer} style={{ fontSize: 12 }} />}
-            onClick={record.refreshServer}
-            disabled={record.isLoadingServer || isSyncing}
-          />
-        </Tooltip>
+            type='primary'
+            ghost
+            icon={<CloudSyncOutlined />}
+            onClick={() => syncNow('sync', record.type)}
+            disabled={isSyncing}
+          >
+            Sync
+          </Button>
+
+          <Button
+            size='small'
+            type='primary'
+            icon={<SyncOutlined />}
+            onClick={() => syncNow('full-sync', record.type)}
+            disabled={isSyncing}
+          >
+            Full Sync
+          </Button>
+        </Space>
       ),
     },
   ]
@@ -458,7 +478,7 @@ export const SyncDataCard: React.FC = () => {
           pagination={false}
           size={screens.xs ? 'small' : 'middle'}
           rowKey='key'
-          scroll={{ x: 560 }}
+          scroll={{ x: 780 }}
         />
       </div>
 
@@ -528,20 +548,20 @@ export const SyncDataCard: React.FC = () => {
             type='primary'
             icon={<CloudSyncOutlined spin={isSyncing} />}
             loading={isSyncing}
-            onClick={() => syncNow(false)}
+            onClick={() => syncNow('sync')}
             style={{ flex: screens.xs ? 1 : 'initial' }}
           >
-            Sync {totalNewCount > 0 ? `(${totalNewCount} new)` : ''}
+            Sync (Chỉ thay đổi) {totalNewCount > 0 ? `(${totalNewCount} mới)` : ''}
           </Button>
 
           <Button
             type='default'
             icon={<SyncOutlined />}
             loading={isSyncing}
-            onClick={() => syncNow(true)}
+            onClick={() => syncNow('full-sync')}
             style={{ flex: screens.xs ? 1 : 'initial' }}
           >
-            Full Sync
+            Full Sync (Toàn bộ)
           </Button>
         </Flex>
 
@@ -560,8 +580,8 @@ export const SyncDataCard: React.FC = () => {
               cancelText='Cancel'
               onConfirm={clearLocalData}
             >
-              <Button danger type='text' icon={<DeleteOutlined />}>
-                Clear Local DB
+              <Button danger icon={<DeleteOutlined />} style={{ flex: screens.xs ? 1 : 'initial' }}>
+                Clear
               </Button>
             </Popconfirm>
           )}

@@ -9,7 +9,7 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons'
 import { useSelector } from '@/core/hooks/redux'
-import { syncService, IDataChanges, useManualSync, SyncMode } from '@/services/localDb'
+import { syncService, IDataChanges, useManualSync, SyncMode, SyncType } from '@/services/localDb'
 import moment from 'moment'
 
 const { Text, Title } = Typography
@@ -29,6 +29,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
   const [internalOpen, setInternalOpen] = useState(false)
   const [changes, setChanges] = useState<IDataChanges | null>(null)
   const [syncSuccess, setSyncSuccess] = useState(false)
+  const [syncingType, setSyncingType] = useState<SyncType | null>(null)
 
   const isControlled = controlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : internalOpen
@@ -76,19 +77,34 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
     }
   }
 
-  const handleSync = async (mode: SyncMode = 'sync') => {
+  const handleSync = async (mode: SyncMode = 'sync', type: SyncType = 'all') => {
     if (isSyncing) return
+    setSyncingType(type)
     try {
-      const result = await syncNow(mode)
+      const result = await syncNow(mode, type)
       if (result && result.isSuccess) {
-        setSyncSuccess(true)
-        setTimeout(() => {
-          handleClose()
-          setSyncSuccess(false)
-        }, 1500)
+        if (user?.uid) {
+          const detected = await syncService.detectDataChanges(user.uid, true)
+          setChanges(detected)
+          if (!detected.hasChanges) {
+            setSyncSuccess(true)
+            setTimeout(() => {
+              handleClose()
+              setSyncSuccess(false)
+            }, 1500)
+          }
+        } else {
+          setSyncSuccess(true)
+          setTimeout(() => {
+            handleClose()
+            setSyncSuccess(false)
+          }, 1500)
+        }
       }
     } catch (err) {
       console.error('Modal sync execution error:', err)
+    } finally {
+      setSyncingType(null)
     }
   }
 
@@ -107,7 +123,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
       closable={!isSyncing}
       maskClosable={!isSyncing}
       centered
-      width={500}
+      width={520}
       destroyOnClose={false}
       footer={
         <Flex justify='flex-end' gap={8} style={{ paddingTop: 8 }} wrap='wrap'>
@@ -117,20 +133,22 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
           <Button
             type='default'
             icon={<SyncOutlined />}
-            loading={isSyncing}
-            disabled={syncSuccess}
-            onClick={() => handleSync('full-sync')}
+            loading={isSyncing && syncingType === 'all'}
+            disabled={isSyncing || syncSuccess}
+            onClick={() => handleSync('full-sync', 'all')}
           >
-            Full Sync (Toàn bộ)
+            Full Sync
           </Button>
           <Button
             type='primary'
-            icon={isSyncing ? <SyncOutlined spin /> : <CloudSyncOutlined />}
-            loading={isSyncing}
-            disabled={syncSuccess}
-            onClick={() => handleSync('sync')}
+            icon={
+              isSyncing && syncingType === 'all' ? <SyncOutlined spin /> : <CloudSyncOutlined />
+            }
+            loading={isSyncing && syncingType === 'all'}
+            disabled={isSyncing || syncSuccess}
+            onClick={() => handleSync('sync', 'all')}
           >
-            {isSyncing ? 'Đang đồng bộ...' : 'Sync (Chỉ thay đổi)'}
+            {isSyncing && syncingType === 'all' ? 'Syncing...' : 'Sync'}
           </Button>
         </Flex>
       }
@@ -213,7 +231,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                     </div>
                   </Space>
 
-                  <Space size={6} wrap>
+                  <Space size={8} wrap align='center'>
                     {changes?.items.hasChanges ? (
                       <Tag color='blue' style={{ margin: 0, fontWeight: 500 }}>
                         Updates available
@@ -227,6 +245,23 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                         Up to date
                       </Tag>
                     )}
+                    <Button
+                      size='small'
+                      type={changes?.items.hasChanges ? 'primary' : 'default'}
+                      ghost={Boolean(changes?.items.hasChanges)}
+                      icon={
+                        isSyncing && syncingType === 'item' ? (
+                          <SyncOutlined spin />
+                        ) : (
+                          <CloudSyncOutlined />
+                        )
+                      }
+                      loading={isSyncing && syncingType === 'item'}
+                      disabled={isSyncing || syncSuccess}
+                      onClick={() => handleSync('sync', 'item')}
+                    >
+                      Sync Items
+                    </Button>
                   </Space>
                 </Flex>
               </div>
@@ -265,7 +300,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                     </div>
                   </Space>
 
-                  <Space size={6} wrap>
+                  <Space size={8} wrap align='center'>
                     {changes?.blogs.hasChanges ? (
                       <Tag color='purple' style={{ margin: 0, fontWeight: 500 }}>
                         Updates available
@@ -279,6 +314,23 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                         Up to date
                       </Tag>
                     )}
+                    <Button
+                      size='small'
+                      type={changes?.blogs.hasChanges ? 'primary' : 'default'}
+                      ghost={Boolean(changes?.blogs.hasChanges)}
+                      icon={
+                        isSyncing && syncingType === 'blog' ? (
+                          <SyncOutlined spin />
+                        ) : (
+                          <CloudSyncOutlined />
+                        )
+                      }
+                      loading={isSyncing && syncingType === 'blog'}
+                      disabled={isSyncing || syncSuccess}
+                      onClick={() => handleSync('sync', 'blog')}
+                    >
+                      Sync Blogs
+                    </Button>
                   </Space>
                 </Flex>
               </div>

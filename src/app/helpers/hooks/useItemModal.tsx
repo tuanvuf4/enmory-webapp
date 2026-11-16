@@ -49,13 +49,14 @@ export const useItemModal = () => {
     onClose?: () => void,
   ) => {
     if (mode === 'view') {
-      const modalId = data?.id ? `item-view-${data.id}` : undefined
+      const modalId = data?.id ? `item-view-${data.id}` : `item-view-${Date.now()}`
       openModal({
         id: modalId,
         title: null,
         width: 800,
         footer: null,
         closable: false,
+        allowMinimize: false,
         content: <ViewItemModalContent initialData={data} onClose={() => closeModal(modalId)} />,
         onClose,
       })

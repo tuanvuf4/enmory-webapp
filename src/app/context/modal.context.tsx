@@ -90,16 +90,25 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
       }
 
       // If new modal is not minimized, minimize any currently active modals
-      // so the new modal takes focus cleanly without stacking modal masks
+      // so the new modal takes focus cleanly without stacking modal masks.
+      // For view item modals, close existing view item modals instead of minimizing them to float button.
       const updatedPrev: ModalConfig[] = config.isMinimized
         ? prev
-        : prev.map((m) => {
-            if (!m.isMinimized) {
-              m.onMinimizeChange?.(true)
-              return { ...m, isMinimized: true }
-            }
-            return m
-          })
+        : prev
+            .filter((m) => {
+              if (m.id?.startsWith('item-view-')) {
+                m.onClose?.()
+                return false
+              }
+              return true
+            })
+            .map((m) => {
+              if (!m.isMinimized) {
+                m.onMinimizeChange?.(true)
+                return { ...m, isMinimized: true }
+              }
+              return m
+            })
 
       const newModal: ModalConfig = { ...config, id, isMinimized: !!config.isMinimized }
       return [...updatedPrev, newModal]
@@ -172,6 +181,9 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
       }
       if (targetIndex >= 0) {
         const target = next[targetIndex]
+        if (target.id?.startsWith('item-view-') || target.allowMinimize === false) {
+          return prev
+        }
         target.onMinimizeChange?.(true)
         const mergedMinimizeInfo: ModalMinimizeInfo | undefined =
           minimizeInfo || target.minimizeInfo
@@ -229,13 +241,21 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
         next.splice(targetIndex, 1)
 
         // Minimize any other currently active modal so only the restored modal is active
-        const finalized: ModalConfig[] = next.map((m) => {
-          if (!m.isMinimized) {
-            m.onMinimizeChange?.(true)
-            return { ...m, isMinimized: true }
-          }
-          return m
-        })
+        const finalized: ModalConfig[] = next
+          .filter((m) => {
+            if (m.id?.startsWith('item-view-')) {
+              m.onClose?.()
+              return false
+            }
+            return true
+          })
+          .map((m) => {
+            if (!m.isMinimized) {
+              m.onMinimizeChange?.(true)
+              return { ...m, isMinimized: true }
+            }
+            return m
+          })
 
         finalized.push(restored)
         return finalized
@@ -316,7 +336,9 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
     )
   }
 
-  const minimizedModals = modals.filter((m) => m.isMinimized)
+  const minimizedModals = modals.filter(
+    (m) => m.isMinimized && !m.id?.startsWith('item-view-') && m.allowMinimize !== false
+  )
 
   return (
     <ModalContext.Provider

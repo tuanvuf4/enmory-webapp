@@ -12,7 +12,7 @@ import { orderByOptions, orderOptions } from '@/models/app.model'
 import { IFormSearchItem } from '@/models/formSearch.model'
 import { ECategory } from '@/models/item.model'
 import { theme, Button, AutoComplete, Input, Dropdown, Checkbox, Select, Flex } from 'antd'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { useLocation } from 'react-router-dom'
 import { NotFound, TagSelect } from '@/views/components'
@@ -44,6 +44,7 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   const { urlParams, setUrlParams, navigateWithParams } = useItemSearchParams()
 
   const { openItemModal } = useItemModal()
+  const isSelectingRef = useRef(false)
 
   const { categories } = useSelector((state) => state.setting)
 
@@ -117,6 +118,13 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
   }, [options, trimmedKeyword, hasExactMatch, token])
 
   const onSelect = async (value: string, option: BaseOptionType) => {
+    const currentKeyword = getValues('keyword') || ''
+    isSelectingRef.current = true
+    setTimeout(() => {
+      setValue('keyword', currentKeyword)
+      isSelectingRef.current = false
+    }, 100)
+
     if (option.id === '__ADD_NEW_ITEM__' || (option as any).isAddOption) {
       openItemModal('add', {
         ...initItem,
@@ -125,21 +133,23 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
       return
     }
 
-    if (location.pathname.includes('library')) {
-      setUrlParams({ ...urlParams, keyword: value }, true)
-    } else {
-      try {
-        showLoading()
+    const itemToView = (option as any).item
+    if (itemToView) {
+      openItemModal('view', itemToView)
+      return
+    }
 
-        const { isSuccess, content } = await itemApi.getItemById(option.id)
-        if (isSuccess && content) {
-          openItemModal('view', content)
-          hideLoading()
-          return
-        }
-      } catch (error) {
-        hideLoading()
+    try {
+      showLoading()
+
+      const { isSuccess, content } = await itemApi.getItemById(option.id)
+      if (isSuccess && content) {
+        openItemModal('view', content)
       }
+    } catch (error) {
+      console.error('Error fetching item for view:', error)
+    } finally {
+      hideLoading()
     }
   }
 
@@ -231,7 +241,12 @@ export const SearchItemForm: React.FC<ISearchFormComp> = ({
                   filterOption={false}
                   options={searchOptions}
                   onSelect={async (value, option) => await onSelect(value, option)}
-                  onChange={(text) => onChange(text)}
+                  onChange={(text, opt) => {
+                    if (isSelectingRef.current || (opt && (opt as any).id)) {
+                      return
+                    }
+                    onChange(text)
+                  }}
                 />
               </div>
             )

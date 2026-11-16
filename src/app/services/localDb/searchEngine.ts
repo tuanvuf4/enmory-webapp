@@ -115,6 +115,21 @@ export const findBestMatchingMeaning = (item: IItem, keyword?: string): IMeaning
       score += 50
     }
 
+    // Check collocations
+    const collocRaw = cleanSearchText(m.collocations || '').toLowerCase()
+    const collocFolded = removeVietnameseTones(collocRaw)
+    if (collocRaw) {
+      if (collocRaw === rawKw || collocFolded === foldedKw) {
+        score += 100
+      } else if (collocRaw.startsWith(rawKw) || collocFolded.startsWith(foldedKw)) {
+        score += 80
+      } else if (isWordBoundaryMatch(collocRaw, rawKw) || isWordBoundaryMatch(collocFolded, foldedKw)) {
+        score += 60
+      } else if (collocRaw.includes(rawKw) || collocFolded.includes(foldedKw)) {
+        score += 40
+      }
+    }
+
     if (m.common) {
       score += 15
     }
@@ -138,7 +153,7 @@ export const invalidateSearchIndex = () => {
 
 /**
  * Executes an optimized local search and filter query against IndexedDB.
- * Precision matching across origin, translation, and definition with Vietnamese tone-insensitivity.
+ * Precision matching across origin, translation, definition, and collocations with Vietnamese tone-insensitivity.
  */
 export const queryLocalItems = async (
   params: IItemRequestParams,
@@ -148,7 +163,7 @@ export const queryLocalItems = async (
   const allItems = await localDb.items.toArray()
   const rawItems = uid ? allItems.filter((item) => !item.uid || item.uid === uid) : allItems
 
-  // 2. Keyword Search & Precision Ranking (Origin, Translation, Definition only)
+  // 2. Keyword Search & Precision Ranking (Origin, Translation, Definition, Collocations)
   let candidateItems = rawItems
   const rawKeyword = (params.keyword || '').trim()
 
@@ -174,7 +189,7 @@ export const queryLocalItems = async (
 
         let itemScore = 0
         let hasMatch = false
-        let matchType: 'origin' | 'translation' | 'definition' | 'none' = 'none'
+        let matchType: 'origin' | 'translation' | 'definition' | 'collocation' | 'none' = 'none'
 
         // A. Match against origin
         if (origLower === lowerKw) {
@@ -299,7 +314,73 @@ export const queryLocalItems = async (
           }
         }
 
-        // D. Proximity tie-breaker for origin matches
+        // D. Match against collocations (both item-level and meaning-level)
+        let bestCollocScore = 0
+        const rawCollocList: string[] = []
+
+        if (Array.isArray(item.collocations)) {
+          rawCollocList.push(...item.collocations)
+        } else if (typeof item.collocations === 'string' && item.collocations) {
+          rawCollocList.push(item.collocations)
+        }
+
+        for (const m of item.meanings || []) {
+          if (m.collocations) {
+            rawCollocList.push(m.collocations)
+          }
+        }
+
+        for (const rawColloc of rawCollocList) {
+          if (!rawColloc) continue
+          // Separate list tags, line breaks, and punctuation into segments
+          const normalized = String(rawColloc)
+            .replace(/<\/li>/gi, ' | ')
+            .replace(/<br\s*\/?>/gi, ' | ')
+            .replace(/[\n\r]+/g, ' | ')
+          const cleanColloc = cleanSearchText(normalized)
+          if (!cleanColloc) continue
+
+          const segments = cleanColloc
+            .split(/[|;,]+/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+
+          for (const seg of segments) {
+            const segLower = seg.toLowerCase()
+            const segFolded = removeVietnameseTones(segLower)
+
+            let cScore = 0
+            if (segLower === lowerKw) {
+              cScore = 750
+            } else if (segFolded === foldedKw) {
+              cScore = 650
+            } else if (segLower.startsWith(lowerKw)) {
+              cScore = 500
+            } else if (segFolded.startsWith(foldedKw)) {
+              cScore = 400
+            } else if (isWordBoundaryMatch(segLower, lowerKw)) {
+              cScore = 320
+            } else if (isWordBoundaryMatch(segFolded, foldedKw)) {
+              cScore = 250
+            } else if (segLower.includes(lowerKw)) {
+              cScore = 180
+            } else if (segFolded.includes(foldedKw)) {
+              cScore = 120
+            }
+
+            if (cScore > bestCollocScore) bestCollocScore = cScore
+          }
+        }
+
+        if (bestCollocScore > 0) {
+          itemScore += bestCollocScore
+          hasMatch = true
+          if (matchType === 'none') {
+            matchType = 'collocation'
+          }
+        }
+
+        // E. Proximity tie-breaker for origin matches
         if (matchType === 'origin' || origLower.includes(lowerKw)) {
           const lenDiff = Math.abs(origLower.length - lowerKw.length)
           itemScore += Math.max(0, 30 - lenDiff)

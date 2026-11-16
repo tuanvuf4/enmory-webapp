@@ -1558,7 +1558,8 @@ export const Developer: React.FC = () => {
                             <Tag color='blue'>{filteredItems.length} từ vựng</Tag>
                             {onlyDuplicateOrigin && (
                               <Tag color='warning'>
-                                Đang lọc {filteredItems.length} item ({duplicateOriginMap.size} nhóm cùng origin)
+                                Đang lọc {filteredItems.length} item ({duplicateOriginMap.size} nhóm
+                                cùng origin)
                               </Tag>
                             )}
                           </Space>
@@ -1595,13 +1596,17 @@ export const Developer: React.FC = () => {
                                       }}
                                     >
                                       <span>
-                                        Phát hiện <b>{duplicateItemsCount}</b> item có cùng origin (thuộc{' '}
-                                        <b>{duplicateOriginMap.size}</b> nhóm) trong Local Database.
+                                        Phát hiện <b>{duplicateItemsCount}</b> item có cùng origin
+                                        (thuộc <b>{duplicateOriginMap.size}</b> nhóm) trong Local
+                                        Database.
                                       </span>
                                     </div>
                                     {duplicateOriginMap.size > 0 && (
                                       <div style={{ marginTop: 4 }}>
-                                        <Text type='secondary' style={{ fontSize: 12, marginRight: 8 }}>
+                                        <Text
+                                          type='secondary'
+                                          style={{ fontSize: 12, marginRight: 8 }}
+                                        >
                                           Nhóm từ trùng:
                                         </Text>
                                         <Space wrap size={[4, 4]}>
@@ -1617,7 +1622,9 @@ export const Developer: React.FC = () => {
                                                 }
                                                 style={{ cursor: 'pointer', fontSize: 11 }}
                                                 onClick={() => {
-                                                  searchKeyword.toLowerCase() === orig ?  setSearchKeyword('') : setSearchKeyword(orig)
+                                                  searchKeyword.toLowerCase() === orig
+                                                    ? setSearchKeyword('')
+                                                    : setSearchKeyword(orig)
                                                 }}
                                               >
                                                 {group[0]?.origin || orig} ({group.length})
@@ -1724,7 +1731,10 @@ export const Developer: React.FC = () => {
                           pagination={{
                             current: Math.min(
                               itemPagination.current,
-                              Math.max(1, Math.ceil(filteredItems.length / itemPagination.pageSize)),
+                              Math.max(
+                                1,
+                                Math.ceil(filteredItems.length / itemPagination.pageSize),
+                              ),
                             ),
                             pageSize: itemPagination.pageSize,
                             showSizeChanger: true,

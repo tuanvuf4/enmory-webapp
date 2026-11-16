@@ -123,7 +123,10 @@ export const findBestMatchingMeaning = (item: IItem, keyword?: string): IMeaning
         score += 100
       } else if (collocRaw.startsWith(rawKw) || collocFolded.startsWith(foldedKw)) {
         score += 80
-      } else if (isWordBoundaryMatch(collocRaw, rawKw) || isWordBoundaryMatch(collocFolded, foldedKw)) {
+      } else if (
+        isWordBoundaryMatch(collocRaw, rawKw) ||
+        isWordBoundaryMatch(collocFolded, foldedKw)
+      ) {
         score += 60
       } else if (collocRaw.includes(rawKw) || collocFolded.includes(foldedKw)) {
         score += 40

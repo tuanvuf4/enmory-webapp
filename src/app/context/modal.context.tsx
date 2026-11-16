@@ -337,7 +337,7 @@ export const ModalProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }
 
   const minimizedModals = modals.filter(
-    (m) => m.isMinimized && !m.id?.startsWith('item-view-') && m.allowMinimize !== false
+    (m) => m.isMinimized && !m.id?.startsWith('item-view-') && m.allowMinimize !== false,
   )
 
   return (

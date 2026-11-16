@@ -49,7 +49,6 @@ import styles from './item.module.scss'
 
 interface IProps {
   action?: boolean
-  active?: boolean
   reload?: boolean
   data: IItem
   onDeleteSuccess?: () => void
@@ -80,7 +79,6 @@ const getCategoryColor = (catId?: ECategory): string => {
 
 export const Item: React.FC<IProps> = ({
   action = true,
-  active = true,
   reload = false,
   data,
   onDeleteSuccess,
@@ -471,7 +469,7 @@ export const Item: React.FC<IProps> = ({
                       size='small'
                       type='text'
                       icon={<MoreOutlined />}
-                      className={clsx(styles.btnMore, active && styles.active)}
+                      className={clsx(styles.btnMore)}
                     />
                   </Dropdown>
                 </>

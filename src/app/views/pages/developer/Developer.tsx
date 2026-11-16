@@ -142,6 +142,18 @@ export const Developer: React.FC = () => {
   const [isBatchDeleting, setIsBatchDeleting] = useState<boolean>(false)
   const [isEditingJson, setIsEditingJson] = useState<boolean>(false)
   const [editingJsonText, setEditingJsonText] = useState<string>('')
+  const [onlyDuplicateOrigin, setOnlyDuplicateOrigin] = useState<boolean>(false)
+  const [itemPagination, setItemPagination] = useState<{ current: number; pageSize: number }>({
+    current: 1,
+    pageSize: 15,
+  })
+  const [itemSorter, setItemSorter] = useState<{
+    columnKey?: string
+    order?: 'ascend' | 'descend' | null
+  }>({
+    columnKey: 'created_date',
+    order: 'descend',
+  })
 
   const [items, setItems] = useState<IItem[]>([])
   const [blogs, setBlogs] = useState<IBlogItem[]>([])
@@ -657,11 +669,54 @@ export const Developer: React.FC = () => {
     return [...list].sort((a, b) => (b.created_date || 0) - (a.created_date || 0))
   }, [blogs, filterByUser, user?.uid])
 
-  // Filter items by search keyword
+  // Map of normalized origin -> items with same origin
+  const duplicateOriginMap = useMemo(() => {
+    const map = new Map<string, IItem[]>()
+    scopedItems.forEach((item) => {
+      const key = (item.origin || '').trim().toLowerCase()
+      if (!key) return
+      const group = map.get(key) || []
+      group.push(item)
+      map.set(key, group)
+    })
+
+    const dups = new Map<string, IItem[]>()
+    map.forEach((group, key) => {
+      if (group.length > 1) {
+        dups.set(key, group)
+      }
+    })
+    return dups
+  }, [scopedItems])
+
+  const duplicateItemsCount = useMemo(() => {
+    let count = 0
+    duplicateOriginMap.forEach((group) => {
+      count += group.length
+    })
+    return count
+  }, [duplicateOriginMap])
+
+  // Filter items by search keyword & duplicate origin
   const filteredItems = useMemo(() => {
-    if (!searchKeyword.trim()) return scopedItems
+    let baseList = scopedItems
+    if (onlyDuplicateOrigin) {
+      baseList = scopedItems.filter((item) => {
+        const key = (item.origin || '').trim().toLowerCase()
+        return key ? duplicateOriginMap.has(key) : false
+      })
+      baseList = [...baseList].sort((a, b) => {
+        const oA = (a.origin || '').trim().toLowerCase()
+        const oB = (b.origin || '').trim().toLowerCase()
+        const comp = oA.localeCompare(oB)
+        if (comp !== 0) return comp
+        return (b.created_date || 0) - (a.created_date || 0)
+      })
+    }
+
+    if (!searchKeyword.trim()) return baseList
     const kw = searchKeyword.toLowerCase()
-    return scopedItems.filter((item) => {
+    return baseList.filter((item) => {
       const originMatch = (item.origin || '').toLowerCase().includes(kw)
       const tagsMatch = (item.tags || []).some((t) => (t || '').toLowerCase().includes(kw))
       const meaningMatch = (item.meanings || []).some(
@@ -671,7 +726,7 @@ export const Developer: React.FC = () => {
       )
       return originMatch || tagsMatch || meaningMatch
     })
-  }, [scopedItems, searchKeyword])
+  }, [scopedItems, onlyDuplicateOrigin, duplicateOriginMap, searchKeyword])
 
   // Filter blogs by search keyword
   const filteredBlogs = useMemo(() => {
@@ -766,40 +821,63 @@ export const Developer: React.FC = () => {
         dataIndex: 'origin',
         key: 'origin',
         width: 200,
+        sortOrder: itemSorter.columnKey === 'origin' ? itemSorter.order : null,
         sorter: (a, b) => (a.origin || '').localeCompare(b.origin || ''),
-        render: (text: string, record: IItem) => (
-          <Space direction='vertical' size={2}>
-            <Space>
-              <Text strong style={{ fontSize: 14, color: token.colorPrimary }}>
-                {text || (
-                  <Text italic type='secondary'>
-                    (No origin)
-                  </Text>
+        render: (text: string, record: IItem) => {
+          const normOrigin = (record.origin || '').trim().toLowerCase()
+          const dupGroup = normOrigin ? duplicateOriginMap.get(normOrigin) : undefined
+          const dupCount = dupGroup ? dupGroup.length : 0
+
+          return (
+            <Space direction='vertical' size={2}>
+              <Space wrap>
+                <Text strong style={{ fontSize: 14, color: token.colorPrimary }}>
+                  {text || (
+                    <Text italic type='secondary'>
+                      (No origin)
+                    </Text>
+                  )}
+                </Text>
+                {dupCount > 1 && (
+                  <Tooltip
+                    title={`Có ${dupCount} item có cùng origin "${text}" trong Local DB. Nhấn để lọc từ này.`}
+                  >
+                    <Tag
+                      color='warning'
+                      style={{ margin: 0, fontSize: 10, cursor: 'pointer' }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSearchKeyword(text)
+                      }}
+                    >
+                      Trùng ({dupCount})
+                    </Tag>
+                  </Tooltip>
                 )}
-              </Text>
-              {!record.id && (
-                <Tooltip title='Bản ghi này bị thiếu ID trong IndexedDB'>
-                  <Tag color='error' style={{ margin: 0, fontSize: 10 }}>
-                    NO ID
+                {!record.id && (
+                  <Tooltip title='Bản ghi này bị thiếu ID trong IndexedDB'>
+                    <Tag color='error' style={{ margin: 0, fontSize: 10 }}>
+                      NO ID
+                    </Tag>
+                  </Tooltip>
+                )}
+                {record.favorite && <StarFilled style={{ color: '#faad14' }} />}
+              </Space>
+              <Space size={4} wrap>
+                {record.catId !== undefined && (
+                  <Tag color='blue' style={{ margin: 0, fontSize: 11 }}>
+                    {getCategory(record.catId as ECategory)}
                   </Tag>
-                </Tooltip>
-              )}
-              {record.favorite && <StarFilled style={{ color: '#faad14' }} />}
+                )}
+                {record.archive && (
+                  <Tag color='default' style={{ margin: 0, fontSize: 11 }}>
+                    Archived
+                  </Tag>
+                )}
+              </Space>
             </Space>
-            <Space size={4} wrap>
-              {record.catId !== undefined && (
-                <Tag color='blue' style={{ margin: 0, fontSize: 11 }}>
-                  {getCategory(record.catId as ECategory)}
-                </Tag>
-              )}
-              {record.archive && (
-                <Tag color='default' style={{ margin: 0, fontSize: 11 }}>
-                  Archived
-                </Tag>
-              )}
-            </Space>
-          </Space>
-        ),
+          )
+        },
       },
       {
         title: 'Level',
@@ -807,6 +885,7 @@ export const Developer: React.FC = () => {
         key: 'level',
         width: 80,
         align: 'center',
+        sortOrder: itemSorter.columnKey === 'level' ? itemSorter.order : null,
         sorter: (a, b) => (a.level || 0) - (b.level || 0),
         render: (level: number) => {
           const colors = ['default', 'blue', 'cyan', 'green', 'gold', 'purple']
@@ -901,7 +980,7 @@ export const Developer: React.FC = () => {
         dataIndex: 'created_date',
         key: 'created_date',
         width: 140,
-        defaultSortOrder: 'descend',
+        sortOrder: itemSorter.columnKey === 'created_date' ? itemSorter.order : null,
         sorter: (a, b) => (a.created_date || 0) - (b.created_date || 0),
         render: (ts?: number) =>
           ts ? (
@@ -917,6 +996,7 @@ export const Developer: React.FC = () => {
         dataIndex: 'last_update',
         key: 'last_update',
         width: 140,
+        sortOrder: itemSorter.columnKey === 'last_update' ? itemSorter.order : null,
         sorter: (a, b) => (a.last_update || 0) - (b.last_update || 0),
         render: (ts?: number) =>
           ts ? (
@@ -967,7 +1047,7 @@ export const Developer: React.FC = () => {
         ),
       },
     ],
-    [token, handleEditItem, handleDeleteItem],
+    [token, handleEditItem, handleDeleteItem, duplicateOriginMap, setSearchKeyword, itemSorter],
   )
 
   const blogColumns = useMemo<TableColumnsType<IBlogItem>>(
@@ -1285,6 +1365,25 @@ export const Developer: React.FC = () => {
                         title='Items (Bảng từ vựng)'
                         value={scopedItems.length}
                         prefix={<DatabaseOutlined style={{ color: token.colorPrimary }} />}
+                        suffix={
+                          duplicateItemsCount > 0 ? (
+                            <Tooltip
+                              title={`Có ${duplicateItemsCount} item trùng origin (${duplicateOriginMap.size} nhóm). Bấm để lọc.`}
+                            >
+                              <Tag
+                                color='warning'
+                                style={{ cursor: 'pointer', marginLeft: 6, fontSize: 11 }}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setActiveTab('items')
+                                  setOnlyDuplicateOrigin(true)
+                                }}
+                              >
+                                {duplicateItemsCount} trùng
+                              </Tag>
+                            </Tooltip>
+                          ) : undefined
+                        }
                       />
                     </Card>
                   </Col>
@@ -1388,6 +1487,32 @@ export const Developer: React.FC = () => {
                             </Tooltip>
                           </Checkbox>
                         )}
+                        {activeTab === 'items' && (
+                          <Checkbox
+                            checked={onlyDuplicateOrigin}
+                            onChange={(e) => setOnlyDuplicateOrigin(e.target.checked)}
+                            style={{ userSelect: 'none' }}
+                          >
+                            <Tooltip title='Lọc và hiển thị các item có cùng origin (trùng lặp) trong Local Database'>
+                              <Space size={4}>
+                                <span>Cùng origin</span>
+                                {duplicateItemsCount > 0 && (
+                                  <Tag
+                                    color='warning'
+                                    style={{
+                                      margin: 0,
+                                      fontSize: 11,
+                                      padding: '0 6px',
+                                      borderRadius: 10,
+                                    }}
+                                  >
+                                    {duplicateItemsCount}
+                                  </Tag>
+                                )}
+                              </Space>
+                            </Tooltip>
+                          </Checkbox>
+                        )}
                         <Input
                           placeholder='Tìm kiếm trong Local DB...'
                           prefix={<SearchOutlined />}
@@ -1416,7 +1541,7 @@ export const Developer: React.FC = () => {
                 </Card>
 
                 {/* Table Viewer */}
-                {loading ? (
+                {loading && items.length === 0 && blogs.length === 0 ? (
                   <Card>
                     <div style={{ textAlign: 'center', padding: '60px 0' }}>
                       <Spin size='large' children='Đang đọc dữ liệu từ IndexedDB...' />
@@ -1427,14 +1552,97 @@ export const Developer: React.FC = () => {
                     {activeTab === 'items' && (
                       <Card
                         title={
-                          <Space>
+                          <Space wrap>
                             <DatabaseOutlined style={{ color: token.colorPrimary }} />
                             <span>Table Items</span>
                             <Tag color='blue'>{filteredItems.length} từ vựng</Tag>
+                            {onlyDuplicateOrigin && (
+                              <Tag color='warning'>
+                                Đang lọc {filteredItems.length} item ({duplicateOriginMap.size} nhóm cùng origin)
+                              </Tag>
+                            )}
                           </Space>
                         }
                         size='small'
+                        extra={
+                          onlyDuplicateOrigin && (
+                            <Button
+                              size='small'
+                              onClick={() => {
+                                setOnlyDuplicateOrigin(false)
+                                setSearchKeyword('')
+                              }}
+                            >
+                              Hiện tất cả ({scopedItems.length})
+                            </Button>
+                          )
+                        }
                       >
+                        {onlyDuplicateOrigin && (
+                          <div style={{ marginBottom: 12 }}>
+                            {duplicateItemsCount > 0 ? (
+                              <Alert
+                                type='warning'
+                                message={
+                                  <Space direction='vertical' style={{ width: '100%' }} size={8}>
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        flexWrap: 'wrap',
+                                        gap: 8,
+                                      }}
+                                    >
+                                      <span>
+                                        Phát hiện <b>{duplicateItemsCount}</b> item có cùng origin (thuộc{' '}
+                                        <b>{duplicateOriginMap.size}</b> nhóm) trong Local Database.
+                                      </span>
+                                    </div>
+                                    {duplicateOriginMap.size > 0 && (
+                                      <div style={{ marginTop: 4 }}>
+                                        <Text type='secondary' style={{ fontSize: 12, marginRight: 8 }}>
+                                          Nhóm từ trùng:
+                                        </Text>
+                                        <Space wrap size={[4, 4]}>
+                                          {Array.from(duplicateOriginMap.entries())
+                                            .slice(0, 30)
+                                            .map(([orig, group]) => (
+                                              <Tag
+                                                key={orig}
+                                                color={
+                                                  searchKeyword.toLowerCase() === orig
+                                                    ? 'orange'
+                                                    : 'default'
+                                                }
+                                                style={{ cursor: 'pointer', fontSize: 11 }}
+                                                onClick={() => {
+                                                  searchKeyword.toLowerCase() === orig ?  setSearchKeyword('') : setSearchKeyword(orig)
+                                                }}
+                                              >
+                                                {group[0]?.origin || orig} ({group.length})
+                                              </Tag>
+                                            ))}
+                                          {duplicateOriginMap.size > 30 && (
+                                            <Text type='secondary' style={{ fontSize: 11 }}>
+                                              +{duplicateOriginMap.size - 30} từ khác...
+                                            </Text>
+                                          )}
+                                        </Space>
+                                      </div>
+                                    )}
+                                  </Space>
+                                }
+                              />
+                            ) : (
+                              <Alert
+                                type='success'
+                                showIcon
+                                message='Tuyệt vời! Không phát hiện item nào có cùng origin trong Local Database.'
+                              />
+                            )}
+                          </div>
+                        )}
                         {missingIdItems.length > 0 && (
                           <div style={{ marginBottom: 12 }}>
                             <Alert
@@ -1502,6 +1710,7 @@ export const Developer: React.FC = () => {
                           </div>
                         )}
                         <Table<IItem>
+                          loading={loading}
                           dataSource={filteredItems}
                           columns={itemColumns}
                           rowKey={(record) =>
@@ -1513,11 +1722,29 @@ export const Developer: React.FC = () => {
                             onChange: (keys) => setSelectedRowKeys(keys),
                           }}
                           pagination={{
-                            defaultPageSize: 15,
+                            current: Math.min(
+                              itemPagination.current,
+                              Math.max(1, Math.ceil(filteredItems.length / itemPagination.pageSize)),
+                            ),
+                            pageSize: itemPagination.pageSize,
                             showSizeChanger: true,
                             pageSizeOptions: ['10', '15', '30', '50', '100'],
                             showTotal: (total, range) =>
                               `${range[0]}-${range[1]} trên tổng số ${total} items`,
+                          }}
+                          onChange={(pagination, _filters, sorter: any) => {
+                            if (pagination.current && pagination.pageSize) {
+                              setItemPagination({
+                                current: pagination.current,
+                                pageSize: pagination.pageSize,
+                              })
+                            }
+                            if (!Array.isArray(sorter)) {
+                              setItemSorter({
+                                columnKey: (sorter.columnKey || sorter.field) as string,
+                                order: sorter.order || null,
+                              })
+                            }
                           }}
                           size='small'
                           bordered
@@ -1573,6 +1800,7 @@ export const Developer: React.FC = () => {
                         size='small'
                       >
                         <Table<IBlogItem>
+                          loading={loading}
                           dataSource={filteredBlogs}
                           columns={blogColumns}
                           rowKey='id'
@@ -1603,6 +1831,7 @@ export const Developer: React.FC = () => {
                         size='small'
                       >
                         <Table<ISyncMeta>
+                          loading={loading}
                           dataSource={filteredSyncMeta}
                           columns={syncMetaColumns}
                           rowKey='key'

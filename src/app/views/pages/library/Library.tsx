@@ -103,7 +103,7 @@ export const Library: React.FC = () => {
                   return (
                     <Col xs={24} sm={12} md={12} lg={8} xl={8} key={idx}>
                       <Widget>
-                        <Item data={item} action active />
+                        <Item data={item} />
                       </Widget>
                     </Col>
                   )

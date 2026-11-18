@@ -3,7 +3,6 @@ import {
   SyncOutlined,
   PlayCircleOutlined,
   PauseCircleOutlined,
-  CheckCircleOutlined,
   InfoCircleOutlined,
   ThunderboltOutlined,
   RiseOutlined,
@@ -14,6 +13,7 @@ import {
   RobotOutlined,
   StopOutlined,
   LoadingOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
 import {
   Button,
@@ -30,11 +30,14 @@ import {
   Divider,
   Checkbox,
   Alert,
+  Popover,
+  Segmented,
 } from 'antd'
 import clsx from 'clsx'
 import { useSelector } from '@/core/hooks'
 import { localDb } from '@/services/localDb'
 import { exampleApi } from '@/services/firebase/api/example.api'
+import { sentenceListeningApi } from '@/services/firebase/api/sentenceListening.api'
 import {
   geminiTtsService,
   geminiPronunciationService,
@@ -64,28 +67,28 @@ export interface IActiveTechniques {
 export const TECHNIQUE_CONFIGS = [
   {
     key: 'linking' as const,
-    label: 'Nối âm',
+    label: 'Linking',
     icon: <LinkOutlined />,
     color: '#1677ff',
     desc: 'Hiển thị vòng cung nối âm giữa phụ âm và nguyên âm, nguyên âm với nguyên âm.',
   },
   {
     key: 'stress' as const,
-    label: 'Trọng âm',
+    label: 'Stress',
     icon: <ThunderboltOutlined />,
     color: '#fa541c',
     desc: 'Làm nổi bật từ nội dung quan trọng cần nhấn và làm mờ từ chức năng.',
   },
   {
     key: 'intonation' as const,
-    label: 'Ngữ điệu',
+    label: 'Intonation',
     icon: <RiseOutlined />,
     color: '#52c41a',
     desc: 'Hiển thị mũi tên lên/xuống giọng và phân loại ngữ điệu toàn câu.',
   },
   {
     key: 'shadow' as const,
-    label: 'Ngắt cụm từ',
+    label: 'Chunking',
     icon: null,
     color: '#722ed1',
     desc: 'Chia câu thành các cụm từ có ý nghĩa (thought groups) và cho phép nghe - lặp lại từng cụm.',
@@ -1007,12 +1010,15 @@ const TIPS: string[] = [
   'Shadowing: Chia câu thành các cụm từ có ý nghĩa (thought groups) theo nhịp thở tự nhiên, nghe và nhại lại ngay lập tức theo ngữ điệu người bản xứ.',
 ]
 
-const getPronunciationSessionKey = (uid?: string) =>
-  `pronunciation_practice_session_${uid || 'default'}`
+export type TShadowingSourceType = 'sentence' | 'example'
+
+const getPronunciationSessionKey = (uid?: string, sourceType: TShadowingSourceType = 'sentence') =>
+  `pronunciation_practice_session_${uid || 'default'}_${sourceType}`
 
 interface IPronunciationSession {
   items: IExample[]
   currentIndex: number
+  sourceType?: TShadowingSourceType
   updatedAt: number
 }
 
@@ -1105,7 +1111,13 @@ export const Shadowing: React.FC<ShadowingProps> = ({
   })
   const [shadowChunk, setShadowChunk] = useState<number | null>(null)
   const [shadowPlaying, setShadowPlaying] = useState(false)
-  const [revealed, setRevealed] = useState(false)
+  const [sourceType, setSourceType] = useState<TShadowingSourceType>(() => {
+    try {
+      const saved = localStorage.getItem('shadowing_source_type')
+      if (saved === 'sentence' || saved === 'example') return saved
+    } catch {}
+    return 'sentence'
+  })
 
   // Track latest state for safe persistence
   const stateRef = useRef({
@@ -1232,11 +1244,12 @@ export const Shadowing: React.FC<ShadowingProps> = ({
     async (patch: { items?: IExample[]; currentIndex?: number }) => {
       if (normalizedItems.length > 0) return
       try {
-        const key = getPronunciationSessionKey(user?.uid)
+        const key = getPronunciationSessionKey(user?.uid, sourceType)
         const cur = stateRef.current
         const sessionData: IPronunciationSession = {
           items: patch.items ?? cur.examples,
           currentIndex: patch.currentIndex ?? cur.currentIndex,
+          sourceType,
           updatedAt: Date.now(),
         }
 
@@ -1252,14 +1265,14 @@ export const Shadowing: React.FC<ShadowingProps> = ({
         console.warn('Failed to save pronunciation session:', err)
       }
     },
-    [user?.uid, normalizedItems],
+    [user?.uid, normalizedItems, sourceType],
   )
 
-  // Fetch hoặc phục hồi session câu ví dụ
+  // Fetch hoặc phục hồi session câu ví dụ / câu mẫu
   const fetchExamples = useCallback(
-    async (forceNew = false) => {
+    async (forceNew = false, targetSourceType?: TShadowingSourceType) => {
+      const currentSource = targetSourceType || sourceType
       setLoading(true)
-      setRevealed(false)
       setShadowChunk(null)
       setEvalResult(null)
       setEvalError(null)
@@ -1272,7 +1285,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
         return
       }
 
-      const key = getPronunciationSessionKey(user?.uid)
+      const key = getPronunciationSessionKey(user?.uid, currentSource)
 
       // 1. Phục hồi bộ câu đã lưu nếu không ép tải mới (tránh đổi bộ câu khi refresh page)
       if (!forceNew) {
@@ -1324,22 +1337,52 @@ export const Shadowing: React.FC<ShadowingProps> = ({
         }
       }
 
-      // 2. Tải bộ câu ngẫu nhiên mới khi không có session lưu hoặc khi bấm tải lại
+      // 2. Tải bộ câu mới theo sourceType đã chọn (sentence / example / all)
       setCurrentIndex(0)
       try {
-        const { isSuccess, content } = await exampleApi.getRandomExamples(15)
-        if (isSuccess && content) {
-          const filtered = content.filter((ex) => {
-            const text = stripHtml(ex.origin)
-            return text.split(/\s+/).length >= 4
+        let newItems: IExample[] = []
+
+        try {
+          const res = await sentenceListeningApi.getListeningSentences({
+            count: 15,
+            sourceType: currentSource,
           })
-          const newItems = filtered.length >= 3 ? filtered : content
-          setExamples(newItems)
+          if (res.isSuccess && res.content && res.content.length > 0) {
+            newItems = res.content.map((item: any) => ({
+              id: item.id,
+              origin: item.origin,
+              translation: item.translation,
+              note: item.note,
+              itemId: item.itemId,
+              itemOrigin: item.sourceType === 'example' ? item.sourceItemOrigin : undefined,
+              catId: item.catId,
+            }))
+          }
+        } catch (err) {
+          console.warn('Failed to fetch from sentenceListeningApi, fallback to exampleApi:', err)
+        }
+
+        // Fallback sang exampleApi nếu localDb / sentenceListeningApi chưa có dữ liệu
+        if (newItems.length === 0) {
+          const { isSuccess, content } = await exampleApi.getRandomExamples(15)
+          if (isSuccess && content) {
+            newItems = content
+          }
+        }
+
+        if (newItems.length > 0) {
+          const filtered = newItems.filter((ex) => {
+            const text = stripHtml(ex.origin)
+            return text.split(/\s+/).length >= 3
+          })
+          const finalItems = filtered.length >= 3 ? filtered : newItems
+          setExamples(finalItems)
 
           // Lưu vào session để giữ nguyên khi refresh
           const sessionData: IPronunciationSession = {
-            items: newItems,
+            items: finalItems,
             currentIndex: 0,
+            sourceType: currentSource,
             updatedAt: Date.now(),
           }
 
@@ -1362,7 +1405,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
         setLoading(false)
       }
     },
-    [user?.uid, normalizedItems],
+    [user?.uid, normalizedItems, sourceType],
   )
 
   const reload = useCallback(() => {
@@ -1372,6 +1415,34 @@ export const Shadowing: React.FC<ShadowingProps> = ({
     }
     fetchExamples(true)
   }, [onReload, fetchExamples])
+
+  const handleSourceTypeChange = useCallback(
+    (newSource: TShadowingSourceType) => {
+      setSourceType(newSource)
+      try {
+        localStorage.setItem('shadowing_source_type', newSource)
+      } catch {}
+      fetchExamples(true, newSource)
+    },
+    [fetchExamples],
+  )
+
+  const settingsContent = (
+    <div className={styles.settingsPanel}>
+      <div className={styles.settingRow}>
+        <span>Nguồn câu:</span>
+        <Segmented
+          size='small'
+          value={sourceType}
+          onChange={(val) => handleSourceTypeChange(val as TShadowingSourceType)}
+          options={[
+            { label: 'Sentence', value: 'sentence' },
+            { label: 'Example', value: 'example' },
+          ]}
+        />
+      </div>
+    </div>
+  )
 
   useEffect(() => {
     if (exposeReload) {
@@ -1383,7 +1454,6 @@ export const Shadowing: React.FC<ShadowingProps> = ({
     if (normalizedItems.length > 0) {
       setExamples(normalizedItems)
       setCurrentIndex(0)
-      setRevealed(false)
       setShadowChunk(null)
       setEvalResult(null)
       setEvalError(null)
@@ -1459,7 +1529,6 @@ export const Shadowing: React.FC<ShadowingProps> = ({
   // Chuyển câu trước / tiếp
   const handleNext = useCallback(() => {
     handleStop()
-    setRevealed(false)
     setShadowChunk(null)
     handleFullResetRecording()
     setCurrentIndex((prev) => {
@@ -1471,7 +1540,6 @@ export const Shadowing: React.FC<ShadowingProps> = ({
 
   const handlePrev = useCallback(() => {
     handleStop()
-    setRevealed(false)
     setShadowChunk(null)
     handleFullResetRecording()
     setCurrentIndex((prev) => {
@@ -1571,6 +1639,45 @@ export const Shadowing: React.FC<ShadowingProps> = ({
 
   return (
     <div className={styles.wrapper}>
+      {/* 1. Header Bar: Counter badge, Origin Tag, Action buttons */}
+      <div className={styles.header}>
+        <Flex align='center' gap={token.size / 2} wrap='wrap'>
+          <Tag className={styles.counterBadge} style={{ color: token.colorTextSecondary }}>
+            {examples.length > 0 ? `${currentIndex + 1} / ${examples.length}` : '0 / 0'}
+          </Tag>
+
+          {currentExample && (
+            <Tag
+              color={currentExample.itemOrigin ? 'purple' : 'blue'}
+              className={styles.counterBadge}
+            >
+              {currentExample.itemOrigin ? currentExample.itemOrigin : 'Sentence'}
+            </Tag>
+          )}
+        </Flex>
+
+        <div className={styles.headerRight}>
+          {/* Refresh Random Batch */}
+          <Button
+            type='text'
+            size='small'
+            icon={<SyncOutlined spin={loading} />}
+            onClick={reload}
+            loading={loading}
+          />
+
+          {/* Settings Popover */}
+          <Popover
+            content={settingsContent}
+            title='Cài đặt nâng cao'
+            trigger='click'
+            placement='bottomRight'
+          >
+            <Button type='text' size='small' icon={<SettingOutlined />} />
+          </Popover>
+        </div>
+      </div>
+
       {/* ── Checkboxes gộp 4 kỹ thuật: Nối âm, Trọng âm, Ngữ điệu, Shadowing ── */}
       <div className={styles.techniqueBar}>
         <div className={styles.techniqueCheckboxes}>
@@ -1621,27 +1728,9 @@ export const Shadowing: React.FC<ShadowingProps> = ({
         >
           {/* Header */}
           <Flex justify='space-between' align='center' style={{ marginBottom: token.size * 0.5 }}>
-            <Flex align='center' gap={8}>
-              <Title level={5} style={{ margin: 0, fontSize: 15 }}>
-                Luyện Nói & Ngữ Âm
-              </Title>
-              {examples.length > 0 && (
-                <Text type='secondary' style={{ fontSize: 12 }}>
-                  {currentIndex + 1}/{examples.length}
-                </Text>
-              )}
-            </Flex>
-
-            <Flex gap={4} align='center'>
-              {(normalizedItems.length !== 1 || Boolean(onReload)) && (
-                <Button
-                  size='small'
-                  icon={<SyncOutlined spin={loading} />}
-                  onClick={reload}
-                  type='text'
-                />
-              )}
-            </Flex>
+            <Title level={5} style={{ margin: 0, fontSize: 15 }}>
+              Luyện Nói & Ngữ Âm
+            </Title>
           </Flex>
 
           {/* Tip Panel */}
@@ -1762,27 +1851,19 @@ export const Shadowing: React.FC<ShadowingProps> = ({
             </div>
           </div>
 
-          {/* ── Translation reveal ── */}
-          <div className={styles.translationArea}>
-            {!revealed ? (
-              <Button
-                type='dashed'
-                size='small'
-                icon={<InfoCircleOutlined />}
-                onClick={() => setRevealed(true)}
-                style={{ fontSize: 12 }}
-              >
-                Xem bản dịch tiếng Việt
-              </Button>
-            ) : (
+          {/* ── Translation / Hint luôn hiển thị ── */}
+          {plainTranslation && (
+            <div className={styles.translationArea}>
               <Flex align='flex-start' gap={8}>
-                <CheckCircleOutlined style={{ color: token.colorSuccess, marginTop: 2 }} />
+                <InfoCircleOutlined
+                  style={{ color: token.colorTextTertiary, marginTop: 3, fontSize: 13 }}
+                />
                 <Text type='secondary' style={{ fontSize: 13 }}>
                   {plainTranslation}
                 </Text>
               </Flex>
-            )}
-          </div>
+            </div>
+          )}
 
           <Divider style={{ margin: `${token.size * 0.5}px 0` }} />
 

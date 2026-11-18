@@ -83,7 +83,7 @@ export const getActionMenuItem = (data: IItem | undefined, isInChecklist = false
       key: '8',
       label: (
         <ActionItem
-          label={isInChecklist ? 'Remove from checklist' : 'Add to checklist'}
+          label={'Checklist'}
           icon={<CheckSquareOutlined style={{ color: isInChecklist ? '#52c41a' : undefined }} />}
         />
       ),

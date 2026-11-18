@@ -4,6 +4,28 @@
   gap: 14px;
 }
 
+/* ── Header Bar (giống Dictation) ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.counterBadge {
+  font-weight: 600;
+  font-size: 13px;
+  margin-inline-end: 0;
+}
+
 /* ── Technique Selection Bar (Checkboxes) ── */
 .techniqueBar {
   background: rgba(0, 0, 0, 0.02);
@@ -535,4 +557,21 @@
 /* ── Legend Card ── */
 .legendCard {
   border-radius: 12px;
+}
+
+/* ── Settings Popover Panel ── */
+.settingsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 6px 2px;
+  min-width: 250px;
+}
+
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
 }

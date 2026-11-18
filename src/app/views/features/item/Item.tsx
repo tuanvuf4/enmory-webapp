@@ -421,16 +421,7 @@ export const Item: React.FC<IProps> = ({
                 <h2
                   className={clsx(styles.originTitle, isDefect(data) && styles.originTitleDefect)}
                 >
-                  {data.origin}{' '}
-                  <Tooltip title={isCopied ? 'Copied' : 'Copy'}>
-                    <Button
-                      type={'text'}
-                      className={clsx(styles.titleCopyBtn, isCopied && styles.titleCopyBtnCopied)}
-                      onClick={handleCopyOrigin}
-                    >
-                      {isCopied ? <CheckOutlined /> : <CopyOutlined />}
-                    </Button>
-                  </Tooltip>
+                  {data.origin}
                 </h2>
               )}
             </div>
@@ -538,6 +529,17 @@ export const Item: React.FC<IProps> = ({
                     <span>{data.user.firstName}</span>
                   </div>
                 )}
+
+                <Tooltip title={isCopied ? 'Copied' : 'Copy'}>
+                  <Button
+                    type={'text'}
+                    size='small'
+                    className={styles.headerActionDim}
+                    onClick={handleCopyOrigin}
+                  >
+                    {isCopied ? <CheckOutlined /> : <CopyOutlined />}
+                  </Button>
+                </Tooltip>
 
                 <Button
                   type={'text'}

@@ -29,7 +29,6 @@ import {
   Progress,
   Divider,
   Checkbox,
-  Select,
   Alert,
 } from 'antd'
 import clsx from 'clsx'
@@ -86,10 +85,10 @@ export const TECHNIQUE_CONFIGS = [
   },
   {
     key: 'shadow' as const,
-    label: 'Shadowing',
-    icon: <PlayCircleOutlined />,
+    label: 'Ngắt cụm từ',
+    icon: null,
     color: '#722ed1',
-    desc: 'Chia câu thành các cụm nhịp điệu (chunks) và cho phép nghe - lặp lại từng cụm.',
+    desc: 'Chia câu thành các cụm từ có ý nghĩa (thought groups) và cho phép nghe - lặp lại từng cụm.',
   },
 ]
 
@@ -121,11 +120,744 @@ interface IUnifiedToken {
 }
 
 /**
+ * Phân tách câu thành các cụm từ có ý nghĩa (Thought Groups) tự nhiên
+ * Dựa trên cấu trúc ngữ pháp tiếng Anh: dấu câu, liên từ kết hợp, mệnh đề phụ thuộc,
+ * đại từ quan hệ, cụm giới từ, và nhịp điệu hơi thở khi nói.
+ */
+const splitIntoThoughtGroups = (words: string[]): string[][] => {
+  const n = words.length
+  if (n === 0) return []
+  if (n <= 4) return [words]
+
+  const clean = (w: string) =>
+    stripHtml(w)
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+
+  const DETERMINERS = new Set([
+    'a',
+    'an',
+    'the',
+    'this',
+    'that',
+    'these',
+    'those',
+    'my',
+    'your',
+    'his',
+    'her',
+    'its',
+    'our',
+    'their',
+    'each',
+    'every',
+    'some',
+    'any',
+    'no',
+    'another',
+    'either',
+    'neither',
+    'many',
+    'much',
+    'few',
+    'little',
+    'several',
+    'all',
+    'both',
+  ])
+
+  const PREPOSITIONS = new Set([
+    'in',
+    'on',
+    'at',
+    'with',
+    'without',
+    'by',
+    'from',
+    'to',
+    'for',
+    'about',
+    'into',
+    'through',
+    'during',
+    'under',
+    'over',
+    'between',
+    'among',
+    'against',
+    'towards',
+    'toward',
+    'behind',
+    'beyond',
+    'across',
+    'along',
+    'of',
+    'near',
+    'upon',
+    'throughout',
+    'within',
+  ])
+
+  const PARTICLES = new Set([
+    'on',
+    'off',
+    'up',
+    'down',
+    'in',
+    'out',
+    'away',
+    'back',
+    'over',
+    'by',
+    'around',
+    'through',
+    'along',
+    'about',
+  ])
+
+  const AUXILIARY_VERBS = new Set([
+    'can',
+    'could',
+    'will',
+    'would',
+    'shall',
+    'should',
+    'may',
+    'might',
+    'must',
+    'is',
+    'are',
+    'am',
+    'was',
+    'were',
+    'be',
+    'been',
+    'being',
+    'have',
+    'has',
+    'had',
+    'having',
+    'do',
+    'does',
+    'did',
+  ])
+
+  const SUBORDINATING = new Set([
+    'because',
+    'although',
+    'though',
+    'while',
+    'whereas',
+    'since',
+    'unless',
+    'if',
+    'whether',
+    'whenever',
+    'wherever',
+    'before',
+    'after',
+    'until',
+    'once',
+  ])
+
+  const RELATIVE_WH = new Set(['which', 'who', 'whom', 'whose', 'where', 'when', 'why', 'how'])
+
+  const COORDINATING = new Set(['and', 'but', 'or', 'so', 'yet', 'nor'])
+
+  const DISCOURSE_MARKERS = new Set([
+    'however',
+    'therefore',
+    'furthermore',
+    'moreover',
+    'meanwhile',
+    'otherwise',
+    'actually',
+    'indeed',
+    'finally',
+    'instead',
+    'besides',
+    'anyway',
+    'first',
+    'second',
+    'third',
+  ])
+
+  const COMMON_VERBS = new Set([
+    'come',
+    'comes',
+    'came',
+    'coming',
+    'go',
+    'goes',
+    'went',
+    'gone',
+    'going',
+    'get',
+    'gets',
+    'got',
+    'gotten',
+    'getting',
+    'take',
+    'takes',
+    'took',
+    'taken',
+    'taking',
+    'put',
+    'puts',
+    'putting',
+    'turn',
+    'turns',
+    'turned',
+    'turning',
+    'look',
+    'looks',
+    'looked',
+    'looking',
+    'give',
+    'gives',
+    'gave',
+    'given',
+    'giving',
+    'bring',
+    'brings',
+    'brought',
+    'bringing',
+    'run',
+    'runs',
+    'ran',
+    'running',
+    'make',
+    'makes',
+    'made',
+    'making',
+    'pick',
+    'picks',
+    'picked',
+    'picking',
+    'hold',
+    'holds',
+    'held',
+    'holding',
+    'keep',
+    'keeps',
+    'kept',
+    'keeping',
+    'call',
+    'calls',
+    'called',
+    'calling',
+    'set',
+    'sets',
+    'setting',
+    'stand',
+    'stands',
+    'stood',
+    'standing',
+    'sit',
+    'sits',
+    'sat',
+    'sitting',
+    'move',
+    'moves',
+    'moved',
+    'moving',
+    'show',
+    'shows',
+    'showed',
+    'shown',
+    'showing',
+    'end',
+    'ends',
+    'ended',
+    'ending',
+    'grow',
+    'grows',
+    'grew',
+    'grown',
+    'growing',
+    'fall',
+    'falls',
+    'fell',
+    'fallen',
+    'falling',
+    'carry',
+    'carries',
+    'carried',
+    'carrying',
+    'break',
+    'breaks',
+    'broke',
+    'broken',
+    'breaking',
+    'drop',
+    'drops',
+    'dropped',
+    'dropping',
+    'hang',
+    'hangs',
+    'hung',
+    'hanging',
+    'wake',
+    'wakes',
+    'woke',
+    'woken',
+    'waking',
+    'step',
+    'steps',
+    'stepped',
+    'stepping',
+    'walk',
+    'walks',
+    'walked',
+    'walking',
+    'talk',
+    'talks',
+    'talked',
+    'talking',
+    'listen',
+    'listens',
+    'listened',
+    'listening',
+    'wait',
+    'waits',
+    'waited',
+    'waiting',
+    'rely',
+    'relies',
+    'relied',
+    'relying',
+    'depend',
+    'depends',
+    'depended',
+    'depending',
+    'belong',
+    'belongs',
+    'belonged',
+    'belonging',
+    'agree',
+    'agrees',
+    'agreed',
+    'agreeing',
+    'pay',
+    'pays',
+    'paid',
+    'paying',
+    'work',
+    'works',
+    'worked',
+    'working',
+    'live',
+    'lives',
+    'lived',
+    'living',
+    'stay',
+    'stays',
+    'stayed',
+    'staying',
+    'start',
+    'starts',
+    'started',
+    'starting',
+    'stop',
+    'stops',
+    'stopped',
+    'stopping',
+    'lead',
+    'leads',
+    'led',
+    'leading',
+    'pass',
+    'passes',
+    'passed',
+    'passing',
+    'check',
+    'checks',
+    'checked',
+    'checking',
+    'point',
+    'points',
+    'pointed',
+    'pointing',
+    'stare',
+    'stares',
+    'stared',
+    'staring',
+    'base',
+    'bases',
+    'based',
+    'basing',
+    'focus',
+    'focuses',
+    'focused',
+    'focusing',
+    'apply',
+    'applies',
+    'applied',
+    'applying',
+    'deal',
+    'deals',
+    'dealt',
+    'dealing',
+  ])
+
+  const COGNITIVE_REPORTING_VERBS = new Set([
+    'realize',
+    'realizes',
+    'realized',
+    'realizing',
+    'think',
+    'thinks',
+    'thought',
+    'thinking',
+    'know',
+    'knows',
+    'knew',
+    'known',
+    'knowing',
+    'say',
+    'says',
+    'said',
+    'saying',
+    'tell',
+    'tells',
+    'told',
+    'telling',
+    'believe',
+    'believes',
+    'believed',
+    'believing',
+    'feel',
+    'feels',
+    'felt',
+    'feeling',
+    'hope',
+    'hopes',
+    'hoped',
+    'hoping',
+    'notice',
+    'notices',
+    'noticed',
+    'noticing',
+    'remember',
+    'remembers',
+    'remembered',
+    'remembering',
+    'find',
+    'finds',
+    'found',
+    'finding',
+    'assume',
+    'assumes',
+    'assumed',
+    'assuming',
+    'hear',
+    'hears',
+    'heard',
+    'hearing',
+    'see',
+    'sees',
+    'saw',
+    'seen',
+    'seeing',
+    'understand',
+    'understands',
+    'understood',
+    'understanding',
+    'guess',
+    'guesses',
+    'guessed',
+    'guessing',
+    'suppose',
+    'supposes',
+    'supposed',
+    'supposing',
+  ])
+
+  const SUBJECT_PRONOUNS = new Set(['i', 'you', 'he', 'she', 'it', 'we', 'they', 'there'])
+
+  const BOUND_VERB_PREP_PAIRS = new Set([
+    'look for',
+    'look at',
+    'look after',
+    'look forward',
+    'listen to',
+    'wait for',
+    'depend on',
+    'rely on',
+    'belong to',
+    'talk to',
+    'speak to',
+    'agree with',
+    'think about',
+    'care about',
+    'pay for',
+    'search for',
+    'ask for',
+    'apply for',
+    'believe in',
+    'focus on',
+    'deal with',
+    'cope with',
+    'worry about',
+    'interested in',
+    'good at',
+    'bad at',
+    'afraid of',
+    'proud of',
+    'tired of',
+    'go to',
+    'went to',
+    'come from',
+    'came from',
+    'arrive at',
+    'arrive in',
+  ])
+
+  const BOUND_PHRASES = new Set([
+    'as well',
+    'in order',
+    'so that',
+    'a lot',
+    'each other',
+    'one another',
+    'because of',
+    'instead of',
+    'due to',
+    'according to',
+    'in front',
+    'out of',
+    'next to',
+    'up to',
+    'as soon',
+    'as long',
+    'even though',
+    'even if',
+    'a little',
+    'a bit',
+  ])
+
+  const ABBREVIATIONS = new Set([
+    'mr',
+    'mrs',
+    'ms',
+    'dr',
+    'prof',
+    'sr',
+    'jr',
+    'vs',
+    'etc',
+    'eg',
+    'ie',
+    'us',
+    'uk',
+  ])
+
+  // Bước 1: Phát hiện ngắt câu bắt buộc theo dấu câu (Hard boundaries)
+  const hardBreakIndices = new Set<number>()
+  for (let i = 0; i < n - 1; i++) {
+    const rawWord = words[i]
+    const cl = clean(rawWord)
+    if (/[,;:—–!?]$/.test(rawWord)) {
+      hardBreakIndices.add(i)
+    } else if (/\.$/.test(rawWord) && !ABBREVIATIONS.has(cl)) {
+      hardBreakIndices.add(i)
+    }
+  }
+
+  // Chia thành các đoạn ban đầu theo dấu câu
+  const initialSegments: string[][] = []
+  let currentSeg: string[] = []
+  for (let i = 0; i < n; i++) {
+    currentSeg.push(words[i])
+    if (hardBreakIndices.has(i) || i === n - 1) {
+      if (currentSeg.length > 0) {
+        initialSegments.push(currentSeg)
+        currentSeg = []
+      }
+    }
+  }
+
+  // Bước 2: Hàm chấm điểm ranh giới ngắt cụm ý nghĩa giữa seg[i] và seg[i+1]
+  const scoreBoundary = (seg: string[], i: number): number => {
+    const w1 = seg[i]
+    const w2 = seg[i + 1]
+    const cl1 = clean(w1)
+    const cl2 = clean(w2)
+    const cl3 = i + 2 < seg.length ? clean(seg[i + 2]) : ''
+
+    // CẤM ngắt sau từ hạn định (mạo từ, sở hữu)
+    if (DETERMINERS.has(cl1)) return -9999
+    // CẤM ngắt ngay sau giới từ
+    if (PREPOSITIONS.has(cl1)) return -9999
+    // CẤM ngắt sau trợ động từ / modal verb
+    if (AUXILIARY_VERBS.has(cl1)) return -9999
+    // CẤM ngắt sau 'to'
+    if (cl1 === 'to') return -9999
+    // CẤM ngắt sau 'not' / 'never'
+    if (cl1 === 'not' || cl1 === 'never') return -9999
+    // CẤM tách cụm động từ đi liền giới từ (phrasal verbs)
+    if (BOUND_VERB_PREP_PAIRS.has(`${cl1} ${cl2}`)) return -9999
+    // CẤM tách các cụm cố định
+    if (BOUND_PHRASES.has(`${cl1} ${cl2}`)) return -9999
+
+    // CẤM ngắt giữa động từ và tiểu từ / giới từ đi liền kề (phrasal verbs & verb-preposition attachments)
+    const isVerb =
+      COMMON_VERBS.has(cl1) ||
+      COGNITIVE_REPORTING_VERBS.has(cl1) ||
+      cl1.endsWith('ing') ||
+      cl1.endsWith('ed')
+    if (isVerb && (PARTICLES.has(cl2) || PREPOSITIONS.has(cl2))) {
+      return -9999
+    }
+
+    let score = 0
+
+    // Mệnh đề phụ thuộc (Subordinating conjunctions)
+    if (SUBORDINATING.has(cl2)) {
+      score += 85
+    } else if (cl2 === 'even' && (cl3 === 'though' || cl3 === 'if')) {
+      score += 85
+    } else if (cl2 === 'in' && cl3 === 'order') {
+      score += 85
+    } else if (cl2 === 'as' && (cl3 === 'soon' || cl3 === 'long')) {
+      score += 85
+    } else if ((cl2 === 'only' || cl2 === 'just' || cl2 === 'simply') && cl3 === 'because') {
+      score += 85
+    }
+
+    // Mệnh đề danh ngữ lược bỏ 'that' (Contact clause): động từ nhận thức/tường thuật + đại từ chủ ngữ hoặc từ hạn định
+    // Ví dụ: "I realize / I come on a little strong...", "I think / you're amazing"
+    if (COGNITIVE_REPORTING_VERBS.has(cl1) && (SUBJECT_PRONOUNS.has(cl2) || DETERMINERS.has(cl2))) {
+      score += 75
+    }
+
+    // Đại từ quan hệ / từ để hỏi dẫn mệnh đề phụ
+    if (RELATIVE_WH.has(cl2) && i >= 1) {
+      score += 70
+    }
+
+    // Từ 'that' dẫn mệnh đề danh ngữ / quan hệ
+    if (cl2 === 'that') {
+      if (COGNITIVE_REPORTING_VERBS.has(cl1) || SUBJECT_PRONOUNS.has(cl3)) {
+        score += 70
+      }
+    }
+
+    // Liên từ kết hợp (Coordinating conjunctions: and, but, or, so...)
+    if (COORDINATING.has(cl2)) {
+      const subjectStarters = new Set([
+        'i',
+        'he',
+        'she',
+        'it',
+        'we',
+        'they',
+        'you',
+        'there',
+        'the',
+        'this',
+        'that',
+      ])
+      if (subjectStarters.has(cl3) || AUXILIARY_VERBS.has(cl3) || cl3 === 'it') {
+        score += 65
+      } else if (i >= 2 && seg.length - (i + 1) >= 2) {
+        score += 45
+      }
+    }
+
+    // Từ nối / Chuyển ý (Discourse markers)
+    if (DISCOURSE_MARKERS.has(cl2)) {
+      score += 75
+    }
+
+    // Giới từ mở đầu cụm trạng ngữ (Prepositional phrases) - chỉ ngắt khi KHÔNG đi liền ngay sau động từ
+    if (PREPOSITIONS.has(cl2) && cl2 !== 'of' && !isVerb) {
+      if (i >= 2 && seg.length - (i + 1) >= 2) {
+        score += 45
+      }
+    }
+
+    // Động từ nguyên mẫu chỉ mục đích (to + verb)
+    if (cl2 === 'to' && cl3 && !DETERMINERS.has(cl3) && !PREPOSITIONS.has(cl3)) {
+      if (i >= 2 && seg.length - (i + 1) >= 2) {
+        score += 45
+      }
+    }
+
+    // Ưu tiên các điểm chia cân bằng độ dài cụm (3-6 từ)
+    const mid = seg.length / 2
+    const distFromMid = Math.abs(i + 1 - mid)
+    const balanceBonus = Math.max(0, 20 - distFromMid * 4)
+    score += balanceBonus
+
+    // Phạt nặng nếu để lại cụm quá ngắn (< 2 từ) ở hai bên
+    const leftLen = i + 1
+    const rightLen = seg.length - (i + 1)
+    if (leftLen < 2 || rightLen < 2) {
+      score -= 50
+    }
+
+    return score
+  }
+
+  // Bước 3: Tinh chỉnh chia nhỏ các đoạn dài (> 6 từ)
+  const refineSegment = (seg: string[]): string[][] => {
+    if (seg.length <= 6) {
+      return [seg]
+    }
+
+    let bestIdx = -1
+    let bestScore = 0
+
+    for (let i = 0; i < seg.length - 1; i++) {
+      const s = scoreBoundary(seg, i)
+      if (s > bestScore) {
+        bestScore = s
+        bestIdx = i
+      }
+    }
+
+    if (bestIdx !== -1 && bestScore > 0) {
+      const left = seg.slice(0, bestIdx + 1)
+      const right = seg.slice(bestIdx + 1)
+      return [...refineSegment(left), ...refineSegment(right)]
+    }
+
+    // Fallback: Tìm điểm ngắt an toàn gần trung tâm nhất không vi phạm quy tắc cấm
+    const mid = Math.floor(seg.length / 2)
+    let fallbackIdx = mid - 1
+    for (let offset = 0; offset < mid; offset++) {
+      for (const idx of [mid - 1 + offset, mid - 1 - offset]) {
+        if (idx >= 1 && idx < seg.length - 2) {
+          const s = scoreBoundary(seg, idx)
+          if (s > -1000) {
+            fallbackIdx = idx
+            break
+          }
+        }
+      }
+      if (fallbackIdx !== mid - 1) break
+    }
+
+    const left = seg.slice(0, fallbackIdx + 1)
+    const right = seg.slice(fallbackIdx + 1)
+    return [left, right]
+  }
+
+  const finalGroups: string[][] = []
+  for (const seg of initialSegments) {
+    finalGroups.push(...refineSegment(seg))
+  }
+
+  return finalGroups
+}
+
+/**
  * Phân tích câu thành chuỗi token tích hợp đồng thời cả 4 kỹ thuật
+ * Trong đó kỹ thuật Shadowing chia câu theo các cụm từ có ý nghĩa (Thought Groups) chuẩn.
  */
 const buildUnifiedSentence = (
   sentence: string,
-  chunkSize: number = 3,
 ): {
   tokens: IUnifiedToken[]
   pattern: 'falling' | 'rising' | 'fall-rise'
@@ -214,10 +946,11 @@ const buildUnifiedSentence = (
       ? 'rising'
       : 'falling'
 
-  const chunks: string[] = []
-  for (let i = 0; i < words.length; i += chunkSize) {
-    chunks.push(words.slice(i, i + chunkSize).join(' '))
-  }
+  const thoughtGroupWordArrays = splitIntoThoughtGroups(words)
+  const chunks: string[] = thoughtGroupWordArrays.map((g) => g.join(' '))
+
+  let currentGroupIdx = 0
+  let wordInGroupIdx = 0
 
   const tokens: IUnifiedToken[] = words.map((word, i) => {
     const cleanWord = stripHtml(word).replace(/[^a-zA-Z]/g, '')
@@ -240,8 +973,15 @@ const buildUnifiedSentence = (
     let tone: 'up' | 'down' | 'neutral' = 'neutral'
     if (i === n - 1) tone = pattern === 'rising' ? 'up' : 'down'
 
-    const chunkIndex = Math.floor(i / chunkSize)
-    const isChunkEnd = (i + 1) % chunkSize === 0 || i === n - 1
+    const group = thoughtGroupWordArrays[currentGroupIdx] || []
+    const isChunkEnd = wordInGroupIdx === group.length - 1 || i === n - 1
+    const chunkIndex = currentGroupIdx
+
+    wordInGroupIdx++
+    if (wordInGroupIdx >= group.length && currentGroupIdx < thoughtGroupWordArrays.length - 1) {
+      currentGroupIdx++
+      wordInGroupIdx = 0
+    }
 
     return {
       word,
@@ -264,7 +1004,7 @@ const TIPS: string[] = [
   'Nối âm: Khi phụ âm cuối gặp nguyên âm đầu của từ kế tiếp, hãy phát âm liền mạch (pick it up → pi·ki·tup).',
   'Trọng âm: Nhấn mạnh vào từ chứa nội dung chính (danh từ, động từ) và lướt nhẹ các từ chức năng (a, an, the, in, to).',
   'Ngữ điệu: Lên giọng ↗ ở cuối câu hỏi Yes/No; xuống giọng ↘ ở câu trần thuật hoặc câu hỏi bắt đầu bằng WH-.',
-  'Shadowing: Chia câu thành các cụm nghĩa nhỏ (chunks) 2-4 từ, nghe và nhại lại ngay lập tức theo ngữ điệu người bản xứ.',
+  'Shadowing: Chia câu thành các cụm từ có ý nghĩa (thought groups) theo nhịp thở tự nhiên, nghe và nhại lại ngay lập tức theo ngữ điệu người bản xứ.',
 ]
 
 const getPronunciationSessionKey = (uid?: string) =>
@@ -365,14 +1105,6 @@ export const Shadowing: React.FC<ShadowingProps> = ({
   })
   const [shadowChunk, setShadowChunk] = useState<number | null>(null)
   const [shadowPlaying, setShadowPlaying] = useState(false)
-  const [chunkSize, setChunkSize] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('pronunciation_chunk_size')
-      if (saved) return Number(saved) || 4
-    } catch {}
-    return 4
-  })
-  const [showTip, setShowTip] = useState(false)
   const [revealed, setRevealed] = useState(false)
 
   // Track latest state for safe persistence
@@ -401,13 +1133,6 @@ export const Shadowing: React.FC<ShadowingProps> = ({
     setSpeed(v)
     try {
       localStorage.setItem('pronunciation_speed', String(v))
-    } catch {}
-  }, [])
-
-  const handleChunkSizeChange = useCallback((val: number) => {
-    setChunkSize(val)
-    try {
-      localStorage.setItem('pronunciation_chunk_size', String(val))
     } catch {}
   }, [])
 
@@ -500,10 +1225,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
   const plainTranslation = useMemo(() => stripHtml(currentExample?.translation), [currentExample])
 
   // Phân tích đồng thời cả 4 kỹ thuật
-  const { tokens, pattern, chunks } = useMemo(
-    () => buildUnifiedSentence(plainOrigin, chunkSize),
-    [plainOrigin, chunkSize],
-  )
+  const { tokens, chunks } = useMemo(() => buildUnifiedSentence(plainOrigin), [plainOrigin])
 
   // Lưu session (danh sách câu và câu hiện tại) vào localDb & localStorage
   const saveSession = useCallback(
@@ -671,11 +1393,23 @@ export const Shadowing: React.FC<ShadowingProps> = ({
     fetchExamples(false)
   }, [normalizedItems, fetchExamples])
 
+  // Dừng mọi âm thanh đang phát
+  const handleStop = useCallback(() => {
+    geminiTtsService.stop()
+    setSpeaking(false)
+    setShadowPlaying(false)
+    setShadowChunk(null)
+  }, [])
+
   // Phát âm toàn câu hoặc 1 đoạn với Gemini TTS
   const handleSpeak = useCallback(
     async (text?: string, rate?: number) => {
       const t = text || plainOrigin
-      if (!t || speaking) return
+      if (!t) return
+      if (speaking || shadowPlaying) {
+        handleStop()
+        return
+      }
       setSpeaking(true)
       try {
         await geminiTtsService.playSpeech(t, {
@@ -688,15 +1422,39 @@ export const Shadowing: React.FC<ShadowingProps> = ({
         setSpeaking(false)
       }
     },
-    [plainOrigin, speaking, speed],
+    [plainOrigin, speaking, shadowPlaying, speed, handleStop],
   )
 
-  const handleStop = useCallback(() => {
-    geminiTtsService.stop()
-    setSpeaking(false)
-    setShadowPlaying(false)
-    setShadowChunk(null)
-  }, [])
+  // Phát âm từng cụm từ có ý nghĩa (Thought Group) để người học nghe và nhại lại
+  const handlePlayChunk = useCallback(
+    async (chunkIdx: number, chunkText: string) => {
+      if (shadowPlaying && shadowChunk === chunkIdx) {
+        handleStop()
+        return
+      }
+      handleStop()
+      setShadowChunk(chunkIdx)
+      setShadowPlaying(true)
+      try {
+        await geminiTtsService.playSpeech(chunkText, {
+          voice: 'Aoede',
+          playbackRate: speed,
+          onEnd: () => {
+            setShadowPlaying(false)
+            setShadowChunk(null)
+          },
+          onError: () => {
+            setShadowPlaying(false)
+            setShadowChunk(null)
+          },
+        })
+      } catch {
+        setShadowPlaying(false)
+        setShadowChunk(null)
+      }
+    },
+    [handleStop, shadowPlaying, shadowChunk, speed],
+  )
 
   // Chuyển câu trước / tiếp
   const handleNext = useCallback(() => {
@@ -862,7 +1620,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
           }}
         >
           {/* Header */}
-          <Flex justify='space-between' align='center' style={{ marginBottom: token.size * 0.75 }}>
+          <Flex justify='space-between' align='center' style={{ marginBottom: token.size * 0.5 }}>
             <Flex align='center' gap={8}>
               <Title level={5} style={{ margin: 0, fontSize: 15 }}>
                 Luyện Nói & Ngữ Âm
@@ -875,14 +1633,6 @@ export const Shadowing: React.FC<ShadowingProps> = ({
             </Flex>
 
             <Flex gap={4} align='center'>
-              <Tooltip title='Mẹo luyện phát âm'>
-                <Button
-                  type='text'
-                  size='small'
-                  icon={<BulbOutlined style={{ color: '#faad14' }} />}
-                  onClick={() => setShowTip((p) => !p)}
-                />
-              </Tooltip>
               {(normalizedItems.length !== 1 || Boolean(onReload)) && (
                 <Button
                   size='small'
@@ -895,61 +1645,43 @@ export const Shadowing: React.FC<ShadowingProps> = ({
           </Flex>
 
           {/* Tip Panel */}
-          {showTip && (
-            <div className={styles.tipBox}>
-              <BulbOutlined style={{ color: '#faad14', flexShrink: 0, marginTop: 2 }} />
-              <Text style={{ fontSize: 13 }}>{randomTip}</Text>
-            </div>
-          )}
+          <div className={styles.tipBox}>
+            <BulbOutlined style={{ color: '#faad14', flexShrink: 0, marginTop: 2 }} />
+            <Text style={{ fontSize: 13 }}>{randomTip}</Text>
+          </div>
 
           {/* ── UNIFIED SENTENCE VISUALIZER ── */}
           <div className={styles.visualizerBox}>
             {/* Header thông tin ngữ điệu & chunk khi được kích hoạt */}
             <div className={styles.visualizerHeader}>
-              {activeTechniques.intonation && (
-                <Tag
-                  color={
-                    pattern === 'rising' ? 'green' : pattern === 'fall-rise' ? 'orange' : 'blue'
-                  }
-                  icon={<RiseOutlined />}
-                  style={{ borderRadius: 6, fontWeight: 600, fontSize: 12, whiteSpace: 'normal' }}
-                >
-                  {pattern === 'rising'
-                    ? '↗ Lên giọng cuối câu (Yes/No Question)'
-                    : pattern === 'fall-rise'
-                      ? '↘↗ Lên - xuống giọng kết hợp'
-                      : '↘ Xuống giọng cuối câu (Trần thuật / WH-question)'}
-                </Tag>
-              )}
-
-              {activeTechniques.shadow && chunks.length > 0 && (
-                <Tag color='purple' style={{ borderRadius: 6, fontSize: 11 }}>
-                  {chunks.length} cụm nhịp điệu (Chunks)
-                </Tag>
-              )}
-
-              {/* Shadowing: Thanh lặp lại từng cụm khi kích hoạt Shadowing */}
+              {/* Shadowing: Danh sách các cụm từ để luyện nhại */}
               {activeTechniques.shadow && chunks.length > 0 && (
                 <div className={styles.shadowChunksBar}>
                   <Flex justify='space-between' align='center' wrap='wrap' gap={6}>
-                    <Text style={{ fontSize: 12, fontWeight: 600, color: '#722ed1' }}>
-                      Luyện nhại từng cụm (Shadowing):
+                    <Text style={{ fontSize: 12, fontWeight: 600 }}>
+                      Luyện shadowing từng cụm từ:
                     </Text>
-                    <Flex align='center' gap={6}>
-                      <Text style={{ fontSize: 11, color: token.colorTextSecondary }}>Độ dài:</Text>
-                      <Select
-                        size='small'
-                        value={chunkSize}
-                        onChange={handleChunkSizeChange}
-                        style={{ width: 80 }}
-                        options={[
-                          { label: '3 từ', value: 3 },
-                          { label: '4 từ', value: 4 },
-                          { label: '5 từ', value: 5 },
-                        ]}
-                      />
-                    </Flex>
                   </Flex>
+                  <div className={styles.shadowChunksList} style={{ marginTop: 4 }}>
+                    {chunks.map((chunk, cIdx) => {
+                      const isChunkActive = shadowChunk === cIdx && shadowPlaying
+                      return (
+                        <button
+                          key={cIdx}
+                          type='button'
+                          className={clsx(
+                            styles.shadowChunkItem,
+                            isChunkActive && styles.shadowChunkActive,
+                          )}
+                          onClick={() => handlePlayChunk(cIdx, chunk)}
+                          title='Bấm để nghe riêng cụm này'
+                        >
+                          {isChunkActive ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                          <span>{chunk}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -1561,7 +2293,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
             {activeTechniques.shadow && (
               <Flex align='center' gap={6}>
                 <span style={{ color: '#722ed1', fontWeight: 700, fontSize: 14 }}>/</span>
-                <Text style={{ fontSize: 12 }}>Ngắt cụm nhịp điệu (Chunk)</Text>
+                <Text style={{ fontSize: 12 }}>Ngắt cụm từ</Text>
               </Flex>
             )}
           </Flex>

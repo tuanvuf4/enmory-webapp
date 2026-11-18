@@ -421,30 +421,18 @@ export const Item: React.FC<IProps> = ({
                 <h2
                   className={clsx(styles.originTitle, isDefect(data) && styles.originTitleDefect)}
                 >
-                  {data.origin}
+                  {data.origin}{' '}
+                  <Tooltip title={isCopied ? 'Copied' : 'Copy'}>
+                    <Button
+                      type={'text'}
+                      className={clsx(styles.titleCopyBtn, isCopied && styles.titleCopyBtnCopied)}
+                      onClick={handleCopyOrigin}
+                    >
+                      {isCopied ? <CheckOutlined /> : <CopyOutlined />}
+                    </Button>
+                  </Tooltip>
                 </h2>
               )}
-
-              <Tooltip title={isCopied ? 'Copied' : 'Copy'}>
-                <Button
-                  type={'text'}
-                  className={clsx(styles.titleCopyBtn, isCopied && styles.titleCopyBtnCopied)}
-                  onClick={handleCopyOrigin}
-                >
-                  {isCopied ? <CheckOutlined /> : <CopyOutlined />}
-                </Button>
-              </Tooltip>
-
-              <Button
-                type={'text'}
-                className={clsx(
-                  styles.titleAudioBtn,
-                  isSpeakingOrigin && styles.titleAudioBtnPlaying,
-                )}
-                onClick={handleQuickSpeak}
-              >
-                <SoundOutlined className={isSpeakingOrigin ? appStyle.soundPlaying : undefined} />
-              </Button>
             </div>
 
             <div className={styles.headerActions}>
@@ -550,6 +538,17 @@ export const Item: React.FC<IProps> = ({
                     <span>{data.user.firstName}</span>
                   </div>
                 )}
+
+                <Button
+                  type={'text'}
+                  className={clsx(
+                    styles.titleAudioBtn,
+                    isSpeakingOrigin && styles.titleAudioBtnPlaying,
+                  )}
+                  onClick={handleQuickSpeak}
+                >
+                  <SoundOutlined className={isSpeakingOrigin ? appStyle.soundPlaying : undefined} />
+                </Button>
               </Flex>
             </Flex>
           )}

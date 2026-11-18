@@ -42,21 +42,23 @@
 /* ── Practice Card ── */
 .practiceCard {
   border-radius: 14px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
 }
 
 /* ── Tip Box ── */
 .tipBox {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 16px;
   background: #fffbe6;
   border: 1px solid #ffe58f;
   border-radius: 8px;
   padding: 10px 12px;
-  margin-bottom: 12px;
   font-size: 13px;
   line-height: 1.5;
+  margin-bottom: 8px;
 }
 
 :global(.dark) .tipBox {
@@ -69,12 +71,11 @@
   background: rgba(0, 0, 0, 0.02);
   border-radius: 12px;
   min-height: 110px;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   border: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px;
+  padding: 0 12px 12px;
 }
 
 :global(.dark) .visualizerBox {
@@ -100,6 +101,7 @@
   column-gap: 2px;
   line-height: 1.8;
   padding: 6px 0;
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
 }
 
 .wordContainer {
@@ -227,8 +229,6 @@
   gap: 8px;
   padding: 8px 0;
   width: 100%;
-  border-top: 1px dashed rgba(0, 0, 0, 0.08);
-  border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
 }
 
 :global(.dark) .shadowChunksBar {
@@ -245,14 +245,18 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 8px;
   border: 1px solid rgba(114, 46, 209, 0.25);
   background: rgba(114, 46, 209, 0.04);
+  color: inherit;
+  font-family: inherit;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+  outline: none;
   transition: all 0.2s;
+  user-select: none;
 }
 
 .shadowChunkItem:hover {
@@ -264,6 +268,23 @@
   background: #722ed1 !important;
   color: #fff !important;
   border-color: #722ed1 !important;
+  box-shadow: 0 2px 8px rgba(114, 46, 209, 0.25);
+}
+
+.shadowChunkActive span,
+.shadowChunkActive :global(.anticon) {
+  color: #fff !important;
+}
+
+:global(.dark) .shadowChunkItem {
+  background: rgba(114, 46, 209, 0.12);
+  border-color: rgba(114, 46, 209, 0.35);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+:global(.dark) .shadowChunkItem:hover {
+  background: rgba(114, 46, 209, 0.22);
+  border-color: #9254de;
 }
 
 /* ── Translation ── */

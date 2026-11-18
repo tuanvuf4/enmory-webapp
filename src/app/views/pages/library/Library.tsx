@@ -146,7 +146,7 @@ export const Library: React.FC = () => {
               <Space direction='vertical' size='middle' align='center'>
                 <DatabaseOutlined style={{ fontSize: 48, color: token.colorPrimary }} />
                 <Typography.Title level={4} style={{ margin: 0 }}>
-                  No Local Data Found
+                  No Data
                 </Typography.Title>
                 <Button
                   type='primary'
@@ -156,7 +156,7 @@ export const Library: React.FC = () => {
                   onClick={() => syncNow(false)}
                   style={{ marginTop: 8 }}
                 >
-                  Sync from Cloud
+                  Sync
                 </Button>
               </Space>
             ) : (

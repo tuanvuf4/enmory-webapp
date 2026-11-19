@@ -10,10 +10,11 @@ import {
 } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { firebaseAuthService } from '@/services/firebase/authService'
-import { localDb } from './db'
+import { localDb, IListeningHistoryItem } from './db'
 import { IItem } from '@/models/item.model'
 import { IBlogItem } from '@/models/blog.model'
 import { mapDocToBlogItem } from '@/services/firebase/api/blog.api'
+import { dictationApi } from '@/services/firebase/api/dictation.api'
 import { invalidateSearchIndex } from './searchEngine'
 import { hydrateItemsWithExamples } from '@/services/firebase/dbIntegration'
 
@@ -24,6 +25,7 @@ const UNSYNCED_META_PREFIX = 'last_unsynced_records_'
 const COUNT_CACHE_TTL_MS = 60000 // 60 seconds
 const serverItemCountCache = new Map<string, { count: number; timestamp: number }>()
 const serverBlogCountCache = new Map<string, { count: number; timestamp: number }>()
+const serverDictationCountCache = new Map<string, { count: number; timestamp: number }>()
 
 // In-memory cache for detectDataChanges to prevent rapid redundant checks
 let lastDetectionCache: { uid: string; result: IDataChanges; timestamp: number } | null = null
@@ -31,7 +33,7 @@ const DETECTION_CACHE_TTL_MS = 30000 // 30 seconds
 
 export interface IUnsyncedRecord {
   id: string
-  type: 'item' | 'blog'
+  type: 'item' | 'blog' | 'dictation'
   title: string
   reason: string
   updatedAt?: number
@@ -58,11 +60,19 @@ export interface IDataChanges {
     updatedCount: number
     deletedCount: number
   }
+  dictations: {
+    hasChanges: boolean
+    localCount: number
+    serverCount: number
+    diffCount: number
+    updatedCount: number
+    deletedCount: number
+  }
   totalChanges: number
 }
 
 export type SyncMode = 'sync' | 'full-sync'
-export type SyncType = 'all' | 'item' | 'blog'
+export type SyncType = 'all' | 'item' | 'blog' | 'dictation'
 
 export interface ISyncOptions {
   mode?: SyncMode
@@ -80,9 +90,11 @@ export interface ISyncResult {
   updatedExamples: number
   updatedBlogs: number
   deletedBlogs: number
+  updatedDictations: number
   totalItems: number
   totalExamples: number
   totalBlogs: number
+  totalDictations: number
   timestamp: number
   unsyncedRecords: IUnsyncedRecord[]
   message?: string
@@ -116,11 +128,36 @@ export const syncService = {
     if (uid) {
       serverItemCountCache.delete(uid)
       serverBlogCountCache.delete(uid)
+      serverDictationCountCache.delete(uid)
       if (lastDetectionCache?.uid === uid) lastDetectionCache = null
     } else {
       serverItemCountCache.clear()
       serverBlogCountCache.clear()
+      serverDictationCountCache.clear()
       lastDetectionCache = null
+    }
+  },
+
+  /**
+   * Get total count of active dictation practice records on Firebase Firestore for a user.
+   * Memoized for 60 seconds to eliminate redundant Firestore getCountFromServer queries.
+   */
+  async getServerDictationCount(uid: string, force = false): Promise<number> {
+    if (!uid) return 0
+    if (!force) {
+      const cached = serverDictationCountCache.get(uid)
+      if (cached && Date.now() - cached.timestamp < COUNT_CACHE_TTL_MS) {
+        return cached.count
+      }
+    }
+
+    try {
+      const count = await dictationApi.getServerDictationCount(uid)
+      serverDictationCountCache.set(uid, { count, timestamp: Date.now() })
+      return count
+    } catch (err) {
+      console.warn('getServerDictationCount failed:', err)
+      return 0
     }
   },
 
@@ -221,15 +258,26 @@ export const syncService = {
    */
   async clearLocalData(uid: string): Promise<void> {
     this.clearCountCache(uid)
-    await localDb.transaction('rw', localDb.items, localDb.blogs, localDb.syncMeta, async () => {
-      await localDb.items.where('uid').equals(uid).delete()
-      await localDb.blogs.where('uid').equals(uid).delete()
-      await localDb.syncMeta.delete(`${SYNC_META_PREFIX}${uid}`)
-      await localDb.syncMeta.delete(`${UNSYNCED_META_PREFIX}${uid}`)
-    })
+    await localDb.transaction(
+      'rw',
+      localDb.items,
+      localDb.blogs,
+      localDb.listeningHistory,
+      localDb.syncMeta,
+      async () => {
+        await localDb.items.where('uid').equals(uid).delete()
+        await localDb.blogs.where('uid').equals(uid).delete()
+        await localDb.listeningHistory.where('uid').equals(uid).delete()
+        await localDb.syncMeta.delete(`${SYNC_META_PREFIX}${uid}`)
+        await localDb.syncMeta.delete(`${UNSYNCED_META_PREFIX}${uid}`)
+      },
+    )
     localStorage.removeItem(`${SYNC_META_PREFIX}${uid}`)
     localStorage.removeItem(`${UNSYNCED_META_PREFIX}${uid}`)
     invalidateSearchIndex()
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('enmory:dictation-updated'))
+    }
   },
 
   /**
@@ -309,11 +357,13 @@ export const syncService = {
     const targetType: SyncType = options?.type || 'all'
     const syncBlogs = targetType === 'all' || targetType === 'blog'
     const syncItems = targetType === 'all' || targetType === 'item'
+    const syncDictations = targetType === 'all' || targetType === 'dictation'
     const now = Date.now()
 
     let updatedItems = 0
     let deletedItems = 0
     let updatedExamples = 0
+    let updatedDictations = 0
     const unsyncedRecords: IUnsyncedRecord[] = []
 
     // ==========================================
@@ -801,6 +851,137 @@ export const syncService = {
       }
     }
 
+    // ==========================================
+    // 3. SYNC DICTATIONS
+    // ==========================================
+    if (syncDictations) {
+      options?.onProgress?.('Sync: Synchronizing dictation practice records...')
+      try {
+        // Step 0: Ensure any local records without uid are assigned current uid
+        const unassigned = await localDb.listeningHistory.filter((rec) => !rec.uid).toArray()
+        if (unassigned.length > 0) {
+          await Promise.all(
+            unassigned.map((rec) => rec.id && localDb.listeningHistory.update(rec.id, { uid })),
+          )
+        }
+
+        // Step 1: Upload unuploaded local dictation records
+        const unuploaded = await localDb.listeningHistory
+          .where('uid')
+          .equals(uid)
+          .filter((rec) => !rec.docId)
+          .toArray()
+
+        if (unuploaded.length > 0) {
+          options?.onProgress?.(
+            `Sync: Uploading ${unuploaded.length} local dictation records to cloud...`,
+          )
+          const uploadedMap = await dictationApi.batchUploadDictations(unuploaded)
+          for (const [localId, docId] of uploadedMap.entries()) {
+            await localDb.listeningHistory.update(localId, { docId })
+          }
+          updatedDictations += uploadedMap.size
+        }
+
+        // Step 2: Download dictation records from Firestore
+        // Always fetch all cloud dictations when syncing specifically 'dictation', or in full-sync,
+        // or if local has 0 records, to guarantee missing cloud records are pulled down cleanly.
+        const localCountBefore = await localDb.listeningHistory.where('uid').equals(uid).count()
+        const shouldFetchAll =
+          isFullSync || targetType === 'dictation' || !lastSyncTime || localCountBefore === 0
+
+        const since = shouldFetchAll ? undefined : lastSyncTime
+        options?.onProgress?.(
+          shouldFetchAll
+            ? 'Full Sync: Fetching all dictations from cloud...'
+            : 'Sync: Checking for updated dictations from cloud...',
+        )
+        const cloudDictations = await dictationApi.getDictations(uid, since)
+
+        if (cloudDictations.length > 0) {
+          if (isFullSync && targetType === 'dictation') {
+            await localDb.listeningHistory.where('uid').equals(uid).delete()
+            const toInsert = cloudDictations.map((cd) => ({
+              uid,
+              docId: cd.docId,
+              date: cd.date,
+              timestamp: cd.timestamp,
+              sentenceId: cd.sentenceId,
+              sentenceOrigin: cd.sentenceOrigin,
+              userText: cd.userText,
+              accuracy: cd.accuracy,
+              isPerfect: cd.isPerfect,
+              sourceType: cd.sourceType,
+              voice: cd.voice,
+              created_date: cd.created_date || cd.timestamp,
+              last_update: cd.last_update || cd.timestamp,
+            }))
+            await localDb.listeningHistory.bulkAdd(toInsert)
+            updatedDictations = toInsert.length
+          } else {
+            const localRecords = await localDb.listeningHistory.where('uid').equals(uid).toArray()
+            const existingDocIds = new Set(localRecords.map((r) => r.docId).filter(Boolean))
+            const existingKeyMap = new Map<string, IListeningHistoryItem>()
+            for (const r of localRecords) {
+              const k = `${r.timestamp || r.created_date || r.date}_${r.sentenceOrigin}`
+              existingKeyMap.set(k, r)
+            }
+
+            const newToInsert: IListeningHistoryItem[] = []
+            for (const cd of cloudDictations) {
+              if (cd.docId && existingDocIds.has(cd.docId)) {
+                continue
+              }
+              const key = `${cd.timestamp || cd.created_date || cd.date}_${cd.sentenceOrigin}`
+              const matchingLocal = existingKeyMap.get(key)
+              if (matchingLocal) {
+                // If local record exists but didn't have docId, link it to prevent future duplicates
+                if (!matchingLocal.docId && cd.docId && matchingLocal.id) {
+                  await localDb.listeningHistory.update(matchingLocal.id, { docId: cd.docId })
+                  existingDocIds.add(cd.docId)
+                }
+                continue
+              }
+
+              newToInsert.push({
+                uid,
+                docId: cd.docId,
+                date: cd.date,
+                timestamp: cd.timestamp,
+                sentenceId: cd.sentenceId,
+                sentenceOrigin: cd.sentenceOrigin,
+                userText: cd.userText,
+                accuracy: cd.accuracy,
+                isPerfect: cd.isPerfect,
+                sourceType: cd.sourceType,
+                voice: cd.voice,
+                created_date: cd.created_date || cd.timestamp,
+                last_update: cd.last_update || cd.timestamp,
+              })
+            }
+
+            if (newToInsert.length > 0) {
+              await localDb.listeningHistory.bulkAdd(newToInsert)
+              updatedDictations += newToInsert.length
+            }
+          }
+        }
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('enmory:dictation-updated'))
+        }
+      } catch (dictErr: any) {
+        console.warn('Failed to sync dictations:', dictErr)
+        unsyncedRecords.push({
+          id: 'dictation_sync',
+          type: 'dictation',
+          title: 'Dictation Practice Sync',
+          reason: dictErr?.message || 'Failed to sync dictations',
+          updatedAt: Date.now(),
+        })
+      }
+    }
+
     // Persist latest unsynced records to syncMeta and localStorage
     try {
       await localDb.syncMeta.put({ key: `${UNSYNCED_META_PREFIX}${uid}`, value: unsyncedRecords })
@@ -813,10 +994,13 @@ export const syncService = {
     invalidateSearchIndex()
     if (syncItems) serverItemCountCache.delete(uid)
     if (syncBlogs) serverBlogCountCache.delete(uid)
+    if (syncDictations) serverDictationCountCache.delete(uid)
+    lastDetectionCache = null
     if (targetType === 'all') this.clearCountCache(uid)
 
     const totalItems = await localDb.items.where('uid').equals(uid).count()
     const totalBlogs = await localDb.blogs.where('uid').equals(uid).count()
+    const totalDictations = await localDb.listeningHistory.where('uid').equals(uid).count()
 
     const allLocalItems = await localDb.items.where('uid').equals(uid).toArray()
     const totalExamples = allLocalItems.reduce(
@@ -835,9 +1019,11 @@ export const syncService = {
       updatedExamples,
       updatedBlogs,
       deletedBlogs: blogIdsToDelete.length,
+      updatedDictations,
       totalItems,
       totalExamples,
       totalBlogs,
+      totalDictations,
       timestamp: now,
       unsyncedRecords,
     }
@@ -911,6 +1097,14 @@ export const syncService = {
         updatedCount: 0,
         deletedCount: 0,
       },
+      dictations: {
+        hasChanges: false,
+        localCount: 0,
+        serverCount: 0,
+        diffCount: 0,
+        updatedCount: 0,
+        deletedCount: 0,
+      },
       totalChanges: 0,
     }
 
@@ -928,15 +1122,16 @@ export const syncService = {
       const hasSyncedBefore = lastSyncTime > 0
 
       // Read local counts directly from IndexedDB (0 network/Firestore cost)
-      const [localItemCount, localBlogCount] = await Promise.all([
+      const [localItemCount, localBlogCount, localDictationCount] = await Promise.all([
         localDb.items.where('uid').equals(uid).count(),
         localDb.blogs.where('uid').equals(uid).count(),
+        localDb.listeningHistory.where('uid').equals(uid).count(),
       ])
 
       // Case A: Device has never synced before
       if (!hasSyncedBefore) {
         // Fast probe with limit(1) to check if cloud has any data without downloading collections
-        const [cloudItemSnap, cloudBlogSnap] = await Promise.all([
+        const [cloudItemSnap, cloudBlogSnap, cloudDictationSnap] = await Promise.all([
           getDocs(query(collection(db, dbCollections.items), where('uid', '==', uid), limit(1))),
           getDocs(
             query(
@@ -945,52 +1140,124 @@ export const syncService = {
               limit(1),
             ),
           ),
+          getDocs(
+            query(collection(db, dbCollections.dictations), where('uid', '==', uid), limit(1)),
+          ),
         ])
 
         const hasCloudItems = !cloudItemSnap.empty
         const hasCloudBlogs = !cloudBlogSnap.empty
+        const hasCloudDictations = !cloudDictationSnap.empty
 
-        if (!hasCloudItems && !hasCloudBlogs && localItemCount === 0 && localBlogCount === 0) {
+        if (
+          !hasCloudItems &&
+          !hasCloudBlogs &&
+          !hasCloudDictations &&
+          localItemCount === 0 &&
+          localBlogCount === 0 &&
+          localDictationCount === 0
+        ) {
           const res: IDataChanges = {
             ...defaultResult,
             items: { ...defaultResult.items, localCount: localItemCount },
             blogs: { ...defaultResult.blogs, localCount: localBlogCount },
+            dictations: { ...defaultResult.dictations, localCount: localDictationCount },
           }
           lastDetectionCache = { uid, result: res, timestamp: Date.now() }
           return res
         }
 
-        const itemsHasChanges = hasCloudItems || localItemCount > 0
-        const blogsHasChanges = hasCloudBlogs || localBlogCount > 0
+        let itemsHasChanges =
+          (hasCloudItems && localItemCount === 0) || (!hasCloudItems && localItemCount > 0)
+        let serverItemCount = hasCloudItems ? 1 : 0
+        if (hasCloudItems && localItemCount > 0) {
+          serverItemCount = await this.getServerItemCount(uid)
+          itemsHasChanges = serverItemCount !== localItemCount
+        }
+
+        let blogsHasChanges =
+          (hasCloudBlogs && localBlogCount === 0) || (!hasCloudBlogs && localBlogCount > 0)
+        let serverBlogCount = hasCloudBlogs ? 1 : 0
+        if (hasCloudBlogs && localBlogCount > 0) {
+          serverBlogCount = await this.getServerBlogCount(uid)
+          blogsHasChanges = serverBlogCount !== localBlogCount
+        }
+
+        let dictationsHasChanges =
+          (hasCloudDictations && localDictationCount === 0) ||
+          (!hasCloudDictations && localDictationCount > 0)
+        let serverDictationCount = hasCloudDictations ? 1 : 0
+        if (hasCloudDictations && localDictationCount > 0) {
+          serverDictationCount = await this.getServerDictationCount(uid)
+          dictationsHasChanges = serverDictationCount !== localDictationCount
+        }
+
+        if (!itemsHasChanges && !blogsHasChanges && !dictationsHasChanges) {
+          // Local database and cloud counts match. Initialize lastSyncTime so future checks use fast delta path.
+          const now = Date.now()
+          await this.setLastSyncTimestamp(uid, now)
+          const res: IDataChanges = {
+            ...defaultResult,
+            lastSyncTime: now,
+            items: {
+              ...defaultResult.items,
+              localCount: localItemCount,
+              serverCount: serverItemCount,
+            },
+            blogs: {
+              ...defaultResult.blogs,
+              localCount: localBlogCount,
+              serverCount: serverBlogCount,
+            },
+            dictations: {
+              ...defaultResult.dictations,
+              localCount: localDictationCount,
+              serverCount: serverDictationCount,
+            },
+          }
+          lastDetectionCache = { uid, result: res, timestamp: Date.now() }
+          return res
+        }
 
         const res: IDataChanges = {
-          hasChanges: itemsHasChanges || blogsHasChanges,
+          hasChanges: itemsHasChanges || blogsHasChanges || dictationsHasChanges,
           lastSyncTime: null,
           items: {
             hasChanges: itemsHasChanges,
             localCount: localItemCount,
-            serverCount: hasCloudItems ? 1 : 0,
-            diffCount: hasCloudItems ? 1 : 0,
+            serverCount: serverItemCount,
+            diffCount: itemsHasChanges ? Math.abs(serverItemCount - localItemCount) || 1 : 0,
             updatedCount: 0,
             deletedCount: 0,
           },
           blogs: {
             hasChanges: blogsHasChanges,
             localCount: localBlogCount,
-            serverCount: hasCloudBlogs ? 1 : 0,
-            diffCount: hasCloudBlogs ? 1 : 0,
+            serverCount: serverBlogCount,
+            diffCount: blogsHasChanges ? Math.abs(serverBlogCount - localBlogCount) || 1 : 0,
             updatedCount: 0,
             deletedCount: 0,
           },
-          totalChanges: (itemsHasChanges ? 1 : 0) + (blogsHasChanges ? 1 : 0),
+          dictations: {
+            hasChanges: dictationsHasChanges,
+            localCount: localDictationCount,
+            serverCount: serverDictationCount,
+            diffCount: dictationsHasChanges
+              ? Math.abs(serverDictationCount - localDictationCount) || 1
+              : 0,
+            updatedCount: 0,
+            deletedCount: 0,
+          },
+          totalChanges:
+            (itemsHasChanges ? 1 : 0) + (blogsHasChanges ? 1 : 0) + (dictationsHasChanges ? 1 : 0),
         }
         lastDetectionCache = { uid, result: res, timestamp: Date.now() }
         return res
       }
 
       // Case B: Device has synced before (hasSyncedBefore === true)
-      // FAST PATH: Run 3 lightweight parallel probes with limit(1).
-      // If nothing was modified, all 3 return empty -> 0 documents read!
+      // FAST PATH: Run lightweight parallel probes with limit(1).
+      // If nothing was modified, all return empty -> 0 documents read!
       const itemsProbePromise = getDocs(
         query(
           collection(db, dbCollections.items),
@@ -1038,11 +1305,23 @@ export const syncService = {
         }
       })()
 
-      const [itemsProbe, deletedProbe, blogsProbe] = await Promise.all([
-        itemsProbePromise,
-        deletedProbePromise,
-        blogsProbePromise,
-      ])
+      const serverDictationCountPromise = this.getServerDictationCount(uid, force)
+      const unuploadedDictationsPromise = localDb.listeningHistory
+        .where('uid')
+        .equals(uid)
+        .filter((rec) => !rec.docId)
+        .count()
+        .then((cnt) => cnt > 0)
+        .catch(() => false)
+
+      const [itemsProbe, deletedProbe, blogsProbe, serverDictationCount, hasUnuploadedDictations] =
+        await Promise.all([
+          itemsProbePromise,
+          deletedProbePromise,
+          blogsProbePromise,
+          serverDictationCountPromise,
+          unuploadedDictationsPromise,
+        ])
 
       const hasUpdatedItems = Boolean(itemsProbe && !itemsProbe.empty)
       const hasDeletedRecords = Boolean(deletedProbe && !deletedProbe.empty)
@@ -1050,7 +1329,10 @@ export const syncService = {
 
       const itemsHasChanges = hasUpdatedItems || hasDeletedRecords
       const blogsHasChanges = hasUpdatedBlogs
-      const hasChanges = itemsHasChanges || blogsHasChanges
+
+      const dictationCountDiff = Math.abs(serverDictationCount - localDictationCount)
+      const dictationsHasChanges = dictationCountDiff > 0 || Boolean(hasUnuploadedDictations)
+      const hasChanges = itemsHasChanges || blogsHasChanges || dictationsHasChanges
 
       const res: IDataChanges = {
         hasChanges,
@@ -1071,7 +1353,21 @@ export const syncService = {
           updatedCount: hasUpdatedBlogs ? 1 : 0,
           deletedCount: 0,
         },
-        totalChanges: (itemsHasChanges ? 1 : 0) + (blogsHasChanges ? 1 : 0),
+        dictations: {
+          hasChanges: dictationsHasChanges,
+          localCount: localDictationCount,
+          serverCount: serverDictationCount,
+          diffCount: dictationsHasChanges
+            ? dictationCountDiff || (hasUnuploadedDictations ? 1 : 0)
+            : 0,
+          updatedCount:
+            serverDictationCount > localDictationCount
+              ? serverDictationCount - localDictationCount
+              : 0,
+          deletedCount: 0,
+        },
+        totalChanges:
+          (itemsHasChanges ? 1 : 0) + (blogsHasChanges ? 1 : 0) + (dictationsHasChanges ? 1 : 0),
       }
 
       lastDetectionCache = { uid, result: res, timestamp: Date.now() }

@@ -14,6 +14,8 @@ import {
   StopOutlined,
   LoadingOutlined,
   SettingOutlined,
+  EditOutlined,
+  CheckSquareOutlined,
 } from '@ant-design/icons'
 import {
   Button,
@@ -32,12 +34,15 @@ import {
   Alert,
   Popover,
   Segmented,
+  message,
 } from 'antd'
 import clsx from 'clsx'
-import { useSelector } from '@/core/hooks'
-import { localDb } from '@/services/localDb'
+import { useSelector, useChecklist, itemKeys } from '@/core/hooks'
+import { localDb, invalidateSearchIndex } from '@/services/localDb'
 import { exampleApi } from '@/services/firebase/api/example.api'
 import { sentenceListeningApi } from '@/services/firebase/api/sentenceListening.api'
+import { itemApi } from '@/services/firebase/api/item.api'
+import { initItem, meaningItem } from '@/views/features/modals/itemModal'
 import {
   geminiTtsService,
   geminiPronunciationService,
@@ -48,8 +53,10 @@ import {
   useSpeechRecognition,
   computeInstantSpeechStats,
   IInstantSpeechStats,
+  useItemModal,
 } from '@/helpers/hooks'
-import { IExample, IItem } from '@/models/item.model'
+import { useQueryClient } from '@tanstack/react-query'
+import { IExample, IItem, ECategory, EType } from '@/models/item.model'
 import { IChecklistItem } from '@/models/checklist.model'
 import styles from './shadowing.module.scss'
 
@@ -1057,6 +1064,8 @@ export const normalizeToExamples = (
       origin: asItem.origin || '',
       translation,
       itemOrigin: asItem.origin,
+      itemId: ('itemId' in asItem && asItem.itemId ? asItem.itemId : asItem.id) || '',
+      catId: asItem.catId,
     }
     result.push(mainExample)
   }
@@ -1082,7 +1091,19 @@ export const Shadowing: React.FC<ShadowingProps> = ({
   const rawItems = items || initialItems
   const normalizedItems = useMemo(() => normalizeToExamples(rawItems), [rawItems])
   const { token } = theme.useToken()
+  const queryClient = useQueryClient()
+  const { openItemModal } = useItemModal()
   const { user } = useSelector((state) => state.auth)
+
+  const {
+    checklist,
+    addItem: addChecklistItem,
+    removeItem: removeChecklistItem,
+    removeItemByItemId,
+  } = useChecklist()
+
+  const [isTogglingChecklist, setIsTogglingChecklist] = useState<boolean>(false)
+  const [isLoadingEditItem, setIsLoadingEditItem] = useState<boolean>(false)
 
   // Kỹ thuật được kích hoạt qua checkbox (mặc định bật tất cả để người học thấy bức tranh toàn cảnh)
   const [activeTechniques, setActiveTechniques] = useState<IActiveTechniques>(() => {
@@ -1233,6 +1254,30 @@ export const Shadowing: React.FC<ShadowingProps> = ({
   }, [handleFullResetRecording])
 
   const currentExample = examples[currentIndex]
+
+  // Match sentence with checklist entry by itemId or origin text
+  const getChecklistEntry = useCallback(
+    (example?: IExample | null) => {
+      if (!example) return undefined
+      if (example.itemId) {
+        const found = checklist.find((c) => c.itemId === example.itemId || c.id === example.itemId)
+        if (found) return found
+      }
+      const originKey = example.origin?.trim().toLowerCase()
+      if (!originKey) return undefined
+      return checklist.find((c) => c.origin?.trim().toLowerCase() === originKey)
+    },
+    [checklist],
+  )
+
+  const isSentenceInChecklist = useCallback(
+    (example?: IExample | null) => {
+      return Boolean(getChecklistEntry(example))
+    },
+    [getChecklistEntry],
+  )
+
+  const isCurrentInChecklist = isSentenceInChecklist(currentExample)
   const plainOrigin = useMemo(() => stripHtml(currentExample?.origin), [currentExample])
   const plainTranslation = useMemo(() => stripHtml(currentExample?.translation), [currentExample])
 
@@ -1466,10 +1511,236 @@ export const Shadowing: React.FC<ShadowingProps> = ({
   // Dừng mọi âm thanh đang phát
   const handleStop = useCallback(() => {
     geminiTtsService.stop()
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
     setSpeaking(false)
     setShadowPlaying(false)
     setShadowChunk(null)
   }, [])
+
+  // Toggle Checklist for Example/Sentence (persisted in Firestore & localDb cache)
+  const handleToggleChecklist = useCallback(
+    async (exampleToToggle?: IExample) => {
+      const example = exampleToToggle || currentExample
+      if (!example) return
+
+      const existingEntry = getChecklistEntry(example)
+
+      setIsTogglingChecklist(true)
+      try {
+        if (existingEntry) {
+          // Remove from checklist
+          const targetChecklistId = existingEntry.checklistId
+          const targetItemId = existingEntry.itemId || existingEntry.id
+          if (targetChecklistId) {
+            await removeChecklistItem(targetChecklistId)
+          } else if (targetItemId) {
+            await removeItemByItemId(targetItemId)
+          }
+          message.info('Đã xóa câu khỏi Checklist!')
+          return
+        }
+
+        // Add to checklist
+        let targetItem: IItem | undefined
+
+        // 1. Try finding existing item by itemId
+        if (example.itemId) {
+          try {
+            targetItem = await localDb.items.get(example.itemId)
+          } catch (err) {
+            console.warn('Error fetching item by itemId:', err)
+          }
+        }
+
+        // 2. Try finding existing item by origin text in localDb.items
+        if (!targetItem && example.origin) {
+          try {
+            targetItem = await localDb.items
+              .filter((i) => i.origin?.trim().toLowerCase() === example.origin.trim().toLowerCase())
+              .first()
+          } catch (err) {
+            console.warn('Error fetching item by origin:', err)
+          }
+        }
+
+        // 3. If item doesn't exist in Library yet, create it as a Sentence item
+        if (!targetItem) {
+          const newSentenceItem: IItem = {
+            ...initItem,
+            origin: example.origin.trim(),
+            catId: ECategory.SENTENCE,
+            level: 1,
+            meanings: [
+              {
+                ...meaningItem,
+                typeId: EType.ALL,
+                translation: example.translation || '',
+                definition: example.translation || '',
+              },
+            ],
+          }
+          const createRes = await itemApi.createItem(newSentenceItem)
+          if (createRes.isSuccess && createRes.content) {
+            targetItem = createRes.content
+            await localDb.items.put(targetItem)
+            invalidateSearchIndex()
+            queryClient.invalidateQueries({ queryKey: itemKeys.lists() })
+
+            // Link newly created itemId to examples array
+            if (targetItem.id) {
+              const newId = targetItem.id
+              setExamples((prev) => {
+                const next = prev.map((it) =>
+                  it.origin === example.origin ? { ...it, itemId: newId } : it,
+                )
+                saveSession({ items: next })
+                return next
+              })
+            }
+          } else {
+            message.error(createRes.message || 'Cannot create sentence!')
+            return
+          }
+        }
+
+        // 4. Add targetItem to Checklist
+        if (!targetItem) {
+          message.error('Cannot add to Checklist!')
+          return
+        }
+
+        const res = await addChecklistItem(targetItem)
+        if (res.isSuccess) {
+          message.success('Added to Checklist!')
+        } else {
+          message.error(res.message || 'Cannot add to Checklist!')
+        }
+      } catch (err: any) {
+        console.error('Error toggling checklist:', err)
+        message.error(err?.message || 'Lỗi khi cập nhật Checklist')
+      } finally {
+        setIsTogglingChecklist(false)
+      }
+    },
+    [
+      currentExample,
+      getChecklistEntry,
+      removeChecklistItem,
+      removeItemByItemId,
+      addChecklistItem,
+      queryClient,
+      saveSession,
+    ],
+  )
+
+  // Edit sentence/item via ItemModal
+  const handleEditItem = useCallback(
+    async (exampleToEdit?: IExample) => {
+      const example = exampleToEdit || currentExample
+      if (!example) return
+
+      // Stop speech if currently playing
+      handleStop()
+
+      setIsLoadingEditItem(true)
+      try {
+        let targetItem: IItem | null | undefined = null
+
+        // 1. Try finding by itemId directly
+        if (example.itemId) {
+          const res = await itemApi.getItemById(example.itemId)
+          if (res.isSuccess && res.content) {
+            targetItem = res.content
+          }
+        }
+
+        // 2. Fallback: Try finding by itemOrigin or origin in localDb.items
+        if (!targetItem) {
+          const searchOrigins = [example.itemOrigin, example.origin].filter(Boolean) as string[]
+          for (const originStr of searchOrigins) {
+            try {
+              const found = await localDb.items
+                .filter((i) => i.origin?.trim().toLowerCase() === originStr.trim().toLowerCase())
+                .first()
+              if (found?.id) {
+                const res = await itemApi.getItemById(found.id)
+                if (res.isSuccess && res.content) {
+                  targetItem = res.content
+                  break
+                }
+              }
+            } catch (err) {
+              console.warn('Error fetching item by origin fallback:', err)
+            }
+          }
+        }
+
+        // 3. If item exists in Library, open ItemModal in edit mode
+        if (targetItem) {
+          openItemModal('edit', targetItem)
+          return
+        }
+
+        // 4. If item doesn't exist yet, construct a new Sentence item and open in add mode
+        const newSentenceItem: IItem = {
+          ...initItem,
+          origin: example.origin.trim(),
+          catId: ECategory.SENTENCE,
+          level: 1,
+          meanings: [
+            {
+              ...meaningItem,
+              typeId: EType.ALL,
+              translation: example.translation || '',
+              definition: example.translation || '',
+            },
+          ],
+        }
+        openItemModal('add', newSentenceItem)
+      } catch (err: any) {
+        console.error('Error opening item modal for edit:', err)
+        message.error(err?.message || 'Không thể mở modal chỉnh sửa item')
+      } finally {
+        setIsLoadingEditItem(false)
+      }
+    },
+    [currentExample, handleStop, openItemModal],
+  )
+
+  // Synchronize item updates into active examples
+  useEffect(() => {
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (
+        event?.type === 'updated' &&
+        event.query.queryKey[0] === 'items' &&
+        event.query.queryKey[1] === 'detail'
+      ) {
+        const updatedItem = event.query.state.data as IItem | undefined
+        if (!updatedItem?.id) return
+
+        const updater = (prev: IExample[]) => {
+          const updated = prev.map((it) => {
+            if (it.itemId === updatedItem.id || it.id === updatedItem.id) {
+              return {
+                ...it,
+                origin: updatedItem.origin || it.origin,
+                translation: updatedItem.meanings?.[0]?.translation || it.translation,
+                itemOrigin: updatedItem.origin,
+              }
+            }
+            return it
+          })
+          saveSession({ items: updated })
+          return updated
+        }
+
+        setExamples(updater)
+      }
+    })
+    return () => unsubscribe()
+  }, [queryClient, saveSession])
 
   // Phát âm toàn câu hoặc 1 đoạn với Gemini TTS
   const handleSpeak = useCallback(
@@ -1657,6 +1928,37 @@ export const Shadowing: React.FC<ShadowingProps> = ({
         </Flex>
 
         <div className={styles.headerRight}>
+          {/* Edit button */}
+          <Button
+            type='text'
+            size='small'
+            loading={isLoadingEditItem}
+            icon={<EditOutlined style={{ fontSize: 16 }} />}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleEditItem()
+            }}
+          />
+
+          {/* Checklist button */}
+          <Button
+            type='text'
+            size='small'
+            loading={isTogglingChecklist}
+            icon={
+              <CheckSquareOutlined
+                style={{
+                  color: isCurrentInChecklist ? token.colorSuccess : undefined,
+                  fontSize: 16,
+                }}
+              />
+            }
+            onClick={(e) => {
+              e.stopPropagation()
+              handleToggleChecklist()
+            }}
+          />
+
           {/* Refresh Random Batch */}
           <Button
             type='text'

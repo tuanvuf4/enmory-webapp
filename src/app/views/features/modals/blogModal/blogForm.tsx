@@ -13,21 +13,8 @@ import { IBlogItem } from '@/models/blog.model'
 import { formatBlogCategoryValue } from '@/services/firebase/api/blogCategories.api'
 import { IClassifiedVocabItem } from '@/models/vocabClassification.model'
 import { VocabClassificationTabs } from '@/views/features/vocabClassification'
-import { TextEditor, InputTag, TagSelect } from '@/views/components'
-import {
-  theme,
-  Input,
-  Button,
-  Row,
-  Col,
-  Tag,
-  Segmented,
-  Space,
-  Typography,
-  Flex,
-  Badge,
-  Dropdown,
-} from 'antd'
+import { TextEditor, InputTag, TagSelect, BilingualReader } from '@/views/components'
+import { theme, Input, Button, Row, Col, Tag, Space, Typography, Flex, Badge, Dropdown } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePrompt } from '@/helpers/hooks'
@@ -52,9 +39,7 @@ import {
   LoadingOutlined,
   TranslationOutlined,
 } from '@ant-design/icons'
-import clsx from 'clsx'
 import moment from 'moment'
-import appStyle from '@/style/appStyle.module.scss'
 import styles from './blogForm.module.scss'
 
 const { Text } = Typography
@@ -721,22 +706,6 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
             )}
           </div>
 
-          {/* Segmented view mode for preview when translation is available */}
-          {description && translation && (
-            <div style={{ marginBottom: 14 }}>
-              <Segmented
-                size='small'
-                value={previewMode}
-                onChange={(val) => setPreviewMode(val as 'original' | 'bilingual' | 'translation')}
-                options={[
-                  { label: 'Bài gốc', value: 'original' },
-                  { label: 'Song ngữ', value: 'bilingual' },
-                  { label: 'Bản dịch', value: 'translation' },
-                ]}
-              />
-            </div>
-          )}
-
           {description ? (
             <>
               {classifiedItems && classifiedItems.length > 0 && (
@@ -754,52 +723,13 @@ export const BlogForm: React.FC<BlogFormProps> = ({ data, onCancel, onClose, onS
                 </div>
               )}
 
-              {previewMode === 'bilingual' && translation ? (
-                <Row gutter={[20, 20]}>
-                  <Col xs={24} lg={12}>
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        fontSize: 13,
-                        marginBottom: 8,
-                        color: token.colorPrimary,
-                      }}
-                    >
-                      🇺🇸 Bài viết gốc
-                    </div>
-                    <div
-                      className={clsx(appStyle.blog, appStyle.article, styles.previewContent)}
-                      dangerouslySetInnerHTML={{ __html: description }}
-                    />
-                  </Col>
-                  <Col xs={24} lg={12}>
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        fontSize: 13,
-                        marginBottom: 8,
-                        color: token.colorSuccess,
-                      }}
-                    >
-                      🇻🇳 Bản dịch tiếng Việt
-                    </div>
-                    <div
-                      className={clsx(appStyle.blog, appStyle.article, styles.previewContent)}
-                      dangerouslySetInnerHTML={{ __html: translation }}
-                    />
-                  </Col>
-                </Row>
-              ) : previewMode === 'translation' && translation ? (
-                <div
-                  className={clsx(appStyle.blog, appStyle.article, styles.previewContent)}
-                  dangerouslySetInnerHTML={{ __html: translation }}
-                />
-              ) : (
-                <div
-                  className={clsx(appStyle.blog, appStyle.article, styles.previewContent)}
-                  dangerouslySetInnerHTML={{ __html: description }}
-                />
-              )}
+              <BilingualReader
+                original={description}
+                translation={translation}
+                viewMode={previewMode}
+                onViewModeChange={setPreviewMode}
+                contentClassName={styles.previewContent}
+              />
             </>
           ) : (
             <div className={styles.emptyPreview}>

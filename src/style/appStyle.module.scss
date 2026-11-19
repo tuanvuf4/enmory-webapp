@@ -197,6 +197,16 @@ $footer-background: #fff;
   background: $color-cyan-8 !important;
 }
 
+.flexVertical {
+  flex-direction: column;
+}
+
+@media screen and (min-width: 576px) {
+  .flexVertical {
+    flex-direction: row;
+  }
+}
+
 .blog,
 .article {
   img {

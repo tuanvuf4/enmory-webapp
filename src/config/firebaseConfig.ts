@@ -17,6 +17,7 @@ export const dbCollections = {
   tracks: 'tracks',
   checklists: 'checklists',
   deleted_records: 'deleted_records',
+  dictations: 'dictations',
 }
 
 // Get Firebase services

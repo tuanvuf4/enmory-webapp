@@ -720,7 +720,7 @@ export const GeminiUsageTab: React.FC = () => {
       {/* Quick Interactive Test Sandbox */}
       <Card
         title={
-          <Space>
+          <Space style={{ marginBottom: token.size / 2, marginTop: token.size / 2 }}>
             <PlayCircleOutlined style={{ color: token.colorPrimary }} />
             <span>Sandbox Test Gemini API & Kiểm tra bộ đếm tức thì</span>
           </Space>

@@ -77,7 +77,10 @@ export interface IDictationProps {
   style?: React.CSSProperties
 }
 
-const getSessionKey = (uid?: string) => `dictation_session_${uid || 'default'}`
+export type TDictationSourceType = 'sentence' | 'example'
+
+const getSessionKey = (uid?: string, sourceType: TDictationSourceType = 'sentence') =>
+  `dictation_session_${uid || 'default'}_${sourceType}`
 
 const { Text } = Typography
 
@@ -120,6 +123,13 @@ export const Dictation: React.FC<IDictationProps> = ({
   const [history, setHistory] = useState<IExample[]>(initialExample ? [initialExample] : [])
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const [loading, setLoading] = useState<boolean>(false)
+  const [sourceType, setSourceType] = useState<TDictationSourceType>(() => {
+    try {
+      const saved = localStorage.getItem('dictation_source_type')
+      if (saved === 'sentence' || saved === 'example') return saved
+    } catch {}
+    return 'sentence'
+  })
 
   // Bounds-safe index and current item
   const safeCurrentIndex =
@@ -207,12 +217,14 @@ export const Dictation: React.FC<IDictationProps> = ({
     safeCurrentIndex,
     isCompleted,
     sessionRecords,
+    sourceType,
   })
   stateRef.current = {
     history,
     safeCurrentIndex,
     isCompleted,
     sessionRecords,
+    sourceType,
   }
 
   // Source (Vietnamese prompt) & Target (English reference sentence)
@@ -261,28 +273,37 @@ export const Dictation: React.FC<IDictationProps> = ({
       isCompleted?: boolean
       sessionRecords?: Record<number, IDictationQuestionRecord>
       items?: IExample[]
+      sourceType?: TDictationSourceType
     }) => {
       if (isCustom) return
       try {
-        const key = getSessionKey(user?.uid)
+        const curSource = patch.sourceType || sourceType
+        const key = getSessionKey(user?.uid, curSource)
         const current = await localDb.syncMeta.get(key)
         const prev = current?.value || {}
         const cur = stateRef.current
+        const sessionData = {
+          items: patch.items ?? prev.items ?? cur.history,
+          currentIndex: patch.currentIndex ?? prev.currentIndex ?? cur.safeCurrentIndex,
+          isCompleted: patch.isCompleted ?? prev.isCompleted ?? cur.isCompleted,
+          sessionRecords: patch.sessionRecords ?? prev.sessionRecords ?? cur.sessionRecords,
+          sourceType: curSource,
+          updatedAt: Date.now(),
+        }
+
+        try {
+          localStorage.setItem(key, JSON.stringify(sessionData))
+        } catch {}
+
         await localDb.syncMeta.put({
           key,
-          value: {
-            items: patch.items ?? prev.items ?? cur.history,
-            currentIndex: patch.currentIndex ?? prev.currentIndex ?? cur.safeCurrentIndex,
-            isCompleted: patch.isCompleted ?? prev.isCompleted ?? cur.isCompleted,
-            sessionRecords: patch.sessionRecords ?? prev.sessionRecords ?? cur.sessionRecords,
-            updatedAt: Date.now(),
-          },
+          value: sessionData,
         })
       } catch (err) {
         console.warn('Failed to update session progress in localDb:', err)
       }
     },
-    [isCustom, user?.uid],
+    [isCustom, user?.uid, sourceType],
   )
 
   // Browser TTS fallback helper (English)
@@ -335,7 +356,7 @@ export const Dictation: React.FC<IDictationProps> = ({
 
   // Fetch or restore batch of sentences
   const loadBatch = useCallback(
-    async (forceNew = false) => {
+    async (forceNew = false, targetSourceType?: TDictationSourceType) => {
       try {
         setLoading(true)
         setIsPlaying(false)
@@ -343,22 +364,44 @@ export const Dictation: React.FC<IDictationProps> = ({
         if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
           window.speechSynthesis.cancel()
         }
+        const currentSource = targetSourceType || sourceType
         const uid = user?.uid
 
         // 1. If not custom & not forcing new, try restore from localDb.syncMeta
         if (!isCustom && !forceNew) {
           try {
-            const key = getSessionKey(uid)
+            const key = getSessionKey(uid, currentSource)
             let record = await localDb.syncMeta.get(key)
             // Fallback: check legacy session key if new key not found yet
             if (!record?.value?.items?.length) {
               const legacyRecord = await localDb.syncMeta.get(
-                `dictran_dictation_session_${uid || 'default'}`,
+                `dictation_session_${uid || 'default'}`,
               )
               if (legacyRecord?.value?.items?.length) {
                 record = legacyRecord
+              } else {
+                const veryLegacyRecord = await localDb.syncMeta.get(
+                  `dictran_dictation_session_${uid || 'default'}`,
+                )
+                if (veryLegacyRecord?.value?.items?.length) {
+                  record = veryLegacyRecord
+                }
               }
             }
+
+            // Fallback to localStorage if localDb had no record
+            if (!record?.value?.items?.length) {
+              try {
+                const raw = localStorage.getItem(key)
+                if (raw) {
+                  const parsed = JSON.parse(raw)
+                  if (parsed && Array.isArray(parsed.items) && parsed.items.length > 0) {
+                    record = { key, value: parsed }
+                  }
+                }
+              } catch {}
+            }
+
             if (
               record &&
               record.value &&
@@ -395,7 +438,7 @@ export const Dictation: React.FC<IDictationProps> = ({
         try {
           const res = await sentenceListeningApi.getListeningSentences({
             count: batchSize,
-            sourceType: 'all',
+            sourceType: currentSource,
           })
           if (res.isSuccess && res.content && res.content.length > 0) {
             newContent = res.content.map((item: any) => ({
@@ -404,7 +447,10 @@ export const Dictation: React.FC<IDictationProps> = ({
               translation: item.translation,
               note: item.note,
               itemId: item.itemId,
-              itemOrigin: item.itemOrigin,
+              itemOrigin:
+                item.sourceType === 'example'
+                  ? item.sourceItemOrigin || item.itemOrigin
+                  : undefined,
               catId: item.catId,
             }))
           }
@@ -424,16 +470,21 @@ export const Dictation: React.FC<IDictationProps> = ({
           setHistory(newContent)
           setCurrentIndex(0)
           if (!isCustom) {
-            const key = getSessionKey(uid)
+            const key = getSessionKey(uid, currentSource)
+            const sessionData = {
+              items: newContent,
+              currentIndex: 0,
+              isCompleted: false,
+              sessionRecords: {},
+              sourceType: currentSource,
+              updatedAt: Date.now(),
+            }
+            try {
+              localStorage.setItem(key, JSON.stringify(sessionData))
+            } catch {}
             await localDb.syncMeta.put({
               key,
-              value: {
-                items: newContent,
-                currentIndex: 0,
-                isCompleted: false,
-                sessionRecords: {},
-                updatedAt: Date.now(),
-              },
+              value: sessionData,
             })
           }
           setSessionRecords({})
@@ -454,7 +505,26 @@ export const Dictation: React.FC<IDictationProps> = ({
         setLoading(false)
       }
     },
-    [batchSize, isCustom, resetExerciseState, user?.uid, autoPlayOnNext, handlePlayAudio],
+    [
+      batchSize,
+      isCustom,
+      resetExerciseState,
+      user?.uid,
+      autoPlayOnNext,
+      handlePlayAudio,
+      sourceType,
+    ],
+  )
+
+  const handleSourceTypeChange = useCallback(
+    (newSource: TDictationSourceType) => {
+      setSourceType(newSource)
+      try {
+        localStorage.setItem('dictation_source_type', newSource)
+      } catch {}
+      loadBatch(true, newSource)
+    },
+    [loadBatch],
   )
 
   // Toggle Checklist for Example/Sentence (persisted in Firestore & localDb cache)
@@ -762,7 +832,11 @@ export const Dictation: React.FC<IDictationProps> = ({
         userText: cleanUser,
         accuracy: evalResult.accuracy,
         isPerfect: evalResult.isPerfect,
-        sourceType: currentExample?.itemOrigin ? 'example' : 'sentence',
+        sourceType: currentExample?.itemOrigin
+          ? 'example'
+          : sourceType === 'example'
+            ? 'example'
+            : 'sentence',
         voice: geminiVoice,
       })
     }
@@ -865,7 +939,11 @@ export const Dictation: React.FC<IDictationProps> = ({
           userText: cleanUser,
           accuracy: evalResult.accuracy,
           isPerfect: evalResult.isPerfect,
-          sourceType: currentExample?.itemOrigin ? 'example' : 'sentence',
+          sourceType: currentExample?.itemOrigin
+            ? 'example'
+            : sourceType === 'example'
+              ? 'example'
+              : 'sentence',
           voice: geminiVoice,
         })
       }
@@ -948,6 +1026,22 @@ export const Dictation: React.FC<IDictationProps> = ({
   // Settings Popover Panel
   const settingsContent = (
     <div className={styles.settingsPanel}>
+      {/* Source Type (Sentence / Example) */}
+      {!isCustom && (
+        <div className={styles.settingRow}>
+          <span>Nguồn câu:</span>
+          <Segmented
+            size='small'
+            value={sourceType}
+            onChange={(val) => handleSourceTypeChange(val as TDictationSourceType)}
+            options={[
+              { label: 'Sentence', value: 'sentence' },
+              { label: 'Example', value: 'example' },
+            ]}
+          />
+        </div>
+      )}
+
       {/* Auto Replay count */}
       <div className={styles.settingRow}>
         <span>Lặp lại câu:</span>
@@ -1027,9 +1121,19 @@ export const Dictation: React.FC<IDictationProps> = ({
     return (
       <div style={{ padding: '36px 0', textAlign: 'center' }}>
         <p style={{ color: token.colorTextSecondary }}>Chưa có câu ví dụ để luyện tập.</p>
-        <Button type='primary' icon={<SyncOutlined />} onClick={() => loadBatch(true)}>
-          Tải câu mới
-        </Button>
+        <Space>
+          <Button type='primary' icon={<SyncOutlined />} onClick={() => loadBatch(true)}>
+            Tải câu mới
+          </Button>
+          <Popover
+            content={settingsContent}
+            title='Cài đặt nâng cao'
+            trigger='click'
+            placement='bottomRight'
+          >
+            <Button icon={<SettingOutlined />}>Cài đặt</Button>
+          </Popover>
+        </Space>
       </div>
     )
   }

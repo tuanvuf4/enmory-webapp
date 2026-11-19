@@ -15,6 +15,7 @@ export interface ICachedAudio {
 
 export interface IListeningHistoryItem {
   id?: number
+  docId?: string
   uid?: string
   date: string // YYYY-MM-DD
   timestamp: number
@@ -25,6 +26,8 @@ export interface IListeningHistoryItem {
   isPerfect: boolean
   sourceType: string
   voice?: string
+  created_date?: number
+  last_update?: number
 }
 
 export interface IErrorApiRequest {
@@ -87,6 +90,9 @@ export class EnmoryDatabase extends Dexie {
     })
     this.version(9).stores({
       translationHistory: null,
+    })
+    this.version(10).stores({
+      listeningHistory: '++id, uid, docId, date, timestamp, accuracy',
     })
   }
 }

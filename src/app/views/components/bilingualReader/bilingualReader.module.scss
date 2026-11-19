@@ -1,0 +1,124 @@
+.container {
+  width: 100%;
+}
+
+.headerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.layoutToggle {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Interleaved mode (đan xen theo đoạn văn) */
+.interleavedContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.interleavedPair {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.06);
+  padding-bottom: 16px;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.originalBlock {
+  width: 100%;
+  line-height: 1.7;
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.translationBlock {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 0 8px 8px 0;
+  box-sizing: border-box;
+}
+
+.translationBadge {
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  user-select: none;
+}
+
+.translationText {
+  width: 100%;
+  line-height: 1.6;
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* Side-by-side mode (song song 2 cột trên desktop) */
+.sideBySideContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sideBySideHeader {
+  margin-bottom: 4px;
+}
+
+.columnTitleOrig,
+.columnTitleTrans {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.sideBySideRow {
+  padding: 12px 14px;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.sideOriginal,
+.sideTranslation {
+  width: 100%;
+  line-height: 1.65;
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .headerBar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .interleavedContainer {
+    gap: 16px;
+  }
+
+  .translationBlock {
+    padding: 8px 12px;
+  }
+}

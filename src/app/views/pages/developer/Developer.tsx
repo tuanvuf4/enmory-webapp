@@ -20,6 +20,11 @@ import {
   Modal,
   Checkbox,
   Descriptions,
+  Form,
+  InputNumber,
+  Switch,
+  Progress,
+  Flex,
 } from 'antd'
 import type { TableColumnsType } from 'antd'
 import {
@@ -41,6 +46,7 @@ import {
   PlusOutlined,
   SyncOutlined,
   CloudSyncOutlined,
+  CustomerServiceOutlined,
 } from '@ant-design/icons'
 import appStyle from '@/style/appStyle.module.scss'
 import { PageTitle } from '@/views/components/pageTitle/PageTitle'
@@ -49,19 +55,21 @@ import { useQueryClient } from '@tanstack/react-query'
 import { iotdAction } from '@/store/reducers/iotd.reducer'
 import { invalidateSearchIndex, localDb, syncService, SyncMode } from '@/services/localDb'
 import { itemApi } from '@/services/firebase/api/item.api'
+import { dictationApi } from '@/services/firebase/api/dictation.api'
 import { doc, collection } from 'firebase/firestore'
 import { db, dbCollections } from '@/config/firebaseConfig'
 import { useItemModal } from '@/helpers/hooks/useItemModal'
 import { useBlogModal } from '@/helpers/hooks/useBlogModal'
 import { IItem, IMeaning, ECategory } from '@/models/item.model'
 import { IBlogItem } from '@/models/blog.model'
-import { ISyncMeta } from '@/services/localDb/db'
+import { ISyncMeta, IListeningHistoryItem } from '@/services/localDb/db'
 import { getCategory, getType } from '@/helpers/item'
 import { GeminiUsageTab } from './GeminiUsageTab'
 import { ApiErrorRequestsTab } from './ApiErrorRequestsTab'
 import { UnsyncableServerItemsCard } from './UnsyncableServerItemsCard'
 import { RemoveLegacyFieldsCard } from './RemoveLegacyFieldsCard'
 import { useGeminiStats } from '@/services/gemini'
+import { SentenceDiffView, evaluateSentenceDiff } from '@/views/components'
 import { IErrorApiRequest } from '@/services/localDb/db'
 import { ERROR_API_REQUESTS_CHANGED_EVENT } from '@/services/localDb/errorApiRequests.service'
 import './developer.module.scss'
@@ -70,7 +78,7 @@ import moment from 'moment'
 
 const { Text } = Typography
 
-type TableType = 'items' | 'blogs' | 'syncMeta' | 'errorApiRequests'
+type TableType = 'items' | 'blogs' | 'dictations' | 'syncMeta' | 'errorApiRequests'
 
 export const Developer: React.FC = () => {
   const { token } = theme.useToken()
@@ -157,24 +165,45 @@ export const Developer: React.FC = () => {
 
   const [items, setItems] = useState<IItem[]>([])
   const [blogs, setBlogs] = useState<IBlogItem[]>([])
+  const [dictations, setDictations] = useState<IListeningHistoryItem[]>([])
   const [syncMeta, setSyncMeta] = useState<ISyncMeta[]>([])
   const [errorRequests, setErrorRequests] = useState<IErrorApiRequest[]>([])
+  const [selectedDictationRowKeys, setSelectedDictationRowKeys] = useState<React.Key[]>([])
+  const [isBatchDeletingDictations, setIsBatchDeletingDictations] = useState<boolean>(false)
+  const [isSyncingDictations, setIsSyncingDictations] = useState<boolean>(false)
+  const [viewingDictation, setViewingDictation] = useState<IListeningHistoryItem | null>(null)
+  const [editingDictation, setEditingDictation] = useState<IListeningHistoryItem | null>(null)
+  const [isSavingDictation, setIsSavingDictation] = useState<boolean>(false)
+  const [dictationForm] = Form.useForm()
 
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [loadedItems, loadedBlogs, loadedSyncMeta, loadedErrorRequests] = await Promise.all([
-        localDb.items.toArray(),
-        localDb.blogs.toArray(),
-        localDb.syncMeta.toArray(),
-        localDb.errorApiRequests.toArray(),
-      ])
+      const [loadedItems, loadedBlogs, loadedDictations, loadedSyncMeta, loadedErrorRequests] =
+        await Promise.all([
+          localDb.items.toArray(),
+          localDb.blogs.toArray(),
+          localDb.listeningHistory.toArray(),
+          localDb.syncMeta.toArray(),
+          localDb.errorApiRequests.toArray(),
+        ])
 
       setItems(loadedItems.sort((a, b) => (b.created_date || 0) - (a.created_date || 0)))
       setBlogs([...loadedBlogs].sort((a, b) => (b.created_date || 0) - (a.created_date || 0)))
+      setDictations(
+        [...loadedDictations].sort(
+          (a, b) => (b.timestamp || b.created_date || 0) - (a.timestamp || a.created_date || 0),
+        ),
+      )
       setSyncMeta(loadedSyncMeta)
       setErrorRequests(loadedErrorRequests.sort((a, b) => b.timestamp - a.timestamp))
       setSelectedRowKeys((prev) => prev.filter((k) => loadedItems.some((it) => it.id === k)))
+      setSelectedDictationRowKeys((prev) =>
+        prev.filter((k) => loadedDictations.some((d) => d.id === k || (d.docId && d.docId === k))),
+      )
+      setViewingDictation((prev) =>
+        prev ? loadedDictations.find((d) => d.id === prev.id) || prev : null,
+      )
     } catch (err) {
       console.error('Failed to load local database:', err)
       message.error(
@@ -194,9 +223,23 @@ export const Developer: React.FC = () => {
         console.error('Failed to refresh error requests:', e)
       }
     }
+    const refreshDictations = async () => {
+      try {
+        const dicts = await localDb.listeningHistory.toArray()
+        setDictations(
+          dicts.sort(
+            (a, b) => (b.timestamp || b.created_date || 0) - (a.timestamp || a.created_date || 0),
+          ),
+        )
+      } catch (e) {
+        console.error('Failed to refresh dictations:', e)
+      }
+    }
     window.addEventListener(ERROR_API_REQUESTS_CHANGED_EVENT, refreshErrors)
+    window.addEventListener('enmory:dictation-updated', refreshDictations)
     return () => {
       window.removeEventListener(ERROR_API_REQUESTS_CHANGED_EVENT, refreshErrors)
+      window.removeEventListener('enmory:dictation-updated', refreshDictations)
     }
   }, [])
 
@@ -273,6 +316,316 @@ export const Developer: React.FC = () => {
       })
     },
     [deleteBlogMutation, loadData, token],
+  )
+
+  const handleSyncDictationsFromCloud = useCallback(
+    async (mode: SyncMode = 'sync') => {
+      if (!user?.uid) {
+        message.warning('Bạn cần đăng nhập để đồng bộ dictation với Cloud!')
+        return
+      }
+      setIsSyncingDictations(true)
+      try {
+        const isFull = mode === 'full-sync'
+        const res = await syncService.sync({ mode, type: 'dictation' })
+        const updatedDicts = await localDb.listeningHistory.toArray()
+        setDictations(
+          updatedDicts.sort(
+            (a, b) => (b.timestamp || b.created_date || 0) - (a.timestamp || a.created_date || 0),
+          ),
+        )
+        message.success(
+          isFull
+            ? `Full Sync thành công: Đã tải toàn bộ ${res.updatedDictations} bản ghi dictation từ Cloud!`
+            : `Đồng bộ thành công: ${res.updatedDictations} bản ghi dictation mới/cập nhật!`,
+        )
+      } catch (err: any) {
+        console.error('Lỗi khi đồng bộ dictations:', err)
+        message.error(
+          'Không thể đồng bộ dictation từ Cloud: ' + (err?.message || 'Lỗi không xác định'),
+        )
+      } finally {
+        setIsSyncingDictations(false)
+      }
+    },
+    [user?.uid],
+  )
+
+  const handleDeleteDictation = useCallback(
+    (record: IListeningHistoryItem) => {
+      const recordId = record.id
+      const docId = record.docId
+      let onlyLocal = false
+
+      Modal.confirm({
+        title: `Xác nhận xóa bản ghi dictation?`,
+        icon: <ExclamationCircleOutlined style={{ color: token.colorError }} />,
+        content: (
+          <div>
+            <p>
+              Bạn có chắc chắn muốn xóa bản ghi cho câu:
+              <br />
+              <b>"{record.sentenceOrigin || '(Không có nội dung)'}"</b>
+            </p>
+            {record.userText && (
+              <p style={{ fontSize: 13, color: token.colorTextSecondary, margin: '4px 0' }}>
+                Đã nhập: <i>"{record.userText}"</i> ({record.accuracy}%)
+              </p>
+            )}
+            {docId && user?.uid ? (
+              <Checkbox
+                defaultChecked={false}
+                onChange={(e) => {
+                  onlyLocal = e.target.checked
+                }}
+                style={{ marginTop: 8 }}
+              >
+                Chỉ xóa trong Local DB (không xóa trên Firebase)
+              </Checkbox>
+            ) : !user?.uid ? (
+              <p style={{ color: token.colorWarning, fontSize: 12, margin: '8px 0 0 0' }}>
+                (Bạn chưa đăng nhập Firebase, bản ghi sẽ chỉ bị xóa khỏi Local DB)
+              </p>
+            ) : (
+              <p style={{ color: token.colorTextDescription, fontSize: 12, margin: '8px 0 0 0' }}>
+                (Bản ghi này chưa được đồng bộ lên Firebase nên sẽ chỉ xóa khỏi Local DB)
+              </p>
+            )}
+          </div>
+        ),
+        okText: 'Xác nhận xóa',
+        okType: 'danger',
+        cancelText: 'Hủy',
+        onOk: async () => {
+          try {
+            if (!onlyLocal && user?.uid && docId) {
+              try {
+                await dictationApi.deleteDictation(docId)
+              } catch (e: any) {
+                console.warn('Firebase dictation deletion error:', e)
+                message.warning(
+                  'Không thể xóa trên Firebase (' +
+                    (e?.message || 'Lỗi') +
+                    '), đang xóa khỏi Local DB...',
+                )
+              }
+            }
+
+            if (recordId !== undefined) {
+              await localDb.listeningHistory.delete(recordId)
+            } else if (docId) {
+              await localDb.listeningHistory.where('docId').equals(docId).delete()
+            } else {
+              await localDb.listeningHistory
+                .filter(
+                  (d) =>
+                    d.timestamp === record.timestamp && d.sentenceOrigin === record.sentenceOrigin,
+                )
+                .delete()
+            }
+
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('enmory:dictation-updated'))
+            }
+
+            message.success('Đã xóa bản ghi dictation thành công!')
+            if (recordId !== undefined) {
+              setSelectedDictationRowKeys((prev) => prev.filter((k) => k !== recordId))
+            }
+            await loadData()
+          } catch (err: any) {
+            console.error('Lỗi khi xóa dictation:', err)
+            message.error('Lỗi khi xóa bản ghi: ' + (err?.message || String(err)))
+          }
+        },
+      })
+    },
+    [token, user?.uid, loadData],
+  )
+
+  const handleBatchDeleteDictations = useCallback(() => {
+    let onlyLocal = false
+    const count = selectedDictationRowKeys.length
+    if (count === 0) return
+
+    Modal.confirm({
+      title: `Xác nhận xóa ${count} bản ghi dictation đã chọn?`,
+      icon: <ExclamationCircleOutlined style={{ color: token.colorError }} />,
+      content: (
+        <div>
+          <p>
+            Bạn có chắc chắn muốn xóa <b>{count}</b> bản ghi dictation đã chọn khỏi cơ sở dữ liệu?
+          </p>
+          {user?.uid ? (
+            <Checkbox
+              defaultChecked={false}
+              onChange={(e) => {
+                onlyLocal = e.target.checked
+              }}
+              style={{ marginTop: 8 }}
+            >
+              Chỉ xóa trong Local DB (không xóa trên Firebase)
+            </Checkbox>
+          ) : (
+            <p style={{ color: token.colorWarning, fontSize: 12, margin: '8px 0 0 0' }}>
+              (Bạn chưa đăng nhập Firebase, các bản ghi sẽ chỉ bị xóa khỏi Local DB)
+            </p>
+          )}
+        </div>
+      ),
+      okText: `Xác nhận xóa ${count} bản ghi`,
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        setIsBatchDeletingDictations(true)
+        const hideLoading = message.loading(`Đang xóa ${count} bản ghi dictation...`, 0)
+        try {
+          const keysToDelete = selectedDictationRowKeys
+          const recordsToDelete = dictations.filter(
+            (d) =>
+              (d.id !== undefined && keysToDelete.includes(d.id)) ||
+              (d.docId && keysToDelete.includes(d.docId)),
+          )
+          const docIdsToDelete = recordsToDelete
+            .map((d) => d.docId)
+            .filter((docId): docId is string => Boolean(docId))
+
+          if (!onlyLocal && user?.uid && docIdsToDelete.length > 0) {
+            try {
+              await dictationApi.batchDeleteDictations(docIdsToDelete)
+            } catch (e: any) {
+              console.warn('Firebase batch delete dictations warning:', e)
+            }
+          }
+
+          const numericIds = keysToDelete
+            .map((k) => Number(k))
+            .filter((k) => !isNaN(k) && typeof k === 'number')
+          if (numericIds.length > 0) {
+            await localDb.listeningHistory.bulkDelete(numericIds)
+          }
+
+          // Handle any items with non-numeric IDs or docId keys
+          for (const rec of recordsToDelete) {
+            if (rec.id === undefined && rec.docId) {
+              await localDb.listeningHistory.where('docId').equals(rec.docId).delete()
+            }
+          }
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('enmory:dictation-updated'))
+          }
+
+          hideLoading()
+          message.success(`Đã xóa thành công ${count} bản ghi dictation!`)
+          setSelectedDictationRowKeys([])
+          await loadData()
+        } catch (err: any) {
+          hideLoading()
+          console.error('Batch delete dictations error:', err)
+          message.error('Lỗi khi xóa hàng loạt: ' + (err?.message || String(err)))
+        } finally {
+          setIsBatchDeletingDictations(false)
+        }
+      },
+    })
+  }, [selectedDictationRowKeys, user?.uid, dictations, loadData, token])
+
+  const handleOpenEditDictation = useCallback(
+    (record: IListeningHistoryItem) => {
+      setEditingDictation(record)
+      dictationForm.setFieldsValue({
+        sentenceOrigin: record.sentenceOrigin || '',
+        userText: record.userText || '',
+        accuracy: record.accuracy ?? 0,
+        isPerfect: Boolean(
+          record.isPerfect || (record.accuracy !== undefined && record.accuracy >= 100),
+        ),
+        sourceType: record.sourceType || 'item',
+        voice: record.voice || '',
+        date: record.date || moment().format('YYYY-MM-DD'),
+        sentenceId: record.sentenceId || '',
+        syncToCloud: Boolean(record.docId && user?.uid),
+      })
+    },
+    [dictationForm, user?.uid],
+  )
+
+  const handleCalculateAccuracy = useCallback(() => {
+    const origin = dictationForm.getFieldValue('sentenceOrigin') || ''
+    const userText = dictationForm.getFieldValue('userText') || ''
+    if (!origin.trim()) {
+      message.warning('Vui lòng nhập câu gốc trước khi tính toán độ chính xác!')
+      return
+    }
+    const diff = evaluateSentenceDiff(origin, userText)
+    dictationForm.setFieldsValue({
+      accuracy: diff.accuracy,
+      isPerfect: diff.isPerfect,
+    })
+    message.success(`Đã tự động tính: ${diff.accuracy}%${diff.isPerfect ? ' (Hoàn hảo)' : ''}`)
+  }, [dictationForm])
+
+  const handleSaveDictation = useCallback(
+    async (values: any) => {
+      if (!editingDictation) return
+      setIsSavingDictation(true)
+      try {
+        const now = Date.now()
+        const updatedRecord: Partial<IListeningHistoryItem> = {
+          sentenceOrigin: values.sentenceOrigin?.trim() || '',
+          userText: values.userText?.trim() || '',
+          accuracy: Number(values.accuracy) || 0,
+          isPerfect: Boolean(values.isPerfect),
+          sourceType: values.sourceType?.trim() || 'item',
+          voice: values.voice?.trim() || undefined,
+          date: values.date?.trim() || moment(now).format('YYYY-MM-DD'),
+          sentenceId: values.sentenceId?.trim() || editingDictation.sentenceId,
+          last_update: now,
+        }
+
+        // 1. Update in Local IndexedDB
+        if (editingDictation.id !== undefined) {
+          await localDb.listeningHistory.update(editingDictation.id, updatedRecord)
+        } else if (editingDictation.docId) {
+          await localDb.listeningHistory
+            .where('docId')
+            .equals(editingDictation.docId)
+            .modify(updatedRecord)
+        }
+
+        // 2. Update on Cloud if requested & has docId
+        if (values.syncToCloud && editingDictation.docId && user?.uid) {
+          try {
+            await dictationApi.updateDictation(editingDictation.docId, updatedRecord)
+          } catch (cloudErr: any) {
+            console.warn('Firebase dictation update error:', cloudErr)
+            message.warning(
+              'Lưu Local DB thành công, nhưng lỗi đồng bộ Cloud: ' +
+                (cloudErr?.message || 'Lỗi không xác định'),
+            )
+          }
+        }
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('enmory:dictation-updated', {
+              detail: { ...editingDictation, ...updatedRecord },
+            }),
+          )
+        }
+
+        message.success('Đã cập nhật bản ghi Dictation thành công!')
+        setEditingDictation(null)
+        await loadData()
+      } catch (err: any) {
+        console.error('Lỗi khi lưu Dictation:', err)
+        message.error('Lỗi khi lưu: ' + (err?.message || String(err)))
+      } finally {
+        setIsSavingDictation(false)
+      }
+    },
+    [editingDictation, user?.uid, loadData],
   )
 
   useEffect(() => {
@@ -611,6 +964,21 @@ export const Developer: React.FC = () => {
         return
       }
 
+      if (
+        parsed.sentenceOrigin !== undefined ||
+        (parsed.accuracy !== undefined && parsed.sentenceId !== undefined)
+      ) {
+        await localDb.listeningHistory.put(parsed as IListeningHistoryItem)
+        message.success('Đã cập nhật bản ghi Dictation thành công!')
+        setSelectedRecordJson({
+          title: `Dictation: ${parsed.sentenceOrigin || parsed.id || 'Record'}`,
+          data: parsed,
+        })
+        setIsEditingJson(false)
+        await loadData()
+        return
+      }
+
       const itemToSave = parsed as IItem
       let itemId = parsed.id ? String(parsed.id).trim() : ''
 
@@ -668,6 +1036,14 @@ export const Developer: React.FC = () => {
     const list = !filterByUser || !user?.uid ? blogs : blogs.filter((b) => b.uid === user.uid)
     return [...list].sort((a, b) => (b.created_date || 0) - (a.created_date || 0))
   }, [blogs, filterByUser, user?.uid])
+
+  const scopedDictations = useMemo(() => {
+    const list =
+      !filterByUser || !user?.uid ? dictations : dictations.filter((d) => d.uid === user.uid)
+    return [...list].sort(
+      (a, b) => (b.timestamp || b.created_date || 0) - (a.timestamp || a.created_date || 0),
+    )
+  }, [dictations, filterByUser, user?.uid])
 
   // Map of normalized origin -> items with same origin
   const duplicateOriginMap = useMemo(() => {
@@ -744,6 +1120,22 @@ export const Developer: React.FC = () => {
     )
   }, [scopedBlogs, searchKeyword])
 
+  // Filter dictations by search keyword
+  const filteredDictations = useMemo(() => {
+    if (!searchKeyword.trim()) return scopedDictations
+    const kw = searchKeyword.toLowerCase()
+    return scopedDictations.filter(
+      (d) =>
+        (d.sentenceOrigin || '').toLowerCase().includes(kw) ||
+        (d.userText || '').toLowerCase().includes(kw) ||
+        (d.sentenceId || '').toLowerCase().includes(kw) ||
+        (d.sourceType || '').toLowerCase().includes(kw) ||
+        (d.voice || '').toLowerCase().includes(kw) ||
+        (d.date || '').toLowerCase().includes(kw) ||
+        (d.docId || '').toLowerCase().includes(kw),
+    )
+  }, [scopedDictations, searchKeyword])
+
   // Filter syncMeta by search keyword
   const filteredSyncMeta = useMemo(() => {
     if (!searchKeyword.trim()) return syncMeta
@@ -758,6 +1150,8 @@ export const Developer: React.FC = () => {
         return filteredItems
       case 'blogs':
         return filteredBlogs
+      case 'dictations':
+        return filteredDictations
       case 'syncMeta':
         return filteredSyncMeta
       case 'errorApiRequests':
@@ -765,7 +1159,7 @@ export const Developer: React.FC = () => {
       default:
         return filteredItems
     }
-  }, [activeTab, filteredItems, filteredBlogs, filteredSyncMeta, errorRequests])
+  }, [activeTab, filteredItems, filteredBlogs, filteredDictations, filteredSyncMeta, errorRequests])
 
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(activeDataset, null, 2))
@@ -1197,6 +1591,173 @@ export const Developer: React.FC = () => {
     [token, handleEditBlog, handleDeleteBlog],
   )
 
+  const dictationColumns = useMemo<TableColumnsType<IListeningHistoryItem>>(
+    () => [
+      {
+        title: '#',
+        key: 'index',
+        width: 55,
+        align: 'center',
+        render: (_: any, __: any, index: number) => index + 1,
+      },
+      {
+        title: 'Câu gốc (Origin)',
+        dataIndex: 'sentenceOrigin',
+        key: 'sentenceOrigin',
+        width: 280,
+        ellipsis: true,
+        render: (text: string) => (
+          <Tooltip title={text || '-'}>
+            <Text strong ellipsis style={{ maxWidth: 260, display: 'inline-block' }}>
+              {text || '-'}
+            </Text>
+          </Tooltip>
+        ),
+      },
+      {
+        title: 'Nội dung đã nhập',
+        dataIndex: 'userText',
+        key: 'userText',
+        width: 260,
+        ellipsis: true,
+        render: (text: string) =>
+          text ? (
+            <Tooltip title={text}>
+              <Text type='secondary' ellipsis style={{ maxWidth: 240, display: 'inline-block' }}>
+                {text}
+              </Text>
+            </Tooltip>
+          ) : (
+            <Text type='secondary' italic>
+              (Chưa nhập)
+            </Text>
+          ),
+      },
+      {
+        title: 'Độ chính xác',
+        dataIndex: 'accuracy',
+        key: 'accuracy',
+        width: 140,
+        align: 'center',
+        sorter: (a, b) => (a.accuracy || 0) - (b.accuracy || 0),
+        render: (acc: number, record: IListeningHistoryItem) => {
+          const isPerf = record.isPerfect || (acc !== undefined && acc >= 100)
+          let color = 'default'
+          if (isPerf) color = 'success'
+          else if (acc >= 80) color = 'blue'
+          else if (acc >= 50) color = 'warning'
+          else color = 'error'
+
+          return (
+            <Tag color={color} style={{ fontWeight: 600 }}>
+              {isPerf ? '100% ★' : `${acc ?? 0}%`}
+            </Tag>
+          )
+        },
+      },
+      {
+        title: 'Loại nguồn',
+        dataIndex: 'sourceType',
+        key: 'sourceType',
+        width: 120,
+        align: 'center',
+        render: (src: string) =>
+          src ? <Tag color='purple'>{src}</Tag> : <Text type='secondary'>-</Text>,
+      },
+      {
+        title: 'Giọng đọc',
+        dataIndex: 'voice',
+        key: 'voice',
+        width: 110,
+        align: 'center',
+        render: (voice: string) => (voice ? <Tag>{voice}</Tag> : <Text type='secondary'>-</Text>),
+      },
+      {
+        title: 'Thời gian',
+        dataIndex: 'timestamp',
+        key: 'timestamp',
+        width: 170,
+        sorter: (a, b) =>
+          (a.timestamp || a.created_date || 0) - (b.timestamp || b.created_date || 0),
+        render: (ts: number, record: IListeningHistoryItem) => {
+          const time = ts || record.created_date
+          if (!time) return record.date || '-'
+          return (
+            <Tooltip title={record.date || ''}>
+              <Text style={{ fontSize: 12 }}>
+                {moment(time).format(appSetting.dateTimeSecondFormat)}
+              </Text>
+            </Tooltip>
+          )
+        },
+      },
+      {
+        title: 'Cloud Doc ID',
+        dataIndex: 'docId',
+        key: 'docId',
+        width: 150,
+        render: (docId: string) =>
+          docId ? (
+            <Tooltip title={docId}>
+              <Tag
+                color='green'
+                style={{ maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis' }}
+              >
+                {docId}
+              </Tag>
+            </Tooltip>
+          ) : (
+            <Tag color='orange'>Local only</Tag>
+          ),
+      },
+      {
+        title: 'Thao tác',
+        key: 'actions',
+        width: 140,
+        align: 'center',
+        render: (_: any, record: IListeningHistoryItem) => (
+          <Space size={4}>
+            <Tooltip title='Xem chi tiết'>
+              <Button
+                size='small'
+                icon={<EyeOutlined style={{ color: token.colorPrimary }} />}
+                onClick={() => setViewingDictation(record)}
+              />
+            </Tooltip>
+            <Tooltip title='Sửa bản ghi'>
+              <Button
+                size='small'
+                icon={<EditOutlined style={{ color: token.colorWarning }} />}
+                onClick={() => handleOpenEditDictation(record)}
+              />
+            </Tooltip>
+            <Tooltip title='Xóa bản ghi'>
+              <Button
+                size='small'
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDeleteDictation(record)}
+              />
+            </Tooltip>
+            <Tooltip title='Xem raw JSON'>
+              <Button
+                size='small'
+                icon={<CodeOutlined />}
+                onClick={() =>
+                  setSelectedRecordJson({
+                    title: `Dictation: ${record.sentenceOrigin || record.id || 'Record'}`,
+                    data: record,
+                  })
+                }
+              />
+            </Tooltip>
+          </Space>
+        ),
+      },
+    ],
+    [token, handleDeleteDictation, handleOpenEditDictation],
+  )
+
   const syncMetaColumns = useMemo<TableColumnsType<ISyncMeta>>(
     () => [
       {
@@ -1351,124 +1912,127 @@ export const Developer: React.FC = () => {
                 />
 
                 {/* Summary Statistics */}
-                <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-                  <Col xs={24} sm={12} md={6}>
-                    <Card
-                      size='small'
-                      hoverable
-                      onClick={() => setActiveTab('items')}
-                      style={{
-                        borderColor: activeTab === 'items' ? token.colorPrimary : undefined,
-                      }}
-                    >
-                      <Statistic
-                        title='Items (Bảng từ vựng)'
-                        value={scopedItems.length}
-                        prefix={<DatabaseOutlined style={{ color: token.colorPrimary }} />}
-                        suffix={
-                          duplicateItemsCount > 0 ? (
-                            <Tooltip
-                              title={`Có ${duplicateItemsCount} item trùng origin (${duplicateOriginMap.size} nhóm). Bấm để lọc.`}
+                <Flex
+                  className={appStyle.flexVertical}
+                  gap={token.size}
+                  wrap
+                  style={{ marginBottom: 16 }}
+                >
+                  <Card
+                    size='small'
+                    hoverable
+                    onClick={() => setActiveTab('items')}
+                    style={{
+                      borderColor: activeTab === 'items' ? token.colorPrimary : undefined,
+                      flex: 1,
+                    }}
+                  >
+                    <Statistic
+                      title='Items (Bảng từ vựng)'
+                      value={scopedItems.length}
+                      prefix={<DatabaseOutlined style={{ color: token.colorPrimary }} />}
+                      suffix={
+                        duplicateItemsCount > 0 ? (
+                          <Tooltip
+                            title={`Có ${duplicateItemsCount} item trùng origin (${duplicateOriginMap.size} nhóm). Bấm để lọc.`}
+                          >
+                            <Tag
+                              color='warning'
+                              style={{ cursor: 'pointer', marginLeft: 6, fontSize: 11 }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setActiveTab('items')
+                                setOnlyDuplicateOrigin(true)
+                              }}
                             >
-                              <Tag
-                                color='warning'
-                                style={{ cursor: 'pointer', marginLeft: 6, fontSize: 11 }}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setActiveTab('items')
-                                  setOnlyDuplicateOrigin(true)
-                                }}
-                              >
-                                {duplicateItemsCount} trùng
-                              </Tag>
-                            </Tooltip>
-                          ) : undefined
-                        }
-                      />
-                    </Card>
-                  </Col>
-                  <Col xs={24} sm={12} md={6}>
-                    <Card
-                      size='small'
-                      hoverable
-                      onClick={() => setActiveTab('blogs')}
-                      style={{
-                        borderColor: activeTab === 'blogs' ? token.colorSuccess : undefined,
-                      }}
-                    >
-                      <Statistic
-                        title='Blogs (Bảng bài viết)'
-                        value={scopedBlogs.length}
-                        prefix={<CodeOutlined style={{ color: token.colorSuccess }} />}
-                      />
-                    </Card>
-                  </Col>
-                  <Col xs={24} sm={12} md={6}>
-                    <Card
-                      size='small'
-                      hoverable
-                      onClick={() => setActiveTab('syncMeta')}
-                      style={{
-                        borderColor: activeTab === 'syncMeta' ? token.colorWarning : undefined,
-                      }}
-                    >
-                      <Statistic
-                        title='Sync Meta (Đồng bộ)'
-                        value={syncMeta.length}
-                        prefix={<DatabaseOutlined style={{ color: token.colorWarning }} />}
-                        suffix={
-                          searchKeyword && filteredSyncMeta.length !== syncMeta.length
-                            ? `(${filteredSyncMeta.length} tìm thấy)`
-                            : ''
-                        }
-                      />
-                    </Card>
-                  </Col>
-                  <Col xs={24} sm={12} md={6}>
-                    <Card
-                      size='small'
-                      hoverable
-                      onClick={() => setActiveTab('errorApiRequests')}
-                      style={{
-                        borderColor:
-                          activeTab === 'errorApiRequests' ? token.colorError : undefined,
-                      }}
-                    >
-                      <Statistic
-                        title='API Errors (Yêu cầu lỗi)'
-                        value={errorRequests.length}
-                        prefix={<ApiOutlined style={{ color: token.colorError }} />}
-                        suffix={
-                          errorRequests.filter((r) => r.lastStatus === 'failed').length > 0
-                            ? `(${errorRequests.filter((r) => r.lastStatus === 'failed').length} thất bại)`
-                            : ''
-                        }
-                      />
-                    </Card>
-                  </Col>
-                </Row>
+                              {duplicateItemsCount} trùng
+                            </Tag>
+                          </Tooltip>
+                        ) : undefined
+                      }
+                    />
+                  </Card>
+                  <Card
+                    size='small'
+                    hoverable
+                    onClick={() => setActiveTab('blogs')}
+                    style={{
+                      borderColor: activeTab === 'blogs' ? token.colorSuccess : undefined,
+                      flex: 1,
+                    }}
+                  >
+                    <Statistic
+                      title='Blogs (Bảng bài viết)'
+                      value={scopedBlogs.length}
+                      prefix={<CodeOutlined style={{ color: token.colorSuccess }} />}
+                    />
+                  </Card>
+                  <Card
+                    size='small'
+                    hoverable
+                    onClick={() => setActiveTab('dictations')}
+                    style={{
+                      borderColor: activeTab === 'dictations' ? token.colorInfo : undefined,
+                      flex: 1,
+                    }}
+                  >
+                    <Statistic
+                      title='Dictations (Chép chính tả)'
+                      value={scopedDictations.length}
+                      prefix={<CustomerServiceOutlined style={{ color: token.colorInfo }} />}
+                      suffix={
+                        searchKeyword && filteredDictations.length !== scopedDictations.length
+                          ? `(${filteredDictations.length} tìm thấy)`
+                          : ''
+                      }
+                    />
+                  </Card>
+                  <Card
+                    size='small'
+                    hoverable
+                    onClick={() => setActiveTab('syncMeta')}
+                    style={{
+                      borderColor: activeTab === 'syncMeta' ? token.colorWarning : undefined,
+                      flex: 1,
+                    }}
+                  >
+                    <Statistic
+                      title='Sync Meta (Đồng bộ)'
+                      value={syncMeta.length}
+                      prefix={<DatabaseOutlined style={{ color: token.colorWarning }} />}
+                      suffix={
+                        searchKeyword && filteredSyncMeta.length !== syncMeta.length
+                          ? `(${filteredSyncMeta.length} tìm thấy)`
+                          : ''
+                      }
+                    />
+                  </Card>
+                  <Card
+                    size='small'
+                    hoverable
+                    onClick={() => setActiveTab('errorApiRequests')}
+                    style={{
+                      borderColor: activeTab === 'errorApiRequests' ? token.colorError : undefined,
+                      flex: 1,
+                    }}
+                  >
+                    <Statistic
+                      title='API Errors (Yêu cầu lỗi)'
+                      value={errorRequests.length}
+                      prefix={<ApiOutlined style={{ color: token.colorError }} />}
+                      suffix={
+                        errorRequests.filter((r) => r.lastStatus === 'failed').length > 0
+                          ? `(${errorRequests.filter((r) => r.lastStatus === 'failed').length} thất bại)`
+                          : ''
+                      }
+                    />
+                  </Card>
+                </Flex>
 
                 {/* Controls & Filter */}
                 <Card style={{ marginBottom: 16 }}>
                   <Row gutter={[16, 16]} align='middle' justify='space-between'>
-                    <Col xs={24} md={12}>
-                      <Tabs
-                        activeKey={activeTab}
-                        onChange={(key) => setActiveTab(key as TableType)}
-                        items={[
-                          { key: 'items', label: `items (${scopedItems.length})` },
-                          { key: 'blogs', label: `blogs (${scopedBlogs.length})` },
-                          { key: 'syncMeta', label: `syncMeta (${syncMeta.length})` },
-                          {
-                            key: 'errorApiRequests',
-                            label: `API Errors (${errorRequests.length})`,
-                          },
-                        ]}
-                        style={{ marginBottom: 0 }}
-                      />
-                    </Col>
-
-                    <Col xs={24} md={12}>
+                    <Col xs={24}>
                       <Space
                         direction='horizontal'
                         style={{ width: '100%', justifyContent: 'flex-end' }}
@@ -1541,7 +2105,7 @@ export const Developer: React.FC = () => {
                 </Card>
 
                 {/* Table Viewer */}
-                {loading && items.length === 0 && blogs.length === 0 ? (
+                {loading && items.length === 0 && blogs.length === 0 && dictations.length === 0 ? (
                   <Card>
                     <div style={{ textAlign: 'center', padding: '60px 0' }}>
                       <Spin size='large' children='Đang đọc dữ liệu từ IndexedDB...' />
@@ -1552,7 +2116,10 @@ export const Developer: React.FC = () => {
                     {activeTab === 'items' && (
                       <Card
                         title={
-                          <Space wrap>
+                          <Space
+                            wrap
+                            style={{ marginBottom: token.size / 2, marginTop: token.size / 2 }}
+                          >
                             <DatabaseOutlined style={{ color: token.colorPrimary }} />
                             <span>Table Items</span>
                             <Tag color='blue'>{filteredItems.length} từ vựng</Tag>
@@ -1766,7 +2333,15 @@ export const Developer: React.FC = () => {
                     {activeTab === 'blogs' && (
                       <Card
                         title={
-                          <Row justify='space-between' align='middle' style={{ width: '100%' }}>
+                          <Row
+                            justify='space-between'
+                            align='middle'
+                            style={{
+                              width: '100%',
+                              marginBottom: token.size / 2,
+                              marginTop: token.size / 2,
+                            }}
+                          >
                             <Col>
                               <Space>
                                 <CodeOutlined style={{ color: token.colorSuccess }} />
@@ -1829,10 +2404,129 @@ export const Developer: React.FC = () => {
                       </Card>
                     )}
 
+                    {activeTab === 'dictations' && (
+                      <Card
+                        title={
+                          <Row
+                            justify='space-between'
+                            align='middle'
+                            style={{
+                              width: '100%',
+                              marginBottom: token.size / 2,
+                              marginTop: token.size / 2,
+                            }}
+                          >
+                            <Col>
+                              <Space>
+                                <CustomerServiceOutlined style={{ color: token.colorInfo }} />
+                                <span>Bảng Luyện nghe & Chép chính tả (Dictations)</span>
+                                <Tag color='cyan'>
+                                  {filteredDictations.length} bản ghi{' '}
+                                  {filterByUser && user?.uid ? '(của bạn)' : '(tất cả)'}
+                                </Tag>
+                              </Space>
+                            </Col>
+                            <Col>
+                              <Space>
+                                <Button
+                                  size='small'
+                                  icon={<SyncOutlined spin={isSyncingDictations} />}
+                                  onClick={() => handleSyncDictationsFromCloud('sync')}
+                                  loading={isSyncingDictations}
+                                >
+                                  Đồng bộ thay đổi
+                                </Button>
+                                <Button
+                                  size='small'
+                                  icon={<CloudSyncOutlined />}
+                                  onClick={() => handleSyncDictationsFromCloud('full-sync')}
+                                  loading={isSyncingDictations}
+                                >
+                                  Full Sync từ Cloud
+                                </Button>
+                              </Space>
+                            </Col>
+                          </Row>
+                        }
+                        size='small'
+                      >
+                        {selectedDictationRowKeys.length > 0 && (
+                          <div style={{ marginBottom: 12 }}>
+                            <Alert
+                              type='info'
+                              showIcon
+                              message={
+                                <Space
+                                  style={{
+                                    width: '100%',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    flexWrap: 'wrap',
+                                    gap: 8,
+                                  }}
+                                >
+                                  <span>
+                                    Đã chọn <b>{selectedDictationRowKeys.length}</b> bản ghi
+                                    dictation
+                                  </span>
+                                  <Space>
+                                    <Button
+                                      size='small'
+                                      danger
+                                      type='primary'
+                                      icon={<DeleteOutlined />}
+                                      loading={isBatchDeletingDictations}
+                                      onClick={handleBatchDeleteDictations}
+                                    >
+                                      Xóa {selectedDictationRowKeys.length} mục đã chọn
+                                    </Button>
+                                    <Button
+                                      size='small'
+                                      onClick={() => setSelectedDictationRowKeys([])}
+                                      disabled={isBatchDeletingDictations}
+                                    >
+                                      Bỏ chọn
+                                    </Button>
+                                  </Space>
+                                </Space>
+                              }
+                            />
+                          </div>
+                        )}
+                        <Table<IListeningHistoryItem>
+                          loading={loading}
+                          dataSource={filteredDictations}
+                          columns={dictationColumns}
+                          rowKey={(record) =>
+                            record.id !== undefined
+                              ? record.id
+                              : record.docId || `${record.timestamp}_${record.sentenceOrigin}`
+                          }
+                          rowSelection={{
+                            selectedRowKeys: selectedDictationRowKeys,
+                            onChange: (keys) => setSelectedDictationRowKeys(keys),
+                          }}
+                          tableLayout='fixed'
+                          pagination={{
+                            defaultPageSize: 15,
+                            showSizeChanger: true,
+                            pageSizeOptions: ['10', '15', '30', '50', '100'],
+                            showTotal: (total, range) =>
+                              `${range[0]}-${range[1]} trên tổng số ${total} bản ghi dictation`,
+                          }}
+                          size='small'
+                          bordered
+                          scroll={{ x: 1200 }}
+                        />
+                      </Card>
+                    )}
+
                     {activeTab === 'syncMeta' && (
                       <Card
                         title={
-                          <Space>
+                          <Space
+                            style={{ marginBottom: token.size / 2, marginTop: token.size / 2 }}
+                          >
                             <DatabaseOutlined style={{ color: token.colorWarning }} />
                             <span>Bảng Sync Meta</span>
                             <Tag color='orange'>{filteredSyncMeta.length} bản ghi cấu hình</Tag>
@@ -1862,7 +2556,9 @@ export const Developer: React.FC = () => {
                     {activeTab === 'errorApiRequests' && (
                       <Card
                         title={
-                          <Space>
+                          <Space
+                            style={{ marginBottom: token.size / 2, marginTop: token.size / 2 }}
+                          >
                             <ApiOutlined style={{ color: token.colorError }} />
                             <span>Bảng Yêu cầu API lỗi (errorApiRequests)</span>
                             <Tag color='red'>{errorRequests.length} yêu cầu lỗi</Tag>
@@ -2230,6 +2926,268 @@ export const Developer: React.FC = () => {
                       </pre>
                     </>
                   )}
+                </Modal>
+
+                {/* Modal Xem chi tiết Dictation */}
+                <Modal
+                  open={Boolean(viewingDictation)}
+                  onCancel={() => setViewingDictation(null)}
+                  title={
+                    <Space align='center'>
+                      <CustomerServiceOutlined style={{ color: token.colorInfo }} />
+                      <span>Chi tiết bản ghi Dictation</span>
+                      {viewingDictation?.isPerfect && <Tag color='success'>Hoàn hảo 100% ★</Tag>}
+                    </Space>
+                  }
+                  width={720}
+                  footer={[
+                    <Button key='close' onClick={() => setViewingDictation(null)}>
+                      Đóng
+                    </Button>,
+                    <Button
+                      key='json'
+                      icon={<CodeOutlined />}
+                      onClick={() => {
+                        if (viewingDictation) {
+                          setSelectedRecordJson({
+                            title: `Dictation: ${viewingDictation.sentenceOrigin || viewingDictation.id}`,
+                            data: viewingDictation,
+                          })
+                        }
+                      }}
+                    >
+                      Xem JSON
+                    </Button>,
+                    <Button
+                      key='edit'
+                      type='primary'
+                      icon={<EditOutlined />}
+                      onClick={() => {
+                        if (viewingDictation) {
+                          const target = viewingDictation
+                          setViewingDictation(null)
+                          handleOpenEditDictation(target)
+                        }
+                      }}
+                    >
+                      Sửa bản ghi
+                    </Button>,
+                  ]}
+                >
+                  {viewingDictation && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      <Descriptions bordered size='small' column={2}>
+                        <Descriptions.Item label='Local DB ID'>
+                          <Text code>{viewingDictation.id ?? '(Chưa có ID)'}</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label='Cloud Doc ID'>
+                          {viewingDictation.docId ? (
+                            <Tag color='green'>{viewingDictation.docId}</Tag>
+                          ) : (
+                            <Tag color='orange'>Local only (Chưa sync Cloud)</Tag>
+                          )}
+                        </Descriptions.Item>
+                        <Descriptions.Item label='Loại nguồn (Source)'>
+                          <Tag color='purple'>{viewingDictation.sourceType || '-'}</Tag>
+                        </Descriptions.Item>
+                        <Descriptions.Item label='Sentence ID'>
+                          <Text code>{viewingDictation.sentenceId || '-'}</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label='Giọng đọc (Voice)'>
+                          <Tag>{viewingDictation.voice || '-'}</Tag>
+                        </Descriptions.Item>
+                        <Descriptions.Item label='Ngày thực hành (Date)'>
+                          {viewingDictation.date || '-'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label='Thời gian chi tiết' span={2}>
+                          {viewingDictation.timestamp || viewingDictation.created_date
+                            ? moment(
+                                viewingDictation.timestamp || viewingDictation.created_date,
+                              ).format(appSetting.dateTimeSecondFormat)
+                            : '-'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label='User UID' span={2}>
+                          <Text type='secondary' copyable={{ text: viewingDictation.uid }}>
+                            {viewingDictation.uid || '-'}
+                          </Text>
+                        </Descriptions.Item>
+                      </Descriptions>
+
+                      <Card size='small' title='So sánh chi tiết (Sentence Diff View)'>
+                        {viewingDictation.sentenceOrigin && viewingDictation.userText ? (
+                          <SentenceDiffView
+                            result={evaluateSentenceDiff(
+                              viewingDictation.sentenceOrigin,
+                              viewingDictation.userText,
+                            )}
+                            sentenceContext={viewingDictation.sentenceOrigin}
+                            showScore
+                          />
+                        ) : (
+                          <Text type='secondary' italic>
+                            Chưa có đầy đủ dữ liệu câu gốc và người dùng nhập để so sánh diff.
+                          </Text>
+                        )}
+                      </Card>
+
+                      <Descriptions bordered size='small' column={1}>
+                        <Descriptions.Item label='Câu gốc (Origin)'>
+                          <Text strong style={{ fontSize: 14 }}>
+                            {viewingDictation.sentenceOrigin || '-'}
+                          </Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label='Bạn đã nhập (User Text)'>
+                          {viewingDictation.userText ? (
+                            <Text style={{ fontSize: 14 }}>{viewingDictation.userText}</Text>
+                          ) : (
+                            <Text type='secondary' italic>
+                              (Chưa có nội dung nhập)
+                            </Text>
+                          )}
+                        </Descriptions.Item>
+                        <Descriptions.Item label='Độ chính xác (Accuracy)'>
+                          <Space
+                            align='center'
+                            style={{ width: '100%', justifyContent: 'space-between' }}
+                          >
+                            <Progress
+                              percent={viewingDictation.accuracy ?? 0}
+                              status={
+                                viewingDictation.accuracy >= 80
+                                  ? 'success'
+                                  : viewingDictation.accuracy >= 50
+                                    ? 'normal'
+                                    : 'exception'
+                              }
+                              style={{ maxWidth: 350 }}
+                            />
+                            <Tag
+                              color={
+                                viewingDictation.isPerfect
+                                  ? 'success'
+                                  : viewingDictation.accuracy >= 80
+                                    ? 'blue'
+                                    : viewingDictation.accuracy >= 50
+                                      ? 'warning'
+                                      : 'error'
+                              }
+                              style={{ fontWeight: 600 }}
+                            >
+                              {viewingDictation.isPerfect
+                                ? '100% Hoàn hảo'
+                                : `${viewingDictation.accuracy ?? 0}%`}
+                            </Tag>
+                          </Space>
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </div>
+                  )}
+                </Modal>
+
+                {/* Modal Sửa Dictation */}
+                <Modal
+                  open={Boolean(editingDictation)}
+                  onCancel={() => setEditingDictation(null)}
+                  title={
+                    <Space align='center'>
+                      <EditOutlined style={{ color: token.colorWarning }} />
+                      <span>
+                        Sửa bản ghi Dictation (ID: {editingDictation?.id ?? editingDictation?.docId}
+                        )
+                      </span>
+                    </Space>
+                  }
+                  width={680}
+                  okText='Lưu thay đổi'
+                  cancelText='Hủy'
+                  confirmLoading={isSavingDictation}
+                  onOk={() => dictationForm.submit()}
+                >
+                  <Form
+                    form={dictationForm}
+                    layout='vertical'
+                    onFinish={handleSaveDictation}
+                    style={{ marginTop: 12 }}
+                  >
+                    <Form.Item
+                      label='Câu gốc (Sentence Origin)'
+                      name='sentenceOrigin'
+                      rules={[{ required: true, message: 'Vui lòng nhập câu gốc!' }]}
+                    >
+                      <Input.TextArea
+                        rows={3}
+                        placeholder='Ví dụ: The quick brown fox jumps over the lazy dog.'
+                      />
+                    </Form.Item>
+
+                    <Form.Item label='Nội dung người dùng đã nhập (User Text)' name='userText'>
+                      <Input.TextArea
+                        rows={3}
+                        placeholder='Nội dung người dùng gõ trong bài luyện...'
+                      />
+                    </Form.Item>
+
+                    <Row gutter={16} align='middle'>
+                      <Col xs={24} sm={10}>
+                        <Form.Item
+                          label='Độ chính xác (Accuracy %)'
+                          name='accuracy'
+                          rules={[{ required: true, message: 'Nhập độ chính xác (0-100)!' }]}
+                        >
+                          <InputNumber min={0} max={100} style={{ width: '100%' }} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={6}>
+                        <Form.Item label='Hoàn hảo 100%' name='isPerfect' valuePropName='checked'>
+                          <Switch checkedChildren='Đúng' unCheckedChildren='Sai' />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={8}>
+                        <Button
+                          icon={<ThunderboltOutlined />}
+                          onClick={handleCalculateAccuracy}
+                          style={{ marginTop: 4, width: '100%' }}
+                        >
+                          Tự tính Accuracy
+                        </Button>
+                      </Col>
+                    </Row>
+
+                    <Row gutter={16}>
+                      <Col xs={24} sm={12}>
+                        <Form.Item label='Loại nguồn (Source Type)' name='sourceType'>
+                          <Input placeholder='item, custom, exercise...' />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={12}>
+                        <Form.Item label='Sentence ID' name='sentenceId'>
+                          <Input placeholder='ID câu gốc hoặc Item ID...' />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+
+                    <Row gutter={16}>
+                      <Col xs={24} sm={12}>
+                        <Form.Item label='Giọng đọc (Voice)' name='voice'>
+                          <Input placeholder='alloy, echo, fable, onyx, nova, shimmer...' />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={12}>
+                        <Form.Item label='Ngày (Date: YYYY-MM-DD)' name='date'>
+                          <Input placeholder='YYYY-MM-DD' />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+
+                    {editingDictation?.docId && user?.uid && (
+                      <Form.Item name='syncToCloud' valuePropName='checked'>
+                        <Checkbox>
+                          Đồng bộ cập nhật này lên Firebase Firestore (Doc ID:{' '}
+                          <code>{editingDictation.docId}</code>)
+                        </Checkbox>
+                      </Form.Item>
+                    )}
+                  </Form>
                 </Modal>
               </>
             ),

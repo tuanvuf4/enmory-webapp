@@ -7,6 +7,7 @@ import {
   CheckCircleOutlined,
   SyncOutlined,
   ClockCircleOutlined,
+  CustomerServiceOutlined,
 } from '@ant-design/icons'
 import { useSelector } from '@/core/hooks/redux'
 import { syncService, IDataChanges, useManualSync, SyncMode, SyncType } from '@/services/localDb'
@@ -32,7 +33,8 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
   const [syncingType, setSyncingType] = useState<SyncType | null>(null)
 
   const isControlled = controlledOpen !== undefined
-  const isOpen = isControlled ? controlledOpen : internalOpen
+  const isOpen =
+    (isControlled ? controlledOpen : internalOpen) && Boolean(changes?.hasChanges || syncSuccess)
 
   const hasCheckedInitialRef = useRef(false)
   const isCheckingRef = useRef(false)
@@ -55,6 +57,9 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
         if (detected.hasChanges) {
           setChanges(detected)
           setInternalOpen(true)
+        } else {
+          setChanges(null)
+          setInternalOpen(false)
         }
       } catch (err) {
         console.warn('Initial data changes detection error:', err)
@@ -68,6 +73,20 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
     return () => clearTimeout(timer)
   }, [isAuth, user?.uid])
 
+  // When controlled open is passed, verify changes and auto-close if none
+  useEffect(() => {
+    if (isControlled && controlledOpen && user?.uid) {
+      syncService.detectDataChanges(user.uid, true).then((detected) => {
+        if (detected.hasChanges) {
+          setChanges(detected)
+        } else {
+          setChanges(null)
+          controlledOnClose?.()
+        }
+      })
+    }
+  }, [isControlled, controlledOpen, user?.uid, controlledOnClose])
+
   const handleClose = () => {
     if (isSyncing) return
     if (isControlled) {
@@ -75,6 +94,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
     } else {
       setInternalOpen(false)
     }
+    setChanges(null)
     setSyncSuccess(false)
   }
 
@@ -87,12 +107,20 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
       if (result && result.isSuccess) {
         if (user?.uid) {
           const detected = await syncService.detectDataChanges(user.uid, true)
-          setChanges(detected)
-          if (!detected.hasChanges) {
+          if (detected.hasChanges) {
+            setChanges(detected)
+          } else {
+            // Khi không còn dữ liệu cần sync, hiện thông báo thành công ngắn rồi tự đóng modal
             setSyncSuccess(true)
+            setTimeout(() => {
+              handleClose()
+            }, 800)
           }
         } else {
           setSyncSuccess(true)
+          setTimeout(() => {
+            handleClose()
+          }, 800)
         }
       }
     } catch (err) {
@@ -102,7 +130,8 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
     }
   }
 
-  if (!changes && !isControlled) {
+  // Không có dữ liệu cần sync thì không hiện modal
+  if (!changes?.hasChanges && !syncSuccess) {
     return null
   }
 
@@ -121,7 +150,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
       footer={
         <Flex justify='flex-end' gap={8} style={{ paddingTop: 8 }} wrap='wrap'>
           <Button onClick={handleClose} disabled={isSyncing}>
-            {changes?.hasChanges ? 'Để sau' : 'Đóng'}
+            Để sau
           </Button>
           <Button
             type='default'
@@ -163,12 +192,10 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
           </div>
           <Flex vertical gap={2}>
             <Title level={5} style={{ margin: 0, lineHeight: 1.3 }}>
-              {changes?.hasChanges ? 'Data Updates Available' : 'Data Synchronized'}
+              Data Updates Available
             </Title>
             <Text type='secondary' style={{ fontSize: 12, fontWeight: 'normal' }}>
-              {changes?.hasChanges
-                ? 'Updates detected in your cloud database'
-                : 'Your local library is up to date'}
+              Updates detected in your cloud database
             </Text>
           </Flex>
         </Flex>
@@ -189,9 +216,8 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
         )}
 
         <Text type='secondary' style={{ display: 'block', marginBottom: 16, fontSize: 13 }}>
-          {changes?.hasChanges
-            ? 'New or updated vocabulary cards and blogs were found in the cloud. Sync now to update your local library.'
-            : 'Your local database is up to date with the cloud.'}
+          New or updated vocabulary cards and blogs were found in the cloud. Sync now to update your
+          local library.
         </Text>
 
         <Flex vertical gap={12}>
@@ -258,7 +284,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                   disabled={isSyncing}
                   onClick={() => handleSync('sync', 'item')}
                 >
-                  Sync Items
+                  Sync
                 </Button>
               </Space>
             </Flex>
@@ -327,7 +353,76 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                   disabled={isSyncing}
                   onClick={() => handleSync('sync', 'blog')}
                 >
-                  Sync Blogs
+                  Sync
+                </Button>
+              </Space>
+            </Flex>
+          </div>
+
+          {/* Dictation Practice Section */}
+          <div
+            style={{
+              border: `1px solid ${token.colorBorderSecondary}`,
+              borderRadius: token.borderRadiusLG,
+              padding: '12px 16px',
+              backgroundColor: token.colorFillAlter,
+            }}
+          >
+            <Flex justify='space-between' align='center' wrap='wrap' gap={8}>
+              <Space size={10} align='center'>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: token.borderRadiusSM,
+                    backgroundColor: '#e6fffb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <CustomerServiceOutlined style={{ color: '#10b981', fontSize: 16 }} />
+                </div>
+                <div>
+                  <Text strong style={{ fontSize: 13, display: 'block' }}>
+                    Dictation Practice
+                  </Text>
+                  <Text type='secondary' style={{ fontSize: 11 }}>
+                    Local: {changes?.dictations.localCount ?? 0} records
+                  </Text>
+                </div>
+              </Space>
+
+              <Space size={8} wrap align='center'>
+                {changes?.dictations.hasChanges ? (
+                  <Tag color='green' style={{ margin: 0, fontWeight: 500 }}>
+                    Updates available
+                  </Tag>
+                ) : (
+                  <Tag
+                    color='success'
+                    icon={<CheckCircleOutlined />}
+                    style={{ margin: 0, fontWeight: 500 }}
+                  >
+                    Up to date
+                  </Tag>
+                )}
+                <Button
+                  size='small'
+                  type={changes?.dictations.hasChanges ? 'primary' : 'default'}
+                  ghost={Boolean(changes?.dictations.hasChanges)}
+                  icon={
+                    isSyncing && syncingType === 'dictation' ? (
+                      <SyncOutlined spin />
+                    ) : (
+                      <CloudSyncOutlined />
+                    )
+                  }
+                  loading={isSyncing && syncingType === 'dictation'}
+                  disabled={isSyncing}
+                  onClick={() => handleSync('sync', 'dictation')}
+                >
+                  Sync
                 </Button>
               </Space>
             </Flex>

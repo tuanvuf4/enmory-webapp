@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { NotFound, PageTitle, Tags } from '@/views/components'
+import { BilingualReader, NotFound, PageTitle, Tags } from '@/views/components'
 import appStyle from '@/style/appStyle.module.scss'
 import { useBlog, useDeleteBlog, useUpdateBlog, useSelector } from '@/core/hooks'
-import { Button, Flex, Popconfirm, Spin, theme, Segmented, Row, Col } from 'antd'
+import { Button, Flex, Popconfirm, Spin, theme } from 'antd'
 import { appSetting } from '@/config/appConfig'
 import moment from 'moment'
 import { ArrowLeftOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
@@ -44,32 +44,6 @@ export const BlogDetail: React.FC<BlogDetailProps> = ({ id: propId }) => {
 
   const { data: blog, isLoading } = useBlog(id || '', !!id)
   const [viewMode, setViewMode] = useState<'original' | 'bilingual' | 'translation'>('original')
-
-  // Align paragraphs for 1:1 bilingual comparison
-  const paragraphPairs = useMemo(() => {
-    if (!blog?.description || !blog?.translation) return null
-    if (typeof document === 'undefined') return null
-
-    try {
-      const parser = new DOMParser()
-      const origDoc = parser.parseFromString(blog.description, 'text/html')
-      const transDoc = parser.parseFromString(blog.translation, 'text/html')
-
-      const origBlocks = Array.from(origDoc.body.children).map((c) => c.outerHTML)
-      const transBlocks = Array.from(transDoc.body.children).map((c) => c.outerHTML)
-
-      if (origBlocks.length > 0 && origBlocks.length === transBlocks.length) {
-        return origBlocks.map((orig, i) => ({
-          original: orig,
-          translation: transBlocks[i],
-        }))
-      }
-    } catch {
-      // fallback
-    }
-
-    return null
-  }, [blog?.description, blog?.translation])
 
   const getTagName = (tag: string) => {
     const normalizedTarget = formatBlogCategoryValue(tag)
@@ -214,111 +188,13 @@ export const BlogDetail: React.FC<BlogDetailProps> = ({ id: propId }) => {
                   />
                 )}
 
-                {/* View mode switcher if translation is available */}
-                {blog.description && blog.translation && (
-                  <Segmented
-                    size='small'
-                    value={viewMode}
-                    onChange={(val) => setViewMode(val as 'original' | 'bilingual' | 'translation')}
-                    options={[
-                      { label: 'Bài gốc', value: 'original' },
-                      { label: 'Song ngữ', value: 'bilingual' },
-                      { label: 'Bản dịch', value: 'translation' },
-                    ]}
-                    style={{ alignSelf: 'flex-start' }}
-                  />
-                )}
-
-                {viewMode === 'bilingual' && blog.translation ? (
-                  <>
-                    {paragraphPairs ? (
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 16,
-                        }}
-                      >
-                        {paragraphPairs.map((pair, idx) => (
-                          <Row
-                            key={idx}
-                            gutter={token.size}
-                            style={{
-                              padding: '12px 4px',
-                              borderRadius: 8,
-                              background: token.colorFillAlter,
-                            }}
-                          >
-                            <Col xs={24} lg={12}>
-                              <div
-                                className={clsx(appStyle.blog, appStyle.article)}
-                                dangerouslySetInnerHTML={{ __html: pair.original }}
-                              />
-                            </Col>
-                            <Col xs={24} lg={12}>
-                              <div
-                                className={clsx(appStyle.blog, appStyle.article)}
-                                style={{
-                                  color: token.colorTextSecondary,
-                                  background: token.colorBgContainer,
-                                  padding: '8px 12px',
-                                  borderRadius: 6,
-                                  borderLeft: `3px solid ${token.colorSuccess}`,
-                                }}
-                                dangerouslySetInnerHTML={{ __html: pair.translation }}
-                              />
-                            </Col>
-                          </Row>
-                        ))}
-                      </div>
-                    ) : (
-                      <Row gutter={[24, 24]}>
-                        <Col xs={24} lg={12}>
-                          <div
-                            style={{
-                              fontWeight: 600,
-                              fontSize: 13,
-                              marginBottom: 8,
-                              color: token.colorPrimary,
-                            }}
-                          >
-                            🇺🇸 Bài viết gốc
-                          </div>
-                          <div
-                            className={clsx(appStyle.blog, appStyle.article)}
-                            dangerouslySetInnerHTML={{ __html: blog.description || '' }}
-                          />
-                        </Col>
-                        <Col xs={24} lg={12}>
-                          <div
-                            style={{
-                              fontWeight: 600,
-                              fontSize: 13,
-                              marginBottom: 8,
-                              color: token.colorSuccess,
-                            }}
-                          >
-                            🇻🇳 Bản dịch tiếng Việt
-                          </div>
-                          <div
-                            className={clsx(appStyle.blog, appStyle.article)}
-                            dangerouslySetInnerHTML={{ __html: blog.translation }}
-                          />
-                        </Col>
-                      </Row>
-                    )}
-                  </>
-                ) : viewMode === 'translation' && blog.translation ? (
-                  <div
-                    className={clsx(appStyle.blog, appStyle.article)}
-                    dangerouslySetInnerHTML={{ __html: blog.translation }}
-                  />
-                ) : (
-                  <div
-                    className={clsx(appStyle.blog, appStyle.article)}
-                    dangerouslySetInnerHTML={{ __html: blog.description || '' }}
-                  />
-                )}
+                {/* Bilingual & reader content view */}
+                <BilingualReader
+                  original={blog.description || ''}
+                  translation={blog.translation}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                />
               </Flex>
             </Widget>
           </>

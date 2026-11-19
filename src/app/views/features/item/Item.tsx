@@ -21,15 +21,15 @@ import { studySetAction } from '@/store/reducers/studySet.reducer'
 import appStyle from '@/style/appStyle.module.scss'
 import { Level, Tags } from '@/views/components'
 import {
-  BookOutlined,
+  // BookOutlined,
   CheckOutlined,
   CheckSquareFilled,
   CheckSquareOutlined,
   ClockCircleOutlined,
   CopyOutlined,
   DownOutlined,
-  HeartFilled,
-  HeartOutlined,
+  // HeartFilled,
+  // HeartOutlined,
   MoreOutlined,
   ReloadOutlined,
   SoundOutlined,
@@ -483,7 +483,7 @@ export const Item: React.FC<IProps> = ({
                   onClick={handleToggleChecklist}
                 />
 
-                <Button
+                {/* <Button
                   type='text'
                   size='small'
                   icon={
@@ -498,9 +498,9 @@ export const Item: React.FC<IProps> = ({
                     favorite(data)
                     onFavorite?.()
                   }}
-                />
+                /> */}
 
-                <Button
+                {/* <Button
                   type='text'
                   size='small'
                   icon={
@@ -515,7 +515,7 @@ export const Item: React.FC<IProps> = ({
                     archive(data)
                     onArchive?.()
                   }}
-                />
+                /> */}
 
                 {isItemDue(data) && (
                   <Tooltip title={`${getDueDurationText(data)}`}>

@@ -26,6 +26,7 @@ import {
   ReadOutlined,
   SearchOutlined,
   CloseCircleOutlined,
+  CustomerServiceOutlined,
 } from '@ant-design/icons'
 import { useManualSync, IUnsyncedRecord } from '@/services/localDb'
 import moment from 'moment'
@@ -35,7 +36,7 @@ const { useBreakpoint } = Grid
 
 interface ISyncSummary {
   key: string
-  type: 'item' | 'blog'
+  type: 'item' | 'blog' | 'dictation'
   title: string
   description: string
   icon: React.ReactNode
@@ -71,6 +72,12 @@ export const SyncDataCard: React.FC = () => {
     serverBlogCount,
     isLoadingServerBlogCount,
     refreshServerBlogCount,
+    localDictationCount,
+    isLoadingLocalDictationCount,
+    refreshLocalDictationCount,
+    serverDictationCount,
+    isLoadingServerDictationCount,
+    refreshServerDictationCount,
     refreshAllCounts,
     syncNow,
     clearLocalData,
@@ -88,7 +95,14 @@ export const SyncDataCard: React.FC = () => {
     serverBlogCount !== null && !isLoadingServerBlogCount && serverBlogCount !== localBlogCount
   const diffBlogCount = serverBlogCount !== null ? serverBlogCount - localBlogCount : 0
 
-  const hasDiff = hasItemDiff || hasBlogDiff
+  const hasDictationDiff =
+    serverDictationCount !== null &&
+    !isLoadingServerDictationCount &&
+    serverDictationCount !== localDictationCount
+  const diffDictationCount =
+    serverDictationCount !== null ? serverDictationCount - localDictationCount : 0
+
+  const hasDiff = hasItemDiff || hasBlogDiff || hasDictationDiff
 
   const summaryData = useMemo<ISyncSummary[]>(
     () => [
@@ -126,6 +140,23 @@ export const SyncDataCard: React.FC = () => {
         hasDiff: hasBlogDiff,
         refreshServer: () => refreshServerBlogCount(true),
       },
+      {
+        key: 'dictations',
+        type: 'dictation',
+        title: 'Dictation',
+        description: 'Listening Practice',
+        icon: <CustomerServiceOutlined style={{ color: '#10b981', fontSize: 16 }} />,
+        tagColor: 'green',
+        unit: 'records',
+        localCount: localDictationCount,
+        isLoadingLocal: isLoadingLocalDictationCount,
+        refreshLocal: refreshLocalDictationCount,
+        serverCount: serverDictationCount,
+        isLoadingServer: isLoadingServerDictationCount,
+        diffCount: diffDictationCount,
+        hasDiff: hasDictationDiff,
+        refreshServer: () => refreshServerDictationCount(true),
+      },
     ],
     [
       token.colorPrimary,
@@ -145,6 +176,14 @@ export const SyncDataCard: React.FC = () => {
       diffBlogCount,
       hasBlogDiff,
       refreshServerBlogCount,
+      localDictationCount,
+      isLoadingLocalDictationCount,
+      refreshLocalDictationCount,
+      serverDictationCount,
+      isLoadingServerDictationCount,
+      diffDictationCount,
+      hasDictationDiff,
+      refreshServerDictationCount,
     ],
   )
 
@@ -161,7 +200,12 @@ export const SyncDataCard: React.FC = () => {
               width: 34,
               height: 34,
               borderRadius: token.borderRadiusSM,
-              backgroundColor: record.type === 'item' ? token.colorPrimaryBg : '#f9f0ff',
+              backgroundColor:
+                record.type === 'item'
+                  ? token.colorPrimaryBg
+                  : record.type === 'blog'
+                    ? '#f9f0ff'
+                    : '#e6fffb',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -200,7 +244,9 @@ export const SyncDataCard: React.FC = () => {
           >
             {record.isLoadingLocal ? <SyncOutlined spin /> : count.toLocaleString()}
           </Tag>
-          <Tooltip title={`Refresh local ${record.type === 'item' ? 'items' : 'blogs'} count`}>
+          <Tooltip
+            title={`Refresh local ${record.type === 'item' ? 'items' : record.type === 'blog' ? 'blogs' : 'dictation'} count`}
+          >
             <Button
               size='small'
               shape='circle'
@@ -254,7 +300,9 @@ export const SyncDataCard: React.FC = () => {
                 </Tag>
               )}
 
-              <Tooltip title={`Refresh server ${record.type === 'item' ? 'items' : 'blogs'} count`}>
+              <Tooltip
+                title={`Refresh server ${record.type === 'item' ? 'items' : record.type === 'blog' ? 'blogs' : 'dictation'} count`}
+              >
                 <Button
                   size='small'
                   shape='circle'
@@ -272,7 +320,7 @@ export const SyncDataCard: React.FC = () => {
               Unavailable
             </Tag>
             <Tooltip
-              title={`Retry fetching server ${record.type === 'item' ? 'items' : 'blogs'} count`}
+              title={`Retry fetching server ${record.type === 'item' ? 'items' : record.type === 'blog' ? 'blogs' : 'dictation'} count`}
             >
               <Button
                 size='small'
@@ -378,15 +426,24 @@ export const SyncDataCard: React.FC = () => {
       filters: [
         { text: 'Item', value: 'item' },
         { text: 'Blog', value: 'blog' },
+        { text: 'Dictation', value: 'dictation' },
       ],
       onFilter: (value, record) => record.type === value,
-      render: (type: 'item' | 'blog') => (
+      render: (type: 'item' | 'blog' | 'dictation') => (
         <Tag
-          color={type === 'item' ? 'blue' : 'purple'}
-          icon={type === 'item' ? <DatabaseOutlined /> : <ReadOutlined />}
+          color={type === 'item' ? 'blue' : type === 'blog' ? 'purple' : 'green'}
+          icon={
+            type === 'item' ? (
+              <DatabaseOutlined />
+            ) : type === 'blog' ? (
+              <ReadOutlined />
+            ) : (
+              <CustomerServiceOutlined />
+            )
+          }
           style={{ textTransform: 'capitalize', fontWeight: 500 }}
         >
-          {type === 'item' ? 'Item' : 'Blog'}
+          {type === 'item' ? 'Item' : type === 'blog' ? 'Blog' : 'Dictation'}
         </Tag>
       ),
     },
@@ -397,7 +454,12 @@ export const SyncDataCard: React.FC = () => {
       render: (title: string, record) => (
         <Space direction='vertical' size={2} style={{ maxWidth: '100%' }}>
           <Text strong style={{ wordBreak: 'break-word' }}>
-            {title || (record.type === 'item' ? '(Empty origin)' : '(Untitled blog)')}
+            {title ||
+              (record.type === 'item'
+                ? '(Empty origin)'
+                : record.type === 'blog'
+                  ? '(Untitled blog)'
+                  : '(Dictation record)')}
           </Text>
           <Text type='secondary' copyable={{ text: record.id }} style={{ fontSize: 11 }}>
             ID: {record.id}

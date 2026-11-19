@@ -1,12 +1,26 @@
-import React, { useEffect, useState, useMemo } from 'react'
-import { Skeleton, theme, Empty, Row, Col, Statistic as AntStatistic } from 'antd'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
+import {
+  Skeleton,
+  theme,
+  Empty,
+  Row,
+  Col,
+  Statistic as AntStatistic,
+  Radio,
+  RadioChangeEvent,
+  Table,
+  Tag,
+  Typography,
+} from 'antd'
 import {
   CustomerServiceOutlined,
   CheckCircleOutlined,
   TrophyOutlined,
   FireOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons'
 import styles from '../chart.module.scss'
+import moment from 'moment'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -25,6 +39,8 @@ import {
   listeningStatsService,
   IListeningSummary,
   IListeningTimelineData,
+  TListeningTimeRange,
+  IListeningHistoryItem,
 } from '@/services/localDb'
 import { useSelector } from '@/core/hooks/redux'
 
@@ -48,35 +64,69 @@ export const ListeningChart: React.FC<IProps> = ({ title = 'Dictation' }) => {
   const { token } = theme.useToken()
   const themeMode = useSelector((state: any) => state?.setting?.themeMode ?? 'light')
   const isDark = themeMode === 'dark'
+  const user = useSelector((state: any) => state?.auth?.user)
+  const uid = user?.uid
 
   const [summary, setSummary] = useState<IListeningSummary | null>(null)
   const [timeline, setTimeline] = useState<IListeningTimelineData | null>(null)
+  const [range, setRange] = useState<TListeningTimeRange>(7)
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
 
-  useEffect(() => {
-    let mounted = true
-    setIsLoaded(false)
-
-    Promise.all([
-      listeningStatsService.getListeningSummary(),
-      listeningStatsService.getTimelineChartData(7),
-    ])
-      .then(([sumRes, timelineRes]) => {
-        if (mounted) {
+  const loadStats = useCallback(
+    (targetRange: TListeningTimeRange) => {
+      setIsLoaded(false)
+      Promise.all([
+        listeningStatsService.getListeningSummary(uid),
+        listeningStatsService.getTimelineChartData(targetRange, uid),
+      ])
+        .then(([sumRes, timelineRes]) => {
           setSummary(sumRes)
           setTimeline(timelineRes)
           setIsLoaded(true)
-        }
-      })
-      .catch((err) => {
-        console.error('Error loading listening stats:', err)
-        if (mounted) setIsLoaded(true)
-      })
+        })
+        .catch((err) => {
+          console.error('Error loading listening stats:', err)
+          setIsLoaded(true)
+        })
+    },
+    [uid],
+  )
+
+  useEffect(() => {
+    loadStats(range)
+
+    const handleDictationUpdated = () => {
+      loadStats(range)
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('enmory:dictation-updated', handleDictationUpdated)
+    }
 
     return () => {
-      mounted = false
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('enmory:dictation-updated', handleDictationUpdated)
+      }
     }
-  }, [])
+  }, [loadStats, range])
+
+  const handleRangeChange = (e: RadioChangeEvent) => {
+    const newRange = e.target.value as TListeningTimeRange
+    setRange(newRange)
+  }
+
+  const rangeSubtitle = useMemo(() => {
+    switch (range) {
+      case 7:
+        return 'Thống kê tiến độ luyện nghe & dictation 7 ngày gần đây'
+      case 14:
+        return 'Thống kê tiến độ luyện nghe & dictation 14 ngày gần đây'
+      case 30:
+        return 'Thống kê tiến độ luyện nghe & dictation 30 ngày gần đây'
+      default:
+        return 'Thống kê tiến độ luyện nghe & dictation'
+    }
+  }, [range])
 
   const chartData = useMemo(() => {
     if (!timeline || timeline.labels.length === 0) return null
@@ -102,7 +152,9 @@ export const ListeningChart: React.FC<IProps> = ({ title = 'Dictation' }) => {
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
           pointBackgroundColor: '#10b981',
           pointBorderColor: '#fff',
-          pointRadius: 4,
+          pointRadius: (ctx: any) => (ctx.raw === null || ctx.raw === undefined ? 0 : 4),
+          pointHoverRadius: (ctx: any) => (ctx.raw === null || ctx.raw === undefined ? 0 : 6),
+          spanGaps: true,
           tension: 0.35,
           yAxisID: 'y1',
         },
@@ -122,6 +174,12 @@ export const ListeningChart: React.FC<IProps> = ({ title = 'Dictation' }) => {
           ...base.plugins?.tooltip,
           callbacks: {
             label: (ctx: any) => {
+              if (ctx.raw === null || ctx.raw === undefined) {
+                if (ctx.dataset.label.includes('Độ chính xác')) {
+                  return ` ${ctx.dataset.label}: Chưa có lượt luyện`
+                }
+                return ` ${ctx.dataset.label}: 0 câu`
+              }
               if (ctx.dataset.label.includes('Độ chính xác')) {
                 return ` ${ctx.dataset.label}: ${ctx.raw}%`
               }
@@ -160,7 +218,7 @@ export const ListeningChart: React.FC<IProps> = ({ title = 'Dictation' }) => {
           min: 0,
           max: 100,
           grid: {
-            drawOnChartArea: false, // only want the grid lines for one axis to show up
+            drawOnChartArea: false,
           },
           ticks: {
             color: token.colorTextSecondary,
@@ -179,18 +237,93 @@ export const ListeningChart: React.FC<IProps> = ({ title = 'Dictation' }) => {
 
   const hasData = (summary?.totalPracticed || 0) > 0
 
+  const recentColumns = useMemo(
+    () => [
+      {
+        title: 'Câu gốc',
+        dataIndex: 'sentenceOrigin',
+        key: 'sentenceOrigin',
+        ellipsis: true,
+        render: (text: string) => (
+          <Typography.Text strong style={{ fontSize: 13 }}>
+            {text || '—'}
+          </Typography.Text>
+        ),
+      },
+      {
+        title: 'Bạn đã gõ',
+        dataIndex: 'userText',
+        key: 'userText',
+        ellipsis: true,
+        render: (text: string) => (
+          <Typography.Text type={text ? undefined : 'secondary'} style={{ fontSize: 13 }}>
+            {text || '(chưa gõ)'}
+          </Typography.Text>
+        ),
+      },
+      {
+        title: 'Độ chính xác',
+        dataIndex: 'accuracy',
+        key: 'accuracy',
+        width: 140,
+        render: (acc: number, record: IListeningHistoryItem) => {
+          const isPerfect = record.isPerfect || acc >= 100
+          let color = 'default'
+          if (isPerfect) color = 'success'
+          else if (acc >= 80) color = 'processing'
+          else if (acc >= 50) color = 'warning'
+          else color = 'error'
+
+          return (
+            <Tag color={color} style={{ fontWeight: 600, borderRadius: 4 }}>
+              {isPerfect ? '100% 🏆' : `${acc ?? 0}%`}
+            </Tag>
+          )
+        },
+      },
+      {
+        title: 'Thời gian',
+        key: 'time',
+        width: 150,
+        render: (_: any, record: IListeningHistoryItem) => {
+          const ts = record.timestamp || record.created_date
+          if (!ts) return record.date || '—'
+          return (
+            <span style={{ fontSize: 12, color: token.colorTextSecondary }}>
+              {moment(ts).format('DD/MM/YYYY HH:mm')}
+            </span>
+          )
+        },
+      },
+    ],
+    [token.colorTextSecondary],
+  )
+
   return (
     <div className={styles.chartCard}>
-      <div className={styles.chartHeader}>
+      <div
+        className={styles.chartHeader}
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12,
+        }}
+      >
         <div className={styles.chartTitleWrapper}>
           <h3 className={styles.chartTitle}>
             <CustomerServiceOutlined className={styles.titleIcon} />
             {title}
           </h3>
-          <p className={styles.chartSubtitle}>
-            Thống kê tiến độ luyện nghe & dictation 7 ngày gần đây
-          </p>
+          <p className={styles.chartSubtitle}>{rangeSubtitle}</p>
         </div>
+
+        <Radio.Group value={range} onChange={handleRangeChange} size='small' buttonStyle='solid'>
+          <Radio.Button value={7}>7 ngày</Radio.Button>
+          <Radio.Button value={14}>14 ngày</Radio.Button>
+          <Radio.Button value={30}>30 ngày</Radio.Button>
+        </Radio.Group>
       </div>
 
       {!isLoaded ? (
@@ -285,6 +418,33 @@ export const ListeningChart: React.FC<IProps> = ({ title = 'Dictation' }) => {
               />
             )}
           </div>
+
+          {summary?.recentSessions && summary.recentSessions.length > 0 && (
+            <div style={{ marginTop: 24 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                  gap: 8,
+                }}
+              >
+                <HistoryOutlined style={{ color: token.colorPrimary }} />
+                <Typography.Text strong style={{ fontSize: 14 }}>
+                  Lịch sử luyện tập gần đây ({summary.recentSessions.length} câu gần nhất)
+                </Typography.Text>
+              </div>
+              <Table
+                dataSource={summary.recentSessions}
+                columns={recentColumns}
+                rowKey={(record, idx) => String(record.id ?? record.docId ?? idx ?? '')}
+                pagination={false}
+                size='small'
+                bordered={false}
+                scroll={{ x: 600 }}
+              />
+            </div>
+          )}
         </>
       )}
     </div>

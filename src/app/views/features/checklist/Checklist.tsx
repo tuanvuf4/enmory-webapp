@@ -18,12 +18,10 @@ import {
 } from 'antd'
 import {
   DeleteOutlined,
-  ThunderboltFilled,
   ClearOutlined,
   MoreOutlined,
   CheckSquareOutlined,
   UndoOutlined,
-  PlayCircleOutlined,
   EditOutlined,
   SearchOutlined,
   FilterOutlined,
@@ -31,13 +29,11 @@ import {
   AudioOutlined,
 } from '@ant-design/icons'
 import clsx from 'clsx'
-import { useChecklist, useDispatch } from '@/core/hooks'
+import { useChecklist } from '@/core/hooks'
 import { IChecklistItem } from '@/models/checklist.model'
 import { useItemModal, usePrompt, useShadowingModal } from '@/helpers/hooks'
 import { getCategory, hasValidMeaning } from '@/helpers/item'
-import { itemApi } from '@/services/firebase/api/item.api'
-import { studySetAction } from '@/store/reducers/studySet.reducer'
-import { IOption, IItemQuiz, ECategory } from '@/models/item.model'
+import { ECategory } from '@/models/item.model'
 import styles from './checklist.module.scss'
 
 type FilterType = 'all' | 'active' | 'completed'
@@ -46,7 +42,6 @@ const PAGE_SIZE = 10
 
 export const Checklist: React.FC = () => {
   const { token } = theme.useToken()
-  const dispatch = useDispatch()
   const {
     checklist,
     isLoading,
@@ -63,7 +58,6 @@ export const Checklist: React.FC = () => {
   const { message, confirm } = usePrompt()
 
   const [filter, setFilter] = useState<FilterType>('active')
-  const [isPracticing, setIsPracticing] = useState<boolean>(false)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [selectedCat, setSelectedCat] = useState<ECategory>(ECategory.ALL)
@@ -119,9 +113,6 @@ export const Checklist: React.FC = () => {
     })
   }, [categoryCounts, checklist.length, categoryList])
 
-  // Filter items that have at least one valid definition/translation
-  const validChecklist = checklist.filter(hasValidMeaning)
-
   const handleDelete = async (item: IChecklistItem) => {
     const id = item.checklistId || item.id || ''
     try {
@@ -135,89 +126,6 @@ export const Checklist: React.FC = () => {
         type: 'error',
         content: error?.message || 'Failed to remove item from checklist',
       })
-    }
-  }
-
-  const handleStartPractice = async (itemsToPractice?: IChecklistItem[]) => {
-    const rawCandidates =
-      itemsToPractice && itemsToPractice.length > 0
-        ? itemsToPractice
-        : filter === 'active'
-          ? checklist.filter((i) => !i.isCompleted)
-          : filter === 'completed'
-            ? checklist.filter((i) => i.isCompleted)
-            : toLearn > 0
-              ? checklist.filter((i) => !i.isCompleted)
-              : checklist
-
-    // Strictly ensure only words with definition/meaning are included in the quiz
-    const candidates = rawCandidates.filter(hasValidMeaning)
-
-    if (candidates.length === 0) {
-      message({
-        type: 'warning',
-        content:
-          'Chưa có từ nào có định nghĩa hoặc nghĩa trong danh sách. Hãy thêm nghĩa cho từ trước khi luyện tập!',
-      })
-      return
-    }
-
-    setIsPracticing(true)
-    try {
-      const res = await itemApi.getChecklistStudySet(candidates)
-      if (!res.isSuccess || !res.content || res.content.length === 0) {
-        message({
-          type: 'error',
-          content: res.message || 'Failed to generate quiz from checklist items',
-        })
-        return
-      }
-
-      const formattedItems = res.content.map((item) => ({
-        ...item,
-        quiz: {
-          ...item.quiz,
-          answer:
-            typeof item.quiz.answer === 'string'
-              ? item.quiz.answer
-              : (item.quiz.answer as IOption<string, boolean>[]).map((ans) => ({
-                  ...ans,
-                  value: false,
-                })),
-          result: false,
-        },
-      })) as unknown as IItemQuiz[]
-
-      dispatch(studySetAction.setList(formattedItems))
-      dispatch(
-        studySetAction.updateProgress({
-          currentIndex: 0,
-          inProgress: true,
-          isDone: false,
-          mode: 'checklist',
-        }),
-      )
-
-      message({
-        type: 'success',
-        content: `Started practice quiz with ${formattedItems.length} defined checklist item(s)!`,
-      })
-
-      // Smooth scroll to StudySet widget
-      const studySet = document.getElementById('studySet')
-      if (studySet) {
-        studySet.focus()
-        const rect = studySet.getBoundingClientRect()
-        window.scrollTo({ top: rect.top + window.scrollY - 140, behavior: 'smooth' })
-      }
-    } catch (err: any) {
-      console.error('Error starting checklist practice:', err)
-      message({
-        type: 'error',
-        content: err?.message || 'Failed to start checklist practice',
-      })
-    } finally {
-      setIsPracticing(false)
     }
   }
 
@@ -372,13 +280,6 @@ export const Checklist: React.FC = () => {
                 menu={{
                   items: [
                     {
-                      key: 'practice-all',
-                      icon: <PlayCircleOutlined />,
-                      label: `Practice all defined (${validChecklist.length} items)`,
-                      disabled: validChecklist.length === 0,
-                      onClick: () => handleStartPractice(validChecklist),
-                    },
-                    {
                       key: 'mark-all-done',
                       icon: <CheckSquareOutlined />,
                       label: 'Mark all as remembered',
@@ -438,16 +339,6 @@ export const Checklist: React.FC = () => {
                   title='More actions'
                 />
               </Dropdown>
-
-              <Button
-                type='primary'
-                icon={<ThunderboltFilled style={{ color: '#ffc107', fontSize: 14 }} />}
-                loading={isPracticing}
-                disabled={validChecklist.length === 0}
-                onClick={() => handleStartPractice()}
-              >
-                Practice {toLearn > 0 ? `(${toLearn})` : `(${total})`}
-              </Button>
             </div>
           </div>
 
@@ -661,7 +552,7 @@ export const Checklist: React.FC = () => {
                         </div>
                         <div>
                           {!hasMeaning && (
-                            <Tooltip title='This word does not have a definition or Vietnamese meaning, it will not appear in practice exercises.'>
+                            <Tooltip title='This word does not have a definition or Vietnamese meaning.'>
                               <Tag
                                 color='warning'
                                 style={{

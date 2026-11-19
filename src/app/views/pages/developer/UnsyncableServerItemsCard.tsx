@@ -1485,7 +1485,7 @@ export const UnsyncableServerItemsCard: React.FC = () => {
   return (
     <Card
       title={
-        <Space>
+        <Space style={{ marginBottom: token.size / 2, marginTop: token.size / 2 }}>
           <WarningOutlined style={{ color: token.colorWarning }} />
           <span>Xử lý Item không thể đồng bộ (Unsyncable & Desync Items)</span>
           {items.length > 0 && (

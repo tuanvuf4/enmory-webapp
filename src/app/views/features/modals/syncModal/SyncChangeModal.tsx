@@ -395,7 +395,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
 
               <Space size={8} wrap align='center'>
                 {changes?.dictations.hasChanges ? (
-                  <Tag color='green' style={{ margin: 0, fontWeight: 500 }}>
+                  <Tag color='blue' style={{ margin: 0, fontWeight: 500 }}>
                     Updates available
                   </Tag>
                 ) : (

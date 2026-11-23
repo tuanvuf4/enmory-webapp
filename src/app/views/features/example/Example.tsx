@@ -113,7 +113,7 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
 
   const getRandomExamples = useCallback(
     async (number = size, force = false) => {
-      if (examples.length > 0 && !force) return
+      if (examples.length > 0 && examples.length <= size && !force) return
 
       try {
         setLoading(true)
@@ -253,7 +253,7 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
       const { isSuccess, content } = await exampleApi.getExamples({
         keyword: kw,
         page: 0,
-        size: Math.max(size, 20),
+        size: size,
       })
       if (isSuccess && content) {
         dispatch(exampleAction.update(content || []))
@@ -269,9 +269,11 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
     openItemModal('view', { id: itemId } as IItem)
   }
 
-  // Load once on mount if empty
+  // Load once on mount if empty or if count exceeds configured size
   useEffect(() => {
-    getRandomExamples(size)
+    if (examples.length === 0 || examples.length > size) {
+      getRandomExamples(size, true)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -305,7 +307,10 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
                     suffix={
                       <CloseCircleOutlined
                         style={{ fontSize: 16, cursor: 'pointer' }}
-                        onClick={() => onChange('')}
+                        onClick={() => {
+                          onChange('')
+                          handleClearSearch()
+                        }}
                       />
                     }
                   />
@@ -313,7 +318,12 @@ export const Example: React.FC<PropsWithChildren & IProps> = () => {
                 filterOption={false}
                 options={options}
                 onSelect={(val, o) => onSelect(val, o)}
-                onChange={(text) => onChange(text)}
+                onChange={(text) => {
+                  onChange(text)
+                  if (!text && activeSearch) {
+                    handleClearSearch()
+                  }
+                }}
               />
             )
           }}

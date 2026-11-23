@@ -160,7 +160,11 @@ export const Library: React.FC = () => {
                 </Button>
               </Space>
             ) : (
-              <NotFound classNames={{ container: 'justify-center' }} showButton={false} />
+              <NotFound
+                label={'No data'}
+                classNames={{ container: 'justify-center' }}
+                showButton={false}
+              />
             )}
           </div>
         )}

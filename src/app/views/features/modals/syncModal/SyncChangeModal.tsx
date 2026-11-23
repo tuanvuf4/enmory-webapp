@@ -33,8 +33,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
   const [syncingType, setSyncingType] = useState<SyncType | null>(null)
 
   const isControlled = controlledOpen !== undefined
-  const isOpen =
-    (isControlled ? controlledOpen : internalOpen) && Boolean(changes?.hasChanges || syncSuccess)
+  const isOpen = isControlled ? controlledOpen : internalOpen
 
   const hasCheckedInitialRef = useRef(false)
   const isCheckingRef = useRef(false)
@@ -105,22 +104,10 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
     try {
       const result = await syncNow(mode, type)
       if (result && result.isSuccess) {
+        setSyncSuccess(true)
         if (user?.uid) {
           const detected = await syncService.detectDataChanges(user.uid, true)
-          if (detected.hasChanges) {
-            setChanges(detected)
-          } else {
-            // Khi không còn dữ liệu cần sync, hiện thông báo thành công ngắn rồi tự đóng modal
-            setSyncSuccess(true)
-            setTimeout(() => {
-              handleClose()
-            }, 800)
-          }
-        } else {
-          setSyncSuccess(true)
-          setTimeout(() => {
-            handleClose()
-          }, 800)
+          setChanges(detected)
         }
       }
     } catch (err) {
@@ -130,8 +117,8 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
     }
   }
 
-  // Không có dữ liệu cần sync thì không hiện modal
-  if (!changes?.hasChanges && !syncSuccess) {
+  // Không có trạng thái mở thì không render modal
+  if (!isOpen) {
     return null
   }
 
@@ -146,11 +133,10 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
       closable={!isSyncing}
       centered
       width={520}
-      destroyOnClose={false}
       footer={
         <Flex justify='flex-end' gap={8} style={{ paddingTop: 8 }} wrap='wrap'>
           <Button onClick={handleClose} disabled={isSyncing}>
-            Để sau
+            {syncSuccess || !changes?.hasChanges ? 'Đóng' : 'Để sau'}
           </Button>
           <Button
             type='default'
@@ -210,7 +196,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
             onClose={() => setSyncSuccess(false)}
             icon={<CheckCircleOutlined />}
             message='Data Synchronized Successfully'
-            description='Your local vocabulary and blogs are now fully up to date.'
+            description='Your data is now fully up to date.'
             style={{ marginBottom: 16 }}
           />
         )}
@@ -247,7 +233,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                 </div>
                 <div>
                   <Text strong style={{ fontSize: 13, display: 'block' }}>
-                    Vocabulary Items
+                    Vocabulary
                   </Text>
                   <Text type='secondary' style={{ fontSize: 11 }}>
                     Local: {changes?.items.localCount ?? 0} items
@@ -316,7 +302,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                 </div>
                 <div>
                   <Text strong style={{ fontSize: 13, display: 'block' }}>
-                    Blogs & Articles
+                    Articles
                   </Text>
                   <Text type='secondary' style={{ fontSize: 11 }}>
                     Local: {changes?.blogs.localCount ?? 0} articles
@@ -385,7 +371,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                 </div>
                 <div>
                   <Text strong style={{ fontSize: 13, display: 'block' }}>
-                    Dictation Practice
+                    Dictation
                   </Text>
                   <Text type='secondary' style={{ fontSize: 11 }}>
                     Local: {changes?.dictations.localCount ?? 0} records

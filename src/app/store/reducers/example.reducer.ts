@@ -46,20 +46,14 @@ export const exampleReducer = createSlice({
       state.list = action.payload
     },
     batchUpdate(state: IExampleState, action: PayloadAction<IExample[]>) {
-      // Create a map of existing examples by ID for fast lookup
-      const existingMap = new Map(state.list.map((ex) => [ex.id, ex]))
-
-      // Update or add examples from the payload
-      for (const example of action.payload) {
-        existingMap.set(example.id, example)
-      }
-
-      // Convert back to array, preserving examples not in the payload
-      state.list = Array.from(existingMap.values())
+      // Update only existing examples in state.list, do not append new ones
+      const updateMap = new Map(action.payload.map((ex) => [ex.id, ex]))
+      state.list = state.list.map((ex) =>
+        updateMap.has(ex.id) ? { ...ex, ...updateMap.get(ex.id)! } : ex,
+      )
 
       // Also update matching examples in translationPractice.history if present
       if (state.translationPractice?.history?.length) {
-        const updateMap = new Map(action.payload.map((ex) => [ex.id, ex]))
         state.translationPractice.history = state.translationPractice.history.map((ex) =>
           updateMap.has(ex.id) ? { ...ex, ...updateMap.get(ex.id)! } : ex,
         )

@@ -234,6 +234,45 @@ export const Dictation: React.FC<IDictationProps> = ({
   const targetText = stripHtml(rawTarget)
   const noteText = currentExample?.note?.trim() || ''
 
+  // Tự động tìm nguồn gốc origin của item (ưu tiên itemOrigin, tiếp đến item.origin từ Library, fallback về currentExample.origin)
+  const [, setResolvedItemOrigin] = useState<string>('')
+
+  useEffect(() => {
+    let isMounted = true
+    const resolveOrigin = async () => {
+      if (!currentExample) {
+        setResolvedItemOrigin('')
+        return
+      }
+
+      if (currentExample.itemOrigin) {
+        setResolvedItemOrigin(currentExample.itemOrigin)
+        return
+      }
+
+      if (currentExample.itemId) {
+        try {
+          const item = await localDb.items.get(currentExample.itemId)
+          if (item?.origin && isMounted) {
+            setResolvedItemOrigin(item.origin)
+            return
+          }
+        } catch (e) {
+          console.warn('Error getting item origin from localDb:', e)
+        }
+      }
+
+      if (isMounted) {
+        setResolvedItemOrigin(currentExample.origin || '')
+      }
+    }
+
+    resolveOrigin()
+    return () => {
+      isMounted = false
+    }
+  }, [currentExample])
+
   // Scrambled word tags for Hint (deduplicated so each word appears once)
   const scrambledWords = useMemo(() => {
     if (!targetText) return []
@@ -716,6 +755,105 @@ export const Dictation: React.FC<IDictationProps> = ({
     [currentExample, openItemModal],
   )
 
+  // View sentence/item via ItemModal
+
+  const handleViewItem = useCallback(
+    async (exampleToView?: IExample) => {
+      const example = exampleToView || currentExample
+      if (!example) return
+
+      geminiTtsService.stop()
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+      setIsPlaying(false)
+
+      try {
+        let targetItem: IItem | null | undefined = null
+
+        // 1. Try finding by itemId directly
+        if (example.itemId) {
+          try {
+            const local = await localDb.items.get(example.itemId)
+            if (local) targetItem = local
+          } catch (err) {
+            console.warn('Error fetching item from localDb:', err)
+          }
+
+          if (!targetItem) {
+            const res = await itemApi.getItemById(example.itemId)
+            if (res.isSuccess && res.content) {
+              targetItem = res.content
+            }
+          }
+        }
+
+        // 2. Fallback: Try finding by itemOrigin or origin in localDb.items
+        if (!targetItem) {
+          const searchOrigins = [example.itemOrigin, example.origin].filter(Boolean) as string[]
+          for (const originStr of searchOrigins) {
+            try {
+              const found = await localDb.items
+                .filter((i) => i.origin?.trim().toLowerCase() === originStr.trim().toLowerCase())
+                .first()
+              if (found) {
+                targetItem = found
+                break
+              }
+            } catch (err) {
+              console.warn('Error fetching item by origin fallback:', err)
+            }
+          }
+        }
+
+        // 3. If item exists in Library, open ItemModal in view mode
+        if (targetItem) {
+          openItemModal('view', targetItem)
+          return
+        }
+
+        // 4. Fallback if item doesn't exist yet: construct item and open in view mode
+        const fallbackItem: IItem = example.itemId
+          ? {
+              ...initItem,
+              id: example.itemId,
+              origin: (example.itemOrigin || example.origin).trim(),
+              catId: example.itemOrigin ? ECategory.WORD : (example.catId ?? ECategory.SENTENCE),
+              level: 1,
+              meanings: [
+                {
+                  ...meaningItem,
+                  typeId: EType.ALL,
+                  translation: example.itemOrigin ? '' : example.translation || '',
+                  definition: example.itemOrigin ? '' : example.translation || '',
+                },
+              ],
+            }
+          : {
+              ...initItem,
+              id: example.id,
+              origin: example.origin.trim(),
+              catId: example.catId ?? ECategory.SENTENCE,
+              level: 1,
+              meanings: [
+                {
+                  ...meaningItem,
+                  typeId: EType.ALL,
+                  translation: example.translation || '',
+                  definition: example.translation || '',
+                },
+              ],
+            }
+        openItemModal('view', fallbackItem)
+      } catch (err: any) {
+        console.error('Error opening item modal for view:', err)
+        message.error(err?.message || 'Không thể mở modal xem item')
+      } finally {
+      }
+    },
+    [currentExample, openItemModal],
+  )
+
   // Synchronize item updates into active history
   useEffect(() => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
@@ -727,24 +865,53 @@ export const Dictation: React.FC<IDictationProps> = ({
         const updatedItem = event.query.state.data as IItem | undefined
         if (!updatedItem?.id) return
 
-        const updater = (prev: IExample[]) =>
-          prev.map((it) => {
-            if (it.itemId === updatedItem.id || it.id === updatedItem.id) {
+        const updater = (prev: IExample[]) => {
+          const updated = prev.map((it) => {
+            // Case A: Parent item was updated/viewed, it is a child example
+            if (it.itemId === updatedItem.id && it.id !== updatedItem.id) {
+              const matchingExample = updatedItem.meanings
+                ?.flatMap((m) => m.examples || [])
+                .find((ex) => ex?.id === it.id)
+
+              if (matchingExample) {
+                return {
+                  ...it,
+                  origin: matchingExample.origin || it.origin,
+                  translation: matchingExample.translation || it.translation,
+                  note: matchingExample.note ?? it.note,
+                  itemOrigin: updatedItem.origin || it.itemOrigin,
+                }
+              }
+
+              // Parent item viewed/updated: preserve sentence origin and translation!
+              return {
+                ...it,
+                itemOrigin: updatedItem.origin || it.itemOrigin,
+              }
+            }
+
+            // Case B: The item itself was updated (e.g. standalone sentence item)
+            if (it.id === updatedItem.id) {
               return {
                 ...it,
                 origin: updatedItem.origin || it.origin,
                 translation: updatedItem.meanings?.[0]?.translation || it.translation,
-                itemOrigin: updatedItem.origin,
+                itemOrigin: updatedItem.origin || it.itemOrigin,
               }
             }
+
             return it
           })
+
+          saveSession({ items: updated })
+          return updated
+        }
 
         setHistory(updater)
       }
     })
     return () => unsubscribe()
-  }, [queryClient])
+  }, [queryClient, saveSession])
 
   // Mount effect to restore or load batch
   useEffect(() => {
@@ -769,30 +936,17 @@ export const Dictation: React.FC<IDictationProps> = ({
 
   // User Answer change
   const handleAnswerChange = (val: string) => {
-    setUserAnswer(val)
     if (isChecked) {
-      setIsChecked(false)
-      setDictationResult(null)
-      setAiReviewResult(null)
-      setSessionRecords((prev) => ({
-        ...prev,
-        [safeCurrentIndex]: {
-          ...prev[safeCurrentIndex],
-          userAnswer: val,
-          isChecked: false,
-          dictationResult: null,
-          aiReviewResult: null,
-        },
-      }))
-    } else {
-      setSessionRecords((prev) => ({
-        ...prev,
-        [safeCurrentIndex]: {
-          ...prev[safeCurrentIndex],
-          userAnswer: val,
-        },
-      }))
+      return
     }
+    setUserAnswer(val)
+    setSessionRecords((prev) => ({
+      ...prev,
+      [safeCurrentIndex]: {
+        ...prev[safeCurrentIndex],
+        userAnswer: val,
+      },
+    }))
   }
 
   // Retry current 10-question set
@@ -807,6 +961,9 @@ export const Dictation: React.FC<IDictationProps> = ({
 
   // Evaluate answer using LCS Diff
   const handleCheck = useCallback(() => {
+    if (isChecked) {
+      return
+    }
     const cleanUser = userAnswer.trim()
     const evalResult = evaluateDictation(targetText, cleanUser)
     setDictationResult(evalResult)
@@ -1009,6 +1166,7 @@ export const Dictation: React.FC<IDictationProps> = ({
 
   // Click on a hint word to append into input
   const handleInsertWord = (word: string) => {
+    if (isChecked) return
     const cleanPrev = userAnswer.trim()
     const newVal = cleanPrev ? `${cleanPrev} ${word}` : word
     handleAnswerChange(newVal)
@@ -1253,12 +1411,7 @@ export const Dictation: React.FC<IDictationProps> = ({
                     <span style={{ fontWeight: 700, fontSize: 13, color: token.colorPrimary }}>
                       Câu {idx + 1}
                     </span>
-                    <Tag
-                      color={example.itemOrigin ? 'purple' : 'blue'}
-                      style={{ fontSize: 11, margin: 0 }}
-                    >
-                      {example.itemOrigin ? example.itemOrigin : 'Sentence'}
-                    </Tag>
+
                     {isCheckedRec ? (
                       <Tag
                         color={isPerfect ? 'success' : accuracy >= 70 ? 'warning' : 'error'}
@@ -1277,6 +1430,26 @@ export const Dictation: React.FC<IDictationProps> = ({
                     <Button
                       type='text'
                       size='small'
+                      icon={<EditOutlined />}
+                      onClick={() => handleEditItem(example)}
+                    />
+
+                    <Button
+                      type='text'
+                      size='small'
+                      icon={
+                        <EyeOutlined
+                          style={{
+                            color: inChecklist ? token.colorSuccess : undefined,
+                          }}
+                        />
+                      }
+                      onClick={() => handleViewItem(example)}
+                    />
+
+                    <Button
+                      type='text'
+                      size='small'
                       icon={
                         <CheckSquareOutlined
                           style={{
@@ -1288,19 +1461,30 @@ export const Dictation: React.FC<IDictationProps> = ({
                     />
 
                     <Button
-                      type='text'
+                      type='link'
                       size='small'
-                      icon={<EditOutlined />}
-                      onClick={() => handleEditItem(example)}
-                    />
+                      onClick={() => {
+                        setIsCompleted(false)
+                        setCurrentIndex(idx)
+                        const newRecords = { ...sessionRecords }
+                        delete newRecords[idx]
+                        setSessionRecords(newRecords)
+                        saveSession({
+                          currentIndex: idx,
+                          isCompleted: false,
+                          sessionRecords: newRecords,
+                        })
+                        setTimeout(() => textAreaRef.current?.focus(), 50)
+                      }}
+                    >
+                      Redo
+                    </Button>
+                  </Space>
+                </div>
 
-                    <Button
-                      type='text'
-                      size='small'
-                      icon={<SoundOutlined />}
-                      onClick={() => handlePlayAudio(tgtText)}
-                    />
-
+                <div className={styles.reviewRow}>
+                  <span className={styles.reviewLabel} style={{ color: token.colorPrimary }}>
+                    Câu tiếng Anh chuẩn:{' '}
                     <Button
                       type='text'
                       size='small'
@@ -1310,35 +1494,22 @@ export const Dictation: React.FC<IDictationProps> = ({
                         message.success('Đã sao chép câu chuẩn!')
                       }}
                     />
-
                     <Button
-                      type='link'
+                      type='text'
                       size='small'
-                      onClick={() => {
-                        setIsCompleted(false)
-                        setCurrentIndex(idx)
-                        saveSession({ currentIndex: idx, isCompleted: false })
-                        setTimeout(() => textAreaRef.current?.focus(), 50)
-                      }}
-                    >
-                      Luyện lại
-                    </Button>
-                  </Space>
+                      icon={<SoundOutlined />}
+                      onClick={() => handlePlayAudio(tgtText)}
+                    />
+                  </span>
+                  <span className={styles.reviewText} style={{ fontWeight: 600 }}>
+                    {tgtText}
+                  </span>
                 </div>
 
                 {/* Source & Target */}
                 <div className={styles.reviewRow}>
                   <span className={styles.reviewLabel}>Câu tiếng Việt:</span>
                   <span className={styles.reviewText}>{srcText}</span>
-                </div>
-
-                <div className={styles.reviewRow}>
-                  <span className={styles.reviewLabel} style={{ color: token.colorPrimary }}>
-                    Câu tiếng Anh chuẩn:
-                  </span>
-                  <span className={styles.reviewText} style={{ fontWeight: 600 }}>
-                    {tgtText}
-                  </span>
                 </div>
 
                 {/* User Translation & Diff */}
@@ -1417,21 +1588,16 @@ export const Dictation: React.FC<IDictationProps> = ({
       className={`${styles.container} ${className || ''}`}
       style={{ outline: 'none', ...style }}
     >
-      {/* 1. Header Bar: Counter badge, Origin Tag, Replay Tag, Action buttons */}
+      {/* 1. Header Bar: Counter badge, Replay Tag, Action buttons */}
       <div className={styles.header}>
         <Flex align='center' gap={token.size / 2} wrap='wrap'>
           <Tag className={styles.counterBadge} style={{ color: token.colorTextSecondary }}>
             {safeCurrentIndex + 1} / {history.length}
           </Tag>
 
-          {isChecked && (
-            <Tag
-              color={currentExample?.itemOrigin ? 'purple' : 'blue'}
-              className={styles.counterBadge}
-            >
-              {currentExample?.itemOrigin ? currentExample.itemOrigin : 'Sentence'}
-            </Tag>
-          )}
+          <Tag color={sourceType === 'example' ? 'purple' : 'blue'} className={styles.counterBadge}>
+            {sourceType === 'example' ? 'Example' : 'Sentence'}
+          </Tag>
 
           {repeatCount > 1 && (
             <Tag color='cyan' className='text-xs'>
@@ -1450,6 +1616,17 @@ export const Dictation: React.FC<IDictationProps> = ({
             onClick={(e) => {
               e.stopPropagation()
               handleEditItem()
+            }}
+          />
+
+          <Button
+            type='text'
+            size='small'
+            loading={isLoadingEditItem}
+            icon={<EyeOutlined style={{ fontSize: 16 }} />}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleViewItem()
             }}
           />
 
@@ -1581,10 +1758,15 @@ export const Dictation: React.FC<IDictationProps> = ({
         <Input.TextArea
           ref={textAreaRef}
           value={userAnswer}
+          disabled={isChecked}
           placeholder={'Input here...'}
-          allowClear={{
-            clearIcon: <ClearOutlined style={{ fontSize: 14 }} />,
-          }}
+          allowClear={
+            !isChecked
+              ? {
+                  clearIcon: <ClearOutlined style={{ fontSize: 14 }} />,
+                }
+              : false
+          }
           onChange={(e) => handleAnswerChange(e.target.value)}
           autoSize={{ minRows: 2, maxRows: 10 }}
           className={styles.textAreaInput}

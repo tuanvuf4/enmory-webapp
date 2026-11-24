@@ -26,6 +26,28 @@
   margin-inline-end: 0;
 }
 
+.tagRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.clickableTag {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: normal;
+  height: auto;
+  padding: 4px 10px;
+  line-height: 1.4;
+  word-break: break-word;
+
+  &:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+  }
+}
+
 /* ── Technique Selection Bar (Checkboxes) ── */
 .techniqueBar {
   background: rgba(0, 0, 0, 0.02);

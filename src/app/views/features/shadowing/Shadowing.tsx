@@ -16,13 +16,16 @@ import {
   SettingOutlined,
   EditOutlined,
   CheckSquareOutlined,
+  RightOutlined,
+  LeftOutlined,
+  SoundOutlined,
+  EyeOutlined,
 } from '@ant-design/icons'
 import {
   Button,
   Card,
   Flex,
   Skeleton,
-  Slider,
   Space,
   Tag,
   theme,
@@ -59,6 +62,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { IExample, IItem, ECategory, EType } from '@/models/item.model'
 import { IChecklistItem } from '@/models/checklist.model'
 import styles from './shadowing.module.scss'
+import appStyle from '@/style/appStyle.module.scss'
 
 const { Text, Title } = Typography
 
@@ -1123,12 +1127,16 @@ export const Shadowing: React.FC<ShadowingProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [speaking, setSpeaking] = useState(false)
+  const [showTranslation, setShowTranslation] = useState(false)
   const [speed, setSpeed] = useState<number>(() => {
     try {
       const saved = localStorage.getItem('pronunciation_speed')
-      if (saved) return Number(saved) || 1
+      if (saved) {
+        const parsed = Number(saved)
+        if ([0.75, 1.0, 1.25].includes(parsed)) return parsed
+      }
     } catch {}
-    return 1
+    return 1.0
   })
   const [shadowChunk, setShadowChunk] = useState<number | null>(null)
   const [shadowPlaying, setShadowPlaying] = useState(false)
@@ -1280,6 +1288,11 @@ export const Shadowing: React.FC<ShadowingProps> = ({
   const isCurrentInChecklist = isSentenceInChecklist(currentExample)
   const plainOrigin = useMemo(() => stripHtml(currentExample?.origin), [currentExample])
   const plainTranslation = useMemo(() => stripHtml(currentExample?.translation), [currentExample])
+
+  // Reset translation display when changing questions
+  useEffect(() => {
+    setShowTranslation(false)
+  }, [currentIndex, currentExample?.id])
 
   // Phân tích đồng thời cả 4 kỹ thuật
   const { tokens, chunks } = useMemo(() => buildUnifiedSentence(plainOrigin), [plainOrigin])
@@ -1483,6 +1496,21 @@ export const Shadowing: React.FC<ShadowingProps> = ({
           options={[
             { label: 'Sentence', value: 'sentence' },
             { label: 'Example', value: 'example' },
+          ]}
+        />
+      </div>
+
+      {/* Playback Speed */}
+      <div className={styles.settingRow}>
+        <span>Tốc độ đọc:</span>
+        <Segmented
+          size='small'
+          value={speed}
+          onChange={(val) => handleSpeedChange(val as number)}
+          options={[
+            { label: '0.75x', value: 0.75 },
+            { label: '1.0x', value: 1.0 },
+            { label: '1.25x', value: 1.25 },
           ]}
         />
       </div>
@@ -1709,6 +1737,103 @@ export const Shadowing: React.FC<ShadowingProps> = ({
     [currentExample, handleStop, openItemModal],
   )
 
+  // View sentence/item via ItemModal
+  const [, setIsLoadingViewItem] = useState<boolean>(false)
+
+  const handleViewItem = useCallback(
+    async (exampleToView?: IExample) => {
+      const example = exampleToView || currentExample
+      if (!example) return
+
+      handleStop()
+      setIsLoadingViewItem(true)
+      try {
+        let targetItem: IItem | null | undefined = null
+
+        // 1. Try finding by itemId directly
+        if (example.itemId) {
+          try {
+            const local = await localDb.items.get(example.itemId)
+            if (local) targetItem = local
+          } catch (err) {
+            console.warn('Error fetching item from localDb:', err)
+          }
+
+          if (!targetItem) {
+            const res = await itemApi.getItemById(example.itemId)
+            if (res.isSuccess && res.content) {
+              targetItem = res.content
+            }
+          }
+        }
+
+        // 2. Fallback: Try finding by itemOrigin or origin in localDb.items
+        if (!targetItem) {
+          const searchOrigins = [example.itemOrigin, example.origin].filter(Boolean) as string[]
+          for (const originStr of searchOrigins) {
+            try {
+              const found = await localDb.items
+                .filter((i) => i.origin?.trim().toLowerCase() === originStr.trim().toLowerCase())
+                .first()
+              if (found) {
+                targetItem = found
+                break
+              }
+            } catch (err) {
+              console.warn('Error fetching item by origin fallback:', err)
+            }
+          }
+        }
+
+        // 3. If item exists in Library, open ItemModal in view mode
+        if (targetItem) {
+          openItemModal('view', targetItem)
+          return
+        }
+
+        // 4. Fallback if item doesn't exist yet: construct item and open in view mode
+        const fallbackItem: IItem = example.itemId
+          ? {
+              ...initItem,
+              id: example.itemId,
+              origin: (example.itemOrigin || example.origin).trim(),
+              catId: example.itemOrigin ? ECategory.WORD : (example.catId ?? ECategory.SENTENCE),
+              level: 1,
+              meanings: [
+                {
+                  ...meaningItem,
+                  typeId: EType.ALL,
+                  translation: example.itemOrigin ? '' : example.translation || '',
+                  definition: example.itemOrigin ? '' : example.translation || '',
+                },
+              ],
+            }
+          : {
+              ...initItem,
+              id: example.id,
+              origin: example.origin.trim(),
+              catId: example.catId ?? ECategory.SENTENCE,
+              level: 1,
+              meanings: [
+                {
+                  ...meaningItem,
+                  typeId: EType.ALL,
+                  translation: example.translation || '',
+                  definition: example.translation || '',
+                },
+              ],
+            }
+        openItemModal('view', fallbackItem)
+      } catch (err: any) {
+        console.error('Error opening item modal for view:', err)
+        message.error(err?.message || 'Không thể mở modal xem item')
+      } finally {
+        setIsLoadingViewItem(false)
+      }
+    },
+    [currentExample, handleStop, openItemModal],
+  )
+
   // Synchronize item updates into active examples
   useEffect(() => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
@@ -1722,14 +1847,39 @@ export const Shadowing: React.FC<ShadowingProps> = ({
 
         const updater = (prev: IExample[]) => {
           const updated = prev.map((it) => {
-            if (it.itemId === updatedItem.id || it.id === updatedItem.id) {
+            // Case A: Parent item was updated/viewed, it is a child example
+            if (it.itemId === updatedItem.id && it.id !== updatedItem.id) {
+              const matchingExample = updatedItem.meanings
+                ?.flatMap((m) => m.examples || [])
+                .find((ex) => ex?.id === it.id)
+
+              if (matchingExample) {
+                return {
+                  ...it,
+                  origin: matchingExample.origin || it.origin,
+                  translation: matchingExample.translation || it.translation,
+                  note: matchingExample.note ?? it.note,
+                  itemOrigin: updatedItem.origin || it.itemOrigin,
+                }
+              }
+
+              // Parent item viewed/updated: preserve sentence origin and translation!
+              return {
+                ...it,
+                itemOrigin: updatedItem.origin || it.itemOrigin,
+              }
+            }
+
+            // Case B: The item itself was updated (e.g. standalone sentence item)
+            if (it.id === updatedItem.id) {
               return {
                 ...it,
                 origin: updatedItem.origin || it.origin,
                 translation: updatedItem.meanings?.[0]?.translation || it.translation,
-                itemOrigin: updatedItem.origin,
+                itemOrigin: updatedItem.origin || it.itemOrigin,
               }
             }
+
             return it
           })
           saveSession({ items: updated })
@@ -1800,6 +1950,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
   // Chuyển câu trước / tiếp
   const handleNext = useCallback(() => {
     handleStop()
+    setShowTranslation(false)
     setShadowChunk(null)
     handleFullResetRecording()
     setCurrentIndex((prev) => {
@@ -1811,6 +1962,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
 
   const handlePrev = useCallback(() => {
     handleStop()
+    setShowTranslation(false)
     setShadowChunk(null)
     handleFullResetRecording()
     setCurrentIndex((prev) => {
@@ -1910,7 +2062,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
 
   return (
     <div className={styles.wrapper}>
-      {/* 1. Header Bar: Counter badge, Origin Tag, Action buttons */}
+      {/* 1. Header Bar: Counter badge, Action buttons */}
       <div className={styles.header}>
         <Flex align='center' gap={token.size / 2} wrap='wrap'>
           <Tag className={styles.counterBadge} style={{ color: token.colorTextSecondary }}>
@@ -1919,10 +2071,10 @@ export const Shadowing: React.FC<ShadowingProps> = ({
 
           {currentExample && (
             <Tag
-              color={currentExample.itemOrigin ? 'purple' : 'blue'}
+              color={sourceType === 'example' ? 'purple' : 'blue'}
               className={styles.counterBadge}
             >
-              {currentExample.itemOrigin ? currentExample.itemOrigin : 'Sentence'}
+              {sourceType === 'example' ? 'Example' : 'Sentence'}
             </Tag>
           )}
         </Flex>
@@ -1937,6 +2089,18 @@ export const Shadowing: React.FC<ShadowingProps> = ({
             onClick={(e) => {
               e.stopPropagation()
               handleEditItem()
+            }}
+          />
+
+          {/* View button */}
+          <Button
+            type='text'
+            size='small'
+            loading={isLoadingEditItem}
+            icon={<EyeOutlined style={{ fontSize: 16 }} />}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleViewItem()
             }}
           />
 
@@ -2153,63 +2317,62 @@ export const Shadowing: React.FC<ShadowingProps> = ({
             </div>
           </div>
 
-          {/* ── Translation / Hint luôn hiển thị ── */}
+          {/* ── Translation / Hint ── */}
           {plainTranslation && (
             <div className={styles.translationArea}>
-              <Flex align='flex-start' gap={8}>
-                <InfoCircleOutlined
-                  style={{ color: token.colorTextTertiary, marginTop: 3, fontSize: 13 }}
-                />
-                <Text type='secondary' style={{ fontSize: 13 }}>
-                  {plainTranslation}
-                </Text>
-              </Flex>
+              {!showTranslation ? (
+                <Button
+                  type='link'
+                  size='small'
+                  icon={<EyeOutlined />}
+                  onClick={() => setShowTranslation(true)}
+                  style={{ padding: 0, height: 'auto', fontSize: 13 }}
+                >
+                  Hiện dịch nghĩa
+                </Button>
+              ) : (
+                <Flex align='flex-start' justify='space-between' gap={8} style={{ width: '100%' }}>
+                  <Flex align='flex-start' gap={8} style={{ flex: 1 }}>
+                    <InfoCircleOutlined
+                      style={{ color: token.colorTextTertiary, marginTop: 3, fontSize: 13 }}
+                    />
+                    <Text type='secondary' style={{ fontSize: 13 }}>
+                      {plainTranslation}
+                    </Text>
+                  </Flex>
+                </Flex>
+              )}
             </div>
           )}
 
           <Divider style={{ margin: `${token.size * 0.5}px 0` }} />
 
-          {/* ── Controls: Tốc độ, Nghe mẫu và Chuyển câu ── */}
-          <Flex vertical gap={token.size * 0.75}>
-            {/* Speed slider */}
-            <Flex align='center' gap={12}>
-              <Text style={{ fontSize: 12, color: token.colorTextSecondary, whiteSpace: 'nowrap' }}>
-                Tốc độ đọc: {Math.round(speed * 100)}%
-              </Text>
-              <Slider
-                min={0.5}
-                max={1.5}
-                step={0.05}
-                value={speed}
-                onChange={handleSpeedChange}
-                style={{ flex: 1 }}
-                tooltip={{ formatter: (v) => `${Math.round((v || 1) * 100)}%` }}
-              />
-            </Flex>
+          {/* ── Controls: Nghe mẫu và Chuyển câu ── */}
+          <Flex justify='space-between' align='center' wrap='wrap' gap={8}>
+            <Button
+              style={{ minWidth: 80 }}
+              icon={<LeftOutlined />}
+              onClick={handlePrev}
+              disabled={examples.length <= 1}
+            />
 
-            {/* Buttons row */}
-            <Flex justify='space-between' align='center' wrap='wrap' gap={8}>
-              <Button onClick={handlePrev} disabled={examples.length <= 1}>
-                ← Trước
-              </Button>
+            <Button
+              type='primary'
+              icon={<SoundOutlined className={speaking ? appStyle.soundPlaying : undefined} />}
+              onClick={speaking ? handleStop : () => handleSpeak()}
+              shape='round'
+              style={{ minWidth: 100 }}
+            >
+              {speaking}
+            </Button>
 
-              <Button
-                type='primary'
-                icon={speaking ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                onClick={speaking ? handleStop : () => handleSpeak()}
-                style={{
-                  background: speaking ? '#ff4d4f' : token.colorPrimary,
-                  borderColor: speaking ? '#ff4d4f' : token.colorPrimary,
-                  minWidth: 100,
-                }}
-              >
-                {speaking ? 'Dừng' : 'Nghe'}
-              </Button>
-
-              <Button type='primary' onClick={handleNext} disabled={examples.length <= 1}>
-                Tiếp →
-              </Button>
-            </Flex>
+            <Button
+              style={{ minWidth: 80 }}
+              icon={<RightOutlined />}
+              type='primary'
+              onClick={handleNext}
+              disabled={examples.length <= 1}
+            />
           </Flex>
 
           <Divider style={{ margin: `${token.size * 0.5}px 0` }} />
@@ -2229,7 +2392,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
                 <Flex align='center' gap={8}>
                   <AudioOutlined style={{ color: '#1677ff', fontSize: 16 }} />
                   <span style={{ fontWeight: 700, fontSize: 13 }}>
-                    Thu âm & Đánh giá với Gemini AI
+                    Thu âm & Đánh giá
                   </span>
                 </Flex>
               </Flex>
@@ -2258,10 +2421,10 @@ export const Shadowing: React.FC<ShadowingProps> = ({
                     onClick={handleStartRecording}
                     style={{ borderRadius: 24, paddingLeft: 24, paddingRight: 24, height: 42 }}
                   >
-                    Bắt đầu thu âm giọng bạn
+                    Bắt đầu thu âm
                   </Button>
                   <Text type='secondary' style={{ fontSize: 12, textAlign: 'center' }}>
-                    Đọc to câu trên và AI sẽ phân tích nối âm, trọng âm, ngữ điệu & shadowing.
+                    Đọc to câu trên và AI sẽ phân tích.
                   </Text>
                 </Flex>
               )}

@@ -783,47 +783,6 @@ export const PlayerDock: React.FC = () => {
     dispatch(listeningAction.updatePlayer({ playing: false }))
   }
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const targetDoc = event.view?.document || document
-      const activeEl = targetDoc.activeElement
-      if (
-        activeEl &&
-        (activeEl.tagName === 'INPUT' ||
-          activeEl.tagName === 'TEXTAREA' ||
-          activeEl.hasAttribute('contenteditable'))
-      ) {
-        return
-      }
-
-      if (event.code === 'Space') {
-        event.preventDefault()
-        if (playing) {
-          handlePause()
-        } else {
-          handlePlay()
-        }
-      }
-
-      if (event.code === 'KeyL' && !event.ctrlKey && !event.metaKey && !event.altKey) {
-        event.preventDefault()
-        handleToggleLoopSegment()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    if (pipWindow) {
-      pipWindow.addEventListener('keydown', handleKeyDown)
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      if (pipWindow) {
-        pipWindow.removeEventListener('keydown', handleKeyDown)
-      }
-    }
-  }, [playing, pipWindow, loopSegment])
-
   const load = (src?: string, startPosition?: number) => {
     const normalizedSrc = normalizeMediaSrc(src)
     hasHandledTrackEndRef.current = false

@@ -1159,6 +1159,54 @@ export const Dictation: React.FC<IDictationProps> = ({
     }
   }
 
+  // Fallback window keydown listener so Ctrl+Space / Enter still work even if focus leaves the input
+  useEffect(() => {
+    if (isCompleted || loading || history.length === 0) return
+
+    const onWindowKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target && containerRef.current?.contains(target)) {
+        return
+      }
+
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return
+      }
+
+      const openModals = document.querySelectorAll('.ant-modal-wrap')
+      for (const modal of Array.from(openModals)) {
+        const el = modal as HTMLElement
+        if (
+          el.style.display !== 'none' &&
+          window.getComputedStyle(el).display !== 'none' &&
+          (!containerRef.current || !el.contains(containerRef.current))
+        ) {
+          return
+        }
+      }
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === ' ' || e.code === 'Space')) {
+        e.preventDefault()
+        handlePlayAudio()
+        return
+      }
+
+      if (isChecked && e.key === 'Enter' && !e.shiftKey && !e.altKey) {
+        e.preventDefault()
+        handleNext()
+      }
+    }
+
+    window.addEventListener('keydown', onWindowKeyDown)
+    return () => window.removeEventListener('keydown', onWindowKeyDown)
+  }, [isCompleted, loading, history.length, isChecked, handlePlayAudio, handleNext])
+
   // Toggle Hint (single step: show/hide)
   const handleToggleHint = () => {
     setShowHint((prev) => !prev)
@@ -1758,7 +1806,7 @@ export const Dictation: React.FC<IDictationProps> = ({
         <Input.TextArea
           ref={textAreaRef}
           value={userAnswer}
-          disabled={isChecked}
+          readOnly={isChecked}
           placeholder={'Input here...'}
           allowClear={
             !isChecked

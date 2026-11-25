@@ -2391,9 +2391,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
               >
                 <Flex align='center' gap={8}>
                   <AudioOutlined style={{ color: '#1677ff', fontSize: 16 }} />
-                  <span style={{ fontWeight: 700, fontSize: 13 }}>
-                    Thu âm & Đánh giá
-                  </span>
+                  <span style={{ fontWeight: 700, fontSize: 13 }}>Thu âm & Đánh giá</span>
                 </Flex>
               </Flex>
             }

@@ -1,4 +1,5 @@
-import { generateContentWithFallback } from './geminiCore.service'
+import { GoogleGenAI } from '@google/genai'
+import { generateContentWithFallback, resolveGeminiApiKey } from './geminiCore.service'
 import {
   IToeicExam,
   IToeicPassageGroup,
@@ -102,19 +103,109 @@ const normalizeOptionKey = (val: string, fallback: ToeicOptionKey = 'A'): ToeicO
   return fallback
 }
 
-const buildPart1SceneSvg = (sceneTitle: string, sceneDetails: string): string => {
-  const safeTitle = (sceneTitle || 'TOEIC Part 1 Photograph').slice(0, 48).replace(/[<>&"]/g, '')
-  const safeDetails = (sceneDetails || '').slice(0, 90).replace(/[<>&"]/g, '')
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 220" fill="none">
-    <rect width="520" height="220" rx="12" fill="#EEF2FF"/>
-    <rect x="16" y="16" width="488" height="188" rx="10" fill="#FFFFFF" stroke="#C7D2FE" stroke-width="2"/>
-    <circle cx="80" cy="82" r="24" fill="#6366F1" fill-opacity="0.16"/>
-    <path d="M68 86 L77 75 L86 84 L92 78 L100 88 H64 Z" fill="#4F46E5"/>
-    <text x="120" y="76" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#312E81">${safeTitle}</text>
-    <text x="120" y="102" font-family="Arial, sans-serif" font-size="12" fill="#475569">${safeDetails}</text>
-    <text x="28" y="176" font-family="Arial, sans-serif" font-size="11" fill="#6366F1">AI Generated Scene • Listen to the 4 statements (A–D) and choose the best match</text>
+/**
+ * Compress a base64 image data URL using an offscreen canvas so it stays ~15-25 KB
+ * and fits comfortably within Firestore's 1 MB document limit.
+ */
+const compressImageDataUrl = (dataUrl: string, maxWidth = 480, quality = 0.72): Promise<string> => {
+  return new Promise((resolve) => {
+    if (typeof document === 'undefined') {
+      resolve(dataUrl)
+      return
+    }
+    const img = new Image()
+    img.onload = () => {
+      const scale = img.width > maxWidth ? maxWidth / img.width : 1
+      const w = Math.round(img.width * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        resolve(dataUrl)
+        return
+      }
+      ctx.drawImage(img, 0, 0, w, h)
+      resolve(canvas.toDataURL('image/jpeg', quality))
+    }
+    img.onerror = () => resolve(dataUrl)
+    img.src = dataUrl
+  })
+}
+
+const buildFallbackSvg = (sceneTitle: string): string => {
+  const safeTitle = (sceneTitle || 'TOEIC Part 1').slice(0, 40).replace(/[<>&"]/g, '')
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 280" fill="none">
+    <rect width="480" height="280" rx="12" fill="#EEF2FF"/>
+    <rect x="40" y="185" width="400" height="16" rx="4" fill="#6366F1"/>
+    <rect x="130" y="115" width="110" height="70" rx="4" fill="#1E293B"/>
+    <rect x="136" y="121" width="98" height="54" rx="2" fill="#93C5FD"/>
+    <circle cx="315" cy="95" r="24" fill="#FDBA74"/>
+    <path d="M275 185 C275 140, 355 140, 355 185 Z" fill="#3B82F6"/>
+    <text x="24" y="34" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#4338CA">${safeTitle}</text>
   </svg>`
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
+/**
+ * Generate a realistic TOEIC Part 1 photograph via Gemini Image Generation,
+ * falling back to an AI-drawn SVG illustration if the image model is unavailable.
+ */
+async function generatePart1SceneImage(sceneTitle: string, sceneDetails: string): Promise<string> {
+  const apiKey = resolveGeminiApiKey()
+  const imagePrompt = `Create a realistic, clear photograph for a TOEIC Part 1 listening test question.
+Scene: ${sceneTitle}. ${sceneDetails}.
+Style: natural everyday workplace/public photography, clear subjects and actions, no text, no captions, no labels, no watermarks.`
+
+  if (apiKey) {
+    const ai = new GoogleGenAI({ apiKey })
+    const imageModels = ['gemini-2.5-flash-image', 'gemini-2.0-flash-exp-image-generation']
+    for (const model of imageModels) {
+      try {
+        const res = await ai.models.generateContent({
+          model,
+          contents: imagePrompt,
+          config: {
+            responseModalities: ['IMAGE'],
+          },
+        })
+        const parts = res.candidates?.[0]?.content?.parts || []
+        const imgPart = parts.find((p: any) => p.inlineData?.data)
+        if (imgPart?.inlineData?.data) {
+          const mime = imgPart.inlineData.mimeType || 'image/png'
+          const rawUrl = `data:${mime};base64,${imgPart.inlineData.data}`
+          return await compressImageDataUrl(rawUrl, 480, 0.72)
+        }
+      } catch (err) {
+        console.warn(`[TOEIC Part 1] Image model ${model} failed, trying fallback...`, err)
+      }
+    }
+  }
+
+  // Fallback: ask Gemini text model to draw a pure visual SVG illustration (no text clues)
+  try {
+    const svgRes = await generateContentWithFallback({
+      serviceName: 'toeic_gen_part1_svg',
+      category: 'general',
+      requestParams: {
+        contents: `Draw a clean, detailed flat-vector SVG illustration (viewBox="0 0 480 280") depicting this scene: "${sceneTitle} - ${sceneDetails}".
+Requirements:
+- Return ONLY raw <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 280">...</svg> markup, no markdown fences.
+- Depict the people, objects, furniture, and actions clearly with colored shapes.
+- Do NOT include any text, captions, or labels inside the SVG.`,
+      },
+      validateResponse: (t) => t.includes('<svg') && t.includes('</svg>'),
+    })
+    const match = svgRes.text.match(/<svg[\s\S]*?<\/svg>/i)
+    if (match) {
+      return `data:image/svg+xml;utf8,${encodeURIComponent(match[0])}`
+    }
+  } catch (err) {
+    console.warn('[TOEIC Part 1] SVG fallback failed:', err)
+  }
+
+  return buildFallbackSvg(sceneTitle)
 }
 
 async function callGeminiJson<T>(prompt: string, serviceName: string): Promise<T[]> {
@@ -156,12 +247,19 @@ Return a JSON array of ${count} objects, each with:
 - "explanation": clear Vietnamese explanation of why the correct option matches the scene and why distractors are wrong.`
 
   const items = await callGeminiJson<any>(prompt, 'toeic_gen_part1')
-  return items.slice(0, count).map((item, idx) => ({
+  const sliced = items.slice(0, count)
+  const imageUrls = await Promise.all(
+    sliced.map((item) =>
+      generatePart1SceneImage(String(item.sceneTitle || ''), String(item.sceneDetails || '')),
+    ),
+  )
+
+  return sliced.map((item, idx) => ({
     id: uid('p1'),
     part: 1 as ToeicPartNumber,
     questionNumber: idx + 1,
-    prompt: 'Look at the scene and listen to the four statements. Choose the best description.',
-    imageUrl: buildPart1SceneSvg(item.sceneTitle, item.sceneDetails),
+    prompt: 'Look at the picture and listen to the four statements. Choose the best description.',
+    imageUrl: imageUrls[idx],
     audioScript: String(item.audioScript || ''),
     options: [
       { key: 'A', text: '(A) Statement A' },

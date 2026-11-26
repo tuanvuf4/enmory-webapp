@@ -381,9 +381,6 @@ export const ToeicExamPractice: React.FC<ToeicExamPracticeProps> = ({
     return Array.from(map.entries()).sort((a, b) => a[0] - b[0])
   }, [allQuestions])
 
-  const isReadingSplitGroup =
-    currentItem.kind === 'group' && currentMeta.section === 'reading' && currentItem.group
-
   return (
     <Space direction='vertical' size={16} style={{ width: '100%' }}>
       {/* Top sticky header */}
@@ -537,17 +534,19 @@ export const ToeicExamPractice: React.FC<ToeicExamPracticeProps> = ({
                 disabled={currentIndex === 0}
                 onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
               >
-                {isReadingSplitGroup ? 'Đoạn trước' : 'Câu trước'}
+                Prev
               </Button>
               <Text type='secondary'>
-                Mục {currentIndex + 1} / {renderItems.length}
+                {currentIndex + 1} / {renderItems.length}
               </Text>
               <Button
                 type='primary'
+                icon={<RightOutlined />}
+                iconPosition='end'
                 disabled={currentIndex === renderItems.length - 1}
                 onClick={() => setCurrentIndex((i) => Math.min(renderItems.length - 1, i + 1))}
               >
-                {isReadingSplitGroup ? 'Đoạn tiếp theo' : 'Câu tiếp theo'} <RightOutlined />
+                Next
               </Button>
             </div>
           </Card>

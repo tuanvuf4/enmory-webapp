@@ -6,6 +6,7 @@ import {
   Card,
   Col,
   Divider,
+  Flex,
   Progress,
   Row,
   Space,
@@ -15,7 +16,6 @@ import {
   theme,
 } from 'antd'
 import {
-  ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CustomerServiceOutlined,
@@ -230,17 +230,6 @@ export const ToeicExamPractice: React.FC<ToeicExamPracticeProps> = ({
     })
   }
 
-  const handleConfirmExit = () => {
-    modal.confirm({
-      title: 'Tạm dừng & Thoát khỏi bài làm?',
-      content:
-        'Trạng thái làm bài (đáp án đã chọn, câu hiện tại và thời gian) đã được lưu trên máy. Bạn có thể quay lại làm tiếp bất cứ lúc nào.',
-      okText: 'Lưu & Thoát',
-      cancelText: 'Ở lại',
-      onOk: onExit,
-    })
-  }
-
   const jumpToQuestion = (questionId: string) => {
     const idx = renderItems.findIndex((item) => item.questions.some((q) => q.id === questionId))
     if (idx !== -1) setCurrentIndex(idx)
@@ -386,31 +375,20 @@ export const ToeicExamPractice: React.FC<ToeicExamPracticeProps> = ({
       {/* Top sticky header */}
       <Card size='small'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
-          <Space>
-            <Button icon={<ArrowLeftOutlined />} onClick={handleConfirmExit}>
-              Thoát
-            </Button>
-            <div>
-              <Title level={5} style={{ margin: 0 }}>
-                {exam.title}
-              </Title>
-              <Space size={6}>
-                <Tag
-                  icon={
-                    currentMeta.section === 'listening' ? (
-                      <CustomerServiceOutlined />
-                    ) : (
-                      <ReadOutlined />
-                    )
-                  }
-                  color={currentMeta.section === 'listening' ? 'blue' : 'green'}
-                >
-                  {currentMeta.section === 'listening' ? 'Listening' : 'Reading'} — Part{' '}
-                  {currentMeta.part}: {currentMeta.viName}
-                </Tag>
-              </Space>
-            </div>
-          </Space>
+          <Flex align='center' wrap gap={token.size / 2}>
+            <Title level={5} style={{ margin: 0 }}>
+              {exam.title}
+            </Title>
+            <Tag
+              icon={
+                currentMeta.section === 'listening' ? <CustomerServiceOutlined /> : <ReadOutlined />
+              }
+              color={currentMeta.section === 'listening' ? 'blue' : 'green'}
+            >
+              {currentMeta.section === 'listening' ? 'Listening' : 'Reading'} — Part{' '}
+              {currentMeta.part}: {currentMeta.viName}
+            </Tag>
+          </Flex>
 
           <Space wrap size={12}>
             {currentMeta.section === 'listening' && (
@@ -557,7 +535,7 @@ export const ToeicExamPractice: React.FC<ToeicExamPracticeProps> = ({
           <Card
             size='small'
             title={
-              <Space>
+              <Space className='my-3'>
                 <CheckCircleOutlined />
                 <span>Phiếu trả lời</span>
               </Space>

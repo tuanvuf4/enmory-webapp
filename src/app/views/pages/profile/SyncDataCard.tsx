@@ -27,6 +27,7 @@ import {
   SearchOutlined,
   CloseCircleOutlined,
   CustomerServiceOutlined,
+  FormOutlined,
 } from '@ant-design/icons'
 import { useManualSync, IUnsyncedRecord } from '@/services/localDb'
 import moment from 'moment'
@@ -36,7 +37,7 @@ const { useBreakpoint } = Grid
 
 interface ISyncSummary {
   key: string
-  type: 'item' | 'blog' | 'dictation'
+  type: 'item' | 'blog' | 'dictation' | 'toeic'
   title: string
   description: string
   icon: React.ReactNode
@@ -78,12 +79,20 @@ export const SyncDataCard: React.FC = () => {
     serverDictationCount,
     isLoadingServerDictationCount,
     refreshServerDictationCount,
+    localToeicCount,
+    isLoadingLocalToeicCount,
+    refreshLocalToeicCount,
+    serverToeicCount,
+    isLoadingServerToeicCount,
+    refreshServerToeicCount,
     refreshAllCounts,
     syncNow,
     clearLocalData,
     unsyncedRecords = [],
     lastSyncResult,
-  } = useManualSync({ autoFetchServerCounts: true })
+    syncFeedback,
+    clearSyncFeedback,
+  } = useManualSync({ autoFetchServerCounts: true, showMessages: false })
 
   const [searchText, setSearchText] = useState('')
 
@@ -102,7 +111,11 @@ export const SyncDataCard: React.FC = () => {
   const diffDictationCount =
     serverDictationCount !== null ? serverDictationCount - localDictationCount : 0
 
-  const hasDiff = hasItemDiff || hasBlogDiff || hasDictationDiff
+  const hasToeicDiff =
+    serverToeicCount !== null && !isLoadingServerToeicCount && serverToeicCount !== localToeicCount
+  const diffToeicCount = serverToeicCount !== null ? serverToeicCount - localToeicCount : 0
+
+  const hasDiff = hasItemDiff || hasBlogDiff || hasDictationDiff || hasToeicDiff
 
   const summaryData = useMemo<ISyncSummary[]>(
     () => [
@@ -157,6 +170,23 @@ export const SyncDataCard: React.FC = () => {
         hasDiff: hasDictationDiff,
         refreshServer: () => refreshServerDictationCount(true),
       },
+      {
+        key: 'toeic',
+        type: 'toeic',
+        title: 'TOEIC Exams',
+        description: 'Exams & History',
+        icon: <FormOutlined style={{ color: '#4f46e5', fontSize: 16 }} />,
+        tagColor: 'geekblue',
+        unit: 'exams',
+        localCount: localToeicCount,
+        isLoadingLocal: isLoadingLocalToeicCount,
+        refreshLocal: refreshLocalToeicCount,
+        serverCount: serverToeicCount,
+        isLoadingServer: isLoadingServerToeicCount,
+        diffCount: diffToeicCount,
+        hasDiff: hasToeicDiff,
+        refreshServer: () => refreshServerToeicCount(true),
+      },
     ],
     [
       token.colorPrimary,
@@ -184,6 +214,14 @@ export const SyncDataCard: React.FC = () => {
       diffDictationCount,
       hasDictationDiff,
       refreshServerDictationCount,
+      localToeicCount,
+      isLoadingLocalToeicCount,
+      refreshLocalToeicCount,
+      serverToeicCount,
+      isLoadingServerToeicCount,
+      diffToeicCount,
+      hasToeicDiff,
+      refreshServerToeicCount,
     ],
   )
 
@@ -205,7 +243,9 @@ export const SyncDataCard: React.FC = () => {
                   ? token.colorPrimaryBg
                   : record.type === 'blog'
                     ? '#f9f0ff'
-                    : '#e6fffb',
+                    : record.type === 'dictation'
+                      ? '#e6fffb'
+                      : '#eef2ff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -245,7 +285,15 @@ export const SyncDataCard: React.FC = () => {
             {record.isLoadingLocal ? <SyncOutlined spin /> : count.toLocaleString()}
           </Tag>
           <Tooltip
-            title={`Refresh local ${record.type === 'item' ? 'items' : record.type === 'blog' ? 'blogs' : 'dictation'} count`}
+            title={`Refresh local ${
+              record.type === 'item'
+                ? 'items'
+                : record.type === 'blog'
+                  ? 'blogs'
+                  : record.type === 'dictation'
+                    ? 'dictation'
+                    : 'TOEIC exams'
+            } count`}
           >
             <Button
               size='small'
@@ -301,7 +349,15 @@ export const SyncDataCard: React.FC = () => {
               )}
 
               <Tooltip
-                title={`Refresh server ${record.type === 'item' ? 'items' : record.type === 'blog' ? 'blogs' : 'dictation'} count`}
+                title={`Refresh server ${
+                  record.type === 'item'
+                    ? 'items'
+                    : record.type === 'blog'
+                      ? 'blogs'
+                      : record.type === 'dictation'
+                        ? 'dictation'
+                        : 'TOEIC exams'
+                } count`}
               >
                 <Button
                   size='small'
@@ -320,7 +376,15 @@ export const SyncDataCard: React.FC = () => {
               Unavailable
             </Tag>
             <Tooltip
-              title={`Retry fetching server ${record.type === 'item' ? 'items' : record.type === 'blog' ? 'blogs' : 'dictation'} count`}
+              title={`Retry fetching server ${
+                record.type === 'item'
+                  ? 'items'
+                  : record.type === 'blog'
+                    ? 'blogs'
+                    : record.type === 'dictation'
+                      ? 'dictation'
+                      : 'TOEIC exams'
+              } count`}
             >
               <Button
                 size='small'
@@ -427,23 +491,40 @@ export const SyncDataCard: React.FC = () => {
         { text: 'Item', value: 'item' },
         { text: 'Blog', value: 'blog' },
         { text: 'Dictation', value: 'dictation' },
+        { text: 'TOEIC', value: 'toeic' },
       ],
       onFilter: (value, record) => record.type === value,
-      render: (type: 'item' | 'blog' | 'dictation') => (
+      render: (type: 'item' | 'blog' | 'dictation' | 'toeic') => (
         <Tag
-          color={type === 'item' ? 'blue' : type === 'blog' ? 'purple' : 'green'}
+          color={
+            type === 'item'
+              ? 'blue'
+              : type === 'blog'
+                ? 'purple'
+                : type === 'dictation'
+                  ? 'green'
+                  : 'geekblue'
+          }
           icon={
             type === 'item' ? (
               <DatabaseOutlined />
             ) : type === 'blog' ? (
               <ReadOutlined />
-            ) : (
+            ) : type === 'dictation' ? (
               <CustomerServiceOutlined />
+            ) : (
+              <FormOutlined />
             )
           }
           style={{ textTransform: 'capitalize', fontWeight: 500 }}
         >
-          {type === 'item' ? 'Item' : type === 'blog' ? 'Blog' : 'Dictation'}
+          {type === 'item'
+            ? 'Item'
+            : type === 'blog'
+              ? 'Blog'
+              : type === 'dictation'
+                ? 'Dictation'
+                : 'TOEIC'}
         </Tag>
       ),
     },
@@ -459,7 +540,9 @@ export const SyncDataCard: React.FC = () => {
                 ? '(Empty origin)'
                 : record.type === 'blog'
                   ? '(Untitled blog)'
-                  : '(Dictation record)')}
+                  : record.type === 'dictation'
+                    ? '(Dictation record)'
+                    : '(TOEIC exam)')}
           </Text>
           <Text type='secondary' copyable={{ text: record.id }} style={{ fontSize: 11 }}>
             ID: {record.id}
@@ -557,8 +640,12 @@ export const SyncDataCard: React.FC = () => {
                   spin={
                     isLoadingServerCount ||
                     isLoadingServerBlogCount ||
+                    isLoadingServerDictationCount ||
+                    isLoadingServerToeicCount ||
                     isLoadingLocalCount ||
-                    isLoadingLocalBlogCount
+                    isLoadingLocalBlogCount ||
+                    isLoadingLocalDictationCount ||
+                    isLoadingLocalToeicCount
                   }
                 />
               }
@@ -566,8 +653,12 @@ export const SyncDataCard: React.FC = () => {
               disabled={
                 isLoadingServerCount ||
                 isLoadingServerBlogCount ||
+                isLoadingServerDictationCount ||
+                isLoadingServerToeicCount ||
                 isLoadingLocalCount ||
                 isLoadingLocalBlogCount ||
+                isLoadingLocalDictationCount ||
+                isLoadingLocalToeicCount ||
                 isSyncing
               }
             >
@@ -632,8 +723,38 @@ export const SyncDataCard: React.FC = () => {
                   )}
                 </div>
               )}
+              {hasDictationDiff && (
+                <div>
+                  {diffDictationCount > 0 ? (
+                    <>
+                      Server has <strong>{diffDictationCount}</strong> dictation record(s) not
+                      synced to this device.
+                    </>
+                  ) : (
+                    <>
+                      Local database has <strong>{Math.abs(diffDictationCount)}</strong> dictation
+                      record(s) difference compared to server.
+                    </>
+                  )}
+                </div>
+              )}
+              {hasToeicDiff && (
+                <div>
+                  {diffToeicCount > 0 ? (
+                    <>
+                      Server has <strong>{diffToeicCount}</strong> TOEIC exam(s) not synced to this
+                      device.
+                    </>
+                  ) : (
+                    <>
+                      Local database has <strong>{Math.abs(diffToeicCount)}</strong> TOEIC exam(s)
+                      difference compared to server.
+                    </>
+                  )}
+                </div>
+              )}
               <Text type='secondary' style={{ fontSize: 12 }}>
-                Sync is recommended to keep your items and blogs up to date.
+                Sync is recommended to keep your local database up to date.
               </Text>
             </div>
           }
@@ -703,9 +824,23 @@ export const SyncDataCard: React.FC = () => {
         </Flex>
       </Flex>
 
-      {/* Table of items and blogs that cannot sync */}
-      {(lastSyncResult || unsyncedRecords.length > 0) && (
+      {/* Sync result / error alert or table of records that cannot sync */}
+      {(lastSyncResult || unsyncedRecords.length > 0 || (!isSyncing && syncFeedback)) && (
         <div style={{ marginTop: token.size }}>
+          {!isSyncing &&
+            syncFeedback &&
+            (syncFeedback.type === 'error' || unsyncedRecords.length === 0) && (
+              <Alert
+                type={syncFeedback.type}
+                showIcon
+                message={syncFeedback.message}
+                description={syncFeedback.description}
+                closable
+                onClose={clearSyncFeedback}
+                style={{ marginBottom: unsyncedRecords.length > 0 ? token.size : 0 }}
+              />
+            )}
+
           {unsyncedRecords.length > 0 ? (
             <Card
               size='small'
@@ -730,6 +865,11 @@ export const SyncDataCard: React.FC = () => {
                   <Tag color='purple'>
                     {unsyncedRecords.filter((r) => r.type === 'blog').length} Blogs
                   </Tag>
+                  {unsyncedRecords.some((r) => r.type === 'toeic') && (
+                    <Tag color='geekblue'>
+                      {unsyncedRecords.filter((r) => r.type === 'toeic').length} TOEIC
+                    </Tag>
+                  )}
                 </Space>
               }
               style={{
@@ -741,8 +881,8 @@ export const SyncDataCard: React.FC = () => {
               <Alert
                 type='warning'
                 showIcon
-                message='The following items and blogs could not be synced into the local database'
-                description='Review the records below. These items or blogs may have missing required fields, schema issues, or storage restrictions. You can run a Full Sync to retry.'
+                message='The following records could not be synced into the local database'
+                description='Review the records below. These records may have missing required fields, schema issues, or storage restrictions. You can run a Full Sync to retry.'
                 style={{ marginBottom: token.size / 2 }}
               />
 
@@ -776,13 +916,15 @@ export const SyncDataCard: React.FC = () => {
               />
             </Card>
           ) : (
-            <Alert
-              type='success'
-              showIcon
-              message='Sync successful'
-              description='All items and blogs are up to date in your local database with 0 sync errors.'
-              closable
-            />
+            !syncFeedback && (
+              <Alert
+                type='success'
+                showIcon
+                message='Sync successful'
+                description='All data is up to date in your local database with 0 sync errors.'
+                closable
+              />
+            )
           )}
         </div>
       )}

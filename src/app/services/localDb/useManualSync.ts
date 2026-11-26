@@ -17,12 +17,20 @@ import { blogKeys } from '@/core/hooks/useBlogs'
 import { refreshAiUsageFromCloud } from '@/services/gemini'
 import { firebaseAuthService } from '@/services/firebase/authService'
 
+export interface ISyncFeedback {
+  type: 'success' | 'warning' | 'error'
+  message: string
+  description?: string
+}
+
 export interface IUseManualSyncOptions {
   autoFetchServerCounts?: boolean
+  showMessages?: boolean
 }
 
 export const useManualSync = (options?: IUseManualSyncOptions) => {
   const autoFetchServerCounts = options?.autoFetchServerCounts ?? false
+  const showMessages = options?.showMessages ?? true
   const { user } = useSelector((state) => state.auth)
   const queryClient = useQueryClient()
 
@@ -35,17 +43,23 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
   const [isLoadingServerBlogCount, setIsLoadingServerBlogCount] = useState<boolean>(false)
   const [serverDictationCount, setServerDictationCount] = useState<number | null>(null)
   const [isLoadingServerDictationCount, setIsLoadingServerDictationCount] = useState<boolean>(false)
+  const [serverToeicCount, setServerToeicCount] = useState<number | null>(null)
+  const [isLoadingServerToeicCount, setIsLoadingServerToeicCount] = useState<boolean>(false)
   const [unsyncedRecords, setUnsyncedRecords] = useState<IUnsyncedRecord[]>([])
   const [lastSyncResult, setLastSyncResult] = useState<ISyncResult | null>(null)
+  const [syncFeedback, setSyncFeedback] = useState<ISyncFeedback | null>(null)
+  const clearSyncFeedback = useCallback(() => setSyncFeedback(null), [])
 
   // Manual local count states and loading indicators
   const [localRefreshTick, setLocalRefreshTick] = useState<number>(0)
   const [isLoadingLocalCount, setIsLoadingLocalCount] = useState<boolean>(false)
   const [isLoadingLocalBlogCount, setIsLoadingLocalBlogCount] = useState<boolean>(false)
   const [isLoadingLocalDictationCount, setIsLoadingLocalDictationCount] = useState<boolean>(false)
+  const [isLoadingLocalToeicCount, setIsLoadingLocalToeicCount] = useState<boolean>(false)
   const [manualLocalItemCount, setManualLocalItemCount] = useState<number | null>(null)
   const [manualLocalBlogCount, setManualLocalBlogCount] = useState<number | null>(null)
   const [manualLocalDictationCount, setManualLocalDictationCount] = useState<number | null>(null)
+  const [manualLocalToeicCount, setManualLocalToeicCount] = useState<number | null>(null)
 
   const getEffectiveUid = useCallback(
     () => user?.uid || firebaseAuthService.getCurrentUser()?.uid || null,
@@ -113,6 +127,14 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     0,
   )
 
+  const liveLocalToeicCount = useLiveQuery(
+    async () => {
+      return await localDb.toeicExams.filter((e) => !e.is_deleted && !e.isSample).count()
+    },
+    [user?.uid, localRefreshTick],
+    0,
+  )
+
   useEffect(() => {
     if (liveLocalItemCount !== undefined && liveLocalItemCount !== null) {
       setManualLocalItemCount(liveLocalItemCount)
@@ -131,12 +153,20 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     }
   }, [liveLocalDictationCount])
 
+  useEffect(() => {
+    if (liveLocalToeicCount !== undefined && liveLocalToeicCount !== null) {
+      setManualLocalToeicCount(liveLocalToeicCount)
+    }
+  }, [liveLocalToeicCount])
+
   const localItemCount =
     manualLocalItemCount !== null ? manualLocalItemCount : (liveLocalItemCount ?? 0)
   const localBlogCount =
     manualLocalBlogCount !== null ? manualLocalBlogCount : (liveLocalBlogCount ?? 0)
   const localDictationCount =
     manualLocalDictationCount !== null ? manualLocalDictationCount : (liveLocalDictationCount ?? 0)
+  const localToeicCount =
+    manualLocalToeicCount !== null ? manualLocalToeicCount : (liveLocalToeicCount ?? 0)
 
   // Refresh local item count directly from IndexedDB
   const refreshLocalItemCount = useCallback(async () => {
@@ -225,13 +255,35 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     }
   }, [getEffectiveUid])
 
+  // Refresh local TOEIC exam count directly from IndexedDB
+  const refreshLocalToeicCount = useCallback(async () => {
+    setIsLoadingLocalToeicCount(true)
+    try {
+      const count = await localDb.toeicExams.filter((e) => !e.is_deleted && !e.isSample).count()
+      setManualLocalToeicCount(count)
+      setLocalRefreshTick((t) => t + 1)
+      return count
+    } catch (err) {
+      console.warn('Failed to refresh local TOEIC count:', err)
+      return 0
+    } finally {
+      setIsLoadingLocalToeicCount(false)
+    }
+  }, [])
+
   const refreshAllLocalCounts = useCallback(async () => {
     await Promise.all([
       refreshLocalItemCount(),
       refreshLocalBlogCount(),
       refreshLocalDictationCount(),
+      refreshLocalToeicCount(),
     ])
-  }, [refreshLocalItemCount, refreshLocalBlogCount, refreshLocalDictationCount])
+  }, [
+    refreshLocalItemCount,
+    refreshLocalBlogCount,
+    refreshLocalDictationCount,
+    refreshLocalToeicCount,
+  ])
 
   // Load last sync time
   const refreshLastSyncTime = useCallback(async () => {
@@ -325,15 +377,48 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     [getEffectiveUid],
   )
 
+  // Count TOEIC exams from server
+  const refreshServerToeicCount = useCallback(
+    async (force = true) => {
+      const uid = getEffectiveUid()
+      if (!uid) {
+        setServerToeicCount(null)
+        setIsLoadingServerToeicCount(false)
+        return
+      }
+
+      setIsLoadingServerToeicCount(true)
+      try {
+        if (force) {
+          syncService.clearCountCache(uid)
+        }
+        const count = await syncService.getServerToeicCount(uid, force)
+        setServerToeicCount(count)
+      } catch (err) {
+        console.warn('Failed to fetch server TOEIC count:', err)
+        setServerToeicCount(null)
+      } finally {
+        setIsLoadingServerToeicCount(false)
+      }
+    },
+    [getEffectiveUid],
+  )
+
   const refreshAllServerCounts = useCallback(
     async (force = true) => {
       await Promise.all([
         refreshServerItemCount(force),
         refreshServerBlogCount(force),
         refreshServerDictationCount(force),
+        refreshServerToeicCount(force),
       ])
     },
-    [refreshServerItemCount, refreshServerBlogCount, refreshServerDictationCount],
+    [
+      refreshServerItemCount,
+      refreshServerBlogCount,
+      refreshServerDictationCount,
+      refreshServerToeicCount,
+    ],
   )
 
   const refreshAllCounts = useCallback(
@@ -342,9 +427,11 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
         refreshServerItemCount(force),
         refreshServerBlogCount(force),
         refreshServerDictationCount(force),
+        refreshServerToeicCount(force),
         refreshLocalItemCount(),
         refreshLocalBlogCount(),
         refreshLocalDictationCount(),
+        refreshLocalToeicCount(),
         refreshLastSyncTime(),
       ])
     },
@@ -352,9 +439,11 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
       refreshServerItemCount,
       refreshServerBlogCount,
       refreshServerDictationCount,
+      refreshServerToeicCount,
       refreshLocalItemCount,
       refreshLocalBlogCount,
       refreshLocalDictationCount,
+      refreshLocalToeicCount,
       refreshLastSyncTime,
     ],
   )
@@ -367,6 +456,7 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
       refreshServerItemCount(false)
       refreshServerBlogCount(false)
       refreshServerDictationCount(false)
+      refreshServerToeicCount(false)
     }
     if (uid) {
       syncService.getLastUnsyncedRecords(uid).then((records) => {
@@ -384,6 +474,7 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     refreshServerItemCount,
     refreshServerBlogCount,
     refreshServerDictationCount,
+    refreshServerToeicCount,
     autoFetchServerCounts,
   ])
 
@@ -397,6 +488,7 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
           refreshServerItemCount(false)
           refreshServerBlogCount(false)
           refreshServerDictationCount(false)
+          refreshServerToeicCount(false)
         }
         syncService.getLastUnsyncedRecords(fbUser.uid).then((records) => {
           setUnsyncedRecords(records)
@@ -411,6 +503,7 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     refreshServerItemCount,
     refreshServerBlogCount,
     refreshServerDictationCount,
+    refreshServerToeicCount,
   ])
 
   const syncNow = useCallback(
@@ -426,8 +519,17 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
             : 'sync'
       const isFullSync = mode === 'full-sync'
 
+      setSyncFeedback(null)
+
       if (!user?.uid) {
-        message.warning('Please log in before syncing.')
+        const feedback: ISyncFeedback = {
+          type: 'warning',
+          message: 'Please log in before syncing.',
+        }
+        setSyncFeedback(feedback)
+        if (showMessages) {
+          message.warning(feedback.message)
+        }
         return null
       }
 
@@ -439,7 +541,9 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
             ? 'bài viết (Blogs)'
             : type === 'dictation'
               ? 'luyện nghe (Dictation)'
-              : 'dữ liệu (Items, Blogs & Dictation)'
+              : type === 'toeic'
+                ? 'đề thi TOEIC (TOEIC Exams)'
+                : 'dữ liệu (Items, Blogs, Dictation & TOEIC)'
 
       setProgressText(
         isFullSync
@@ -463,6 +567,7 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
           if (type === 'all' || type === 'item') await refreshServerItemCount(true)
           if (type === 'all' || type === 'blog') await refreshServerBlogCount(true)
           if (type === 'all' || type === 'dictation') await refreshServerDictationCount(true)
+          if (type === 'all' || type === 'toeic') await refreshServerToeicCount(true)
         }
         await refreshAiUsageFromCloud().catch(() => null)
 
@@ -489,23 +594,50 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
               ? `Đã tải toàn bộ ${result.updatedBlogs} bài viết.`
               : type === 'dictation'
                 ? `Đã tải toàn bộ ${result.updatedDictations} bản ghi dictation.`
-                : `Đã tải toàn bộ ${result.updatedItems} items, ${result.updatedBlogs} bài viết, và ${result.updatedDictations} bản ghi dictation.`
+                : type === 'toeic'
+                  ? 'Đã tải toàn bộ đề thi và lịch sử làm bài TOEIC.'
+                  : `Đã tải toàn bộ ${result.updatedItems} items, ${result.updatedBlogs} bài viết, ${result.updatedDictations} bản ghi dictation và dữ liệu TOEIC.`
           : hasAnyChanges
             ? `Đã đồng bộ ${result.updatedItems} items thay đổi, ${result.updatedBlogs} bài viết thay đổi, ${result.updatedDictations} bản ghi dictation thay đổi, xóa ${result.deletedItems} items${result.deletedBlogs ? `, xóa ${result.deletedBlogs} bài viết` : ''}.`
             : `Tất cả ${targetLabel} đã được cập nhật mới nhất.`
 
         const unsyncedCount = result.unsyncedRecords?.length || 0
         if (unsyncedCount > 0) {
-          message.warning(
-            `Đồng bộ hoàn tất với ${unsyncedCount} bản ghi lỗi schema chưa thể sync. Kiểm tra bảng bên dưới.`,
-          )
+          const feedback: ISyncFeedback = {
+            type: 'warning',
+            message: 'Đồng bộ hoàn tất với cảnh báo',
+            description: `Đồng bộ hoàn tất với ${unsyncedCount} bản ghi lỗi schema chưa thể sync. Kiểm tra bảng bên dưới.`,
+          }
+          setSyncFeedback(feedback)
+          if (showMessages) {
+            message.warning(
+              `Đồng bộ hoàn tất với ${unsyncedCount} bản ghi lỗi schema chưa thể sync. Kiểm tra bảng bên dưới.`,
+            )
+          }
         } else {
-          message.success(`Đồng bộ hoàn tất! ${details}`)
+          const feedback: ISyncFeedback = {
+            type: 'success',
+            message: 'Đồng bộ hoàn tất!',
+            description: details,
+          }
+          setSyncFeedback(feedback)
+          if (showMessages) {
+            message.success(`Đồng bộ hoàn tất! ${details}`)
+          }
         }
         return result
       } catch (err: any) {
         console.error('Manual sync failed:', err)
-        message.error(`Đồng bộ thất bại: ${err.message || 'Lỗi mạng'}`)
+        const errorDetail = err.message || 'Lỗi mạng'
+        const feedback: ISyncFeedback = {
+          type: 'error',
+          message: 'Đồng bộ thất bại',
+          description: errorDetail,
+        }
+        setSyncFeedback(feedback)
+        if (showMessages) {
+          message.error(`Đồng bộ thất bại: ${errorDetail}`)
+        }
         return null
       } finally {
         setIsSyncing(false)
@@ -514,6 +646,7 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     },
     [
       user?.uid,
+      showMessages,
       getEffectiveUid,
       autoFetchServerCounts,
       refreshLastSyncTime,
@@ -521,6 +654,7 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
       refreshServerItemCount,
       refreshServerBlogCount,
       refreshServerDictationCount,
+      refreshServerToeicCount,
       queryClient,
     ],
   )
@@ -576,6 +710,12 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     serverDictationCount,
     isLoadingServerDictationCount,
     refreshServerDictationCount,
+    localToeicCount: localToeicCount ?? 0,
+    isLoadingLocalToeicCount,
+    refreshLocalToeicCount,
+    serverToeicCount,
+    isLoadingServerToeicCount,
+    refreshServerToeicCount,
     refreshAllServerCounts,
     refreshAllCounts,
     syncNow,
@@ -588,5 +728,7 @@ export const useManualSync = (options?: IUseManualSyncOptions) => {
     unsyncedRecords,
     lastSyncResult,
     setUnsyncedRecords,
+    syncFeedback,
+    clearSyncFeedback,
   }
 }

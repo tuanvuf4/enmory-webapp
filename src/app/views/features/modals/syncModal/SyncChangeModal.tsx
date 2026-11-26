@@ -8,6 +8,7 @@ import {
   SyncOutlined,
   ClockCircleOutlined,
   CustomerServiceOutlined,
+  FormOutlined,
 } from '@ant-design/icons'
 import { useSelector } from '@/core/hooks/redux'
 import { syncService, IDataChanges, useManualSync, SyncMode, SyncType } from '@/services/localDb'
@@ -29,7 +30,6 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
 
   const [internalOpen, setInternalOpen] = useState(false)
   const [changes, setChanges] = useState<IDataChanges | null>(null)
-  const [syncSuccess, setSyncSuccess] = useState(false)
   const [syncingType, setSyncingType] = useState<SyncType | null>(null)
 
   const isControlled = controlledOpen !== undefined
@@ -38,7 +38,9 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
   const hasCheckedInitialRef = useRef(false)
   const isCheckingRef = useRef(false)
 
-  const { isSyncing, progressText, syncNow } = useManualSync()
+  const { isSyncing, progressText, syncNow, syncFeedback, clearSyncFeedback } = useManualSync({
+    showMessages: false,
+  })
 
   // Detect data changes on initial page load / reload
   useEffect(() => {
@@ -94,17 +96,16 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
       setInternalOpen(false)
     }
     setChanges(null)
-    setSyncSuccess(false)
+    clearSyncFeedback()
   }
 
   const handleSync = async (mode: SyncMode = 'sync', type: SyncType = 'all') => {
     if (isSyncing) return
     setSyncingType(type)
-    setSyncSuccess(false)
+    clearSyncFeedback()
     try {
       const result = await syncNow(mode, type)
       if (result && result.isSuccess) {
-        setSyncSuccess(true)
         if (user?.uid) {
           const detected = await syncService.detectDataChanges(user.uid, true)
           setChanges(detected)
@@ -136,7 +137,11 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
       footer={
         <Flex justify='flex-end' gap={8} style={{ paddingTop: 8 }} wrap='wrap'>
           <Button onClick={handleClose} disabled={isSyncing}>
-            {syncSuccess || !changes?.hasChanges ? 'Đóng' : 'Để sau'}
+            {syncFeedback?.type === 'success' ||
+            syncFeedback?.type === 'warning' ||
+            !changes?.hasChanges
+              ? 'Đóng'
+              : 'Để sau'}
           </Button>
           <Button
             type='default'
@@ -188,15 +193,14 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
       }
     >
       <div style={{ marginTop: 16 }}>
-        {syncSuccess && (
+        {!isSyncing && syncFeedback && (
           <Alert
-            type='success'
+            type={syncFeedback.type}
             showIcon
             closable
-            onClose={() => setSyncSuccess(false)}
-            icon={<CheckCircleOutlined />}
-            message='Data Synchronized Successfully'
-            description='Your data is now fully up to date.'
+            onClose={clearSyncFeedback}
+            message={syncFeedback.message}
+            description={syncFeedback.description}
             style={{ marginBottom: 16 }}
           />
         )}
@@ -236,7 +240,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                     Vocabulary
                   </Text>
                   <Text type='secondary' style={{ fontSize: 11 }}>
-                    Local: {changes?.items.localCount ?? 0} items
+                    {changes?.items.localCount ?? 0} items
                   </Text>
                 </div>
               </Space>
@@ -305,7 +309,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                     Articles
                   </Text>
                   <Text type='secondary' style={{ fontSize: 11 }}>
-                    Local: {changes?.blogs.localCount ?? 0} articles
+                    {changes?.blogs.localCount ?? 0} articles
                   </Text>
                 </div>
               </Space>
@@ -374,7 +378,7 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                     Dictation
                   </Text>
                   <Text type='secondary' style={{ fontSize: 11 }}>
-                    Local: {changes?.dictations.localCount ?? 0} records
+                    {changes?.dictations.localCount ?? 0} records
                   </Text>
                 </div>
               </Space>
@@ -407,6 +411,75 @@ export const SyncChangeModal: React.FC<SyncChangeModalProps> = ({
                   loading={isSyncing && syncingType === 'dictation'}
                   disabled={isSyncing}
                   onClick={() => handleSync('sync', 'dictation')}
+                >
+                  Sync
+                </Button>
+              </Space>
+            </Flex>
+          </div>
+
+          {/* TOEIC Exams & History Section */}
+          <div
+            style={{
+              border: `1px solid ${token.colorBorderSecondary}`,
+              borderRadius: token.borderRadiusLG,
+              padding: '12px 16px',
+              backgroundColor: token.colorFillAlter,
+            }}
+          >
+            <Flex justify='space-between' align='center' wrap='wrap' gap={8}>
+              <Space size={10} align='center'>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: token.borderRadiusSM,
+                    backgroundColor: '#eef2ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <FormOutlined style={{ color: '#4f46e5', fontSize: 16 }} />
+                </div>
+                <div>
+                  <Text strong style={{ fontSize: 13, display: 'block' }}>
+                    TOEIC Exams
+                  </Text>
+                  <Text type='secondary' style={{ fontSize: 11 }}>
+                    {changes?.toeic?.localCount ?? 0} exams
+                  </Text>
+                </div>
+              </Space>
+
+              <Space size={8} wrap align='center'>
+                {changes?.toeic?.hasChanges ? (
+                  <Tag color='blue' style={{ margin: 0, fontWeight: 500 }}>
+                    Updates available
+                  </Tag>
+                ) : (
+                  <Tag
+                    color='success'
+                    icon={<CheckCircleOutlined />}
+                    style={{ margin: 0, fontWeight: 500 }}
+                  >
+                    Up to date
+                  </Tag>
+                )}
+                <Button
+                  size='small'
+                  type={changes?.toeic?.hasChanges ? 'primary' : 'default'}
+                  ghost={Boolean(changes?.toeic?.hasChanges)}
+                  icon={
+                    isSyncing && syncingType === 'toeic' ? (
+                      <SyncOutlined spin />
+                    ) : (
+                      <CloudSyncOutlined />
+                    )
+                  }
+                  loading={isSyncing && syncingType === 'toeic'}
+                  disabled={isSyncing}
+                  onClick={() => handleSync('sync', 'toeic')}
                 >
                   Sync
                 </Button>

@@ -1,6 +1,7 @@
 import Dexie, { Table } from 'dexie'
 import { IItem } from '@/models/item.model'
 import { IBlogItem } from '@/models/blog.model'
+import { IToeicAttempt, IToeicExam } from '@/models/toeic.model'
 
 export interface ISyncMeta {
   key: string
@@ -57,6 +58,8 @@ export class EnmoryDatabase extends Dexie {
   audioCache!: Table<ICachedAudio, string>
   listeningHistory!: Table<IListeningHistoryItem, number>
   errorApiRequests!: Table<IErrorApiRequest, string>
+  toeicExams!: Table<IToeicExam, string>
+  toeicAttempts!: Table<IToeicAttempt, string>
 
   constructor() {
     super('EnmoryLocalDB')
@@ -93,6 +96,10 @@ export class EnmoryDatabase extends Dexie {
     })
     this.version(10).stores({
       listeningHistory: '++id, uid, docId, date, timestamp, accuracy',
+    })
+    this.version(11).stores({
+      toeicExams: 'id, uid, createdAt, updatedAt, isSample',
+      toeicAttempts: 'id, uid, examId, submittedAt',
     })
   }
 }

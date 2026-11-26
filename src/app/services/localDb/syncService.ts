@@ -17,6 +17,8 @@ import { mapDocToBlogItem } from '@/services/firebase/api/blog.api'
 import { dictationApi } from '@/services/firebase/api/dictation.api'
 import { invalidateSearchIndex } from './searchEngine'
 import { hydrateItemsWithExamples } from '@/services/firebase/dbIntegration'
+import { syncToeicWithServer } from '@/views/pages/toeic/toeicData'
+import { doc, getDoc } from 'firebase/firestore'
 
 const SYNC_META_PREFIX = 'last_sync_time_'
 const UNSYNCED_META_PREFIX = 'last_unsynced_records_'
@@ -26,6 +28,7 @@ const COUNT_CACHE_TTL_MS = 60000 // 60 seconds
 const serverItemCountCache = new Map<string, { count: number; timestamp: number }>()
 const serverBlogCountCache = new Map<string, { count: number; timestamp: number }>()
 const serverDictationCountCache = new Map<string, { count: number; timestamp: number }>()
+const serverToeicCountCache = new Map<string, { count: number; timestamp: number }>()
 
 // In-memory cache for detectDataChanges to prevent rapid redundant checks
 let lastDetectionCache: { uid: string; result: IDataChanges; timestamp: number } | null = null
@@ -33,7 +36,7 @@ const DETECTION_CACHE_TTL_MS = 30000 // 30 seconds
 
 export interface IUnsyncedRecord {
   id: string
-  type: 'item' | 'blog' | 'dictation'
+  type: 'item' | 'blog' | 'dictation' | 'toeic'
   title: string
   reason: string
   updatedAt?: number
@@ -68,11 +71,19 @@ export interface IDataChanges {
     updatedCount: number
     deletedCount: number
   }
+  toeic: {
+    hasChanges: boolean
+    localCount: number
+    serverCount: number
+    diffCount: number
+    updatedCount: number
+    deletedCount: number
+  }
   totalChanges: number
 }
 
 export type SyncMode = 'sync' | 'full-sync'
-export type SyncType = 'all' | 'item' | 'blog' | 'dictation'
+export type SyncType = 'all' | 'item' | 'blog' | 'dictation' | 'toeic'
 
 export interface ISyncOptions {
   mode?: SyncMode
@@ -129,11 +140,13 @@ export const syncService = {
       serverItemCountCache.delete(uid)
       serverBlogCountCache.delete(uid)
       serverDictationCountCache.delete(uid)
+      serverToeicCountCache.delete(uid)
       if (lastDetectionCache?.uid === uid) lastDetectionCache = null
     } else {
       serverItemCountCache.clear()
       serverBlogCountCache.clear()
       serverDictationCountCache.clear()
+      serverToeicCountCache.clear()
       lastDetectionCache = null
     }
   },
@@ -211,6 +224,30 @@ export const syncService = {
       return activeCount
     } catch (err) {
       console.warn('getServerBlogCount failed:', err)
+      throw err
+    }
+  },
+
+  /**
+   * Get total count of active TOEIC exams on Firebase Firestore.
+   * Memoized for 60 seconds to eliminate redundant Firestore queries.
+   */
+  async getServerToeicCount(uid: string, force = false): Promise<number> {
+    if (!uid) return 0
+    if (!force) {
+      const cached = serverToeicCountCache.get(uid)
+      if (cached && Date.now() - cached.timestamp < COUNT_CACHE_TTL_MS) {
+        return cached.count
+      }
+    }
+
+    try {
+      const snap = await getDocs(collection(db, dbCollections.toeicExams))
+      const activeCount = snap.docs.filter((d) => !d.data()?.is_deleted).length
+      serverToeicCountCache.set(uid, { count: activeCount, timestamp: Date.now() })
+      return activeCount
+    } catch (err) {
+      console.warn('getServerToeicCount failed:', err)
       throw err
     }
   },
@@ -358,6 +395,7 @@ export const syncService = {
     const syncBlogs = targetType === 'all' || targetType === 'blog'
     const syncItems = targetType === 'all' || targetType === 'item'
     const syncDictations = targetType === 'all' || targetType === 'dictation'
+    const syncToeic = targetType === 'all' || targetType === 'toeic'
     const now = Date.now()
 
     let updatedItems = 0
@@ -982,6 +1020,30 @@ export const syncService = {
       }
     }
 
+    // ==========================================
+    // 4. SYNC TOEIC EXAMS & USER ATTEMPTS
+    // ==========================================
+    if (syncToeic) {
+      options?.onProgress?.('Sync: Synchronizing TOEIC exams & attempt history...')
+      try {
+        let isAdmin = false
+        try {
+          const userDoc = await getDoc(doc(db, dbCollections.users, uid))
+          isAdmin = userDoc.exists() && userDoc.data()?.configuration?.role === 'admin'
+        } catch {}
+        await syncToeicWithServer(uid, isAdmin)
+      } catch (toeicErr: any) {
+        console.warn('Failed to sync TOEIC data:', toeicErr)
+        unsyncedRecords.push({
+          id: 'toeic_sync',
+          type: 'toeic',
+          title: 'TOEIC Exams & History Sync',
+          reason: toeicErr?.message || 'Failed to sync TOEIC data',
+          updatedAt: Date.now(),
+        })
+      }
+    }
+
     // Persist latest unsynced records to syncMeta and localStorage
     try {
       await localDb.syncMeta.put({ key: `${UNSYNCED_META_PREFIX}${uid}`, value: unsyncedRecords })
@@ -1105,6 +1167,14 @@ export const syncService = {
         updatedCount: 0,
         deletedCount: 0,
       },
+      toeic: {
+        hasChanges: false,
+        localCount: 0,
+        serverCount: 0,
+        diffCount: 0,
+        updatedCount: 0,
+        deletedCount: 0,
+      },
       totalChanges: 0,
     }
 
@@ -1122,11 +1192,21 @@ export const syncService = {
       const hasSyncedBefore = lastSyncTime > 0
 
       // Read local counts directly from IndexedDB (0 network/Firestore cost)
-      const [localItemCount, localBlogCount, localDictationCount] = await Promise.all([
-        localDb.items.where('uid').equals(uid).count(),
-        localDb.blogs.where('uid').equals(uid).count(),
-        localDb.listeningHistory.where('uid').equals(uid).count(),
-      ])
+      const [localItemCount, localBlogCount, localDictationCount, localToeicExamCount] =
+        await Promise.all([
+          localDb.items.where('uid').equals(uid).count(),
+          localDb.blogs.where('uid').equals(uid).count(),
+          localDb.listeningHistory.where('uid').equals(uid).count(),
+          localDb.toeicExams.filter((e) => !e.is_deleted && !e.isSample).count(),
+        ])
+
+      const serverToeicSnap = await getDocs(collection(db, dbCollections.toeicExams)).catch(
+        () => null,
+      )
+      const serverToeicExamCount = serverToeicSnap
+        ? serverToeicSnap.docs.filter((d) => !d.data()?.is_deleted).length
+        : localToeicExamCount
+      const toeicHasChanges = serverToeicExamCount !== localToeicExamCount
 
       // Case A: Device has never synced before
       if (!hasSyncedBefore) {
@@ -1153,6 +1233,7 @@ export const syncService = {
           !hasCloudItems &&
           !hasCloudBlogs &&
           !hasCloudDictations &&
+          !toeicHasChanges &&
           localItemCount === 0 &&
           localBlogCount === 0 &&
           localDictationCount === 0
@@ -1162,6 +1243,11 @@ export const syncService = {
             items: { ...defaultResult.items, localCount: localItemCount },
             blogs: { ...defaultResult.blogs, localCount: localBlogCount },
             dictations: { ...defaultResult.dictations, localCount: localDictationCount },
+            toeic: {
+              ...defaultResult.toeic,
+              localCount: localToeicExamCount,
+              serverCount: serverToeicExamCount,
+            },
           }
           lastDetectionCache = { uid, result: res, timestamp: Date.now() }
           return res
@@ -1192,7 +1278,7 @@ export const syncService = {
           dictationsHasChanges = serverDictationCount !== localDictationCount
         }
 
-        if (!itemsHasChanges && !blogsHasChanges && !dictationsHasChanges) {
+        if (!itemsHasChanges && !blogsHasChanges && !dictationsHasChanges && !toeicHasChanges) {
           // Local database and cloud counts match. Initialize lastSyncTime so future checks use fast delta path.
           const now = Date.now()
           await this.setLastSyncTimestamp(uid, now)
@@ -1214,13 +1300,18 @@ export const syncService = {
               localCount: localDictationCount,
               serverCount: serverDictationCount,
             },
+            toeic: {
+              ...defaultResult.toeic,
+              localCount: localToeicExamCount,
+              serverCount: serverToeicExamCount,
+            },
           }
           lastDetectionCache = { uid, result: res, timestamp: Date.now() }
           return res
         }
 
         const res: IDataChanges = {
-          hasChanges: itemsHasChanges || blogsHasChanges || dictationsHasChanges,
+          hasChanges: itemsHasChanges || blogsHasChanges || dictationsHasChanges || toeicHasChanges,
           lastSyncTime: null,
           items: {
             hasChanges: itemsHasChanges,
@@ -1248,8 +1339,22 @@ export const syncService = {
             updatedCount: 0,
             deletedCount: 0,
           },
+          toeic: {
+            hasChanges: toeicHasChanges,
+            localCount: localToeicExamCount,
+            serverCount: serverToeicExamCount,
+            diffCount: toeicHasChanges ? Math.abs(serverToeicExamCount - localToeicExamCount) : 0,
+            updatedCount:
+              serverToeicExamCount > localToeicExamCount
+                ? serverToeicExamCount - localToeicExamCount
+                : 0,
+            deletedCount: 0,
+          },
           totalChanges:
-            (itemsHasChanges ? 1 : 0) + (blogsHasChanges ? 1 : 0) + (dictationsHasChanges ? 1 : 0),
+            (itemsHasChanges ? 1 : 0) +
+            (blogsHasChanges ? 1 : 0) +
+            (dictationsHasChanges ? 1 : 0) +
+            (toeicHasChanges ? 1 : 0),
         }
         lastDetectionCache = { uid, result: res, timestamp: Date.now() }
         return res
@@ -1332,7 +1437,8 @@ export const syncService = {
 
       const dictationCountDiff = Math.abs(serverDictationCount - localDictationCount)
       const dictationsHasChanges = dictationCountDiff > 0 || Boolean(hasUnuploadedDictations)
-      const hasChanges = itemsHasChanges || blogsHasChanges || dictationsHasChanges
+      const hasChanges =
+        itemsHasChanges || blogsHasChanges || dictationsHasChanges || toeicHasChanges
 
       const res: IDataChanges = {
         hasChanges,
@@ -1366,8 +1472,22 @@ export const syncService = {
               : 0,
           deletedCount: 0,
         },
+        toeic: {
+          hasChanges: toeicHasChanges,
+          localCount: localToeicExamCount,
+          serverCount: serverToeicExamCount,
+          diffCount: toeicHasChanges ? Math.abs(serverToeicExamCount - localToeicExamCount) : 0,
+          updatedCount:
+            serverToeicExamCount > localToeicExamCount
+              ? serverToeicExamCount - localToeicExamCount
+              : 0,
+          deletedCount: 0,
+        },
         totalChanges:
-          (itemsHasChanges ? 1 : 0) + (blogsHasChanges ? 1 : 0) + (dictationsHasChanges ? 1 : 0),
+          (itemsHasChanges ? 1 : 0) +
+          (blogsHasChanges ? 1 : 0) +
+          (dictationsHasChanges ? 1 : 0) +
+          (toeicHasChanges ? 1 : 0),
       }
 
       lastDetectionCache = { uid, result: res, timestamp: Date.now() }

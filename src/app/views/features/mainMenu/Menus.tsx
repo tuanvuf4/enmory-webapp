@@ -1,5 +1,6 @@
 import {
   BookOutlined,
+  CrownOutlined,
   CustomerServiceOutlined,
   HomeOutlined,
   InfoCircleOutlined,
@@ -34,6 +35,11 @@ export const menus: MenuProps['items'] = [
     key: '4',
     icon: <CustomerServiceOutlined className='icon' />,
     label: 'listening',
+  },
+  {
+    key: '13',
+    icon: <CrownOutlined className='icon' />,
+    label: 'toeic',
   },
   // {
   //   key: '10',
@@ -156,5 +162,9 @@ export const keyPaths = [
   {
     key: '12',
     path: '/blog',
+  },
+  {
+    key: '13',
+    path: '/toeic',
   },
 ]

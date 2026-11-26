@@ -18,6 +18,8 @@ export const dbCollections = {
   checklists: 'checklists',
   deleted_records: 'deleted_records',
   dictations: 'dictations',
+  toeicExams: 'toeic_exams',
+  toeicAttempts: 'toeic_attempts',
 }
 
 // Get Firebase services

@@ -24,7 +24,7 @@ export interface IGeminiVoiceOption {
 export const GEMINI_VOICES: IGeminiVoiceOption[] = [
   {
     value: 'auto',
-    label: 'Default (Multi-Voice)',
+    label: 'Default',
     desc: 'Tự động chọn giọng Gemini nam/nữ phù hợp theo từng nhân vật hội thoại',
     gender: 'auto',
   },

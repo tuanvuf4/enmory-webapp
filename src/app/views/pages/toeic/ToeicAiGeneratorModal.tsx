@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react'
 import {
   Alert,
+  App,
   Button,
   Col,
   Divider,
@@ -14,7 +15,6 @@ import {
   Space,
   Tag,
   Typography,
-  message,
   theme,
 } from 'antd'
 import {
@@ -60,6 +60,7 @@ export const ToeicAiGeneratorModal: React.FC<ToeicAiGeneratorModalProps> = ({
   onGenerated,
 }) => {
   const { token } = theme.useToken()
+  const { message } = App.useApp()
   const [preset, setPreset] = useState<PresetType>('standard_200')
   const [config, setConfig] = useState<IGenerateToeicExamConfig>({ ...STANDARD_ETS_CONFIG })
   const [isGenerating, setIsGenerating] = useState(false)

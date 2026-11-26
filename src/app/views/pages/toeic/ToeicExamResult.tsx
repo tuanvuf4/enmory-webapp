@@ -5,6 +5,10 @@ import {
   Card,
   Col,
   Divider,
+  Empty,
+  Flex,
+  Grid,
+  Pagination,
   Progress,
   Row,
   Segmented,
@@ -20,7 +24,6 @@ import {
   CheckCircleFilled,
   CloseCircleFilled,
   CustomerServiceOutlined,
-  MinusCircleOutlined,
   ReadOutlined,
   RedoOutlined,
   TrophyOutlined,
@@ -30,6 +33,7 @@ import { getExamRenderItems, getPartMeta } from './toeicData'
 import { ToeicAudioPlayer } from './ToeicAudioPlayer'
 
 const { Title, Text, Paragraph } = Typography
+const { useBreakpoint } = Grid
 
 interface ToeicExamResultProps {
   exam: IToeicExam
@@ -38,7 +42,7 @@ interface ToeicExamResultProps {
   onBackToList: () => void
 }
 
-type ReviewFilter = 'all' | 'wrong' | 'correct' | 'unanswered' | 'flagged'
+type ReviewFilter = 'all' | 'wrong' | 'correct' | 'flagged'
 
 const formatDuration = (seconds: number) => {
   const m = Math.floor(seconds / 60)
@@ -53,7 +57,10 @@ export const ToeicExamResult: React.FC<ToeicExamResultProps> = ({
   onBackToList,
 }) => {
   const { token } = theme.useToken()
+  const screens = useBreakpoint()
   const [filter, setFilter] = useState<ReviewFilter>('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   const renderItems = useMemo(
     () => getExamRenderItems(exam, attempt.selectedParts),
@@ -68,11 +75,24 @@ export const ToeicExamResult: React.FC<ToeicExamResultProps> = ({
     const userAns = attempt.answers[q.id]
     if (filter === 'all') return true
     if (filter === 'correct') return userAns === q.correctAnswer
-    if (filter === 'wrong') return Boolean(userAns) && userAns !== q.correctAnswer
-    if (filter === 'unanswered') return !userAns
+    if (filter === 'wrong') return userAns !== q.correctAnswer
     if (filter === 'flagged') return attempt.flaggedIds.includes(q.id)
     return true
   }
+
+  const filteredRenderItems = useMemo(() => {
+    return renderItems
+      .map((item) => ({
+        ...item,
+        filteredQs: item.questions.filter(matchesFilter),
+      }))
+      .filter((item) => item.filteredQs.length > 0)
+  }, [renderItems, filter, attempt.answers, attempt.flaggedIds])
+
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filteredRenderItems.slice(start, start + pageSize)
+  }, [filteredRenderItems, currentPage, pageSize])
 
   const partColumns = [
     {
@@ -127,26 +147,18 @@ export const ToeicExamResult: React.FC<ToeicExamResultProps> = ({
         size='small'
         style={{
           marginBottom: 12,
-          borderColor: isUnanswered
-            ? token.colorBorder
-            : isCorrect
-              ? token.colorSuccessBorder
-              : token.colorErrorBorder,
+          borderColor: isCorrect ? token.colorSuccessBorder : token.colorErrorBorder,
         }}
         title={
           <Space>
             <Tag color='geekblue'>Câu {q.questionNumber}</Tag>
-            {isUnanswered ? (
-              <Tag icon={<MinusCircleOutlined />} color='default'>
-                Chưa trả lời
-              </Tag>
-            ) : isCorrect ? (
+            {isCorrect ? (
               <Tag icon={<CheckCircleFilled />} color='success'>
                 Chính xác
               </Tag>
             ) : (
               <Tag icon={<CloseCircleFilled />} color='error'>
-                Sai (Chọn {userAns})
+                {isUnanswered ? 'Sai (Chưa trả lời)' : `Sai (Chọn ${userAns})`}
               </Tag>
             )}
             <Tag color='processing'>Đáp án đúng: {q.correctAnswer}</Tag>
@@ -241,14 +253,14 @@ export const ToeicExamResult: React.FC<ToeicExamResultProps> = ({
             <Button icon={<ArrowLeftOutlined />} onClick={onBackToList}>
               Danh sách đề thi
             </Button>
-            <Title level={4} style={{ margin: 0 }}>
-              Kết quả: {attempt.examTitle}
-            </Title>
-          </Space>
-          <Space>
             <Button type='primary' icon={<RedoOutlined />} onClick={onRetry}>
               Làm lại đề này
             </Button>
+          </Space>
+          <Space>
+            <Title level={4} style={{ margin: 0 }}>
+              Kết quả: {attempt.examTitle}
+            </Title>
           </Space>
         </div>
 
@@ -302,88 +314,171 @@ export const ToeicExamResult: React.FC<ToeicExamResultProps> = ({
         </Row>
       </Card>
 
-      <Card title='Thống kê chi tiết theo từng Part'>
-        <Table
-          dataSource={attempt.partStats}
-          columns={partColumns}
-          rowKey='part'
-          pagination={false}
-          size='small'
-        />
+      <Card title='Thống kê chi tiết'>
+        {screens.md ? (
+          <Table
+            dataSource={attempt.partStats}
+            columns={partColumns}
+            rowKey='part'
+            pagination={false}
+            size='small'
+            scroll={{ x: 'max-content' }}
+          />
+        ) : (
+          <Space direction='vertical' size={10} style={{ width: '100%' }}>
+            {attempt.partStats.map((stat) => {
+              const meta = getPartMeta(stat.part)
+              const pct = stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : 0
+              return (
+                <Card key={stat.part} size='small' style={{ background: token.colorFillTertiary }}>
+                  <div className='flex flex-wrap items-center justify-between gap-2 mb-2'>
+                    <Space size={6}>
+                      <Tag color={meta.section === 'listening' ? 'blue' : 'green'}>
+                        Part {stat.part}
+                      </Tag>
+                      <Text strong>{meta.viName}</Text>
+                    </Space>
+                    <Text type='secondary' style={{ fontSize: 12 }}>
+                      {meta.section === 'listening' ? 'Nghe hiểu' : 'Đọc hiểu'}
+                    </Text>
+                  </div>
+                  <div className='flex items-center justify-between gap-2 mb-1'>
+                    <Text type='secondary' style={{ fontSize: 12 }}>
+                      Đúng / Tổng:
+                    </Text>
+                    <Text strong>
+                      {stat.correct} / {stat.total}
+                    </Text>
+                  </div>
+                  <Progress percent={pct} size='small' />
+                </Card>
+              )
+            })}
+          </Space>
+        )}
       </Card>
 
       <Card
-        title='Xem lại bài làm & Giải thích chi tiết'
-        extra={
-          <Segmented
-            value={filter}
-            onChange={(val) => setFilter(val as ReviewFilter)}
-            options={[
-              { label: 'Tất cả', value: 'all' },
-              { label: 'Câu sai', value: 'wrong' },
-              { label: 'Câu đúng', value: 'correct' },
-              { label: 'Chưa làm', value: 'unanswered' },
-              { label: 'Đã đánh dấu', value: 'flagged' },
-            ]}
-          />
+        title={
+          <Flex
+            align='center'
+            justify='space-between'
+            wrap
+            gap={token.size / 2}
+            style={{ width: '100%', margin: '8px 0' }}
+          >
+            <Text>Xem lại bài làm & Giải thích chi tiết</Text>
+            <Segmented
+              value={filter}
+              onChange={(val) => {
+                setFilter(val as ReviewFilter)
+                setCurrentPage(1)
+              }}
+              options={[
+                { label: 'Tất cả', value: 'all' },
+                { label: 'Câu sai', value: 'wrong' },
+                { label: 'Câu đúng', value: 'correct' },
+                { label: 'Đã đánh dấu', value: 'flagged' },
+              ]}
+            />
+          </Flex>
         }
       >
-        {renderItems.map((item) => {
-          const filteredQs = item.questions.filter(matchesFilter)
-          if (filteredQs.length === 0) return null
-
-          if (item.kind === 'single') {
-            return filteredQs.map((q) => renderReviewQuestion(q))
-          }
-
-          if (item.kind === 'group' && item.group) {
-            const meta = getPartMeta(item.part)
-            return (
-              <Card
-                key={item.group.id}
+        {filteredRenderItems.length === 0 ? (
+          <Empty description='Không có câu hỏi nào phù hợp với bộ lọc' />
+        ) : (
+          <>
+            <div className='flex justify-end pb-3'>
+              <Pagination
                 size='small'
-                type='inner'
-                title={`Part ${item.part}: ${item.group.title || meta.viName}`}
-                style={{ marginBottom: 16 }}
-              >
-                <Space direction='vertical' size={12} style={{ width: '100%' }}>
-                  {meta.section === 'listening' ? (
-                    <>
-                      <ToeicAudioPlayer
-                        compact
-                        audioUrl={item.group.audioUrl}
-                        audioScript={item.group.audioScript}
-                        title={item.group.title}
-                      />
-                      {item.group.audioScript && (
-                        <Alert
-                          type='info'
-                          message='Audio Transcript'
-                          description={
+                current={currentPage}
+                pageSize={pageSize}
+                total={filteredRenderItems.length}
+                showSizeChanger
+                pageSizeOptions={['5', '10', '20']}
+                onChange={(page, size) => {
+                  setCurrentPage(page)
+                  setPageSize(size)
+                }}
+              />
+            </div>
+
+            {paginatedItems.map((item) => {
+              const filteredQs = item.filteredQs
+
+              if (item.kind === 'single') {
+                return filteredQs.map((q) => renderReviewQuestion(q))
+              }
+
+              if (item.kind === 'group' && item.group) {
+                const meta = getPartMeta(item.part)
+                return (
+                  <Card
+                    key={item.group.id}
+                    size='small'
+                    type='inner'
+                    title={`Part ${item.part}: ${item.group.title || meta.viName}`}
+                    style={{ marginBottom: 16 }}
+                  >
+                    <Space direction='vertical' size={12} style={{ width: '100%' }}>
+                      {meta.section === 'listening' ? (
+                        <>
+                          <ToeicAudioPlayer
+                            compact
+                            audioUrl={item.group.audioUrl}
+                            audioScript={item.group.audioScript}
+                            title={item.group.title}
+                          />
+                          {item.group.audioScript && (
+                            <Alert
+                              type='info'
+                              message='Audio Transcript'
+                              description={
+                                <Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>
+                                  {item.group.audioScript}
+                                </Paragraph>
+                              }
+                            />
+                          )}
+                        </>
+                      ) : (
+                        (item.group.passages || []).map((passage, pIdx) => (
+                          <Card
+                            key={pIdx}
+                            size='small'
+                            style={{ background: token.colorFillTertiary }}
+                          >
                             <Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>
-                              {item.group.audioScript}
+                              {passage}
                             </Paragraph>
-                          }
-                        />
+                          </Card>
+                        ))
                       )}
-                    </>
-                  ) : (
-                    (item.group.passages || []).map((passage, pIdx) => (
-                      <Card key={pIdx} size='small' style={{ background: token.colorFillTertiary }}>
-                        <Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>
-                          {passage}
-                        </Paragraph>
-                      </Card>
-                    ))
-                  )}
-                  <Divider style={{ margin: '4px 0' }} />
-                  {filteredQs.map((q) => renderReviewQuestion(q))}
-                </Space>
-              </Card>
-            )
-          }
-          return null
-        })}
+                      <Divider style={{ margin: '4px 0' }} />
+                      {filteredQs.map((q) => renderReviewQuestion(q))}
+                    </Space>
+                  </Card>
+                )
+              }
+              return null
+            })}
+
+            <div className='flex justify-end pt-3'>
+              <Pagination
+                size='small'
+                current={currentPage}
+                pageSize={pageSize}
+                total={filteredRenderItems.length}
+                showSizeChanger
+                pageSizeOptions={['5', '10', '20']}
+                onChange={(page, size) => {
+                  setCurrentPage(page)
+                  setPageSize(size)
+                }}
+              />
+            </div>
+          </>
+        )}
       </Card>
     </Space>
   )

@@ -4,11 +4,12 @@ const WORD_CATEGORY_ID = 1
 const PHRASE_CATEGORY_ID = 2
 
 const GEMINI_MODELS = [
+  'gemini-4-argon',
   'gemini-3.8-flash',
   'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
   'gemini-flash-latest',
-  'gemini-2.5-flash',
+  'gemini-2.5-pro-preview-tts'
 ]
 
 if (typeof importScripts === 'function') {

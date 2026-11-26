@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
+  App,
   Button,
   Card,
   Col,
   Divider,
-  Modal,
   Progress,
   Row,
   Space,
@@ -53,7 +53,7 @@ interface ToeicExamPracticeProps {
   selectedParts: ToeicPartNumber[]
   durationMinutes: number // 0 = unlimited
   initialProgress?: IToeicInProgressState | null
-  onSubmit: (attempt: IToeicAttempt) => void
+  onSubmit: (attempt: IToeicAttempt) => void | Promise<void>
   onExit: () => void
 }
 
@@ -73,6 +73,7 @@ export const ToeicExamPractice: React.FC<ToeicExamPracticeProps> = ({
   onExit,
 }) => {
   const { token } = theme.useToken()
+  const { modal } = App.useApp()
 
   const savedDraft = useMemo(
     () => initialProgress ?? loadToeicProgress(exam.id, uid),
@@ -105,6 +106,7 @@ export const ToeicExamPractice: React.FC<ToeicExamPracticeProps> = ({
   )
   const [flaggedIds, setFlaggedIds] = useState<string[]>(() => savedDraft?.flaggedIds || [])
   const [showTranscript, setShowTranscript] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(() => savedDraft?.elapsedSeconds ?? 0)
   const [remainingSeconds, setRemainingSeconds] = useState<number>(() => {
     if (effectiveDuration <= 0) return 0
@@ -199,7 +201,7 @@ export const ToeicExamPractice: React.FC<ToeicExamPracticeProps> = ({
 
   const handleConfirmSubmit = () => {
     const unanswered = totalCount - answeredCount
-    Modal.confirm({
+    modal.confirm({
       title: 'Nộp bài thi TOEIC?',
       content:
         unanswered > 0
@@ -207,24 +209,29 @@ export const ToeicExamPractice: React.FC<ToeicExamPracticeProps> = ({
           : `Bạn đã hoàn thành tất cả ${totalCount}/${totalCount} câu. Nộp bài để xem kết quả ngay?`,
       okText: 'Nộp bài',
       cancelText: 'Làm tiếp',
-      onOk: () => {
+      onOk: async () => {
         if (submittedRef.current) return
         submittedRef.current = true
-        clearToeicProgress(exam.id, uid)
-        const attempt = evaluateToeicAttempt(
-          exam,
-          answers,
-          flaggedIds,
-          effectiveParts,
-          elapsedSeconds,
-        )
-        onSubmit(attempt)
+        setIsSubmitting(true)
+        try {
+          clearToeicProgress(exam.id, uid)
+          const attempt = evaluateToeicAttempt(
+            exam,
+            answers,
+            flaggedIds,
+            effectiveParts,
+            elapsedSeconds,
+          )
+          await onSubmit(attempt)
+        } finally {
+          setIsSubmitting(false)
+        }
       },
     })
   }
 
   const handleConfirmExit = () => {
-    Modal.confirm({
+    modal.confirm({
       title: 'Tạm dừng & Thoát khỏi bài làm?',
       content:
         'Trạng thái làm bài (đáp án đã chọn, câu hiện tại và thời gian) đã được lưu trên máy. Bạn có thể quay lại làm tiếp bất cứ lúc nào.',
@@ -424,8 +431,14 @@ export const ToeicExamPractice: React.FC<ToeicExamPracticeProps> = ({
                 ? `Còn lại: ${formatCountdown(remainingSeconds)}`
                 : `Đã làm: ${formatCountdown(elapsedSeconds)}`}
             </Tag>
-            <Button type='primary' icon={<SendOutlined />} onClick={handleConfirmSubmit}>
-              Nộp bài ({answeredCount}/{totalCount})
+            <Button
+              type='primary'
+              icon={<SendOutlined />}
+              loading={isSubmitting}
+              disabled={isSubmitting}
+              onClick={handleConfirmSubmit}
+            >
+              {isSubmitting ? 'Đang nộp bài...' : `Nộp bài (${answeredCount}/${totalCount})`}
             </Button>
           </Space>
         </div>

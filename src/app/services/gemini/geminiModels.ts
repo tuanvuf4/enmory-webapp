@@ -1,11 +1,11 @@
 export const GEMINI_MODELS = [
+  'gemini-4-argon',
   'gemini-3.8-flash',
   'gemini-3.6-flash',
   'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite',
   'gemini-3-flash-preview',
-  'gemini-2.5-flash',
 ] as const
 
 export type TGeminiModel = (typeof GEMINI_MODELS)[number]
@@ -36,15 +36,9 @@ export const AI_MODEL_CHANGE_EVENT = 'enmory_default_ai_model_changed'
 export const AI_MODEL_STORAGE_KEY = 'enmory_default_ai_model'
 
 /**
- * Danh sách model khuyên dùng cho chức năng Auto Fill
- */
-export const GEMINI_AUTOFILL_MODELS = GEMINI_MODELS
-
-/**
  * Alias danh sách models ứng viên để tương thích ngược với các code gọi cũ
  */
 export const CANDIDATE_GEMINI_MODELS = GEMINI_MODELS
-export const GEMINI_CANDIDATE_MODELS = GEMINI_MODELS
 
 /**
  * Cấu hình hiển thị lựa chọn model trên giao diện người dùng
@@ -56,6 +50,11 @@ export interface IGeminiModelOption {
 }
 
 export const GEMINI_MODEL_OPTIONS: IGeminiModelOption[] = [
+  {
+    value: 'gemini-4-argon',
+    label: 'Gemini 4', // (High - Khuyên dùng)
+    desc: 'Năng lực suy luận cao, tối ưu tra cứu từ điển chuyên sâu, chuẩn IPA và nghĩa chính xác',
+  },
   {
     value: 'gemini-3.8-flash',
     label: 'Gemini 3.8 Flash', // (High - Khuyên dùng)
@@ -86,11 +85,6 @@ export const GEMINI_MODEL_OPTIONS: IGeminiModelOption[] = [
     label: 'Gemini 3 Flash Preview', // (Bản thử nghiệm)
     desc: 'Phiên bản thử nghiệm tối ưu tốc độ',
   },
-  {
-    value: 'gemini-2.5-flash',
-    label: 'Gemini 2.5 Flash',
-    desc: 'Phiên bản gọn nhẹ, phản hồi âm thanh siêu tốc',
-  },
 ]
 
 /**
@@ -103,11 +97,6 @@ export const GEMINI_TRANSCRIPT_MODELS = GEMINI_MODEL_OPTIONS
  * Hỗ trợ nhận diện âm thanh đa phương thức (multimodal audio), phân tích nối âm, trọng âm, ngữ điệu và shadowing.
  */
 export const GEMINI_SPEECH_EVAL_MODELS: IGeminiModelOption[] = [
-  {
-    value: 'gemini-2.5-flash',
-    label: 'Gemini 2.5 Flash (Phản hồi cực nhanh - Khuyên dùng cho Audio)',
-    desc: 'Xử lý âm thanh đa phương thức siêu nhanh, giảm độ trễ tối đa và ổn định',
-  },
   {
     value: 'gemini-3.5-flash',
     label: 'Gemini 3.5 Flash (Cân bằng)',
@@ -125,7 +114,7 @@ export const GEMINI_SPEECH_EVAL_MODELS: IGeminiModelOption[] = [
   },
 ]
 
-export const DEFAULT_SPEECH_EVAL_MODEL: TGeminiModel = 'gemini-2.5-flash'
+export const DEFAULT_SPEECH_EVAL_MODEL: TGeminiModel = 'gemini-3.6-flash'
 
 /**
  * Lấy model AI mặc định từ User Setting / localStorage
@@ -172,7 +161,6 @@ export const buildFallbackModelChain = (
   if (category === 'speech') {
     candidates = [
       initial,
-      'gemini-2.5-flash',
       'gemini-3.5-flash',
       'gemini-3.8-flash',
       'gemini-3.6-flash',
@@ -183,7 +171,7 @@ export const buildFallbackModelChain = (
       initial,
       'gemini-3.8-flash',
       'gemini-3.5-flash',
-      'gemini-2.5-flash',
+      'gemini-4-argon',
       'gemini-3.6-flash',
       'gemini-3.5-flash-lite',
       'gemini-3.1-flash-lite',
@@ -199,10 +187,10 @@ export const buildFallbackModelChain = (
  * Danh sách Gemini TTS Models chuẩn hóa chuyên biệt cho tạo âm thanh (speech/audio):
  */
 export const GEMINI_TTS_MODELS = [
+  'gemini-4-argon',
   'gemini-3.8-flash-lite-tts',
   'gemini-3.8-flash-tts',
   'gemini-3.1-flash-tts-preview',
-  'gemini-2.5-flash-preview-tts',
 ] as const
 
 export type TGeminiTtsModel = (typeof GEMINI_TTS_MODELS)[number]

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
+  App,
   Button,
   Card,
   Checkbox,
@@ -14,7 +15,6 @@ import {
   Tabs,
   Tag,
   Typography,
-  message,
   theme,
 } from 'antd'
 import {
@@ -54,6 +54,7 @@ type ToeicViewMode = 'list' | 'practice' | 'result'
 
 export const Toeic = () => {
   const { token } = theme.useToken()
+  const { message } = App.useApp()
   const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useSelector((state) => state.auth)
   const uid = user?.uid || firebaseAuthService.getCurrentUser()?.uid || ''
@@ -132,6 +133,10 @@ export const Toeic = () => {
       return
     }
 
+    if (viewMode === 'result' && activeExam?.id === urlExamId) {
+      return
+    }
+
     const resolveUrlExam = async () => {
       let target = exams.find((e) => e.id === urlExamId)
       if (!target) {
@@ -156,7 +161,7 @@ export const Toeic = () => {
     }
 
     resolveUrlExam()
-  }, [urlExamId, exams, uid, viewMode])
+  }, [urlExamId, exams, uid, viewMode, activeExam?.id])
 
   const launchAvailableParts = useMemo(() => {
     if (!launchExam) return [] as ToeicPartNumber[]
@@ -236,7 +241,6 @@ export const Toeic = () => {
       ...attempt,
       uid: uid || undefined,
     }
-    setSearchParams({})
 
     if (uid) {
       try {

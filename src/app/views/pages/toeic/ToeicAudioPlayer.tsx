@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Button, Select, Slider, Space, Tag, Tooltip, Typography, message, theme } from 'antd'
+import { App, Button, Select, Slider, Space, Tag, Tooltip, Typography, theme } from 'antd'
 import { PauseCircleOutlined, PlayCircleOutlined, SoundOutlined } from '@ant-design/icons'
 import { GEMINI_VOICES, TGeminiVoice, geminiTtsService } from '@/services/gemini'
 
@@ -39,6 +39,7 @@ export const ToeicAudioPlayer: React.FC<ToeicAudioPlayerProps> = ({
   compact = false,
 }) => {
   const { token } = theme.useToken()
+  const { message } = App.useApp()
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const cancelledRef = useRef(false)
 

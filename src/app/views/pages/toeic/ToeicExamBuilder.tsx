@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import {
+  App,
   Button,
   Card,
   Col,
@@ -14,7 +15,6 @@ import {
   Tag,
   Typography,
   Upload,
-  message,
   theme,
 } from 'antd'
 import {
@@ -104,6 +104,7 @@ export const ToeicExamBuilder: React.FC<ToeicExamBuilderProps> = ({
   onCancel,
 }) => {
   const { token } = theme.useToken()
+  const { message } = App.useApp()
   const [activePart, setActivePart] = useState<ToeicPartNumber>(1)
 
   const [title, setTitle] = useState(initialExam?.title || 'Đề thi TOEIC Listening & Reading mới')

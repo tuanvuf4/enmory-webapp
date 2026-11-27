@@ -44,6 +44,14 @@ import {
   extractSegmentsFromContent,
   cleanContentForAI,
 } from '@/services/gemini/geminiVocabClassifier.service'
+import {
+  geminiTtsService,
+  DEFAULT_USER_TTS_MODEL,
+  DEFAULT_USER_TTS_VOICE,
+  TGeminiTtsModel,
+  TGeminiVoice,
+} from '@/services/gemini'
+import { useSelector } from '@/core/hooks'
 import { usePrompt, useItemModal } from '@/helpers/hooks'
 import { initItem } from '@/views/features/modals/itemModal/data'
 import { sanitizePronunciation } from '@/core/utils'
@@ -144,6 +152,9 @@ export const VocabClassificationTabs: React.FC<IVocabClassificationTabsProps> = 
   const [loading, setLoading] = useState<boolean>(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [speakingId, setSpeakingId] = useState<string | null>(null)
+  const userConfig = useSelector((state) => state.auth.user?.configuration)
+  const userTtsVoice = (userConfig?.defaultTtsVoice as TGeminiVoice) || DEFAULT_USER_TTS_VOICE
+  const userTtsModel = (userConfig?.defaultTtsModel as TGeminiTtsModel) || DEFAULT_USER_TTS_MODEL
 
   const [classificationData, setClassificationData] = useState<IContentClassificationData | null>(
     null,
@@ -365,19 +376,39 @@ export const VocabClassificationTabs: React.FC<IVocabClassificationTabsProps> = 
     }
   }
 
-  // Audio pronunciation via SpeechSynthesis
-  const handleSpeak = (text: string, id: string) => {
+  // Audio pronunciation via Gemini TTS (with browser SpeechSynthesis fallback)
+  const handleSpeak = async (text: string, id: string) => {
+    if (!text) return
+    geminiTtsService.stop()
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel()
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = 'en-US'
-      utterance.rate = 0.92
+    }
 
-      setSpeakingId(id)
-      utterance.onend = () => setSpeakingId(null)
-      utterance.onerror = () => setSpeakingId(null)
+    const fallbackBrowserSpeak = () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+        const utterance = new SpeechSynthesisUtterance(text)
+        utterance.lang = 'en-US'
+        utterance.rate = 0.92
+        utterance.onend = () => setSpeakingId(null)
+        utterance.onerror = () => setSpeakingId(null)
+        window.speechSynthesis.speak(utterance)
+      } else {
+        setSpeakingId(null)
+      }
+    }
 
-      window.speechSynthesis.speak(utterance)
+    setSpeakingId(id)
+    try {
+      await geminiTtsService.playSpeech(text, {
+        voice: userTtsVoice,
+        model: userTtsModel,
+        onStart: () => setSpeakingId(id),
+        onEnd: () => setSpeakingId(null),
+        onError: fallbackBrowserSpeak,
+      })
+    } catch {
+      fallbackBrowserSpeak()
     }
   }
 

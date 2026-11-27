@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 export const GEMINI_MODELS = [
   'gemini-4-argon',
   'gemini-3.8-flash',
@@ -194,3 +196,149 @@ export const GEMINI_TTS_MODELS = [
 ] as const
 
 export type TGeminiTtsModel = (typeof GEMINI_TTS_MODELS)[number]
+
+/**
+ * Model TTS mặc định cho User Settings toàn hệ thống
+ */
+export const DEFAULT_USER_TTS_MODEL: TGeminiTtsModel = 'gemini-4-argon'
+
+/**
+ * Tên event phát ra khi người dùng đổi model TTS mặc định
+ */
+export const TTS_MODEL_CHANGE_EVENT = 'enmory_default_tts_model_changed'
+
+/**
+ * Key lưu model TTS mặc định trong localStorage
+ */
+export const TTS_MODEL_STORAGE_KEY = 'enmory_default_tts_model'
+
+export interface IGeminiTtsModelOption {
+  value: TGeminiTtsModel
+  label: string
+  desc?: string
+}
+
+export const GEMINI_TTS_MODEL_OPTIONS: IGeminiTtsModelOption[] = [
+  {
+    value: 'gemini-4-argon',
+    label: 'Gemini 4',
+    desc: 'Mô hình Gemini 4 đa phương thức, tạo giọng đọc tự nhiên và chính xác cao',
+  },
+  {
+    value: 'gemini-3.8-flash-lite-tts',
+    label: 'Gemini 3.8 Flash Lite TTS',
+    desc: 'Chuyên biệt TTS tốc độ cao, phản hồi nhanh và tối ưu quota',
+  },
+  {
+    value: 'gemini-3.8-flash-tts',
+    label: 'Gemini 3.8 Flash TTS',
+    desc: 'Chuyên biệt TTS chất lượng cao, ngữ điệu truyền cảm và ổn định',
+  },
+  {
+    value: 'gemini-3.1-flash-tts-preview',
+    label: 'Gemini 3.1 Flash TTS Preview',
+    desc: 'Phiên bản thử nghiệm chuyên biệt cho chuyển văn bản thành giọng nói',
+  },
+]
+
+/**
+ * Lấy model TTS mặc định từ User Setting / localStorage
+ */
+export const getUserDefaultTtsModel = (
+  fallback: TGeminiTtsModel = DEFAULT_USER_TTS_MODEL,
+): TGeminiTtsModel => {
+  if (typeof window === 'undefined') return fallback
+  try {
+    const saved = localStorage.getItem(TTS_MODEL_STORAGE_KEY) || ''
+    if (saved && (GEMINI_TTS_MODELS as readonly string[]).includes(saved)) {
+      return saved as TGeminiTtsModel
+    }
+  } catch {}
+  return fallback
+}
+
+/**
+ * Lưu model TTS mặc định vào User Setting (localStorage & dispatch event)
+ */
+export const setUserDefaultTtsModel = (model: TGeminiTtsModel): void => {
+  if (typeof window === 'undefined') return
+  if (!(GEMINI_TTS_MODELS as readonly string[]).includes(model)) return
+  try {
+    localStorage.setItem(TTS_MODEL_STORAGE_KEY, model)
+    window.dispatchEvent(new CustomEvent(TTS_MODEL_CHANGE_EVENT, { detail: model }))
+  } catch (e) {
+    console.warn('Failed to save default TTS model:', e)
+  }
+}
+
+/**
+ * Xây dựng chuỗi fallback TTS models: Model TTS người dùng chọn đứng ĐẦU TIÊN,
+ * nếu model đó lỗi (429/quota) thì tự động chuyển sang các TTS model tiếp theo.
+ */
+export const buildFallbackTtsModelChain = (preferredModel?: TGeminiTtsModel): TGeminiTtsModel[] => {
+  const initial =
+    preferredModel && (GEMINI_TTS_MODELS as readonly string[]).includes(preferredModel)
+      ? preferredModel
+      : getUserDefaultTtsModel(DEFAULT_USER_TTS_MODEL)
+  return Array.from(new Set<TGeminiTtsModel>([initial, ...GEMINI_TTS_MODELS]))
+}
+
+/**
+ * React hook theo dõi realtime model AI mặc định của user
+ */
+export const useUserDefaultAiModel = (): TGeminiModel => {
+  const [model, setModel] = useState<TGeminiModel>(() => getUserDefaultAiModel())
+
+  useEffect(() => {
+    const handleUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<TGeminiModel>
+      if (
+        customEvent?.detail &&
+        (GEMINI_MODELS as readonly string[]).includes(customEvent.detail)
+      ) {
+        setModel(customEvent.detail)
+      } else {
+        setModel(getUserDefaultAiModel())
+      }
+    }
+
+    window.addEventListener(AI_MODEL_CHANGE_EVENT, handleUpdate)
+    window.addEventListener('storage', handleUpdate)
+    return () => {
+      window.removeEventListener(AI_MODEL_CHANGE_EVENT, handleUpdate)
+      window.removeEventListener('storage', handleUpdate)
+    }
+  }, [])
+
+  return model
+}
+
+/**
+ * React hook theo dõi realtime model Gemini TTS mặc định của user
+ */
+export const useUserDefaultTtsModel = (): TGeminiTtsModel => {
+  const [model, setModel] = useState<TGeminiTtsModel>(() => getUserDefaultTtsModel())
+
+  useEffect(() => {
+    const handleUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<TGeminiTtsModel>
+      if (
+        customEvent?.detail &&
+        (GEMINI_TTS_MODELS as readonly string[]).includes(customEvent.detail)
+      ) {
+        setModel(customEvent.detail)
+      } else {
+        setModel(getUserDefaultTtsModel())
+      }
+    }
+
+    window.addEventListener(TTS_MODEL_CHANGE_EVENT, handleUpdate)
+    window.addEventListener('storage', handleUpdate)
+    return () => {
+      window.removeEventListener(TTS_MODEL_CHANGE_EVENT, handleUpdate)
+      window.removeEventListener('storage', handleUpdate)
+    }
+  }, [])
+
+  return model
+}

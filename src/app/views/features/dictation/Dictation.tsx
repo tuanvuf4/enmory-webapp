@@ -12,8 +12,8 @@ import {
   Flex,
   Result,
   Popover,
-  Select,
   Segmented,
+  Select,
   Switch,
 } from 'antd'
 import type { TextAreaRef } from 'antd/es/input/TextArea'
@@ -43,10 +43,12 @@ import { itemApi } from '@/services/firebase/api/item.api'
 import { initItem, meaningItem } from '@/views/features/modals/itemModal'
 import {
   geminiTtsService,
-  GEMINI_VOICES,
-  TGeminiVoice,
   geminiTranslationReviewService,
   ITranslationReviewResponse,
+  DEFAULT_USER_TTS_MODEL,
+  DEFAULT_USER_TTS_VOICE,
+  TGeminiTtsModel,
+  TGeminiVoice,
 } from '@/services/gemini'
 import {
   SentenceDiffView,
@@ -136,18 +138,12 @@ export const Dictation: React.FC<IDictationProps> = ({
     history.length > 0 ? Math.min(Math.max(0, currentIndex), history.length - 1) : 0
   const currentExample = history[safeCurrentIndex] || null
 
-  // Audio & Voice Preferences
-  const [geminiVoice, setGeminiVoice] = useState<TGeminiVoice>(() => {
-    return (localStorage.getItem('gemini_tts_voice') as TGeminiVoice) || 'Aoede'
-  })
+  // Audio & Voice Preferences (from Redux user configuration)
+  const userTtsVoice =
+    (user?.configuration?.defaultTtsVoice as TGeminiVoice) || DEFAULT_USER_TTS_VOICE
+  const userTtsModel =
+    (user?.configuration?.defaultTtsModel as TGeminiTtsModel) || DEFAULT_USER_TTS_MODEL
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0)
-  const [repeatCount, setRepeatCount] = useState<number>(() => {
-    return Number(
-      localStorage.getItem('dictation_repeat_count') ||
-        localStorage.getItem('dictran_repeat_count') ||
-        1,
-    )
-  })
   const [autoPlayOnNext, setAutoPlayOnNext] = useState<boolean>(() => {
     return (
       (localStorage.getItem('dictation_autoplay_next') ??
@@ -377,9 +373,9 @@ export const Dictation: React.FC<IDictationProps> = ({
       setIsPlaying(true)
       try {
         await geminiTtsService.playSpeech(textToPlay, {
-          voice: geminiVoice,
+          voice: userTtsVoice,
+          model: userTtsModel,
           playbackRate: playbackSpeed,
-          repeatCount,
           onStart: () => setIsPlaying(true),
           onEnd: () => setIsPlaying(false),
           onError: () => {
@@ -390,7 +386,7 @@ export const Dictation: React.FC<IDictationProps> = ({
         speakBrowser(textToPlay, () => setIsPlaying(false))
       }
     },
-    [targetText, isPlaying, geminiVoice, playbackSpeed, repeatCount, speakBrowser],
+    [targetText, isPlaying, userTtsVoice, userTtsModel, playbackSpeed, speakBrowser],
   )
 
   // Fetch or restore batch of sentences
@@ -994,7 +990,7 @@ export const Dictation: React.FC<IDictationProps> = ({
           : sourceType === 'example'
             ? 'example'
             : 'sentence',
-        voice: geminiVoice,
+        voice: userTtsVoice,
       })
     }
 
@@ -1011,7 +1007,7 @@ export const Dictation: React.FC<IDictationProps> = ({
     currentExample,
     onSuccess,
     user?.uid,
-    geminiVoice,
+    userTtsVoice,
   ])
 
   // Navigate to previous question
@@ -1101,7 +1097,7 @@ export const Dictation: React.FC<IDictationProps> = ({
             : sourceType === 'example'
               ? 'example'
               : 'sentence',
-          voice: geminiVoice,
+          voice: userTtsVoice,
         })
       }
 
@@ -1248,25 +1244,6 @@ export const Dictation: React.FC<IDictationProps> = ({
         </div>
       )}
 
-      {/* Auto Replay count */}
-      <div className={styles.settingRow}>
-        <span>Lặp lại câu:</span>
-        <Segmented
-          size='small'
-          value={repeatCount}
-          onChange={(val) => {
-            const r = Number(val)
-            setRepeatCount(r)
-            localStorage.setItem('dictation_repeat_count', String(r))
-          }}
-          options={[
-            { label: '1 lần', value: 1 },
-            { label: '2 lần', value: 2 },
-            { label: '3 lần', value: 3 },
-          ]}
-        />
-      </div>
-
       {/* Auto Play on Next */}
       <div className={styles.settingRow}>
         <span>Tự động phát khi Next:</span>
@@ -1280,35 +1257,21 @@ export const Dictation: React.FC<IDictationProps> = ({
         />
       </div>
 
-      {/* Voice Selection */}
-      <div className={styles.settingRow}>
-        <span>Giọng đọc Gemini:</span>
-        <Select
-          size='small'
-          value={geminiVoice}
-          onChange={(val) => {
-            setGeminiVoice(val)
-            localStorage.setItem('gemini_tts_voice', val)
-          }}
-          style={{ width: 130 }}
-          options={GEMINI_VOICES.map((v) => ({
-            value: v.value,
-            label: v.label,
-          }))}
-        />
-      </div>
-
       {/* Playback Speed */}
       <div className={styles.settingRow}>
         <span>Tốc độ đọc:</span>
-        <Segmented
+        <Select
           size='small'
           value={playbackSpeed}
-          onChange={(val) => setPlaybackSpeed(val as number)}
+          onChange={(val) => setPlaybackSpeed(val)}
+          style={{ width: 90 }}
           options={[
-            { label: '0.75x', value: 0.75 },
-            { label: '1.0x', value: 1.0 },
-            { label: '1.25x', value: 1.25 },
+            { label: '0.5', value: 0.5 },
+            { label: '0.6', value: 0.6 },
+            { label: '0.7', value: 0.7 },
+            { label: '0.8', value: 0.8 },
+            { label: '0.9', value: 0.9 },
+            { label: '1.0', value: 1.0 },
           ]}
         />
       </div>
@@ -1646,12 +1609,6 @@ export const Dictation: React.FC<IDictationProps> = ({
           <Tag color={sourceType === 'example' ? 'purple' : 'blue'} className={styles.counterBadge}>
             {sourceType === 'example' ? 'Example' : 'Sentence'}
           </Tag>
-
-          {repeatCount > 1 && (
-            <Tag color='cyan' className='text-xs'>
-              {repeatCount}x Replay
-            </Tag>
-          )}
         </Flex>
 
         <div className={styles.headerRight}>

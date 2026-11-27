@@ -155,6 +155,8 @@ export const appSetting = {
     blogTags: [] as ITag[],
     role: 'user' as TRole,
     defaultAiModel: 'gemini-3.8-flash',
+    defaultTtsModel: 'gemini-4-argon',
+    defaultTtsVoice: 'auto',
   },
   options: [
     { value: 0, label: 0 },

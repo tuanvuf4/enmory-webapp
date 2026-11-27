@@ -29,6 +29,15 @@ export const getPartMeta = (part: ToeicPartNumber): IToeicPartMeta => {
 }
 
 /**
+ * Format TOEIC listening transcript so each option label (e.g. A:, B:, (A), (B))
+ * starts on its own line for readability.
+ */
+export const formatTranscriptLines = (script?: string): string => {
+  if (!script) return ''
+  return script.trim().replace(/\s+(?=(?:\([A-D]\)|[A-D]:)\s*)/g, '\n')
+}
+
+/**
  * Flatten an exam into ordered renderable items (single questions & passage groups),
  * optionally filtered by selected parts, and assign sequential display numbers.
  */

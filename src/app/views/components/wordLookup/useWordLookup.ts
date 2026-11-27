@@ -1,9 +1,17 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useSelector } from '@/core/hooks'
 import { usePrompt, useItemModal } from '@/helpers/hooks'
 import { IItem, ECategory, EType } from '@/models/item.model'
 import { initItem, meaningItem } from '@/views/features/modals/itemModal'
-import { geminiTtsService } from '@/services/gemini/geminiTts.service'
-import { geminiDictionaryService, resolveGeminiApiKey } from '@/services/gemini'
+import {
+  geminiDictionaryService,
+  geminiTtsService,
+  resolveGeminiApiKey,
+  DEFAULT_USER_TTS_MODEL,
+  DEFAULT_USER_TTS_VOICE,
+  TGeminiTtsModel,
+  TGeminiVoice,
+} from '@/services/gemini'
 import { resolveOpenAiApiKey } from '@/services/openai/tts.service'
 import { localDb } from '@/services/localDb'
 import { getType } from '@/helpers/item'
@@ -35,6 +43,9 @@ export const useWordLookup = (rawWord: string, sentenceContext?: string) => {
   // const [isSavingToLibrary, setIsSavingToLibrary] = useState(false)
   const [isSavingToLibrary] = useState(false)
   const [isPlayingAudio, setIsPlayingAudio] = useState(false)
+  const userConfig = useSelector((state) => state.auth.user?.configuration)
+  const userTtsVoice = (userConfig?.defaultTtsVoice as TGeminiVoice) || DEFAULT_USER_TTS_VOICE
+  const userTtsModel = (userConfig?.defaultTtsModel as TGeminiTtsModel) || DEFAULT_USER_TTS_MODEL
 
   // Lookup in local indexedDb
   const performLookup = useCallback(async () => {
@@ -92,7 +103,8 @@ export const useWordLookup = (rawWord: string, sentenceContext?: string) => {
     setIsPlayingAudio(true)
     try {
       await geminiTtsService.playSpeech(textToPlay, {
-        voice: 'Aoede',
+        voice: userTtsVoice,
+        model: userTtsModel,
         onEnd: () => setIsPlayingAudio(false),
         onError: () => {
           if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -117,7 +129,7 @@ export const useWordLookup = (rawWord: string, sentenceContext?: string) => {
         setIsPlayingAudio(false)
       }
     }
-  }, [lookupData?.origin, cleanWord])
+  }, [lookupData?.origin, cleanWord, userTtsVoice, userTtsModel])
 
   // Gemini AI dictionary lookup
   const handleAiLookup = useCallback(async () => {

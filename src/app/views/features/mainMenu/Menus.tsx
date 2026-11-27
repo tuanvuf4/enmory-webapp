@@ -39,7 +39,7 @@ export const menus: MenuProps['items'] = [
   {
     key: '13',
     icon: <CrownOutlined className='icon' />,
-    label: 'toeic',
+    label: 'test',
   },
   // {
   //   key: '10',
@@ -165,6 +165,6 @@ export const keyPaths = [
   },
   {
     key: '13',
-    path: '/toeic',
+    path: '/test',
   },
 ]

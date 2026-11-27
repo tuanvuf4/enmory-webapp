@@ -37,6 +37,7 @@ import {
 import {
   clearToeicProgress,
   evaluateToeicAttempt,
+  formatTranscriptLines,
   getExamAllQuestions,
   getExamRenderItems,
   getPartMeta,
@@ -296,7 +297,11 @@ export const ToeicExamPractice: React.FC<ToeicExamPracticeProps> = ({
                   type='info'
                   showIcon
                   message='Transcript'
-                  description={<Text>{q.audioScript}</Text>}
+                  description={
+                    <Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>
+                      {formatTranscriptLines(q.audioScript)}
+                    </Paragraph>
+                  }
                 />
               )}
             </>

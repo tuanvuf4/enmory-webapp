@@ -266,7 +266,8 @@ Extract and format accurate dictionary data following ${sourceContext} conventio
    - Based on Oxford 3000 / Oxford 5000 CEFR scale:
      1 = A1, 2 = A2, 3 = B1, 4 = B2, 5 = C1/C2.
 
-3. Forms: Other morphological or inflected forms of the word (e.g. plurals, verb conjugations - past tense, past participle, -ing, 3rd person singular, comparative/superlative forms).
+3. Forms: ONLY irregular morphological or inflected forms of single words (catId === 1) — such as irregular verb conjugations (past tense, past participle, e.g. "went", "gone" for "go"), irregular noun plurals (e.g. "children", "mice"), or irregular comparative/superlative forms (e.g. "better", "best").
+   - CRITICAL RULE: DO NOT include regular inflections (e.g. regular -s/-es, -ed, -ing, -er, -est). If the word has no irregular forms (or if catId !== 1), you MUST return "forms": [].
    - CRITICAL RULE: DO NOT include the origin word "${trimmed}" itself in forms.
 
 4. Word Family: Derived or related words sharing the morphological base (noun, verb, adj, adv).
@@ -298,7 +299,7 @@ Return ONLY valid JSON matching this schema:
 {
   "catId": 1,
   "level": 3,
-  "forms": ["..."],
+  "forms": ["only irregular forms excluding ${trimmed}, or [] if none"],
   "word_family": ["..."],
   "relation": ["..."],
   "meanings": [

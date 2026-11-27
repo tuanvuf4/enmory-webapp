@@ -1,4 +1,10 @@
-import { geminiTtsService } from '@/services/gemini'
+import {
+  geminiTtsService,
+  getUserDefaultTtsModel,
+  getUserDefaultTtsVoice,
+  TGeminiTtsModel,
+  TGeminiVoice,
+} from '@/services/gemini'
 
 export function shuffleArray<T>(array: T[]): T[] {
   let currentIndex = array.length
@@ -28,7 +34,8 @@ export const speakWord = async (
   if (!origin) return Promise.resolve()
   return geminiTtsService
     .playSpeech(origin, {
-      voice: 'Aoede',
+      voice: options?.voice ?? getUserDefaultTtsVoice(),
+      model: options?.model ?? getUserDefaultTtsModel(),
       playbackRate: options?.rate ?? 1.0,
       onStart: options?.onStart,
       onEnd: options?.onEnd,
@@ -44,6 +51,8 @@ export interface ISpeakSentenceOptions {
   lang?: string
   rate?: number
   pitch?: number
+  voice?: TGeminiVoice
+  model?: TGeminiTtsModel
   onStart?: () => void
   onEnd?: () => void
   onError?: (err: any) => void
@@ -56,7 +65,8 @@ export const speakSentence = (text: string, options?: ISpeakSentenceOptions) => 
   if (!text) return
   geminiTtsService
     .playSpeech(text, {
-      voice: 'Aoede',
+      voice: options?.voice ?? getUserDefaultTtsVoice(),
+      model: options?.model ?? getUserDefaultTtsModel(),
       playbackRate: options?.rate ?? 1.0,
       onStart: options?.onStart,
       onEnd: options?.onEnd,

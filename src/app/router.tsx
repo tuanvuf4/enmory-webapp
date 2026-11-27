@@ -46,7 +46,7 @@ export const RouterElement = () => {
     { path: '/', element: lazyLoadRoutes('home') },
     { path: '/library', element: lazyLoadRoutes('library') },
     { path: '/listening', element: lazyLoadRoutes('listening') },
-    { path: '/toeic', element: lazyLoadRoutes('toeic') },
+    { path: '/test', element: lazyLoadRoutes('test') },
     { path: '/blog', element: lazyLoadRoutes('blog') },
     { path: '/blog/:id', element: lazyLoadRoutes('blogDetail') },
     { path: '/statistic', element: lazyLoadRoutes('statistic') },

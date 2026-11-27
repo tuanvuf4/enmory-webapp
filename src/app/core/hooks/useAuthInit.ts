@@ -4,15 +4,37 @@
  */
 
 import { useEffect } from 'react'
-import { useDispatch } from '@/core/hooks/redux'
+import { useDispatch, useSelector } from '@/core/hooks/redux'
 import { checkAuthState } from '@/store/reducers/auth.reducer'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { useQueryClient } from '@tanstack/react-query'
 import { checklistKeys } from './useChecklist'
+import {
+  setUserDefaultAiModel,
+  setUserDefaultTtsModel,
+  setUserDefaultTtsVoice,
+  TGeminiModel,
+  TGeminiTtsModel,
+  TGeminiVoice,
+} from '@/services/gemini'
 
 export const useAuthInit = () => {
   const dispatch = useDispatch()
   const queryClient = useQueryClient()
+  const userConfig = useSelector((state) => state.auth.user?.configuration)
+
+  useEffect(() => {
+    if (!userConfig) return
+    if (userConfig.defaultAiModel) {
+      setUserDefaultAiModel(userConfig.defaultAiModel as TGeminiModel)
+    }
+    if (userConfig.defaultTtsModel) {
+      setUserDefaultTtsModel(userConfig.defaultTtsModel as TGeminiTtsModel)
+    }
+    if (userConfig.defaultTtsVoice) {
+      setUserDefaultTtsVoice(userConfig.defaultTtsVoice as TGeminiVoice)
+    }
+  }, [userConfig?.defaultAiModel, userConfig?.defaultTtsModel, userConfig?.defaultTtsVoice])
 
   useEffect(() => {
     // Fetch user profile and configuration on initial load to reduce synchronization requests

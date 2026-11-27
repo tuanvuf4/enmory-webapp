@@ -456,7 +456,10 @@ CRITICAL RULES FOR CATEGORY & LINGUISTIC FIELDS (STRICT ENMORY RULES):
    - ONLY items where catId === 1 (WORD) can have "forms" and "word_family"!
    - If "${originWord}" is a PHRASE, IDIOM, SLANG, COLLOCATION, or SENTENCE (catId !== 1):
      You MUST return "forms": [] (empty array) and "word_family": [] (empty array). Do NOT invent forms or word families for phrases!
-   - For single words (catId === 1): return other morphological forms and derived word family words. NEVER include "${originWord}" itself in forms, word_family, relation, or synonyms!
+   - For single words (catId === 1):
+     * "forms": ONLY include irregular morphological or inflected forms (e.g. irregular past/past participle like "went", "gone"; irregular plurals like "children", "mice"; irregular comparatives/superlatives like "better", "best"). DO NOT include regular inflections (-s/-es, -ed, -ing, -er, -est). If the word has no irregular forms, return "forms": [].
+     * "word_family": return derived words sharing the root.
+     * NEVER include "${originWord}" itself in forms, word_family, relation, or synonyms!
 
 3. PRONUNCIATION:
    - For single words (catId === 1): provide "uk", "us", and "common".
@@ -474,7 +477,7 @@ Output ONLY valid JSON matching this schema:
 {
   "catId": 1,
   "level": 3,
-  "forms": ["other morphological forms excluding ${originWord}, or [] if phrase/idiom"],
+  "forms": ["only irregular forms excluding ${originWord}, or [] if none or phrase/idiom"],
   "word_family": ["derived words sharing the root excluding ${originWord}, or [] if phrase/idiom"],
   "relation": ["closely related words, synonyms, compounds excluding ${originWord}"],
   "meanings": [

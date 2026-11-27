@@ -45,6 +45,8 @@ import {
   GEMINI_VOICES,
   geminiVocabClassifierService,
   geminiTranscriptService,
+  DEFAULT_USER_TTS_VOICE,
+  TGeminiVoice,
 } from '@/services/gemini'
 import { browserTranslatorService } from '@/services/browserTranslator.service'
 import { formatTranscriptIntoSentences } from '@/views/features/player/transcriptUtils'
@@ -121,6 +123,8 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
   }) as yup.ObjectSchema<IMediaForm>
 
   const [openGenerateModal, setOpenGenerateModal] = useState(false)
+  const userConfig = useSelector((state) => state.auth.user?.configuration)
+  const userTtsVoice = (userConfig?.defaultTtsVoice as TGeminiVoice) || DEFAULT_USER_TTS_VOICE
 
   const {
     control,
@@ -131,7 +135,7 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
     watch,
     formState: { errors },
   } = useForm<IMediaForm>({
-    defaultValues: trackData || initMediaForm,
+    defaultValues: trackData || { ...initMediaForm, voice: userTtsVoice },
     mode: 'all',
     resolver: yupResolver(schema),
   })
@@ -368,13 +372,19 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
         relation: trackData.relation || [],
         srcUrl: trackData.srcUrl || '',
         srcType: trackData.srcType,
-        voice: trackData.voice || 'auto',
+        voice: trackData.voice || userTtsVoice,
         vocabClassification: trackData.vocabClassification || [],
       })
     } else {
-      reset(initMediaForm)
+      reset({ ...initMediaForm, voice: userTtsVoice })
     }
   }, [trackData, reset])
+
+  useEffect(() => {
+    if (!trackData?.id) {
+      setValue('voice', userTtsVoice)
+    }
+  }, [userTtsVoice, trackData?.id, setValue])
 
   const onSubmit = async (data: IMediaForm) => {
     try {
@@ -415,7 +425,7 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
         srcUrl: data.srcUrl?.trim() || '',
         tags: data.tags || [],
         relation: data.relation || [],
-        voice: data.voice || 'auto',
+        voice: data.voice || userTtsVoice,
         vocabClassification: classifiedVocab,
       }
 
@@ -451,7 +461,7 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
           dispatch(listeningAction.addTrack(result.content))
           dispatch(settingAction.setTrackIndex(trackIndex + 1))
         }
-        reset()
+        reset({ ...initMediaForm, voice: userTtsVoice })
         onConfirm?.(result.content)
       } else {
         message({ type: 'error', content: result.message || 'Failed to save track' })
@@ -465,7 +475,7 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
   }
 
   const handleCancel = () => {
-    reset()
+    reset({ ...initMediaForm, voice: userTtsVoice })
     onCancel?.()
   }
 
@@ -627,7 +637,7 @@ export const MediaForm: React.FC<IMediaFormProps> = ({ onCancel, onConfirm, trac
                   render={({ field }) => (
                     <Select
                       {...field}
-                      value={field.value || 'auto'}
+                      value={field.value || userTtsVoice}
                       style={{ width: '100%' }}
                       options={GEMINI_VOICES.map((v) => ({
                         value: v.value,

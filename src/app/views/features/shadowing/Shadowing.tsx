@@ -37,6 +37,7 @@ import {
   Alert,
   Popover,
   Segmented,
+  Select,
   message,
 } from 'antd'
 import clsx from 'clsx'
@@ -50,6 +51,10 @@ import {
   geminiTtsService,
   geminiPronunciationService,
   IPronunciationEvaluationResult,
+  DEFAULT_USER_TTS_MODEL,
+  DEFAULT_USER_TTS_VOICE,
+  TGeminiTtsModel,
+  TGeminiVoice,
 } from '@/services/gemini'
 import {
   useAudioRecorder,
@@ -1098,6 +1103,10 @@ export const Shadowing: React.FC<ShadowingProps> = ({
   const queryClient = useQueryClient()
   const { openItemModal } = useItemModal()
   const { user } = useSelector((state) => state.auth)
+  const userTtsVoice =
+    (user?.configuration?.defaultTtsVoice as TGeminiVoice) || DEFAULT_USER_TTS_VOICE
+  const userTtsModel =
+    (user?.configuration?.defaultTtsModel as TGeminiTtsModel) || DEFAULT_USER_TTS_MODEL
 
   const {
     checklist,
@@ -1133,7 +1142,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
       const saved = localStorage.getItem('pronunciation_speed')
       if (saved) {
         const parsed = Number(saved)
-        if ([0.75, 1.0, 1.25].includes(parsed)) return parsed
+        if ([0.5, 0.6, 0.7, 0.8, 0.9, 1.0].includes(parsed)) return parsed
       }
     } catch {}
     return 1.0
@@ -1503,14 +1512,18 @@ export const Shadowing: React.FC<ShadowingProps> = ({
       {/* Playback Speed */}
       <div className={styles.settingRow}>
         <span>Tốc độ đọc:</span>
-        <Segmented
+        <Select
           size='small'
           value={speed}
-          onChange={(val) => handleSpeedChange(val as number)}
+          onChange={(val) => handleSpeedChange(val)}
+          style={{ width: 90 }}
           options={[
-            { label: '0.75x', value: 0.75 },
-            { label: '1.0x', value: 1.0 },
-            { label: '1.25x', value: 1.25 },
+            { label: '0.5', value: 0.5 },
+            { label: '0.6', value: 0.6 },
+            { label: '0.7', value: 0.7 },
+            { label: '0.8', value: 0.8 },
+            { label: '0.9', value: 0.9 },
+            { label: '1.0', value: 1.0 },
           ]}
         />
       </div>
@@ -1904,7 +1917,8 @@ export const Shadowing: React.FC<ShadowingProps> = ({
       setSpeaking(true)
       try {
         await geminiTtsService.playSpeech(t, {
-          voice: 'Aoede',
+          voice: userTtsVoice,
+          model: userTtsModel,
           playbackRate: rate ?? speed,
           onEnd: () => setSpeaking(false),
           onError: () => setSpeaking(false),
@@ -1913,7 +1927,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
         setSpeaking(false)
       }
     },
-    [plainOrigin, speaking, shadowPlaying, speed, handleStop],
+    [plainOrigin, speaking, shadowPlaying, speed, handleStop, userTtsVoice, userTtsModel],
   )
 
   // Phát âm từng cụm từ có ý nghĩa (Thought Group) để người học nghe và nhại lại
@@ -1928,7 +1942,8 @@ export const Shadowing: React.FC<ShadowingProps> = ({
       setShadowPlaying(true)
       try {
         await geminiTtsService.playSpeech(chunkText, {
-          voice: 'Aoede',
+          voice: userTtsVoice,
+          model: userTtsModel,
           playbackRate: speed,
           onEnd: () => {
             setShadowPlaying(false)
@@ -1944,7 +1959,7 @@ export const Shadowing: React.FC<ShadowingProps> = ({
         setShadowChunk(null)
       }
     },
-    [handleStop, shadowPlaying, shadowChunk, speed],
+    [handleStop, shadowPlaying, shadowChunk, speed, userTtsVoice, userTtsModel],
   )
 
   // Chuyển câu trước / tiếp

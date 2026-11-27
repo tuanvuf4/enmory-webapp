@@ -30,7 +30,14 @@ import { tracksApi } from '@/services/firebase'
 import { TrackList } from './TrackList'
 import { firebaseAuthService } from '@/services/firebase/authService'
 import { usePrompt } from '@/helpers/hooks'
-import { geminiTtsService as ttsService, TGeminiVoice, GEMINI_VOICES } from '@/services/gemini'
+import {
+  geminiTtsService as ttsService,
+  TGeminiVoice,
+  TGeminiTtsModel,
+  GEMINI_VOICES,
+  DEFAULT_USER_TTS_MODEL,
+  DEFAULT_USER_TTS_VOICE,
+} from '@/services/gemini'
 
 export const PlayerDock: React.FC = () => {
   const { message } = usePrompt()
@@ -362,10 +369,29 @@ export const PlayerDock: React.FC = () => {
     }
   }, [isTranscriptPlayback, dispatch])
 
-  // Selected voice for Gemini TTS (per track or default to multi-voice auto)
+  // Selected voice for Gemini TTS (per-track override or user default setting from Redux)
+  const userTtsVoice =
+    (user?.configuration?.defaultTtsVoice as TGeminiVoice) || DEFAULT_USER_TTS_VOICE
+  const userTtsModel =
+    (user?.configuration?.defaultTtsModel as TGeminiTtsModel) || DEFAULT_USER_TTS_MODEL
+  const [manualTrackVoice, setManualTrackVoice] = useState<{
+    trackId?: number
+    voice: TGeminiVoice
+  } | null>(null)
+
+  useEffect(() => {
+    setManualTrackVoice(null)
+  }, [currentTrack?.id])
+
   const currentVoice = useMemo<TGeminiVoice>(() => {
-    return (currentTrack?.voice as TGeminiVoice) || 'auto'
-  }, [currentTrack?.voice])
+    if (manualTrackVoice && manualTrackVoice.trackId === currentTrack?.id) {
+      return manualTrackVoice.voice
+    }
+    if (currentTrack?.voice && currentTrack.voice !== 'auto') {
+      return currentTrack.voice as TGeminiVoice
+    }
+    return userTtsVoice
+  }, [manualTrackVoice, currentTrack?.id, currentTrack?.voice, userTtsVoice])
 
   const loopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -441,6 +467,7 @@ export const PlayerDock: React.FC = () => {
       clearLoopTimer()
       ttsService.play(text, {
         voice,
+        model: userTtsModel,
         playbackRate: rate,
         volume: vol,
         muted: isMuted,
@@ -484,7 +511,7 @@ export const PlayerDock: React.FC = () => {
         },
       })
     },
-    [clearLoopTimer, transcriptSegments, transcriptDuration, duration, dispatch],
+    [clearLoopTimer, transcriptSegments, transcriptDuration, duration, dispatch, userTtsModel],
   )
 
   // Playback timer loop for transcript mode
@@ -623,6 +650,7 @@ export const PlayerDock: React.FC = () => {
           const nextSeg = transcriptSegments[activeIndex + 1]
           ttsService.prefetch(nextSeg.text, {
             voice: currentVoice,
+            model: userTtsModel,
             playbackRate,
           })
         }
@@ -639,6 +667,7 @@ export const PlayerDock: React.FC = () => {
     volume,
     muted,
     currentVoice,
+    userTtsModel,
     speakTranscriptSegment,
     clearLoopTimer,
   ])
@@ -1269,6 +1298,7 @@ export const PlayerDock: React.FC = () => {
                         label: v.label,
                         onClick: () => {
                           if (currentTrack) {
+                            setManualTrackVoice({ trackId: currentTrack.id, voice: v.value })
                             dispatch(
                               listeningAction.updateTrack({ ...currentTrack, voice: v.value }),
                             )

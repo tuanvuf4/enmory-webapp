@@ -1,7 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { App, Button, Select, Slider, Space, Tag, Tooltip, Typography, theme } from 'antd'
+import { App, Button, Select, Slider, Space, Tag, Typography, theme } from 'antd'
 import { PauseCircleOutlined, PlayCircleOutlined, SoundOutlined } from '@ant-design/icons'
-import { GEMINI_VOICES, TGeminiVoice, geminiTtsService } from '@/services/gemini'
+import { useSelector } from '@/core/hooks'
+import {
+  TGeminiVoice,
+  TGeminiTtsModel,
+  DEFAULT_USER_TTS_MODEL,
+  DEFAULT_USER_TTS_VOICE,
+  geminiTtsService,
+} from '@/services/gemini'
 
 const { Text } = Typography
 
@@ -20,15 +27,27 @@ const formatSeconds = (sec: number) => {
 }
 
 /**
+ * Format option labels (e.g. "A:", "(A)") as "A." so TTS pronounces A, B, C, D
+ * instead of treating them as speaker tags or parenthetical stage directions.
+ */
+const formatOptionLabelsForSpeech = (text: string): string => {
+  return text
+    .replace(/(?:^|(?<=\s))\(([A-D])\)\s*/g, '$1. ')
+    .replace(/(?:^|(?<=\s))([A-D]):\s*/g, '$1. ')
+    .trim()
+}
+
+/**
  * Split multi-speaker script into segments if formatted with speaker labels on new lines
  * (e.g., "Woman: ...\nMan: ..."), otherwise keep as a single segment.
  */
 const splitScriptSegments = (script: string): string[] => {
-  const lines = script
+  const formatted = formatOptionLabelsForSpeech(script)
+  const lines = formatted
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean)
-  if (lines.length <= 1) return [script.trim()]
+  if (lines.length <= 1) return [formatted]
   return lines
 }
 
@@ -49,7 +68,9 @@ export const ToeicAudioPlayer: React.FC<ToeicAudioPlayerProps> = ({
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [playbackRate, setPlaybackRate] = useState<number>(1)
-  const [geminiVoice, setGeminiVoice] = useState<TGeminiVoice>('auto')
+  const userConfig = useSelector((state) => state.auth.user?.configuration)
+  const userTtsVoice = (userConfig?.defaultTtsVoice as TGeminiVoice) || DEFAULT_USER_TTS_VOICE
+  const userTtsModel = (userConfig?.defaultTtsModel as TGeminiTtsModel) || DEFAULT_USER_TTS_MODEL
 
   const hasAudioFile = Boolean(audioUrl && audioUrl.trim())
   const hasScript = Boolean(audioScript && audioScript.trim())
@@ -131,7 +152,8 @@ export const ToeicAudioPlayer: React.FC<ToeicAudioPlayerProps> = ({
         setIsLoadingTts(i === 0)
         setIsPlaying(true)
         await geminiTtsService.playSpeech(segments[i], {
-          voice: geminiVoice,
+          voice: userTtsVoice,
+          model: userTtsModel,
           playbackRate,
         })
         setIsLoadingTts(false)
@@ -152,7 +174,7 @@ export const ToeicAudioPlayer: React.FC<ToeicAudioPlayerProps> = ({
         message.warning(
           `Không thể phát giọng Gemini (${err?.message || 'kiểm tra API key'}). Đang chuyển sang giọng trình duyệt.`,
         )
-        fallbackBrowserTts(audioScript!.trim())
+        fallbackBrowserTts(formatOptionLabelsForSpeech(audioScript!))
       }
     }
   }
@@ -214,21 +236,6 @@ export const ToeicAudioPlayer: React.FC<ToeicAudioPlayerProps> = ({
         </Space>
 
         <Space wrap size={8}>
-          {!hasAudioFile && (
-            <Tooltip title='Chọn giọng đọc Gemini'>
-              <Select
-                size='small'
-                value={geminiVoice}
-                onChange={(val) => setGeminiVoice(val)}
-                style={{ width: 155 }}
-                options={GEMINI_VOICES.map((v) => ({
-                  value: v.value,
-                  label: v.label,
-                }))}
-              />
-            </Tooltip>
-          )}
-
           <Select
             size='small'
             value={playbackRate}

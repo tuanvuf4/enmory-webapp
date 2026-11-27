@@ -36,8 +36,12 @@ import {
   GEMINI_VOICES,
   GEMINI_TRANSCRIPT_MODELS,
   TGeminiModel,
-  DEFAULT_GEMINI_MODEL,
+  TGeminiTtsModel,
+  DEFAULT_USER_AI_MODEL,
+  DEFAULT_USER_TTS_MODEL,
+  DEFAULT_USER_TTS_VOICE,
 } from '@/services/gemini'
+import { useSelector } from '@/core/hooks'
 import { parseTranscript, formatSegmentTime } from '../../player/transcriptUtils'
 import { usePrompt } from '@/helpers/hooks'
 
@@ -66,6 +70,11 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
   const { token } = theme.useToken()
   const { message } = usePrompt()
 
+  const userConfig = useSelector((state) => state.auth.user?.configuration)
+  const userAiModel = (userConfig?.defaultAiModel as TGeminiModel) || DEFAULT_USER_AI_MODEL
+  const userTtsVoice = (userConfig?.defaultTtsVoice as TGeminiVoice) || DEFAULT_USER_TTS_VOICE
+  const userTtsModel = (userConfig?.defaultTtsModel as TGeminiTtsModel) || DEFAULT_USER_TTS_MODEL
+
   // Form states
   const [description, setDescription] = useState(
     initialDescription?.trim() ? initialDescription : DEFAULT_TRANSCRIPT_DESCRIPTION,
@@ -73,14 +82,22 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
   const [loading, setLoading] = useState(false)
   const [statusText, setStatusText] = useState<string>('')
   const [generatedPrompt, setGeneratedPrompt] = useState<string>('')
-  const [selectedModel, setSelectedModel] = useState<TGeminiModel>(DEFAULT_GEMINI_MODEL)
+  const [selectedModel, setSelectedModel] = useState<TGeminiModel>(userAiModel)
   const [result, setResult] = useState<IGenerateTranscriptResponse | null>(null)
 
   // Preview TTS player state
-  const [selectedVoice, setSelectedVoice] = useState<TGeminiVoice>('auto')
+  const [selectedVoice, setSelectedVoice] = useState<TGeminiVoice>(userTtsVoice)
   const [isPlayingPreview, setIsPlayingPreview] = useState(false)
   const [previewSegmentIndex, setPreviewSegmentIndex] = useState<number>(-1)
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    setSelectedModel(userAiModel)
+  }, [userAiModel])
+
+  useEffect(() => {
+    setSelectedVoice(userTtsVoice)
+  }, [userTtsVoice])
 
   // Reset or update description when modal opens
   useEffect(() => {
@@ -145,11 +162,15 @@ export const GenerateTranscriptModal: React.FC<IGenerateTranscriptModalProps> = 
 
       // Prefetch next segment into cache
       if (currentIdx + 1 < segments.length) {
-        ttsService.prefetch(segments[currentIdx + 1].text, { voice: selectedVoice })
+        ttsService.prefetch(segments[currentIdx + 1].text, {
+          voice: selectedVoice,
+          model: userTtsModel,
+        })
       }
 
       ttsService.play(seg.text, {
         voice: selectedVoice,
+        model: userTtsModel,
         onEnded: () => {
           currentIdx++
           if (currentIdx < segments.length) {

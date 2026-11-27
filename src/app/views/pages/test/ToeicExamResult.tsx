@@ -29,7 +29,7 @@ import {
   TrophyOutlined,
 } from '@ant-design/icons'
 import { IToeicAttempt, IToeicExam, IToeicPartStat, IToeicQuestion } from '@/models/toeic.model'
-import { getExamRenderItems, getPartMeta } from './toeicData'
+import { formatTranscriptLines, getExamRenderItems, getPartMeta } from './toeicData'
 import { ToeicAudioPlayer } from './ToeicAudioPlayer'
 
 const { Title, Text, Paragraph } = Typography
@@ -188,7 +188,11 @@ export const ToeicExamResult: React.FC<ToeicExamResultProps> = ({
                 <Alert
                   type='info'
                   message='Transcript'
-                  description={<Text>{q.audioScript}</Text>}
+                  description={
+                    <Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>
+                      {formatTranscriptLines(q.audioScript)}
+                    </Paragraph>
+                  }
                 />
               )}
             </>

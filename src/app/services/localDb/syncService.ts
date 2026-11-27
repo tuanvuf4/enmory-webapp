@@ -17,7 +17,7 @@ import { mapDocToBlogItem } from '@/services/firebase/api/blog.api'
 import { dictationApi } from '@/services/firebase/api/dictation.api'
 import { invalidateSearchIndex } from './searchEngine'
 import { hydrateItemsWithExamples } from '@/services/firebase/dbIntegration'
-import { syncToeicWithServer } from '@/views/pages/toeic/toeicData'
+import { syncToeicWithServer } from '@/views/pages/test/toeicData'
 import { doc, getDoc } from 'firebase/firestore'
 
 const SYNC_META_PREFIX = 'last_sync_time_'

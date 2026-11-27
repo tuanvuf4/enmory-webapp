@@ -23,6 +23,8 @@ export interface IUserConfig<R = number[]> {
   blogTags?: ITag[]
   role: TRole
   defaultAiModel?: string
+  defaultTtsModel?: string
+  defaultTtsVoice?: string
 }
 
 export interface IUser<R = number[]> {

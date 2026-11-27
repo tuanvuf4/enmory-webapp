@@ -52,7 +52,7 @@ const { Title, Text, Paragraph } = Typography
 
 type ToeicViewMode = 'list' | 'practice' | 'result'
 
-export const Toeic = () => {
+export const Test = () => {
   const { token } = theme.useToken()
   const { message } = App.useApp()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -69,6 +69,7 @@ export const Toeic = () => {
   const [activeAttempt, setActiveAttempt] = useState<IToeicAttempt | null>(null)
 
   const urlExamId = searchParams.get('id')
+  const urlShowResult = searchParams.get('result') === 'true'
 
   // Practice launch modal state
   const [launchExam, setLaunchExam] = useState<IToeicExam | null>(null)
@@ -124,16 +125,12 @@ export const Toeic = () => {
     return () => window.removeEventListener('enmory:toeic-updated', onUpdated)
   }, [refreshFromLocal])
 
-  // Sync URL query ?id=xxx with practice mode so reload/direct link opens the exam
+  // Sync URL query ?id=xxx[&result=true] with practice / result mode so reload/direct link works
   useEffect(() => {
     if (!urlExamId) {
-      if (viewMode === 'practice') {
+      if (viewMode !== 'list') {
         setViewMode('list')
       }
-      return
-    }
-
-    if (viewMode === 'result' && activeExam?.id === urlExamId) {
       return
     }
 
@@ -143,25 +140,50 @@ export const Toeic = () => {
         const fromDb = await localDb.toeicExams.get(urlExamId)
         if (fromDb && !fromDb.is_deleted) target = fromDb
       }
-      if (target) {
-        const saved = loadToeicProgress(target.id, uid)
-        if (saved) {
-          setSelectedParts(saved.selectedParts)
-          setPracticeDuration(saved.durationMinutes)
-        } else {
-          const available = Array.from(
-            new Set(getExamAllQuestions(target).map((q) => q.part)),
-          ).sort((a, b) => a - b)
-          setSelectedParts(available)
-          setPracticeDuration(target.durationMinutes || 120)
+      if (!target) return
+
+      if (urlShowResult) {
+        const matchedAttempt =
+          (activeAttempt?.examId === urlExamId ? activeAttempt : null) ||
+          attempts
+            .filter((a) => a.examId === urlExamId)
+            .sort((a, b) => b.submittedAt - a.submittedAt)[0] ||
+          (await localDb.toeicAttempts
+            .where('examId')
+            .equals(urlExamId)
+            .toArray()
+            .then(
+              (list) =>
+                list
+                  .filter((a) => !uid || !a.uid || a.uid === uid)
+                  .sort((a, b) => b.submittedAt - a.submittedAt)[0],
+            ))
+
+        if (matchedAttempt) {
+          setActiveExam(target)
+          setActiveAttempt(matchedAttempt)
+          setViewMode('result')
+          return
         }
-        setActiveExam(target)
-        setViewMode('practice')
       }
+
+      const saved = loadToeicProgress(target.id, uid)
+      if (saved) {
+        setSelectedParts(saved.selectedParts)
+        setPracticeDuration(saved.durationMinutes)
+      } else {
+        const available = Array.from(new Set(getExamAllQuestions(target).map((q) => q.part))).sort(
+          (a, b) => a - b,
+        )
+        setSelectedParts(available)
+        setPracticeDuration(target.durationMinutes || 120)
+      }
+      setActiveExam(target)
+      setViewMode('practice')
     }
 
     resolveUrlExam()
-  }, [urlExamId, exams, uid, viewMode, activeExam?.id])
+  }, [urlExamId, urlShowResult, exams, attempts, uid, activeAttempt])
 
   const launchAvailableParts = useMemo(() => {
     if (!launchExam) return [] as ToeicPartNumber[]
@@ -248,6 +270,7 @@ export const Toeic = () => {
         await localDb.toeicAttempts.put(savedOnServer)
         setAttempts((prev) => [savedOnServer, ...prev])
         setActiveAttempt(savedOnServer)
+        setSearchParams({ id: savedOnServer.examId, result: 'true' })
         setViewMode('result')
         message.success('Đã nộp bài và lưu kết quả lên server!')
         return
@@ -261,6 +284,7 @@ export const Toeic = () => {
     await localDb.toeicAttempts.put(attemptWithUid)
     setAttempts((prev) => [attemptWithUid, ...prev])
     setActiveAttempt(attemptWithUid)
+    setSearchParams({ id: attemptWithUid.examId, result: 'true' })
     setViewMode('result')
   }
 
@@ -281,6 +305,7 @@ export const Toeic = () => {
     }
     setActiveExam(foundExam)
     setActiveAttempt(attempt)
+    setSearchParams({ id: foundExam.id, result: 'true' })
     setViewMode('result')
   }
 
@@ -638,4 +663,4 @@ export const Toeic = () => {
   )
 }
 
-export default Toeic
+export default Test

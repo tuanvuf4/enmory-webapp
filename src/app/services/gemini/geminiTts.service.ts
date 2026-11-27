@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { GoogleGenAI } from '@google/genai'
 import {
   generateOpenAiSpeech,
@@ -8,7 +9,7 @@ import {
   TOpenAiVoice,
 } from '../openai/tts.service'
 import { resolveGeminiApiKey } from './geminiDictionary.service'
-import { GEMINI_TTS_MODELS } from './geminiModels'
+import { buildFallbackTtsModelChain, getUserDefaultTtsModel, TGeminiTtsModel } from './geminiModels'
 import { generateContentWithTracking } from './geminiTracker.service'
 import { localDb } from '../localDb/db'
 
@@ -59,6 +60,63 @@ export const GEMINI_VOICES: IGeminiVoiceOption[] = [
     gender: 'male',
   },
 ]
+
+export const DEFAULT_USER_TTS_VOICE: TGeminiVoice = 'auto'
+export const TTS_VOICE_CHANGE_EVENT = 'enmory_default_tts_voice_changed'
+export const TTS_VOICE_STORAGE_KEY = 'enmory_default_tts_voice'
+
+export const isValidGeminiVoice = (voice: unknown): voice is TGeminiVoice => {
+  return typeof voice === 'string' && GEMINI_VOICES.some((v) => v.value === voice)
+}
+
+export const getUserDefaultTtsVoice = (
+  fallback: TGeminiVoice = DEFAULT_USER_TTS_VOICE,
+): TGeminiVoice => {
+  if (typeof window === 'undefined') return fallback
+  try {
+    const saved =
+      localStorage.getItem(TTS_VOICE_STORAGE_KEY) || localStorage.getItem('gemini_tts_voice') || ''
+    if (isValidGeminiVoice(saved)) {
+      return saved
+    }
+  } catch {}
+  return fallback
+}
+
+export const setUserDefaultTtsVoice = (voice: TGeminiVoice): void => {
+  if (typeof window === 'undefined') return
+  if (!isValidGeminiVoice(voice)) return
+  try {
+    localStorage.setItem(TTS_VOICE_STORAGE_KEY, voice)
+    window.dispatchEvent(new CustomEvent(TTS_VOICE_CHANGE_EVENT, { detail: voice }))
+  } catch (e) {
+    console.warn('Failed to save default TTS voice:', e)
+  }
+}
+
+export const useUserDefaultTtsVoice = (): TGeminiVoice => {
+  const [voice, setVoice] = useState<TGeminiVoice>(() => getUserDefaultTtsVoice())
+
+  useEffect(() => {
+    const handleUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<TGeminiVoice>
+      if (isValidGeminiVoice(customEvent?.detail)) {
+        setVoice(customEvent.detail)
+      } else {
+        setVoice(getUserDefaultTtsVoice())
+      }
+    }
+
+    window.addEventListener(TTS_VOICE_CHANGE_EVENT, handleUpdate)
+    window.addEventListener('storage', handleUpdate)
+    return () => {
+      window.removeEventListener(TTS_VOICE_CHANGE_EVENT, handleUpdate)
+      window.removeEventListener('storage', handleUpdate)
+    }
+  }, [])
+
+  return voice
+}
 
 // In-memory audio URL cache: key -> objectUrl
 const audioCache = new Map<string, string>()
@@ -322,6 +380,7 @@ export const getVoiceForSpeaker = (
 
 export interface IPlaySpeechOptions {
   voice?: TGeminiVoice
+  model?: TGeminiTtsModel
   playbackRate?: number
   repeatCount?: number // 1, 2, 3
   volume?: number
@@ -341,14 +400,21 @@ export class GeminiTTSPlayer {
    * Generates audio for a given sentence using Gemini TTS with OpenAI fallback.
    * Returns a cached Blob URL.
    */
-  async getAudioUrl(text: string, voice: TGeminiVoice = 'Aoede'): Promise<string> {
+  async getAudioUrl(
+    text: string,
+    voice?: TGeminiVoice,
+    preferredModel?: TGeminiTtsModel,
+  ): Promise<string> {
     const cleanText = text.replace(/\[.*?\]|\(.*?\)/g, '').trim()
     if (!cleanText) {
       throw new Error('No text provided for TTS')
     }
 
-    const resolvedVoice = voice === 'auto' ? 'Aoede' : voice
-    const cacheKey = `${resolvedVoice}_${cleanText}`
+    const effectiveVoice = voice ?? getUserDefaultTtsVoice()
+    const resolvedVoice = effectiveVoice === 'auto' ? 'Aoede' : effectiveVoice
+    const targetModel = preferredModel || getUserDefaultTtsModel()
+    const modelChain = buildFallbackTtsModelChain(targetModel)
+    const cacheKey = `${targetModel}_${resolvedVoice}_${cleanText}`
 
     // 1. In-memory URL cache check
     if (audioCache.has(cacheKey)) {
@@ -409,7 +475,7 @@ export class GeminiTTSPlayer {
         if (geminiApiKey) {
           const ai = new GoogleGenAI({ apiKey: geminiApiKey })
 
-          for (const model of GEMINI_TTS_MODELS) {
+          for (const model of modelChain) {
             try {
               const response = await generateContentWithTracking(ai, 'TTS Speech', {
                 model,
@@ -500,13 +566,18 @@ export class GeminiTTSPlayer {
    */
   prefetch(
     rawText: string,
-    options?: { voice?: TGeminiVoice; playbackRate?: number; speed?: number },
+    options?: {
+      voice?: TGeminiVoice
+      model?: TGeminiTtsModel
+      playbackRate?: number
+      speed?: number
+    },
   ): void {
     const { speaker, text: speechText } = parseSpeakerAndText(rawText)
     if (!speechText) return
 
-    const voice = getVoiceForSpeaker(speaker, options?.voice || 'auto')
-    this.getAudioUrl(speechText, voice).catch((err) => {
+    const voice = getVoiceForSpeaker(speaker, options?.voice ?? getUserDefaultTtsVoice())
+    this.getAudioUrl(speechText, voice, options?.model).catch((err) => {
       console.debug('Gemini TTS prefetch ignored error:', err?.message)
     })
   }
@@ -518,6 +589,7 @@ export class GeminiTTSPlayer {
     rawText: string,
     options: {
       voice?: TGeminiVoice
+      model?: TGeminiTtsModel
       playbackRate?: number
       volume?: number
       muted?: boolean
@@ -531,10 +603,10 @@ export class GeminiTTSPlayer {
     const { speaker, text: speechText } = parseSpeakerAndText(rawText)
     if (!speechText) return null
 
-    const resolvedVoice = getVoiceForSpeaker(speaker, options.voice || 'auto')
+    const resolvedVoice = getVoiceForSpeaker(speaker, options.voice ?? getUserDefaultTtsVoice())
 
     try {
-      const audioUrl = await this.getAudioUrl(speechText, resolvedVoice)
+      const audioUrl = await this.getAudioUrl(speechText, resolvedVoice, options.model)
 
       if (requestId !== this.playRequestId) {
         return null
@@ -582,12 +654,12 @@ export class GeminiTTSPlayer {
     if (this.isCancelled) return
 
     const { speaker, text: speechText } = parseSpeakerAndText(text)
-    const voice = getVoiceForSpeaker(speaker, options?.voice || 'Aoede')
+    const voice = getVoiceForSpeaker(speaker, options?.voice ?? getUserDefaultTtsVoice())
     const playbackRate = options?.playbackRate ?? 1.0
 
     return new Promise<void>(async (resolve, reject) => {
       try {
-        const audioUrl = await this.getAudioUrl(speechText || text, voice)
+        const audioUrl = await this.getAudioUrl(speechText || text, voice, options?.model)
         if (this.isCancelled) return resolve()
 
         const audio = new Audio(audioUrl)

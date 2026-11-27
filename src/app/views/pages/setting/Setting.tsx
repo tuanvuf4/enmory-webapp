@@ -27,6 +27,8 @@ import {
   AppstoreOutlined,
   SaveOutlined,
   RobotOutlined,
+  PlayCircleOutlined,
+  PauseCircleOutlined,
 } from '@ant-design/icons'
 import { useForm, Controller } from 'react-hook-form'
 import { useState, useEffect } from 'react'
@@ -37,6 +39,15 @@ import {
   GEMINI_MODEL_OPTIONS,
   setUserDefaultAiModel,
   DEFAULT_USER_AI_MODEL,
+  GEMINI_TTS_MODEL_OPTIONS,
+  DEFAULT_USER_TTS_MODEL,
+  setUserDefaultTtsModel,
+  TGeminiTtsModel,
+  GEMINI_VOICES,
+  DEFAULT_USER_TTS_VOICE,
+  setUserDefaultTtsVoice,
+  TGeminiVoice,
+  geminiTtsService,
 } from '@/services/gemini'
 
 const { Text } = Typography
@@ -112,9 +123,10 @@ interface SettingRowProps {
   hint?: string
   children: React.ReactNode
   last?: boolean
+  stackOnMobile?: boolean
 }
 
-const SettingRow = ({ label, hint, children, last }: SettingRowProps) => {
+const SettingRow = ({ label, hint, children, last, stackOnMobile }: SettingRowProps) => {
   const { token } = theme.useToken()
   return (
     <>
@@ -123,7 +135,7 @@ const SettingRow = ({ label, hint, children, last }: SettingRowProps) => {
         gutter={[token.size, token.sizeXS]}
         style={{ padding: `${token.sizeXS}px 0` }}
       >
-        <Col xs={18} sm={14}>
+        <Col xs={stackOnMobile ? 24 : 18} sm={14}>
           <Text style={{ fontWeight: 500, color: token.colorText }}>{label}</Text>
           {hint && (
             <div>
@@ -133,7 +145,12 @@ const SettingRow = ({ label, hint, children, last }: SettingRowProps) => {
             </div>
           )}
         </Col>
-        <Col xs={6} sm={10} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Col
+          xs={stackOnMobile ? 24 : 6}
+          sm={10}
+          style={{ display: 'flex', justifyContent: stackOnMobile ? 'flex-start' : 'flex-end' }}
+          className={stackOnMobile ? 'sm:!justify-end' : undefined}
+        >
           {children}
         </Col>
       </Row>
@@ -152,6 +169,7 @@ const Setting = () => {
   const { user } = useSelector((state) => state.auth)
   const dispatch = useDispatch()
   const [isLoading, setIsLoading] = useState(false)
+  const [isTestingVoice, setIsTestingVoice] = useState(false)
 
   const sanitizeConfig = (config?: Partial<IUserConfig> | null): IUserConfig => {
     const cleanConfig = Object.fromEntries(
@@ -159,15 +177,18 @@ const Setting = () => {
     )
     return {
       ...appSetting.meta,
+      ...cleanConfig,
       itemTags: user?.configuration?.itemTags || [],
       blogTags: user?.configuration?.blogTags || [],
-      ...cleanConfig,
       numberOfListeningSentences:
         config?.numberOfListeningSentences ?? appSetting.meta.numberOfListeningSentences,
+      defaultAiModel: config?.defaultAiModel || appSetting.meta.defaultAiModel,
+      defaultTtsModel: config?.defaultTtsModel || appSetting.meta.defaultTtsModel,
+      defaultTtsVoice: config?.defaultTtsVoice || appSetting.meta.defaultTtsVoice,
     }
   }
 
-  const { control, handleSubmit, reset } = useForm<IUserConfig>({
+  const { control, handleSubmit, reset, watch } = useForm<IUserConfig>({
     defaultValues: sanitizeConfig(user?.configuration),
   })
 
@@ -177,16 +198,59 @@ const Setting = () => {
     }
   }, [user?.configuration, reset])
 
+  useEffect(() => {
+    return () => {
+      geminiTtsService.stop()
+    }
+  }, [])
+
+  const watchedTtsVoice = (watch('defaultTtsVoice') as TGeminiVoice) || DEFAULT_USER_TTS_VOICE
+  const watchedTtsModel = (watch('defaultTtsModel') as TGeminiTtsModel) || DEFAULT_USER_TTS_MODEL
+
+  const handleTestVoice = async () => {
+    if (isTestingVoice) {
+      geminiTtsService.stop()
+      setIsTestingVoice(false)
+      return
+    }
+    setIsTestingVoice(true)
+    try {
+      await geminiTtsService.playSpeech(
+        'Hello! This is your default Gemini voice for English practice.',
+        {
+          voice: watchedTtsVoice,
+          model: watchedTtsModel,
+          onEnd: () => setIsTestingVoice(false),
+          onError: () => {
+            setIsTestingVoice(false)
+            message({
+              type: 'warning',
+              content: 'Không thể phát thử giọng Gemini TTS. Vui lòng kiểm tra API key.',
+            })
+          },
+        },
+      )
+    } catch {
+      setIsTestingVoice(false)
+    }
+  }
+
   const onSubmit = async (data: IUserConfig) => {
     setIsLoading(true)
     try {
       const sanitizedData = sanitizeConfig(data)
-      if (sanitizedData.defaultAiModel) {
-        setUserDefaultAiModel(sanitizedData.defaultAiModel as any)
-      }
       const result = await apiUser.updateUserConfig(sanitizedData)
 
       if (result.isSuccess) {
+        if (sanitizedData.defaultAiModel) {
+          setUserDefaultAiModel(sanitizedData.defaultAiModel as any)
+        }
+        if (sanitizedData.defaultTtsModel) {
+          setUserDefaultTtsModel(sanitizedData.defaultTtsModel as TGeminiTtsModel)
+        }
+        if (sanitizedData.defaultTtsVoice) {
+          setUserDefaultTtsVoice(sanitizedData.defaultTtsVoice as TGeminiVoice)
+        }
         message({ type: 'success', content: 'Settings saved successfully!' })
         // Update user configuration in Redux store
         dispatch(authAction.updateUserConfig(sanitizedData))
@@ -439,6 +503,7 @@ const Setting = () => {
               <SettingRow
                 label='Mô hình AI mặc định'
                 hint='Mô hình được ưu tiên gọi đầu tiên. Nếu gặp giới hạn request (Rate Limit 429 trên gói Free Tier), hệ thống sẽ tự động gọi ngầm các model khác (3.8 Flash, 3.5 Flash, 2.5 Flash...) cho đến khi thành công.'
+                stackOnMobile
                 last
               >
                 <Controller
@@ -447,10 +512,7 @@ const Setting = () => {
                   render={({ field: { value, onChange } }) => (
                     <Select
                       value={value || DEFAULT_USER_AI_MODEL}
-                      onChange={(val) => {
-                        onChange(val)
-                        setUserDefaultAiModel(val as any)
-                      }}
+                      onChange={onChange}
                       options={GEMINI_MODEL_OPTIONS.map((opt) => ({
                         value: opt.value,
                         label: (
@@ -459,11 +521,83 @@ const Setting = () => {
                           </Tooltip>
                         ),
                       }))}
-                      style={{ width: 280 }}
+                      style={{ width: '100%', maxWidth: 280 }}
                       popupMatchSelectWidth={340}
                     />
                   )}
                 />
+              </SettingRow>
+            </SectionCard>
+
+            {/* ── Voice & Gemini TTS Preferences ── */}
+            <SectionCard
+              icon={<SoundOutlined />}
+              title='Giọng đọc & Gemini TTS'
+              description='Cấu hình giọng đọc và mô hình Gemini TTS mặc định sử dụng chung cho toàn ứng dụng'
+            >
+              <SettingRow
+                label='Mô hình Gemini TTS mặc định'
+                hint='Model TTS ưu tiên khi tạo giọng đọc. Nếu gặp lỗi hoặc vượt hạn mức (429), hệ thống tự động chuyển sang các TTS model dự phòng.'
+                stackOnMobile
+              >
+                <Controller
+                  name='defaultTtsModel'
+                  control={control}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      value={value || DEFAULT_USER_TTS_MODEL}
+                      onChange={onChange}
+                      options={GEMINI_TTS_MODEL_OPTIONS.map((opt) => ({
+                        value: opt.value,
+                        label: (
+                          <Tooltip title={opt.desc} placement='topLeft'>
+                            <div style={{ fontWeight: 600 }}>{opt.label}</div>
+                          </Tooltip>
+                        ),
+                      }))}
+                      style={{ width: '100%', maxWidth: 280 }}
+                      popupMatchSelectWidth={340}
+                    />
+                  )}
+                />
+              </SettingRow>
+
+              <SettingRow
+                label='Giọng đọc mặc định'
+                hint='Áp dụng mặc định cho phát âm từ vựng, ví dụ, Dictation, Shadowing, Listening Player và TOEIC.'
+                stackOnMobile
+                last
+              >
+                <Space style={{ width: '100%', maxWidth: 280 }} align='center'>
+                  <Controller
+                    name='defaultTtsVoice'
+                    control={control}
+                    render={({ field: { value, onChange } }) => (
+                      <Select
+                        value={value || DEFAULT_USER_TTS_VOICE}
+                        onChange={onChange}
+                        options={GEMINI_VOICES.map((opt) => ({
+                          value: opt.value,
+                          label: (
+                            <Tooltip title={opt.desc} placement='topLeft'>
+                              <div style={{ fontWeight: 600 }}>{opt.label}</div>
+                            </Tooltip>
+                          ),
+                        }))}
+                        style={{ flex: 1, minWidth: 185 }}
+                        popupMatchSelectWidth={320}
+                      />
+                    )}
+                  />
+                  <Tooltip title={isTestingVoice ? 'Dừng nghe thử' : 'Nghe thử giọng đọc'}>
+                    <Button
+                      icon={isTestingVoice ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                      onClick={handleTestVoice}
+                    >
+                      {isTestingVoice ? 'Dừng' : 'Thử'}
+                    </Button>
+                  </Tooltip>
+                </Space>
               </SettingRow>
             </SectionCard>
 

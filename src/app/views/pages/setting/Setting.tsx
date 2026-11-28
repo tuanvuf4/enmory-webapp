@@ -396,9 +396,9 @@ const Setting = () => {
                 <SectionCard
                   icon={<TeamOutlined />}
                   title='Community'
-                  description='Social & sharing features'
+                  description='Sharing resources & features'
                 >
-                  <SettingRow label='Enable Community' last>
+                  <SettingRow label='Community' last>
                     <Controller
                       control={control}
                       name='community'

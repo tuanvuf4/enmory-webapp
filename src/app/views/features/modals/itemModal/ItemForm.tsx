@@ -4,6 +4,7 @@ import appStyle from '@/style/appStyle.module.scss'
 import { appConfig, EAppType } from '@/config/appConfig'
 import { useAutoComplete } from '@/helpers/hooks/autoComplete'
 import { isGroupWord } from '@/helpers/validate'
+import { appendImageToDefinition, fetchIllustrativeImage } from '@/helpers/item'
 import { ECategory, EType, IItem, IExample, IMeaning } from '@/models/item.model'
 import { formatTagValue } from '@/models/tag.model'
 import { categories as defaultCategories } from '@/constant/item'
@@ -529,6 +530,23 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         }
       })
       .sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0))
+
+    if (
+      formattedMeanings.length > 0 &&
+      !/<img\b/i.test(String(formattedMeanings[0].definition || ''))
+    ) {
+      const imageUrl = await fetchIllustrativeImage(originWord)
+      if (imageUrl) {
+        formattedMeanings[0] = {
+          ...formattedMeanings[0],
+          definition: appendImageToDefinition(
+            formattedMeanings[0].definition,
+            imageUrl,
+            originWord,
+          ),
+        }
+      }
+    }
 
     const autofillForms = filterWordsExcludingOrigin(
       data.forms && data.forms.length > 0 ? data.forms : getValues('forms') || [],

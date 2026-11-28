@@ -118,3 +118,50 @@ export const toWildString = (value: string, wildcard = '_') => {
 export const getRandomNumber = (max: number, min: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
+
+const escapeHtmlAttr = (str = '') =>
+  str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+/**
+ * Fetch an illustrative thumbnail image URL from Wikipedia REST summary API.
+ * Returns null silently on error, timeout, or disambiguation pages.
+ */
+export const fetchIllustrativeImage = async (origin: string): Promise<string | null> => {
+  const term = String(origin || '').trim()
+  if (!term) return null
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 2500)
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}`,
+      {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+      },
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    if (data?.type === 'disambiguation') return null
+    const src = data?.thumbnail?.source
+    return typeof src === 'string' && src.startsWith('http') ? src : null
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
+ * Embed an illustrative image into an HTML definition string if not already present.
+ */
+export const appendImageToDefinition = (
+  definition = '',
+  imageUrl?: string | null,
+  altText = '',
+): string => {
+  const def = String(definition || '').trim()
+  if (!imageUrl || /<img\b/i.test(def)) return def
+  const imgHtml = `<p><img src="${escapeHtmlAttr(imageUrl)}" alt="${escapeHtmlAttr(altText)}" /></p>`
+  if (!def) return imgHtml
+  return /<[a-z][\s\S]*>/i.test(def) ? `${def}${imgHtml}` : `<p>${def}</p>${imgHtml}`
+}

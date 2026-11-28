@@ -185,13 +185,58 @@ function resolveTypeId(type) {
   return TYPE_MAP.NOUN
 }
 
-function buildItemPayload(input, uid, resolvedTags, existingDoc = null) {
+function escapeHtmlAttr(str = '') {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+async function fetchIllustrativeImage(origin = '') {
+  const term = String(origin || '').trim()
+  if (!term) return null
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}`,
+      {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(2500),
+      },
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    if (data?.type === 'disambiguation') return null
+    const src = data?.thumbnail?.source
+    return typeof src === 'string' && src.startsWith('http') ? src : null
+  } catch {
+    return null
+  }
+}
+
+function appendImageToDefinition(definition = '', imageUrl = '', altText = '') {
+  const def = String(definition || '').trim()
+  if (!imageUrl || /<img\b/i.test(def)) return def
+  const imgHtml = `<p><img src="${escapeHtmlAttr(imageUrl)}" alt="${escapeHtmlAttr(altText)}" /></p>`
+  if (!def) return imgHtml
+  return /<[a-z][\s\S]*>/i.test(def) ? `${def}${imgHtml}` : `<p>${def}</p>${imgHtml}`
+}
+
+async function buildItemPayload(input, uid, resolvedTags, existingDoc = null, autoImage = true) {
   const now = Date.now()
   const origin = String(input.origin || '').trim()
   const normalizedTags = normalizeTags(resolvedTags ?? input.tags ?? [])
   const existingId = existingDoc?.id || ''
 
-  const meanings = (input.meanings || [])
+  const rawMeanings = input.meanings || []
+  const needsAutoImage =
+    autoImage &&
+    rawMeanings.length > 0 &&
+    !rawMeanings[0]?.imageUrl &&
+    !/<img\b/i.test(String(rawMeanings[0]?.definition || ''))
+  const autoImageUrl = needsAutoImage ? await fetchIllustrativeImage(origin) : null
+
+  const meanings = rawMeanings
     .map((m, index) => {
       const meaningId = m.id || crypto.randomUUID()
       const examples = (m.examples || []).map((ex) => ({
@@ -205,6 +250,9 @@ function buildItemPayload(input, uid, resolvedTags, existingDoc = null) {
         randomIndex: ex.randomIndex ?? Math.random(),
       }))
 
+      const imageUrl = m.imageUrl || (index === 0 ? autoImageUrl : '') || ''
+      const definition = appendImageToDefinition(m.definition || '', imageUrl, origin)
+
       return {
         id: meaningId,
         itemId: existingId,
@@ -214,7 +262,7 @@ function buildItemPayload(input, uid, resolvedTags, existingDoc = null) {
         enable: m.enable ?? true,
         pronunciation: normalizePronunciation(m.pronunciation),
         note: String(m.note || ''),
-        definition: String(m.definition || ''),
+        definition,
         translation: String(m.translation || ''),
         grammar: String(m.grammar || ''),
         collocations: String(m.collocations || ''),
@@ -339,7 +387,16 @@ const MeaningSchema = z.object({
     .optional()
     .default('NOUN')
     .describe('Part of speech (NOUN, VERB, ADJECTIVE, ADVERB, etc.)'),
-  definition: z.string().optional().default('').describe('English definition'),
+  definition: z
+    .string()
+    .optional()
+    .default('')
+    .describe('English definition (supports HTML, including <img src="..." alt="..." /> for illustrative images)'),
+  imageUrl: z
+    .string()
+    .optional()
+    .default('')
+    .describe('Optional illustrative image URL to embed into definition HTML if available'),
   translation: z.string().optional().default('').describe('Vietnamese meaning/translation'),
   pronunciation: z
     .object({
@@ -418,8 +475,13 @@ server.tool(
       .optional()
       .default(false)
       .describe('Set true to force creating a new document instead of replacing an existing one with the same origin'),
+    autoImage: z
+      .boolean()
+      .optional()
+      .default(true)
+      .describe('Automatically fetch an illustrative image from Wikipedia into definition if no imageUrl/<img> is provided'),
   },
-  async ({ item, ensureTags, skipDuplicateCheck }) => {
+  async ({ item, ensureTags, skipDuplicateCheck, autoImage }) => {
     try {
       const trimmedOrigin = String(item.origin || '').trim()
       if (!trimmedOrigin) {
@@ -439,7 +501,7 @@ server.tool(
           ? await ensureTagsExist(DEFAULT_UID, item.tags)
           : normalizeTags(item.tags || [])
 
-      const payload = buildItemPayload(item, DEFAULT_UID, resolvedTags, existingDoc)
+      const payload = await buildItemPayload(item, DEFAULT_UID, resolvedTags, existingDoc, autoImage)
 
       let docId
       let action
@@ -503,8 +565,13 @@ server.tool(
       .optional()
       .default(false)
       .describe('Set true to force creating new documents instead of replacing existing ones'),
+    autoImage: z
+      .boolean()
+      .optional()
+      .default(true)
+      .describe('Automatically fetch an illustrative image from Wikipedia into definition if no imageUrl/<img> is provided'),
   },
-  async ({ items, ensureTags, skipDuplicateCheck }) => {
+  async ({ items, ensureTags, skipDuplicateCheck, autoImage }) => {
     try {
       const existingMap = new Map()
       if (!skipDuplicateCheck) {
@@ -544,7 +611,13 @@ server.tool(
           (t) => tagLookup.get(t.toLowerCase()) || t,
         )
         const existingDoc = !skipDuplicateCheck ? existingMap.get(key) || null : null
-        const payload = buildItemPayload(item, DEFAULT_UID, resolvedTags, existingDoc)
+        const payload = await buildItemPayload(
+          item,
+          DEFAULT_UID,
+          resolvedTags,
+          existingDoc,
+          autoImage,
+        )
 
         if (existingDoc) {
           await setDoc(doc(db, 'items', existingDoc.id), payload)

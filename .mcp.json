@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "enmory": {
+      "command": "node",
+      "args": ["d:/enmory-webapp/tools/enmory-mcp/index.mjs"]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "enmory-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server for adding and querying Enmory vocabulary in Firestore",
+  "main": "index.mjs",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "enmory-webapp": "file:../..",
+    "zod": "^3.24.0"
+  }
+}

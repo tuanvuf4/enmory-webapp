@@ -350,10 +350,14 @@ const Setting = () => {
 
       <div className={clsx(appStyle.bodyContent)}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Space
-            direction='vertical'
-            size={token.sizeMD}
-            style={{ display: 'flex', maxWidth: 760, margin: '0 auto' }}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: token.sizeMD,
+              maxWidth: 760,
+              margin: '0 auto',
+            }}
           >
             {/* ── Study Set ── */}
             <SectionCard
@@ -620,7 +624,21 @@ const Setting = () => {
             </SectionCard>
 
             {/* ── Save button ── */}
-            <div style={{ textAlign: 'center', paddingBottom: token.sizeLG }}>
+            <div
+              style={{
+                position: 'sticky',
+                bottom: 'var(--app-footer-height, 0px)',
+                zIndex: 10,
+                display: 'flex',
+                justifyContent: 'center',
+                padding: `${token.sizeSM}px ${token.sizeMD}px`,
+                background: token.colorBgContainer,
+                border: `1px solid ${token.colorBorder}`,
+                borderBottom: 'none',
+                borderRadius: `${token.borderRadiusLG}px ${token.borderRadiusLG}px 0 0`,
+                boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.08)',
+              }}
+            >
               <Button
                 type='primary'
                 htmlType='submit'
@@ -632,7 +650,7 @@ const Setting = () => {
                 Save Settings
               </Button>
             </div>
-          </Space>
+          </div>
         </form>
       </div>
     </div>

@@ -23,8 +23,9 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.resolve(__dirname, '../..')
 
-// Load .env from project root without polluting stdout
+// Load .env as fallback (e.g., UID), then override with .env.web
 dotenv.config({ path: path.join(ROOT_DIR, '.env'), quiet: true })
+dotenv.config({ path: path.join(ROOT_DIR, '.env.web'), override: true, quiet: true })
 
 const CATEGORY_MAP = {
   ALL: 0,
